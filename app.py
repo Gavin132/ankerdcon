@@ -346,24 +346,35 @@ def render_hub_tab(users_df: pd.DataFrame, meals_df: pd.DataFrame) -> None:
             st.info("No users found for M.I.A. checks.")
             return
 
-        def user_missing(row: pd.Series) -> bool:
-            inbound_missing = not row["Inbound Car"].strip()
-            outbound_missing = not row["Outbound Car"].strip()
-            meal_missing = True
+        # FIX: Create a copy so we don't accidentally edit the cached database
+        display_users = users_df.copy()
+
+        # NEW: Compile exactly what is missing into a clear text label
+        def get_missing_items(row: pd.Series) -> str:
+            missing = []
+            if not str(row.get("Hotel Room", "")).strip():
+                missing.append("Hotel")
+            if not str(row.get("Inbound Car", "")).strip():
+                missing.append("Inbound")
+            if not str(row.get("Outbound Car", "")).strip():
+                missing.append("Outbound")
+            
+            # Check if they forgot to RSVP for the next meal
             if next_meal is not None:
                 meal_rsvps = normalize_list_field(next_meal.get("RSVPs", ""))
-                meal_missing = row["Name"] not in meal_rsvps
-            else:
-                meal_missing = False
-            return inbound_missing or outbound_missing or meal_missing
+                if row["Name"] not in meal_rsvps:
+                    missing.append("Meal RSVP")
+            
+            return " + ".join(missing)
 
-        mia_df = users_df[users_df.apply(user_missing, axis=1)]
+        display_users["Missing Action"] = display_users.apply(get_missing_items, axis=1)
+        mia_df = display_users[display_users["Missing Action"] != ""]
+        
         if mia_df.empty:
-            st.success("Everyone has at least one transport assignment and meal RSVP on file.")
+            st.success("Everyone has all transport, hotel, and meal RSVPs sorted!")
         else:
             st.warning("These people need immediate follow-up:")
-            st.table(mia_df[["Name", "Hotel Room", "Inbound Car", "Outbound Car"]].fillna(""))
-
+            st.table(mia_df[["Name", "Hotel Room", "Inbound Car", "Outbound Car", "Missing Action"]].fillna(""))
 
 def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None:
     st.header("🚗 Transport")
