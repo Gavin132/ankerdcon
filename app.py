@@ -68,8 +68,6 @@ PAYMENTS_COLS = {
     "Date": 4,
 }
 
-# The coordinate zones for the Map
-# You can change these lat/lon coordinates to match whichever venue you are at!
 MAP_ZONES = {
     "Tokyo Big Sight (Con Venue)": [35.6306, 139.7933],
     "Akihabara (Merch Run)": [35.6983, 139.7731],
@@ -194,7 +192,6 @@ def update_user_location(user_name: str, zone: str, location_text: str) -> None:
     row_number = int(user.iloc[0]["row_number"])
     
     current_time = get_local_now().strftime("%H:%M")
-    # We save the zone safely hidden behind a pipe character so we can read it back for the map
     ping_with_time = f"{zone}|{location_text} (at {current_time})"
     
     update_sheet_cell("Users", row_number, USER_COLS["Live Location Ping"], ping_with_time)
@@ -288,7 +285,6 @@ def log_payment(paid_by: str, amount: str, description: str, date_text: str) -> 
 def render_hub_tab(users_df: pd.DataFrame, meals_df: pd.DataFrame) -> None:
     st.markdown("## 🗺️ The Hub")
     
-    # --- M.I.A. LIST ---
     st.markdown("#### 🚨 Action Needed")
     next_meal = get_next_meal(meals_df)
     
@@ -316,7 +312,6 @@ def render_hub_tab(users_df: pd.DataFrame, meals_df: pd.DataFrame) -> None:
     
     st.divider()
 
-    # --- MAP & LOCATIONS ---
     st.markdown("#### 📍 Group Locations")
     
     with st.expander("📍 Update My Location"):
@@ -336,26 +331,21 @@ def render_hub_tab(users_df: pd.DataFrame, meals_df: pd.DataFrame) -> None:
         if pings.empty:
             st.info("No location updates yet.")
         else:
-            # 1. Prepare map data
             map_data = []
             feed_html = ""
             
             for _, row in pings.iterrows():
                 ping_str = str(row['Live Location Ping'])
-                
-                # Safely parse the old data vs new data format
                 if "|" in ping_str:
                     zone = ping_str.split("|")[0].strip()
                     rest_of_ping = ping_str.split("|")[1].strip()
                 else:
-                    # Fallback for old pings before we added the map feature
                     zone = list(MAP_ZONES.keys())[0] 
                     rest_of_ping = ping_str
                 
                 text_part = rest_of_ping.split(" (at ")[0] if " (at " in rest_of_ping else rest_of_ping
                 time_part = rest_of_ping.split(" (at ")[1].replace(")", "") if " (at " in rest_of_ping else "Unknown time"
                 
-                # Add to feed
                 feed_html += f"""
                 <div class='feed-card'>
                     <div class='ping-time'>{row['Name']} • {time_part}</div>
@@ -364,7 +354,6 @@ def render_hub_tab(users_df: pd.DataFrame, meals_df: pd.DataFrame) -> None:
                 </div>
                 """
                 
-                # Map coordinates (add tiny random scatter so pins don't overlap entirely)
                 if zone in MAP_ZONES:
                     base_lat, base_lon = MAP_ZONES[zone]
                     map_data.append({
@@ -373,18 +362,14 @@ def render_hub_tab(users_df: pd.DataFrame, meals_df: pd.DataFrame) -> None:
                         "name": row['Name']
                     })
 
-            # 2. Render the Map
             if map_data:
                 map_df = pd.DataFrame(map_data)
-                # Display the visual map!
                 st.map(map_df, zoom=12, use_container_width=True)
             
-            # 3. Render the Feed underneath
             st.markdown(feed_html, unsafe_allow_html=True)
 
     st.divider()
 
-    # --- HOTEL ROOMS ---
     st.markdown("#### 🛏️ Hotel Rooms")
     if users_df.empty:
         st.info("No hotel room assignments found.")
@@ -632,9 +617,63 @@ def render_admin_tab(payments_df: pd.DataFrame, users_df: pd.DataFrame) -> None:
             """, unsafe_allow_html=True)
 
 
+# NEW FEATURE: Master Calendar Agenda
+def render_calendar_tab(rides_df: pd.DataFrame, meals_df: pd.DataFrame) -> None:
+    st.markdown("## 🗓️ Master Calendar")
+    st.markdown("<p style='color: #9ca3af;'>The complete convention schedule, past and future.</p>", unsafe_allow_html=True)
+
+    # 1. Grab Rides
+    all_rides = pd.DataFrame()
+    if not rides_df.empty:
+        rides = rides_df.copy()
+        rides["Parsed Time"] = rides["Departure Time"].apply(parse_datetime)
+        all_rides = rides.dropna(subset=["Parsed Time"]).copy()
+        if not all_rides.empty:
+            all_rides["Type"] = "🚗 Ride"
+            all_rides["Display Name"] = all_rides["Driver"].apply(lambda d: f"Ride with {d}")
+            all_rides["Details"] = all_rides.apply(lambda r: f"{r['Direction']} | Passengers: {r['Passengers'] or 'None'}", axis=1)
+
+    # 2. Grab Meals
+    all_meals = pd.DataFrame()
+    if not meals_df.empty:
+        meals = meals_df.copy()
+        meals["Parsed Time"] = meals["Time"].apply(parse_datetime)
+        all_meals = meals.dropna(subset=["Parsed Time"]).copy()
+        if not all_meals.empty:
+            all_meals["Type"] = "🍔 Meal/Event"
+            all_meals["Display Name"] = all_meals["Meal Name"]
+            all_meals["Details"] = all_meals.apply(lambda m: f"Location: {m['Location (Optional)'] or 'TBD'}", axis=1)
+
+    # Combine into a master timeline
+    timeline = pd.concat([all_rides, all_meals], ignore_index=True)
+    
+    if timeline.empty:
+        st.info("No events have been scheduled yet.")
+        return
+
+    # Sort chronologically (Oldest to Newest, like a real calendar)
+    timeline = timeline.sort_values("Parsed Time", ascending=True)
+    timeline["Date String"] = timeline["Parsed Time"].dt.strftime("%A, %b %d, %Y")
+    
+    grouped = timeline.groupby("Date String", sort=False)
+    
+    for date_str, group in grouped:
+        st.markdown(f"#### 📅 {date_str}")
+        for _, item in group.iterrows():
+            time_str = item["Parsed Time"].strftime("%H:%M")
+            st.markdown(f"""
+            <div class='feed-card' style='padding: 0.8rem; margin-bottom: 0.5rem; border-left: 4px solid #7c3aed;'>
+                <div style='color: #9ca3af; font-size: 0.8rem;'>{time_str} • {item['Type']}</div>
+                <div style='font-weight: bold; font-size: 1.1rem; margin-top: 0.2rem;'>{item['Display Name']}</div>
+                <div style='color: #d1d5db; font-size: 0.9rem; margin-top: 0.2rem;'>{item['Details']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        st.write("") # Spacer between days
+
+
 def render_archive_tab(rides_df: pd.DataFrame, meals_df: pd.DataFrame) -> None:
     st.markdown("## 📜 The Archive")
-    st.markdown("<p style='color: #9ca3af;'>A history of all past events, grouped by day.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #9ca3af;'>A history of all past events.</p>", unsafe_allow_html=True)
 
     now = get_local_now()
     
@@ -703,48 +742,103 @@ def main() -> None:
 
     st_autorefresh(interval=60000, limit=None, key="con_refresh")
 
+    # The Slide-out Sidebar (Hamburger Menu)
+    with st.sidebar:
+        st.markdown("### 🛠️ More Tools")
+        sidebar_selection = option_menu(
+            None,
+            ["Master Calendar", "The Archive"],
+            icons=["calendar3", "archive"],
+            menu_icon="cast",
+            default_index=0,
+            styles={
+                "container": {"padding": "0!important", "background-color": "transparent"},
+                "icon": {"color": "#7c3aed", "font-size": "18px"},
+                "nav-link": {"font-size": "14px", "text-align": "left", "margin": "4px 0px"},
+                "nav-link-selected": {"background-color": "#1f2937", "color": "#f8fafc"},
+            }
+        )
+
     st.markdown("<h2 style='text-align: center; margin-bottom: 0;'>🛡️ Ankerd Con</h2>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #9ca3af; margin-bottom: 1rem;'>Live Event Logistics</p>", unsafe_allow_html=True)
 
-    selected_tab = option_menu(
-        None,
-        ["Hub", "Cars", "Food", "Money", "Archive"],
-        icons=["house", "car-front", "cup-hot", "wallet2", "archive"],
-        menu_icon="cast",
-        default_index=0,
-        orientation="horizontal",
-        styles={
-            "container": {"padding": "0!important", "background-color": "#0b1320"},
-            "icon": {"color": "#7c3aed", "font-size": "16px"},
-            "nav-link": {
-                "font-size": "12px", 
-                "text-align": "center",
-                "margin": "0px 2px",
-                "padding": "10px 0px",
-                "border-radius": "10px",
-                "color": "#d1d5db",
-                "background-color": "#111827",
-            },
-            "nav-link-selected": {"background-color": "#1f2937", "color": "#f8fafc", "font-weight": "bold"},
-        },
-    )
+    # We check if the user clicked something in the sidebar. 
+    # If they didn't, we show the main 4 horizontal tabs.
+    # To do this cleanly, we add a "fake" variable to keep track.
+    
+    show_main_tabs = True
+    # We only hide the main tabs if the user explicitly clicks a sidebar option
+    # Since Streamlit runs top-to-bottom, we can check if they are interacting with the sidebar.
+    # We'll add a quick toggle to handle this UX cleanly.
+    
+    if st.session_state.get('last_clicked') == 'sidebar':
+        show_main_tabs = False
+        
+    # Let's add a button to return to the main dashboard if they are in the sidebar menus
+    if sidebar_selection:
+        if st.sidebar.button("← Back to Main Dashboard"):
+            st.session_state['view_mode'] = 'main'
+            st.rerun()
+            
+    # View State Logic
+    if 'view_mode' not in st.session_state:
+        st.session_state['view_mode'] = 'main'
 
+    # If they interact with the sidebar, switch the view mode
+    # A tiny hack in Streamlit to detect sidebar clicks: 
+    # if the option_menu returns a value and we didn't just press the back button
+    
     users_df = get_sheet_records("Users")
     rides_df = get_sheet_records("Rides")
     meals_df = get_sheet_records("Meals")
     payments_df = get_sheet_records("Payments")
 
-    if selected_tab == "Hub":
-        render_hub_tab(users_df, meals_df)
-    elif selected_tab == "Cars":
-        render_transport_tab(users_df, rides_df)
-    elif selected_tab == "Food":
-        render_food_tab(users_df, meals_df)
-    elif selected_tab == "Money":
-        render_admin_tab(payments_df, users_df)
-    elif selected_tab == "Archive":
-        render_archive_tab(rides_df, meals_df)
+    # We determine what to show based on the sidebar vs main nav
+    # To make the UX seamless, we will render the main tabs unless a sidebar item is actively chosen
+    # We'll use a slightly different option_menu setup so they don't fight each other.
+    
+    # We remove the default value from the sidebar so it doesn't auto-override.
+    # Wait, option_menu requires a default. We will check a session state toggle.
 
+    if st.session_state['view_mode'] == 'main':
+        selected_tab = option_menu(
+            None,
+            ["Hub", "Cars", "Food", "Money"],
+            icons=["house", "car-front", "cup-hot", "wallet2"],
+            menu_icon="cast",
+            default_index=0,
+            orientation="horizontal",
+            styles={
+                "container": {"padding": "0!important", "background-color": "#0b1320"},
+                "icon": {"color": "#7c3aed", "font-size": "16px"},
+                "nav-link": {"font-size": "12px", "text-align": "center", "margin": "0px 2px", "padding": "10px 0px", "border-radius": "10px", "color": "#d1d5db", "background-color": "#111827"},
+                "nav-link-selected": {"background-color": "#1f2937", "color": "#f8fafc", "font-weight": "bold"},
+            },
+        )
+        
+        if selected_tab == "Hub":
+            render_hub_tab(users_df, meals_df)
+        elif selected_tab == "Cars":
+            render_transport_tab(users_df, rides_df)
+        elif selected_tab == "Food":
+            render_food_tab(users_df, meals_df)
+        elif selected_tab == "Money":
+            render_admin_tab(payments_df, users_df)
+            
+        # If they click the sidebar while here, switch modes
+        if sidebar_selection in ["Master Calendar", "The Archive"] and st.session_state.get('last_sidebar') != sidebar_selection:
+             st.session_state['view_mode'] = 'sidebar'
+             st.session_state['last_sidebar'] = sidebar_selection
+             st.rerun()
+
+    else:
+        # We are in sidebar mode
+        if sidebar_selection == "Master Calendar":
+            render_calendar_tab(rides_df, meals_df)
+        elif sidebar_selection == "The Archive":
+            render_archive_tab(rides_df, meals_df)
+            
+        st.session_state['last_sidebar'] = sidebar_selection
 
 if __name__ == "__main__":
     main()
