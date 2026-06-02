@@ -382,6 +382,11 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
         horizontal=True,
     )
     direction_value = "Inbound" if direction_choice == "Inbound to Con" else "Outbound"
+    
+    # FIX 1: Clean up the data just in case Google Sheets has accidental spaces or lowercase letters
+    if not rides_df.empty:
+        rides_df["Direction"] = rides_df["Direction"].astype(str).str.strip().str.title()
+        
     filtered_rides = rides_df[rides_df["Direction"] == direction_value].copy()
 
     def seats_left(row: pd.Series) -> int:
@@ -411,10 +416,8 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
             card_opacity = "1.0"
             is_full = ride['Seats Left'] <= 0
             
-            # NEW: The Full Badge UI Logic
             full_badge = ""
             if is_full and minutes_left >= 0:
-                # Add the bright red badge, force the border red, and dim the card
                 full_badge = "<span style='background-color: #ef4444; color: white; font-size: 0.75rem; font-weight: bold; padding: 0.1rem 0.5rem; border-radius: 999px; margin-left: 0.5rem; vertical-align: middle;'>FULL</span>"
                 border_color = "#ef4444" 
                 card_opacity = "0.6"     
@@ -424,9 +427,8 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
                 border_color = "#374151"
                 time_warning = f"<span style='color:#6b7280; font-style:italic;'> (Departed)</span>"
                 card_opacity = "0.5"
-                full_badge = "" # Hide the full badge if it's already gone
+                full_badge = "" 
             elif 0 <= minutes_left <= 60 and not is_full:
-                # Standard green-to-red time gradient for available cars
                 ratio = minutes_left / 60.0 
                 r = int(239 - (239 - 34) * ratio)
                 g = int(68 + (197 - 68) * ratio)
@@ -434,7 +436,6 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
                 border_color = f"rgb({r}, {g}, {b})"
                 time_warning = f"<span style='color:{border_color}; font-weight:bold;'> ({int(minutes_left)} mins left!)</span>"
             elif 0 <= minutes_left <= 60 and is_full:
-                 # If it's full AND leaving soon, just keep the warning text red
                  time_warning = f"<span style='color:#ef4444; font-weight:bold;'> ({int(minutes_left)} mins left!)</span>"
 
             with st.container():
@@ -458,7 +459,6 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
             ride_options = []
             ride_map: Dict[str, dict] = {}
             for _, ride in active_rides.iterrows():
-                # NEW: Update the Dropdown to make full cars extremely obvious
                 if ride['Seats Left'] <= 0:
                     option_label = f"🚫 [FULL] {ride['Driver']} | {ride['Departure Time']}"
                 else:
@@ -487,7 +487,16 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
     with st.container():
         st.subheader("Create a New Ride")
         with st.form("new_ride_form"):
-            ride_direction = st.selectbox("Direction", options=["Inbound", "Outbound"])
+            
+            # FIX 2: Make the creation form automatically match the tab you are currently looking at!
+            form_default_index = 0 if direction_value == "Inbound" else 1
+            
+            ride_direction = st.selectbox(
+                "Direction", 
+                options=["Inbound", "Outbound"], 
+                index=form_default_index
+            )
+            
             driver_name = st.selectbox(
                 "Driver",
                 options=sorted(users_df["Name"].dropna().unique()),
@@ -499,7 +508,7 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
             with col2:
                 departure_time_input = st.time_input("Time")
                 
-            total_seats = st.number_input("Passsenger seats", min_value=1, max_value=20, value=4)
+            total_seats = st.number_input("Passenger seats", min_value=1, max_value=20, value=4)
             
             if st.form_submit_button("Create Ride"):
                 datetime_str = f"{departure_date.strftime('%Y-%m-%d')} {departure_time_input.strftime('%H:%M')}"
