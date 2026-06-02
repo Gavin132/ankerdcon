@@ -1,0 +1,6 @@
+streamlit
+streamlit-option-menu
+gspread
+requests
+pandas
+streamlit-autorefresh
