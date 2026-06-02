@@ -1,4 +1,5 @@
 import json
+import random
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from typing import Dict, List, Optional
@@ -12,35 +13,26 @@ from streamlit_option_menu import option_menu
 from streamlit_autorefresh import st_autorefresh
 
 
-# UI UPGRADE: Changed layout to centered for a forced mobile-app feel on all devices
+# Mobile-first dark theme styling
 st.set_page_config(page_title="Ankerd Con App", layout="centered", page_icon="🛡️", initial_sidebar_state="collapsed")
 
-# Mobile-first dark theme styling
 st.markdown(
     """
     <style>
     :root { color-scheme: dark; }
     body, .stApp, .css-1d391kg { background-color: #0b1320; color: #e6e8ef; }
-    
-    /* UI UPGRADE: Tightened padding so the app doesn't waste space at the top of a phone screen */
     .block-container { padding: 2rem 1rem 2rem 1rem !important; max-width: 600px; }
-    
     .stButton>button, .stDownloadButton>button { background-color: #7c3aed; color: #ffffff; border-radius: 0.8rem; border: none; font-weight: bold; }
     .stButton>button:hover { background-color: #6d28d9; }
-    
     .stTextInput>div>div>input, .stSelectbox>div>div>div>input, .stNumberInput>div>div>input { background-color: #111827; color: #e6e8ef; border-radius: 0.8rem; border: 1px solid #374151; }
-    
-    /* UI UPGRADE: Make expanders look like interactive menu buttons */
     .streamlit-expanderHeader { background-color: #1f2937; border-radius: 0.5rem; color: #e6e8ef; font-weight: bold; }
     div[data-testid="stExpander"] { border: none !important; margin-bottom: 1rem; }
-    
     .stMarkdown { color: #e6e8ef; }
     .stApp .css-1d391kg .main { background-color: #0b1320; }
-    
-    /* Custom Card Classes for Feed Layouts */
     .feed-card { background-color: #111827; padding: 1rem; border-radius: 0.8rem; border: 1px solid #1f2937; margin-bottom: 0.8rem; }
     .ping-time { color: #9ca3af; font-size: 0.8rem; margin-bottom: 0.2rem; }
     .ping-text { font-size: 1rem; margin-top: 0; }
+    .zone-badge { display: inline-block; background-color: #374151; color: #d1d5db; font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 4px; margin-bottom: 0.3rem; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -74,6 +66,16 @@ PAYMENTS_COLS = {
     "Amount": 2,
     "Description": 3,
     "Date": 4,
+}
+
+# The coordinate zones for the Map
+# You can change these lat/lon coordinates to match whichever venue you are at!
+MAP_ZONES = {
+    "Tokyo Big Sight (Con Venue)": [35.6306, 139.7933],
+    "Akihabara (Merch Run)": [35.6983, 139.7731],
+    "Hotel": [35.6325, 139.7950],
+    "Food/Lunch Spot": [35.6280, 139.7940],
+    "Off-site: City Center": [35.6895, 139.6917]
 }
 
 
@@ -182,7 +184,7 @@ def get_next_meal(meals_df: pd.DataFrame) -> Optional[pd.Series]:
     return upcoming.iloc[0]
 
 
-def update_user_location(user_name: str, location_text: str) -> None:
+def update_user_location(user_name: str, zone: str, location_text: str) -> None:
     users_df = get_sheet_records("Users")
     user = users_df[users_df["Name"] == user_name]
     if user.empty:
@@ -192,15 +194,16 @@ def update_user_location(user_name: str, location_text: str) -> None:
     row_number = int(user.iloc[0]["row_number"])
     
     current_time = get_local_now().strftime("%H:%M")
-    ping_with_time = f"{location_text} (at {current_time})"
+    # We save the zone safely hidden behind a pipe character so we can read it back for the map
+    ping_with_time = f"{zone}|{location_text} (at {current_time})"
     
     update_sheet_cell("Users", row_number, USER_COLS["Live Location Ping"], ping_with_time)
     get_sheet_records.clear()
     send_discord_notification(
         "Location Ping Updated",
-        f"{user_name} updated their live location to: {ping_with_time}",
+        f"{user_name} is in {zone}: {location_text} (at {current_time})",
     )
-    st.success(f"Ping updated to: {location_text}")
+    st.success(f"Ping updated to: {zone} - {location_text}")
 
 
 def update_user_car(user_name: str, direction: str, car_label: str) -> None:
@@ -305,7 +308,6 @@ def render_hub_tab(users_df: pd.DataFrame, meals_df: pd.DataFrame) -> None:
         display_users["Missing Action"] = display_users.apply(get_missing_items, axis=1)
         mia_df = display_users[display_users["Missing Action"] != ""]
         
-        # UI UPGRADE: Replaced table with high-visibility alert blocks
         if mia_df.empty:
             st.success("Everyone is fully accounted for!")
         else:
@@ -314,44 +316,76 @@ def render_hub_tab(users_df: pd.DataFrame, meals_df: pd.DataFrame) -> None:
     
     st.divider()
 
-    # --- LOCATION PINGS ---
-    st.markdown("#### 📍 Live Locations")
+    # --- MAP & LOCATIONS ---
+    st.markdown("#### 📍 Group Locations")
     
-    # UI UPGRADE: Hidden the form inside an expander
     with st.expander("📍 Update My Location"):
         with st.form("location_ping_form"):
             ping_name = st.selectbox("Who are you?", options=sorted(users_df["Name"].dropna().unique()))
-            ping_text = st.text_input("Short update", placeholder="e.g. At Artist Alley row D")
+            ping_zone = st.selectbox("Zone", options=list(MAP_ZONES.keys()))
+            ping_text = st.text_input("Specific Spot", placeholder="e.g. Artist Alley row D")
             if st.form_submit_button("Send Update"):
                 if ping_text.strip():
-                    update_user_location(ping_name, ping_text.strip())
+                    update_user_location(ping_name, ping_zone, ping_text.strip())
                     st.rerun()
 
-    # UI UPGRADE: Replaced table with a social-media style feed
     if not users_df.empty:
         pings = users_df[["Name", "Live Location Ping"]].dropna()
         pings = pings[pings["Live Location Ping"] != ""]
+        
         if pings.empty:
             st.info("No location updates yet.")
         else:
+            # 1. Prepare map data
+            map_data = []
+            feed_html = ""
+            
             for _, row in pings.iterrows():
-                # Extracting the time from the string for styling (e.g., "At Artist Alley (at 14:30)")
                 ping_str = str(row['Live Location Ping'])
-                text_part = ping_str.split(" (at ")[0] if " (at " in ping_str else ping_str
-                time_part = ping_str.split(" (at ")[1].replace(")", "") if " (at " in ping_str else "Unknown time"
                 
-                st.markdown(f"""
+                # Safely parse the old data vs new data format
+                if "|" in ping_str:
+                    zone = ping_str.split("|")[0].strip()
+                    rest_of_ping = ping_str.split("|")[1].strip()
+                else:
+                    # Fallback for old pings before we added the map feature
+                    zone = list(MAP_ZONES.keys())[0] 
+                    rest_of_ping = ping_str
+                
+                text_part = rest_of_ping.split(" (at ")[0] if " (at " in rest_of_ping else rest_of_ping
+                time_part = rest_of_ping.split(" (at ")[1].replace(")", "") if " (at " in rest_of_ping else "Unknown time"
+                
+                # Add to feed
+                feed_html += f"""
                 <div class='feed-card'>
                     <div class='ping-time'>{row['Name']} • {time_part}</div>
+                    <div class='zone-badge'>{zone}</div>
                     <div class='ping-text'>{text_part}</div>
                 </div>
-                """, unsafe_allow_html=True)
+                """
+                
+                # Map coordinates (add tiny random scatter so pins don't overlap entirely)
+                if zone in MAP_ZONES:
+                    base_lat, base_lon = MAP_ZONES[zone]
+                    map_data.append({
+                        "lat": base_lat + random.uniform(-0.001, 0.001), 
+                        "lon": base_lon + random.uniform(-0.001, 0.001),
+                        "name": row['Name']
+                    })
+
+            # 2. Render the Map
+            if map_data:
+                map_df = pd.DataFrame(map_data)
+                # Display the visual map!
+                st.map(map_df, zoom=12, use_container_width=True)
+            
+            # 3. Render the Feed underneath
+            st.markdown(feed_html, unsafe_allow_html=True)
 
     st.divider()
 
     # --- HOTEL ROOMS ---
     st.markdown("#### 🛏️ Hotel Rooms")
-    # UI UPGRADE: Replaced dataframe with simple readable text blocks
     if users_df.empty:
         st.info("No hotel room assignments found.")
     else:
@@ -389,7 +423,6 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
         filtered_rides = filtered_rides[filtered_rides["Parsed Time"] >= cutoff_time]
         filtered_rides = filtered_rides.sort_values("Parsed Time").fillna("")
 
-    # --- RIDE FEED ---
     if filtered_rides.empty and not rides_df[rides_df["Direction"] == direction_value].empty:
         st.success(f"All scheduled {direction_value.lower()} rides have departed!")
     elif filtered_rides.empty:
@@ -436,7 +469,6 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
 
     st.divider()
 
-    # UI UPGRADE: Hide action forms in expanders
     with st.expander("🎟️ Claim a Seat"):
         active_rides = filtered_rides[filtered_rides["Parsed Time"] >= now] if not filtered_rides.empty else filtered_rides
         if active_rides.empty:
@@ -469,7 +501,6 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
             ride_direction = st.selectbox("Direction", options=["Inbound", "Outbound"], index=form_default_index)
             driver_name = st.selectbox("Driver", options=sorted(users_df["Name"].dropna().unique()))
             
-            # Mobile friendly stacking
             departure_date = st.date_input("Date")
             departure_time_input = st.time_input("Time")
             total_seats = st.number_input("Total passenger seats", min_value=1, max_value=20, value=4)
@@ -492,7 +523,6 @@ def render_food_tab(users_df: pd.DataFrame, meals_df: pd.DataFrame) -> None:
         display_meals = display_meals[display_meals["Parsed Time"] >= cutoff_time]
         display_meals = display_meals.sort_values(["Parsed Time", "Meal Name"]).fillna("")
 
-    # --- MEAL FEED ---
     if display_meals.empty and not meals_df.empty:
         st.success("All scheduled events have concluded!")
     elif display_meals.empty:
@@ -530,7 +560,6 @@ def render_food_tab(users_df: pd.DataFrame, meals_df: pd.DataFrame) -> None:
 
     st.divider()
 
-    # UI UPGRADE: Hide action forms in expanders
     with st.expander("🍽️ RSVP for a Meal"):
         active_meals = display_meals[display_meals["Parsed Time"] >= now] if not display_meals.empty else display_meals
         if active_meals.empty:
@@ -567,7 +596,6 @@ def render_food_tab(users_df: pd.DataFrame, meals_df: pd.DataFrame) -> None:
 def render_admin_tab(payments_df: pd.DataFrame, users_df: pd.DataFrame) -> None:
     st.markdown("## 💳 Finance")
 
-    # UI UPGRADE: Hide action form in expander
     with st.expander("💸 Log a New Payment"):
         with st.form("payment_form"):
             payer = st.selectbox("Who paid?", options=sorted(users_df["Name"].dropna().unique()))
@@ -583,7 +611,6 @@ def render_admin_tab(payments_df: pd.DataFrame, users_df: pd.DataFrame) -> None:
                     st.rerun()
 
     st.markdown("#### Transaction History")
-    # UI UPGRADE: Replaced dataframe with a clean banking-style feed
     if payments_df.empty:
         st.info("No payments logged yet.")
     else:
@@ -604,13 +631,13 @@ def render_admin_tab(payments_df: pd.DataFrame, users_df: pd.DataFrame) -> None:
             </div>
             """, unsafe_allow_html=True)
 
+
 def render_archive_tab(rides_df: pd.DataFrame, meals_df: pd.DataFrame) -> None:
     st.markdown("## 📜 The Archive")
     st.markdown("<p style='color: #9ca3af;'>A history of all past events, grouped by day.</p>", unsafe_allow_html=True)
 
     now = get_local_now()
     
-    # 1. Verzamel alle oude ritten
     past_rides = pd.DataFrame()
     if not rides_df.empty:
         rides = rides_df.copy()
@@ -621,7 +648,6 @@ def render_archive_tab(rides_df: pd.DataFrame, meals_df: pd.DataFrame) -> None:
             past_rides["Display Name"] = past_rides["Driver"].apply(lambda d: f"Ride with {d}")
             past_rides["Details"] = past_rides.apply(lambda r: f"{r['Direction']} | Passengers: {r['Passengers'] or 'None'}", axis=1)
 
-    # 2. Verzamel alle oude maaltijden
     past_meals = pd.DataFrame()
     if not meals_df.empty:
         meals = meals_df.copy()
@@ -632,20 +658,15 @@ def render_archive_tab(rides_df: pd.DataFrame, meals_df: pd.DataFrame) -> None:
             past_meals["Display Name"] = past_meals["Meal Name"]
             past_meals["Details"] = past_meals.apply(lambda m: f"Location: {m['Location (Optional)'] or 'TBD'} | Cost: {m['Cost']}", axis=1)
 
-    # 3. Voeg ze samen tot één grote tijdlijn
     timeline = pd.concat([past_rides, past_meals], ignore_index=True)
     
     if timeline.empty:
         st.info("The archive is currently empty. Past events will appear here automatically once their time passes.")
         return
 
-    # Sorteer van nieuw naar oud
     timeline = timeline.sort_values("Parsed Time", ascending=False)
-    
-    # Maak een mooie datum-tekst om op te groeperen (bijv. "Tuesday, June 02, 2026")
     timeline["Date String"] = timeline["Parsed Time"].dt.strftime("%A, %B %d, %Y")
     
-    # 4. Groepeer ze en stop ze in opklapbare menu's (expanders)
     grouped = timeline.groupby("Date String", sort=False)
     
     for date_str, group in grouped:
@@ -655,7 +676,6 @@ def render_archive_tab(rides_df: pd.DataFrame, meals_df: pd.DataFrame) -> None:
                 st.markdown(f"**{time_str}** — {item['Type']}: **{item['Display Name']}**")
                 st.caption(f"{item['Details']}")
                 st.divider()
-
 
 
 def check_password() -> bool:
@@ -668,7 +688,6 @@ def check_password() -> bool:
     with st.form("login_form"):
         pwd = st.text_input("Passphrase", type="password")
         if st.form_submit_button("Enter"):
-            # Ensure app_password is set in secrets.toml!
             if pwd == st.secrets.get("app_password", "default_secret_if_forgotten"):
                 st.session_state["password_correct"] = True
                 st.rerun()
@@ -684,13 +703,12 @@ def main() -> None:
 
     st_autorefresh(interval=60000, limit=None, key="con_refresh")
 
-    # UI UPGRADE: Minimalist header
     st.markdown("<h2 style='text-align: center; margin-bottom: 0;'>🛡️ Ankerd Con</h2>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #9ca3af; margin-bottom: 1rem;'>Live Event Logistics</p>", unsafe_allow_html=True)
 
     selected_tab = option_menu(
         None,
-        ["Hub", "Cars", "Food", "Money", "Archive"], # Shortened titles so they fit on one mobile row
+        ["Hub", "Cars", "Food", "Money", "Archive"],
         icons=["house", "car-front", "cup-hot", "wallet2", "archive"],
         menu_icon="cast",
         default_index=0,
@@ -726,6 +744,7 @@ def main() -> None:
         render_admin_tab(payments_df, users_df)
     elif selected_tab == "Archive":
         render_archive_tab(rides_df, meals_df)
+
 
 if __name__ == "__main__":
     main()
