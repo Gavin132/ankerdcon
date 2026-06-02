@@ -476,7 +476,7 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
             with col2:
                 departure_time_input = st.time_input("Time")
                 
-            total_seats = st.number_input("Total seats", min_value=1, max_value=20, value=6)
+            total_seats = st.number_input("Passenger seats", min_value=1, max_value=20, value=4)
             
             if st.form_submit_button("Create Ride"):
                 datetime_str = f"{departure_date.strftime('%Y-%m-%d')} {departure_time_input.strftime('%H:%M')}"
