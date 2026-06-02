@@ -370,9 +370,17 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
     if rides_df.empty:
         st.info("No transport rides have been scheduled yet.")
 
+    # FIX: Grab the time at the very top of the tab
+    now = get_local_now()
+    
+    # NEW: Automatically switch the default toggle based on the time of day
+    # If the hour is before 13:00 (1 PM), default index is 0 ("Inbound"). Otherwise, index is 1 ("Outbound").
+    default_tab_index = 0 if now.hour < 13 else 1
+
     direction_choice = st.radio(
         "Choose a view",
         options=["Inbound to Con", "Outbound/Return"],
+        index=default_tab_index,
         horizontal=True,
     )
     direction_value = "Inbound" if direction_choice == "Inbound to Con" else "Outbound"
@@ -382,13 +390,11 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
         passengers = normalize_list_field(row["Passengers"])
         return max(int(row["Total Seats"] or 0) - len(passengers), 0)
 
-    now = get_local_now()
-
     if not filtered_rides.empty:
         filtered_rides["Parsed Time"] = filtered_rides["Departure Time"].apply(parse_datetime)
         filtered_rides["Seats Left"] = filtered_rides.apply(seats_left, axis=1)
         
-        # FIX: Keep rides visible for 2 hours AFTER they depart
+        # Keep rides visible for 2 hours AFTER they depart
         cutoff_time = now - timedelta(hours=2)
         filtered_rides = filtered_rides[filtered_rides["Parsed Time"] >= cutoff_time]
         filtered_rides = filtered_rides.sort_values("Parsed Time").fillna("")
@@ -406,7 +412,7 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
             time_warning = ""
             card_opacity = "1.0"
             
-            # FIX: If the event is in the past, gray it out
+            # If the event is in the past, gray it out
             if minutes_left < 0:
                 border_color = "#374151"
                 time_warning = f"<span style='color:#6b7280; font-style:italic;'> (Departed)</span>"
