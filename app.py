@@ -604,6 +604,59 @@ def render_admin_tab(payments_df: pd.DataFrame, users_df: pd.DataFrame) -> None:
             </div>
             """, unsafe_allow_html=True)
 
+def render_archive_tab(rides_df: pd.DataFrame, meals_df: pd.DataFrame) -> None:
+    st.markdown("## 📜 The Archive")
+    st.markdown("<p style='color: #9ca3af;'>A history of all past events, grouped by day.</p>", unsafe_allow_html=True)
+
+    now = get_local_now()
+    
+    # 1. Verzamel alle oude ritten
+    past_rides = pd.DataFrame()
+    if not rides_df.empty:
+        rides = rides_df.copy()
+        rides["Parsed Time"] = rides["Departure Time"].apply(parse_datetime)
+        past_rides = rides[rides["Parsed Time"] < now].copy()
+        if not past_rides.empty:
+            past_rides["Type"] = "🚗 Ride"
+            past_rides["Display Name"] = past_rides["Driver"].apply(lambda d: f"Ride with {d}")
+            past_rides["Details"] = past_rides.apply(lambda r: f"{r['Direction']} | Passengers: {r['Passengers'] or 'None'}", axis=1)
+
+    # 2. Verzamel alle oude maaltijden
+    past_meals = pd.DataFrame()
+    if not meals_df.empty:
+        meals = meals_df.copy()
+        meals["Parsed Time"] = meals["Time"].apply(parse_datetime)
+        past_meals = meals[meals["Parsed Time"] < now].copy()
+        if not past_meals.empty:
+            past_meals["Type"] = "🍔 Meal"
+            past_meals["Display Name"] = past_meals["Meal Name"]
+            past_meals["Details"] = past_meals.apply(lambda m: f"Location: {m['Location (Optional)'] or 'TBD'} | Cost: {m['Cost']}", axis=1)
+
+    # 3. Voeg ze samen tot één grote tijdlijn
+    timeline = pd.concat([past_rides, past_meals], ignore_index=True)
+    
+    if timeline.empty:
+        st.info("The archive is currently empty. Past events will appear here automatically once their time passes.")
+        return
+
+    # Sorteer van nieuw naar oud
+    timeline = timeline.sort_values("Parsed Time", ascending=False)
+    
+    # Maak een mooie datum-tekst om op te groeperen (bijv. "Tuesday, June 02, 2026")
+    timeline["Date String"] = timeline["Parsed Time"].dt.strftime("%A, %B %d, %Y")
+    
+    # 4. Groepeer ze en stop ze in opklapbare menu's (expanders)
+    grouped = timeline.groupby("Date String", sort=False)
+    
+    for date_str, group in grouped:
+        with st.expander(f"📅 {date_str}"):
+            for _, item in group.iterrows():
+                time_str = item["Parsed Time"].strftime("%H:%M")
+                st.markdown(f"**{time_str}** — {item['Type']}: **{item['Display Name']}**")
+                st.caption(f"{item['Details']}")
+                st.divider()
+
+
 
 def check_password() -> bool:
     if st.session_state.get("password_correct", False):
@@ -637,8 +690,8 @@ def main() -> None:
 
     selected_tab = option_menu(
         None,
-        ["Hub", "Cars", "Food", "Money"], # Shortened titles so they fit on one mobile row
-        icons=["house", "car-front", "cup-hot", "wallet2"],
+        ["Hub", "Cars", "Food", "Money", "Archive"], # Shortened titles so they fit on one mobile row
+        icons=["house", "car-front", "cup-hot", "wallet2", "archive"],
         menu_icon="cast",
         default_index=0,
         orientation="horizontal",
@@ -671,7 +724,8 @@ def main() -> None:
         render_food_tab(users_df, meals_df)
     elif selected_tab == "Money":
         render_admin_tab(payments_df, users_df)
-
+    elif selected_tab == "Archive":
+        render_archive_tab(rides_df, meals_df)
 
 if __name__ == "__main__":
     main()
