@@ -370,11 +370,9 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
     if rides_df.empty:
         st.info("No transport rides have been scheduled yet.")
 
-    # FIX: Grab the time at the very top of the tab
     now = get_local_now()
     
-    # NEW: Automatically switch the default toggle based on the time of day
-    # If the hour is before 13:00 (1 PM), default index is 0 ("Inbound"). Otherwise, index is 1 ("Outbound").
+    # Automatically switch the default toggle based on the time of day
     default_tab_index = 0 if now.hour < 13 else 1
 
     direction_choice = st.radio(
@@ -411,24 +409,38 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
             border_color = "#1f2937"
             time_warning = ""
             card_opacity = "1.0"
+            is_full = ride['Seats Left'] <= 0
             
-            # If the event is in the past, gray it out
+            # NEW: The Full Badge UI Logic
+            full_badge = ""
+            if is_full and minutes_left >= 0:
+                # Add the bright red badge, force the border red, and dim the card
+                full_badge = "<span style='background-color: #ef4444; color: white; font-size: 0.75rem; font-weight: bold; padding: 0.1rem 0.5rem; border-radius: 999px; margin-left: 0.5rem; vertical-align: middle;'>FULL</span>"
+                border_color = "#ef4444" 
+                card_opacity = "0.6"     
+            
+            # If the event is in the past, gray it out entirely
             if minutes_left < 0:
                 border_color = "#374151"
                 time_warning = f"<span style='color:#6b7280; font-style:italic;'> (Departed)</span>"
                 card_opacity = "0.5"
-            elif 0 <= minutes_left <= 60:
+                full_badge = "" # Hide the full badge if it's already gone
+            elif 0 <= minutes_left <= 60 and not is_full:
+                # Standard green-to-red time gradient for available cars
                 ratio = minutes_left / 60.0 
                 r = int(239 - (239 - 34) * ratio)
                 g = int(68 + (197 - 68) * ratio)
                 b = int(68 + (94 - 68) * ratio)
                 border_color = f"rgb({r}, {g}, {b})"
                 time_warning = f"<span style='color:{border_color}; font-weight:bold;'> ({int(minutes_left)} mins left!)</span>"
+            elif 0 <= minutes_left <= 60 and is_full:
+                 # If it's full AND leaving soon, just keep the warning text red
+                 time_warning = f"<span style='color:#ef4444; font-weight:bold;'> ({int(minutes_left)} mins left!)</span>"
 
             with st.container():
                 st.markdown(f"""
                 <div style='border-left: 6px solid {border_color}; background-color: #111827; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; opacity: {card_opacity};'>
-                    <h3 style='margin-top:0; margin-bottom: 0.2rem;'>{ride['Driver']}'s Car</h3>
+                    <h3 style='margin-top:0; margin-bottom: 0.2rem;'>{ride['Driver']}'s Car {full_badge}</h3>
                     <p style='margin: 0.2rem 0;'><b>Departure:</b> {ride['Departure Time']} {time_warning}</p>
                     <p style='margin: 0.2rem 0;'><b>Seats Left:</b> {ride['Seats Left']} / {ride['Total Seats']}</p>
                     <p style='margin: 0.2rem 0; color: #9ca3af;'><b>Passengers:</b> {ride['Passengers'] or 'None yet'}</p>
@@ -446,7 +458,12 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
             ride_options = []
             ride_map: Dict[str, dict] = {}
             for _, ride in active_rides.iterrows():
-                option_label = f"{ride['Driver']} | {ride['Departure Time']} | {ride['Seats Left']} seats left"
+                # NEW: Update the Dropdown to make full cars extremely obvious
+                if ride['Seats Left'] <= 0:
+                    option_label = f"🚫 [FULL] {ride['Driver']} | {ride['Departure Time']}"
+                else:
+                    option_label = f"✅ {ride['Driver']} | {ride['Departure Time']} | {ride['Seats Left']} seats left"
+                    
                 ride_options.append(option_label)
                 ride_map[option_label] = ride.to_dict()
 
@@ -462,7 +479,7 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
                 if st.form_submit_button("Claim Seat"):
                     selected_ride = ride_map[selected_ride_label]
                     if selected_ride["Seats Left"] <= 0:
-                        st.error("This ride has no seats left.")
+                        st.error("This ride is completely full!")
                     else:
                         claim_ride_seat(claimer_name, selected_ride, direction_value)
                         st.rerun()
@@ -482,7 +499,7 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
             with col2:
                 departure_time_input = st.time_input("Time")
                 
-            total_seats = st.number_input("Passenger seats", min_value=1, max_value=20, value=4)
+            total_seats = st.number_input("Passsenger seats", min_value=1, max_value=20, value=4)
             
             if st.form_submit_button("Create Ride"):
                 datetime_str = f"{departure_date.strftime('%Y-%m-%d')} {departure_time_input.strftime('%H:%M')}"
