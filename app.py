@@ -12,9 +12,7 @@ from google.oauth2.service_account import Credentials
 from streamlit_option_menu import option_menu
 from streamlit_autorefresh import st_autorefresh
 
-
-# Mobile-first dark theme styling
-st.set_page_config(page_title="Ankerd Con App", layout="centered", page_icon="🛡️", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Ankerd Con App", layout="centered", page_icon="https://cdn.discordapp.com/attachments/465068365472464906/1512430852745854976/channels4_profile1.jpg?ex=6a24107e&is=6a22befe&hm=e1407fd7135e44ba64f734b22245d268e584743b03b4c4d26b4f25857aa565c1", initial_sidebar_state="collapsed")
 
 st.markdown(
     """
