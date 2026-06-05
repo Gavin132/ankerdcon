@@ -220,7 +220,15 @@ def claim_ride_seat(user_name: str, ride_row: Dict[str, str], direction: str) ->
 def create_ride(direction: str, vehicle_type: str, driver: str, departure_time: str, start_location: str, total_seats: int) -> None:
     append_sheet_row("Rides", [direction, vehicle_type, driver, departure_time, start_location, str(total_seats), ""])
     get_all_tables.clear()
-    veh_icon = "🚆 Train/Bus" if vehicle_type == "Public Transport" else "🚗 Car"
+    
+    # EASTER EGG: Timo's Truck Logic for Discord
+    if vehicle_type == "Public Transport":
+        veh_icon = "🚆 Train/Bus"
+    elif driver.strip().lower() == "timo":
+        veh_icon = "🚚 Truck"
+    else:
+        veh_icon = "🚗 Car"
+        
     send_discord_notification("New Transport Added", f"A new {direction} {veh_icon} departs from **{start_location}** at **{departure_time}**.")
     st.success("New transport added.")
 
@@ -409,6 +417,7 @@ def render_hub_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame, meals_df: pd.
 
 
 # --- TRANSPORT TAB ---
+# --- TRANSPORT TAB ---
 def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None:
     st.markdown("## 🚗 Transport")
 
@@ -441,10 +450,21 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
             minutes_left = (parsed_time - now).total_seconds() / 60.0
             
             is_pt = str(ride.get("Vehicle Type", "")).strip().lower() == "public transport"
+            driver_name = str(ride.get("Driver", ""))
+            is_timo = driver_name.strip().lower() == "timo"
             
             border_color = "#3b82f6" if is_pt else "#1f2937" 
-            title_icon = "🚆" if is_pt else "🚗"
-            title_text = f"Public Transport via {ride['Driver']}" if is_pt else f"{ride['Driver']}'s Car"
+            
+            # EASTER EGG: Timo's Truck Logic for the App UI
+            if is_pt:
+                title_icon = "🚆"
+                title_text = f"Public Transport via {driver_name}"
+            elif is_timo:
+                title_icon = "🚚"
+                title_text = f"{driver_name}'s Truck"
+            else:
+                title_icon = "🚗"
+                title_text = f"{driver_name}'s Car"
             
             time_warning = ""
             card_opacity = "1.0"
@@ -492,13 +512,17 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
             ride_map: Dict[str, dict] = {}
             for _, ride in active_rides.iterrows():
                 is_pt = str(ride.get("Vehicle Type", "")).strip().lower() == "public transport"
+                driver_name = str(ride.get("Driver", ""))
+                is_timo = driver_name.strip().lower() == "timo"
                 
                 if not is_pt and ride['Seats Left'] <= 0:
-                    option_label = f"🚫 [FULL] {ride['Driver']} | {ride['Departure Time']}"
+                    option_label = f"🚫 [FULL] {driver_name} | {ride['Departure Time']}"
                 elif is_pt:
-                    option_label = f"🚆 [PT] {ride['Start Location']} via {ride['Driver']} | {ride['Departure Time']}"
+                    option_label = f"🚆 [PT] {ride['Start Location']} via {driver_name} | {ride['Departure Time']}"
+                elif is_timo:
+                    option_label = f"🚚 [TRUCK] {driver_name} | {ride['Departure Time']} | {ride['Seats Left']} seats"
                 else:
-                    option_label = f"✅ [CAR] {ride['Driver']} | {ride['Departure Time']} | {ride['Seats Left']} seats"
+                    option_label = f"✅ [CAR] {driver_name} | {ride['Departure Time']} | {ride['Seats Left']} seats"
                     
                 ride_options.append(option_label)
                 ride_map[option_label] = ride.to_dict()
