@@ -69,12 +69,13 @@ PAYMENTS_COLS = {
     "Date": 4,
 }
 
+# UPDATED: Replaced Tokyo with EU/NL coordinates relevant to HDCC / HMIA
 MAP_ZONES = {
-    "Tokyo Big Sight (Con Venue)": [35.6306, 139.7933],
-    "Akihabara (Merch Run)": [35.6983, 139.7731],
-    "Hotel": [35.6325, 139.7950],
-    "Food/Lunch Spot": [35.6280, 139.7940],
-    "Off-site: City Center": [35.6895, 139.6917]
+    "Jaarbeurs Utrecht (HDCC)": [52.0874, 5.1062],
+    "Brussels Expo (HMIA)": [50.8985, 4.3396],
+    "Ahoy Rotterdam": [52.0833, 4.4886],
+    "Event Hotel": [52.0880, 5.1000],
+    "Off-site / Restaurant": [52.0900, 5.1100]
 }
 
 
@@ -85,9 +86,16 @@ def get_local_now() -> datetime:
 def send_discord_notification(title: str, message: str) -> None:
     webhook_url = st.secrets.get("webhooks", {}).get("discord")
     if not webhook_url: return
+    
+    # NEW: Add clickable app link to the bottom of the webhook message
+    app_url = st.secrets.get("app_url", "")
+    full_message = message
+    if app_url:
+        full_message += f"\n\n[👉 **Click here to open the App**]({app_url})"
+        
     payload = {
         "username": "Ankerd Con Bot",
-        "embeds": [{"title": title, "description": message, "color": 0x5b6f9f, "timestamp": get_local_now().isoformat()}],
+        "embeds": [{"title": title, "description": full_message, "color": 0x5b6f9f, "timestamp": get_local_now().isoformat()}],
     }
     try: requests.post(webhook_url, json=payload, timeout=5)
     except requests.RequestException: pass
@@ -108,7 +116,6 @@ def get_gsheet() -> gspread.Spreadsheet:
     return get_gsheet_client().open_by_key(sheet_id)
 
 
-# MEGA SPEED UPGRADE: Fetching all tabs in a single API call instead of 5 separate ones.
 @st.cache_data(ttl=60)
 def get_all_tables() -> Dict[str, pd.DataFrame]:
     spreadsheet = get_gsheet()
@@ -133,7 +140,6 @@ def get_all_tables() -> Dict[str, pd.DataFrame]:
             else:
                 headers = values[0]
                 max_cols = len(headers)
-                # Google Sheets omits empty trailing cells, so we pad them back in
                 padded_rows = [row + [""] * (max_cols - len(row)) for row in values[1:]]
                 df = pd.DataFrame(padded_rows, columns=headers)
                 df = df.astype(str).replace("nan", "", regex=False)
@@ -154,7 +160,6 @@ def append_sheet_row(tab_name: str, values: List[str]) -> None:
 
 def parse_datetime(value: str) -> Optional[datetime]:
     try:
-        # Added dayfirst=True to handle Google Sheets regional auto-formatting
         parsed = pd.to_datetime(value, errors="coerce", dayfirst=True)
         if pd.isna(parsed): return None
         return parsed.to_pydatetime()
@@ -176,7 +181,7 @@ def update_user_location(user_name: str, zone: str, location_text: str) -> None:
     
     update_sheet_cell("Users", row_number, USER_COLS["Live Location Ping"], ping_with_time)
     get_all_tables.clear()
-    send_discord_notification("Location Ping Updated", f"{user_name} is in {zone}: {location_text}")
+    send_discord_notification("Location Ping Updated", f"📍 **{user_name}** is in {zone}: {location_text}")
     st.success(f"Ping updated to: {zone} - {location_text}")
 
 
@@ -185,7 +190,6 @@ def update_user_car(user_name: str, direction: str, car_label: str) -> None:
     user = users_df[users_df["Name"] == user_name]
     if user.empty:
         return
-
     row_number = int(user.iloc[0]["row_number"])
     col_name = "Inbound Car" if direction == "Inbound" else "Outbound Car"
     update_sheet_cell("Users", row_number, USER_COLS[col_name], car_label)
@@ -217,14 +221,14 @@ def create_ride(direction: str, vehicle_type: str, driver: str, departure_time: 
     append_sheet_row("Rides", [direction, vehicle_type, driver, departure_time, start_location, str(total_seats), ""])
     get_all_tables.clear()
     veh_icon = "🚆 Train/Bus" if vehicle_type == "Public Transport" else "🚗 Car"
-    send_discord_notification("New Transport Added", f"A new {direction} {veh_icon} departs from {start_location} at {departure_time}.")
+    send_discord_notification("New Transport Added", f"A new {direction} {veh_icon} departs from **{start_location}** at **{departure_time}**.")
     st.success("New transport added.")
 
 
 def create_meal(meal_name: str, meal_time: str, location: str, cost: str) -> None:
     append_sheet_row("Meals", [meal_name, meal_time, location, cost, ""])
     get_all_tables.clear()
-    send_discord_notification("New Meal Added", f"New meal: {meal_name} at {meal_time}.")
+    send_discord_notification("New Meal Added", f"New meal: **{meal_name}** at {meal_time}.")
     st.success("Meal plan created.")
 
 
@@ -243,17 +247,16 @@ def log_payment(paid_by: str, amount: str, description: str, date_text: str) -> 
     st.success("Payment logged.")
 
 
-# --- HUB TAB ---
+# --- HUB TAB (UPDATED FOR TARGETED EVENT ISOLATION) ---
 def render_hub_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame, meals_df: pd.DataFrame, calendar_df: pd.DataFrame) -> None:
     st.markdown("## 🗺️ The Hub")
-    st.markdown("#### 🚨 Daily Action Check")
     
     now = get_local_now()
     today_str = now.strftime("%Y-%m-%d")
     
-    active_dates = {}
-    hotel_required_dates = {} # NEW: Track if a hotel is actually needed today
+    future_events = []
     
+    # 1. Parse Calendar and build a list of all future event days
     if not calendar_df.empty:
         for _, event in calendar_df.iterrows():
             raw_date_str = str(event.get("Date", "")).strip()
@@ -262,24 +265,31 @@ def render_hub_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame, meals_df: pd.
             
             std_date_str = parsed_dt.strftime("%Y-%m-%d")
             
-            parts = str(event.get("Participants", ""))
-            participants = normalize_list_field(parts) if parts else users_df["Name"].dropna().unique().tolist()
-            
-            if std_date_str not in active_dates:
-                active_dates[std_date_str] = set()
-                hotel_required_dates[std_date_str] = False
+            # Only care about today or the future
+            if std_date_str >= today_str:
+                parts = str(event.get("Participants", ""))
+                participants = normalize_list_field(parts) if parts else users_df["Name"].dropna().unique().tolist()
                 
-            active_dates[std_date_str].update(participants)
-            
-            # Check if this specific calendar event requires a hotel
-            if str(event.get("Is Hotel", "")).strip().upper() == "TRUE":
-                hotel_required_dates[std_date_str] = True
-                
-    future_dates = {d: list(p) for d, p in active_dates.items() if d >= today_str}
-    
-    if not future_dates:
+                future_events.append({
+                    "date": std_date_str,
+                    "event_id": str(event.get("Event ID", "DefaultEvent")).strip(),
+                    "is_hotel": str(event.get("Is Hotel", "")).strip().upper() == "TRUE",
+                    "participants": participants
+                })
+
+    if not future_events:
         st.info("No upcoming events found in the Calendar. Add dates to see daily readiness checklists!")
     else:
+        # 2. Sort by date, figure out what the VERY NEXT event is, and isolate it
+        future_events.sort(key=lambda x: x["date"])
+        target_event_id = future_events[0]["event_id"]
+        
+        # Filter down so we ONLY process days belonging to this specific upcoming Event ID
+        current_event_days = [e for e in future_events if e["event_id"] == target_event_id]
+        
+        st.markdown(f"#### 🚨 Daily Action Check")
+        st.caption(f"Currently tracking: **{target_event_id}**")
+        
         if not rides_df.empty:
             rides_df["Parsed Time"] = rides_df["Departure Time"].apply(parse_datetime)
             rides_df["Date String"] = rides_df["Parsed Time"].dt.strftime("%Y-%m-%d")
@@ -287,8 +297,11 @@ def render_hub_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame, meals_df: pd.
             meals_df["Parsed Time"] = meals_df["Time"].apply(parse_datetime)
             meals_df["Date String"] = meals_df["Parsed Time"].dt.strftime("%Y-%m-%d")
 
-        for date_str in sorted(future_dates.keys()):
-            participants_on_day = future_dates[date_str]
+        # 3. Generate the MIA lists only for the isolated event days
+        for event_day in current_event_days:
+            date_str = event_day["date"]
+            participants_on_day = event_day["participants"]
+            hotel_required = event_day["is_hotel"]
             nice_date_format = datetime.strptime(date_str, "%Y-%m-%d").strftime("%A, %B %d")
             
             date_rides = rides_df[rides_df["Date String"] == date_str] if not rides_df.empty else pd.DataFrame()
@@ -299,13 +312,11 @@ def render_hub_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame, meals_df: pd.
             for user in participants_on_day:
                 missing = []
                 
-                # FIX: Only check the hotel room if today's calendar events require one!
-                if hotel_required_dates.get(date_str, False):
+                if hotel_required:
                     user_row = users_df[users_df["Name"] == user]
                     if not user_row.empty and not str(user_row.iloc[0].get("Hotel Room", "")).strip():
                         missing.append("Hotel Room")
                 
-                # Check Transport (Car OR Public Transport)
                 inbound = date_rides[date_rides["Direction"].str.lower() == "inbound"]
                 has_inbound = False
                 for _, r in inbound.iterrows():
@@ -320,7 +331,6 @@ def render_hub_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame, meals_df: pd.
                         has_outbound = True; break
                 if not has_outbound: missing.append("Outbound Travel")
                 
-                # Check Meals on this specific day
                 for _, m in date_meals.iterrows():
                     if user not in normalize_list_field(m.get("RSVPs", "")):
                         missing.append(f"RSVP: {m['Meal Name']}")
@@ -652,7 +662,6 @@ def render_calendar_tab(calendar_df: pd.DataFrame) -> None:
     if calendar_df.empty: st.info("No events added to the Calendar tab yet."); return
     df = calendar_df.copy()
     
-    # Added dayfirst=True to the calendar date parser
     df["Start Parsed"] = pd.to_datetime(df["Date"], errors="coerce", dayfirst=True)
     df = df.dropna(subset=["Start Parsed"]).sort_values("Start Parsed", ascending=True)
     
