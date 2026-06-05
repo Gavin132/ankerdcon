@@ -512,7 +512,7 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
             
             departure_date = st.date_input("Date")
             departure_time_input = st.time_input("Time")
-            total_seats = st.number_input("Total seats (Ignored for PT)", min_value=1, max_value=50, value=4)
+            total_seats = st.number_input("Passenger seats (Ignored for Public Transport)", min_value=1, max_value=50, value=4)
             
             if st.form_submit_button("Add Transport"):
                 if not driver_name.strip() or not start_loc.strip():
