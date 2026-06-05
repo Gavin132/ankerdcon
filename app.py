@@ -11,8 +11,36 @@ import streamlit as st
 from google.oauth2.service_account import Credentials
 from streamlit_option_menu import option_menu
 from streamlit_autorefresh import st_autorefresh
+import streamlit.components.v1 as components
+
+# ... existing imports ...
 
 st.set_page_config(page_title="Ankerd Con App", layout="centered", page_icon="https://cdn.discordapp.com/attachments/465068365472464906/1512430852745854976/channels4_profile1.jpg?ex=6a24107e&is=6a22befe&hm=e1407fd7135e44ba64f734b22245d268e584743b03b4c4d26b4f25857aa565c1", initial_sidebar_state="collapsed")
+# --- MOBILE HOME SCREEN ICON HACK ---
+# Replace the URL below with the direct link to your square logo
+icon_url = "https://cdn.discordapp.com/attachments/465068365472464906/1512430852745854976/channels4_profile1.jpg?ex=6a24107e&is=6a22befe&hm=e1407fd7135e44ba64f734b22245d268e584743b03b4c4d26b4f25857aa565c1"
+
+components.html(
+    f"""
+    <script>
+        // Access the parent document (the main Streamlit app window)
+        const doc = window.parent.document;
+        
+        // Find the existing Apple touch icon and change it, or create a new one
+        let link = doc.querySelector("link[rel~='apple-touch-icon']");
+        if (!link) {{
+            link = doc.createElement('link');
+            link.rel = 'apple-touch-icon';
+            doc.head.appendChild(link);
+        }}
+        link.href = '{icon_url}';
+    </script>
+    """,
+    height=0,
+    width=0,
+)
+
+
 
 st.markdown(
     """
