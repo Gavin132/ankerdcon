@@ -434,12 +434,12 @@ def render_hub_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame, meals_df: pd.
                 st.markdown(f"**Room {room_name}:** {row['Guests']}")
 
 
-# --- TRANSPORT TAB ---
-# --- TRANSPORT TAB ---
-def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None:
+# --- TRANSPORT TAB (UPDATED WITH PARTICIPANT FILTER) ---
+def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame, calendar_df: pd.DataFrame) -> None:
     st.markdown("## 🚗 Transport")
 
     now = get_local_now()
+    today_str = now.strftime("%Y-%m-%d")
     default_tab_index = 0 if now.hour < 13 else 1
 
     direction_choice = st.radio("Route View", options=["Inbound to Con", "Outbound/Return"], index=default_tab_index, horizontal=True)
@@ -473,7 +473,6 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
             
             border_color = "#3b82f6" if is_pt else "#1f2937" 
             
-            # EASTER EGG: Timo's Truck Logic for the App UI
             if is_pt:
                 title_icon = "🚆"
                 title_text = f"Public Transport via {driver_name}"
@@ -521,6 +520,38 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
 
     st.divider()
 
+    # --- FILTER USER LIST FOR SEAT CLAIMING ---
+    event_participants = set()
+    if not calendar_df.empty:
+        future_events = []
+        for _, event in calendar_df.iterrows():
+            raw_date_str = str(event.get("Date", "")).strip()
+            parsed_dt = parse_datetime(raw_date_str)
+            if not parsed_dt: continue
+            std_date_str = parsed_dt.strftime("%Y-%m-%d")
+            
+            if std_date_str >= today_str:
+                parts = str(event.get("Participants", ""))
+                participants = normalize_list_field(parts) if parts else users_df["Name"].dropna().unique().tolist()
+                future_events.append({
+                    "date": std_date_str,
+                    "event_id": str(event.get("Event ID", "DefaultEvent")).strip(),
+                    "participants": participants
+                })
+        
+        if future_events:
+            future_events.sort(key=lambda x: x["date"])
+            target_event_id = future_events[0]["event_id"]
+            current_event_days = [e for e in future_events if e["event_id"] == target_event_id]
+            for day in current_event_days:
+                event_participants.update(day["participants"])
+
+    # If we found explicit event participants, filter the dropdown list down to just them
+    if event_participants:
+        allowed_names = sorted([name for name in users_df["Name"].dropna().unique() if str(name).strip() in event_participants])
+    else:
+        allowed_names = sorted(users_df["Name"].dropna().unique())
+
     with st.expander("🎟️ Claim a Seat / Mark as Public Transport"):
         active_rides = filtered_rides[filtered_rides["Parsed Time"] >= now] if not filtered_rides.empty else filtered_rides
         if active_rides.empty:
@@ -546,7 +577,7 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
                 ride_map[option_label] = ride.to_dict()
 
             with st.form("claim_seat_form"):
-                claimer_name = st.selectbox("Your name", options=sorted(users_df["Name"].dropna().unique()))
+                claimer_name = st.selectbox("Your name", options=allowed_names)
                 selected_ride_label = st.selectbox("Choose transport", options=ride_options)
                 if st.form_submit_button("Confirm Travel Plan"):
                     selected_ride = ride_map[selected_ride_label]
@@ -573,7 +604,6 @@ def render_transport_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame) -> None
                     datetime_str = f"{departure_date.strftime('%Y-%m-%d')} {departure_time_input.strftime('%H:%M')}"
                     create_ride(ride_direction, vehicle_type, driver_name.strip(), datetime_str, start_loc.strip(), total_seats)
                     st.rerun()
-
 
 # --- FOOD TAB ---
 def render_food_tab(users_df: pd.DataFrame, meals_df: pd.DataFrame) -> None:
@@ -767,7 +797,7 @@ def main() -> None:
     calendar_df = tables.get("Calendar", pd.DataFrame())
 
     if selected_tab == "Hub": render_hub_tab(users_df, rides_df, meals_df, calendar_df)
-    elif selected_tab == "Travel": render_transport_tab(users_df, rides_df)
+    elif selected_tab == "Travel": render_transport_tab(users_df, rides_df, calendar_df)
     elif selected_tab == "Food": render_food_tab(users_df, meals_df)
     elif selected_tab == "Money": render_admin_tab(payments_df, users_df)
     elif selected_tab == "More ☰": render_more_menu(rides_df, meals_df, calendar_df)
