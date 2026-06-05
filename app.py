@@ -256,6 +256,7 @@ def log_payment(paid_by: str, amount: str, description: str, date_text: str) -> 
 
 
 # --- HUB TAB (UPDATED FOR TARGETED EVENT ISOLATION) ---
+# --- HUB TAB (UPDATED FOR DYNAMIC HOTELS) ---
 def render_hub_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame, meals_df: pd.DataFrame, calendar_df: pd.DataFrame) -> None:
     st.markdown("## 🗺️ The Hub")
     
@@ -263,6 +264,8 @@ def render_hub_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame, meals_df: pd.
     today_str = now.strftime("%Y-%m-%d")
     
     future_events = []
+    show_hotel = False
+    event_participants = set()
     
     # 1. Parse Calendar and build a list of all future event days
     if not calendar_df.empty:
@@ -292,8 +295,12 @@ def render_hub_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame, meals_df: pd.
         future_events.sort(key=lambda x: x["date"])
         target_event_id = future_events[0]["event_id"]
         
-        # Filter down so we ONLY process days belonging to this specific upcoming Event ID
         current_event_days = [e for e in future_events if e["event_id"] == target_event_id]
+        
+        # Check if we need to show the Hotel section for this event, and gather who is going
+        show_hotel = any(day["is_hotel"] for day in current_event_days)
+        for day in current_event_days:
+            event_participants.update(day["participants"])
         
         st.markdown(f"#### 🚨 Daily Action Check")
         st.caption(f"Currently tracking: **{target_event_id}**")
@@ -380,6 +387,10 @@ def render_hub_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame, meals_df: pd.
             feed_html = ""
             
             for _, row in pings.iterrows():
+                # NEW: Only show location pings for people actually attending this event!
+                if event_participants and str(row['Name']).strip() not in event_participants:
+                    continue
+                    
                 ping_str = str(row['Live Location Ping'])
                 if "|" in ping_str:
                     zone, rest_of_ping = ping_str.split("|", 1)
@@ -406,14 +417,21 @@ def render_hub_tab(users_df: pd.DataFrame, rides_df: pd.DataFrame, meals_df: pd.
                 st.map(pd.DataFrame(map_data), zoom=12, use_container_width=True)
             st.markdown(feed_html, unsafe_allow_html=True)
 
-    st.divider()
-
-    st.markdown("#### 🛏️ Hotel Rooms")
-    if users_df.empty: st.info("No hotel room assignments found.")
-    else:
-        room_grid = users_df.fillna("").groupby("Hotel Room")["Name"].apply(lambda names: ", ".join(names[names != ""])).reset_index(name="Guests")
-        for _, row in room_grid.sort_values("Hotel Room").iterrows():
-            st.markdown(f"**Room {row['Hotel Room'] or 'Unassigned'}:** {row['Guests']}")
+    # --- HOTEL ROOMS (DYNAMICALLY HIDDEN) ---
+    if show_hotel:
+        st.divider()
+        st.markdown("#### 🛏️ Hotel Rooms")
+        
+        # Filter down to only show users explicitly listed in this event's participants
+        target_users = users_df[users_df["Name"].astype(str).str.strip().isin(event_participants)]
+        
+        if target_users.empty: 
+            st.info("No hotel room assignments found for this event's participants.")
+        else:
+            room_grid = target_users.fillna("").groupby("Hotel Room")["Name"].apply(lambda names: ", ".join(names[names != ""])).reset_index(name="Guests")
+            for _, row in room_grid.sort_values("Hotel Room").iterrows():
+                room_name = row['Hotel Room'] if row['Hotel Room'] else "Unassigned"
+                st.markdown(f"**Room {room_name}:** {row['Guests']}")
 
 
 # --- TRANSPORT TAB ---
