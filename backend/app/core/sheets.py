@@ -67,7 +67,8 @@ def _fetch_all_tables(spreadsheet: gspread.Spreadsheet) -> dict[str, pd.DataFram
             result[tab] = pd.DataFrame(columns=values[0])
         else:
             headers = values[0]
-            padded = [row + [""] * (len(headers) - len(row)) for row in values[1:]]
+            # Pad short rows and truncate long rows to always match header count
+            padded = [(row + [""] * len(headers))[: len(headers)] for row in values[1:]]
             df = pd.DataFrame(padded, columns=headers)
             df = df.astype(str).replace("nan", "", regex=False)
             df["row_number"] = df.index + 2
