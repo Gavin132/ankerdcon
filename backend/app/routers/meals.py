@@ -55,3 +55,28 @@ def rsvp(
         sheets_service.rsvp_meal(sheets, meal_id, body.user_name)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
+@router.post("/{meal_id}/cancel-rsvp", status_code=status.HTTP_204_NO_CONTENT)
+def cancel_rsvp(
+    meal_id: int,
+    body: RsvpRequest,
+    _: str = Depends(get_current_user),
+    sheets: gspread.Spreadsheet = Depends(get_sheets),
+) -> None:
+    try:
+        sheets_service.cancel_meal_rsvp(sheets, meal_id, body.user_name)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
+@router.delete("/{meal_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_meal(
+    meal_id: int,
+    _: str = Depends(get_current_user),
+    sheets: gspread.Spreadsheet = Depends(get_sheets),
+) -> None:
+    try:
+        sheets_service.delete_meal(sheets, meal_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
