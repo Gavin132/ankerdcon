@@ -21,8 +21,8 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { id: "hub", label: "Hub", path: "/" },
   { id: "transport", label: "Transport", path: "/transport" },
-  { id: "food", label: "Food", path: "/food" },
-  { id: "finance", label: "Financien", path: "/finance" },
+  { id: "food", label: "Eten", path: "/food" },
+  { id: "finance", label: "Financiën", path: "/finance" },
   { id: "more", label: "Meer", path: "/more" },
 ];
 
