@@ -20,18 +20,27 @@ export function LoginPage() {
           transition={{ duration: 0.5 }}
         >
           <motion.div
-            className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl gradient-brand shadow-hero"
+            className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-white border border-sky-100 shadow-hero overflow-hidden"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.1, duration: 0.4, type: "spring", bounce: 0.4 }}
+            transition={{
+              delay: 0.1,
+              duration: 0.4,
+              type: "spring",
+              bounce: 0.4,
+            }}
           >
-            <span className="text-3xl font-black text-white tracking-tighter">A</span>
+            <img
+              src="/assets/images/ankerd-logo.png"
+              alt="Ankerd"
+              className="h-14 w-14 object-contain"
+            />
           </motion.div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">
             Ankerd Con
           </h1>
           <p className="mt-2 text-sm text-slate-500 font-medium">
-            Jouw crew portal voor het evenement
+            Jouw leden portal voor het evenement
           </p>
         </motion.div>
 
@@ -44,7 +53,9 @@ export function LoginPage() {
         >
           <div className="card-surface rounded-3xl p-7">
             <div className="mb-6">
-              <h2 className="text-base font-black text-slate-800">Welkom terug</h2>
+              <h2 className="text-base font-black text-slate-800">
+                Welkom terug
+              </h2>
               <p className="mt-1 text-sm text-slate-400">
                 Voer de groepscode in om toegang te krijgen
               </p>
@@ -53,7 +64,7 @@ export function LoginPage() {
           </div>
 
           <p className="mt-5 text-center text-xs text-slate-400">
-            Alleen toegankelijk voor Ankerd crew members
+            Alleen toegankelijk voor Ankerd members
           </p>
         </motion.div>
       </div>

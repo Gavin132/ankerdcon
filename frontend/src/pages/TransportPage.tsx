@@ -1,32 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Car,
   Train,
-  MapPin,
   Clock,
   Users,
   ParkingCircle,
   Plus,
   ExternalLink,
   ChevronDown,
-  Navigation,
   ArrowRight,
   ArrowLeft,
+  MapPin,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Card } from "../components/common/Card";
 import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { EmptyState } from "../components/common/EmptyState";
 import { useRides, useCreateRide, useClaimSeat, useLeaveSeat } from "../hooks/useRides";
-import { formatDateTime, formatTime } from "../utils/format";
+import { useUsers } from "../hooks/useUsers";
+import { formatDateTime } from "../utils/format";
+import { toast } from "../store/toast.store";
 import type { Direction, VehicleType, Ride } from "../types";
-import { DIRECTIONS, VEHICLE_TYPES } from "../constants";
+import { DIRECTIONS } from "../constants";
+
+const enc = encodeURIComponent;
 
 const createSchema = z.object({
   direction: z.enum(["Inbound", "Outbound"]),
@@ -34,9 +36,9 @@ const createSchema = z.object({
   driver: z.string().min(1, "Verplicht"),
   departure_time: z.string().min(1, "Verplicht"),
   start_location: z.string().min(1, "Verplicht"),
+  end_location: z.string().optional(),
   total_seats: z.coerce.number().min(1).max(99),
   parking_info: z.string().optional(),
-  maps_link: z.string().optional(),
 });
 
 const nameSchema = z.object({
@@ -52,6 +54,78 @@ const container = {
 };
 const cardItem = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
 
+// ---------------------------------------------------------------------------
+// Route helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse the stored maps_link (google.com/maps/dir/?api=1&origin=X&destination=Y)
+ * to get the human-readable addresses back.
+ */
+function parseRoute(mapsLink: string): { origin: string; destination: string } | null {
+  if (!mapsLink) return null;
+  try {
+    const url = new URL(mapsLink);
+    const origin = url.searchParams.get("origin");
+    const destination = url.searchParams.get("destination");
+    if (origin && destination) return { origin, destination };
+  } catch {
+    // ignore malformed URLs
+  }
+  return null;
+}
+
+/** Embed URL that shows turn-by-turn route (works without API key). */
+function buildEmbedUrl(start: string, end?: string): string {
+  if (end && end.trim()) {
+    return `https://maps.google.com/maps?saddr=${enc(start)}&daddr=${enc(end)}&output=embed`;
+  }
+  return `https://maps.google.com/maps?q=${enc(start)}&output=embed`;
+}
+
+// ---------------------------------------------------------------------------
+// Route preview in the create form (debounced)
+// ---------------------------------------------------------------------------
+
+function RoutePreview({ start, end }: { start: string; end: string }) {
+  const [committed, setCommitted] = useState({ start: "", end: "" });
+
+  useEffect(() => {
+    if (!start.trim()) {
+      setCommitted({ start: "", end: "" });
+      return;
+    }
+    const t = setTimeout(() => setCommitted({ start: start.trim(), end: end.trim() }), 900);
+    return () => clearTimeout(t);
+  }, [start, end]);
+
+  if (!committed.start) return null;
+
+  const src = buildEmbedUrl(committed.start, committed.end || undefined);
+  const label = committed.end ? "Route preview" : "Locatie preview";
+
+  return (
+    <div className="mt-2 relative rounded-xl overflow-hidden border border-slate-100">
+      <iframe
+        key={src}
+        title={label}
+        src={src}
+        className="w-full h-36 border-0 block"
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+      />
+      <div className="absolute top-2 left-2 flex items-center gap-1.5 rounded-lg bg-white/90 backdrop-blur-sm border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-600 pointer-events-none">
+        <MapPin size={10} className="text-sky-500" />
+        {label}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Seat dots
+// ---------------------------------------------------------------------------
+
 function SeatDots({ total, left }: { total: number; left: number }) {
   const taken = total - left;
   const dots = Math.min(total, 8);
@@ -65,68 +139,82 @@ function SeatDots({ total, left }: { total: number; left: number }) {
           }`}
         />
       ))}
-      {total > 8 && (
-        <span className="text-xs text-slate-400">+{total - 8}</span>
-      )}
+      {total > 8 && <span className="text-xs text-slate-400">+{total - 8}</span>}
     </div>
   );
 }
 
-function RideCard({ ride }: { ride: Ride }) {
+// ---------------------------------------------------------------------------
+// Ride card
+// ---------------------------------------------------------------------------
+
+function RideCard({ ride, userNames }: { ride: Ride; userNames: string[] }) {
   const [expanded, setExpanded] = useState(false);
   const [claimOpen, setClaimOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
   const claimMutation = useClaimSeat();
   const leaveMutation = useLeaveSeat();
-
   const claimForm = useForm<NameForm>({ resolver: zodResolver(nameSchema) });
   const leaveForm = useForm<NameForm>({ resolver: zodResolver(nameSchema) });
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = claimForm;
-
   async function onClaim(values: NameForm) {
-    await claimMutation.mutateAsync({ rowNumber: ride.row_number, payload: values });
-    reset();
-    setClaimOpen(false);
+    try {
+      await claimMutation.mutateAsync({ rowNumber: ride.row_number, payload: values });
+      claimForm.reset();
+      setClaimOpen(false);
+      toast("success", "Plek geclaimd! Je staat in de rit.");
+    } catch {
+      toast("error", "Kon plek niet claimen. Probeer opnieuw.");
+    }
   }
 
   async function onLeave(values: NameForm) {
-    await leaveMutation.mutateAsync({ rowNumber: ride.row_number, payload: values });
-    leaveForm.reset();
-    setLeaveOpen(false);
+    try {
+      await leaveMutation.mutateAsync({ rowNumber: ride.row_number, payload: values });
+      leaveForm.reset();
+      setLeaveOpen(false);
+      toast("success", "Je bent uitgestapt uit de rit.");
+    } catch {
+      toast("error", "Kon je niet uitschrijven.");
+    }
   }
 
   const isPT = ride.is_public_transport;
+  const isInbound = ride.direction === "Inbound";
+
+  // Prefer explicit origin/destination parsed from maps_link (set when ride was
+  // created with the new form). Fall back to direction-based inference.
+  const route = parseRoute(ride.maps_link);
+  const fromLabel = route?.origin ?? (isInbound ? ride.start_location : "Con locatie");
+  const toLabel   = route?.destination ?? (isInbound ? "Con locatie" : ride.start_location);
+
+  // Route embed: shows turn-by-turn directions when both points are known.
+  const embedUrl = route
+    ? buildEmbedUrl(route.origin, route.destination)
+    : buildEmbedUrl(ride.start_location);
+
+  const openUrl = ride.maps_link
+    || `https://www.google.com/maps/search/?api=1&query=${enc(ride.start_location)}`;
 
   return (
     <>
       <motion.div variants={cardItem}>
         <div className="card-surface rounded-2xl overflow-hidden">
-          {/* Card header strip */}
-          <div
-            className={`h-1 w-full ${
-              isPT
-                ? "bg-gradient-to-r from-violet-400 to-purple-500"
-                : ride.is_full
-                ? "bg-gradient-to-r from-rose-400 to-rose-500"
-                : "bg-gradient-to-r from-sky-400 to-blue-500"
-            }`}
-          />
-
           <div className="p-4">
+            {/* Header */}
             <div className="flex items-start gap-3">
-              {/* Icon */}
               <div
                 className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-                  isPT
-                    ? "bg-violet-50 text-violet-600"
-                    : "bg-sky-50 text-sky-600"
+                  isPT ? "bg-gradient-to-br from-violet-400 to-purple-500" : "gradient-brand"
                 }`}
               >
-                {isPT ? <Train size={20} strokeWidth={2} /> : <Car size={20} strokeWidth={2} />}
+                {isPT ? (
+                  <Train size={20} className="text-white" strokeWidth={2} />
+                ) : (
+                  <Car size={20} className="text-white" strokeWidth={2} />
+                )}
               </div>
 
-              {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-1.5 mb-1">
                   <span className="font-black text-slate-900 text-sm">{ride.driver}</span>
@@ -138,20 +226,12 @@ function RideCard({ ride }: { ride: Ride }) {
                     </Badge>
                   )}
                 </div>
-
-                <div className="flex flex-wrap gap-x-3 gap-y-1">
-                  <span className="flex items-center gap-1 text-xs text-slate-500">
-                    <Navigation size={11} className="text-slate-400" />
-                    {ride.start_location}
-                  </span>
-                  <span className="flex items-center gap-1 text-xs font-semibold text-slate-700">
-                    <Clock size={11} className="text-sky-400" />
-                    {formatTime(ride.departure_time)}
-                  </span>
-                </div>
+                <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                  <Clock size={11} className="text-sky-400 shrink-0" />
+                  {formatDateTime(ride.departure_time)}
+                </span>
               </div>
 
-              {/* Expand toggle */}
               <button
                 onClick={() => setExpanded((e) => !e)}
                 className="shrink-0 flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all"
@@ -162,9 +242,26 @@ function RideCard({ ride }: { ride: Ride }) {
               </button>
             </div>
 
-            {/* Seat visualization for cars */}
+            {/* Route strip */}
+            <div className="mt-3 flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-100">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-slate-400 leading-none mb-0.5">Van</p>
+                <p className="text-sm font-bold text-slate-800 truncate">{fromLabel}</p>
+              </div>
+              <div className="shrink-0 flex items-center gap-1">
+                <div className="h-px w-4 bg-slate-200" />
+                <ArrowRight size={13} className="text-sky-400" />
+                <div className="h-px w-4 bg-slate-200" />
+              </div>
+              <div className="flex-1 min-w-0 text-right">
+                <p className="text-xs text-slate-400 leading-none mb-0.5">Naar</p>
+                <p className="text-sm font-bold text-slate-800 truncate">{toLabel}</p>
+              </div>
+            </div>
+
+            {/* Seat dots */}
             {!isPT && (
-              <div className="mt-3 flex items-center gap-3">
+              <div className="mt-3 flex items-center gap-2 px-1">
                 <SeatDots total={ride.total_seats} left={ride.seats_left} />
                 <span className="text-xs text-slate-400">
                   {ride.total_seats - ride.seats_left}/{ride.total_seats} bezet
@@ -183,12 +280,6 @@ function RideCard({ ride }: { ride: Ride }) {
                   className="overflow-hidden"
                 >
                   <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
-                    {/* Full departure time */}
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <Clock size={12} className="text-sky-400" />
-                      <span>Vertrek: <span className="font-semibold text-slate-700">{formatDateTime(ride.departure_time)}</span></span>
-                    </div>
-
                     {/* Passengers */}
                     {ride.passengers.length > 0 && (
                       <div>
@@ -204,39 +295,44 @@ function RideCard({ ride }: { ride: Ride }) {
                       </div>
                     )}
 
-                    {/* Parking info */}
+                    {/* Parking */}
                     {ride.parking_info && (
-                      <div className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
-                        <ParkingCircle size={16} className="shrink-0 text-sky-500" />
+                      <div className="flex items-start gap-3 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
+                        <ParkingCircle size={16} className="shrink-0 text-sky-500 mt-0.5" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">Parkeerinfo</p>
-                          <p className="text-sm font-medium text-slate-800">{ride.parking_info}</p>
+                          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                            Parkeerinfo
+                          </p>
+                          <p className="text-sm text-slate-700 leading-relaxed">{ride.parking_info}</p>
                         </div>
-                        {ride.maps_link && (
-                          <a
-                            href={ride.maps_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-500 text-white hover:bg-sky-600 transition-colors shadow-sm"
-                          >
-                            <MapPin size={16} />
-                          </a>
-                        )}
                       </div>
                     )}
 
-                    {/* Maps link without parking info */}
-                    {ride.maps_link && !ride.parking_info && (
-                      <a
-                        href={ride.maps_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-sm font-semibold text-sky-600 hover:text-sky-700"
-                      >
-                        <ExternalLink size={14} />
-                        Bekijk op Google Maps
-                      </a>
-                    )}
+                    {/* Route map — shows full route when both points known, single pin otherwise */}
+                    <div>
+                      <p className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                        <MapPin size={11} className="text-sky-500" />
+                        {route ? "Route" : "Vertrekpunt"}
+                      </p>
+                      <div className="relative rounded-xl overflow-hidden border border-slate-100">
+                        <iframe
+                          title="Kaart"
+                          src={embedUrl}
+                          className="w-full h-48 border-0 block"
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                        />
+                        <a
+                          href={openUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="absolute bottom-2 right-2 flex items-center gap-1.5 rounded-lg bg-white/90 backdrop-blur-sm border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-white transition-colors"
+                        >
+                          <ExternalLink size={11} />
+                          {route ? "Open route" : "Open in Maps"}
+                        </a>
+                      </div>
+                    </div>
 
                     {/* Actions */}
                     {!isPT && (
@@ -272,30 +368,58 @@ function RideCard({ ride }: { ride: Ride }) {
         </div>
       </motion.div>
 
-      <Modal open={claimOpen} onClose={() => setClaimOpen(false)} title="Plek claimen" description={`Rit met ${ride.driver} → ${ride.start_location}`}>
-        <form onSubmit={handleSubmit(onClaim)} className="space-y-4">
+      {/* Claim modal */}
+      <Modal
+        open={claimOpen}
+        onClose={() => setClaimOpen(false)}
+        title="Plek claimen"
+        description={`${fromLabel} → ${toLabel}`}
+      >
+        <form onSubmit={claimForm.handleSubmit(onClaim)} className="space-y-4">
           <div>
             <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
               Jouw naam
             </label>
-            <input className="input-field" placeholder="Naam" {...register("user_name")} />
-            {errors.user_name && (
-              <p className="mt-1.5 text-xs text-rose-500">{errors.user_name.message}</p>
+            {userNames.length > 0 ? (
+              <select className="input-field" {...claimForm.register("user_name")}>
+                <option value="">Selecteer naam…</option>
+                {userNames.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            ) : (
+              <input className="input-field" placeholder="Naam" {...claimForm.register("user_name")} />
+            )}
+            {claimForm.formState.errors.user_name && (
+              <p className="mt-1.5 text-xs text-rose-500">
+                {claimForm.formState.errors.user_name.message}
+              </p>
             )}
           </div>
-          <Button type="submit" loading={isSubmitting} className="w-full">
+          <Button type="submit" loading={claimForm.formState.isSubmitting} className="w-full">
             Plek bevestigen
           </Button>
         </form>
       </Modal>
 
-      <Modal open={leaveOpen} onClose={() => setLeaveOpen(false)} title="Uitstappen" description="Verwijder jezelf als passagier">
+      {/* Leave modal */}
+      <Modal
+        open={leaveOpen}
+        onClose={() => setLeaveOpen(false)}
+        title="Uitstappen"
+        description="Verwijder jezelf als passagier"
+      >
         <form onSubmit={leaveForm.handleSubmit(onLeave)} className="space-y-4">
           <div>
             <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
               Jouw naam
             </label>
-            <input className="input-field" placeholder="Naam" {...leaveForm.register("user_name")} />
+            {ride.passengers.length > 0 ? (
+              <select className="input-field" {...leaveForm.register("user_name")}>
+                <option value="">Selecteer naam…</option>
+                {ride.passengers.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            ) : (
+              <input className="input-field" placeholder="Naam" {...leaveForm.register("user_name")} />
+            )}
           </div>
           <Button type="submit" variant="danger" loading={leaveForm.formState.isSubmitting} className="w-full">
             Uitstappen bevestigen
@@ -306,29 +430,63 @@ function RideCard({ ride }: { ride: Ride }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+
 export function TransportPage() {
   const [tab, setTab] = useState<Direction>("Inbound");
   const [createOpen, setCreateOpen] = useState(false);
   const { data: rides, isLoading } = useRides();
+  const { data: users } = useUsers();
+  const userNames = (users ?? []).map((u) => u.name);
   const createMutation = useCreateRide();
 
-  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } =
-    useForm<CreateForm>({
-      resolver: zodResolver(createSchema),
-      defaultValues: { direction: "Inbound", vehicle_type: "Car", total_seats: 4 },
-    });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<CreateForm>({
+    resolver: zodResolver(createSchema),
+    defaultValues: { direction: "Inbound", vehicle_type: "Car", total_seats: 4 },
+  });
 
-  const vehicleType = watch("vehicle_type");
+  const vehicleType   = watch("vehicle_type");
+  const startLocation = watch("start_location") ?? "";
+  const endLocation   = watch("end_location") ?? "";
   const filtered = (rides ?? []).filter((r) => r.direction === tab);
 
+  function openCreate() {
+    reset({ direction: tab, vehicle_type: "Car", total_seats: 4 });
+    setCreateOpen(true);
+  }
+
   async function onCreate(values: CreateForm) {
-    await createMutation.mutateAsync({
-      ...values,
-      direction: values.direction as Direction,
-      vehicle_type: values.vehicle_type as VehicleType,
-    });
-    reset();
-    setCreateOpen(false);
+    // Encode departure + destination into a Google Maps directions URL.
+    // This is parsed back on the card to show the real route embed.
+    const mapsLink = values.end_location
+      ? `https://www.google.com/maps/dir/?api=1&origin=${enc(values.start_location)}&destination=${enc(values.end_location)}`
+      : `https://www.google.com/maps/search/?api=1&query=${enc(values.start_location)}`;
+
+    try {
+      await createMutation.mutateAsync({
+        direction: values.direction as Direction,
+        vehicle_type: values.vehicle_type as VehicleType,
+        driver: values.driver,
+        departure_time: values.departure_time,
+        start_location: values.start_location,
+        total_seats: values.total_seats,
+        parking_info: values.parking_info ?? "",
+        maps_link: mapsLink,
+      });
+      reset();
+      setCreateOpen(false);
+      toast("success", "Rit toegevoegd aan het schema!");
+    } catch {
+      toast("error", "Kon de rit niet toevoegen. Probeer opnieuw.");
+    }
   }
 
   return (
@@ -356,7 +514,7 @@ export function TransportPage() {
       </div>
 
       {/* Add button */}
-      <Button variant="secondary" className="w-full" onClick={() => setCreateOpen(true)}>
+      <Button variant="secondary" className="w-full" onClick={openCreate}>
         <Plus size={16} />
         Rit toevoegen
       </Button>
@@ -381,28 +539,36 @@ export function TransportPage() {
           animate="show"
         >
           {filtered.map((ride) => (
-            <RideCard key={ride.row_number} ride={ride} />
+            <RideCard key={ride.row_number} ride={ride} userNames={userNames} />
           ))}
         </motion.div>
       )}
 
       {/* Create modal */}
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Rit toevoegen" description="Vul de details van de rit in">
+      <Modal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        title="Rit toevoegen"
+        description="Vul de details van de rit in"
+      >
         <form onSubmit={handleSubmit(onCreate)} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Richting</label>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
+                Richting
+              </label>
               <select className="input-field" {...register("direction")}>
                 <option value="Inbound">Heen</option>
                 <option value="Outbound">Terug</option>
               </select>
             </div>
             <div>
-              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Type</label>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
+                Type
+              </label>
               <select className="input-field" {...register("vehicle_type")}>
-                {VEHICLE_TYPES.map((v) => (
-                  <option key={v} value={v}>{v}</option>
-                ))}
+                <option value="Car">Auto</option>
+                <option value="Public Transport">Openbaar Vervoer</option>
               </select>
             </div>
           </div>
@@ -411,39 +577,82 @@ export function TransportPage() {
             <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
               {vehicleType === "Car" ? "Chauffeur" : "Lijn / vervoerder"}
             </label>
-            <input className="input-field" placeholder={vehicleType === "Car" ? "Naam" : "Bijv. NS Intercity"} {...register("driver")} />
-            {errors.driver && <p className="mt-1.5 text-xs text-rose-500">{errors.driver.message}</p>}
+            {vehicleType === "Car" && userNames.length > 0 ? (
+              <select className="input-field" {...register("driver")}>
+                <option value="">Selecteer chauffeur…</option>
+                {userNames.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            ) : (
+              <input
+                className="input-field"
+                placeholder={vehicleType === "Car" ? "Naam" : "Bijv. NS Intercity"}
+                {...register("driver")}
+              />
+            )}
+            {errors.driver && (
+              <p className="mt-1.5 text-xs text-rose-500">{errors.driver.message}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Vertrektijd</label>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
+                Vertrektijd
+              </label>
               <input type="datetime-local" className="input-field" {...register("departure_time")} />
-              {errors.departure_time && <p className="mt-1.5 text-xs text-rose-500">{errors.departure_time.message}</p>}
+              {errors.departure_time && (
+                <p className="mt-1.5 text-xs text-rose-500">{errors.departure_time.message}</p>
+              )}
             </div>
             <div>
-              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Plaatsen</label>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
+                Plaatsen
+              </label>
               <input type="number" min={1} max={99} className="input-field" {...register("total_seats")} />
             </div>
           </div>
 
-          <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Vertreklocatie</label>
-            <input className="input-field" placeholder="Bijv. Amsterdam Centraal" {...register("start_location")} />
-            {errors.start_location && <p className="mt-1.5 text-xs text-rose-500">{errors.start_location.message}</p>}
+          {/* Departure + destination with live route preview */}
+          <div className="space-y-2">
+            <div>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
+                Vertrekpunt
+              </label>
+              <input
+                className="input-field"
+                placeholder="Bijv. Amsterdam Sloterdijk, Westmaas"
+                {...register("start_location")}
+              />
+              {errors.start_location && (
+                <p className="mt-1.5 text-xs text-rose-500">{errors.start_location.message}</p>
+              )}
+            </div>
+            <div>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
+                Bestemming (optioneel)
+              </label>
+              <input
+                className="input-field"
+                placeholder="Bijv. Rotterdam Ahoy"
+                {...register("end_location")}
+              />
+            </div>
+            {/* Live route preview — updates 900 ms after typing stops */}
+            <RoutePreview start={startLocation} end={endLocation} />
           </div>
 
           {vehicleType === "Car" && (
-            <>
-              <div>
-                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Parkeerinfo (optioneel)</label>
-                <input className="input-field" placeholder="Bijv. P2 niveau 1, vak A4" {...register("parking_info")} />
-              </div>
-              <div>
-                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Google Maps link (optioneel)</label>
-                <input className="input-field" placeholder="https://maps.google.com/..." {...register("maps_link")} />
-              </div>
-            </>
+            <div>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
+                Parkeerinfo (optioneel)
+              </label>
+              <textarea
+                rows={3}
+                className="input-field resize-none"
+                placeholder="Bijv. P2 niveau 1, vak A4. Druk op de groene knop bij de slagboom."
+                {...register("parking_info")}
+              />
+            </div>
           )}
 
           <Button type="submit" loading={isSubmitting} className="w-full">
