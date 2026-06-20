@@ -31,3 +31,7 @@ class CreateRideRequest(BaseModel):
 
 class ClaimSeatRequest(BaseModel):
     user_name: str
+
+
+class LeaveSeatRequest(BaseModel):
+    user_name: str
