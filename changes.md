@@ -18,3 +18,5 @@
 6. op de home page, bij aankomend event staan nu bijna alle deelnemers. zou dit uitklapbaar kunnen zijn als je drukt op de icoontjes van de mensen?
 
 7. mogelijkheid om op elke dropdown menu te kunnen typen, en daarna iets te kunnen kiezen uit de lijst. zodat je niet hoeft te scrollen door 40 namen om de goeie te vinden.
+
+8. bij het toevoegen van ritjes hoeft een gebruiker geen plaatsen aan te geven als deze openbaar vervoer selecteert, deze optie kan dan weggelaten / hidden gezet worden.
