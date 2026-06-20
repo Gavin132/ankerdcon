@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 import gspread
 
 from app.dependencies import get_current_user, get_sheets
@@ -23,5 +23,18 @@ def create_payment(
     sheets: gspread.Spreadsheet = Depends(get_sheets),
 ) -> None:
     sheets_service.create_payment(
-        sheets, body.paid_by, body.amount, body.description, body.date
+        sheets, body.paid_by, body.amount, body.description, body.date, body.splits or []
     )
+
+
+@router.delete("/{payment_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_payment(
+    payment_id: int,
+    user_name: str,
+    _: str = Depends(get_current_user),
+    sheets: gspread.Spreadsheet = Depends(get_sheets),
+) -> None:
+    try:
+        sheets_service.delete_payment(sheets, payment_id, user_name)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
