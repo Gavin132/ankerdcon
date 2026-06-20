@@ -1,3 +1,24 @@
+# Secrets
 .streamlit/secrets.toml
+backend/.env
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Build output
+backend/dist/
+frontend/dist/
+frontend/node_modules/
+
+# Coverage
+.coverage
+htmlcov/
+
+# OS
+.DS_Store
+Thumbs.db
