@@ -19,7 +19,8 @@ export interface User {
 
 export interface LocationPingRequest {
   user_name: string;
-  ping_text: string;
+  zone: string;
+  text: string;
 }
 
 // Rides
@@ -81,12 +82,18 @@ export interface RsvpRequest {
 }
 
 // Payments
+export interface Split {
+  name: string;
+  amount: number;
+}
+
 export interface Payment {
   paid_by: string;
   amount: number;
   description: string;
   date: string;
   row_number: number;
+  splits: Split[];
 }
 
 export interface CreatePaymentRequest {
@@ -94,6 +101,7 @@ export interface CreatePaymentRequest {
   amount: number;
   description: string;
   date: string;
+  splits?: Split[];
 }
 
 // Calendar
