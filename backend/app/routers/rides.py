@@ -5,7 +5,7 @@ import gspread
 
 from app.config import Settings, get_settings
 from app.dependencies import get_current_user, get_sheets
-from app.models.ride import ClaimSeatRequest, CreateRideRequest, Ride
+from app.models.ride import ClaimSeatRequest, CreateRideRequest, Ride, LeaveSeatRequest
 import app.services.discord_service as discord_service
 import app.services.sheets_service as sheets_service
 
@@ -69,5 +69,18 @@ def claim_seat(
 ) -> None:
     try:
         sheets_service.claim_ride_seat(sheets, ride_id, body.user_name)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
+@router.post("/{ride_id}/leave", status_code=status.HTTP_204_NO_CONTENT)
+def leave_seat(
+    ride_id: int,
+    body: LeaveSeatRequest,
+    _: str = Depends(get_current_user),
+    sheets: gspread.Spreadsheet = Depends(get_sheets),
+) -> None:
+    try:
+        sheets_service.leave_ride_seat(sheets, ride_id, body.user_name)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
