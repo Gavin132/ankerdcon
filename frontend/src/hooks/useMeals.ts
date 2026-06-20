@@ -1,10 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  getMeals,
-  createMeal,
-  rsvpMeal,
-  cancelRsvp,
-} from "../services/meals.service";
+import { getMeals, createMeal, rsvpMeal, cancelRsvp, deleteMeal } from "../services/meals.service";
 import { QUERY_KEYS, STALE_TIME } from "../constants";
 import type { CreateMealRequest, RsvpRequest } from "../types";
 
@@ -27,13 +22,8 @@ export function useCreateMeal() {
 export function useRsvpMeal() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      rowNumber,
-      payload,
-    }: {
-      rowNumber: number;
-      payload: RsvpRequest;
-    }) => rsvpMeal(rowNumber, payload),
+    mutationFn: ({ rowNumber, payload }: { rowNumber: number; payload: RsvpRequest }) =>
+      rsvpMeal(rowNumber, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.meals }),
   });
 }
@@ -41,13 +31,16 @@ export function useRsvpMeal() {
 export function useCancelRsvp() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      rowNumber,
-      payload,
-    }: {
-      rowNumber: number;
-      payload: RsvpRequest;
-    }) => cancelRsvp(rowNumber, payload),
+    mutationFn: ({ rowNumber, payload }: { rowNumber: number; payload: RsvpRequest }) =>
+      cancelRsvp(rowNumber, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.meals }),
+  });
+}
+
+export function useDeleteMeal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (rowNumber: number) => deleteMeal(rowNumber),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.meals }),
   });
 }
