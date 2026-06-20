@@ -6,29 +6,18 @@ export async function getMeals(): Promise<Meal[]> {
   return data;
 }
 
-export async function createMeal(payload: CreateMealRequest): Promise<Meal> {
-  const { data } = await apiClient.post<Meal>("/api/meals/", payload);
-  return data;
+export async function createMeal(payload: CreateMealRequest): Promise<void> {
+  await apiClient.post("/api/meals/", payload);
 }
 
-export async function rsvpMeal(
-  rowNumber: number,
-  payload: RsvpRequest,
-): Promise<Meal> {
-  const { data } = await apiClient.post<Meal>(
-    `/api/meals/${rowNumber}/rsvp`,
-    payload,
-  );
-  return data;
+export async function rsvpMeal(rowNumber: number, payload: RsvpRequest): Promise<void> {
+  await apiClient.post(`/api/meals/${rowNumber}/rsvp`, payload);
 }
 
-export async function cancelRsvp(
-  rowNumber: number,
-  payload: RsvpRequest,
-): Promise<Meal> {
-  const { data } = await apiClient.post<Meal>(
-    `/api/meals/${rowNumber}/cancel-rsvp`,
-    payload,
-  );
-  return data;
+export async function cancelRsvp(rowNumber: number, payload: RsvpRequest): Promise<void> {
+  await apiClient.post(`/api/meals/${rowNumber}/cancel-rsvp`, payload);
+}
+
+export async function deleteMeal(rowNumber: number): Promise<void> {
+  await apiClient.delete(`/api/meals/${rowNumber}`);
 }

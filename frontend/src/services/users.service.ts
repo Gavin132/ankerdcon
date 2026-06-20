@@ -9,5 +9,9 @@ export async function getUsers(): Promise<User[]> {
 export async function pingLocation(
   payload: LocationPingRequest,
 ): Promise<void> {
-  await apiClient.post("/api/users/ping", payload);
+  const { user_name, zone, text } = payload;
+  await apiClient.put(
+    `/api/users/${encodeURIComponent(user_name)}/location`,
+    { zone, text },
+  );
 }
