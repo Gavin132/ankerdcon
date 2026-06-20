@@ -14,7 +14,7 @@ import pandas as pd
 from app.core import sheets as _cache
 from app.models.calendar import CalendarEvent
 from app.models.meal import Meal
-from app.models.payment import Payment
+from app.models.payment import Payment, Split
 from app.models.ride import Ride
 from app.models.user import User
 
@@ -51,6 +51,7 @@ _PAYMENTS_COLS: dict[str, int] = {
     "Amount": 2,
     "Description": 3,
     "Date": 4,
+    "Splits": 5,
 }
 
 
@@ -70,6 +71,18 @@ def _safe_int(value: str, default: int = 0) -> int:
         return default
 
 
+def _safe_float(value: object, default: float = 0.0) -> float:
+    try:
+        return float(str(value).strip().replace(",", "."))
+    except (ValueError, TypeError):
+        return default
+
+
+def _blank(value: object) -> bool:
+    """Return True if a cell value is empty / whitespace / nan."""
+    return not str(value).strip() or str(value).strip().lower() == "nan"
+
+
 def _worksheet(spreadsheet: gspread.Spreadsheet, tab: str) -> gspread.Worksheet:
     return spreadsheet.worksheet(tab)
 
@@ -86,12 +99,13 @@ def get_users(spreadsheet: gspread.Spreadsheet) -> list[User]:
     return [
         User(
             row_number=int(row["row_number"]),
-            name=row.get("Name", ""),
-            phone_number=row.get("Phone Number", ""),
-            hotel_room=row.get("Hotel Room", ""),
-            live_location_ping=row.get("Live Location Ping", ""),
+            name=row.get("Name", "").strip(),
+            phone_number=row.get("Phone Number", "").strip(),
+            hotel_room=row.get("Hotel Room", "").strip(),
+            live_location_ping=row.get("Live Location Ping", "").strip(),
         )
         for _, row in df.iterrows()
+        if not _blank(row.get("Name", ""))
     ]
 
 
@@ -126,6 +140,9 @@ def get_rides(spreadsheet: gspread.Spreadsheet) -> list[Ride]:
 
     rides: list[Ride] = []
     for _, row in df.iterrows():
+        # Skip rows missing required fields
+        if _blank(row.get("Direction", "")) or _blank(row.get("Driver", "")):
+            continue
         passengers = _normalize_list(row.get("Passengers", ""))
         total_seats = _safe_int(row.get("Total Seats", "0"))
         is_pt = row.get("Vehicle Type", "").strip().lower() == "public transport"
@@ -135,13 +152,13 @@ def get_rides(spreadsheet: gspread.Spreadsheet) -> list[Ride]:
                 row_number=int(row["row_number"]),
                 direction=row.get("Direction", "").strip().title(),
                 vehicle_type=row.get("Vehicle Type", "").strip(),
-                driver=row.get("Driver", ""),
-                departure_time=row.get("Departure Time", ""),
-                start_location=row.get("Start Location", ""),
+                driver=row.get("Driver", "").strip(),
+                departure_time=row.get("Departure Time", "").strip(),
+                start_location=row.get("Start Location", "").strip(),
                 total_seats=total_seats,
                 passengers=passengers,
-                parking_info=row.get("Parking Info", ""),
-                maps_link=row.get("Maps Link", ""),
+                parking_info=row.get("Parking Info", "").strip(),
+                maps_link=row.get("Maps Link", "").strip(),
                 seats_left=seats_left,
                 is_full=not is_pt and seats_left <= 0,
                 is_public_transport=is_pt,
@@ -198,6 +215,24 @@ def claim_ride_seat(
     _cache.invalidate_cache()
 
 
+def leave_ride_seat(
+    spreadsheet: gspread.Spreadsheet,
+    row_number: int,
+    user_name: str,
+) -> None:
+    ride = next((r for r in get_rides(spreadsheet) if r.row_number == row_number), None)
+    if ride is None:
+        raise ValueError("Ride not found")
+    if user_name not in ride.passengers:
+        raise ValueError("Not on this transport")
+
+    updated = [p for p in ride.passengers if p != user_name]
+    _worksheet(spreadsheet, "Rides").update_cell(
+        row_number, _RIDES_COLS["Passengers"], ", ".join(updated)
+    )
+    _cache.invalidate_cache()
+
+
 # ---------------------------------------------------------------------------
 # Meals
 # ---------------------------------------------------------------------------
@@ -210,15 +245,15 @@ def get_meals(spreadsheet: gspread.Spreadsheet) -> list[Meal]:
     return [
         Meal(
             row_number=int(row["row_number"]),
-            meal_name=row.get("Meal Name", ""),
-            time=row.get("Time", ""),
-            location=row.get("Location (Optional)", ""),
-            cost=row.get("Cost", ""),
+            meal_name=row.get("Meal Name", "").strip(),
+            time=row.get("Time", "").strip(),
+            location=row.get("Location (Optional)", "").strip(),
+            cost=row.get("Cost", "").strip(),
             rsvps=_normalize_list(row.get("RSVPs", "")),
-            transport_needed=str(row.get("Transport Needed", "")).strip().upper()
-            == "TRUE",
+            transport_needed=str(row.get("Transport Needed", "")).strip().upper() == "TRUE",
         )
         for _, row in df.iterrows()
+        if not _blank(row.get("Meal Name", ""))
     ]
 
 
@@ -255,9 +290,50 @@ def rsvp_meal(
     _cache.invalidate_cache()
 
 
+def cancel_meal_rsvp(
+    spreadsheet: gspread.Spreadsheet,
+    row_number: int,
+    user_name: str,
+) -> None:
+    meal = next((m for m in get_meals(spreadsheet) if m.row_number == row_number), None)
+    if meal is None:
+        raise ValueError("Meal not found")
+    if user_name not in meal.rsvps:
+        raise ValueError("Not RSVPed for this meal")
+
+    updated = [r for r in meal.rsvps if r != user_name]
+    _worksheet(spreadsheet, "Meals").update_cell(
+        row_number, _MEALS_COLS["RSVPs"], ", ".join(updated)
+    )
+    _cache.invalidate_cache()
+
+
+def delete_meal(
+    spreadsheet: gspread.Spreadsheet,
+    row_number: int,
+) -> None:
+    meal = next((m for m in get_meals(spreadsheet) if m.row_number == row_number), None)
+    if meal is None:
+        raise ValueError("Meal not found")
+    _worksheet(spreadsheet, "Meals").delete_rows(row_number)
+    _cache.invalidate_cache()
+
+
 # ---------------------------------------------------------------------------
 # Payments
 # ---------------------------------------------------------------------------
+
+
+def _parse_splits(value: object) -> list[Split]:
+    import json
+    raw = str(value).strip()
+    if not raw or raw.lower() == "nan":
+        return []
+    try:
+        data = json.loads(raw)
+        return [Split(name=s["name"], amount=float(s["amount"])) for s in data if "name" in s and "amount" in s]
+    except Exception:
+        return []
 
 
 def get_payments(spreadsheet: gspread.Spreadsheet) -> list[Payment]:
@@ -267,26 +343,45 @@ def get_payments(spreadsheet: gspread.Spreadsheet) -> list[Payment]:
     return [
         Payment(
             row_number=int(row["row_number"]),
-            paid_by=row.get("Paid By", ""),
-            amount=row.get("Amount", ""),
-            description=row.get("Description", ""),
-            date=row.get("Date", ""),
+            paid_by=row.get("Paid By", "").strip(),
+            amount=_safe_float(row.get("Amount", 0)),
+            description=row.get("Description", "").strip(),
+            date=row.get("Date", "").strip(),
+            splits=_parse_splits(row.get("Splits", "")),
         )
         for _, row in df.iterrows()
+        if not _blank(row.get("Paid By", "")) and not _blank(row.get("Amount", ""))
     ]
 
 
 def create_payment(
     spreadsheet: gspread.Spreadsheet,
     paid_by: str,
-    amount: str,
+    amount: float,
     description: str,
     date: str,
+    splits: list[Split] | None = None,
 ) -> None:
+    import json
+    splits_json = json.dumps([{"name": s.name, "amount": s.amount} for s in splits]) if splits else ""
     _worksheet(spreadsheet, "Payments").append_row(
-        [paid_by, amount, description, date],
+        [paid_by, amount, description, date, splits_json],
         value_input_option="USER_ENTERED",
     )
+    _cache.invalidate_cache()
+
+
+def delete_payment(
+    spreadsheet: gspread.Spreadsheet,
+    row_number: int,
+    user_name: str,
+) -> None:
+    payment = next((p for p in get_payments(spreadsheet) if p.row_number == row_number), None)
+    if payment is None:
+        raise ValueError("Payment not found")
+    if payment.paid_by != user_name:
+        raise ValueError("Only the payer can delete this payment")
+    _worksheet(spreadsheet, "Payments").delete_rows(row_number)
     _cache.invalidate_cache()
 
 
@@ -302,11 +397,12 @@ def get_calendar(spreadsheet: gspread.Spreadsheet) -> list[CalendarEvent]:
     return [
         CalendarEvent(
             row_number=int(row["row_number"]),
-            date=row.get("Date", ""),
-            event_id=row.get("Event ID", "DefaultEvent"),
-            event_name=row.get("Event Name", ""),
+            date=row.get("Date", "").strip(),
+            event_id=row.get("Event ID", "").strip() or f"event_{row['row_number']}",
+            event_name=row.get("Event Name", "").strip(),
             is_hotel=str(row.get("Is Hotel", "")).strip().upper() == "TRUE",
             participants=_normalize_list(row.get("Participants", "")),
         )
         for _, row in df.iterrows()
+        if not _blank(row.get("Date", "")) and not _blank(row.get("Event Name", ""))
     ]
