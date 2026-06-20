@@ -1,5 +1,4 @@
 import { useLocation } from "react-router-dom";
-import { Anchor } from "lucide-react";
 import { APP_NAME, NAV_ITEMS } from "../../constants";
 
 const PAGE_SUBTITLES: Record<string, string> = {
@@ -18,9 +17,13 @@ export function Header() {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-100 bg-white/90 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-5">
-        {/* Anchor logo mark */}
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg gradient-brand shadow-sm">
-          <Anchor size={16} strokeWidth={2.5} className="text-white" />
+        {/* Logo */}
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white border border-sky-100 shadow-sm overflow-hidden">
+          <img
+            src="/assets/images/ankerd-logo.png"
+            alt="Ankerd"
+            className="h-6 w-6 object-contain"
+          />
         </div>
 
         {/* Title + subtitle */}
@@ -29,7 +32,7 @@ export function Header() {
             {isHub ? APP_NAME : (currentNav?.label ?? APP_NAME)}
           </h1>
           <p className="text-xs text-slate-400 font-medium leading-tight">
-            {isHub ? "Crew portal" : (subtitle ?? "")}
+            {isHub ? "Live Event Logistics" : (subtitle ?? "")}
           </p>
         </div>
       </div>
