@@ -91,7 +91,8 @@
   }
 
   .input-field {
-    @apply w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all duration-150;
+    /* text-base (16px) prevents iOS from auto-zooming on focus */
+    @apply w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 placeholder-slate-400 transition-all duration-150;
     @apply focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-3 focus:ring-sky-100;
   }
 
@@ -132,3 +133,70 @@
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
 }
+
+/* ─── Dark mode (class-based, toggled via .dark on <html>) ───────────────── */
+
+/* Page background */
+.dark body {
+  background-color: #0f172a;
+  color: #f1f5f9;
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(14, 165, 233, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(2, 132, 199, 0.04) 0%, transparent 50%);
+}
+
+/* Card surface */
+.dark .card-surface {
+  background-color: #1e293b;
+  border-color: rgba(51, 65, 85, 0.8);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.25),
+    0 4px 16px rgba(14, 165, 233, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* Frosted glass */
+.dark .glass {
+  background: rgba(15, 23, 42, 0.85);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Form inputs — also set color-scheme so native controls (select, date) render in dark */
+.dark .input-field {
+  background-color: #1e293b;
+  border-color: #475569;
+  color: #f1f5f9;
+  color-scheme: dark;
+}
+.dark .input-field::placeholder {
+  color: #64748b;
+}
+.dark .input-field:focus {
+  background-color: #0f172a;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+}
+
+/* ── Global Tailwind utility overrides in dark mode ─────────────────────── */
+/* Specificity: 2 selectors (.dark + .class) beats single-class Tailwind utilities */
+
+/* Text */
+.dark .text-slate-900 { color: #f1f5f9; }
+.dark .text-slate-800 { color: #e2e8f0; }
+.dark .text-slate-700 { color: #cbd5e1; }
+
+/* Backgrounds */
+.dark .bg-slate-50  { background-color: #1e293b; }
+.dark .bg-slate-100 { background-color: #334155; }
+
+/* Borders */
+.dark .border-slate-100 { border-color: rgba(51, 65, 85, 0.8); }
+.dark .border-slate-200 { border-color: rgba(71, 85, 105, 0.8); }
+
+/* Dividers */
+.dark .divide-slate-50 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(30, 41, 59, 0.8);
+}
+
+/* Scrollbar */
+.dark ::-webkit-scrollbar-thumb { background-color: #334155; }
