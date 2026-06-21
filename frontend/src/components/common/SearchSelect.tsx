@@ -23,9 +23,7 @@ export function SearchSelect({
 
   const filtered =
     value.trim().length > 0
-      ? options
-          .filter((o) => o.toLowerCase().includes(value.toLowerCase()))
-          .slice(0, 8)
+      ? options.filter((o) => o.toLowerCase().includes(value.toLowerCase())).slice(0, 8)
       : [];
 
   // Close on outside click

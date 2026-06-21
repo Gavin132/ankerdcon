@@ -12,22 +12,15 @@ import {
   ChevronDown,
   Trash2,
 } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Badge } from "../common/Badge";
 import { Button } from "../common/Button";
 import { Modal } from "../common/Modal";
+import { NamePicker } from "../common/NamePicker";
 import { useRsvpMeal, useCancelRsvp, useDeleteMeal } from "../../hooks/useMeals";
 import { formatDateTime } from "../../utils/format";
 import { toast } from "../../store/toast.store";
 import { listItem } from "../../utils/motion";
 import type { Meal } from "../../types";
-
-const nameSchema = z.object({
-  user_name: z.string().min(1, "Vul je naam in"),
-});
-type NameForm = z.infer<typeof nameSchema>;
 
 interface MealCardProps {
   meal: Meal;
@@ -39,29 +32,32 @@ export function MealCard({ meal, userNames }: MealCardProps) {
   const [rsvpOpen, setRsvpOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [rsvpNames, setRsvpNames] = useState<string[]>([]);
+  const [cancelName, setCancelName] = useState("");
 
   const rsvpMutation = useRsvpMeal();
   const cancelMutation = useCancelRsvp();
   const deleteMutation = useDeleteMeal();
 
-  const rsvpForm = useForm<NameForm>({ resolver: zodResolver(nameSchema) });
-  const cancelForm = useForm<NameForm>({ resolver: zodResolver(nameSchema) });
-
-  async function onRsvp(values: NameForm) {
+  async function onRsvp() {
+    if (rsvpNames.length === 0) return;
     try {
-      await rsvpMutation.mutateAsync({ rowNumber: meal.row_number, payload: values });
-      rsvpForm.reset();
+      for (const name of rsvpNames) {
+        await rsvpMutation.mutateAsync({ rowNumber: meal.row_number, payload: { user_name: name } });
+      }
+      setRsvpNames([]);
       setRsvpOpen(false);
-      toast("success", `${values.user_name} is aangemeld voor ${meal.meal_name}!`);
+      toast("success", rsvpNames.length === 1 ? `${rsvpNames[0]} is aangemeld voor ${meal.meal_name}!` : `${rsvpNames.length} personen aangemeld voor ${meal.meal_name}!`);
     } catch {
       toast("error", "Kon je niet aanmelden. Probeer opnieuw.");
     }
   }
 
-  async function onCancel(values: NameForm) {
+  async function onCancel() {
+    if (!cancelName.trim()) return;
     try {
-      await cancelMutation.mutateAsync({ rowNumber: meal.row_number, payload: values });
-      cancelForm.reset();
+      await cancelMutation.mutateAsync({ rowNumber: meal.row_number, payload: { user_name: cancelName.trim() } });
+      setCancelName("");
       setCancelOpen(false);
       toast("success", "Aanmelding geannuleerd.");
     } catch {
@@ -118,8 +114,8 @@ export function MealCard({ meal, userNames }: MealCardProps) {
             {(meal.location || meal.cost) && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {meal.location && (
-                  <span className="flex items-center gap-1.5 rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-1.5 text-xs font-medium text-slate-600">
-                    <MapPin size={11} className="text-slate-400 shrink-0" />
+                  <span className="flex items-center gap-1.5 rounded-lg bg-slate-100 border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
+                    <MapPin size={11} className="text-sky-500 shrink-0" />
                     {meal.location}
                   </span>
                 )}
@@ -200,65 +196,58 @@ export function MealCard({ meal, userNames }: MealCardProps) {
 
       <Modal
         open={rsvpOpen}
-        onClose={() => setRsvpOpen(false)}
+        onClose={() => { setRsvpOpen(false); setRsvpNames([]); }}
         title={`Aanmelden — ${meal.meal_name}`}
         description={meal.location || undefined}
       >
-        <form onSubmit={rsvpForm.handleSubmit(onRsvp)} className="space-y-4">
-          <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
-              Jouw naam
-            </label>
-            {userNames.length > 0 ? (
-              <select className="input-field" {...rsvpForm.register("user_name")}>
-                <option value="">Selecteer naam…</option>
-                {userNames.map((n) => <option key={n} value={n}>{n}</option>)}
-              </select>
-            ) : (
-              <input className="input-field" placeholder="Naam" {...rsvpForm.register("user_name")} />
-            )}
-            {rsvpForm.formState.errors.user_name && (
-              <p className="mt-1.5 text-xs text-rose-500">
-                {rsvpForm.formState.errors.user_name.message}
-              </p>
-            )}
-          </div>
-          <Button type="submit" loading={rsvpForm.formState.isSubmitting} className="w-full">
-            Aanmelding bevestigen
+        <div className="space-y-3">
+          <NamePicker
+            multiple
+            options={userNames.filter((n) => !meal.rsvps.includes(n))}
+            value={rsvpNames}
+            onChange={setRsvpNames}
+            color="green"
+          />
+          <Button
+            onClick={onRsvp}
+            loading={rsvpMutation.isPending}
+            className="w-full"
+            disabled={rsvpNames.length === 0}
+          >
+            <UserCheck size={15} />
+            {rsvpNames.length === 0
+              ? "Selecteer een naam"
+              : rsvpNames.length === 1
+              ? `${rsvpNames[0]} aanmelden`
+              : `${rsvpNames.length} personen aanmelden`}
           </Button>
-        </form>
+        </div>
       </Modal>
 
       <Modal
         open={cancelOpen}
-        onClose={() => setCancelOpen(false)}
+        onClose={() => { setCancelOpen(false); setCancelName(""); }}
         title="Aanmelding annuleren"
         description={meal.meal_name}
       >
-        <form onSubmit={cancelForm.handleSubmit(onCancel)} className="space-y-4">
-          <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
-              Jouw naam
-            </label>
-            <select className="input-field" {...cancelForm.register("user_name")}>
-              <option value="">Selecteer naam…</option>
-              {meal.rsvps.map((n) => <option key={n} value={n}>{n}</option>)}
-            </select>
-            {cancelForm.formState.errors.user_name && (
-              <p className="mt-1.5 text-xs text-rose-500">
-                {cancelForm.formState.errors.user_name.message}
-              </p>
-            )}
-          </div>
+        <div className="space-y-3">
+          <NamePicker
+            options={meal.rsvps}
+            value={cancelName}
+            onChange={setCancelName}
+            color="rose"
+          />
           <Button
-            type="submit"
             variant="danger"
-            loading={cancelForm.formState.isSubmitting}
+            onClick={onCancel}
+            loading={cancelMutation.isPending}
             className="w-full"
+            disabled={!cancelName.trim()}
           >
-            Aanmelding annuleren
+            <UserMinus size={15} />
+            {cancelName.trim() ? `${cancelName} afmelden` : "Selecteer een naam"}
           </Button>
-        </form>
+        </div>
       </Modal>
 
       <Modal
