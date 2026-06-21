@@ -39,3 +39,21 @@ class ClaimSeatRequest(BaseModel):
 
 class LeaveSeatRequest(BaseModel):
     user_name: str
+
+
+class RestaurantDriverRequest(BaseModel):
+    user_name: str
+    seats: int
+
+
+class LeaveRestaurantDriverRequest(BaseModel):
+    user_name: str
+
+
+class RestaurantAssignRequest(BaseModel):
+    user_name: str
+    driver_name: str
+
+
+class RestaurantUnassignRequest(BaseModel):
+    user_name: str

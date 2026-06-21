@@ -264,6 +264,117 @@ def leave_ride_seat(
     _cache.invalidate_cache()
 
 
+def _parse_restaurant_drivers(parking_info: str) -> list[dict]:
+    import json
+    raw = str(parking_info).strip()
+    if not raw or raw.lower() == "nan":
+        return []
+    try:
+        data = json.loads(raw)
+        return [d for d in data if "name" in d and "seats" in d]
+    except Exception:
+        return []
+
+
+def add_restaurant_driver(
+    spreadsheet: gspread.Spreadsheet,
+    row_number: int,
+    user_name: str,
+    seats: int,
+) -> None:
+    import json
+    ride = next((r for r in get_rides(spreadsheet) if r.row_number == row_number), None)
+    if ride is None:
+        raise ValueError("Ride not found")
+    drivers = _parse_restaurant_drivers(ride.parking_info)
+    if any(d["name"] == user_name for d in drivers):
+        raise ValueError("Already registered as driver")
+    drivers.append({"name": user_name, "seats": seats})
+    _worksheet(spreadsheet, "Rides").update_cell(
+        row_number, _RIDES_COLS["Parking Info"], json.dumps(drivers)
+    )
+    _cache.invalidate_cache()
+
+
+def remove_restaurant_driver(
+    spreadsheet: gspread.Spreadsheet,
+    row_number: int,
+    user_name: str,
+) -> None:
+    import json
+    ride = next((r for r in get_rides(spreadsheet) if r.row_number == row_number), None)
+    if ride is None:
+        raise ValueError("Ride not found")
+    drivers = _parse_restaurant_drivers(ride.parking_info)
+    if not any(d["name"] == user_name for d in drivers):
+        raise ValueError("Not registered as driver")
+    drivers = [d for d in drivers if d["name"] != user_name]
+    _worksheet(spreadsheet, "Rides").update_cell(
+        row_number, _RIDES_COLS["Parking Info"], json.dumps(drivers) if drivers else ""
+    )
+    _cache.invalidate_cache()
+
+
+def assign_to_driver(
+    spreadsheet: gspread.Spreadsheet,
+    row_number: int,
+    user_name: str,
+    driver_name: str,
+) -> None:
+    import json
+    ride = next((r for r in get_rides(spreadsheet) if r.row_number == row_number), None)
+    if ride is None:
+        raise ValueError("Ride not found")
+    drivers = _parse_restaurant_drivers(ride.parking_info)
+    target = next((d for d in drivers if d["name"] == driver_name), None)
+    if target is None:
+        raise ValueError(f"Driver '{driver_name}' not found")
+    if user_name == driver_name:
+        raise ValueError("Je kunt niet in je eigen auto stappen")
+
+    # Remove from any existing driver assignment first
+    for d in drivers:
+        pax = d.get("passengers", [])
+        if user_name in pax:
+            pax.remove(user_name)
+        d["passengers"] = pax
+
+    pax = target.get("passengers", [])
+    if len(pax) >= target["seats"]:
+        raise ValueError(f"Auto van {driver_name} is vol")
+    if user_name not in pax:
+        pax.append(user_name)
+    target["passengers"] = pax
+
+    _worksheet(spreadsheet, "Rides").update_cell(
+        row_number, _RIDES_COLS["Parking Info"], json.dumps(drivers)
+    )
+    _cache.invalidate_cache()
+
+
+def unassign_from_driver(
+    spreadsheet: gspread.Spreadsheet,
+    row_number: int,
+    user_name: str,
+) -> None:
+    import json
+    ride = next((r for r in get_rides(spreadsheet) if r.row_number == row_number), None)
+    if ride is None:
+        raise ValueError("Ride not found")
+    drivers = _parse_restaurant_drivers(ride.parking_info)
+
+    for d in drivers:
+        pax = d.get("passengers", [])
+        if user_name in pax:
+            pax.remove(user_name)
+        d["passengers"] = pax
+
+    _worksheet(spreadsheet, "Rides").update_cell(
+        row_number, _RIDES_COLS["Parking Info"], json.dumps(drivers)
+    )
+    _cache.invalidate_cache()
+
+
 # ---------------------------------------------------------------------------
 # Meals
 # ---------------------------------------------------------------------------
