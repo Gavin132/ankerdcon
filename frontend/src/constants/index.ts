@@ -26,5 +26,5 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "more", label: "Meer", path: "/more" },
 ];
 
-export const DIRECTIONS = ["Inbound", "Outbound"] as const;
+export const DIRECTIONS = ["Inbound", "Outbound", "Restaurant"] as const;
 export const VEHICLE_TYPES = ["Car", "Public Transport"] as const;
