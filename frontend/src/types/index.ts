@@ -25,7 +25,7 @@ export interface LocationPingRequest {
 
 // Rides
 export type VehicleType = "Car" | "Public Transport";
-export type Direction = "Inbound" | "Outbound";
+export type Direction = "Inbound" | "Outbound" | "Restaurant";
 
 export interface Ride {
   direction: Direction;
@@ -41,6 +41,8 @@ export interface Ride {
   seats_left: number;
   is_full: boolean;
   is_public_transport: boolean;
+  car_available: boolean;
+  action_required: boolean;
 }
 
 export interface CreateRideRequest {
@@ -52,6 +54,8 @@ export interface CreateRideRequest {
   total_seats: number;
   parking_info?: string;
   maps_link?: string;
+  car_available?: boolean;
+  action_required?: boolean;
 }
 
 export interface ClaimSeatRequest {
@@ -112,6 +116,10 @@ export interface CalendarEvent {
   is_hotel: boolean;
   participants: string[];
   row_number: number;
+}
+
+export interface CalendarRsvpRequest {
+  user_name: string;
 }
 
 // UI helpers
