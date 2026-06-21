@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Car,
+  Truck,
   Train,
   Clock,
   Users,
@@ -12,6 +13,10 @@ import {
   ArrowRight,
   ArrowLeft,
   MapPin,
+  History,
+  Timer,
+  Utensils,
+  AlertCircle,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,6 +26,7 @@ import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { EmptyState } from "../components/common/EmptyState";
+import { SearchSelect } from "../components/common/SearchSelect";
 import { useRides, useCreateRide, useClaimSeat, useLeaveSeat } from "../hooks/useRides";
 import { useUsers } from "../hooks/useUsers";
 import { formatDateTime } from "../utils/format";
@@ -31,7 +37,7 @@ import { DIRECTIONS } from "../constants";
 const enc = encodeURIComponent;
 
 const createSchema = z.object({
-  direction: z.enum(["Inbound", "Outbound"]),
+  direction: z.enum(["Inbound", "Outbound", "Restaurant"]),
   vehicle_type: z.enum(["Car", "Public Transport"]),
   driver: z.string().min(1, "Verplicht"),
   departure_time: z.string().min(1, "Verplicht"),
@@ -39,6 +45,8 @@ const createSchema = z.object({
   end_location: z.string().optional(),
   total_seats: z.coerce.number().min(1).max(99),
   parking_info: z.string().optional(),
+  car_available: z.boolean().optional(),
+  action_required: z.boolean().optional(),
 });
 
 const nameSchema = z.object({
@@ -58,10 +66,6 @@ const cardItem = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
 // Route helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Parse the stored maps_link (google.com/maps/dir/?api=1&origin=X&destination=Y)
- * to get the human-readable addresses back.
- */
 function parseRoute(mapsLink: string): { origin: string; destination: string } | null {
   if (!mapsLink) return null;
   try {
@@ -75,12 +79,34 @@ function parseRoute(mapsLink: string): { origin: string; destination: string } |
   return null;
 }
 
-/** Embed URL that shows turn-by-turn route (works without API key). */
 function buildEmbedUrl(start: string, end?: string): string {
   if (end && end.trim()) {
     return `https://maps.google.com/maps?saddr=${enc(start)}&daddr=${enc(end)}&output=embed`;
   }
   return `https://maps.google.com/maps?q=${enc(start)}&output=embed`;
+}
+
+// ---------------------------------------------------------------------------
+// Ride status helpers
+// ---------------------------------------------------------------------------
+
+type RideStatus = "upcoming" | "soon" | "urgent" | "recent" | "past";
+
+function getRideStatus(departureTime: string): { status: RideStatus; minutesUntil: number } {
+  const dep = new Date(departureTime.replace(" ", "T")).getTime();
+  if (isNaN(dep)) return { status: "upcoming", minutesUntil: Infinity };
+  const minutesUntil = (dep - Date.now()) / 60000;
+  if (minutesUntil > 120) return { status: "upcoming", minutesUntil };
+  if (minutesUntil > 30) return { status: "soon", minutesUntil };
+  if (minutesUntil > 0) return { status: "urgent", minutesUntil };
+  if (minutesUntil > -120) return { status: "recent", minutesUntil };
+  return { status: "past", minutesUntil };
+}
+
+function formatCountdown(minutes: number): string {
+  const m = Math.ceil(minutes);
+  if (m >= 60) return `${Math.floor(m / 60)}u ${m % 60}m`;
+  return `${m}m`;
 }
 
 // ---------------------------------------------------------------------------
@@ -152,10 +178,21 @@ function RideCard({ ride, userNames }: { ride: Ride; userNames: string[] }) {
   const [expanded, setExpanded] = useState(false);
   const [claimOpen, setClaimOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  const [, tick] = useState(0);
   const claimMutation = useClaimSeat();
   const leaveMutation = useLeaveSeat();
   const claimForm = useForm<NameForm>({ resolver: zodResolver(nameSchema) });
   const leaveForm = useForm<NameForm>({ resolver: zodResolver(nameSchema) });
+  const claimName = claimForm.watch("user_name") ?? "";
+  const leaveName = leaveForm.watch("user_name") ?? "";
+
+  // Re-render every 30 s so countdown stays live
+  useEffect(() => {
+    const id = setInterval(() => tick((n) => n + 1), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const { status, minutesUntil } = getRideStatus(ride.departure_time);
 
   async function onClaim(values: NameForm) {
     try {
@@ -181,35 +218,82 @@ function RideCard({ ride, userNames }: { ride: Ride; userNames: string[] }) {
 
   const isPT = ride.is_public_transport;
   const isInbound = ride.direction === "Inbound";
+  const isRestaurant = ride.direction === "Restaurant";
+  const isTimo = ride.driver.trim().toLowerCase() === "timo";
+  const isRecent = status === "recent";
 
-  // Prefer explicit origin/destination parsed from maps_link (set when ride was
-  // created with the new form). Fall back to direction-based inference.
   const route = parseRoute(ride.maps_link);
-  const fromLabel = route?.origin ?? (isInbound ? ride.start_location : "Con locatie");
-  const toLabel   = route?.destination ?? (isInbound ? "Con locatie" : ride.start_location);
-
-  // Route embed: shows turn-by-turn directions when both points are known.
-  const embedUrl = route
+  const fromLabel = route?.origin ?? (
+    isInbound ? ride.start_location :
+    isRestaurant ? "Hotel / Con" :
+    "Con locatie"
+  );
+  const toLabel = route?.destination ?? (
+    isInbound ? "Con locatie" :
+    ride.start_location
+  );
+  const embedUrl  = route
     ? buildEmbedUrl(route.origin, route.destination)
     : buildEmbedUrl(ride.start_location);
-
   const openUrl = ride.maps_link
     || `https://www.google.com/maps/search/?api=1&query=${enc(ride.start_location)}`;
 
+  // Left border by urgency
+  const borderClass =
+    status === "urgent" ? "border-l-4 border-l-rose-400" :
+    status === "soon"   ? "border-l-4 border-l-amber-400" :
+    status === "recent" ? "border-l-4 border-l-slate-300" :
+    "";
+
   return (
     <>
-      <motion.div variants={cardItem}>
-        <div className="card-surface rounded-2xl overflow-hidden">
+      <motion.div variants={cardItem} className={isRecent ? "opacity-60" : ""}>
+        <div className={`card-surface rounded-2xl overflow-hidden ${borderClass}`}>
+
+          {/* Action required banner */}
+          {ride.action_required && status !== "past" && (
+            <div className="flex items-center gap-2 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+              <AlertCircle size={12} />
+              Actie vereist — reageer hieronder
+            </div>
+          )}
+
+          {/* Status banner */}
+          {status === "urgent" && (
+            <div className="flex items-center gap-2 bg-rose-50 px-4 py-2 text-xs font-bold text-rose-600">
+              <Timer size={12} />
+              Vertrekt over {formatCountdown(minutesUntil)}!
+            </div>
+          )}
+          {status === "soon" && (
+            <div className="flex items-center gap-2 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-600">
+              <Timer size={12} />
+              Vertrekt over {formatCountdown(minutesUntil)}
+            </div>
+          )}
+          {status === "recent" && (
+            <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-400">
+              <Clock size={12} />
+              Vertrokken
+            </div>
+          )}
+
           <div className="p-4">
             {/* Header */}
             <div className="flex items-start gap-3">
               <div
                 className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-                  isPT ? "bg-gradient-to-br from-violet-400 to-purple-500" : "gradient-brand"
+                  isPT ? "bg-gradient-to-br from-violet-400 to-purple-500" :
+                  isRestaurant ? "bg-gradient-to-br from-amber-400 to-orange-500" :
+                  "gradient-brand"
                 }`}
               >
-                {isPT ? (
+                {isRestaurant ? (
+                  <Utensils size={20} className="text-white" strokeWidth={2} />
+                ) : isPT ? (
                   <Train size={20} className="text-white" strokeWidth={2} />
+                ) : isTimo ? (
+                  <Truck size={20} className="text-white" strokeWidth={2} />
                 ) : (
                   <Car size={20} className="text-white" strokeWidth={2} />
                 )}
@@ -219,15 +303,25 @@ function RideCard({ ride, userNames }: { ride: Ride; userNames: string[] }) {
                 <div className="flex flex-wrap items-center gap-1.5 mb-1">
                   <span className="font-black text-slate-900 text-sm">{ride.driver}</span>
                   {isPT && <Badge variant="violet">OV</Badge>}
-                  {ride.is_full && <Badge variant="red" dot>Vol</Badge>}
-                  {!isPT && !ride.is_full && (
+                  {isRestaurant && ride.car_available && <Badge variant="green">Auto beschikbaar</Badge>}
+                  {isRestaurant && !ride.car_available && <Badge variant="gray">Eigen vervoer</Badge>}
+                  {isRecent && <Badge variant="gray">Vertrokken</Badge>}
+                  {!isRecent && ride.is_full && <Badge variant="red" dot>Vol</Badge>}
+                  {!isRecent && !isPT && !isRestaurant && !ride.is_full && (
                     <Badge variant="green" dot>
-                      {ride.seats_left} plek{ride.seats_left !== 1 ? "ken" : ""} vrij
+                      {ride.seats_left} meerijder{ride.seats_left !== 1 ? "s" : ""} welkom
                     </Badge>
                   )}
                 </div>
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                  <Clock size={11} className="text-sky-400 shrink-0" />
+                  <Clock
+                    size={11}
+                    className={`shrink-0 ${
+                      status === "urgent" ? "text-rose-400" :
+                      status === "soon"   ? "text-amber-400" :
+                      "text-sky-400"
+                    }`}
+                  />
                   {formatDateTime(ride.departure_time)}
                 </span>
               </div>
@@ -260,11 +354,11 @@ function RideCard({ ride, userNames }: { ride: Ride; userNames: string[] }) {
             </div>
 
             {/* Seat dots */}
-            {!isPT && (
+            {!isPT && !isRecent && (
               <div className="mt-3 flex items-center gap-2 px-1">
                 <SeatDots total={ride.total_seats} left={ride.seats_left} />
                 <span className="text-xs text-slate-400">
-                  {ride.total_seats - ride.seats_left}/{ride.total_seats} bezet
+                  {ride.total_seats - ride.seats_left}/{ride.total_seats} meerijders
                 </span>
               </div>
             )}
@@ -285,7 +379,7 @@ function RideCard({ ride, userNames }: { ride: Ride; userNames: string[] }) {
                       <div>
                         <p className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">
                           <Users size={11} className="mr-1 inline" />
-                          Passagiers
+                          Meerijders
                         </p>
                         <div className="flex flex-wrap gap-1.5">
                           {ride.passengers.map((p) => (
@@ -308,7 +402,7 @@ function RideCard({ ride, userNames }: { ride: Ride; userNames: string[] }) {
                       </div>
                     )}
 
-                    {/* Route map — shows full route when both points known, single pin otherwise */}
+                    {/* Route map */}
                     <div>
                       <p className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
                         <MapPin size={11} className="text-sky-500" />
@@ -334,8 +428,8 @@ function RideCard({ ride, userNames }: { ride: Ride; userNames: string[] }) {
                       </div>
                     </div>
 
-                    {/* Actions */}
-                    {!isPT && (
+                    {/* Actions — not available for recently departed rides */}
+                    {!isPT && !isRecent && (
                       <div className="flex gap-2 pt-1">
                         {!ride.is_full && (
                           <Button
@@ -345,7 +439,7 @@ function RideCard({ ride, userNames }: { ride: Ride; userNames: string[] }) {
                             onClick={() => setClaimOpen(true)}
                           >
                             <Plus size={14} />
-                            Plek claimen
+                            Meerijden
                           </Button>
                         )}
                         {ride.passengers.length > 0 && (
@@ -372,7 +466,7 @@ function RideCard({ ride, userNames }: { ride: Ride; userNames: string[] }) {
       <Modal
         open={claimOpen}
         onClose={() => setClaimOpen(false)}
-        title="Plek claimen"
+        title="Meerijden"
         description={`${fromLabel} → ${toLabel}`}
       >
         <form onSubmit={claimForm.handleSubmit(onClaim)} className="space-y-4">
@@ -380,14 +474,12 @@ function RideCard({ ride, userNames }: { ride: Ride; userNames: string[] }) {
             <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
               Jouw naam
             </label>
-            {userNames.length > 0 ? (
-              <select className="input-field" {...claimForm.register("user_name")}>
-                <option value="">Selecteer naam…</option>
-                {userNames.map((n) => <option key={n} value={n}>{n}</option>)}
-              </select>
-            ) : (
-              <input className="input-field" placeholder="Naam" {...claimForm.register("user_name")} />
-            )}
+            <SearchSelect
+              options={userNames}
+              value={claimName}
+              onChange={(v) => claimForm.setValue("user_name", v)}
+              placeholder="Typ om te zoeken…"
+            />
             {claimForm.formState.errors.user_name && (
               <p className="mt-1.5 text-xs text-rose-500">
                 {claimForm.formState.errors.user_name.message}
@@ -405,23 +497,26 @@ function RideCard({ ride, userNames }: { ride: Ride; userNames: string[] }) {
         open={leaveOpen}
         onClose={() => setLeaveOpen(false)}
         title="Uitstappen"
-        description="Verwijder jezelf als passagier"
+        description="Verwijder jezelf als meerijder"
       >
         <form onSubmit={leaveForm.handleSubmit(onLeave)} className="space-y-4">
           <div>
             <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
               Jouw naam
             </label>
-            {ride.passengers.length > 0 ? (
-              <select className="input-field" {...leaveForm.register("user_name")}>
-                <option value="">Selecteer naam…</option>
-                {ride.passengers.map((n) => <option key={n} value={n}>{n}</option>)}
-              </select>
-            ) : (
-              <input className="input-field" placeholder="Naam" {...leaveForm.register("user_name")} />
-            )}
+            <SearchSelect
+              options={ride.passengers}
+              value={leaveName}
+              onChange={(v) => leaveForm.setValue("user_name", v)}
+              placeholder="Typ om te zoeken…"
+            />
           </div>
-          <Button type="submit" variant="danger" loading={leaveForm.formState.isSubmitting} className="w-full">
+          <Button
+            type="submit"
+            variant="danger"
+            loading={leaveForm.formState.isSubmitting}
+            className="w-full"
+          >
             Uitstappen bevestigen
           </Button>
         </form>
@@ -437,6 +532,7 @@ function RideCard({ ride, userNames }: { ride: Ride; userNames: string[] }) {
 export function TransportPage() {
   const [tab, setTab] = useState<Direction>("Inbound");
   const [createOpen, setCreateOpen] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const { data: rides, isLoading } = useRides();
   const { data: users } = useUsers();
   const userNames = (users ?? []).map((u) => u.name);
@@ -447,16 +543,33 @@ export function TransportPage() {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateForm>({
     resolver: zodResolver(createSchema),
     defaultValues: { direction: "Inbound", vehicle_type: "Car", total_seats: 4 },
   });
 
-  const vehicleType   = watch("vehicle_type");
-  const startLocation = watch("start_location") ?? "";
-  const endLocation   = watch("end_location") ?? "";
-  const filtered = (rides ?? []).filter((r) => r.direction === tab);
+  const vehicleType     = watch("vehicle_type");
+  const startLocation   = watch("start_location") ?? "";
+  const endLocation     = watch("end_location") ?? "";
+  const formDirection   = watch("direction");
+
+  // When switching to Public Transport, fill a large default so validation passes
+  useEffect(() => {
+    if (vehicleType === "Public Transport") {
+      setValue("total_seats", 99);
+    }
+  }, [vehicleType, setValue]);
+
+  const allFiltered = (rides ?? []).filter((r) => r.direction === tab);
+  const activeRides = allFiltered.filter((r) => getRideStatus(r.departure_time).status !== "past");
+  const pastRides   = allFiltered
+    .filter((r) => getRideStatus(r.departure_time).status === "past")
+    .sort((a, b) =>
+      new Date(b.departure_time.replace(" ", "T")).getTime() -
+      new Date(a.departure_time.replace(" ", "T")).getTime()
+    );
 
   function openCreate() {
     reset({ direction: tab, vehicle_type: "Car", total_seats: 4 });
@@ -464,8 +577,6 @@ export function TransportPage() {
   }
 
   async function onCreate(values: CreateForm) {
-    // Encode departure + destination into a Google Maps directions URL.
-    // This is parsed back on the card to show the real route embed.
     const mapsLink = values.end_location
       ? `https://www.google.com/maps/dir/?api=1&origin=${enc(values.start_location)}&destination=${enc(values.end_location)}`
       : `https://www.google.com/maps/search/?api=1&query=${enc(values.start_location)}`;
@@ -480,6 +591,8 @@ export function TransportPage() {
         total_seats: values.total_seats,
         parking_info: values.parking_info ?? "",
         maps_link: mapsLink,
+        car_available: values.car_available ?? false,
+        action_required: values.action_required ?? false,
       });
       reset();
       setCreateOpen(false);
@@ -492,23 +605,21 @@ export function TransportPage() {
   return (
     <div className="space-y-5">
       {/* Direction tabs */}
-      <div className="flex gap-2 rounded-2xl bg-slate-100 p-1">
-        {DIRECTIONS.map((d) => (
+      <div className="flex gap-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800 p-1">
+        {(["Inbound", "Outbound", "Restaurant"] as const).map((d) => (
           <button
             key={d}
             onClick={() => setTab(d)}
-            className={`relative flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
+            className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-semibold transition-all duration-200 ${
               tab === d
-                ? "bg-white text-slate-900 shadow-card"
-                : "text-slate-500 hover:text-slate-700"
+                ? "bg-white text-slate-900 shadow-card dark:bg-slate-700 dark:text-slate-100"
+                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
             }`}
           >
-            {d === "Inbound" ? (
-              <ArrowRight size={14} className={tab === d ? "text-sky-500" : ""} />
-            ) : (
-              <ArrowLeft size={14} className={tab === d ? "text-sky-500" : ""} />
-            )}
-            {d === "Inbound" ? "Heen" : "Terug"}
+            {d === "Inbound" && <ArrowRight size={13} className={tab === d ? "text-sky-500" : ""} />}
+            {d === "Outbound" && <ArrowLeft size={13} className={tab === d ? "text-sky-500" : ""} />}
+            {d === "Restaurant" && <Utensils size={13} className={tab === d ? "text-amber-500" : ""} />}
+            {d === "Inbound" ? "Heen" : d === "Outbound" ? "Terug" : "Restaurant"}
           </button>
         ))}
       </div>
@@ -524,24 +635,75 @@ export function TransportPage() {
         <div className="flex justify-center py-16">
           <LoadingSpinner />
         </div>
-      ) : filtered.length === 0 ? (
+      ) : allFiltered.length === 0 ? (
         <EmptyState
           icon={<Car size={36} />}
           title="Geen ritten gepland"
-          description={`Er zijn nog geen ${tab === "Inbound" ? "heenritten" : "terugritten"} toegevoegd.`}
+          description={`Er zijn nog geen ${tab === "Inbound" ? "heenritten" : tab === "Outbound" ? "terugritten" : "restaurantritten"} toegevoegd.`}
         />
       ) : (
-        <motion.div
-          key={tab}
-          className="space-y-3"
-          variants={container}
-          initial="hidden"
-          animate="show"
-        >
-          {filtered.map((ride) => (
-            <RideCard key={ride.row_number} ride={ride} userNames={userNames} />
-          ))}
-        </motion.div>
+        <>
+          {activeRides.length === 0 ? (
+            <EmptyState
+              icon={<Car size={36} />}
+              title="Geen actieve ritten"
+              description="Alle ritten zijn al vertrokken. Bekijk de geschiedenis hieronder."
+            />
+          ) : (
+            <motion.div
+              key={tab}
+              className="space-y-3"
+              variants={container}
+              initial="hidden"
+              animate="show"
+            >
+              {activeRides.map((ride) => (
+                <RideCard key={ride.row_number} ride={ride} userNames={userNames} />
+              ))}
+            </motion.div>
+          )}
+
+          {/* History */}
+          {pastRides.length > 0 && (
+            <div>
+              <button
+                onClick={() => setShowHistory((v) => !v)}
+                className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500 hover:bg-slate-100 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+              >
+                <span className="flex items-center gap-2">
+                  <History size={14} />
+                  Geschiedenis ({pastRides.length})
+                </span>
+                <motion.div animate={{ rotate: showHistory ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                  <ChevronDown size={14} />
+                </motion.div>
+              </button>
+
+              <AnimatePresence>
+                {showHistory && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.22 }}
+                    className="overflow-hidden"
+                  >
+                    <motion.div
+                      className="mt-3 space-y-3"
+                      variants={container}
+                      initial="hidden"
+                      animate="show"
+                    >
+                      {pastRides.map((ride) => (
+                        <RideCard key={ride.row_number} ride={ride} userNames={userNames} />
+                      ))}
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+        </>
       )}
 
       {/* Create modal */}
@@ -560,6 +722,7 @@ export function TransportPage() {
               <select className="input-field" {...register("direction")}>
                 <option value="Inbound">Heen</option>
                 <option value="Outbound">Terug</option>
+                <option value="Restaurant">Restaurant</option>
               </select>
             </div>
             <div>
@@ -577,15 +740,18 @@ export function TransportPage() {
             <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
               {vehicleType === "Car" ? "Chauffeur" : "Lijn / vervoerder"}
             </label>
-            {vehicleType === "Car" && userNames.length > 0 ? (
-              <select className="input-field" {...register("driver")}>
-                <option value="">Selecteer chauffeur…</option>
-                {userNames.map((n) => <option key={n} value={n}>{n}</option>)}
-              </select>
+            {vehicleType === "Car" ? (
+              <SearchSelect
+                options={userNames}
+                value={watch("driver") ?? ""}
+                onChange={(v) => setValue("driver", v)}
+                placeholder="Typ om te zoeken…"
+              />
             ) : (
               <input
                 className="input-field"
-                placeholder={vehicleType === "Car" ? "Naam" : "Bijv. NS Intercity"}
+                placeholder="Bijv. NS Intercity"
+                autoComplete="off"
                 {...register("driver")}
               />
             )}
@@ -594,7 +760,7 @@ export function TransportPage() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className={`grid gap-3 ${vehicleType === "Public Transport" ? "grid-cols-1" : "grid-cols-2"}`}>
             <div>
               <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
                 Vertrektijd
@@ -604,12 +770,14 @@ export function TransportPage() {
                 <p className="mt-1.5 text-xs text-rose-500">{errors.departure_time.message}</p>
               )}
             </div>
-            <div>
-              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
-                Plaatsen
-              </label>
-              <input type="number" min={1} max={99} className="input-field" {...register("total_seats")} />
-            </div>
+            {vehicleType !== "Public Transport" && (
+              <div>
+                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
+                  Plaatsen
+                </label>
+                <input type="number" min={1} max={99} className="input-field" {...register("total_seats")} />
+              </div>
+            )}
           </div>
 
           {/* Departure + destination with live route preview */}
@@ -637,11 +805,35 @@ export function TransportPage() {
                 {...register("end_location")}
               />
             </div>
-            {/* Live route preview — updates 900 ms after typing stops */}
+            {/* Live route preview */}
             <RoutePreview start={startLocation} end={endLocation} />
           </div>
 
-          {vehicleType === "Car" && (
+          {formDirection === "Restaurant" && (
+            <div className="rounded-xl border border-amber-100 bg-amber-50 p-4 space-y-3 dark:border-amber-900/40 dark:bg-amber-900/20">
+              <p className="text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
+                Restaurant opties
+              </p>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded accent-amber-500"
+                  {...register("car_available")}
+                />
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Auto beschikbaar</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded accent-amber-500"
+                  {...register("action_required")}
+                />
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Actie vereist (reageer verplicht)</span>
+              </label>
+            </div>
+          )}
+
+          {vehicleType === "Car" && formDirection !== "Restaurant" && (
             <div>
               <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
                 Parkeerinfo (optioneel)

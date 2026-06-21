@@ -13,6 +13,10 @@ import {
   Users,
   Search,
   Archive,
+  Moon,
+  Sun,
+  UserPlus,
+  UserMinus,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,11 +27,14 @@ import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { Badge } from "../components/common/Badge";
 import { LocationPingDisplay } from "../components/common/LocationPingDisplay";
 import { useUsers, usePingLocation } from "../hooks/useUsers";
-import { useCalendar } from "../hooks/useCalendar";
+import { useCalendar, useRsvpCalendarEvent, useLeaveCalendarEvent } from "../hooks/useCalendar";
+import { SearchSelect } from "../components/common/SearchSelect";
 import { useAuthStore } from "../store/auth.store";
+import { useThemeStore } from "../store/theme.store";
 import { logout } from "../services/auth.service";
 import { useNavigate } from "react-router-dom";
 import { avatarColor } from "../utils/avatar";
+import { formatDate } from "../utils/format";
 import type { CalendarEvent } from "../types";
 
 // ---------------------------------------------------------------------------
@@ -90,7 +97,28 @@ function todayKey(): string {
 // Calendar grid component
 // ---------------------------------------------------------------------------
 
-function CalendarGrid({ events }: { events: CalendarEvent[] }) {
+function CalendarGrid({
+  events,
+  allUsers,
+  onRsvp,
+  onLeave,
+}: {
+  events: CalendarEvent[];
+  allUsers: string[];
+  onRsvp: (rowNumber: number, userName: string) => void;
+  onLeave: (rowNumber: number, userName: string) => void;
+}) {
+  const [activeRsvpEvent, setActiveRsvpEvent] = useState<number | null>(null);
+  const [rsvpMode, setRsvpMode] = useState<"join" | "leave">("join");
+
+  function openRsvp(rowNumber: number, mode: "join" | "leave") {
+    setActiveRsvpEvent(rowNumber);
+    setRsvpMode(mode);
+  }
+
+  function closeRsvp() {
+    setActiveRsvpEvent(null);
+  }
   // Build event map keyed by YYYY-MM-DD
   const eventMap = useMemo(() => {
     const map: Record<string, CalendarEvent[]> = {};
@@ -162,10 +190,10 @@ function CalendarGrid({ events }: { events: CalendarEvent[] }) {
   return (
     <div className="card-surface rounded-2xl overflow-hidden">
       {/* Month navigation */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-slate-50">
+      <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-slate-50 dark:border-slate-800">
         <button
           onClick={prevMonth}
-          className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+          className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:hover:bg-slate-700"
         >
           <ChevronLeft size={16} />
         </button>
@@ -181,7 +209,7 @@ function CalendarGrid({ events }: { events: CalendarEvent[] }) {
         </div>
         <button
           onClick={nextMonth}
-          className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+          className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:hover:bg-slate-700"
         >
           <ChevronRight size={16} />
         </button>
@@ -222,7 +250,7 @@ function CalendarGrid({ events }: { events: CalendarEvent[] }) {
                   isSelected
                     ? "bg-sky-500 text-white shadow-sm font-black"
                     : hasEvents
-                      ? "text-sky-700 font-black hover:bg-sky-50 cursor-pointer"
+                      ? "text-sky-700 font-black hover:bg-sky-50 cursor-pointer dark:text-sky-400 dark:hover:bg-sky-900/30"
                       : "text-slate-300 font-medium cursor-default",
                   isToday && !isSelected
                     ? "ring-2 ring-sky-400 ring-offset-1"
@@ -257,42 +285,108 @@ function CalendarGrid({ events }: { events: CalendarEvent[] }) {
               transition={{ duration: 0.22 }}
               className="overflow-hidden"
             >
-              <div className="mt-3 space-y-2.5 border-t border-slate-100 pt-3">
-                {selectedEvents.map((ev) => (
-                  <div
-                    key={ev.event_id}
-                    className="rounded-xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-3"
-                  >
-                    <div className="flex items-start gap-2.5">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg gradient-brand">
-                        <CalendarDays size={14} className="text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-black text-slate-900 text-sm leading-tight">
-                            {ev.event_name}
-                          </p>
-                          {ev.is_hotel && (
-                            <Badge variant="violet">
-                              <BedDouble size={10} />
-                              Hotel
-                            </Badge>
+              <div className="mt-3 space-y-2.5 border-t border-slate-100 pt-3 dark:border-slate-700">
+                {selectedEvents.map((ev) => {
+                  const isPast = selectedDate !== null && selectedDate < todayKey();
+                  const isRsvpOpen = activeRsvpEvent === ev.row_number;
+                  return (
+                    <div
+                      key={ev.event_id}
+                      className="rounded-xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-3 dark:border-sky-900/50 dark:from-sky-900/20 dark:to-slate-800/50"
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg gradient-brand">
+                          <CalendarDays size={14} className="text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-black text-slate-900 text-sm leading-tight">
+                              {ev.event_name}
+                            </p>
+                            {ev.is_hotel && (
+                              <Badge variant="violet">
+                                <BedDouble size={10} />
+                                Hotel
+                              </Badge>
+                            )}
+                          </div>
+                          {ev.participants.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {ev.participants.map((p) => (
+                                <Badge key={p} variant="blue">
+                                  <Users size={10} />
+                                  {p}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          {!isPast && (
+                            <div className="mt-3 border-t border-sky-100/60 pt-3 dark:border-sky-800/30">
+                              {isRsvpOpen ? (
+                                <div className="space-y-2.5">
+                                  <div className="flex items-center justify-between">
+                                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                                      {rsvpMode === "join" ? "Wie meldt zich aan?" : "Wie meldt zich af?"}
+                                    </p>
+                                    <button
+                                      type="button"
+                                      onClick={closeRsvp}
+                                      className="flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:hover:bg-slate-700"
+                                    >
+                                      <span className="text-xs">✕</span>
+                                    </button>
+                                  </div>
+                                  <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto py-0.5">
+                                    {(rsvpMode === "leave" ? ev.participants : allUsers).map((name) => (
+                                      <button
+                                        key={name}
+                                        type="button"
+                                        onClick={() => {
+                                          if (rsvpMode === "join") onRsvp(ev.row_number, name);
+                                          else onLeave(ev.row_number, name);
+                                          closeRsvp();
+                                        }}
+                                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-all active:scale-95 ${
+                                          rsvpMode === "join"
+                                            ? "bg-sky-100 text-sky-700 hover:bg-sky-200 dark:bg-sky-900/40 dark:text-sky-300 dark:hover:bg-sky-800/60"
+                                            : "bg-rose-100 text-rose-700 hover:bg-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:hover:bg-rose-800/60"
+                                        }`}
+                                      >
+                                        {rsvpMode === "join" ? <UserPlus size={10} /> : <UserMinus size={10} />}
+                                        {name}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => openRsvp(ev.row_number, "join")}
+                                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-sky-200/60 bg-sky-50 py-2 text-xs font-semibold text-sky-700 hover:bg-sky-100 transition-colors dark:border-sky-800/50 dark:bg-sky-900/25 dark:text-sky-400 dark:hover:bg-sky-900/40"
+                                  >
+                                    <UserPlus size={12} />
+                                    Aanmelden
+                                  </button>
+                                  {ev.participants.length > 0 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => openRsvp(ev.row_number, "leave")}
+                                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200/60 bg-slate-50 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-100 transition-colors dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400 dark:hover:bg-slate-800"
+                                    >
+                                      <UserMinus size={12} />
+                                      Afmelden
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           )}
                         </div>
-                        {ev.participants.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1">
-                            {ev.participants.map((p) => (
-                              <Badge key={p} variant="blue">
-                                <Users size={10} />
-                                {p}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </motion.div>
           )}
@@ -423,13 +517,19 @@ export function MorePage() {
   const { data: users, isLoading } = useUsers();
   const { data: calendarEvents } = useCalendar();
   const pingMutation = usePingLocation();
+  const rsvpMutation = useRsvpCalendarEvent();
+  const leaveMutation = useLeaveCalendarEvent();
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const navigate = useNavigate();
+  const isDark = useThemeStore((s) => s.isDark);
+  const toggleTheme = useThemeStore((s) => s.toggle);
 
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<PingForm>({ resolver: zodResolver(pingSchema) });
 
@@ -437,6 +537,22 @@ export function MorePage() {
     await pingMutation.mutateAsync(values);
     reset({});
     setPingOpen(false);
+  }
+
+  async function onCalendarRsvp(rowNumber: number, userName: string) {
+    try {
+      await rsvpMutation.mutateAsync({ rowNumber, userName });
+    } catch {
+      // silently ignore duplicate sign-ups
+    }
+  }
+
+  async function onCalendarLeave(rowNumber: number, userName: string) {
+    try {
+      await leaveMutation.mutateAsync({ rowNumber, userName });
+    } catch {
+      // silently ignore if not found
+    }
   }
 
   async function onLogout() {
@@ -455,6 +571,14 @@ export function MorePage() {
       )
     : allUsers;
 
+  // Find the next upcoming calendar event (include today)
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const nextEvent = (calendarEvents ?? [])
+    .map((ev) => ({ ev, date: parseEventDate(ev.date) }))
+    .filter(({ date }) => date !== null && date >= todayStart)
+    .sort((a, b) => a.date!.getTime() - b.date!.getTime())[0]?.ev ?? null;
+
   return (
     <motion.div
       className="space-y-5"
@@ -468,7 +592,7 @@ export function MorePage() {
         <div className="card-surface rounded-2xl overflow-hidden">
           <button
             onClick={() => setPingOpen(true)}
-            className="flex w-full items-center gap-4 px-5 py-4 text-left hover:bg-slate-50 transition-colors"
+            className="flex w-full items-center gap-4 px-5 py-4 text-left hover:bg-slate-50 transition-colors dark:hover:bg-slate-800/60"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-brand">
               <Navigation size={18} className="text-white" />
@@ -484,6 +608,29 @@ export function MorePage() {
         </div>
       </motion.div>
 
+      {/* Upcoming event banner — always visible below ping button */}
+      {nextEvent && (
+        <motion.div variants={item}>
+          <div className="relative overflow-hidden rounded-2xl gradient-hero px-5 py-4 shadow-hero">
+            <div className="pointer-events-none absolute -top-8 -right-8 h-28 w-28 rounded-full bg-sky-400/10" />
+            <div className="relative">
+              <div className="mb-1 flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse" />
+                <span className="text-xs font-bold text-sky-400 uppercase tracking-widest">
+                  Aankomend evenement
+                </span>
+              </div>
+              <p className="font-black text-white text-base leading-tight">{nextEvent.event_name}</p>
+              <p className="mt-1 flex items-center gap-1.5 text-xs text-sky-300">
+                <CalendarDays size={12} className="text-sky-400" />
+                {formatDate(nextEvent.date)}
+                {nextEvent.is_hotel && " · Hotel inbegrepen"}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Con Calendar */}
       {(calendarEvents ?? []).length > 0 && (
         <motion.div variants={item}>
@@ -491,7 +638,12 @@ export function MorePage() {
             <CalendarDays size={13} className="text-sky-500" />
             Con Kalender
           </p>
-          <CalendarGrid events={calendarEvents ?? []} />
+          <CalendarGrid
+            events={calendarEvents ?? []}
+            allUsers={allUsers.map((u) => u.name)}
+            onRsvp={onCalendarRsvp}
+            onLeave={onCalendarLeave}
+          />
         </motion.div>
       )}
 
@@ -623,9 +775,34 @@ export function MorePage() {
         </AnimatePresence>
       </motion.div>
 
+      {/* Instellingen — theme toggle */}
+      <motion.div variants={item}>
+        <p className="section-label mb-3">Instellingen</p>
+        <div className="card-surface rounded-2xl overflow-hidden">
+          <div className="flex items-center gap-4 px-5 py-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-brand shrink-0">
+              {isDark ? <Moon size={18} className="text-white" /> : <Sun size={18} className="text-white" />}
+            </div>
+            <div className="flex-1">
+              <p className="font-bold text-slate-900 text-sm">Donker thema</p>
+              <p className="text-xs text-slate-400 mt-0.5">Wissel tussen licht en donker</p>
+            </div>
+            <button
+              onClick={toggleTheme}
+              className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 ${isDark ? "bg-sky-500" : "bg-slate-200"}`}
+              aria-label="Thema wisselen"
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${isDark ? "translate-x-6" : "translate-x-1"}`}
+              />
+            </button>
+          </div>
+        </div>
+      </motion.div>
+
       {/* App info */}
       <motion.div variants={item}>
-        <div className="rounded-2xl border border-slate-100 bg-white/60 px-5 py-4 text-center">
+        <div className="rounded-2xl border border-slate-100 bg-white/60 px-5 py-4 text-center dark:border-slate-800 dark:bg-slate-900/60">
           <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-sky-100 shadow-sm overflow-hidden">
             <img
               src="/assets/images/ankerd-logo.png"
@@ -642,7 +819,7 @@ export function MorePage() {
       <motion.div variants={item}>
         <button
           onClick={onLogout}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 py-3.5 text-sm font-semibold text-rose-600 hover:bg-rose-100 transition-colors"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 py-3.5 text-sm font-semibold text-rose-600 hover:bg-rose-100 transition-colors dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-900/40"
         >
           <LogOut size={16} />
           Uitloggen
@@ -661,22 +838,12 @@ export function MorePage() {
             <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
               Jouw naam
             </label>
-            {allUsers.length > 0 ? (
-              <select className="input-field" {...register("user_name")}>
-                <option value="">Selecteer naam…</option>
-                {allUsers.map((u) => (
-                  <option key={u.name} value={u.name}>
-                    {u.name}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                className="input-field"
-                placeholder="Naam"
-                {...register("user_name")}
-              />
-            )}
+            <SearchSelect
+              options={allUsers.map((u) => u.name)}
+              value={watch("user_name") ?? ""}
+              onChange={(v) => setValue("user_name", v)}
+              placeholder="Typ om te zoeken…"
+            />
             {errors.user_name && (
               <p className="mt-1.5 text-xs text-rose-500">
                 {errors.user_name.message}

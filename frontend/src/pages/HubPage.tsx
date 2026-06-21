@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   CalendarDays,
   Bus,
@@ -329,6 +329,7 @@ function CrewSection({ users }: { users: User[] }) {
 
 export function HubPage() {
   const navigate = useNavigate();
+  const [participantsExpanded, setParticipantsExpanded] = useState(false);
   const { data: events, isLoading: evLoading } = useCalendar();
   const { data: rides } = useRides();
   const { data: meals } = useMeals();
@@ -392,26 +393,60 @@ export function HubPage() {
               </div>
 
               {event.participants.length > 0 && (
-                <div className="mt-4 flex items-center gap-2">
-                  <div className="flex -space-x-2">
-                    {event.participants.slice(0, 5).map((p) => (
-                      <div
-                        key={p}
-                        className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#0F3D5A] bg-gradient-to-br ${avatarColor(p)} text-xs font-bold text-white`}
-                        title={p}
+                <div className="mt-4">
+                  <button
+                    onClick={() => setParticipantsExpanded((v) => !v)}
+                    className="flex items-center gap-2 text-left"
+                  >
+                    <div className="flex -space-x-2">
+                      {event.participants.slice(0, 5).map((p) => (
+                        <div
+                          key={p}
+                          className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#0F3D5A] bg-gradient-to-br ${avatarColor(p)} text-xs font-bold text-white`}
+                          title={p}
+                        >
+                          {p[0].toUpperCase()}
+                        </div>
+                      ))}
+                      {event.participants.length > 5 && (
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#0F3D5A] bg-white/20 text-xs font-bold text-white">
+                          +{event.participants.length - 5}
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-xs font-medium text-sky-300/80">
+                      {participantsExpanded ? "Verbergen" : `${event.participants.length} deelnemers`}
+                    </span>
+                  </button>
+
+                  <AnimatePresence>
+                    {participantsExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
                       >
-                        {p[0].toUpperCase()}
-                      </div>
-                    ))}
-                    {event.participants.length > 5 && (
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#0F3D5A] bg-white/20 text-xs font-bold text-white">
-                        +{event.participants.length - 5}
-                      </div>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {event.participants.map((p) => (
+                            <span
+                              key={p}
+                              className="inline-flex items-center gap-1 rounded-full bg-sky-400/20 border border-sky-400/30 px-2.5 py-1 text-xs font-semibold text-sky-200"
+                            >
+                              <span
+                                className={`h-4 w-4 rounded-full bg-gradient-to-br ${avatarColor(p)} flex items-center justify-center text-xs font-black text-white`}
+                                style={{ fontSize: "9px" }}
+                              >
+                                {p[0].toUpperCase()}
+                              </span>
+                              {p}
+                            </span>
+                          ))}
+                        </div>
+                      </motion.div>
                     )}
-                  </div>
-                  <span className="text-xs font-medium text-sky-300">
-                    {event.participants.join(", ")}
-                  </span>
+                  </AnimatePresence>
                 </div>
               )}
             </div>
