@@ -1,13 +1,21 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, CalendarDays, Users, BedDouble, UserPlus, UserMinus, Check } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  CalendarDays,
+  Users,
+  BedDouble,
+  UserPlus,
+  UserMinus,
+  Check,
+} from "lucide-react";
 import { Badge } from "../common/Badge";
 import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
 import { parseEventDate, toDateKey, todayKey } from "../../utils/date";
 import type { CalendarEvent } from "../../types";
-
-const DAY_LABELS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
+import { DAY_LABELS } from "../../constants";
 
 interface CalendarGridProps {
   events: CalendarEvent[];
@@ -16,7 +24,12 @@ interface CalendarGridProps {
   onLeave?: (rowNumber: number, userName: string) => void;
 }
 
-export function CalendarGrid({ events, allUsers = [], onRsvp, onLeave }: CalendarGridProps) {
+export function CalendarGrid({
+  events,
+  allUsers = [],
+  onRsvp,
+  onLeave,
+}: CalendarGridProps) {
   const [activeRsvpEvent, setActiveRsvpEvent] = useState<number | null>(null);
   const [rsvpMode, setRsvpMode] = useState<"join" | "leave">("join");
   const [rsvpNames, setRsvpNames] = useState<string[]>([]);
@@ -33,7 +46,10 @@ export function CalendarGrid({ events, allUsers = [], onRsvp, onLeave }: Calenda
     return map;
   }, [events]);
 
-  const [currentMonth, setCurrentMonth] = useState<{ year: number; month: number }>(() => {
+  const [currentMonth, setCurrentMonth] = useState<{
+    year: number;
+    month: number;
+  }>(() => {
     const today = new Date();
     const keys = Object.keys(eventMap).sort();
     const futureKey = keys.find((k) => k >= toDateKey(today));
@@ -95,7 +111,9 @@ export function CalendarGrid({ events, allUsers = [], onRsvp, onLeave }: Calenda
           <ChevronLeft size={16} />
         </button>
         <div className="text-center">
-          <p className="text-sm font-black text-slate-800 dark:text-white capitalize">{monthLabel}</p>
+          <p className="text-sm font-black text-slate-800 dark:text-white capitalize">
+            {monthLabel}
+          </p>
           {monthEventCount > 0 && (
             <p className="text-xs text-sky-500 font-semibold mt-0.5">
               {monthEventCount} {monthEventCount === 1 ? "event" : "events"}
@@ -114,7 +132,10 @@ export function CalendarGrid({ events, allUsers = [], onRsvp, onLeave }: Calenda
         {/* Day-of-week headers */}
         <div className="grid grid-cols-7 mb-1">
           {DAY_LABELS.map((d) => (
-            <div key={d} className="text-center text-xs font-bold text-slate-300 py-1">
+            <div
+              key={d}
+              className="text-center text-xs font-bold text-slate-300 py-1"
+            >
               {d}
             </div>
           ))}
@@ -133,22 +154,39 @@ export function CalendarGrid({ events, allUsers = [], onRsvp, onLeave }: Calenda
             return (
               <button
                 key={i}
-                onClick={() => hasEvents && setSelectedDate(isSelected ? null : dateKey)}
+                onClick={() =>
+                  hasEvents && setSelectedDate(isSelected ? null : dateKey)
+                }
                 disabled={!hasEvents}
                 className={[
                   "relative flex h-10 flex-col items-center justify-center rounded-xl text-sm transition-all",
-                  isSelected ? "bg-sky-500 text-white shadow-sm font-black" : "",
-                  !isSelected && hasEvents ? "text-sky-700 font-black hover:bg-sky-50 cursor-pointer dark:text-sky-400 dark:hover:bg-sky-900/30" : "",
-                  !isSelected && !hasEvents ? "text-slate-300 font-medium cursor-default" : "",
-                  isToday && !isSelected ? "ring-2 ring-sky-400 ring-offset-1" : "",
-                ].filter(Boolean).join(" ")}
+                  isSelected
+                    ? "bg-sky-500 text-white shadow-sm font-black"
+                    : "",
+                  !isSelected && hasEvents
+                    ? "text-sky-700 font-black hover:bg-sky-50 cursor-pointer dark:text-sky-400 dark:hover:bg-sky-900/30"
+                    : "",
+                  !isSelected && !hasEvents
+                    ? "text-slate-300 font-medium cursor-default"
+                    : "",
+                  isToday && !isSelected
+                    ? "ring-2 ring-sky-400 ring-offset-1"
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
               >
                 <span className="leading-none">{day}</span>
                 {hasEvents && !isSelected && (
                   <span className="mt-0.5 flex gap-0.5">
-                    {Array.from({ length: Math.min(eventCount, 3) }).map((_, j) => (
-                      <span key={j} className="h-1 w-1 rounded-full bg-sky-400" />
-                    ))}
+                    {Array.from({ length: Math.min(eventCount, 3) }).map(
+                      (_, j) => (
+                        <span
+                          key={j}
+                          className="h-1 w-1 rounded-full bg-sky-400"
+                        />
+                      ),
+                    )}
                   </span>
                 )}
               </button>
@@ -211,11 +249,16 @@ export function CalendarGrid({ events, allUsers = [], onRsvp, onLeave }: Calenda
                                 <div className="space-y-2">
                                   <div className="flex items-center justify-between">
                                     <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                                      {rsvpMode === "join" ? "Wie meldt zich aan?" : "Wie meldt zich af?"}
+                                      {rsvpMode === "join"
+                                        ? "Wie meldt zich aan?"
+                                        : "Wie meldt zich af?"}
                                     </p>
                                     <button
                                       type="button"
-                                      onClick={() => { setActiveRsvpEvent(null); setRsvpNames([]); }}
+                                      onClick={() => {
+                                        setActiveRsvpEvent(null);
+                                        setRsvpNames([]);
+                                      }}
                                       className="flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:hover:bg-slate-700"
                                     >
                                       <span className="text-xs">✕</span>
@@ -223,19 +266,30 @@ export function CalendarGrid({ events, allUsers = [], onRsvp, onLeave }: Calenda
                                   </div>
                                   <NamePicker
                                     multiple
-                                    options={rsvpMode === "leave" ? ev.participants : allUsers}
+                                    options={
+                                      rsvpMode === "leave"
+                                        ? ev.participants
+                                        : allUsers
+                                    }
                                     value={rsvpNames}
                                     onChange={setRsvpNames}
-                                    color={rsvpMode === "leave" ? "rose" : "sky"}
+                                    color={
+                                      rsvpMode === "leave" ? "rose" : "sky"
+                                    }
                                   />
                                   <Button
                                     size="sm"
-                                    variant={rsvpMode === "leave" ? "danger" : "primary"}
+                                    variant={
+                                      rsvpMode === "leave"
+                                        ? "danger"
+                                        : "primary"
+                                    }
                                     disabled={rsvpNames.length === 0}
                                     className="w-full"
                                     onClick={() => {
                                       rsvpNames.forEach((name) => {
-                                        if (rsvpMode === "join") onRsvp!(ev.row_number, name);
+                                        if (rsvpMode === "join")
+                                          onRsvp!(ev.row_number, name);
                                         else onLeave!(ev.row_number, name);
                                       });
                                       setActiveRsvpEvent(null);
@@ -246,15 +300,19 @@ export function CalendarGrid({ events, allUsers = [], onRsvp, onLeave }: Calenda
                                     {rsvpNames.length === 0
                                       ? "Selecteer naam(en)"
                                       : rsvpMode === "join"
-                                      ? `${rsvpNames.length} ${rsvpNames.length === 1 ? "persoon" : "personen"} aanmelden`
-                                      : `${rsvpNames.length} ${rsvpNames.length === 1 ? "persoon" : "personen"} afmelden`}
+                                        ? `${rsvpNames.length} ${rsvpNames.length === 1 ? "persoon" : "personen"} aanmelden`
+                                        : `${rsvpNames.length} ${rsvpNames.length === 1 ? "persoon" : "personen"} afmelden`}
                                   </Button>
                                 </div>
                               ) : (
                                 <div className="flex gap-2">
                                   <button
                                     type="button"
-                                    onClick={() => { setActiveRsvpEvent(ev.row_number); setRsvpMode("join"); setRsvpNames([]); }}
+                                    onClick={() => {
+                                      setActiveRsvpEvent(ev.row_number);
+                                      setRsvpMode("join");
+                                      setRsvpNames([]);
+                                    }}
                                     className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-sky-200/60 bg-sky-50 py-2 text-xs font-semibold text-sky-700 hover:bg-sky-100 transition-colors dark:border-sky-800/50 dark:bg-sky-900/25 dark:text-sky-400 dark:hover:bg-sky-900/40"
                                   >
                                     <UserPlus size={12} />
@@ -263,7 +321,11 @@ export function CalendarGrid({ events, allUsers = [], onRsvp, onLeave }: Calenda
                                   {ev.participants.length > 0 && (
                                     <button
                                       type="button"
-                                      onClick={() => { setActiveRsvpEvent(ev.row_number); setRsvpMode("leave"); setRsvpNames([]); }}
+                                      onClick={() => {
+                                        setActiveRsvpEvent(ev.row_number);
+                                        setRsvpMode("leave");
+                                        setRsvpNames([]);
+                                      }}
                                       className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200/60 bg-slate-50 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-100 transition-colors dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400 dark:hover:bg-slate-800"
                                     >
                                       <UserMinus size={12} />

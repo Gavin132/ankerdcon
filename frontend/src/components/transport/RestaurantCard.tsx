@@ -12,7 +12,6 @@ import {
   X,
   CheckCircle2,
 } from "lucide-react";
-import { Badge } from "../common/Badge";
 import { Button } from "../common/Button";
 import { Modal } from "../common/Modal";
 import { NamePicker } from "../common/NamePicker";
@@ -63,25 +62,44 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
   const attendees = ride.passengers;
   const driverNames = new Set(drivers.map((d) => d.name));
   const assignedPax = new Set(drivers.flatMap((d) => d.passengers));
-  const unassigned = attendees.filter((a) => !driverNames.has(a) && !assignedPax.has(a));
+  const unassigned = attendees.filter(
+    (a) => !driverNames.has(a) && !assignedPax.has(a),
+  );
   const totalCapacity = drivers.reduce((sum, d) => sum + d.seats, 0);
   const nonDriverAttendees = attendees.filter((a) => !driverNames.has(a));
   const hasGap = unassigned.length > 0 && drivers.length > 0;
-  const allClear = drivers.length > 0 && nonDriverAttendees.length > 0 && unassigned.length === 0;
-  const allParticipants = Array.from(new Set([...attendees, ...drivers.map((d) => d.name)]));
+  const allClear =
+    drivers.length > 0 &&
+    nonDriverAttendees.length > 0 &&
+    unassigned.length === 0;
+  const allParticipants = Array.from(
+    new Set([...attendees, ...drivers.map((d) => d.name)]),
+  );
 
   const targetDriver = drivers.find((d) => d.name === joinTarget);
-  const spotsInTarget = targetDriver ? targetDriver.seats - targetDriver.passengers.length : 0;
+  const spotsInTarget = targetDriver
+    ? targetDriver.seats - targetDriver.passengers.length
+    : 0;
 
   async function handleAddDriver() {
     if (!driverName.trim()) return;
     try {
-      await addDriverMutation.mutateAsync({ rowNumber: ride.row_number, payload: { user_name: driverName.trim(), seats: driverSeats } });
+      await addDriverMutation.mutateAsync({
+        rowNumber: ride.row_number,
+        payload: { user_name: driverName.trim(), seats: driverSeats },
+      });
       if (!attendees.includes(driverName.trim())) {
-        await claimMutation.mutateAsync({ rowNumber: ride.row_number, payload: { user_name: driverName.trim() } });
+        await claimMutation.mutateAsync({
+          rowNumber: ride.row_number,
+          payload: { user_name: driverName.trim() },
+        });
       }
-      toast("success", `${driverName.trim()} rijdt mee (${driverSeats} plaatsen)`);
-      setDriverName(""); setDriverOpen(false);
+      toast(
+        "success",
+        `${driverName.trim()} rijdt mee (${driverSeats} plaatsen)`,
+      );
+      setDriverName("");
+      setDriverOpen(false);
     } catch {
       toast("error", "Kon chauffeur niet registreren.");
     }
@@ -91,10 +109,19 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
     if (attendNames.length === 0) return;
     try {
       for (const name of attendNames) {
-        await claimMutation.mutateAsync({ rowNumber: ride.row_number, payload: { user_name: name } });
+        await claimMutation.mutateAsync({
+          rowNumber: ride.row_number,
+          payload: { user_name: name },
+        });
       }
-      toast("success", attendNames.length === 1 ? `${attendNames[0]} gaat mee!` : `${attendNames.length} personen gaan mee!`);
-      setAttendNames([]); setAttendOpen(false);
+      toast(
+        "success",
+        attendNames.length === 1
+          ? `${attendNames[0]} gaat mee!`
+          : `${attendNames.length} personen gaan mee!`,
+      );
+      setAttendNames([]);
+      setAttendOpen(false);
     } catch {
       toast("error", "Kon aanmelding niet verwerken.");
     }
@@ -105,21 +132,41 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
     try {
       for (const name of joinNames) {
         if (!attendees.includes(name)) {
-          await claimMutation.mutateAsync({ rowNumber: ride.row_number, payload: { user_name: name } });
+          await claimMutation.mutateAsync({
+            rowNumber: ride.row_number,
+            payload: { user_name: name },
+          });
         }
-        await assignMutation.mutateAsync({ rowNumber: ride.row_number, payload: { user_name: name, driver_name: joinTarget } });
+        await assignMutation.mutateAsync({
+          rowNumber: ride.row_number,
+          payload: { user_name: name, driver_name: joinTarget },
+        });
       }
-      toast("success", joinNames.length === 1 ? `${joinNames[0]} rijdt mee met ${joinTarget}` : `${joinNames.length} personen rijden mee met ${joinTarget}`);
-      setJoinNames([]); setJoinOpen(false);
+      toast(
+        "success",
+        joinNames.length === 1
+          ? `${joinNames[0]} rijdt mee met ${joinTarget}`
+          : `${joinNames.length} personen rijden mee met ${joinTarget}`,
+      );
+      setJoinNames([]);
+      setJoinOpen(false);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "";
-      toast("error", msg.includes("vol") ? `Auto van ${joinTarget} is vol!` : "Kon niet toewijzen.");
+      toast(
+        "error",
+        msg.includes("vol")
+          ? `Auto van ${joinTarget} is vol!`
+          : "Kon niet toewijzen.",
+      );
     }
   }
 
   async function handleUnassign(userName: string) {
     try {
-      await unassignMutation.mutateAsync({ rowNumber: ride.row_number, payload: { user_name: userName } });
+      await unassignMutation.mutateAsync({
+        rowNumber: ride.row_number,
+        payload: { user_name: userName },
+      });
       toast("info", `${userName} verwijderd uit auto`);
     } catch {
       toast("error", "Kon niet verwijderen.");
@@ -131,13 +178,23 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
     const isDriver = driverNames.has(leaveName.trim());
     try {
       if (isDriver) {
-        await leaveDriverMutation.mutateAsync({ rowNumber: ride.row_number, payload: { user_name: leaveName.trim() } });
+        await leaveDriverMutation.mutateAsync({
+          rowNumber: ride.row_number,
+          payload: { user_name: leaveName.trim() },
+        });
       } else {
-        await unassignMutation.mutateAsync({ rowNumber: ride.row_number, payload: { user_name: leaveName.trim() } });
+        await unassignMutation.mutateAsync({
+          rowNumber: ride.row_number,
+          payload: { user_name: leaveName.trim() },
+        });
       }
-      await leaveSeatMutation.mutateAsync({ rowNumber: ride.row_number, payload: { user_name: leaveName.trim() } });
+      await leaveSeatMutation.mutateAsync({
+        rowNumber: ride.row_number,
+        payload: { user_name: leaveName.trim() },
+      });
       toast("success", `${leaveName.trim()} afgemeld.`);
-      setLeaveName(""); setLeaveOpen(false);
+      setLeaveName("");
+      setLeaveOpen(false);
     } catch {
       toast("error", "Kon afmelding niet verwerken.");
     }
@@ -146,13 +203,16 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
   return (
     <>
       <motion.div variants={listItem}>
-        <div className={`card-surface rounded-2xl overflow-hidden border-l-4 ${hasGap ? "border-l-rose-400" : allClear ? "border-l-emerald-400" : "border-l-amber-400"}`}>
-
+        <div
+          className={`card-surface rounded-2xl overflow-hidden border-l-4 ${hasGap ? "border-l-rose-400" : allClear ? "border-l-emerald-400" : "border-l-amber-400"}`}
+        >
           {/* Top banner */}
           {hasGap && canAct && (
             <div className="flex items-center gap-2 bg-rose-50 px-4 py-2.5 text-xs font-bold text-rose-700 border-b border-rose-100 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-900/40">
               <AlertCircle size={12} />
-              {unassigned.length} {unassigned.length === 1 ? "persoon heeft" : "personen hebben"} nog geen rit — wijs ze toe!
+              {unassigned.length}{" "}
+              {unassigned.length === 1 ? "persoon heeft" : "personen hebben"}{" "}
+              nog geen rit — wijs ze toe!
             </div>
           )}
           {!hasGap && ride.action_required && canAct && !allClear && (
@@ -181,20 +241,28 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
                 <Utensils size={20} className="text-white" strokeWidth={2} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-black text-slate-900 dark:text-white text-sm truncate">{ride.start_location}</p>
+                <p className="font-black text-slate-900 dark:text-white text-sm truncate">
+                  {ride.start_location}
+                </p>
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
                   <Clock size={11} className="text-amber-400 shrink-0" />
                   {formatDateTime(ride.departure_time)}
                 </span>
               </div>
               {drivers.length > 0 && (
-                <div className={`shrink-0 flex flex-col items-center rounded-xl px-2.5 py-1.5 text-xs font-black ${
-                  hasGap
-                    ? "bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"
-                    : "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-                }`}>
-                  <span>{assignedPax.size}/{totalCapacity}</span>
-                  <span className="text-[9px] font-normal opacity-70">bezet</span>
+                <div
+                  className={`shrink-0 flex flex-col items-center rounded-xl px-2.5 py-1.5 text-xs font-black ${
+                    hasGap
+                      ? "bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"
+                      : "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                  }`}
+                >
+                  <span>
+                    {assignedPax.size}/{totalCapacity}
+                  </span>
+                  <span className="text-[9px] font-normal opacity-70">
+                    bezet
+                  </span>
                 </div>
               )}
             </div>
@@ -207,7 +275,10 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
                 </p>
                 {canAct && (
                   <button
-                    onClick={() => { setDriverName(""); setDriverOpen(true); }}
+                    onClick={() => {
+                      setDriverName("");
+                      setDriverOpen(true);
+                    }}
                     className="flex items-center gap-1 text-xs font-semibold text-amber-600 hover:text-amber-700 transition-colors dark:text-amber-400"
                   >
                     <Plus size={11} />
@@ -217,7 +288,9 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
               </div>
 
               {drivers.length === 0 ? (
-                <p className="text-xs text-slate-400 italic">Nog geen chauffeurs — wie rijdt er?</p>
+                <p className="text-xs text-slate-400 italic">
+                  Nog geen chauffeurs — wie rijdt er?
+                </p>
               ) : (
                 <div className="space-y-2">
                   {drivers.map((d) => {
@@ -230,22 +303,37 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
                       >
                         <div className="flex items-center justify-between px-3 pt-2.5 pb-2">
                           <div className="flex items-center gap-2">
-                            {d.name.trim().toLowerCase().startsWith("timo")
-                              ? <Truck size={13} className="text-amber-500 shrink-0" />
-                              : <Car size={13} className="text-amber-500 shrink-0" />
-                            }
-                            <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{d.name}</span>
-                            <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                              isFull
-                                ? "bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400"
-                                : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                            }`}>
+                            {d.name.trim().toLowerCase().startsWith("timo") ? (
+                              <Truck
+                                size={13}
+                                className="text-amber-500 shrink-0"
+                              />
+                            ) : (
+                              <Car
+                                size={13}
+                                className="text-amber-500 shrink-0"
+                              />
+                            )}
+                            <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                              {d.name}
+                            </span>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                                isFull
+                                  ? "bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400"
+                                  : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                              }`}
+                            >
                               {d.passengers.length}/{d.seats}
                             </span>
                           </div>
                           {canAct && !isFull && (
                             <button
-                              onClick={() => { setJoinTarget(d.name); setJoinNames([]); setJoinOpen(true); }}
+                              onClick={() => {
+                                setJoinTarget(d.name);
+                                setJoinNames([]);
+                                setJoinOpen(true);
+                              }}
                               className="flex items-center gap-1 rounded-lg bg-sky-50 px-2.5 py-1 text-xs font-bold text-sky-600 hover:bg-sky-100 transition-colors dark:bg-sky-900/30 dark:text-sky-400 dark:hover:bg-sky-900/50"
                             >
                               Stap in
@@ -253,24 +341,40 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
                             </button>
                           )}
                           {isFull && canAct && (
-                            <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">Vol</span>
+                            <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+                              Vol
+                            </span>
                           )}
                         </div>
                         <div className="px-3 pb-2.5 flex flex-wrap gap-1.5">
                           {d.passengers.length === 0 ? (
-                            <span className="text-xs text-slate-400 italic">{spotsLeft} {spotsLeft === 1 ? "plek" : "plekken"} vrij</span>
+                            <span className="text-xs text-slate-400 italic">
+                              {spotsLeft} {spotsLeft === 1 ? "plek" : "plekken"}{" "}
+                              vrij
+                            </span>
                           ) : (
                             <>
                               {d.passengers.map((pax) => (
                                 <button
                                   key={pax}
                                   onClick={() => canAct && handleUnassign(pax)}
-                                  disabled={!canAct || unassignMutation.isPending}
-                                  title={canAct ? "Klik om uit auto te verwijderen" : undefined}
+                                  disabled={
+                                    !canAct || unassignMutation.isPending
+                                  }
+                                  title={
+                                    canAct
+                                      ? "Klik om uit auto te verwijderen"
+                                      : undefined
+                                  }
                                   className="group inline-flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-700 transition-colors hover:bg-rose-100 hover:text-rose-600 disabled:cursor-default disabled:opacity-60 dark:bg-sky-900/30 dark:text-sky-300 dark:hover:bg-rose-900/30 dark:hover:text-rose-400"
                                 >
                                   {pax}
-                                  {canAct && <X size={9} className="opacity-0 transition-opacity group-hover:opacity-100" />}
+                                  {canAct && (
+                                    <X
+                                      size={9}
+                                      className="opacity-0 transition-opacity group-hover:opacity-100"
+                                    />
+                                  )}
                                 </button>
                               ))}
                               {spotsLeft > 0 && (
@@ -306,7 +410,9 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
                   ))}
                 </div>
                 {drivers.length === 0 && (
-                  <p className="mt-2 text-xs text-rose-400">Voeg eerst een chauffeur toe</p>
+                  <p className="mt-2 text-xs text-rose-400">
+                    Voeg eerst een chauffeur toe
+                  </p>
                 )}
               </div>
             )}
@@ -315,7 +421,10 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
             <div className="flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-700">
               {canAct && allParticipants.length > 0 ? (
                 <button
-                  onClick={() => { setLeaveName(""); setLeaveOpen(true); }}
+                  onClick={() => {
+                    setLeaveName("");
+                    setLeaveOpen(true);
+                  }}
                   className="text-xs text-slate-400 hover:text-slate-600 transition-colors dark:hover:text-slate-300"
                 >
                   Afmelden
@@ -325,11 +434,22 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
               )}
               {canAct && (
                 <div className="flex gap-2">
-                  <Button variant="secondary" onClick={() => { setDriverName(""); setDriverOpen(true); }}>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setDriverName("");
+                      setDriverOpen(true);
+                    }}
+                  >
                     <Car size={13} />
                     Ik rijd
                   </Button>
-                  <Button onClick={() => { setAttendNames([]); setAttendOpen(true); }}>
+                  <Button
+                    onClick={() => {
+                      setAttendNames([]);
+                      setAttendOpen(true);
+                    }}
+                  >
                     <Users size={13} />
                     Ik ga mee
                   </Button>
@@ -341,11 +461,26 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
       </motion.div>
 
       {/* Ik rijd modal */}
-      <Modal open={driverOpen} onClose={() => { setDriverOpen(false); setDriverName(""); }} title="Ik rijd" description="Hoeveel mensen kun je meenemen?">
+      <Modal
+        open={driverOpen}
+        onClose={() => {
+          setDriverOpen(false);
+          setDriverName("");
+        }}
+        title="Ik rijd"
+        description="Hoeveel mensen kun je meenemen?"
+      >
         <div className="space-y-4">
-          <NamePicker options={userNames} value={driverName} onChange={setDriverName} color="sky" />
+          <NamePicker
+            options={userNames}
+            value={driverName}
+            onChange={setDriverName}
+            color="sky"
+          />
           <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Beschikbare plaatsen</label>
+            <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
+              Beschikbare plaatsen
+            </label>
             <div className="flex gap-2">
               {[2, 3, 4, 5, 6, 7].map((n) => (
                 <button
@@ -359,18 +494,34 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
               ))}
             </div>
           </div>
-          <Button onClick={handleAddDriver} loading={addDriverMutation.isPending || claimMutation.isPending} className="w-full" disabled={!driverName.trim()}>
+          <Button
+            onClick={handleAddDriver}
+            loading={addDriverMutation.isPending || claimMutation.isPending}
+            className="w-full"
+            disabled={!driverName.trim()}
+          >
             <Car size={15} />
-            {driverName.trim() ? `${driverName} rijdt met ${driverSeats} plaatsen` : "Selecteer een naam"}
+            {driverName.trim()
+              ? `${driverName} rijdt met ${driverSeats} plaatsen`
+              : "Selecteer een naam"}
           </Button>
         </div>
       </Modal>
 
       {/* Ik ga mee modal */}
-      <Modal open={attendOpen} onClose={() => { setAttendOpen(false); setAttendNames([]); }} title="Ik ga mee" description={`Aanmelden voor ${ride.start_location}`}>
+      <Modal
+        open={attendOpen}
+        onClose={() => {
+          setAttendOpen(false);
+          setAttendNames([]);
+        }}
+        title="Ik ga mee"
+        description={`Aanmelden voor ${ride.start_location}`}
+      >
         <div className="space-y-4">
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Je wordt op de lijst gezet. Kies daarna een auto via <strong>Stap in</strong>.
+            Je wordt op de lijst gezet. Kies daarna een auto via{" "}
+            <strong>Stap in</strong>.
           </p>
           <NamePicker
             multiple
@@ -379,13 +530,18 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
             onChange={setAttendNames}
             color="sky"
           />
-          <Button onClick={handleAttend} loading={claimMutation.isPending} className="w-full" disabled={attendNames.length === 0}>
+          <Button
+            onClick={handleAttend}
+            loading={claimMutation.isPending}
+            className="w-full"
+            disabled={attendNames.length === 0}
+          >
             <Users size={15} />
             {attendNames.length === 0
               ? "Selecteer een naam"
               : attendNames.length === 1
-              ? `${attendNames[0]} gaat mee!`
-              : `${attendNames.length} personen gaan mee!`}
+                ? `${attendNames[0]} gaat mee!`
+                : `${attendNames.length} personen gaan mee!`}
           </Button>
         </div>
       </Modal>
@@ -393,9 +549,16 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
       {/* Stap in modal */}
       <Modal
         open={joinOpen}
-        onClose={() => { setJoinOpen(false); setJoinNames([]); }}
+        onClose={() => {
+          setJoinOpen(false);
+          setJoinNames([]);
+        }}
         title={`Stap in bij ${joinTarget}`}
-        description={spotsInTarget > 0 ? `${spotsInTarget} ${spotsInTarget === 1 ? "plek" : "plekken"} beschikbaar` : ""}
+        description={
+          spotsInTarget > 0
+            ? `${spotsInTarget} ${spotsInTarget === 1 ? "plek" : "plekken"} beschikbaar`
+            : ""
+        }
       >
         <div className="space-y-4">
           <NamePicker
@@ -405,7 +568,9 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
             onChange={setJoinNames}
             maxSelect={spotsInTarget}
             color="sky"
-            placeholder={unassigned.length > 0 ? "Zoek iemand zonder rit…" : "Zoek naam…"}
+            placeholder={
+              unassigned.length > 0 ? "Zoek iemand zonder rit…" : "Zoek naam…"
+            }
           />
           <Button
             onClick={handleJoin}
@@ -417,20 +582,37 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
             {joinNames.length === 0
               ? "Selecteer een naam"
               : joinNames.length === 1
-              ? `${joinNames[0]} stap in bij ${joinTarget}`
-              : `${joinNames.length} personen stap in bij ${joinTarget}`}
+                ? `${joinNames[0]} stap in bij ${joinTarget}`
+                : `${joinNames.length} personen stap in bij ${joinTarget}`}
           </Button>
         </div>
       </Modal>
 
       {/* Afmelden modal */}
-      <Modal open={leaveOpen} onClose={() => { setLeaveOpen(false); setLeaveName(""); }} title="Afmelden" description="Verwijder jezelf van de lijst">
+      <Modal
+        open={leaveOpen}
+        onClose={() => {
+          setLeaveOpen(false);
+          setLeaveName("");
+        }}
+        title="Afmelden"
+        description="Verwijder jezelf van de lijst"
+      >
         <div className="space-y-4">
-          <NamePicker options={allParticipants} value={leaveName} onChange={setLeaveName} color="rose" />
+          <NamePicker
+            options={allParticipants}
+            value={leaveName}
+            onChange={setLeaveName}
+            color="rose"
+          />
           <Button
             onClick={handleLeave}
             variant="danger"
-            loading={leaveDriverMutation.isPending || leaveSeatMutation.isPending || unassignMutation.isPending}
+            loading={
+              leaveDriverMutation.isPending ||
+              leaveSeatMutation.isPending ||
+              unassignMutation.isPending
+            }
             className="w-full"
             disabled={!leaveName.trim()}
           >

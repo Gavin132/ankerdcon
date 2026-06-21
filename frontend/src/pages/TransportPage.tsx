@@ -6,7 +6,6 @@ import {
   ChevronDown,
   ArrowRight,
   ArrowLeft,
-  MapPin,
   History,
   Utensils,
 } from "lucide-react";
@@ -51,7 +50,9 @@ const container = {
 
 export function TransportPage() {
   const location = useLocation();
-  const [tab, setTab] = useState<Direction>((location.state as { tab?: Direction })?.tab ?? "Inbound");
+  const [tab, setTab] = useState<Direction>(
+    (location.state as { tab?: Direction })?.tab ?? "Inbound",
+  );
   const [createOpen, setCreateOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const { data: rides, isLoading } = useRides();
@@ -68,10 +69,14 @@ export function TransportPage() {
     formState: { errors, isSubmitting },
   } = useForm<CreateForm>({
     resolver: zodResolver(createSchema),
-    defaultValues: { direction: "Inbound", vehicle_type: "Car", total_seats: 4 },
+    defaultValues: {
+      direction: "Inbound",
+      vehicle_type: "Car",
+      total_seats: 4,
+    },
   });
 
-  const vehicleType   = watch("vehicle_type");
+  const vehicleType = watch("vehicle_type");
   const formDirection = watch("direction");
 
   useEffect(() => {
@@ -84,12 +89,15 @@ export function TransportPage() {
   }, [vehicleType, formDirection, setValue]);
 
   const allFiltered = (rides ?? []).filter((r) => r.direction === tab);
-  const activeRides = allFiltered.filter((r) => getRideStatus(r.departure_time).status !== "past");
-  const pastRides   = allFiltered
+  const activeRides = allFiltered.filter(
+    (r) => getRideStatus(r.departure_time).status !== "past",
+  );
+  const pastRides = allFiltered
     .filter((r) => getRideStatus(r.departure_time).status === "past")
-    .sort((a, b) =>
-      new Date(b.departure_time.replace(" ", "T")).getTime() -
-      new Date(a.departure_time.replace(" ", "T")).getTime()
+    .sort(
+      (a, b) =>
+        new Date(b.departure_time.replace(" ", "T")).getTime() -
+        new Date(a.departure_time.replace(" ", "T")).getTime(),
     );
 
   function openCreate() {
@@ -137,10 +145,29 @@ export function TransportPage() {
                 : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
             }`}
           >
-            {d === "Inbound" && <ArrowRight size={13} className={tab === d ? "text-sky-500" : ""} />}
-            {d === "Outbound" && <ArrowLeft size={13} className={tab === d ? "text-sky-500" : ""} />}
-            {d === "Restaurant" && <Utensils size={13} className={tab === d ? "text-amber-500" : ""} />}
-            {d === "Inbound" ? "Heen" : d === "Outbound" ? "Terug" : "Restaurant"}
+            {d === "Inbound" && (
+              <ArrowRight
+                size={13}
+                className={tab === d ? "text-sky-500" : ""}
+              />
+            )}
+            {d === "Outbound" && (
+              <ArrowLeft
+                size={13}
+                className={tab === d ? "text-sky-500" : ""}
+              />
+            )}
+            {d === "Restaurant" && (
+              <Utensils
+                size={13}
+                className={tab === d ? "text-amber-500" : ""}
+              />
+            )}
+            {d === "Inbound"
+              ? "Heen"
+              : d === "Outbound"
+                ? "Terug"
+                : "Restaurant"}
           </button>
         ))}
       </div>
@@ -180,10 +207,18 @@ export function TransportPage() {
             >
               {activeRides.map((ride) =>
                 ride.direction === "Restaurant" ? (
-                  <RestaurantCard key={ride.row_number} ride={ride} userNames={userNames} />
+                  <RestaurantCard
+                    key={ride.row_number}
+                    ride={ride}
+                    userNames={userNames}
+                  />
                 ) : (
-                  <RideCard key={ride.row_number} ride={ride} userNames={userNames} />
-                )
+                  <RideCard
+                    key={ride.row_number}
+                    ride={ride}
+                    userNames={userNames}
+                  />
+                ),
               )}
             </motion.div>
           )}
@@ -199,7 +234,10 @@ export function TransportPage() {
                   <History size={14} />
                   Geschiedenis ({pastRides.length})
                 </span>
-                <motion.div animate={{ rotate: showHistory ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                <motion.div
+                  animate={{ rotate: showHistory ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
                   <ChevronDown size={14} />
                 </motion.div>
               </button>
@@ -221,10 +259,18 @@ export function TransportPage() {
                     >
                       {pastRides.map((ride) =>
                         ride.direction === "Restaurant" ? (
-                          <RestaurantCard key={ride.row_number} ride={ride} userNames={userNames} />
+                          <RestaurantCard
+                            key={ride.row_number}
+                            ride={ride}
+                            userNames={userNames}
+                          />
                         ) : (
-                          <RideCard key={ride.row_number} ride={ride} userNames={userNames} />
-                        )
+                          <RideCard
+                            key={ride.row_number}
+                            ride={ride}
+                            userNames={userNames}
+                          />
+                        ),
                       )}
                     </motion.div>
                   </motion.div>
@@ -243,7 +289,9 @@ export function TransportPage() {
         description="Vul de details van de rit in"
       >
         <form onSubmit={handleSubmit(onCreate)} className="space-y-4">
-          <div className={`grid gap-3 ${formDirection === "Restaurant" ? "grid-cols-1" : "grid-cols-2"}`}>
+          <div
+            className={`grid gap-3 ${formDirection === "Restaurant" ? "grid-cols-1" : "grid-cols-2"}`}
+          >
             <div>
               <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
                 Richting
@@ -269,7 +317,11 @@ export function TransportPage() {
 
           <div>
             <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
-              {formDirection === "Restaurant" ? "Organisator" : vehicleType === "Car" ? "Chauffeur" : "Lijn / vervoerder"}
+              {formDirection === "Restaurant"
+                ? "Organisator"
+                : vehicleType === "Car"
+                  ? "Chauffeur"
+                  : "Lijn / vervoerder"}
             </label>
             {vehicleType === "Car" || formDirection === "Restaurant" ? (
               <SearchSelect
@@ -287,43 +339,68 @@ export function TransportPage() {
               />
             )}
             {errors.driver && (
-              <p className="mt-1.5 text-xs text-rose-500">{errors.driver.message}</p>
+              <p className="mt-1.5 text-xs text-rose-500">
+                {errors.driver.message}
+              </p>
             )}
           </div>
 
-          <div className={`grid gap-3 ${vehicleType === "Public Transport" || formDirection === "Restaurant" ? "grid-cols-1" : "grid-cols-2"}`}>
+          <div
+            className={`grid gap-3 ${vehicleType === "Public Transport" || formDirection === "Restaurant" ? "grid-cols-1" : "grid-cols-2"}`}
+          >
             <div>
               <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
                 Vertrektijd
               </label>
-              <input type="datetime-local" className="input-field" {...register("departure_time")} />
+              <input
+                type="datetime-local"
+                className="input-field"
+                {...register("departure_time")}
+              />
               {errors.departure_time && (
-                <p className="mt-1.5 text-xs text-rose-500">{errors.departure_time.message}</p>
+                <p className="mt-1.5 text-xs text-rose-500">
+                  {errors.departure_time.message}
+                </p>
               )}
             </div>
-            {vehicleType !== "Public Transport" && formDirection !== "Restaurant" && (
-              <div>
-                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
-                  Plaatsen
-                </label>
-                <input type="number" min={1} max={99} className="input-field" {...register("total_seats")} />
-              </div>
-            )}
+            {vehicleType !== "Public Transport" &&
+              formDirection !== "Restaurant" && (
+                <div>
+                  <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
+                    Plaatsen
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={99}
+                    className="input-field"
+                    {...register("total_seats")}
+                  />
+                </div>
+              )}
           </div>
 
           {/* Departure + destination */}
           <div className="space-y-2">
             <div>
               <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
-                {formDirection === "Restaurant" ? "Restaurant / locatie" : "Vertrekpunt"}
+                {formDirection === "Restaurant"
+                  ? "Restaurant / locatie"
+                  : "Vertrekpunt"}
               </label>
               <input
                 className="input-field"
-                placeholder={formDirection === "Restaurant" ? "Bijv. La Piazza, Rotterdam" : "Bijv. Amsterdam Sloterdijk, Westmaas"}
+                placeholder={
+                  formDirection === "Restaurant"
+                    ? "Bijv. La Piazza, Rotterdam"
+                    : "Bijv. Amsterdam Sloterdijk, Westmaas"
+                }
                 {...register("start_location")}
               />
               {errors.start_location && (
-                <p className="mt-1.5 text-xs text-rose-500">{errors.start_location.message}</p>
+                <p className="mt-1.5 text-xs text-rose-500">
+                  {errors.start_location.message}
+                </p>
               )}
             </div>
             {formDirection !== "Restaurant" && (
@@ -351,7 +428,9 @@ export function TransportPage() {
                   className="h-4 w-4 rounded accent-amber-500"
                   {...register("car_available")}
                 />
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Auto beschikbaar</span>
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Auto beschikbaar
+                </span>
               </label>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
@@ -359,7 +438,9 @@ export function TransportPage() {
                   className="h-4 w-4 rounded accent-amber-500"
                   {...register("action_required")}
                 />
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Actie vereist (reageer verplicht)</span>
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Actie vereist (reageer verplicht)
+                </span>
               </label>
             </div>
           )}

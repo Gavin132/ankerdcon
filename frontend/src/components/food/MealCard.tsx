@@ -16,7 +16,11 @@ import { Badge } from "../common/Badge";
 import { Button } from "../common/Button";
 import { Modal } from "../common/Modal";
 import { NamePicker } from "../common/NamePicker";
-import { useRsvpMeal, useCancelRsvp, useDeleteMeal } from "../../hooks/useMeals";
+import {
+  useRsvpMeal,
+  useCancelRsvp,
+  useDeleteMeal,
+} from "../../hooks/useMeals";
 import { formatDateTime } from "../../utils/format";
 import { toast } from "../../store/toast.store";
 import { listItem } from "../../utils/motion";
@@ -43,11 +47,19 @@ export function MealCard({ meal, userNames }: MealCardProps) {
     if (rsvpNames.length === 0) return;
     try {
       for (const name of rsvpNames) {
-        await rsvpMutation.mutateAsync({ rowNumber: meal.row_number, payload: { user_name: name } });
+        await rsvpMutation.mutateAsync({
+          rowNumber: meal.row_number,
+          payload: { user_name: name },
+        });
       }
       setRsvpNames([]);
       setRsvpOpen(false);
-      toast("success", rsvpNames.length === 1 ? `${rsvpNames[0]} is aangemeld voor ${meal.meal_name}!` : `${rsvpNames.length} personen aangemeld voor ${meal.meal_name}!`);
+      toast(
+        "success",
+        rsvpNames.length === 1
+          ? `${rsvpNames[0]} is aangemeld voor ${meal.meal_name}!`
+          : `${rsvpNames.length} personen aangemeld voor ${meal.meal_name}!`,
+      );
     } catch {
       toast("error", "Kon je niet aanmelden. Probeer opnieuw.");
     }
@@ -56,7 +68,10 @@ export function MealCard({ meal, userNames }: MealCardProps) {
   async function onCancel() {
     if (!cancelName.trim()) return;
     try {
-      await cancelMutation.mutateAsync({ rowNumber: meal.row_number, payload: { user_name: cancelName.trim() } });
+      await cancelMutation.mutateAsync({
+        rowNumber: meal.row_number,
+        payload: { user_name: cancelName.trim() },
+      });
       setCancelName("");
       setCancelOpen(false);
       toast("success", "Aanmelding geannuleerd.");
@@ -82,12 +97,18 @@ export function MealCard({ meal, userNames }: MealCardProps) {
           <div className="p-4">
             <div className="flex items-start gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500">
-                <UtensilsCrossed size={20} className="text-white" strokeWidth={2} />
+                <UtensilsCrossed
+                  size={20}
+                  className="text-white"
+                  strokeWidth={2}
+                />
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                  <h3 className="font-black text-slate-900 text-sm">{meal.meal_name}</h3>
+                  <h3 className="font-black text-slate-900 text-sm">
+                    {meal.meal_name}
+                  </h3>
                   {meal.transport_needed && (
                     <Badge variant="blue">
                       <Bus size={10} />
@@ -105,7 +126,10 @@ export function MealCard({ meal, userNames }: MealCardProps) {
                 onClick={() => setExpanded((e) => !e)}
                 className="shrink-0 flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all"
               >
-                <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                <motion.div
+                  animate={{ rotate: expanded ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
                   <ChevronDown size={16} />
                 </motion.div>
               </button>
@@ -132,11 +156,15 @@ export function MealCard({ meal, userNames }: MealCardProps) {
               {meal.rsvps.length > 0 ? (
                 <span className="flex items-center gap-1.5 text-xs text-slate-500">
                   <Users size={11} className="text-slate-400" />
-                  <span className="font-bold text-slate-800">{meal.rsvps.length}</span>
+                  <span className="font-bold text-slate-800">
+                    {meal.rsvps.length}
+                  </span>
                   {meal.rsvps.length === 1 ? " persoon" : " personen"} aangemeld
                 </span>
               ) : (
-                <span className="text-xs text-slate-400 italic">Nog niemand aangemeld</span>
+                <span className="text-xs text-slate-400 italic">
+                  Nog niemand aangemeld
+                </span>
               )}
             </div>
 
@@ -178,11 +206,19 @@ export function MealCard({ meal, userNames }: MealCardProps) {
                         Aanmelden
                       </Button>
                       {meal.rsvps.length > 0 && (
-                        <Button size="sm" variant="ghost" onClick={() => setCancelOpen(true)}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setCancelOpen(true)}
+                        >
                           <UserMinus size={14} />
                         </Button>
                       )}
-                      <Button size="sm" variant="ghost" onClick={() => setDeleteOpen(true)}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setDeleteOpen(true)}
+                      >
                         <Trash2 size={14} className="text-rose-400" />
                       </Button>
                     </div>
@@ -196,7 +232,10 @@ export function MealCard({ meal, userNames }: MealCardProps) {
 
       <Modal
         open={rsvpOpen}
-        onClose={() => { setRsvpOpen(false); setRsvpNames([]); }}
+        onClose={() => {
+          setRsvpOpen(false);
+          setRsvpNames([]);
+        }}
         title={`Aanmelden — ${meal.meal_name}`}
         description={meal.location || undefined}
       >
@@ -218,15 +257,18 @@ export function MealCard({ meal, userNames }: MealCardProps) {
             {rsvpNames.length === 0
               ? "Selecteer een naam"
               : rsvpNames.length === 1
-              ? `${rsvpNames[0]} aanmelden`
-              : `${rsvpNames.length} personen aanmelden`}
+                ? `${rsvpNames[0]} aanmelden`
+                : `${rsvpNames.length} personen aanmelden`}
           </Button>
         </div>
       </Modal>
 
       <Modal
         open={cancelOpen}
-        onClose={() => { setCancelOpen(false); setCancelName(""); }}
+        onClose={() => {
+          setCancelOpen(false);
+          setCancelName("");
+        }}
         title="Aanmelding annuleren"
         description={meal.meal_name}
       >
@@ -245,7 +287,9 @@ export function MealCard({ meal, userNames }: MealCardProps) {
             disabled={!cancelName.trim()}
           >
             <UserMinus size={15} />
-            {cancelName.trim() ? `${cancelName} afmelden` : "Selecteer een naam"}
+            {cancelName.trim()
+              ? `${cancelName} afmelden`
+              : "Selecteer een naam"}
           </Button>
         </div>
       </Modal>
@@ -257,7 +301,11 @@ export function MealCard({ meal, userNames }: MealCardProps) {
         description={`Weet je zeker dat je "${meal.meal_name}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`}
       >
         <div className="flex gap-3">
-          <Button variant="ghost" className="flex-1" onClick={() => setDeleteOpen(false)}>
+          <Button
+            variant="ghost"
+            className="flex-1"
+            onClick={() => setDeleteOpen(false)}
+          >
             Annuleren
           </Button>
           <Button

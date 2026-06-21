@@ -148,3 +148,43 @@ export interface CalendarRsvpRequest {
 
 // UI helpers
 export type TabId = "hub" | "transport" | "food" | "finance" | "more";
+
+export type BaseProps = {
+  options: string[];
+  placeholder?: string;
+  color?: "sky" | "rose" | "green";
+};
+
+export type SingleProps = BaseProps & {
+  multiple?: false;
+  value: string;
+  onChange: (name: string) => void;
+  maxSelect?: never;
+};
+
+export type MultiProps = BaseProps & {
+  multiple: true;
+  value: string[];
+  onChange: (names: string[]) => void;
+  maxSelect?: number;
+};
+
+export type NamePickerProps = SingleProps | MultiProps;
+
+export interface MissingItem {
+  name: string;
+  items: string[];
+}
+
+export interface ActionAlert {
+  date: string;
+  eventName: string;
+  missing: MissingItem[];
+}
+
+export interface RestaurantGap {
+  rowNumber: number;
+  location: string;
+  departureTime: string;
+  unassigned: string[];
+}

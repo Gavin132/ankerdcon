@@ -1,13 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-
-interface SearchSelectProps {
-  options: string[];
-  value: string;
-  onChange: (value: string) => void;
-  onBlur?: () => void;
-  placeholder?: string;
-  className?: string;
-}
+import { SearchSelectProps } from "../../types/interfaces";
 
 export function SearchSelect({
   options,
@@ -23,13 +15,18 @@ export function SearchSelect({
 
   const filtered =
     value.trim().length > 0
-      ? options.filter((o) => o.toLowerCase().includes(value.toLowerCase())).slice(0, 8)
+      ? options
+          .filter((o) => o.toLowerCase().includes(value.toLowerCase()))
+          .slice(0, 8)
       : [];
 
   // Close on outside click
   useEffect(() => {
     function onMouseDown(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     }
@@ -63,7 +60,9 @@ export function SearchSelect({
         type="text"
         value={value}
         onChange={handleChange}
-        onFocus={() => { if (value.trim().length > 0) setOpen(true); }}
+        onFocus={() => {
+          if (value.trim().length > 0) setOpen(true);
+        }}
         onBlur={onBlur}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}

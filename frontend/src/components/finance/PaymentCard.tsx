@@ -8,12 +8,7 @@ import { formatDate, formatCurrency } from "../../utils/format";
 import { avatarColor, personInitial } from "../../utils/avatar";
 import { toast } from "../../store/toast.store";
 import { listItem } from "../../utils/motion";
-import type { Payment } from "../../types";
-
-interface PaymentCardProps {
-  payment: Payment;
-  userNames: string[];
-}
+import { PaymentCardProps } from "../../types/interfaces";
 
 export function PaymentCard({ payment, userNames }: PaymentCardProps) {
   const [expanded, setExpanded] = useState(false);
@@ -26,7 +21,10 @@ export function PaymentCard({ payment, userNames }: PaymentCardProps) {
   async function onDelete() {
     if (!deleteName) return;
     try {
-      await deleteMutation.mutateAsync({ rowNumber: payment.row_number, userName: deleteName });
+      await deleteMutation.mutateAsync({
+        rowNumber: payment.row_number,
+        userName: deleteName,
+      });
       setDeleteOpen(false);
       toast("success", `"${payment.description}" is verwijderd.`);
     } catch {
@@ -47,7 +45,9 @@ export function PaymentCard({ payment, userNames }: PaymentCardProps) {
               </div>
 
               <div className="flex-1 min-w-0">
-                <p className="font-black text-slate-900 text-sm truncate">{payment.description}</p>
+                <p className="font-black text-slate-900 text-sm truncate">
+                  {payment.description}
+                </p>
                 <div className="flex items-center gap-2.5 mt-0.5">
                   <span className="flex items-center gap-1 text-xs text-slate-500 font-medium">
                     <User size={10} className="text-slate-400" />
@@ -119,7 +119,9 @@ export function PaymentCard({ payment, userNames }: PaymentCardProps) {
                             >
                               {personInitial(s.name)}
                             </div>
-                            <span className="text-xs font-semibold text-slate-700">{s.name}</span>
+                            <span className="text-xs font-semibold text-slate-700">
+                              {s.name}
+                            </span>
                           </div>
                           <span className="text-xs font-bold text-slate-800">
                             {formatCurrency(s.amount)}
@@ -170,7 +172,11 @@ export function PaymentCard({ payment, userNames }: PaymentCardProps) {
             </select>
           </div>
           <div className="flex gap-3">
-            <Button variant="ghost" className="flex-1" onClick={() => setDeleteOpen(false)}>
+            <Button
+              variant="ghost"
+              className="flex-1"
+              onClick={() => setDeleteOpen(false)}
+            >
               Annuleren
             </Button>
             <Button

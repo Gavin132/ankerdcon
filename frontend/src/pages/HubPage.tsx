@@ -10,7 +10,7 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
-import { DailyActionCheck, computeActionAlerts, computeRestaurantGaps } from "../components/hub/DailyActionCheck";
+import { DailyActionCheck } from "../components/hub/DailyActionCheck";
 import { StatCard } from "../components/hub/StatCard";
 import { CrewSection } from "../components/hub/CrewSection";
 import { useCalendar } from "../hooks/useCalendar";
@@ -21,6 +21,8 @@ import { useUsers } from "../hooks/useUsers";
 import { formatDate } from "../utils/format";
 import { avatarColor } from "../utils/avatar";
 import { listItem, listContainer } from "../utils/motion";
+import { computeRestaurantGaps } from "../components/hub/ComputeRestaurantGap";
+import { computeActionAlerts } from "../components/hub/ComputeActionAlert";
 
 export function HubPage() {
   const navigate = useNavigate();
@@ -41,7 +43,11 @@ export function HubPage() {
 
   const totalSpend = (payments ?? []).reduce((s, p) => s + p.amount, 0);
   const event = events?.[0];
-  const actionAlerts = computeActionAlerts(events ?? [], rides ?? [], meals ?? []);
+  const actionAlerts = computeActionAlerts(
+    events ?? [],
+    rides ?? [],
+    meals ?? [],
+  );
   const restaurantGaps = computeRestaurantGaps(rides ?? []);
 
   return (
@@ -107,7 +113,9 @@ export function HubPage() {
                       )}
                     </div>
                     <span className="text-xs font-medium text-sky-300/80">
-                      {participantsExpanded ? "Verbergen" : `${event.participants.length} deelnemers`}
+                      {participantsExpanded
+                        ? "Verbergen"
+                        : `${event.participants.length} deelnemers`}
                     </span>
                   </button>
 

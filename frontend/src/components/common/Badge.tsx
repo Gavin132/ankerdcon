@@ -1,20 +1,16 @@
-import type { ReactNode } from "react";
-
-interface BadgeProps {
-  children: ReactNode;
-  variant?: "blue" | "green" | "yellow" | "red" | "gray" | "violet" | "white";
-  className?: string;
-  dot?: boolean;
-}
+import { BadgeProps } from "../../types/interfaces";
 
 const variantClasses: Record<NonNullable<BadgeProps["variant"]>, string> = {
-  blue:   "bg-sky-100 text-sky-700 border border-sky-200/60 dark:bg-sky-900/50 dark:text-sky-300 dark:border-sky-800/60",
-  green:  "bg-emerald-100 text-emerald-700 border border-emerald-200/60 dark:bg-emerald-900/50 dark:text-emerald-300 dark:border-emerald-800/60",
-  yellow: "bg-amber-100 text-amber-700 border border-amber-200/60 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-800/60",
-  red:    "bg-rose-100 text-rose-700 border border-rose-200/60 dark:bg-rose-900/50 dark:text-rose-300 dark:border-rose-800/60",
-  gray:   "bg-slate-100 text-slate-600 border border-slate-200/60 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600/60",
-  violet: "bg-violet-100 text-violet-700 border border-violet-200/60 dark:bg-violet-900/50 dark:text-violet-300 dark:border-violet-800/60",
-  white:  "bg-white/20 text-white border border-white/30 backdrop-blur-sm",
+  blue: "bg-sky-100 text-sky-700 border border-sky-200/60 dark:bg-sky-900/50 dark:text-sky-300 dark:border-sky-800/60",
+  green:
+    "bg-emerald-100 text-emerald-700 border border-emerald-200/60 dark:bg-emerald-900/50 dark:text-emerald-300 dark:border-emerald-800/60",
+  yellow:
+    "bg-amber-100 text-amber-700 border border-amber-200/60 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-800/60",
+  red: "bg-rose-100 text-rose-700 border border-rose-200/60 dark:bg-rose-900/50 dark:text-rose-300 dark:border-rose-800/60",
+  gray: "bg-slate-100 text-slate-600 border border-slate-200/60 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600/60",
+  violet:
+    "bg-violet-100 text-violet-700 border border-violet-200/60 dark:bg-violet-900/50 dark:text-violet-300 dark:border-violet-800/60",
+  white: "bg-white/20 text-white border border-white/30 backdrop-blur-sm",
 };
 
 const dotColors: Record<NonNullable<BadgeProps["variant"]>, string> = {

@@ -1,15 +1,15 @@
 import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Moon, Sun } from "lucide-react";
-import { APP_NAME, NAV_ITEMS } from "../../constants";
+import { APP_NAME } from "../../constants";
 import { useThemeStore } from "../../store/theme.store";
 
 const PAGE_META: Record<string, { title: string; subtitle: string }> = {
-  "/":         { title: APP_NAME,     subtitle: "Live Event Logistics" },
-  "/transport":{ title: "Transport",  subtitle: "Plan je reis" },
-  "/food":     { title: "Eten",       subtitle: "Eten & drinken" },
-  "/finance":  { title: "Financiën",  subtitle: "Groepskas" },
-  "/more":     { title: "Meer",       subtitle: "Instellingen" },
+  "/": { title: APP_NAME, subtitle: "Live Event Logistics" },
+  "/transport": { title: "Transport", subtitle: "Plan je reis" },
+  "/food": { title: "Eten", subtitle: "Eten & drinken" },
+  "/finance": { title: "Financiën", subtitle: "Groepskas" },
+  "/more": { title: "Meer", subtitle: "Instellingen" },
 };
 
 export function Header() {
@@ -22,7 +22,6 @@ export function Header() {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-100/80 bg-white/85 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-900/85">
       <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-5">
-
         {/* Logo */}
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white border border-sky-100 shadow-sm overflow-hidden dark:bg-slate-800 dark:border-slate-700">
           <img
