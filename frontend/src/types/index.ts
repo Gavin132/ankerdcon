@@ -62,6 +62,30 @@ export interface ClaimSeatRequest {
   user_name: string;
 }
 
+export interface RestaurantDriver {
+  name: string;
+  seats: number;
+  passengers: string[];
+}
+
+export interface RestaurantDriverRequest {
+  user_name: string;
+  seats: number;
+}
+
+export interface LeaveRestaurantDriverRequest {
+  user_name: string;
+}
+
+export interface RestaurantAssignRequest {
+  user_name: string;
+  driver_name: string;
+}
+
+export interface RestaurantUnassignRequest {
+  user_name: string;
+}
+
 // Meals
 export interface Meal {
   meal_name: string;
