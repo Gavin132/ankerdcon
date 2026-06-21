@@ -7,7 +7,7 @@ const ICONS = [Home, Bus, UtensilsCrossed, Wallet, MoreHorizontal];
 
 export function BottomNav() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-slate-100 bg-white safe-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-slate-100 bg-white safe-bottom dark:border-slate-800 dark:bg-slate-900">
       <div className="mx-auto flex max-w-2xl items-center justify-around px-1">
         {NAV_ITEMS.map((item, i) => {
           const Icon = ICONS[i];
@@ -43,7 +43,7 @@ export function BottomNav() {
 
                   <span
                     className={`text-[10px] font-semibold leading-none transition-colors duration-150 ${
-                      isActive ? "text-sky-600" : "text-slate-400"
+                      isActive ? "text-sky-500 dark:text-sky-400" : "text-slate-400 dark:text-slate-500"
                     }`}
                   >
                     {item.label}
