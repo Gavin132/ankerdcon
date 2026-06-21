@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getRides, createRide, claimSeat, leaveSeat } from "../services/rides.service";
+import { getRides, createRide, claimSeat, leaveSeat, addRestaurantDriver, leaveRestaurantDriver, assignToDriver, unassignFromDriver } from "../services/rides.service";
 import { QUERY_KEYS, STALE_TIME } from "../constants";
-import type { CreateRideRequest, ClaimSeatRequest, Direction } from "../types";
+import type { CreateRideRequest, ClaimSeatRequest, Direction, RestaurantDriverRequest, LeaveRestaurantDriverRequest, RestaurantAssignRequest, RestaurantUnassignRequest } from "../types";
 
 export function useRides(direction?: Direction) {
   return useQuery({
@@ -43,6 +43,42 @@ export function useLeaveSeat() {
       rowNumber: number;
       payload: ClaimSeatRequest;
     }) => leaveSeat(rowNumber, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.rides }),
+  });
+}
+
+export function useAddRestaurantDriver() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ rowNumber, payload }: { rowNumber: number; payload: RestaurantDriverRequest }) =>
+      addRestaurantDriver(rowNumber, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.rides }),
+  });
+}
+
+export function useLeaveRestaurantDriver() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ rowNumber, payload }: { rowNumber: number; payload: LeaveRestaurantDriverRequest }) =>
+      leaveRestaurantDriver(rowNumber, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.rides }),
+  });
+}
+
+export function useAssignToDriver() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ rowNumber, payload }: { rowNumber: number; payload: RestaurantAssignRequest }) =>
+      assignToDriver(rowNumber, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.rides }),
+  });
+}
+
+export function useUnassignFromDriver() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ rowNumber, payload }: { rowNumber: number; payload: RestaurantUnassignRequest }) =>
+      unassignFromDriver(rowNumber, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.rides }),
   });
 }
