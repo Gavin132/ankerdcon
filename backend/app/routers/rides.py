@@ -42,6 +42,8 @@ def create_ride(
         body.total_seats,
         body.parking_info,
         body.maps_link,
+        body.car_available,
+        body.action_required,
     )
     is_timo = body.driver.strip().lower() == "timo"
     if body.vehicle_type == "Public Transport":

@@ -8,3 +8,7 @@ class CalendarEvent(BaseModel):
     event_name: str
     is_hotel: bool
     participants: list[str]
+
+
+class CalendarRsvpRequest(BaseModel):
+    user_name: str

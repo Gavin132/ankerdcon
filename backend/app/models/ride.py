@@ -12,6 +12,8 @@ class Ride(BaseModel):
     passengers: list[str]
     parking_info: str = ""
     maps_link: str = ""
+    car_available: bool = False
+    action_required: bool = False
     # Computed on read
     seats_left: int
     is_full: bool
@@ -27,6 +29,8 @@ class CreateRideRequest(BaseModel):
     total_seats: int = 4
     parking_info: str = ""
     maps_link: str = ""
+    car_available: bool = False
+    action_required: bool = False
 
 
 class ClaimSeatRequest(BaseModel):
