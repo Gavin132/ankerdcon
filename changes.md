@@ -22,3 +22,9 @@
 8. bij het toevoegen van ritjes hoeft een gebruiker geen plaatsen aan te geven als deze openbaar vervoer selecteert, deze optie kan dan weggelaten / hidden gezet worden.
 
 9. aankomend event bovenin het scherm laat nog de oude datum zien, misschien staat de tijdzone van de app verkeerd?
+
+10. oke dit zou wel gave extra zijn maar hoeft niet perse als het moeilijk te implementeren is. en het moet een toevoeging zijn geen vervanging van. maar op de transport tab dat er onderin een kaart zichtbaar is en dat daarop pins staan met de mensen die rijden vanuit een plek, en misschien die pins kleuren geven, grijs is al vertrokken, rood bijna weg, etc.
+
+11. darkmode toggle bij meer settings? of misschien afhankelijk van system settings. even kijken hoe dat eruit ziet met de kleuren pallete die er nu ligt...
+
+12. 
