@@ -25,7 +25,7 @@ export interface LocationPingRequest {
 
 // Rides
 export type VehicleType = "Car" | "Public Transport";
-export type Direction = "Inbound" | "Outbound";
+export type Direction = "Inbound" | "Outbound" | "Restaurant";
 
 export interface Ride {
   direction: Direction;
@@ -41,6 +41,8 @@ export interface Ride {
   seats_left: number;
   is_full: boolean;
   is_public_transport: boolean;
+  car_available: boolean;
+  action_required: boolean;
 }
 
 export interface CreateRideRequest {
@@ -52,9 +54,35 @@ export interface CreateRideRequest {
   total_seats: number;
   parking_info?: string;
   maps_link?: string;
+  car_available?: boolean;
+  action_required?: boolean;
 }
 
 export interface ClaimSeatRequest {
+  user_name: string;
+}
+
+export interface RestaurantDriver {
+  name: string;
+  seats: number;
+  passengers: string[];
+}
+
+export interface RestaurantDriverRequest {
+  user_name: string;
+  seats: number;
+}
+
+export interface LeaveRestaurantDriverRequest {
+  user_name: string;
+}
+
+export interface RestaurantAssignRequest {
+  user_name: string;
+  driver_name: string;
+}
+
+export interface RestaurantUnassignRequest {
   user_name: string;
 }
 
@@ -114,5 +142,49 @@ export interface CalendarEvent {
   row_number: number;
 }
 
+export interface CalendarRsvpRequest {
+  user_name: string;
+}
+
 // UI helpers
 export type TabId = "hub" | "transport" | "food" | "finance" | "more";
+
+export type BaseProps = {
+  options: string[];
+  placeholder?: string;
+  color?: "sky" | "rose" | "green";
+};
+
+export type SingleProps = BaseProps & {
+  multiple?: false;
+  value: string;
+  onChange: (name: string) => void;
+  maxSelect?: never;
+};
+
+export type MultiProps = BaseProps & {
+  multiple: true;
+  value: string[];
+  onChange: (names: string[]) => void;
+  maxSelect?: number;
+};
+
+export type NamePickerProps = SingleProps | MultiProps;
+
+export interface MissingItem {
+  name: string;
+  items: string[];
+}
+
+export interface ActionAlert {
+  date: string;
+  eventName: string;
+  missing: MissingItem[];
+}
+
+export interface RestaurantGap {
+  rowNumber: number;
+  location: string;
+  departureTime: string;
+  unassigned: string[];
+}

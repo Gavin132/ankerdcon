@@ -12,9 +12,9 @@ const variantClasses: Record<NonNullable<ButtonProps["variant"]>, string> = {
   primary:
     "gradient-brand text-white shadow-stat disabled:opacity-60",
   secondary:
-    "bg-white text-slate-700 border border-slate-200 shadow-card hover:border-sky-200 hover:shadow-card-hover hover:text-sky-700 disabled:opacity-50",
+    "bg-white text-slate-700 border border-slate-200 shadow-card hover:border-sky-200 hover:shadow-card-hover hover:text-sky-700 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:border-sky-500 dark:hover:text-sky-400",
   ghost:
-    "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-50",
+    "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200",
   danger:
     "bg-gradient-to-r from-rose-500 to-red-500 text-white shadow-stat disabled:opacity-60",
 };

@@ -2,29 +2,30 @@ import { useState } from "react";
 import { X, UserPlus } from "lucide-react";
 import { avatarColor, personInitial } from "../../utils/avatar";
 import { formatCurrency } from "../../utils/format";
-import type { Split } from "../../types";
+import { NamePicker } from "../common/NamePicker";
+import { SplitBuilderProps } from "../../types/interfaces";
 
-interface SplitBuilderProps {
-  splits: Split[];
-  onChange: (splits: Split[]) => void;
-  userNames: string[];
-  totalAmount: number;
-}
-
-export function SplitBuilder({ splits, onChange, userNames, totalAmount }: SplitBuilderProps) {
-  const [name, setName] = useState("");
+export function SplitBuilder({
+  splits,
+  onChange,
+  userNames,
+  totalAmount,
+}: SplitBuilderProps) {
+  const [names, setNames] = useState<string[]>([]);
   const [amount, setAmount] = useState("");
 
-  const usedNames = splits.map((s) => s.name);
-  const available = userNames.filter((n) => !usedNames.includes(n));
+  const usedNames = new Set(splits.map((s) => s.name));
+  const available = userNames.filter(
+    (n) => !usedNames.has(n) && !names.includes(n),
+  );
   const splitTotal = splits.reduce((s, x) => s + x.amount, 0);
   const remaining = Math.max(0, totalAmount - splitTotal);
 
   function add() {
     const amt = parseFloat(amount);
-    if (!name || isNaN(amt) || amt <= 0) return;
-    onChange([...splits, { name, amount: amt }]);
-    setName("");
+    if (names.length === 0 || isNaN(amt) || amt <= 0) return;
+    onChange([...splits, ...names.map((n) => ({ name: n, amount: amt }))]);
+    setNames([]);
     setAmount("");
   }
 
@@ -61,8 +62,12 @@ export function SplitBuilder({ splits, onChange, userNames, totalAmount }: Split
               >
                 {personInitial(s.name)}
               </div>
-              <span className="flex-1 text-xs font-semibold text-slate-700">{s.name}</span>
-              <span className="text-xs font-bold text-slate-800">{formatCurrency(s.amount)}</span>
+              <span className="flex-1 text-xs font-semibold text-slate-700">
+                {s.name}
+              </span>
+              <span className="text-xs font-bold text-slate-800">
+                {formatCurrency(s.amount)}
+              </span>
               <button
                 onClick={() => remove(i)}
                 className="text-slate-300 hover:text-rose-400 transition-colors ml-1"
@@ -74,25 +79,25 @@ export function SplitBuilder({ splits, onChange, userNames, totalAmount }: Split
         </div>
       )}
 
+      <NamePicker
+        multiple
+        options={
+          available.length > 0
+            ? available
+            : userNames.filter((n) => !names.includes(n))
+        }
+        value={names}
+        onChange={setNames}
+        color="sky"
+        placeholder="Kies persoon(en)…"
+      />
       <div className="flex gap-2">
-        <select
-          className="input-field flex-1 text-sm"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        >
-          <option value="">Persoon…</option>
-          {(available.length > 0 ? available : userNames).map((n) => (
-            <option key={n} value={n}>
-              {n}
-            </option>
-          ))}
-        </select>
         <input
           type="number"
           step="0.01"
           min="0"
-          className="input-field w-24 text-sm"
-          placeholder="€0,00"
+          className="input-field flex-1 text-sm"
+          placeholder="Bedrag p.p. (€)"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), add())}
@@ -100,7 +105,7 @@ export function SplitBuilder({ splits, onChange, userNames, totalAmount }: Split
         <button
           type="button"
           onClick={add}
-          disabled={!name || !amount}
+          disabled={names.length === 0 || !amount}
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-sky-600 transition-colors"
         >
           <UserPlus size={15} />

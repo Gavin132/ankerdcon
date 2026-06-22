@@ -56,7 +56,9 @@ export function CrewList({ users, isLoading }: CrewListProps) {
               </div>
             )}
           </div>
-          <span className="text-xs text-slate-400 font-medium">Tik om te bekijken</span>
+          <span className="text-xs text-slate-400 font-medium">
+            Tik om te bekijken
+          </span>
         </div>
       )}
 
@@ -95,14 +97,19 @@ export function CrewList({ users, isLoading }: CrewListProps) {
                     </p>
                   ) : (
                     filtered.map((u) => (
-                      <div key={u.name} className="flex items-center gap-3 px-4 py-3.5">
+                      <div
+                        key={u.name}
+                        className="flex items-center gap-3 px-4 py-3.5"
+                      >
                         <div
                           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-black text-white ${avatarColor(u.name)}`}
                         >
                           {u.name[0]}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-bold text-slate-900 text-sm">{u.name}</p>
+                          <p className="font-bold text-slate-900 text-sm">
+                            {u.name}
+                          </p>
                           <div className="flex flex-wrap items-center gap-3 mt-0.5">
                             {u.hotel_room && (
                               <span className="flex items-center gap-1 text-xs text-slate-400">

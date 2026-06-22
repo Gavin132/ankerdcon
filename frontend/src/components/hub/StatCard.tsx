@@ -1,16 +1,15 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { listItem } from "../../utils/motion";
+import { StatCardProps } from "../../types/interfaces";
 
-interface StatCardProps {
-  gradient: string;
-  icon: React.ReactNode;
-  value: string | number;
-  label: string;
-  onClick?: () => void;
-}
-
-export function StatCard({ gradient, icon, value, label, onClick }: StatCardProps) {
+export function StatCard({
+  gradient,
+  icon,
+  value,
+  label,
+  onClick,
+}: StatCardProps) {
   return (
     <motion.button
       variants={listItem}
@@ -35,7 +34,9 @@ export function StatCard({ gradient, icon, value, label, onClick }: StatCardProp
             />
           )}
         </div>
-        <div className="text-3xl font-black text-white leading-none">{value}</div>
+        <div className="text-3xl font-black text-white leading-none">
+          {value}
+        </div>
         <div className="mt-1 text-xs font-semibold text-white/70 uppercase tracking-widest">
           {label}
         </div>

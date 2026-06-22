@@ -13,6 +13,17 @@ export function formatDateTime(dateStr: string): string {
 
 export function formatDate(dateStr: string): string {
   try {
+    // DD-MM-YYYY or D-M-YYYY (common Google Sheets date format)
+    const dmyMatch = dateStr.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+    if (dmyMatch) {
+      const d = new Date(+dmyMatch[3], +dmyMatch[2] - 1, +dmyMatch[1]);
+      if (!isNaN(d.getTime())) return format(d, "d MMMM yyyy", { locale: nl });
+    }
+    // YYYY-MM-DD — parse as local midnight to avoid UTC offset shifting the date
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      const d = new Date(dateStr + "T00:00:00");
+      if (!isNaN(d.getTime())) return format(d, "d MMMM yyyy", { locale: nl });
+    }
     const parsed = parseISO(dateStr);
     if (!isValid(parsed)) return dateStr;
     return format(parsed, "d MMMM yyyy", { locale: nl });

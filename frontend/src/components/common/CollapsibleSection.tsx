@@ -1,14 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
-
-interface CollapsibleSectionProps {
-  title: React.ReactNode;
-  defaultOpen?: boolean;
-  children: React.ReactNode;
-  className?: string;
-  titleClassName?: string;
-}
+import { CollapsibleSectionProps } from "../../types/interfaces";
 
 export function CollapsibleSection({
   title,

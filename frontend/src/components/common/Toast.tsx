@@ -15,12 +15,12 @@ export function ToastContainer() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ type: "spring", stiffness: 420, damping: 32 }}
-            className={`pointer-events-auto flex w-full items-center gap-3 rounded-2xl bg-white/95 backdrop-blur-sm px-4 py-3 shadow-xl border ${
+            className={`pointer-events-auto flex w-full items-center gap-3 rounded-2xl bg-white/95 backdrop-blur-sm dark:bg-slate-800/95 px-4 py-3 shadow-xl border ${
               t.type === "success"
-                ? "border-sky-100"
+                ? "border-sky-100 dark:border-sky-800/60"
                 : t.type === "error"
-                ? "border-rose-100"
-                : "border-slate-100"
+                ? "border-rose-100 dark:border-rose-800/60"
+                : "border-slate-100 dark:border-slate-700"
             }`}
           >
             <div
@@ -39,12 +39,12 @@ export function ToastContainer() {
                 style={{ filter: "brightness(0) invert(1)" }}
               />
             </div>
-            <p className="flex-1 text-sm font-semibold text-slate-800 leading-tight">
+            <p className="flex-1 text-sm font-semibold text-slate-800 dark:text-slate-100 leading-tight">
               {t.message}
             </p>
             <button
               onClick={() => removeToast(t.id)}
-              className="shrink-0 flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              className="shrink-0 flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors dark:hover:text-slate-200 dark:hover:bg-slate-700"
             >
               <X size={13} />
             </button>

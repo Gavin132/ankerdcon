@@ -26,5 +26,52 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "more", label: "Meer", path: "/more" },
 ];
 
-export const DIRECTIONS = ["Inbound", "Outbound"] as const;
+export const DIRECTIONS = ["Inbound", "Outbound", "Restaurant"] as const;
 export const VEHICLE_TYPES = ["Car", "Public Transport"] as const;
+
+export const sizeClasses = {
+  sm: "h-4 w-4",
+  md: "h-8 w-8",
+  lg: "h-12 w-12",
+};
+
+// ─── Color tokens ─────────────────────────────────────────────────────────────
+
+export const TOKENS = {
+  sky: {
+    dot: "bg-sky-500",
+    activeRow: "bg-sky-50 dark:bg-sky-900/30",
+    chip: "bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300",
+    chipX: "text-sky-400 hover:text-sky-700 dark:hover:text-sky-200",
+    check: "text-sky-500",
+    bar: "bg-sky-400",
+    barFull: "bg-amber-400",
+    counter: "text-slate-400",
+    counterFull: "text-amber-500",
+  },
+  rose: {
+    dot: "bg-rose-500",
+    activeRow: "bg-rose-50 dark:bg-rose-900/20",
+    chip: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
+    chipX: "text-rose-400 hover:text-rose-600 dark:hover:text-rose-200",
+    check: "text-rose-500",
+    bar: "bg-rose-400",
+    barFull: "bg-amber-400",
+    counter: "text-slate-400",
+    counterFull: "text-amber-500",
+  },
+  green: {
+    dot: "bg-emerald-500",
+    activeRow: "bg-emerald-50 dark:bg-emerald-900/20",
+    chip: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+    chipX:
+      "text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-200",
+    check: "text-emerald-500",
+    bar: "bg-emerald-400",
+    barFull: "bg-amber-400",
+    counter: "text-slate-400",
+    counterFull: "text-amber-500",
+  },
+} as const;
+
+export const DAY_LABELS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
