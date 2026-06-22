@@ -160,7 +160,7 @@ export function SplashScreen({ onDismiss }: SplashScreenProps) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden select-none"
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden select-none"
       style={{
         background: "linear-gradient(170deg, #050c1e 0%, #081c3a 40%, #0c2d58 80%, #0e3460 100%)",
       }}
