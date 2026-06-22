@@ -6,10 +6,11 @@ import {
   Wallet,
   BedDouble,
   Users,
+  UserCheck,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LoadingSpinner } from "../components/common/LoadingSpinner";
+import { HubSkeleton } from "../components/common/Skeleton";
 import { DailyActionCheck } from "../components/hub/DailyActionCheck";
 import { StatCard } from "../components/hub/StatCard";
 import { CrewSection } from "../components/hub/CrewSection";
@@ -34,11 +35,7 @@ export function HubPage() {
   const { data: users } = useUsers();
 
   if (evLoading) {
-    return (
-      <div className="flex justify-center py-24">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
+    return <HubSkeleton />;
   }
 
   const totalSpend = (payments ?? []).reduce((s, p) => s + p.amount, 0);
@@ -89,6 +86,25 @@ export function HubPage() {
                   </span>
                 )}
               </div>
+
+              {/* Attendance summary */}
+              {(users ?? []).length > 0 && (
+                <div className="mt-3 flex items-center gap-3">
+                  {/* Progress bar */}
+                  <div className="flex-1 h-1.5 rounded-full bg-white/20 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-sky-300 transition-all duration-700"
+                      style={{ width: `${Math.round((event.participants.length / (users ?? []).length) * 100)}%` }}
+                    />
+                  </div>
+                  <div className="shrink-0 flex items-center gap-1.5 rounded-full bg-white/15 border border-white/20 px-2.5 py-1">
+                    <UserCheck size={11} className="text-sky-300" />
+                    <span className="text-xs font-bold text-white">
+                      {event.participants.length} <span className="font-normal text-sky-300/80">van</span> {(users ?? []).length}
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {event.participants.length > 0 && (
                 <div className="mt-4">

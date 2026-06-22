@@ -8,10 +8,13 @@
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Anchor height so dvh units work correctly */
+    height: 100%;
   }
 
   body {
     @apply bg-slate-50 text-slate-900;
+    min-height: 100%;
     overscroll-behavior: none;
     background-image:
       radial-gradient(circle at 20% 10%, rgba(56, 189, 248, 0.08) 0%, transparent 50%),
@@ -19,7 +22,22 @@
     background-attachment: fixed;
   }
 
+  #root {
+    min-height: 100%;
+    isolation: isolate;
+  }
+
   * { box-sizing: border-box; }
+
+  /* Eliminate 300ms tap delay on all interactive elements */
+  button, a, [role="button"], input, select, textarea, label {
+    touch-action: manipulation;
+  }
+
+  /* Momentum scrolling for scroll containers on iOS */
+  .overflow-y-auto, .overflow-y-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
 
   ::-webkit-scrollbar { width: 3px; }
   ::-webkit-scrollbar-thumb { @apply rounded-full bg-sky-200; }

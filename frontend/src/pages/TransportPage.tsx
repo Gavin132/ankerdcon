@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   History,
   Utensils,
+  CalendarClock,
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -15,11 +16,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
-import { LoadingSpinner } from "../components/common/LoadingSpinner";
+import { RideCardSkeleton } from "../components/common/Skeleton";
 import { EmptyState } from "../components/common/EmptyState";
 import { SearchSelect } from "../components/common/SearchSelect";
 import { RideCard } from "../components/transport/RideCard";
 import { RestaurantCard } from "../components/transport/RestaurantCard";
+import { RideTimeline } from "../components/transport/RideTimeline";
 import { useRides, useCreateRide } from "../hooks/useRides";
 import { useUsers } from "../hooks/useUsers";
 import { toast } from "../store/toast.store";
@@ -55,6 +57,7 @@ export function TransportPage() {
   );
   const [createOpen, setCreateOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showTimeline, setShowTimeline] = useState(false);
   const { data: rides, isLoading } = useRides();
   const { data: users } = useUsers();
   const userNames = (users ?? []).map((u) => u.name);
@@ -133,43 +136,37 @@ export function TransportPage() {
 
   return (
     <div className="space-y-5">
-      {/* Direction tabs */}
-      <div className="flex gap-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800 p-1">
-        {(["Inbound", "Outbound", "Restaurant"] as const).map((d) => (
-          <button
-            key={d}
-            onClick={() => setTab(d)}
-            className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-semibold transition-all duration-200 ${
-              tab === d
-                ? "bg-white text-slate-900 shadow-card dark:bg-slate-700 dark:text-slate-100"
-                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-            }`}
-          >
-            {d === "Inbound" && (
-              <ArrowRight
-                size={13}
-                className={tab === d ? "text-sky-500" : ""}
-              />
-            )}
-            {d === "Outbound" && (
-              <ArrowLeft
-                size={13}
-                className={tab === d ? "text-sky-500" : ""}
-              />
-            )}
-            {d === "Restaurant" && (
-              <Utensils
-                size={13}
-                className={tab === d ? "text-amber-500" : ""}
-              />
-            )}
-            {d === "Inbound"
-              ? "Heen"
-              : d === "Outbound"
-                ? "Terug"
-                : "Restaurant"}
-          </button>
-        ))}
+      {/* Direction tabs + timeline toggle */}
+      <div className="flex gap-2">
+        <div className="flex flex-1 gap-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800 p-1">
+          {(["Inbound", "Outbound", "Restaurant"] as const).map((d) => (
+            <button
+              key={d}
+              onClick={() => { setTab(d); setShowTimeline(false); }}
+              className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-semibold transition-all duration-200 ${
+                tab === d && !showTimeline
+                  ? "bg-white text-slate-900 shadow-card dark:bg-slate-700 dark:text-slate-100"
+                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              }`}
+            >
+              {d === "Inbound" && <ArrowRight size={13} className={tab === d && !showTimeline ? "text-sky-500" : ""} />}
+              {d === "Outbound" && <ArrowLeft size={13} className={tab === d && !showTimeline ? "text-sky-500" : ""} />}
+              {d === "Restaurant" && <Utensils size={13} className={tab === d && !showTimeline ? "text-amber-500" : ""} />}
+              {d === "Inbound" ? "Heen" : d === "Outbound" ? "Terug" : "Restaurant"}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setShowTimeline((v) => !v)}
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-all ${
+            showTimeline
+              ? "bg-sky-500 text-white shadow-card"
+              : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:text-slate-400"
+          }`}
+          title="Tijdlijn"
+        >
+          <CalendarClock size={16} />
+        </button>
       </div>
 
       {/* Add button */}
@@ -178,10 +175,15 @@ export function TransportPage() {
         Rit toevoegen
       </Button>
 
-      {/* Content */}
-      {isLoading ? (
-        <div className="flex justify-center py-16">
-          <LoadingSpinner />
+      {/* Timeline view */}
+      {showTimeline && (
+        <RideTimeline rides={rides ?? []} />
+      )}
+
+      {/* Tab content */}
+      {!showTimeline && (isLoading ? (
+        <div className="space-y-3">
+          {[0, 1, 2].map((i) => <RideCardSkeleton key={i} />)}
         </div>
       ) : allFiltered.length === 0 ? (
         <EmptyState
@@ -228,7 +230,7 @@ export function TransportPage() {
             <div>
               <button
                 onClick={() => setShowHistory((v) => !v)}
-                className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500 hover:bg-slate-100 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+                className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 min-h-[48px] text-sm font-semibold text-slate-500 hover:bg-slate-100 active:bg-slate-100 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
               >
                 <span className="flex items-center gap-2">
                   <History size={14} />
@@ -279,7 +281,7 @@ export function TransportPage() {
             </div>
           )}
         </>
-      )}
+      ))}
 
       {/* Create modal */}
       <Modal
@@ -290,7 +292,7 @@ export function TransportPage() {
       >
         <form onSubmit={handleSubmit(onCreate)} className="space-y-4">
           <div
-            className={`grid gap-3 ${formDirection === "Restaurant" ? "grid-cols-1" : "grid-cols-2"}`}
+            className={`grid gap-3 ${formDirection === "Restaurant" ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}
           >
             <div>
               <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
@@ -346,7 +348,7 @@ export function TransportPage() {
           </div>
 
           <div
-            className={`grid gap-3 ${vehicleType === "Public Transport" || formDirection === "Restaurant" ? "grid-cols-1" : "grid-cols-2"}`}
+            className={`grid gap-3 ${vehicleType === "Public Transport" || formDirection === "Restaurant" ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}
           >
             <div>
               <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
@@ -422,7 +424,7 @@ export function TransportPage() {
               <p className="text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
                 Restaurant opties
               </p>
-              <label className="flex items-center gap-3 cursor-pointer">
+              {/* <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
                   className="h-4 w-4 rounded accent-amber-500"
@@ -431,7 +433,7 @@ export function TransportPage() {
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                   Auto beschikbaar
                 </span>
-              </label>
+              </label> */}
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"

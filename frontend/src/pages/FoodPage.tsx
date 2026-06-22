@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
-import { LoadingSpinner } from "../components/common/LoadingSpinner";
+import { MealCardSkeleton } from "../components/common/Skeleton";
 import { EmptyState } from "../components/common/EmptyState";
 import { MealCard } from "../components/food/MealCard";
 import { useMeals, useCreateMeal } from "../hooks/useMeals";
@@ -60,8 +60,8 @@ export function FoodPage() {
       </Button>
 
       {isLoading ? (
-        <div className="flex justify-center py-16">
-          <LoadingSpinner />
+        <div className="space-y-3">
+          {[0, 1, 2].map((i) => <MealCardSkeleton key={i} />)}
         </div>
       ) : (meals ?? []).length === 0 ? (
         <EmptyState
@@ -109,7 +109,7 @@ export function FoodPage() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
                 Locatie (optioneel)

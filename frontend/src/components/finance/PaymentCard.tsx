@@ -67,7 +67,7 @@ export function PaymentCard({ payment, userNames }: PaymentCardProps) {
                 {hasSplits && (
                   <button
                     onClick={() => setExpanded((e) => !e)}
-                    className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all"
+                    className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all"
                   >
                     <motion.div
                       animate={{ rotate: expanded ? 180 : 0 }}
@@ -137,7 +137,7 @@ export function PaymentCard({ payment, userNames }: PaymentCardProps) {
             <div className="mt-3 flex justify-end">
               <button
                 onClick={() => setDeleteOpen(true)}
-                className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors"
+                className="flex items-center gap-1 rounded-lg px-3 py-2 min-h-[36px] text-xs font-medium text-slate-400 hover:bg-rose-50 hover:text-rose-500 active:bg-rose-50 active:text-rose-500 transition-colors"
               >
                 <Trash2 size={12} />
                 Verwijderen
