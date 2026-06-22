@@ -64,3 +64,7 @@ export interface StatCardProps {
   label: string;
   onClick?: () => void;
 }
+
+export interface SplashScreenProps {
+  onDismiss: () => void;
+}
