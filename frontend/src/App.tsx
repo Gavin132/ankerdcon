@@ -43,9 +43,9 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeSync />
-      <SplashController />
       <RouterProvider router={router} />
       <ToastContainer />
+      <SplashController />
     </QueryClientProvider>
   );
 }
