@@ -27,4 +27,19 @@
 
 11. darkmode toggle bij meer settings? of misschien afhankelijk van system settings. even kijken hoe dat eruit ziet met de kleuren pallete die er nu ligt...
 
-12. 
+
+
+22/06/2026
+
+12. onder de tab Meer, evenementen staan verkeerd geordend. de volgorde moet chronologisch zijn van eerste tot laatste event.
+
+13. onder de tab Meer, ik zou niet weten hoe, maar het zou iets duidelijker kunnen om jezelf toe te voegen aan een aankomend event.
+
+14. onder de tab Meer, events die al geweest zijn onderin verstoppen onder een geschiedenis kopje.
+
+15. onder de tab Meer, in plaats van een hele lijst van events die onder 2026 staan bijvoorbeeld, de events groeperen met de 'Event ID'
+    > De mogelijkheid om op een event groep/ event (Dokomi 2027 of HDCC 2026 Zomer) te kunnen klikken, en daar jezelf toe te kunnen voegen, misschien met een klein rond icoontje van een persoon met een plusje achter de event groep of naam of id.
+
+16. onder de tab Hub, Oude events worden nog steeds laten zien na de datum. Alle event datums/dagen mogen alleen maar zichtbaar zijn tijdens een Event ID nog lopend is. Bijvoorbeeld: als Dokomi 2027 nog steeds bezig is: I.E. het is nu dokomi zondag, dan moeten alle voorgaande dagen nog steeds zichtbaar zijn. Als het event klaar is mag alles naar het ingeklapte geschiedenis kopje.
+
+17. onder de tab Eten, oude event wordt nog steeds laten zien voorbij de verstreken datum. deze events moeten de dag erna naar een ingeklapt geschiedenis kopje.
