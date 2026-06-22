@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
-import { LoadingSpinner } from "../components/common/LoadingSpinner";
+import { PaymentCardSkeleton } from "../components/common/Skeleton";
 import { EmptyState } from "../components/common/EmptyState";
 import { NamePicker } from "../components/common/NamePicker";
 import { PaymentCard } from "../components/finance/PaymentCard";
@@ -69,8 +69,8 @@ export function FinancePage() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-24">
-        <LoadingSpinner />
+      <div className="space-y-3">
+        {[0, 1, 2].map((i) => <PaymentCardSkeleton key={i} />)}
       </div>
     );
   }
@@ -219,7 +219,7 @@ export function FinancePage() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
                 Bedrag (€)

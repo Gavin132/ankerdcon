@@ -106,7 +106,7 @@ export function CalendarGrid({
       <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-slate-50 dark:border-slate-800">
         <button
           onClick={prevMonth}
-          className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:hover:bg-slate-700"
+          className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 active:bg-slate-100 transition-colors dark:hover:bg-slate-700"
         >
           <ChevronLeft size={16} />
         </button>
@@ -122,7 +122,7 @@ export function CalendarGrid({
         </div>
         <button
           onClick={nextMonth}
-          className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:hover:bg-slate-700"
+          className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 active:bg-slate-100 transition-colors dark:hover:bg-slate-700"
         >
           <ChevronRight size={16} />
         </button>
@@ -259,7 +259,7 @@ export function CalendarGrid({
                                         setActiveRsvpEvent(null);
                                         setRsvpNames([]);
                                       }}
-                                      className="flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:hover:bg-slate-700"
+                                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:hover:bg-slate-700"
                                     >
                                       <span className="text-xs">✕</span>
                                     </button>

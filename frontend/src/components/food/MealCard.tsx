@@ -11,6 +11,7 @@ import {
   Users,
   ChevronDown,
   Trash2,
+  CalendarPlus,
 } from "lucide-react";
 import { Badge } from "../common/Badge";
 import { Button } from "../common/Button";
@@ -22,6 +23,7 @@ import {
   useDeleteMeal,
 } from "../../hooks/useMeals";
 import { formatDateTime } from "../../utils/format";
+import { exportMealToIcs } from "../../utils/ics";
 import { toast } from "../../store/toast.store";
 import { listItem } from "../../utils/motion";
 import type { Meal } from "../../types";
@@ -37,7 +39,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [rsvpNames, setRsvpNames] = useState<string[]>([]);
-  const [cancelName, setCancelName] = useState("");
+  const [cancelNames, setCancelNames] = useState<string[]>([]);
 
   const rsvpMutation = useRsvpMeal();
   const cancelMutation = useCancelRsvp();
@@ -66,15 +68,22 @@ export function MealCard({ meal, userNames }: MealCardProps) {
   }
 
   async function onCancel() {
-    if (!cancelName.trim()) return;
+    if (cancelNames.length === 0) return;
     try {
-      await cancelMutation.mutateAsync({
-        rowNumber: meal.row_number,
-        payload: { user_name: cancelName.trim() },
-      });
-      setCancelName("");
+      for (const name of cancelNames) {
+        await cancelMutation.mutateAsync({
+          rowNumber: meal.row_number,
+          payload: { user_name: name },
+        });
+      }
+      setCancelNames([]);
       setCancelOpen(false);
-      toast("success", "Aanmelding geannuleerd.");
+      toast(
+        "success",
+        cancelNames.length === 1
+          ? `${cancelNames[0]} afgemeld.`
+          : `${cancelNames.length} personen afgemeld.`,
+      );
     } catch {
       toast("error", "Kon aanmelding niet annuleren.");
     }
@@ -124,7 +133,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
 
               <button
                 onClick={() => setExpanded((e) => !e)}
-                className="shrink-0 flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all"
+                className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all"
               >
                 <motion.div
                   animate={{ rotate: expanded ? 180 : 0 }}
@@ -217,6 +226,14 @@ export function MealCard({ meal, userNames }: MealCardProps) {
                       <Button
                         size="sm"
                         variant="ghost"
+                        onClick={() => exportMealToIcs(meal)}
+                        title="Toevoegen aan kalender"
+                      >
+                        <CalendarPlus size={14} className="text-sky-500" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         onClick={() => setDeleteOpen(true)}
                       >
                         <Trash2 size={14} className="text-rose-400" />
@@ -267,16 +284,17 @@ export function MealCard({ meal, userNames }: MealCardProps) {
         open={cancelOpen}
         onClose={() => {
           setCancelOpen(false);
-          setCancelName("");
+          setCancelNames([]);
         }}
         title="Aanmelding annuleren"
         description={meal.meal_name}
       >
         <div className="space-y-3">
           <NamePicker
+            multiple
             options={meal.rsvps}
-            value={cancelName}
-            onChange={setCancelName}
+            value={cancelNames}
+            onChange={setCancelNames}
             color="rose"
           />
           <Button
@@ -284,12 +302,14 @@ export function MealCard({ meal, userNames }: MealCardProps) {
             onClick={onCancel}
             loading={cancelMutation.isPending}
             className="w-full"
-            disabled={!cancelName.trim()}
+            disabled={cancelNames.length === 0}
           >
             <UserMinus size={15} />
-            {cancelName.trim()
-              ? `${cancelName} afmelden`
-              : "Selecteer een naam"}
+            {cancelNames.length === 0
+              ? "Selecteer een naam"
+              : cancelNames.length === 1
+              ? `${cancelNames[0]} afmelden`
+              : `${cancelNames.length} personen afmelden`}
           </Button>
         </div>
       </Modal>

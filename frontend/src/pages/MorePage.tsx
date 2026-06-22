@@ -10,7 +10,9 @@ import {
   Navigation,
   CalendarDays,
   Search,
+  QrCode,
 } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -44,6 +46,7 @@ export function MorePage() {
   const [pingOpen, setPingOpen] = useState(false);
   const [crewExpanded, setCrewExpanded] = useState(false);
   const [crewQuery, setCrewQuery] = useState("");
+  const [qrOpen, setQrOpen] = useState(false);
 
   const { data: users, isLoading } = useUsers();
   const { data: calendarEvents } = useCalendar();
@@ -119,7 +122,7 @@ export function MorePage() {
         <div className="card-surface rounded-2xl overflow-hidden">
           <button
             onClick={() => setPingOpen(true)}
-            className="flex w-full items-center gap-4 px-5 py-4 text-left hover:bg-slate-50 transition-colors dark:hover:bg-slate-800/60"
+            className="flex w-full items-center gap-4 px-5 py-4 text-left hover:bg-slate-50 active:bg-slate-50 transition-colors dark:hover:bg-slate-800/60 dark:active:bg-slate-800/60"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-brand">
               <Navigation size={18} className="text-white" />
@@ -290,7 +293,7 @@ export function MorePage() {
         </AnimatePresence>
       </motion.div>
 
-      {/* App info */}
+      {/* App info + QR share */}
       <motion.div variants={listItem}>
         <div className="rounded-2xl border border-slate-100 bg-white/60 px-5 py-4 text-center dark:border-slate-800 dark:bg-slate-900/60">
           <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-sky-100 shadow-sm overflow-hidden">
@@ -298,6 +301,39 @@ export function MorePage() {
           </div>
           <p className="font-black text-slate-800 dark:text-white text-sm">Ankerd Con</p>
           <p className="text-xs text-slate-400 mt-0.5">Event portal · v1.0</p>
+
+          <button
+            onClick={() => setQrOpen((v) => !v)}
+            className="mt-3 flex items-center gap-1.5 mx-auto text-xs font-semibold text-sky-500 hover:text-sky-600 transition-colors"
+          >
+            <QrCode size={13} />
+            {qrOpen ? "Verberg QR-code" : "Deel via QR-code"}
+          </button>
+
+          <AnimatePresence>
+            {qrOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-4 flex flex-col items-center gap-2">
+                  <div className="rounded-2xl bg-white p-3 shadow-sm border border-slate-100">
+                    <QRCodeSVG
+                      value={typeof window !== "undefined" ? window.location.origin : ""}
+                      size={160}
+                      bgColor="#ffffff"
+                      fgColor="#0f172a"
+                      level="M"
+                    />
+                  </div>
+                  <p className="text-xs text-slate-400">Scan om de app te openen</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </motion.div>
 
@@ -305,7 +341,7 @@ export function MorePage() {
       <motion.div variants={listItem}>
         <button
           onClick={onLogout}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 py-3.5 text-sm font-semibold text-rose-600 hover:bg-rose-100 transition-colors dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-900/40"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 py-3.5 min-h-[52px] text-sm font-semibold text-rose-600 hover:bg-rose-100 active:bg-rose-100 transition-colors dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-900/40 dark:active:bg-rose-900/40"
         >
           <LogOut size={16} />
           Uitloggen
