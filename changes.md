@@ -51,3 +51,5 @@
 20. Bij de tab Eten, de etentjes / box voor de eten afspraak moet altijd uitgeklapt zijn.
 
 21. Bij de tab Hub, in plaats van een leden counter tegel, maak hier een locatie ping tegel. laat deze tegel ook iets meer opvallen dan de andere drie.
+
+22. Bedenk een manier om versie nummers automatisch aan te maken/bij te werken bij elke nieuwe push naar de repo. Voor kleine changes hoeft er geen grote nieuwe versie naam/nummering te komen.
