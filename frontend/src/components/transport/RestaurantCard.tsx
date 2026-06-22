@@ -334,7 +334,7 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
                                 setJoinNames([]);
                                 setJoinOpen(true);
                               }}
-                              className="flex items-center gap-1 rounded-lg bg-sky-50 px-2.5 py-1 text-xs font-bold text-sky-600 hover:bg-sky-100 transition-colors dark:bg-sky-900/30 dark:text-sky-400 dark:hover:bg-sky-900/50"
+                              className="flex items-center gap-1 rounded-lg bg-sky-50 px-3 py-2 text-xs font-bold text-sky-600 hover:bg-sky-100 transition-colors dark:bg-sky-900/30 dark:text-sky-400 dark:hover:bg-sky-900/50 min-h-[36px]"
                             >
                               Stap in
                               <ArrowRight size={11} />
