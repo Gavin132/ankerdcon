@@ -3,7 +3,7 @@ import { LoginForm } from "../components/auth/LoginForm";
 
 export function LoginPage() {
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-slate-50">
+    <div className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-slate-50 pt-[env(safe-area-inset-top,0px)]">
       {/* Background decoration */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-sky-400/10 blur-3xl" />

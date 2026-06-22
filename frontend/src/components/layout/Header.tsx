@@ -20,7 +20,7 @@ export function Header() {
   const meta = PAGE_META[pathname] ?? { title: APP_NAME, subtitle: "" };
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-100/80 bg-white/85 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-900/85">
+    <header className="sticky top-0 z-30 border-b border-slate-100/80 bg-white/85 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-900/85 pt-[env(safe-area-inset-top,0px)]">
       <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-5">
         {/* Logo */}
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white border border-sky-100 shadow-sm overflow-hidden dark:bg-slate-800 dark:border-slate-700">

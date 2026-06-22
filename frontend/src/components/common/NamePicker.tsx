@@ -22,27 +22,21 @@ export function NamePicker(props: NamePickerProps) {
     ? options.filter((o) => o.toLowerCase().includes(query.toLowerCase()))
     : options;
 
-  // ── Multi-select: close on outside pointerdown, never on blur ────────────
+  // ── Multi-select: close on outside pointerdown only ──────────────────────
   useEffect(() => {
     if (!isMulti || !open) return;
 
     function onOutside(e: PointerEvent) {
-      const target = e.target as Node;
-
-      if (containerRef.current?.contains(target)) {
-        return;
-      }
-
+      if (containerRef.current?.contains(e.target as Node)) return;
       setOpen(false);
       setQuery("");
     }
 
     document.addEventListener("pointerdown", onOutside, true);
-
     return () => document.removeEventListener("pointerdown", onOutside, true);
   }, [isMulti, open]);
 
-  // ── Single-select: close on blur (list closes after selection anyway) ────
+  // ── Single-select: close on blur ─────────────────────────────────────────
   function handleBlur() {
     if (isMulti) return;
     setTimeout(() => {
@@ -50,10 +44,10 @@ export function NamePicker(props: NamePickerProps) {
         setOpen(false);
         setQuery("");
       }
-    }, 100);
+    }, 150);
   }
 
-  // ── handlers ──
+  // ── Handlers ──────────────────────────────────────────────────────────────
 
   function handleSingleSelect(name: string) {
     (props as SingleProps).onChange(name);
@@ -67,19 +61,23 @@ export function NamePicker(props: NamePickerProps) {
       mp.onChange(selected.filter((n) => n !== name));
     } else if (!atMax) {
       mp.onChange([...selected, name]);
-      setQuery("");
+      // Don't clear the query — let the user keep filtering for more names
     }
+    // Always keep the list open after a toggle
+    setOpen(true);
   }
 
   function handleDeselect(name: string) {
     (props as MultiProps).onChange(selected.filter((n) => n !== name));
+    // Keep list open after deselecting a chip
+    setOpen(true);
   }
 
   const singleValue = !isMulti ? (props as SingleProps).value : "";
 
   return (
     <div ref={containerRef} className="space-y-1.5">
-      {/* ── Multi: selected chips + capacity bar ────────────────────────── */}
+      {/* ── Multi: selected chips + capacity bar ─────────────────────────── */}
       {isMulti && (
         <AnimatePresence>
           {selected.length > 0 && (
@@ -128,19 +126,11 @@ export function NamePicker(props: NamePickerProps) {
                   <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                     <motion.div
                       className={`h-full rounded-full transition-colors ${atMax ? tk.barFull : tk.bar}`}
-                      animate={{
-                        width: `${(selected.length / maxSelect) * 100}%`,
-                      }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 30,
-                      }}
+                      animate={{ width: `${(selected.length / maxSelect) * 100}%` }}
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
                     />
                   </div>
-                  <span
-                    className={`shrink-0 text-xs font-bold tabular-nums ${atMax ? tk.counterFull : tk.counter}`}
-                  >
+                  <span className={`shrink-0 text-xs font-bold tabular-nums ${atMax ? tk.counterFull : tk.counter}`}>
                     {selected.length}/{maxSelect}
                   </span>
                 </div>
@@ -150,7 +140,7 @@ export function NamePicker(props: NamePickerProps) {
         </AnimatePresence>
       )}
 
-      {/* ── Search input ────────────────────────────────────────────────── */}
+      {/* ── Search input ─────────────────────────────────────────────────── */}
       <div className="relative">
         <Search
           size={13}
@@ -168,14 +158,16 @@ export function NamePicker(props: NamePickerProps) {
             setOpen(true);
             e.target.select();
           }}
+          // onClick handles the case where the input is already focused (onFocus won't re-fire)
+          onClick={() => setOpen(true)}
           onBlur={handleBlur}
           autoComplete="off"
         />
       </div>
 
-      {/* ── Options list ────────────────────────────────────────────────── */}
+      {/* ── Options list ─────────────────────────────────────────────────── */}
       {open && (
-        <div className="max-h-[168px] overflow-y-auto rounded-xl border border-slate-100 dark:border-slate-700 divide-y divide-slate-50 dark:divide-slate-800">
+        <div className="max-h-[220px] overflow-y-auto overscroll-contain rounded-xl border border-slate-100 dark:border-slate-700 divide-y divide-slate-50 dark:divide-slate-800">
           {filtered.length === 0 ? (
             <p className="px-4 py-4 text-center text-xs text-slate-400">
               Geen resultaten voor &ldquo;{query}&rdquo;
@@ -189,18 +181,20 @@ export function NamePicker(props: NamePickerProps) {
                 <button
                   key={name}
                   type="button"
-                  onPointerDown={(e) => {
-                    e.preventDefault();
+                  // Use onClick instead of onPointerDown so:
+                  // 1. Scroll gestures on the list don't trigger accidental selection
+                  // 2. No e.preventDefault() that could interfere with the outside-click detector
+                  onClick={() => {
                     if (isMulti) handleMultiToggle(name);
                     else handleSingleSelect(name);
                   }}
                   disabled={isDisabled}
-                  className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors ${
+                  className={`flex w-full items-center gap-3 px-3 py-3 text-left transition-colors min-h-[48px] ${
                     isSelected
                       ? tk.activeRow
                       : isDisabled
                         ? "cursor-not-allowed opacity-35"
-                        : "hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                        : "hover:bg-slate-50 active:bg-slate-50 dark:hover:bg-slate-800/60 dark:active:bg-slate-800/60"
                   }`}
                 >
                   <div
@@ -215,9 +209,7 @@ export function NamePicker(props: NamePickerProps) {
                     <Check size={15} className={`shrink-0 ${tk.check}`} />
                   )}
                   {!isMulti && singleValue === name && (
-                    <span
-                      className={`h-2 w-2 shrink-0 rounded-full ${tk.dot}`}
-                    />
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${tk.dot}`} />
                   )}
                 </button>
               );
