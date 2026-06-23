@@ -26,6 +26,12 @@ _USER_COLS: dict[str, int] = {
     "Phone Number": 2,
     "Hotel Room": 3,
     "Live Location Ping": 4,
+    "Passcode": 5,
+    "Color": 6,
+    "Font": 7,
+    "Pronouns": 8,
+    "Bio": 9,
+    "Banner Color": 10,
 }
 _RIDES_COLS: dict[str, int] = {
     "Direction": 1,
@@ -117,10 +123,65 @@ def get_users(spreadsheet: gspread.Spreadsheet) -> list[User]:
             phone_number=row.get("Phone Number", "").strip(),
             hotel_room=row.get("Hotel Room", "").strip(),
             live_location_ping=row.get("Live Location Ping", "").strip(),
+            color=row.get("Color", "").strip(),
+            font=row.get("Font", "").strip(),
+            bio=row.get("Bio", "").strip(),
+            banner_color=row.get("Banner Color", "").strip(),
+            pronouns=row.get("Pronouns", "").strip(),
         )
         for _, row in df.iterrows()
         if not _blank(row.get("Name", ""))
     ]
+
+
+def get_user_names(spreadsheet: gspread.Spreadsheet) -> list[str]:
+    """Return only names — safe to expose publicly for the login name picker."""
+    df = _cache.get_cached_tables(spreadsheet).get("Users", pd.DataFrame())
+    if df.empty:
+        return []
+    return [
+        str(row.get("Name", "")).strip()
+        for _, row in df.iterrows()
+        if not _blank(row.get("Name", ""))
+    ]
+
+
+def check_passcode(spreadsheet: gspread.Spreadsheet, user_name: str, passcode: str) -> bool:
+    """Return True if the passcode matches the stored value for this user."""
+    df = _cache.get_cached_tables(spreadsheet).get("Users", pd.DataFrame())
+    match = df[df["Name"] == user_name]
+    if match.empty:
+        return False
+    stored = str(match.iloc[0].get("Passcode", "")).strip()
+    return bool(stored) and stored == passcode
+
+
+def update_user_preferences(
+    spreadsheet: gspread.Spreadsheet,
+    user_name: str,
+    color: str | None,
+    font: str | None,
+    bio: str | None = None,
+    banner_color: str | None = None,
+    pronouns: str | None = None,
+) -> None:
+    df = _cache.get_cached_tables(spreadsheet).get("Users", pd.DataFrame())
+    match = df[df["Name"] == user_name]
+    if match.empty:
+        raise ValueError(f"Gebruiker '{user_name}' niet gevonden")
+    row_number = int(match.iloc[0]["row_number"])
+    ws = _worksheet(spreadsheet, "Users")
+    if color is not None:
+        ws.update_cell(row_number, _USER_COLS["Color"], color)
+    if font is not None:
+        ws.update_cell(row_number, _USER_COLS["Font"], font)
+    if bio is not None:
+        ws.update_cell(row_number, _USER_COLS["Bio"], bio)
+    if banner_color is not None:
+        ws.update_cell(row_number, _USER_COLS["Banner Color"], banner_color)
+    if pronouns is not None:
+        ws.update_cell(row_number, _USER_COLS["Pronouns"], pronouns)
+    _cache.invalidate_cache()
 
 
 def update_user_location(

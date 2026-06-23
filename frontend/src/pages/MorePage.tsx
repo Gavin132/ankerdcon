@@ -26,9 +26,12 @@ import { CalendarArchive } from "../components/more/CalendarArchive";
 import { useUsers, usePingLocation } from "../hooks/useUsers";
 import { useCalendar, useRsvpCalendarEvent, useLeaveCalendarEvent } from "../hooks/useCalendar";
 import { useAuthStore } from "../store/auth.store";
+import { UserNameDisplay } from "../components/common/UserNameDisplay";
+import { UserProfilePopup, type AnchorRect } from "../components/common/UserProfilePopup";
 import { logout } from "../services/auth.service";
 import { useNavigate } from "react-router-dom";
 import { avatarColor } from "../utils/avatar";
+import type { User } from "../types";
 import { formatDate } from "../utils/format";
 import { parseEventDate } from "../utils/date";
 import { listContainer, listItem } from "../utils/motion";
@@ -47,6 +50,8 @@ export function MorePage() {
   const [crewExpanded, setCrewExpanded] = useState(false);
   const [crewQuery, setCrewQuery] = useState("");
   const [qrOpen, setQrOpen] = useState(false);
+  const [popupUser, setPopupUser] = useState<User | null>(null);
+  const [popupAnchorRect, setPopupAnchorRect] = useState<AnchorRect>({ top: 0, left: 0, right: 0, height: 0 });
 
   const { data: users, isLoading } = useUsers();
   const { data: calendarEvents } = useCalendar();
@@ -54,6 +59,7 @@ export function MorePage() {
   const rsvpMutation = useRsvpCalendarEvent();
   const leaveMutation = useLeaveCalendarEvent();
   const clearAuth = useAuthStore((s) => s.clearAuth);
+  const currentUser = useAuthStore((s) => s.currentUser);
   const navigate = useNavigate();
 
   const {
@@ -261,14 +267,27 @@ export function MorePage() {
                       </p>
                     ) : (
                       filteredUsers.map((u) => (
-                        <div key={u.name} className="flex items-center gap-3 px-4 py-3.5">
+                        <button
+                          key={u.name}
+                          onClick={(e) => {
+                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                            setPopupAnchorRect({ top: rect.top, left: rect.left, right: rect.right, height: rect.height });
+                            setPopupUser(u);
+                          }}
+                          className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-slate-50 active:bg-slate-50 transition-colors dark:hover:bg-slate-800/60"
+                        >
                           <div
                             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-black text-white ${avatarColor(u.name)}`}
+                            style={u.color ? { backgroundColor: u.color, backgroundImage: "none" } : undefined}
                           >
                             {u.name[0]}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-bold text-slate-900 dark:text-white text-sm">{u.name}</p>
+                            <UserNameDisplay
+                              name={u.name}
+                              clickable={false}
+                              className="font-bold text-sm block"
+                            />
                             <div className="flex flex-wrap items-center gap-3 mt-0.5">
                               {u.hotel_room && (
                                 <span className="flex items-center gap-1 text-xs text-slate-400">
@@ -287,7 +306,7 @@ export function MorePage() {
                           {u.live_location_ping && (
                             <LocationPingDisplay raw={u.live_location_ping} />
                           )}
-                        </div>
+                        </button>
                       ))
                     )}
                   </div>
@@ -352,6 +371,16 @@ export function MorePage() {
           Uitloggen
         </button>
       </motion.div>
+
+      {/* Profile popup */}
+      <UserProfilePopup
+        user={popupUser}
+        open={popupUser !== null}
+        isOwn={currentUser === popupUser?.name}
+        anchorRect={popupAnchorRect}
+        onClose={() => setPopupUser(null)}
+        calendarEvents={calendarEvents ?? []}
+      />
 
       {/* Ping modal */}
       <Modal

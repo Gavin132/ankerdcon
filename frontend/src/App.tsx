@@ -20,12 +20,7 @@ const queryClient = new QueryClient({
 function ThemeSync() {
   const isDark = useThemeStore((s) => s.isDark);
   useEffect(() => {
-    const root = document.documentElement;
-    if (isDark) {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
+    document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
   return null;
 }

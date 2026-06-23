@@ -209,51 +209,56 @@ export function HubPage() {
       {/* Stats grid */}
       <motion.div variants={listItem}>
         <p className="section-label mb-3">Overzicht</p>
-        <div className="grid grid-cols-2 gap-3">
+
+        {/* Location ping — full width, above the stat cards */}
+        <motion.button
+          onClick={() => navigate("/more")}
+          className="mb-3 w-full group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 p-4 text-left shadow-stat cursor-pointer"
+          whileHover={{ y: -2, scale: 1.01 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ duration: 0.15 }}
+        >
+          <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-white/10 blur-xl" />
+          <div className="relative flex items-center gap-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
+              <Navigation size={20} className="text-white" />
+            </div>
+            <div className="flex-1">
+              <div className="text-base font-black text-white leading-none">Locatie pingen</div>
+              <div className="mt-1 text-xs font-semibold text-white/70 uppercase tracking-widest">
+                Stuur je locatie naar de groep
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-white/50 group-hover:text-white/80 transition-colors" />
+          </div>
+        </motion.button>
+
+        {/* 3 stat cards in a single row */}
+        <div className="grid grid-cols-3 gap-3">
           <StatCard
+            compact
             gradient="bg-gradient-to-br from-sky-500 to-blue-600"
-            icon={<Bus size={18} className="text-white" />}
+            icon={<Bus size={15} className="text-white" />}
             value={futureRidesCount}
             label="Ritten"
             onClick={() => navigate("/transport")}
           />
           <StatCard
+            compact
             gradient="bg-gradient-to-br from-cyan-400 to-sky-500"
-            icon={<UtensilsCrossed size={18} className="text-white" />}
+            icon={<UtensilsCrossed size={15} className="text-white" />}
             value={futureMealsCount}
             label="Maaltijden"
             onClick={() => navigate("/food")}
           />
           <StatCard
+            compact
             gradient="bg-gradient-to-br from-blue-600 to-blue-800"
-            icon={<Wallet size={18} className="text-white" />}
+            icon={<Wallet size={15} className="text-white" />}
             value={`€${totalSpend.toFixed(0)}`}
             label="Uitgaven"
             onClick={() => navigate("/finance")}
           />
-          {/* Location ping tile — spans full width to stand out */}
-          <motion.button
-            variants={listItem}
-            onClick={() => navigate("/more")}
-            className="col-span-2 group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 p-5 text-left shadow-stat cursor-pointer"
-            whileHover={{ y: -2, scale: 1.01 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ duration: 0.15 }}
-          >
-            <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-white/10 blur-xl" />
-            <div className="relative flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
-                <Navigation size={20} className="text-white" />
-              </div>
-              <div className="flex-1">
-                <div className="text-lg font-black text-white leading-none">Locatie pingen</div>
-                <div className="mt-1 text-xs font-semibold text-white/70 uppercase tracking-widest">
-                  Stuur je locatie naar de groep
-                </div>
-              </div>
-              <ChevronRight size={16} className="text-white/50 group-hover:text-white/80 transition-colors" />
-            </div>
-          </motion.button>
         </div>
       </motion.div>
 

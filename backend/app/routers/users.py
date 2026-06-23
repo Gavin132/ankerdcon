@@ -3,11 +3,19 @@ import gspread
 
 from app.config import Settings, get_settings
 from app.dependencies import get_current_user, get_sheets
-from app.models.user import LocationPingRequest, User
+from app.models.user import LocationPingRequest, UpdatePreferencesRequest, User
 import app.services.discord_service as discord_service
 import app.services.sheets_service as sheets_service
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+@router.get("/names", response_model=list[str])
+def list_names(
+    sheets: gspread.Spreadsheet = Depends(get_sheets),
+) -> list[str]:
+    """Public endpoint — returns only names for the login name picker."""
+    return sheets_service.get_user_names(sheets)
 
 
 @router.get("/", response_model=list[User])
@@ -16,6 +24,20 @@ def list_users(
     sheets: gspread.Spreadsheet = Depends(get_sheets),
 ) -> list[User]:
     return sheets_service.get_users(sheets)
+
+
+@router.put("/preferences", status_code=status.HTTP_204_NO_CONTENT)
+def update_preferences(
+    body: UpdatePreferencesRequest,
+    current_user: str = Depends(get_current_user),
+    sheets: gspread.Spreadsheet = Depends(get_sheets),
+) -> None:
+    try:
+        sheets_service.update_user_preferences(
+            sheets, current_user, body.color, body.font, body.bio, body.banner_color, body.pronouns
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
 
 @router.put("/{user_name}/location", status_code=status.HTTP_204_NO_CONTENT)

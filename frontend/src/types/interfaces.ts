@@ -63,6 +63,7 @@ export interface StatCardProps {
   value: string | number;
   label: string;
   onClick?: () => void;
+  compact?: boolean;
 }
 
 export interface SplashScreenProps {

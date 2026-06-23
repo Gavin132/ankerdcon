@@ -19,7 +19,6 @@ class Settings(BaseSettings):
     google_sheet_id: str
 
     # Auth
-    app_passphrase: str
     jwt_secret_key: str
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 15

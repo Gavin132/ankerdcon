@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
+import gspread
 
 from app.config import Settings, get_settings
+from app.dependencies import get_sheets
 from app.models.auth import LoginRequest, TokenResponse
 import app.services.auth_service as auth_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 _REFRESH_COOKIE = "ankerd_refresh"
-_COOKIE_MAX_AGE = 60 * 60 * 24 * 7  # 7 days in seconds
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -15,13 +16,15 @@ def login(
     body: LoginRequest,
     response: Response,
     settings: Settings = Depends(get_settings),
+    sheets: gspread.Spreadsheet = Depends(get_sheets),
 ) -> TokenResponse:
-    if not auth_service.authenticate(body.passphrase, settings):
+    if not auth_service.authenticate(body.user_name, body.passcode, sheets):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect passphrase"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Onjuiste naam of toegangscode",
         )
 
-    tokens = auth_service.issue_tokens(settings)
+    tokens = auth_service.issue_tokens(settings, body.user_name)
 
     response.set_cookie(
         key=_REFRESH_COOKIE,

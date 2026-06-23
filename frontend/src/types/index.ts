@@ -1,6 +1,7 @@
 // Auth
 export interface LoginRequest {
-  passphrase: string;
+  user_name: string;
+  passcode: string;
 }
 
 export interface TokenResponse {
@@ -15,6 +16,21 @@ export interface User {
   hotel_room: string;
   live_location_ping: string;
   row_number: number;
+  color: string;
+  font: string;
+  bio: string;
+  banner_color: string;
+  pronouns: string;
+}
+
+export type FontOption = "default" | "mono" | "serif" | "cursive" | "display";
+
+export interface UpdatePreferencesRequest {
+  color?: string;
+  font?: FontOption;
+  bio?: string;
+  banner_color?: string;
+  pronouns?: string;
 }
 
 export interface LocationPingRequest {

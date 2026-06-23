@@ -7,6 +7,7 @@ import { TransportPage } from "./pages/TransportPage";
 import { FoodPage } from "./pages/FoodPage";
 import { FinancePage } from "./pages/FinancePage";
 import { MorePage } from "./pages/MorePage";
+import { ProfilePage } from "./pages/ProfilePage";
 
 export const router = createBrowserRouter([
   {
@@ -55,6 +56,10 @@ export const router = createBrowserRouter([
           </AppShell>
         ),
         path: "/more",
+      },
+      {
+        element: <ProfilePage />,
+        path: "/profile/:name",
       },
     ],
   },

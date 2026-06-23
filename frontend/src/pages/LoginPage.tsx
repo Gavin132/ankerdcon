@@ -57,7 +57,7 @@ export function LoginPage() {
                 Welkom terug
               </h2>
               <p className="mt-1 text-sm text-slate-400">
-                Voer de groepscode in om toegang te krijgen
+                Log in met je naam en persoonlijke code
               </p>
             </div>
             <LoginForm />

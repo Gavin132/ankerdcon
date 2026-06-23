@@ -2,8 +2,12 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BedDouble, Phone, ChevronDown, Search } from "lucide-react";
 import { LocationPingDisplay } from "../common/LocationPingDisplay";
+import { UserNameDisplay } from "../common/UserNameDisplay";
+import { UserProfilePopup, type AnchorRect } from "../common/UserProfilePopup";
 import { avatarColor } from "../../utils/avatar";
 import { listItem } from "../../utils/motion";
+import { useAuthStore } from "../../store/auth.store";
+import { useCalendar } from "../../hooks/useCalendar";
 import type { User } from "../../types";
 
 interface CrewSectionProps {
@@ -13,6 +17,10 @@ interface CrewSectionProps {
 export function CrewSection({ users }: CrewSectionProps) {
   const [expanded, setExpanded] = useState(false);
   const [query, setQuery] = useState("");
+  const [popupUser, setPopupUser] = useState<User | null>(null);
+  const [popupAnchorRect, setPopupAnchorRect] = useState<AnchorRect>({ top: 0, left: 0, right: 0, height: 0 });
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const { data: calendarEvents } = useCalendar();
 
   const filtered = query
     ? users.filter((u) => u.name.toLowerCase().includes(query.toLowerCase()))
@@ -36,13 +44,21 @@ export function CrewSection({ users }: CrewSectionProps) {
 
       {/* Avatar strip when collapsed */}
       {!expanded && users.length > 0 && (
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setExpanded(true)}>
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => setExpanded(true)}
+        >
           <div className="flex -space-x-2">
             {users.slice(0, 8).map((u) => (
               <div
                 key={u.name}
                 title={u.name}
                 className={`flex h-9 w-9 items-center justify-center rounded-full border-2 border-white dark:border-slate-900 bg-gradient-to-br text-xs font-black text-white ${avatarColor(u.name)}`}
+                style={
+                  u.color
+                    ? { backgroundColor: u.color, backgroundImage: "none" }
+                    : undefined
+                }
               >
                 {u.name[0]}
               </div>
@@ -87,14 +103,31 @@ export function CrewSection({ users }: CrewSectionProps) {
                   </p>
                 ) : (
                   filtered.map((u) => (
-                    <div key={u.name} className="flex items-center gap-3 px-4 py-3.5">
+                    <button
+                      key={u.name}
+                      onClick={(e) => {
+                        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                        setPopupAnchorRect({ top: rect.top, left: rect.left, right: rect.right, height: rect.height });
+                        setPopupUser(u);
+                      }}
+                      className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-slate-50 active:bg-slate-50 transition-colors dark:hover:bg-slate-800/60"
+                    >
                       <div
                         className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-black text-white ${avatarColor(u.name)}`}
+                        style={
+                          u.color
+                            ? { backgroundColor: u.color, backgroundImage: "none" }
+                            : undefined
+                        }
                       >
                         {u.name[0]}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-slate-900 dark:text-white text-sm">{u.name}</p>
+                        <UserNameDisplay
+                          name={u.name}
+                          clickable={false}
+                          className="font-bold text-sm block"
+                        />
                         <div className="flex flex-wrap items-center gap-3 mt-0.5">
                           {u.hotel_room && (
                             <span className="flex items-center gap-1 text-xs text-slate-400">
@@ -113,7 +146,7 @@ export function CrewSection({ users }: CrewSectionProps) {
                       {u.live_location_ping && (
                         <LocationPingDisplay raw={u.live_location_ping} />
                       )}
-                    </div>
+                    </button>
                   ))
                 )}
               </div>
@@ -121,6 +154,16 @@ export function CrewSection({ users }: CrewSectionProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Profile popup */}
+      <UserProfilePopup
+        user={popupUser}
+        open={popupUser !== null}
+        isOwn={currentUser === popupUser?.name}
+        anchorRect={popupAnchorRect}
+        onClose={() => setPopupUser(null)}
+        calendarEvents={calendarEvents ?? []}
+      />
     </motion.div>
   );
 }
