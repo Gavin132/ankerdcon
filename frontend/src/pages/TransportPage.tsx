@@ -369,7 +369,7 @@ export function TransportPage() {
               formDirection !== "Restaurant" && (
                 <div>
                   <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
-                    Plaatsen
+                    Totaal zitplaatsen
                   </label>
                   <input
                     type="number"
@@ -378,6 +378,7 @@ export function TransportPage() {
                     className="input-field"
                     {...register("total_seats")}
                   />
+                  <p className="mt-1 text-xs text-slate-400">Incl. de bestuurder (1 zitplaats)</p>
                 </div>
               )}
           </div>

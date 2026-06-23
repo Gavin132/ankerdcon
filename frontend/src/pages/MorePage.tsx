@@ -178,7 +178,12 @@ export function MorePage() {
       {/* Archive */}
       {(calendarEvents ?? []).length > 0 && (
         <motion.div variants={listItem}>
-          <CalendarArchive events={calendarEvents ?? []} />
+          <CalendarArchive
+            events={calendarEvents ?? []}
+            allUsers={allUsers.map((u) => u.name)}
+            onRsvp={onCalendarRsvp}
+            onLeave={onCalendarLeave}
+          />
         </motion.div>
       )}
 

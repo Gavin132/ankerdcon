@@ -5,8 +5,9 @@ import {
   UtensilsCrossed,
   Wallet,
   BedDouble,
-  Users,
   UserCheck,
+  Navigation,
+  ChevronRight,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -22,6 +23,8 @@ import { useUsers } from "../hooks/useUsers";
 import { formatDate } from "../utils/format";
 import { avatarColor } from "../utils/avatar";
 import { listItem, listContainer } from "../utils/motion";
+import { parseEventDate, toDateKey, todayKey } from "../utils/date";
+import { getRideStatus } from "../utils/rides";
 import { computeRestaurantGaps } from "../components/hub/ComputeRestaurantGap";
 import { computeActionAlerts } from "../components/hub/ComputeActionAlert";
 
@@ -39,7 +42,22 @@ export function HubPage() {
   }
 
   const totalSpend = (payments ?? []).reduce((s, p) => s + p.amount, 0);
-  const event = events?.[0];
+
+  const todayStr = todayKey();
+  const event =
+    (events ?? [])
+      .map((ev) => ({ ev, date: parseEventDate(ev.date) }))
+      .filter(({ date }) => date !== null && toDateKey(date) >= todayStr)
+      .sort((a, b) => a.date!.getTime() - b.date!.getTime())[0]?.ev ?? null;
+
+  const futureRidesCount = (rides ?? []).filter(
+    (r) => getRideStatus(r.departure_time).status !== "past",
+  ).length;
+  const futureMealsCount = (meals ?? []).filter((m) => {
+    const d = new Date(m.time.replace(" ", "T"));
+    return !isNaN(d.getTime()) && d > new Date();
+  }).length;
+
   const actionAlerts = computeActionAlerts(
     events ?? [],
     rides ?? [],
@@ -195,14 +213,14 @@ export function HubPage() {
           <StatCard
             gradient="bg-gradient-to-br from-sky-500 to-blue-600"
             icon={<Bus size={18} className="text-white" />}
-            value={(rides ?? []).length}
+            value={futureRidesCount}
             label="Ritten"
             onClick={() => navigate("/transport")}
           />
           <StatCard
             gradient="bg-gradient-to-br from-cyan-400 to-sky-500"
             icon={<UtensilsCrossed size={18} className="text-white" />}
-            value={(meals ?? []).length}
+            value={futureMealsCount}
             label="Maaltijden"
             onClick={() => navigate("/food")}
           />
@@ -213,12 +231,29 @@ export function HubPage() {
             label="Uitgaven"
             onClick={() => navigate("/finance")}
           />
-          <StatCard
-            gradient="bg-gradient-to-br from-sky-400 to-blue-500"
-            icon={<Users size={18} className="text-white" />}
-            value={(users ?? []).length}
-            label="Leden"
-          />
+          {/* Location ping tile — spans full width to stand out */}
+          <motion.button
+            variants={listItem}
+            onClick={() => navigate("/more")}
+            className="col-span-2 group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 p-5 text-left shadow-stat cursor-pointer"
+            whileHover={{ y: -2, scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ duration: 0.15 }}
+          >
+            <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-white/10 blur-xl" />
+            <div className="relative flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
+                <Navigation size={20} className="text-white" />
+              </div>
+              <div className="flex-1">
+                <div className="text-lg font-black text-white leading-none">Locatie pingen</div>
+                <div className="mt-1 text-xs font-semibold text-white/70 uppercase tracking-widest">
+                  Stuur je locatie naar de groep
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-white/50 group-hover:text-white/80 transition-colors" />
+            </div>
+          </motion.button>
         </div>
       </motion.div>
 

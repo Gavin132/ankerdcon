@@ -34,7 +34,7 @@ interface MealCardProps {
 }
 
 export function MealCard({ meal, userNames }: MealCardProps) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [rsvpOpen, setRsvpOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
