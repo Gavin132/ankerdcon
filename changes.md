@@ -70,6 +70,8 @@
 
 28. grote hotelkamer tegel op de hub pagina als er een event bezig is met de is_hotel tag op true. op deze tegel zie je dan wie welk kamer numme zit. kamernummer weergeven en daaronder/naast de namen.
 
+29. een manier om automatisch versienummers bij te houden in de meer tab. wat is hiervoor een gebruikelijke implementatie?
+
 # broken met deze update:
 kan geen meals toevoegen
 kan geen payments toevoegen
