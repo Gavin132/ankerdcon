@@ -9,36 +9,39 @@ import {
   Check,
   BedDouble,
 } from "lucide-react";
+import { UserAvatar } from "../common/UserAvatar";
 import { Badge } from "../common/Badge";
 import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
-import { avatarColor, personInitial } from "../../utils/avatar";
 import { parseEventDate, toDateKey, todayKey } from "../../utils/date";
 import type { CalendarEvent } from "../../types";
 
 interface CalendarArchiveProps {
   events: CalendarEvent[];
   allUsers?: string[];
-  onRsvp?: (rowNumber: number, userName: string) => void;
-  onLeave?: (rowNumber: number, userName: string) => void;
-}
-
-function formatEventId(id: string): string {
-  return id
-    .replace(/([a-zA-Z])(\d)/g, "$1 $2")
-    .replace(/(\d)([a-zA-Z])/g, "$1 $2")
-    .split(" ")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+  onRsvp?: (id: number, userName: string) => void;
+  onLeave?: (id: number, userName: string) => void;
 }
 
 interface EventGroup {
-  id: string;
+  id: string; // We map event_group_id to a string so it works as a Map key easily
   displayName: string;
   entries: { ev: CalendarEvent; date: Date }[];
   firstDate: Date;
   lastDate: Date;
   isPast: boolean;
+}
+
+// Replaces the old formatEventId. Extracts the main event name by removing day words.
+function extractGroupName(eventName: string): string {
+  // E.g., turns "HDCC Zaterdag" into "HDCC"
+  const dayWords = ["maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag", "zondag", "freitag", "samstag", "sonntag"];
+  let cleaned = eventName;
+  for (const day of dayWords) {
+    const regex = new RegExp(`\\b${day}\\b`, "gi");
+    cleaned = cleaned.replace(regex, "");
+  }
+  return cleaned.trim() || eventName; 
 }
 
 export function CalendarArchive({
@@ -56,22 +59,26 @@ export function CalendarArchive({
   const today = todayKey();
   const hasRsvp = !!onRsvp && !!onLeave && allUsers.length > 0;
 
-  // Group events by event_id
+  // Group events by event_group_id (fallback to specific 'id' if no group)
   const groupMap = new Map<string, EventGroup>();
   for (const ev of events) {
     const date = parseEventDate(ev.date);
     if (!date) continue;
-    if (!groupMap.has(ev.event_id)) {
-      groupMap.set(ev.event_id, {
-        id: ev.event_id,
-        displayName: formatEventId(ev.event_id),
+    
+    // Grouping logic based on new integers!
+    const groupId = ev.event_group_id ? `group_${ev.event_group_id}` : `single_${ev.id}`;
+    
+    if (!groupMap.has(groupId)) {
+      groupMap.set(groupId, {
+        id: groupId,
+        displayName: extractGroupName(ev.event_name),
         entries: [],
         firstDate: date,
         lastDate: date,
         isPast: false,
       });
     }
-    const group = groupMap.get(ev.event_id)!;
+    const group = groupMap.get(groupId)!;
     group.entries.push({ ev, date });
     if (date < group.firstDate) group.firstDate = date;
     if (date > group.lastDate) group.lastDate = date;
@@ -84,11 +91,9 @@ export function CalendarArchive({
   }
 
   const allGroups = Array.from(groupMap.values());
-  // Upcoming: sorted chronologically (earliest first)
   const upcomingGroups = allGroups
     .filter((g) => !g.isPast)
     .sort((a, b) => a.firstDate.getTime() - b.firstDate.getTime());
-  // Past: most recent first
   const pastGroups = allGroups
     .filter((g) => g.isPast)
     .sort((a, b) => b.firstDate.getTime() - a.firstDate.getTime());
@@ -160,10 +165,10 @@ export function CalendarArchive({
                 {group.entries.map(({ ev, date }) => {
                   const dateKey = toDateKey(date);
                   const isEventPast = dateKey < today;
-                  const isRsvpOpen = activeRsvpEvent === ev.row_number;
+                  const isRsvpOpen = activeRsvpEvent === ev.id;
 
                   return (
-                    <div key={ev.row_number} className="px-4 py-3">
+                    <div key={ev.id} className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
                         <p
                           className={`text-sm font-semibold ${
@@ -186,14 +191,7 @@ export function CalendarArchive({
                       {ev.participants.length > 0 && (
                         <div className="mt-2 flex -space-x-1.5">
                           {ev.participants.slice(0, 6).map((p) => (
-                            <div
-                              key={p}
-                              title={p}
-                              className={`flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br text-white ${avatarColor(p)}`}
-                              style={{ fontSize: "9px", fontWeight: 900 }}
-                            >
-                              {personInitial(p)}
-                            </div>
+                            <UserAvatar key={p} name={p} />
                           ))}
                           {ev.participants.length > 6 && (
                             <div
@@ -249,8 +247,8 @@ export function CalendarArchive({
                                 onClick={() => {
                                   rsvpNames.forEach((name) => {
                                     if (rsvpMode === "join")
-                                      onRsvp!(ev.row_number, name);
-                                    else onLeave!(ev.row_number, name);
+                                      onRsvp!(ev.id, name);
+                                    else onLeave!(ev.id, name);
                                   });
                                   setActiveRsvpEvent(null);
                                   setRsvpNames([]);
@@ -269,7 +267,7 @@ export function CalendarArchive({
                               <button
                                 type="button"
                                 onClick={() => {
-                                  setActiveRsvpEvent(ev.row_number);
+                                  setActiveRsvpEvent(ev.id);
                                   setRsvpMode("join");
                                   setRsvpNames([]);
                                 }}
@@ -282,7 +280,7 @@ export function CalendarArchive({
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    setActiveRsvpEvent(ev.row_number);
+                                    setActiveRsvpEvent(ev.id);
                                     setRsvpMode("leave");
                                     setRsvpNames([]);
                                   }}
@@ -309,7 +307,6 @@ export function CalendarArchive({
 
   return (
     <div className="space-y-4">
-      {/* Upcoming event groups */}
       {upcomingGroups.length > 0 && (
         <div>
           <p className="section-label mb-3 flex items-center gap-2">
@@ -322,7 +319,6 @@ export function CalendarArchive({
         </div>
       )}
 
-      {/* Past event groups — collapsed under history */}
       {pastGroups.length > 0 && (
         <div>
           <button

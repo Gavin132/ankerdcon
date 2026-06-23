@@ -4,7 +4,6 @@ import {
   ChevronLeft,
   ChevronRight,
   CalendarDays,
-  Users,
   BedDouble,
   UserPlus,
   UserMinus,
@@ -13,6 +12,7 @@ import {
 import { Badge } from "../common/Badge";
 import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
+import { UserAvatar } from "../common/UserAvatar";
 import { parseEventDate, toDateKey, todayKey } from "../../utils/date";
 import type { CalendarEvent } from "../../types";
 import { DAY_LABELS } from "../../constants";
@@ -20,8 +20,8 @@ import { DAY_LABELS } from "../../constants";
 interface CalendarGridProps {
   events: CalendarEvent[];
   allUsers?: string[];
-  onRsvp?: (rowNumber: number, userName: string) => void;
-  onLeave?: (rowNumber: number, userName: string) => void;
+  onRsvp?: (id: number, userName: string) => void;
+  onLeave?: (id: number, userName: string) => void;
 }
 
 export function CalendarGrid({
@@ -207,12 +207,12 @@ export function CalendarGrid({
               <div className="mt-3 space-y-2.5 border-t border-slate-100 pt-3 dark:border-slate-700">
                 {selectedEvents.map((ev) => {
                   const isPast = selectedDate !== null && selectedDate < today;
-                  const isRsvpOpen = activeRsvpEvent === ev.row_number;
+                  const isRsvpOpen = activeRsvpEvent === ev.id;
                   const hasRsvp = !!onRsvp && !!onLeave && allUsers.length > 0;
 
                   return (
                     <div
-                      key={ev.event_id}
+                      key={ev.id}
                       className="rounded-xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-3 dark:border-sky-900/50 dark:from-sky-900/20 dark:to-slate-800/50"
                     >
                       <div className="flex items-start gap-2.5">
@@ -231,18 +231,21 @@ export function CalendarGrid({
                               </Badge>
                             )}
                           </div>
+
+                          {/* Avatar Facepile */}
                           {ev.participants.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1">
+                            <div className="mt-2.5 flex items-center -space-x-2">
                               {ev.participants.map((p) => (
-                                <Badge key={p} variant="blue">
-                                  <Users size={10} />
-                                  {p}
-                                </Badge>
+                                <UserAvatar
+                                  key={p}
+                                  name={p}
+                                  className="h-7 w-7 text-[10px] ring-2 ring-white dark:ring-slate-800"
+                                />
                               ))}
                             </div>
                           )}
 
-                          {/* RSVP actions (only when handlers provided and event is not past) */}
+                          {/* RSVP actions */}
                           {hasRsvp && !isPast && (
                             <div className="mt-3 border-t border-sky-100/60 pt-3 dark:border-sky-800/30">
                               {isRsvpOpen ? (
@@ -289,8 +292,8 @@ export function CalendarGrid({
                                     onClick={() => {
                                       rsvpNames.forEach((name) => {
                                         if (rsvpMode === "join")
-                                          onRsvp!(ev.row_number, name);
-                                        else onLeave!(ev.row_number, name);
+                                          onRsvp!(ev.id, name);
+                                        else onLeave!(ev.id, name);
                                       });
                                       setActiveRsvpEvent(null);
                                       setRsvpNames([]);
@@ -309,7 +312,7 @@ export function CalendarGrid({
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      setActiveRsvpEvent(ev.row_number);
+                                      setActiveRsvpEvent(ev.id);
                                       setRsvpMode("join");
                                       setRsvpNames([]);
                                     }}
@@ -322,7 +325,7 @@ export function CalendarGrid({
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        setActiveRsvpEvent(ev.row_number);
+                                        setActiveRsvpEvent(ev.id);
                                         setRsvpMode("leave");
                                         setRsvpNames([]);
                                       }}

@@ -19,7 +19,7 @@ import { useCalendar } from "../hooks/useCalendar";
 import { useRides } from "../hooks/useRides";
 import { useMeals } from "../hooks/useMeals";
 import { usePayments } from "../hooks/usePayments";
-import { useUsers } from "../hooks/useUsers";
+import { useUser } from "../hooks/useUsers";
 import { formatDate } from "../utils/format";
 import { avatarColor } from "../utils/avatar";
 import { listItem, listContainer } from "../utils/motion";
@@ -35,7 +35,7 @@ export function HubPage() {
   const { data: rides } = useRides();
   const { data: meals } = useMeals();
   const { data: payments } = usePayments();
-  const { data: users } = useUsers();
+  const { data: users } = useUser();
 
   if (evLoading) {
     return <HubSkeleton />;

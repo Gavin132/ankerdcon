@@ -1,105 +1,68 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Lock, ArrowRight, User } from "lucide-react";
+import { useState, useEffect } from "react";
+import { LogIn } from "lucide-react";
+import { useNavigate } from "react-router-dom"; // Add this
 import { Button } from "../common/Button";
-import { login } from "../../services/auth.service";
-import { useAuthStore } from "../../store/auth.store";
-import { usePublicUserNames } from "../../hooks/useUsers";
-import { useNavigate } from "react-router-dom";
-
-const schema = z.object({
-  user_name: z.string().min(1, "Selecteer je naam"),
-  passcode: z.string().min(1, "Vul je toegangscode in"),
-});
-
-type FormValues = z.infer<typeof schema>;
+import { supabase } from "../../services/supabase";
+import { useAuthStore } from "../../store/auth.store"; // Add this
 
 export function LoginForm() {
-  const setAccessToken = useAuthStore((s) => s.setAccessToken);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Bring in your router and your auth state
   const navigate = useNavigate();
-  const { data: names = [], isLoading: namesLoading } = usePublicUserNames();
+  const accessToken = useAuthStore((s) => s.accessToken);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    setError,
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
-
-  async function onSubmit(values: FormValues) {
-    try {
-      const data = await login({ user_name: values.user_name, passcode: values.passcode });
-      setAccessToken(data.access_token);
+  // The Magic Redirect: If the token suddenly exists, send them to the dashboard!
+  useEffect(() => {
+    if (accessToken) {
       navigate("/", { replace: true });
-    } catch {
-      setError("passcode", { message: "Onjuiste naam of toegangscode. Probeer opnieuw." });
+    }
+  }, [accessToken, navigate]);
+
+  async function handleDiscordLogin() {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "discord",
+        options: {
+          redirectTo: window.location.origin, 
+        }
+      });
+
+      if (error) throw error;
+      
+    } catch (err: any) {
+      setError(err.message || "Er is een fout opgetreden bij het inloggen via Discord.");
+      setIsLoading(false);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* Name picker */}
-      <div>
-        <label className="mb-2 block text-xs font-semibold uppercase tracking-widest text-slate-400">
-          Jouw naam
-        </label>
-        <div className="relative">
-          <User
-            size={15}
-            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-          />
-          <select
-            className={`input-field pl-11 ${errors.user_name ? "border-rose-400 ring-2 ring-rose-100" : ""}`}
-            disabled={namesLoading}
-            {...register("user_name")}
-          >
-            <option value="">
-              {namesLoading ? "Laden…" : "Selecteer je naam…"}
-            </option>
-            {names.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </div>
-        {errors.user_name && (
-          <p className="mt-2 text-xs font-medium text-rose-500">
-            {errors.user_name.message}
-          </p>
-        )}
+    <div className="space-y-4">
+      <div className="text-center mb-6">
+        <h2 className="text-lg font-semibold text-white">Welkom bij Ankerd Con</h2>
+        <p className="text-sm text-slate-400 mt-1">Koppel je account om verder te gaan</p>
       </div>
 
-      {/* Passcode */}
-      <div>
-        <label className="mb-2 block text-xs font-semibold uppercase tracking-widest text-slate-400">
-          Toegangscode
-        </label>
-        <div className="relative">
-          <Lock
-            size={15}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-          />
-          <input
-            type="password"
-            placeholder="••••••••"
-            autoComplete="current-password"
-            className={`input-field pl-11 ${errors.passcode ? "border-rose-400 ring-2 ring-rose-100" : ""}`}
-            {...register("passcode")}
-          />
-        </div>
-        {errors.passcode && (
-          <p className="mt-2 text-xs font-medium text-rose-500">
-            {errors.passcode.message}
-          </p>
-        )}
-      </div>
-
-      <Button type="submit" size="lg" loading={isSubmitting} className="w-full">
-        Inloggen
-        {!isSubmitting && <ArrowRight size={16} />}
+      <Button 
+        type="button" 
+        size="lg" 
+        onClick={handleDiscordLogin} 
+        loading={isLoading} 
+        className="w-full bg-[#5865F2] hover:bg-[#4752C4] border-transparent text-white"
+      >
+        Inloggen met Discord
+        {!isLoading && <LogIn size={18} className="ml-2" />}
       </Button>
-    </form>
+
+      {error && (
+        <p className="mt-2 text-xs font-medium text-rose-500 text-center">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }

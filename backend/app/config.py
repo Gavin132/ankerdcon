@@ -14,12 +14,15 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
-    # Google Sheets
-    google_service_account_json: str
-    google_sheet_id: str
+    # Google Sheets zou dus deprecated moeten zijn
+    # google_service_account_json: str
+    # google_sheet_id: str
+
+    supabase_url: str = ""
+    supabase_secret_key: str = ""
 
     # Auth
-    jwt_secret_key: str
+    jwt_secret_key: str = ""
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7

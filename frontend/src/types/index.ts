@@ -44,6 +44,7 @@ export type VehicleType = "Car" | "Public Transport";
 export type Direction = "Inbound" | "Outbound" | "Restaurant";
 
 export interface Ride {
+  id: number;
   direction: Direction;
   vehicle_type: VehicleType;
   driver: string;
@@ -53,12 +54,12 @@ export interface Ride {
   passengers: string[];
   parking_info: string;
   maps_link: string;
-  row_number: number;
   seats_left: number;
   is_full: boolean;
   is_public_transport: boolean;
   car_available: boolean;
   action_required: boolean;
+  restaurant_drivers?: RestaurantDriver[];
 }
 
 export interface CreateRideRequest {
@@ -148,14 +149,13 @@ export interface CreatePaymentRequest {
   splits?: Split[];
 }
 
-// Calendar
 export interface CalendarEvent {
-  date: string;
-  event_id: string;
+  id: number;             
+  event_group_id?: number;
   event_name: string;
+  date: string;
   is_hotel: boolean;
   participants: string[];
-  row_number: number;
 }
 
 export interface CalendarRsvpRequest {

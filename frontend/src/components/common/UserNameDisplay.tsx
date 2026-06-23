@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useUsers } from "../../hooks/useUsers";
+import { useUser } from "../../hooks/useUsers";
 
 const FONT_MAP: Record<string, string> = {
   mono: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
@@ -20,8 +20,7 @@ export function UserNameDisplay({
   clickable = true,
 }: UserNameDisplayProps) {
   const navigate = useNavigate();
-  const { data: users } = useUsers();
-  const user = users?.find((u) => u.name === name);
+  const { data: user } = useUser(name);
 
   const style: React.CSSProperties = {
     color: user?.color || undefined,

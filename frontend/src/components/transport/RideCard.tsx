@@ -57,7 +57,8 @@ export function RideCard({ ride, userNames }: RideCardProps) {
     if (claimNames.length === 0) return;
     try {
       for (const name of claimNames) {
-        await claimMutation.mutateAsync({ rowNumber: ride.row_number, payload: { user_name: name } });
+        // CHANGED: ride.row_number is now ride.id
+        await claimMutation.mutateAsync({ id: ride.id, payload: { user_name: name } });
       }
       setClaimNames([]);
       setClaimOpen(false);
@@ -71,7 +72,8 @@ export function RideCard({ ride, userNames }: RideCardProps) {
     if (leaveNames.length === 0) return;
     try {
       for (const name of leaveNames) {
-        await leaveMutation.mutateAsync({ rowNumber: ride.row_number, payload: { user_name: name } });
+        // CHANGED: ride.row_number is now ride.id
+        await leaveMutation.mutateAsync({ id: ride.id, payload: { user_name: name } });
       }
       setLeaveNames([]);
       setLeaveOpen(false);

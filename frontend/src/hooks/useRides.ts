@@ -23,12 +23,12 @@ export function useClaimSeat() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({
-      rowNumber,
+      id,
       payload,
     }: {
-      rowNumber: number;
+      id: number;
       payload: ClaimSeatRequest;
-    }) => claimSeat(rowNumber, payload),
+    }) => claimSeat(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.rides }),
   });
 }
@@ -37,12 +37,12 @@ export function useLeaveSeat() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({
-      rowNumber,
+      id,
       payload,
     }: {
-      rowNumber: number;
+      id: number;
       payload: ClaimSeatRequest;
-    }) => leaveSeat(rowNumber, payload),
+    }) => leaveSeat(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.rides }),
   });
 }
@@ -50,8 +50,8 @@ export function useLeaveSeat() {
 export function useAddRestaurantDriver() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ rowNumber, payload }: { rowNumber: number; payload: RestaurantDriverRequest }) =>
-      addRestaurantDriver(rowNumber, payload),
+    mutationFn: ({ id, payload }: { id: number; payload: RestaurantDriverRequest }) =>
+      addRestaurantDriver(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.rides }),
   });
 }
@@ -59,8 +59,8 @@ export function useAddRestaurantDriver() {
 export function useLeaveRestaurantDriver() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ rowNumber, payload }: { rowNumber: number; payload: LeaveRestaurantDriverRequest }) =>
-      leaveRestaurantDriver(rowNumber, payload),
+    mutationFn: ({ id, payload }: { id: number; payload: LeaveRestaurantDriverRequest }) =>
+      leaveRestaurantDriver(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.rides }),
   });
 }
@@ -68,8 +68,8 @@ export function useLeaveRestaurantDriver() {
 export function useAssignToDriver() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ rowNumber, payload }: { rowNumber: number; payload: RestaurantAssignRequest }) =>
-      assignToDriver(rowNumber, payload),
+    mutationFn: ({ id, payload }: { id: number; payload: RestaurantAssignRequest }) =>
+      assignToDriver(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.rides }),
   });
 }
@@ -77,8 +77,8 @@ export function useAssignToDriver() {
 export function useUnassignFromDriver() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ rowNumber, payload }: { rowNumber: number; payload: RestaurantUnassignRequest }) =>
-      unassignFromDriver(rowNumber, payload),
+    mutationFn: ({ id, payload }: { id: number; payload: RestaurantUnassignRequest }) =>
+      unassignFromDriver(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.rides }),
   });
 }

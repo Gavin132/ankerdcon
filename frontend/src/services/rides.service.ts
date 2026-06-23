@@ -2,13 +2,13 @@ import { apiClient } from "../utils/api";
 import type {
   Ride,
   CreateRideRequest,
-  ClaimSeatRequest,
   Direction,
   RestaurantDriverRequest,
   LeaveRestaurantDriverRequest,
   RestaurantAssignRequest,
   RestaurantUnassignRequest,
 } from "../types";
+import { api } from "./api";
 
 export async function getRides(direction?: Direction): Promise<Ride[]> {
   const params = direction ? { direction } : {};
@@ -21,52 +21,38 @@ export async function createRide(payload: CreateRideRequest): Promise<Ride> {
   return data;
 }
 
-export async function claimSeat(
-  rowNumber: number,
-  payload: ClaimSeatRequest,
-): Promise<Ride> {
-  const { data } = await apiClient.post<Ride>(
-    `/api/rides/${rowNumber}/claim`,
-    payload,
-  );
-  return data;
-}
+export const claimSeat = async (id: string, payload: { user_name: string }) => {
+  await api.post(`/api/rides/${id}/claim`, payload);
+};
 
-export async function leaveSeat(
-  rowNumber: number,
-  payload: ClaimSeatRequest,
-): Promise<Ride> {
-  const { data } = await apiClient.post<Ride>(
-    `/api/rides/${rowNumber}/leave`,
-    payload,
-  );
-  return data;
-}
+export const leaveSeat = async (id: string, payload: { user_name: string }) => {
+  await api.post(`/rides/${id}/leave`, payload);
+};
 
 export async function addRestaurantDriver(
-  rowNumber: number,
+  id: number,
   payload: RestaurantDriverRequest,
 ): Promise<void> {
-  await apiClient.post(`/api/rides/${rowNumber}/restaurant-driver`, payload);
+  await apiClient.post(`/api/rides/${id}/restaurant-driver`, payload);
 }
 
 export async function leaveRestaurantDriver(
-  rowNumber: number,
+  id: number,
   payload: LeaveRestaurantDriverRequest,
 ): Promise<void> {
-  await apiClient.post(`/api/rides/${rowNumber}/restaurant-driver/leave`, payload);
+  await apiClient.post(`/api/rides/${id}/restaurant-driver/leave`, payload);
 }
 
 export async function assignToDriver(
-  rowNumber: number,
+  id: number,
   payload: RestaurantAssignRequest,
 ): Promise<void> {
-  await apiClient.post(`/api/rides/${rowNumber}/restaurant-driver/assign`, payload);
+  await apiClient.post(`/api/rides/${id}/restaurant-driver/assign`, payload);
 }
 
 export async function unassignFromDriver(
-  rowNumber: number,
+  id: number,
   payload: RestaurantUnassignRequest,
 ): Promise<void> {
-  await apiClient.post(`/api/rides/${rowNumber}/restaurant-driver/unassign`, payload);
+  await apiClient.post(`/api/rides/${id}/restaurant-driver/unassign`, payload);
 }

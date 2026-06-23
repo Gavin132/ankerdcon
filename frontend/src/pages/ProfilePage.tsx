@@ -4,7 +4,7 @@ import { ArrowLeft, Check, X, BedDouble, Phone, MapPin } from "lucide-react";
 import { Button } from "../components/common/Button";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { LocationPingDisplay } from "../components/common/LocationPingDisplay";
-import { useUsers, useUpdatePreferences } from "../hooks/useUsers";
+import { useUser, useUpdatePreferences } from "../hooks/useUsers";
 import { useAuthStore } from "../store/auth.store";
 import { avatarColor } from "../utils/avatar";
 import { toast } from "../store/toast.store";
@@ -234,22 +234,30 @@ function Section({
 // ─── main component ───────────────────────────────────────────────────────────
 
 export function ProfilePage() {
+  // 1. Get URL parameters
   const { name } = useParams<{ name: string }>();
+  const decodedName = name ? decodeURIComponent(name) : "";
+
+  // 2. Setup navigation & auth
   const navigate = useNavigate();
   const currentUser = useAuthStore((s) => s.currentUser);
-  const { data: users, isLoading } = useUsers();
+
+  // 3. Fetching Data
+  const { data: user, isLoading } = useUser(decodedName); 
   const updateMutation = useUpdatePreferences();
 
-  const decodedName = name ? decodeURIComponent(name) : "";
-  const user = users?.find((u) => u.name === decodedName);
+  // 4. Derived state
   const isOwn = currentUser === decodedName;
 
+  // 5. Local form state
   const [draftBio, setDraftBio] = useState("");
   const [draftColor, setDraftColor] = useState("");
   const [draftBanner, setDraftBanner] = useState("");
   const [draftFont, setDraftFont] = useState<FontOption>("default");
   const [draftPronouns, setDraftPronouns] = useState("");
   const [initialized, setInitialized] = useState(false);
+
+  // ... rest of your useEffect and component logic ...
 
   useEffect(() => {
     if (user && !initialized) {

@@ -3,17 +3,20 @@ from pydantic import BaseModel, field_validator
 
 
 class User(BaseModel):
-    row_number: int
+    id: str
     name: str
-    phone_number: str = ""
-    hotel_room: str = ""
-    live_location_ping: str = ""
-    color: str = ""
-    font: str = ""
-    bio: str = ""
-    banner_color: str = ""
-    pronouns: str = ""
-
+    row_number: Optional[int] = None # Added this since it's missing
+    phone_number: Optional[str] = None
+    hotel_room: Optional[str] = None
+    live_location_ping: Optional[str] = None
+    passcode: Optional[str] = None
+    color: Optional[str] = None
+    font: Optional[str] = None
+    pronouns: Optional[str] = None
+    bio: Optional[str] = None
+    banner_color: Optional[str] = None
+    banner_url: Optional[str] = None
+    discord_id: Optional[str] = None
 
 class LocationPingRequest(BaseModel):
     zone: str

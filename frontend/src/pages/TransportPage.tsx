@@ -143,11 +143,10 @@ export function TransportPage() {
             <button
               key={d}
               onClick={() => { setTab(d); setShowTimeline(false); }}
-              className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-semibold transition-all duration-200 ${
-                tab === d && !showTimeline
-                  ? "bg-white text-slate-900 shadow-card dark:bg-slate-700 dark:text-slate-100"
-                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-              }`}
+              className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-semibold transition-all duration-200 ${tab === d && !showTimeline
+                ? "bg-white text-slate-900 shadow-card dark:bg-slate-700 dark:text-slate-100"
+                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                }`}
             >
               {d === "Inbound" && <ArrowRight size={13} className={tab === d && !showTimeline ? "text-sky-500" : ""} />}
               {d === "Outbound" && <ArrowLeft size={13} className={tab === d && !showTimeline ? "text-sky-500" : ""} />}
@@ -158,11 +157,10 @@ export function TransportPage() {
         </div>
         <button
           onClick={() => setShowTimeline((v) => !v)}
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-all ${
-            showTimeline
-              ? "bg-sky-500 text-white shadow-card"
-              : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:text-slate-400"
-          }`}
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-all ${showTimeline
+            ? "bg-sky-500 text-white shadow-card"
+            : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:text-slate-400"
+            }`}
           title="Tijdlijn"
         >
           <CalendarClock size={16} />
@@ -210,13 +208,13 @@ export function TransportPage() {
               {activeRides.map((ride) =>
                 ride.direction === "Restaurant" ? (
                   <RestaurantCard
-                    key={ride.row_number}
+                    key={ride.id}
                     ride={ride}
                     userNames={userNames}
                   />
                 ) : (
                   <RideCard
-                    key={ride.row_number}
+                    key={ride.id}
                     ride={ride}
                     userNames={userNames}
                   />
@@ -262,13 +260,13 @@ export function TransportPage() {
                       {pastRides.map((ride) =>
                         ride.direction === "Restaurant" ? (
                           <RestaurantCard
-                            key={ride.row_number}
+                            key={ride.id}
                             ride={ride}
                             userNames={userNames}
                           />
                         ) : (
                           <RideCard
-                            key={ride.row_number}
+                            key={ride.id}
                             ride={ride}
                             userNames={userNames}
                           />

@@ -52,14 +52,6 @@ export function LoginPage() {
           transition={{ delay: 0.2, duration: 0.4 }}
         >
           <div className="card-surface rounded-3xl p-7">
-            <div className="mb-6">
-              <h2 className="text-base font-black text-slate-800">
-                Welkom terug
-              </h2>
-              <p className="mt-1 text-sm text-slate-400">
-                Log in met je naam en persoonlijke code
-              </p>
-            </div>
             <LoginForm />
           </div>
 

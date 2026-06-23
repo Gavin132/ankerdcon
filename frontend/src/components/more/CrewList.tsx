@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BedDouble, Phone, ChevronDown, Search } from "lucide-react";
 import { LoadingSpinner } from "../common/LoadingSpinner";
 import { LocationPingDisplay } from "../common/LocationPingDisplay";
-import { avatarColor } from "../../utils/avatar";
 import type { User } from "../../types";
+
+// 1. Import your new component (adjust the path if it's saved somewhere else!)
+import { UserAvatar } from "../common/UserAvatar"; 
 
 interface CrewListProps {
   users: User[];
@@ -35,6 +37,7 @@ export function CrewList({ users, isLoading }: CrewListProps) {
         </motion.div>
       </button>
 
+      {/* --- UNEXPANDED VIEW (THE FACEPILE) --- */}
       {!expanded && users.length > 0 && (
         <div
           className="flex items-center gap-2 cursor-pointer"
@@ -42,16 +45,15 @@ export function CrewList({ users, isLoading }: CrewListProps) {
         >
           <div className="flex -space-x-2">
             {users.slice(0, 8).map((u) => (
-              <div
-                key={u.name}
-                title={u.name}
-                className={`flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br text-xs font-black text-white ${avatarColor(u.name)}`}
-              >
-                {u.name[0]}
-              </div>
+              // 2. Replaced the old div with UserAvatar
+              <UserAvatar 
+                key={u.name} 
+                name={u.name} 
+                className="h-9 w-9 text-xs" 
+              />
             ))}
             {users.length > 8 && (
-              <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-slate-200 text-xs font-black text-slate-600">
+              <div className="flex z-10 h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-slate-200 text-xs font-black text-slate-600">
                 +{users.length - 8}
               </div>
             )}
@@ -62,6 +64,7 @@ export function CrewList({ users, isLoading }: CrewListProps) {
         </div>
       )}
 
+      {/* --- EXPANDED VIEW (THE ROSTER) --- */}
       <AnimatePresence>
         {expanded && (
           <motion.div
@@ -101,11 +104,12 @@ export function CrewList({ users, isLoading }: CrewListProps) {
                         key={u.name}
                         className="flex items-center gap-3 px-4 py-3.5"
                       >
-                        <div
-                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-black text-white ${avatarColor(u.name)}`}
-                        >
-                          {u.name[0]}
-                        </div>
+                        {/* 3. Replaced the old div with UserAvatar */}
+                        <UserAvatar 
+                          name={u.name} 
+                          className="h-10 w-10 text-sm" 
+                        />
+                        
                         <div className="flex-1 min-w-0">
                           <p className="font-bold text-slate-900 text-sm">
                             {u.name}

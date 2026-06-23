@@ -3,13 +3,16 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncGenerator
+import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
-from app.routers import auth, calendar, meals, payments, rides, users
+from app.core.database import supabase
+
+from app.routers import users, calendar, rides, meals, payments
 
 
 @asynccontextmanager
@@ -31,16 +34,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 app = FastAPI(
     title="Ankerd Con API",
-    version="1.0.0",
+    version="1.2.3",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
     lifespan=lifespan,
 )
 
+
+# Force exact matches for local Vite development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Tightened per-environment via CORS_ORIGINS env var at deploy time
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -50,7 +55,7 @@ app.add_middleware(
 # API routes — all prefixed with /api
 # ---------------------------------------------------------------------------
 _API = "/api"
-app.include_router(auth.router, prefix=_API)
+
 app.include_router(users.router, prefix=_API)
 app.include_router(rides.router, prefix=_API)
 app.include_router(meals.router, prefix=_API)
@@ -62,6 +67,14 @@ app.include_router(calendar.router, prefix=_API)
 def health() -> dict:
     return {"status": "ok", "service": "ankerd-con-api"}
 
+@app.get("/api/test-db", tags=["meta"])
+def test_db_connection():
+    try:
+        # Ask Supabase for just the name and color of the first 3 users
+        response = supabase.table("profiles").select("name, color").limit(3).execute()
+        return {"status": "success", "data": response.data}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 # ---------------------------------------------------------------------------
 # Serve React frontend (only present after `npm run build`)

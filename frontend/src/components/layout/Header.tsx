@@ -5,7 +5,7 @@ import { Moon, Sun, User, LogOut } from "lucide-react";
 import { APP_NAME } from "../../constants";
 import { useThemeStore } from "../../store/theme.store";
 import { useAuthStore } from "../../store/auth.store";
-import { useUsers } from "../../hooks/useUsers";
+import { useUser } from "../../hooks/useUsers";
 import { avatarColor } from "../../utils/avatar";
 import { logout } from "../../services/auth.service";
 
@@ -24,9 +24,10 @@ export function Header() {
   const toggleTheme = useThemeStore((s) => s.toggle);
   const currentUser = useAuthStore((s) => s.currentUser);
   const clearAuth = useAuthStore((s) => s.clearAuth);
-  const { data: users } = useUsers();
+  
+  // This fetches your actual profile from the database using the UUID!
+  const { data: me } = useUser(currentUser || "");
 
-  const me = users?.find((u) => u.name === currentUser);
   const meta = PAGE_META[pathname] ?? { title: APP_NAME, subtitle: "" };
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -53,6 +54,15 @@ export function Header() {
       navigate("/login", { replace: true });
     }
   }
+
+  // --- NEW: Smart Display Variables ---
+  // If the profile hasn't loaded yet, default to a generic fallback instead of the UUID
+  const displayName = me?.name || "Gebruiker";
+  const displayInitial = me?.name ? me.name.charAt(0).toUpperCase() : "-";
+
+  // If `me.color` is a raw hex code (e.g. "#0ea5e9"), we use it as inline style.
+  // Otherwise, we fall back to your beautiful gradient generator, but we hash your REAL name, not your UUID!
+  const useInlineColor = me?.color && me.color.startsWith("#");
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-100/80 bg-white/85 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-900/85 pt-[env(safe-area-inset-top,0px)]">
@@ -112,15 +122,15 @@ export function Header() {
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[11px] font-black text-white transition-opacity hover:opacity-75 active:opacity-60 shadow-sm ${avatarColor(currentUser)}`}
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-black text-white transition-opacity hover:opacity-75 active:opacity-60 shadow-sm ${!useInlineColor ? `bg-gradient-to-br ${avatarColor(displayName)}` : ""}`}
               style={
-                me?.color
+                useInlineColor
                   ? { backgroundColor: me.color, backgroundImage: "none" }
                   : undefined
               }
               aria-label="Accountmenu"
             >
-              {currentUser[0]?.toUpperCase()}
+              {displayInitial}
             </button>
 
             <AnimatePresence>
@@ -137,18 +147,18 @@ export function Header() {
                   {/* User chip */}
                   <div className="flex items-center gap-2.5 border-b border-slate-100 dark:border-slate-700 px-4 py-3">
                     <div
-                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[10px] font-black text-white ${avatarColor(currentUser)}`}
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-black text-white ${!useInlineColor ? `bg-gradient-to-br ${avatarColor(displayName)}` : ""}`}
                       style={
-                        me?.color
+                        useInlineColor
                           ? { backgroundColor: me.color, backgroundImage: "none" }
                           : undefined
                       }
                     >
-                      {currentUser[0]?.toUpperCase()}
+                      {displayInitial}
                     </div>
                     <div className="min-w-0">
                       <p className="truncate text-[13px] font-bold text-slate-900 dark:text-white leading-tight">
-                        {currentUser}
+                        {displayName}
                       </p>
                       {me?.pronouns && (
                         <p className="text-[10px] text-slate-400 leading-none mt-0.5">{me.pronouns}</p>
@@ -160,6 +170,7 @@ export function Header() {
                   <button
                     onClick={() => {
                       setMenuOpen(false);
+                      // Use the UUID here so the router navigates to the correct URL!
                       navigate(`/profile/${encodeURIComponent(currentUser)}`);
                     }}
                     className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors"
