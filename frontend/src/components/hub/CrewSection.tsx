@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BedDouble, Phone, ChevronDown, Search } from "lucide-react";
+import { BedDouble, ChevronDown, Search } from "lucide-react";
 import { LocationPingDisplay } from "../common/LocationPingDisplay";
 import { UserNameDisplay } from "../common/UserNameDisplay";
 import { UserProfilePopup, type AnchorRect } from "../common/UserProfilePopup";
-import { avatarColor } from "../../utils/avatar";
+import { UserAvatar } from "../common/UserAvatar";
 import { listItem } from "../../utils/motion";
 import { useAuthStore } from "../../store/auth.store";
 import { useCalendar } from "../../hooks/useCalendar";
@@ -50,18 +50,7 @@ export function CrewSection({ users }: CrewSectionProps) {
         >
           <div className="flex -space-x-2">
             {users.slice(0, 8).map((u) => (
-              <div
-                key={u.name}
-                title={u.name}
-                className={`flex h-9 w-9 items-center justify-center rounded-full border-2 border-white dark:border-slate-900 bg-gradient-to-br text-xs font-black text-white ${avatarColor(u.name)}`}
-                style={
-                  u.color
-                    ? { backgroundColor: u.color, backgroundImage: "none" }
-                    : undefined
-                }
-              >
-                {u.name[0]}
-              </div>
+              <UserAvatar key={u.name} name={u.name} className="h-9 w-9 text-xs" />
             ))}
             {users.length > 8 && (
               <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-700 text-xs font-black text-slate-600 dark:text-slate-300">
@@ -112,16 +101,7 @@ export function CrewSection({ users }: CrewSectionProps) {
                       }}
                       className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-slate-50 active:bg-slate-50 transition-colors dark:hover:bg-slate-800/60"
                     >
-                      <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-black text-white ${avatarColor(u.name)}`}
-                        style={
-                          u.color
-                            ? { backgroundColor: u.color, backgroundImage: "none" }
-                            : undefined
-                        }
-                      >
-                        {u.name[0]}
-                      </div>
+                      <UserAvatar name={u.name} className="h-10 w-10 text-sm rounded-xl" />
                       <div className="flex-1 min-w-0">
                         <UserNameDisplay
                           name={u.name}
@@ -133,12 +113,6 @@ export function CrewSection({ users }: CrewSectionProps) {
                             <span className="flex items-center gap-1 text-xs text-slate-400">
                               <BedDouble size={11} />
                               Kamer {u.hotel_room}
-                            </span>
-                          )}
-                          {u.phone_number && (
-                            <span className="flex items-center gap-1 text-xs text-slate-400">
-                              <Phone size={11} />
-                              {u.phone_number}
                             </span>
                           )}
                         </div>
@@ -159,7 +133,7 @@ export function CrewSection({ users }: CrewSectionProps) {
       <UserProfilePopup
         user={popupUser}
         open={popupUser !== null}
-        isOwn={currentUser === popupUser?.name}
+        isOwn={currentUser === popupUser?.id}
         anchorRect={popupAnchorRect}
         onClose={() => setPopupUser(null)}
         calendarEvents={calendarEvents ?? []}

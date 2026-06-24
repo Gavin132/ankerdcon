@@ -4,8 +4,9 @@ import { User, Calendar, ChevronDown, Trash2, Receipt } from "lucide-react";
 import { Button } from "../common/Button";
 import { Modal } from "../common/Modal";
 import { useDeletePayment } from "../../hooks/usePayments";
+import { NamePicker } from "../common/NamePicker";
 import { formatDate, formatCurrency } from "../../utils/format";
-import { avatarColor, personInitial } from "../../utils/avatar";
+import { UserAvatar } from "../common/UserAvatar";
 import { toast } from "../../store/toast.store";
 import { listItem } from "../../utils/motion";
 import { PaymentCardProps } from "../../types/interfaces";
@@ -22,7 +23,7 @@ export function PaymentCard({ payment, userNames }: PaymentCardProps) {
     if (!deleteName) return;
     try {
       await deleteMutation.mutateAsync({
-        rowNumber: payment.row_number,
+        id: payment.id,
         userName: deleteName,
       });
       setDeleteOpen(false);
@@ -38,11 +39,7 @@ export function PaymentCard({ payment, userNames }: PaymentCardProps) {
         <div className="card-surface rounded-2xl overflow-hidden">
           <div className="p-4">
             <div className="flex items-center gap-3">
-              <div
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-black text-white ${avatarColor(payment.paid_by)}`}
-              >
-                {personInitial(payment.paid_by)}
-              </div>
+              <UserAvatar name={payment.paid_by} className="h-11 w-11 text-sm rounded-xl" />
 
               <div className="flex-1 min-w-0">
                 <p className="font-black text-slate-900 text-sm truncate">
@@ -114,11 +111,7 @@ export function PaymentCard({ payment, userNames }: PaymentCardProps) {
                           className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2"
                         >
                           <div className="flex items-center gap-2">
-                            <div
-                              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br text-xs font-black text-white ${avatarColor(s.name)}`}
-                            >
-                              {personInitial(s.name)}
-                            </div>
+                            <UserAvatar name={s.name} className="h-6 w-6 text-[9px] rounded-lg" />
                             <span className="text-xs font-semibold text-slate-700">
                               {s.name}
                             </span>
@@ -158,18 +151,12 @@ export function PaymentCard({ payment, userNames }: PaymentCardProps) {
             <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
               Jouw naam
             </label>
-            <select
-              className="input-field"
+            <NamePicker
+              options={userNames}
               value={deleteName}
-              onChange={(e) => setDeleteName(e.target.value)}
-            >
-              <option value="">Selecteer naam…</option>
-              {userNames.map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
+              onChange={setDeleteName}
+              color="rose"
+            />
           </div>
           <div className="flex gap-3">
             <Button

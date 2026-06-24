@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BedDouble, Phone, ChevronDown, Search } from "lucide-react";
+import { BedDouble, ChevronDown, Search } from "lucide-react";
 import { LoadingSpinner } from "../common/LoadingSpinner";
 import { LocationPingDisplay } from "../common/LocationPingDisplay";
 import type { User } from "../../types";
@@ -119,12 +119,6 @@ export function CrewList({ users, isLoading }: CrewListProps) {
                               <span className="flex items-center gap-1 text-xs text-slate-400">
                                 <BedDouble size={11} />
                                 Kamer {u.hotel_room}
-                              </span>
-                            )}
-                            {u.phone_number && (
-                              <span className="flex items-center gap-1 text-xs text-slate-400">
-                                <Phone size={11} />
-                                {u.phone_number}
                               </span>
                             )}
                           </div>

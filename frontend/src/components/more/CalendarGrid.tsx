@@ -20,8 +20,8 @@ import { DAY_LABELS } from "../../constants";
 interface CalendarGridProps {
   events: CalendarEvent[];
   allUsers?: string[];
-  onRsvp?: (id: number, userName: string) => void;
-  onLeave?: (id: number, userName: string) => void;
+  onRsvp?: (id: string, userName: string) => void;
+  onLeave?: (id: string, userName: string) => void;
 }
 
 export function CalendarGrid({
@@ -30,7 +30,7 @@ export function CalendarGrid({
   onRsvp,
   onLeave,
 }: CalendarGridProps) {
-  const [activeRsvpEvent, setActiveRsvpEvent] = useState<number | null>(null);
+  const [activeRsvpEvent, setActiveRsvpEvent] = useState<string | null>(null);
   const [rsvpMode, setRsvpMode] = useState<"join" | "leave">("join");
   const [rsvpNames, setRsvpNames] = useState<string[]>([]);
 

@@ -1,7 +1,7 @@
 import { UtensilsCrossed, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RestaurantGap } from "../../types";
-import { avatarColor } from "../../utils/avatar";
+import { UserAvatar } from "../common/UserAvatar";
 import { formatDateTime } from "../../utils/format";
 import { CollapsibleSection } from "../common/CollapsibleSection";
 
@@ -31,11 +31,7 @@ export function RestaurantGapBlock({ gap }: { gap: RestaurantGap }) {
         <p className="text-xs text-slate-400">Nog geen rit toegewezen:</p>
         {gap.unassigned.map((name) => (
           <div key={name} className="flex items-center gap-2.5">
-            <div
-              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br text-xs font-black text-white ${avatarColor(name)}`}
-            >
-              {name[0].toUpperCase()}
-            </div>
+            <UserAvatar name={name} className="h-7 w-7 text-xs rounded-lg" />
             <span className="flex-1 text-sm font-semibold text-slate-800 dark:text-slate-200 capitalize">
               {name}
             </span>
