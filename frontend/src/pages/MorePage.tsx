@@ -4,7 +4,6 @@ import {
   MapPin,
   LogOut,
   BedDouble,
-  Phone,
   ChevronRight,
   ChevronDown,
   Navigation,
@@ -31,6 +30,7 @@ import { UserProfilePopup, type AnchorRect } from "../components/common/UserProf
 import { logout } from "../services/auth.service";
 import { useNavigate } from "react-router-dom";
 import { avatarColor } from "../utils/avatar";
+import { UserAvatar } from "../components/common/UserAvatar";
 import type { User } from "../types";
 import { formatDate } from "../utils/format";
 import { parseEventDate } from "../utils/date";
@@ -47,6 +47,7 @@ type PingForm = z.infer<typeof pingSchema>;
 
 export function MorePage() {
   const [pingOpen, setPingOpen] = useState(false);
+  const [calendarView, setCalendarView] = useState<"list" | "calendar">("list");
   const [crewExpanded, setCrewExpanded] = useState(false);
   const [crewQuery, setCrewQuery] = useState("");
   const [qrOpen, setQrOpen] = useState(false);
@@ -77,17 +78,17 @@ export function MorePage() {
     setPingOpen(false);
   }
 
-  async function onCalendarRsvp(rowNumber: number, userName: string) {
+  async function onCalendarRsvp(id: string, userName: string) {
     try {
-      await rsvpMutation.mutateAsync({ rowNumber, userName });
+      await rsvpMutation.mutateAsync({ id, userName });
     } catch {
       // silently ignore duplicate sign-ups
     }
   }
 
-  async function onCalendarLeave(rowNumber: number, userName: string) {
+  async function onCalendarLeave(id: string, userName: string) {
     try {
-      await leaveMutation.mutateAsync({ rowNumber, userName });
+      await leaveMutation.mutateAsync({ id, userName });
     } catch {
       // silently ignore if not found
     }
@@ -165,31 +166,62 @@ export function MorePage() {
         </motion.div>
       )}
 
-      {/* Con Calendar */}
+      {/* Con Calendar — list or grid view */}
       {(calendarEvents ?? []).length > 0 && (
         <motion.div variants={listItem}>
-          <p className="section-label mb-3 flex items-center gap-2">
-            <CalendarDays size={13} className="text-sky-500" />
-            Con Kalender
-          </p>
-          <CalendarGrid
-            events={calendarEvents ?? []}
-            allUsers={allUsers.map((u) => u.name)}
-            onRsvp={onCalendarRsvp}
-            onLeave={onCalendarLeave}
-          />
-        </motion.div>
-      )}
+          {/* Header + view toggle */}
+          <div className="flex items-center justify-between mb-3">
+            <p className="section-label flex items-center gap-2">
+              <CalendarDays size={13} className="text-sky-500" />
+              Con Kalender
+            </p>
+            <div className="flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 gap-0.5">
+              {(["list", "calendar"] as const).map((view) => (
+                <button
+                  key={view}
+                  onClick={() => setCalendarView(view)}
+                  className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                    calendarView === view
+                      ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm"
+                      : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                  }`}
+                >
+                  {view === "list" ? "Lijst" : "Kalender"}
+                </button>
+              ))}
+            </div>
+          </div>
 
-      {/* Archive */}
-      {(calendarEvents ?? []).length > 0 && (
-        <motion.div variants={listItem}>
-          <CalendarArchive
-            events={calendarEvents ?? []}
-            allUsers={allUsers.map((u) => u.name)}
-            onRsvp={onCalendarRsvp}
-            onLeave={onCalendarLeave}
-          />
+          {/* Both views rendered simultaneously in the same grid cell so
+              height never changes during the crossfade transition */}
+          <div className="grid">
+            <motion.div
+              style={{ gridArea: "1 / 1" }}
+              animate={{ opacity: calendarView === "list" ? 1 : 0 }}
+              transition={{ duration: 0.2 }}
+              className={calendarView !== "list" ? "pointer-events-none" : ""}
+            >
+              <CalendarArchive
+                events={calendarEvents ?? []}
+                allUsers={allUsers.map((u) => u.name)}
+                onRsvp={onCalendarRsvp}
+                onLeave={onCalendarLeave}
+              />
+            </motion.div>
+            <motion.div
+              style={{ gridArea: "1 / 1" }}
+              animate={{ opacity: calendarView === "calendar" ? 1 : 0 }}
+              transition={{ duration: 0.2 }}
+              className={calendarView !== "calendar" ? "pointer-events-none" : ""}
+            >
+              <CalendarGrid
+                events={calendarEvents ?? []}
+                allUsers={allUsers.map((u) => u.name)}
+                onRsvp={onCalendarRsvp}
+                onLeave={onCalendarLeave}
+              />
+            </motion.div>
+          </div>
         </motion.div>
       )}
 
@@ -214,13 +246,7 @@ export function MorePage() {
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCrewExpanded(true)}>
             <div className="flex -space-x-2">
               {allUsers.slice(0, 8).map((u) => (
-                <div
-                  key={u.name}
-                  title={u.name}
-                  className={`flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br text-xs font-black text-white ${avatarColor(u.name)}`}
-                >
-                  {u.name[0]}
-                </div>
+                <UserAvatar key={u.name} name={u.name} className="h-9 w-9 text-xs" />
               ))}
               {allUsers.length > 8 && (
                 <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-slate-200 text-xs font-black text-slate-600">
@@ -276,12 +302,7 @@ export function MorePage() {
                           }}
                           className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-slate-50 active:bg-slate-50 transition-colors dark:hover:bg-slate-800/60"
                         >
-                          <div
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-black text-white ${avatarColor(u.name)}`}
-                            style={u.color ? { backgroundColor: u.color, backgroundImage: "none" } : undefined}
-                          >
-                            {u.name[0]}
-                          </div>
+                          <UserAvatar name={u.name} className="h-10 w-10 text-sm rounded-xl" />
                           <div className="flex-1 min-w-0">
                             <UserNameDisplay
                               name={u.name}
@@ -293,12 +314,6 @@ export function MorePage() {
                                 <span className="flex items-center gap-1 text-xs text-slate-400">
                                   <BedDouble size={11} />
                                   Kamer {u.hotel_room}
-                                </span>
-                              )}
-                              {u.phone_number && (
-                                <span className="flex items-center gap-1 text-xs text-slate-400">
-                                  <Phone size={11} />
-                                  {u.phone_number}
                                 </span>
                               )}
                             </div>
@@ -324,7 +339,7 @@ export function MorePage() {
             <img src="/assets/images/ankerd-logo.png" alt="Ankerd" className="h-8 w-8 object-contain" />
           </div>
           <p className="font-black text-slate-800 dark:text-white text-sm">Ankerd Con</p>
-          <p className="text-xs text-slate-400 mt-0.5">Event portal · v1.0</p>
+          <p className="text-xs text-slate-400 mt-0.5">Event portal · v{__APP_VERSION__}</p>
 
           <button
             onClick={() => setQrOpen((v) => !v)}
@@ -376,7 +391,7 @@ export function MorePage() {
       <UserProfilePopup
         user={popupUser}
         open={popupUser !== null}
-        isOwn={currentUser === popupUser?.name}
+        isOwn={currentUser === popupUser?.id}
         anchorRect={popupAnchorRect}
         onClose={() => setPopupUser(null)}
         calendarEvents={calendarEvents ?? []}
