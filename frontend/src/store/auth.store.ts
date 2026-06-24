@@ -13,7 +13,9 @@ interface AuthState {
   accessToken: string | null;
   currentUser: string | null;
   isAuthenticated: boolean;
-  setAccessToken: (token: string) => void;
+  forbidden: boolean;
+  setAccessToken: (token: string | null) => void;
+  setForbidden: () => void;
   clearAuth: () => void;
 }
 
@@ -21,12 +23,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   accessToken: null,
   currentUser: null,
   isAuthenticated: false,
+  forbidden: false,
   setAccessToken: (token) =>
-    set({
-      accessToken: token,
-      currentUser: parseJwtSub(token),
-      isAuthenticated: true,
-    }),
+    token
+      ? set({ accessToken: token, currentUser: parseJwtSub(token), isAuthenticated: true, forbidden: false })
+      : set({ accessToken: null, currentUser: null, isAuthenticated: false }),
+  setForbidden: () => set({ forbidden: true }),
   clearAuth: () =>
-    set({ accessToken: null, currentUser: null, isAuthenticated: false }),
+    set({ accessToken: null, currentUser: null, isAuthenticated: false, forbidden: false }),
 }));

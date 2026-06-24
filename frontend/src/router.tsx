@@ -8,6 +8,7 @@ import { FoodPage } from "./pages/FoodPage";
 import { FinancePage } from "./pages/FinancePage";
 import { MorePage } from "./pages/MorePage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 
 export const router = createBrowserRouter([
   {
@@ -62,5 +63,9 @@ export const router = createBrowserRouter([
         path: "/profile/:name",
       },
     ],
+  },
+  {
+    path: "*",
+    element: <NotFoundPage />,
   },
 ]);
