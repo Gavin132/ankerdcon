@@ -17,18 +17,13 @@ from app.routers import users, calendar, rides, meals, payments
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """Warm up the Sheets connection on startup so the first request isn't slow.
-    Failure here is non-fatal — the cache simply stays cold until the first request.
-    """
+    """Verify Supabase connectivity on startup."""
     try:
-        from app.core.sheets import get_cached_tables, get_spreadsheet
-
-        settings = get_settings()
-        spreadsheet = get_spreadsheet(settings)
-        get_cached_tables(spreadsheet)
-        print("✅  Google Sheets connection established")
+        from app.core.database import supabase
+        supabase.table("profiles").select("name").limit(1).execute()
+        print("✅  Supabase connection established")
     except Exception as exc:  # noqa: BLE001
-        print(f"⚠️   Google Sheets warmup skipped: {exc}")
+        print(f"⚠️   Supabase warmup failed: {exc}")
     yield
 
 

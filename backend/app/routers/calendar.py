@@ -15,7 +15,7 @@ def list_events(_: str = Depends(get_current_user)) -> list[CalendarEvent]:
 
 @router.post("/{event_id}/rsvp", status_code=status.HTTP_204_NO_CONTENT)
 def rsvp_event(
-    event_id: int, # This acts as the specific row ID (what used to be rowNumber)
+    event_id: str,
     body: CalendarRsvpRequest,
     _: str = Depends(get_current_user),
 ) -> None:
@@ -43,7 +43,7 @@ def rsvp_event(
 
 @router.post("/{event_id}/leave", status_code=status.HTTP_204_NO_CONTENT)
 def leave_event(
-    event_id: int,
+    event_id: str,
     body: CalendarRsvpRequest,
     _: str = Depends(get_current_user),
 ) -> None:

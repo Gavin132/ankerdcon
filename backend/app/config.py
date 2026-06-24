@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from functools import lru_cache
 
 from pydantic import field_validator
@@ -13,10 +12,6 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
     )
-
-    # Google Sheets zou dus deprecated moeten zijn
-    # google_service_account_json: str
-    # google_sheet_id: str
 
     supabase_url: str = ""
     supabase_secret_key: str = ""
@@ -41,9 +36,6 @@ class Settings(BaseSettings):
             return [o.strip() for o in v.split(",") if o.strip()]
         return v
 
-    @property
-    def google_service_account(self) -> dict:
-        return json.loads(self.google_service_account_json)
 
 
 @lru_cache

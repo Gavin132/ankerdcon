@@ -2,8 +2,8 @@ from pydantic import BaseModel, model_validator
 from typing import Any
 
 class CalendarEvent(BaseModel):
-    id: int
-    event_group_id: int | None = None
+    id: str
+    event_group_id: str | None = None
     event_name: str
     date: str
     is_hotel: bool = False

@@ -7,7 +7,7 @@ class RestaurantDriver(BaseModel):
     passengers: list[str] = Field(default_factory=list)
 
 class Ride(BaseModel):
-    id: int
+    id: str
     direction: str
     vehicle_type: str
     driver: str

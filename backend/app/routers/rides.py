@@ -27,7 +27,7 @@ def create_ride(body: CreateRideRequest, _: str = Depends(get_current_user)) -> 
     return response.data[0]
 
 @router.post("/{ride_id}/claim", response_model=Ride)
-def claim_seat(ride_id: int, body: ClaimSeatRequest, _: str = Depends(get_current_user)) -> Ride:
+def claim_seat(ride_id: str, body: ClaimSeatRequest, _: str = Depends(get_current_user)) -> Ride:
     resp = supabase.table("rides").select("passengers, total_seats").eq("id", ride_id).execute()
     if not resp.data:
         raise HTTPException(status_code=404, detail="Ride not found")
@@ -44,7 +44,7 @@ def claim_seat(ride_id: int, body: ClaimSeatRequest, _: str = Depends(get_curren
     return resp.data[0]
 
 @router.post("/{ride_id}/leave", response_model=Ride)
-def leave_seat(ride_id: int, body: ClaimSeatRequest, _: str = Depends(get_current_user)) -> Ride:
+def leave_seat(ride_id: str, body: ClaimSeatRequest, _: str = Depends(get_current_user)) -> Ride:
     resp = supabase.table("rides").select("passengers").eq("id", ride_id).execute()
     if not resp.data:
         raise HTTPException(status_code=404, detail="Ride not found")
@@ -59,7 +59,7 @@ def leave_seat(ride_id: int, body: ClaimSeatRequest, _: str = Depends(get_curren
 # --- RESTAURANT LOGIC ---
 
 @router.post("/{ride_id}/restaurant-driver", status_code=status.HTTP_204_NO_CONTENT)
-def add_restaurant_driver(ride_id: int, body: RestaurantDriverRequest, _: str = Depends(get_current_user)):
+def add_restaurant_driver(ride_id: str, body: RestaurantDriverRequest, _: str = Depends(get_current_user)):
     resp = supabase.table("rides").select("restaurant_drivers").eq("id", ride_id).execute()
     drivers = resp.data[0].get("restaurant_drivers") or []
     
@@ -68,13 +68,13 @@ def add_restaurant_driver(ride_id: int, body: RestaurantDriverRequest, _: str = 
         supabase.table("rides").update({"restaurant_drivers": drivers}).eq("id", ride_id).execute()
 
 @router.post("/{ride_id}/restaurant-driver/leave", status_code=status.HTTP_204_NO_CONTENT)
-def leave_restaurant_driver(ride_id: int, body: LeaveRestaurantDriverRequest, _: str = Depends(get_current_user)):
+def leave_restaurant_driver(ride_id: str, body: LeaveRestaurantDriverRequest, _: str = Depends(get_current_user)):
     resp = supabase.table("rides").select("restaurant_drivers").eq("id", ride_id).execute()
     drivers = [d for d in (resp.data[0].get("restaurant_drivers") or []) if d.get("name") != body.user_name]
     supabase.table("rides").update({"restaurant_drivers": drivers}).eq("id", ride_id).execute()
 
 @router.post("/{ride_id}/restaurant-driver/assign", status_code=status.HTTP_204_NO_CONTENT)
-def assign_to_driver(ride_id: int, body: RestaurantAssignRequest, _: str = Depends(get_current_user)):
+def assign_to_driver(ride_id: str, body: RestaurantAssignRequest, _: str = Depends(get_current_user)):
     resp = supabase.table("rides").select("restaurant_drivers").eq("id", ride_id).execute()
     drivers = resp.data[0].get("restaurant_drivers") or []
     
@@ -92,7 +92,7 @@ def assign_to_driver(ride_id: int, body: RestaurantAssignRequest, _: str = Depen
     supabase.table("rides").update({"restaurant_drivers": drivers}).eq("id", ride_id).execute()
 
 @router.post("/{ride_id}/restaurant-driver/unassign", status_code=status.HTTP_204_NO_CONTENT)
-def unassign_from_driver(ride_id: int, body: RestaurantUnassignRequest, _: str = Depends(get_current_user)):
+def unassign_from_driver(ride_id: str, body: RestaurantUnassignRequest, _: str = Depends(get_current_user)):
     resp = supabase.table("rides").select("restaurant_drivers").eq("id", ride_id).execute()
     drivers = resp.data[0].get("restaurant_drivers") or []
     

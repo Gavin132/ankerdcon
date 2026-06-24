@@ -1,3 +1,4 @@
+import re
 from typing import Literal, Optional
 from pydantic import BaseModel, field_validator
 
@@ -5,7 +6,6 @@ from pydantic import BaseModel, field_validator
 class User(BaseModel):
     id: str
     name: str
-    row_number: Optional[int] = None # Added this since it's missing
     phone_number: Optional[str] = None
     hotel_room: Optional[str] = None
     live_location_ping: Optional[str] = None
@@ -17,6 +17,22 @@ class User(BaseModel):
     banner_color: Optional[str] = None
     banner_url: Optional[str] = None
     discord_id: Optional[str] = None
+    discord_username: Optional[str] = None
+    avatar_url: Optional[str] = None
+
+class UpdateNameRequest(BaseModel):
+    new_name: str
+
+    @field_validator("new_name")
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        v = v.strip()
+        if len(v) < 2 or len(v) > 30:
+            raise ValueError("Naam moet tussen 2 en 30 tekens zijn")
+        if not re.match(r"^[\w\s\-\.]+$", v, re.UNICODE):
+            raise ValueError("Naam mag alleen letters, cijfers, spaties, koppeltekens en punten bevatten")
+        return v
+
 
 class LocationPingRequest(BaseModel):
     zone: str
@@ -29,6 +45,7 @@ class UpdatePreferencesRequest(BaseModel):
     bio: Optional[str] = None
     banner_color: Optional[str] = None
     pronouns: Optional[str] = None
+    phone_number: Optional[str] = None
 
     @field_validator("color", "banner_color")
     @classmethod
@@ -53,3 +70,13 @@ class UpdatePreferencesRequest(BaseModel):
         if v and len(v) > 40:
             raise ValueError("Voornaamwoorden mogen maximaal 40 tekens bevatten")
         return v
+
+    @field_validator("phone_number")
+    @classmethod
+    def valid_phone(cls, v: Optional[str]) -> Optional[str]:
+        if not v or not v.strip():
+            return None
+        stripped = re.sub(r"[\s\-().]", "", v.strip())
+        if not re.match(r"^\+?[0-9]{7,15}$", stripped):
+            raise ValueError("Voer een geldig telefoonnummer in (bijv. +31 6 12345678)")
+        return v.strip()
