@@ -105,13 +105,13 @@ export interface RestaurantUnassignRequest {
 
 // Meals
 export interface Meal {
+  id: string; // was row_number
   meal_name: string;
   time: string;
   location: string;
-  cost: string;
-  rsvps: string[];
+  cost: number; // was string
   transport_needed: boolean;
-  row_number: number;
+  participants: string[]; // was rsvps
 }
 
 export interface CreateMealRequest {

@@ -21,14 +21,14 @@ def create_meal(
     _: str = Depends(get_current_user),
     settings: Settings = Depends(get_settings),
 ) -> None:
-    # Insert new meal into Supabase
+
     meal_data = {
         "meal_name": body.meal_name,
         "time": body.time,
         "location": body.location,
-        "cost": body.cost,
+        "cost": float(body.cost) if body.cost else 0.0, 
         "transport_needed": body.transport_needed,
-        "participants": [] # Initialize with empty array
+        "participants": [] 
     }
     supabase.table("meals").insert(meal_data).execute()
 

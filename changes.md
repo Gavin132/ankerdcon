@@ -73,6 +73,6 @@
 29. een manier om automatisch versienummers bij te houden in de meer tab. wat is hiervoor een gebruikelijke implementatie?
 
 # broken met deze update:
-kan geen meals toevoegen
+meal tab beetje broken.
 kan geen payments toevoegen
 frontend/src/hooks/useRides.ts

@@ -1,33 +1,46 @@
 import { CalendarEvent, Ride, Meal, ActionAlert } from "../../types";
 
 export function computeActionAlerts(
-  events: CalendarEvent[],
-  rides: Ride[],
-  meals: Meal[],
+  events: CalendarEvent[] | undefined,
+  rides: Ride[] | undefined,
+  meals: Meal[] | undefined,
 ): ActionAlert[] {
-  return events
+  // 1. Safe fallbacks for the main arrays in case they are loading
+  const safeEvents = events ?? [];
+  const safeRides = rides ?? [];
+  const safeMeals = meals ?? [];
+
+  return safeEvents
     .map((ev) => {
       const inbound = new Set(
-        rides
+        safeRides
           .filter((r) => r.direction === "Inbound")
-          .flatMap((r) => r.passengers.map((p) => p.toLowerCase())),
+          // 2. Safe fallback for passengers
+          .flatMap((r) => (r.passengers ?? []).map((p) => p.toLowerCase())),
       );
+      
       const outbound = new Set(
-        rides
+        safeRides
           .filter((r) => r.direction === "Outbound")
-          .flatMap((r) => r.passengers.map((p) => p.toLowerCase())),
+          // Safe fallback for passengers
+          .flatMap((r) => (r.passengers ?? []).map((p) => p.toLowerCase())),
       );
-      const rsvps = new Set(
-        meals.flatMap((m) => m.rsvps.map((r) => r.toLowerCase())),
+      
+      const foodRsvps = new Set(
+        // 3. CRITICAL: Swapped 'rsvps' for 'participants' to match your new DB!
+        safeMeals.flatMap((m) => (m.participants ?? []).map((r) => r.toLowerCase())),
       );
 
-      const missing = ev.participants
+      // Safe fallback for event participants
+      const missing = (ev.participants ?? [])
         .map((name) => {
           const lc = name.toLowerCase();
           const items: string[] = [];
+          
           if (!inbound.has(lc)) items.push("Heen");
           if (!outbound.has(lc)) items.push("Terug");
-          if (meals.length > 0 && !rsvps.has(lc)) items.push("Eten");
+          if (safeMeals.length > 0 && !foodRsvps.has(lc)) items.push("Eten");
+          
           return { name, items };
         })
         .filter((m) => m.items.length > 0);

@@ -19,11 +19,13 @@ export function useCreateMeal() {
   });
 }
 
+// ✅ 1. Fixed the RSVP hook so it's an actual React Query mutation!
 export function useRsvpMeal() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ rowNumber, payload }: { rowNumber: number; payload: RsvpRequest }) =>
-      rsvpMeal(rowNumber, payload),
+    // ✅ CHANGED: Expects `id` instead of `rowNumber`
+    mutationFn: ({ id, payload }: { id: string; payload: RsvpRequest }) =>
+      rsvpMeal(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.meals }),
   });
 }
@@ -31,8 +33,9 @@ export function useRsvpMeal() {
 export function useCancelRsvp() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ rowNumber, payload }: { rowNumber: number; payload: RsvpRequest }) =>
-      cancelRsvp(rowNumber, payload),
+    // ✅ 2. CHANGED: Expects `id` instead of `rowNumber`
+    mutationFn: ({ id, payload }: { id: string; payload: RsvpRequest }) =>
+      cancelRsvp(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.meals }),
   });
 }
@@ -40,7 +43,8 @@ export function useCancelRsvp() {
 export function useDeleteMeal() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (rowNumber: number) => deleteMeal(rowNumber),
+    // ✅ 3. CHANGED: Expects `id` instead of `rowNumber`
+    mutationFn: (id: string) => deleteMeal(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.meals }),
   });
 }

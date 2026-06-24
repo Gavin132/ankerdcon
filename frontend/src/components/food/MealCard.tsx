@@ -45,12 +45,16 @@ export function MealCard({ meal, userNames }: MealCardProps) {
   const cancelMutation = useCancelRsvp();
   const deleteMutation = useDeleteMeal();
 
+  // 1. Safe fallback for participants array
+  const safeParticipants = meal.participants ?? [];
+
   async function onRsvp() {
     if (rsvpNames.length === 0) return;
     try {
       for (const name of rsvpNames) {
+        // 2. CHANGED rowNumber to id
         await rsvpMutation.mutateAsync({
-          rowNumber: meal.row_number,
+          id: meal.id,
           payload: { user_name: name },
         });
       }
@@ -71,8 +75,9 @@ export function MealCard({ meal, userNames }: MealCardProps) {
     if (cancelNames.length === 0) return;
     try {
       for (const name of cancelNames) {
+        // 3. CHANGED rowNumber to id
         await cancelMutation.mutateAsync({
-          rowNumber: meal.row_number,
+          id: meal.id,
           payload: { user_name: name },
         });
       }
@@ -91,7 +96,8 @@ export function MealCard({ meal, userNames }: MealCardProps) {
 
   async function onDelete() {
     try {
-      await deleteMutation.mutateAsync(meal.row_number);
+      // 4. CHANGED meal.row_number to meal.id
+      await deleteMutation.mutateAsync(meal.id);
       setDeleteOpen(false);
       toast("success", `${meal.meal_name} is verwijderd.`);
     } catch {
@@ -162,13 +168,13 @@ export function MealCard({ meal, userNames }: MealCardProps) {
             )}
 
             <div className="mt-3 px-1">
-              {meal.rsvps.length > 0 ? (
+              {safeParticipants.length > 0 ? (
                 <span className="flex items-center gap-1.5 text-xs text-slate-500">
                   <Users size={11} className="text-slate-400" />
                   <span className="font-bold text-slate-800">
-                    {meal.rsvps.length}
+                    {safeParticipants.length}
                   </span>
-                  {meal.rsvps.length === 1 ? " persoon" : " personen"} aangemeld
+                  {safeParticipants.length === 1 ? " persoon" : " personen"} aangemeld
                 </span>
               ) : (
                 <span className="text-xs text-slate-400 italic">
@@ -187,14 +193,14 @@ export function MealCard({ meal, userNames }: MealCardProps) {
                   className="overflow-hidden"
                 >
                   <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
-                    {meal.rsvps.length > 0 && (
+                    {safeParticipants.length > 0 && (
                       <div>
                         <p className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">
                           <UserCheck size={11} className="mr-1 inline" />
                           Aangemeld
                         </p>
                         <div className="flex flex-wrap gap-1.5">
-                          {meal.rsvps.map((r) => (
+                          {safeParticipants.map((r) => (
                             <Badge key={r} variant="green">
                               <UserCheck size={10} />
                               {r}
@@ -214,7 +220,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
                         <UserCheck size={14} />
                         Aanmelden
                       </Button>
-                      {meal.rsvps.length > 0 && (
+                      {safeParticipants.length > 0 && (
                         <Button
                           size="sm"
                           variant="ghost"
@@ -259,7 +265,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
         <div className="space-y-3">
           <NamePicker
             multiple
-            options={userNames.filter((n) => !meal.rsvps.includes(n))}
+            options={userNames.filter((n) => !safeParticipants.includes(n))}
             value={rsvpNames}
             onChange={setRsvpNames}
             color="green"
@@ -292,7 +298,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
         <div className="space-y-3">
           <NamePicker
             multiple
-            options={meal.rsvps}
+            options={safeParticipants}
             value={cancelNames}
             onChange={setCancelNames}
             color="rose"

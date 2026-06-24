@@ -1,14 +1,14 @@
 from pydantic import BaseModel
-
+from typing import Optional
 
 class Meal(BaseModel):
-    row_number: int
+    id: str
     meal_name: str
     time: str
-    location: str = ""
-    cost: str = ""
-    rsvps: list[str]
+    location: str
+    cost: float
     transport_needed: bool
+    participants: list[str] = []
 
 
 class CreateMealRequest(BaseModel):

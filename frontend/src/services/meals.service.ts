@@ -10,9 +10,9 @@ export async function createMeal(payload: CreateMealRequest): Promise<void> {
   await apiClient.post("/api/meals/", payload);
 }
 
-export async function rsvpMeal(rowNumber: number, payload: RsvpRequest): Promise<void> {
-  await apiClient.post(`/api/meals/${rowNumber}/rsvp`, payload);
-}
+export const rsvpMeal = async (id: string, payload: { user_name: string }) => {
+  await api.post(`/api/meals/${id}/rsvp`, payload);
+};
 
 export async function cancelRsvp(rowNumber: number, payload: RsvpRequest): Promise<void> {
   await apiClient.post(`/api/meals/${rowNumber}/cancel-rsvp`, payload);
