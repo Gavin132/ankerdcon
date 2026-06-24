@@ -1,5 +1,5 @@
 import { apiClient } from "../utils/api";
-import type { UpdatePreferencesRequest, User, LocationPingRequest } from "../types";
+import type { UpdateNameRequest, UpdatePreferencesRequest, User, LocationPingRequest } from "../types";
 
 export async function getPublicUserNames(): Promise<string[]> {
   const { data } = await apiClient.get<string[]>("/api/users/names");
@@ -22,6 +22,23 @@ export async function updatePreferences(
   payload: UpdatePreferencesRequest,
 ): Promise<void> {
   await apiClient.put("/api/users/preferences", payload);
+}
+
+export async function updateName(payload: UpdateNameRequest): Promise<void> {
+  await apiClient.patch("/api/users/name", payload);
+}
+
+export async function uploadBanner(blob: Blob, mimeType: string): Promise<{ url: string }> {
+  const form = new FormData();
+  form.append("file", blob, `banner.${mimeType === "image/gif" ? "gif" : "jpg"}`);
+  const { data } = await apiClient.post<{ url: string }>("/api/users/banner", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+}
+
+export async function deleteBanner(): Promise<void> {
+  await apiClient.delete("/api/users/banner");
 }
 
 export async function pingLocation(

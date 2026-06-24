@@ -50,7 +50,7 @@ export function RestaurantStatus({ rides }: RestaurantStatusProps) {
       <div className="space-y-2">
         {relevant.map(({ ride, drivers, unassigned, totalCapacity, allClear }) => (
           <button
-            key={ride.row_number}
+            key={ride.id}
             onClick={() => navigate("/transport")}
             className="w-full text-left"
           >

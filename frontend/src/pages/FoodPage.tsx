@@ -89,7 +89,7 @@ export function FoodPage() {
             ) : (
               <motion.div className="space-y-3" variants={listContainer} initial="hidden" animate="show">
                 {upcomingMeals.map((meal) => (
-                  <MealCard key={meal.row_number} meal={meal} userNames={userNames} />
+                  <MealCard key={meal.id} meal={meal} userNames={userNames} />
                 ))}
               </motion.div>
             )}
@@ -128,7 +128,7 @@ export function FoodPage() {
                         animate="show"
                       >
                         {pastMeals.map((meal) => (
-                          <MealCard key={meal.row_number} meal={meal} userNames={userNames} />
+                          <MealCard key={meal.id} meal={meal} userNames={userNames} />
                         ))}
                       </motion.div>
                     </motion.div>

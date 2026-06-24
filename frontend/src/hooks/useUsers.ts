@@ -1,13 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  deleteBanner,
   getPublicUserNames,
   getUser,
-  getUsers, // <-- THIS is the missing piece!
+  getUsers,
   pingLocation,
+  updateName,
   updatePreferences,
+  uploadBanner,
 } from "../services/users.service";
-import { STALE_TIME } from "../constants"; 
-import type { LocationPingRequest, UpdatePreferencesRequest } from "../types";
+import { STALE_TIME } from "../constants";
+import type { LocationPingRequest, UpdateNameRequest, UpdatePreferencesRequest } from "../types";
 
 export function usePublicUserNames() {
   return useQuery({
@@ -52,6 +55,42 @@ export function useUpdatePreferences() {
     mutationFn: (payload: UpdatePreferencesRequest) => updatePreferences(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["user"] });
+    },
+  });
+}
+
+export function useUploadBanner() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ blob, mimeType }: { blob: Blob; mimeType: string }) =>
+      uploadBanner(blob, mimeType),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["user"] });
+      qc.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+}
+
+export function useDeleteBanner() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: deleteBanner,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["user"] });
+      qc.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+}
+
+export function useUpdateName() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: UpdateNameRequest) => updateName(payload),
+    onSuccess: () => {
+      // Invalidate all user-related queries so the new name propagates everywhere
+      qc.invalidateQueries({ queryKey: ["user"] });
+      qc.invalidateQueries({ queryKey: ["users"] });
+      qc.invalidateQueries({ queryKey: ["userNames"] });
     },
   });
 }

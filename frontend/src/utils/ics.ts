@@ -72,19 +72,19 @@ export function exportRideToIcs(ride: Ride) {
           .join("\n");
 
   const ics = buildIcs({
-    uid: `ride-${ride.row_number}@ankerdcon`,
+    uid: `ride-${ride.id}@ankerdcon`,
     dtstart: formatIcsDate(ride.departure_time),
     summary,
     location: ride.start_location,
     description,
   });
 
-  shareOrDownloadIcs(ics, `rit-${ride.row_number}.ics`);
+  shareOrDownloadIcs(ics, `rit-${ride.id}.ics`);
 }
 
 export function exportMealToIcs(meal: Meal) {
   const description = [
-    meal.rsvps.length > 0 ? `Aangemeld: ${meal.rsvps.join(", ")}` : "",
+    meal.participants.length > 0 ? `Aangemeld: ${meal.participants.join(", ")}` : "",
     meal.cost ? `Kosten p.p.: ${meal.cost}` : "",
     meal.transport_needed ? "Vervoer nodig vanuit hotel" : "",
   ]
@@ -92,12 +92,12 @@ export function exportMealToIcs(meal: Meal) {
     .join("\n");
 
   const ics = buildIcs({
-    uid: `meal-${meal.row_number}@ankerdcon`,
+    uid: `meal-${meal.id}@ankerdcon`,
     dtstart: formatIcsDate(meal.time),
     summary: meal.meal_name,
     location: meal.location || undefined,
     description: description || undefined,
   });
 
-  shareOrDownloadIcs(ics, `maaltijd-${meal.row_number}.ics`);
+  shareOrDownloadIcs(ics, `maaltijd-${meal.id}.ics`);
 }

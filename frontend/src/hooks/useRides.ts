@@ -26,7 +26,7 @@ export function useClaimSeat() {
       id,
       payload,
     }: {
-      id: number;
+      id: string;
       payload: ClaimSeatRequest;
     }) => claimSeat(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.rides }),
@@ -40,7 +40,7 @@ export function useLeaveSeat() {
       id,
       payload,
     }: {
-      id: number;
+      id: string;
       payload: ClaimSeatRequest;
     }) => leaveSeat(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.rides }),

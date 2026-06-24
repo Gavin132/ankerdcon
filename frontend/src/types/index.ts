@@ -11,19 +11,27 @@ export interface TokenResponse {
 
 // Users
 export interface User {
+  id?: string;
   name: string;
   phone_number: string;
   hotel_room: string;
   live_location_ping: string;
-  row_number: number;
   color: string;
   font: string;
   bio: string;
   banner_color: string;
   pronouns: string;
+  avatar_url?: string;
+  banner_url?: string;
+  discord_id?: string;
+  discord_username?: string;
 }
 
 export type FontOption = "default" | "mono" | "serif" | "cursive" | "display";
+
+export interface UpdateNameRequest {
+  new_name: string;
+}
 
 export interface UpdatePreferencesRequest {
   color?: string;
@@ -31,6 +39,7 @@ export interface UpdatePreferencesRequest {
   bio?: string;
   banner_color?: string;
   pronouns?: string;
+  phone_number?: string;
 }
 
 export interface LocationPingRequest {
@@ -44,7 +53,7 @@ export type VehicleType = "Car" | "Public Transport";
 export type Direction = "Inbound" | "Outbound" | "Restaurant";
 
 export interface Ride {
-  id: number;
+  id: string;
   direction: Direction;
   vehicle_type: VehicleType;
   driver: string;
@@ -105,7 +114,7 @@ export interface RestaurantUnassignRequest {
 
 // Meals
 export interface Meal {
-  id: string; // was row_number
+  id: string;
   meal_name: string;
   time: string;
   location: string;
@@ -133,11 +142,11 @@ export interface Split {
 }
 
 export interface Payment {
+  id: string;
   paid_by: string;
   amount: number;
   description: string;
   date: string;
-  row_number: number;
   splits: Split[];
 }
 
@@ -150,8 +159,8 @@ export interface CreatePaymentRequest {
 }
 
 export interface CalendarEvent {
-  id: number;             
-  event_group_id?: number;
+  id: string;
+  event_group_id?: string;
   event_name: string;
   date: string;
   is_hotel: boolean;
@@ -199,7 +208,7 @@ export interface ActionAlert {
 }
 
 export interface RestaurantGap {
-  rowNumber: number;
+  id: string;
   location: string;
   departureTime: string;
   unassigned: string[];

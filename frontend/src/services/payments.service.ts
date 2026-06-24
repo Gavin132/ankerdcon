@@ -10,6 +10,6 @@ export async function createPayment(payload: CreatePaymentRequest): Promise<void
   await apiClient.post("/api/payments/", payload);
 }
 
-export async function deletePayment(rowNumber: number, userName: string): Promise<void> {
-  await apiClient.delete(`/api/payments/${rowNumber}`, { params: { user_name: userName } });
+export async function deletePayment(id: string, userName: string): Promise<void> {
+  await apiClient.delete(`/api/payments/${id}`, { params: { user_name: userName } });
 }

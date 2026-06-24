@@ -85,12 +85,12 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
     if (!driverName.trim()) return;
     try {
       await addDriverMutation.mutateAsync({
-        rowNumber: ride.row_number,
+        id: ride.id,
         payload: { user_name: driverName.trim(), seats: driverSeats },
       });
       if (!attendees.includes(driverName.trim())) {
         await claimMutation.mutateAsync({
-          rowNumber: ride.row_number,
+          id: ride.id,
           payload: { user_name: driverName.trim() },
         });
       }
@@ -110,7 +110,7 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
     try {
       for (const name of attendNames) {
         await claimMutation.mutateAsync({
-          rowNumber: ride.row_number,
+          id: ride.id,
           payload: { user_name: name },
         });
       }
@@ -133,12 +133,12 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
       for (const name of joinNames) {
         if (!attendees.includes(name)) {
           await claimMutation.mutateAsync({
-            rowNumber: ride.row_number,
+            id: ride.id,
             payload: { user_name: name },
           });
         }
         await assignMutation.mutateAsync({
-          rowNumber: ride.row_number,
+          id: ride.id,
           payload: { user_name: name, driver_name: joinTarget },
         });
       }
@@ -164,7 +164,7 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
   async function handleUnassign(userName: string) {
     try {
       await unassignMutation.mutateAsync({
-        rowNumber: ride.row_number,
+        id: ride.id,
         payload: { user_name: userName },
       });
       toast("info", `${userName} verwijderd uit auto`);
@@ -179,17 +179,17 @@ export function RestaurantCard({ ride, userNames }: RestaurantCardProps) {
     try {
       if (isDriver) {
         await leaveDriverMutation.mutateAsync({
-          rowNumber: ride.row_number,
+          id: ride.id,
           payload: { user_name: leaveName.trim() },
         });
       } else {
         await unassignMutation.mutateAsync({
-          rowNumber: ride.row_number,
+          id: ride.id,
           payload: { user_name: leaveName.trim() },
         });
       }
       await leaveSeatMutation.mutateAsync({
-        rowNumber: ride.row_number,
+        id: ride.id,
         payload: { user_name: leaveName.trim() },
       });
       toast("success", `${leaveName.trim()} afgemeld.`);

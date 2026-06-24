@@ -6,10 +6,10 @@ export async function getCalendar(): Promise<CalendarEvent[]> {
   return data;
 }
 
-export async function rsvpCalendarEvent(rowNumber: number, userName: string): Promise<void> {
-  await apiClient.post(`/api/calendar/${rowNumber}/rsvp`, { user_name: userName });
+export async function rsvpCalendarEvent(id: string, userName: string): Promise<void> {
+  await apiClient.post(`/api/calendar/${id}/rsvp`, { user_name: userName });
 }
 
-export async function leaveCalendarEvent(rowNumber: number, userName: string): Promise<void> {
-  await apiClient.post(`/api/calendar/${rowNumber}/leave`, { user_name: userName });
+export async function leaveCalendarEvent(id: string, userName: string): Promise<void> {
+  await apiClient.post(`/api/calendar/${id}/leave`, { user_name: userName });
 }

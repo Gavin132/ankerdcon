@@ -13,8 +13,8 @@ export function useCalendar() {
 export function useRsvpCalendarEvent() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ rowNumber, userName }: { rowNumber: number; userName: string }) =>
-      rsvpCalendarEvent(rowNumber, userName),
+    mutationFn: ({ id, userName }: { id: string; userName: string }) =>
+      rsvpCalendarEvent(id, userName),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.calendar }),
   });
 }
@@ -22,8 +22,8 @@ export function useRsvpCalendarEvent() {
 export function useLeaveCalendarEvent() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ rowNumber, userName }: { rowNumber: number; userName: string }) =>
-      leaveCalendarEvent(rowNumber, userName),
+    mutationFn: ({ id, userName }: { id: string; userName: string }) =>
+      leaveCalendarEvent(id, userName),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.calendar }),
   });
 }

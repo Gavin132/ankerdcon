@@ -37,7 +37,7 @@ export function DailyActionCheck({
             <EventAlertBlock key={alert.date + alert.eventName} alert={alert} />
           ))}
           {restaurantGaps.map((gap) => (
-            <RestaurantGapBlock key={gap.rowNumber} gap={gap} />
+            <RestaurantGapBlock key={gap.id} gap={gap} />
           ))}
         </div>
       </CollapsibleSection>

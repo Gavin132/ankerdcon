@@ -190,7 +190,7 @@ export function FinancePage() {
       ) : (
         <motion.div className="space-y-3" variants={listContainer} initial="hidden" animate="show">
           {allPayments.map((payment) => (
-            <PaymentCard key={payment.row_number} payment={payment} userNames={userNames} />
+            <PaymentCard key={payment.id} payment={payment} userNames={userNames} />
           ))}
         </motion.div>
       )}
