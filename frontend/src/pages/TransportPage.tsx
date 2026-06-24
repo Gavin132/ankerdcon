@@ -18,7 +18,7 @@ import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { RideCardSkeleton } from "../components/common/Skeleton";
 import { EmptyState } from "../components/common/EmptyState";
-import { SearchSelect } from "../components/common/SearchSelect";
+import { NamePicker } from "../components/common/NamePicker";
 import { RideCard } from "../components/transport/RideCard";
 import { RestaurantCard } from "../components/transport/RestaurantCard";
 import { RideTimeline } from "../components/transport/RideTimeline";
@@ -324,11 +324,11 @@ export function TransportPage() {
                   : "Lijn / vervoerder"}
             </label>
             {vehicleType === "Car" || formDirection === "Restaurant" ? (
-              <SearchSelect
+              <NamePicker
                 options={userNames}
                 value={watch("driver") ?? ""}
                 onChange={(v) => setValue("driver", v)}
-                placeholder="Typ om te zoeken…"
+                placeholder="Zoek naam…"
               />
             ) : (
               <input

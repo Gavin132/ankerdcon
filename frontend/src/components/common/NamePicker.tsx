@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Search, X, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { avatarColor } from "../../utils/avatar";
+import { UserAvatar } from "./UserAvatar";
 import { TOKENS } from "../../constants";
 import { NamePickerProps, MultiProps, SingleProps } from "../../types";
 
@@ -20,7 +20,7 @@ export function NamePicker(props: NamePickerProps) {
 
   const filtered = query.trim()
     ? options.filter((o) => o.toLowerCase().includes(query.toLowerCase()))
-    : options;
+    : [];
 
   // ── Multi-select: close on outside pointerdown only ──────────────────────
   useEffect(() => {
@@ -99,11 +99,7 @@ export function NamePicker(props: NamePickerProps) {
                       transition={{ duration: 0.13 }}
                       className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${tk.chip}`}
                     >
-                      <div
-                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[9px] font-black text-white ${avatarColor(name)}`}
-                      >
-                        {name[0].toUpperCase()}
-                      </div>
+                      <UserAvatar name={name} className="h-4 w-4 text-[9px] !border-0" />
                       <span>{name}</span>
                       <button
                         type="button"
@@ -166,7 +162,7 @@ export function NamePicker(props: NamePickerProps) {
       </div>
 
       {/* ── Options list ─────────────────────────────────────────────────── */}
-      {open && (
+      {open && query.trim() && (
         <div className="max-h-[220px] overflow-y-auto overscroll-contain rounded-xl border border-slate-100 dark:border-slate-700 divide-y divide-slate-50 dark:divide-slate-800">
           {filtered.length === 0 ? (
             <p className="px-4 py-4 text-center text-xs text-slate-400">
@@ -197,11 +193,7 @@ export function NamePicker(props: NamePickerProps) {
                         : "hover:bg-slate-50 active:bg-slate-50 dark:hover:bg-slate-800/60 dark:active:bg-slate-800/60"
                   }`}
                 >
-                  <div
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-black text-white ${avatarColor(name)}`}
-                  >
-                    {name[0].toUpperCase()}
-                  </div>
+                  <UserAvatar name={name} className="h-7 w-7 text-xs" />
                   <span className="flex-1 text-sm font-semibold text-slate-800 dark:text-slate-200">
                     {name}
                   </span>

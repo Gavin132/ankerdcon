@@ -24,7 +24,7 @@ import { formatDateTime } from "../../utils/format";
 import { parseRoute, buildEmbedUrl, buildMapsOpenUrl } from "../../utils/maps";
 import { getRideStatus, formatCountdown } from "../../utils/rides";
 import { exportRideToIcs } from "../../utils/ics";
-import { avatarColor } from "../../utils/avatar";
+import { UserAvatar } from "../common/UserAvatar";
 import { toast } from "../../store/toast.store";
 import { listItem } from "../../utils/motion";
 import type { Ride } from "../../types";
@@ -57,8 +57,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
     if (claimNames.length === 0) return;
     try {
       for (const name of claimNames) {
-        // CHANGED: ride.row_number is now ride.id
-        await claimMutation.mutateAsync({ id: ride.id, payload: { user_name: name } });
+await claimMutation.mutateAsync({ id: ride.id, payload: { user_name: name } });
       }
       setClaimNames([]);
       setClaimOpen(false);
@@ -72,8 +71,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
     if (leaveNames.length === 0) return;
     try {
       for (const name of leaveNames) {
-        // CHANGED: ride.row_number is now ride.id
-        await leaveMutation.mutateAsync({ id: ride.id, payload: { user_name: name } });
+await leaveMutation.mutateAsync({ id: ride.id, payload: { user_name: name } });
       }
       setLeaveNames([]);
       setLeaveOpen(false);
@@ -184,9 +182,13 @@ export function RideCard({ ride, userNames }: RideCardProps) {
             {/* Driver row + seats badge */}
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-black text-white ${avatarColor(ride.driver)}`}>
-                  {ride.driver[0].toUpperCase()}
-                </div>
+                {isPT ? (
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/30">
+                    <Train size={14} className="text-violet-600 dark:text-violet-400" />
+                  </div>
+                ) : (
+                  <UserAvatar name={ride.driver} className="h-8 w-8 text-xs" />
+                )}
                 <div className="min-w-0">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-none mb-0.5">
                     {isPT ? "Lijn / vervoerder" : "Chauffeur"}
@@ -230,43 +232,35 @@ export function RideCard({ ride, userNames }: RideCardProps) {
             )}
 
             {/* Passengers strip + stap-in CTA */}
-            {!isPT && (
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 min-w-0">
-                  {ride.passengers.length > 0 ? (
-                    <>
-                      <div className="flex -space-x-1.5">
-                        {ride.passengers.slice(0, 5).map((p) => (
-                          <div
-                            key={p}
-                            title={p}
-                            className={`flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br text-[9px] font-black text-white dark:border-slate-800 ${avatarColor(p)}`}
-                          >
-                            {p[0].toUpperCase()}
-                          </div>
-                        ))}
-                        {ride.passengers.length > 5 && (
-                          <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-slate-200 text-[9px] font-bold text-slate-600 dark:border-slate-800 dark:bg-slate-700 dark:text-slate-300">
-                            +{ride.passengers.length - 5}
-                          </div>
-                        )}
-                      </div>
-                      <span className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
-                        {ride.passengers.length} meerijder{ride.passengers.length !== 1 ? "s" : ""}
-                      </span>
-                    </>
-                  ) : (
-                    <span className="text-xs text-slate-400 italic">Nog geen meerijders</span>
-                  )}
-                </div>
-                {canAct && !ride.is_full && (
-                  <Button size="sm" onClick={() => { setClaimNames([]); setClaimOpen(true); }} className="shrink-0">
-                    <Plus size={13} />
-                    Stap in
-                  </Button>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                {ride.passengers.length > 0 ? (
+                  <>
+                    <div className="flex -space-x-1.5">
+                      {ride.passengers.slice(0, 5).map((p) => (
+                        <UserAvatar key={p} name={p} className="h-6 w-6 text-[9px]" />
+                      ))}
+                      {ride.passengers.length > 5 && (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-slate-200 text-[9px] font-bold text-slate-600 dark:border-slate-800 dark:bg-slate-700 dark:text-slate-300">
+                          +{ride.passengers.length - 5}
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
+                      {ride.passengers.length} meerijder{ride.passengers.length !== 1 ? "s" : ""}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-xs text-slate-400 italic">Nog geen meerijders</span>
                 )}
               </div>
-            )}
+              {canAct && !ride.is_full && (
+                <Button size="sm" onClick={() => { setClaimNames([]); setClaimOpen(true); }} className="shrink-0">
+                  <Plus size={13} />
+                  Stap in
+                </Button>
+              )}
+            </div>
 
             {/* ── Expanded section ────────────────────────────────────── */}
             <AnimatePresence>
@@ -290,9 +284,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
                         <div className="space-y-1">
                           {ride.passengers.map((p) => (
                             <div key={p} className="flex items-center gap-2.5">
-                              <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-black text-white ${avatarColor(p)}`}>
-                                {p[0].toUpperCase()}
-                              </div>
+                              <UserAvatar name={p} className="h-7 w-7 text-xs" />
                               <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{p}</span>
                             </div>
                           ))}
@@ -372,7 +364,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
                         <CalendarPlus size={12} />
                         Kalender
                       </button>
-                      {!isPT && canAct && ride.passengers.length > 0 && (
+                      {canAct && ride.passengers.length > 0 && (
                         <button
                           onClick={() => { setLeaveNames([]); setLeaveOpen(true); }}
                           className="text-xs font-semibold text-slate-400 hover:text-rose-500 active:text-rose-500 transition-colors"
@@ -394,7 +386,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
         open={claimOpen}
         onClose={() => { setClaimOpen(false); setClaimNames([]); }}
         title="Stap in"
-        description={`${fromLabel} → ${toLabel} · ${ride.seats_left} ${ride.seats_left === 1 ? "plek" : "plekken"} vrij`}
+        description={`${fromLabel} → ${toLabel}${isPT ? "" : ` · ${ride.seats_left} ${ride.seats_left === 1 ? "plek" : "plekken"} vrij`}`}
       >
         <div className="space-y-3">
           <NamePicker
@@ -402,7 +394,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
             options={availableToJoin}
             value={claimNames}
             onChange={setClaimNames}
-            maxSelect={ride.seats_left}
+            maxSelect={isPT ? undefined : ride.seats_left}
             color="sky"
           />
           <Button onClick={handleClaim} loading={claimMutation.isPending} className="w-full" disabled={claimNames.length === 0}>
