@@ -37,6 +37,15 @@ Een centrale planning in de vorm van een interactieve kalender:
 * Per event is direct zichtbaar welke deelnemers aanwezig zijn en wat de exacte data zijn.
 * Geeft duidelijk aan of er voor een specifiek evenement ook een overnachting is gepland.
 
+### Profiel customisation
+De mogelijkheid voor een gebruiker om diens profiel helemaal zo in te stellen zoals ze dat willen.
+* Banners
+* Profielfoto's
+* Displaynames
+* Badges
+* En nog veel meer!
+
+
 ---
 
 ## Roadmap & Toekomstige Features
