@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { routes } from "../config/routes";
 import {
   ArrowLeft, Check, AlertTriangle, BedDouble, Phone,
   MapPin, Upload, Pencil, Save, Smartphone,
@@ -475,7 +476,7 @@ export function ProfilePage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => navigate(`/profile/${encodeURIComponent(decodedName)}`)}
+                  onClick={() => navigate(routes.profile.view(decodedName))}
                   className="hidden sm:flex"
                 >
                   <Pencil size={13} />

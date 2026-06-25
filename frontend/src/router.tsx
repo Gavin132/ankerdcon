@@ -1,4 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
+import { routes } from "./config/routes";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { AppShell } from "./components/layout/AppShell";
 import { LoginPage } from "./pages/LoginPage";
@@ -12,55 +13,35 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 
 export const router = createBrowserRouter([
   {
-    path: "/login",
+    path: routes.login,
     element: <LoginPage />,
   },
   {
     element: <ProtectedRoute />,
     children: [
       {
-        element: (
-          <AppShell>
-            <HubPage />
-          </AppShell>
-        ),
-        path: "/",
+        path: routes.hub,
+        element: <AppShell><HubPage /></AppShell>,
       },
       {
-        element: (
-          <AppShell>
-            <TransportPage />
-          </AppShell>
-        ),
-        path: "/transport",
+        path: routes.transport,
+        element: <AppShell><TransportPage /></AppShell>,
       },
       {
-        element: (
-          <AppShell>
-            <FoodPage />
-          </AppShell>
-        ),
-        path: "/food",
+        path: routes.food,
+        element: <AppShell><FoodPage /></AppShell>,
       },
       {
-        element: (
-          <AppShell>
-            <FinancePage />
-          </AppShell>
-        ),
-        path: "/finance",
+        path: routes.finance,
+        element: <AppShell><FinancePage /></AppShell>,
       },
       {
-        element: (
-          <AppShell>
-            <MorePage />
-          </AppShell>
-        ),
-        path: "/more",
+        path: routes.more,
+        element: <AppShell><MorePage /></AppShell>,
       },
       {
+        path: routes.profile.pattern,
         element: <ProfilePage />,
-        path: "/profile/:name",
       },
     ],
   },

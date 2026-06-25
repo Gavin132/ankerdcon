@@ -93,6 +93,21 @@ def update_name(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden")
 
 
+@router.put("/{identifier}/location", status_code=status.HTTP_204_NO_CONTENT)
+def ping_location(
+    identifier: str,
+    body: LocationPingRequest,
+    current_user: str = Depends(get_current_user),
+) -> None:
+    """Update the live location ping for a user."""
+    now = datetime.now().strftime("%H:%M")
+    base = f"{body.zone}|{body.text}" if body.text else body.zone
+    value = f"{base} (at {now})"
+    response = supabase.table("profiles").update({"live_location_ping": value}).eq("name", identifier).execute()
+    if not response.data:
+        raise HTTPException(status_code=404, detail="Gebruiker niet gevonden")
+
+
 @router.get("/{identifier}", response_model=User)
 def get_user(identifier: str, _: str = Depends(get_current_user)) -> User:
     """Fetch a single user by either their secure UUID or their readable Name."""

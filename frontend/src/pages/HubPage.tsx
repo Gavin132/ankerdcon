@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { routes } from "../config/routes";
 import { HubSkeleton } from "../components/common/Skeleton";
 import { DailyActionCheck } from "../components/hub/DailyActionCheck";
 import { CrewSection } from "../components/hub/CrewSection";
@@ -259,7 +260,7 @@ export function HubPage() {
 
           {/* Ritten */}
           <motion.button
-            onClick={() => navigate("/transport")}
+            onClick={() => navigate(routes.transport)}
             className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 p-4 text-left shadow-stat"
             whileHover={{ y: -2, scale: 1.015 }}
             whileTap={{ scale: 0.97 }}
@@ -282,7 +283,7 @@ export function HubPage() {
 
           {/* Maaltijden */}
           <motion.button
-            onClick={() => navigate("/food")}
+            onClick={() => navigate(routes.food)}
             className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-400 to-sky-500 p-4 text-left shadow-stat"
             whileHover={{ y: -2, scale: 1.015 }}
             whileTap={{ scale: 0.97 }}
@@ -305,7 +306,7 @@ export function HubPage() {
 
           {/* Financiën */}
           <motion.button
-            onClick={() => navigate("/finance")}
+            onClick={() => navigate(routes.finance)}
             className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500 to-purple-700 p-4 text-left shadow-stat"
             whileHover={{ y: -2, scale: 1.015 }}
             whileTap={{ scale: 0.97 }}
@@ -325,7 +326,7 @@ export function HubPage() {
 
           {/* Locatie pingen */}
           <motion.button
-            onClick={() => navigate("/more")}
+            onClick={() => navigate(routes.more)}
             className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 p-4 text-left shadow-stat"
             whileHover={{ y: -2, scale: 1.015 }}
             whileTap={{ scale: 0.97 }}

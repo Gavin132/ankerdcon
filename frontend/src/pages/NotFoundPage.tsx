@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Anchor } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { routes } from "../config/routes";
 import { APP_NAME } from "../constants";
 
 const STARS = [
@@ -99,7 +100,7 @@ export function NotFoundPage() {
         </div>
 
         <button
-          onClick={() => navigate("/", { replace: true })}
+          onClick={() => navigate(routes.hub, { replace: true })}
           className="mt-1 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-colors"
           style={{ background: "rgba(14,116,144,0.45)", border: "1px solid rgba(125,211,252,0.25)" }}
         >

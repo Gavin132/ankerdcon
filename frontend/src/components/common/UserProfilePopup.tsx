@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { routes } from "../../config/routes";
 import { BedDouble, Phone, MapPin, Pencil, CalendarDays } from "lucide-react";
 import { avatarColor } from "../../utils/avatar";
 import { LocationPingDisplay } from "./LocationPingDisplay";
@@ -271,7 +272,7 @@ export function UserProfilePopup({
                     <button
                       onClick={() => {
                         onClose();
-                        navigate(`/profile/${encodeURIComponent(u?.id ?? u?.name ?? "")}`);
+                        navigate(routes.profile.view(u?.id ?? u?.name ?? ""));
                       }}
                       className="flex w-full items-center justify-center gap-2 rounded-xl gradient-brand py-2.5 text-[13px] font-bold text-white transition-opacity hover:opacity-90 active:opacity-80"
                     >

@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { routes } from "../../config/routes";
 import { useUser } from "../../hooks/useUsers";
 
 const FONT_MAP: Record<string, string> = {
@@ -34,7 +35,7 @@ export function UserNameDisplay({
         type="button"
         onClick={(e) => {
           e.stopPropagation();
-          navigate(`/profile/${encodeURIComponent(name)}`);
+          navigate(routes.profile.view(name));
         }}
         className={`text-left hover:opacity-70 transition-opacity ${className}`}
         style={style}
