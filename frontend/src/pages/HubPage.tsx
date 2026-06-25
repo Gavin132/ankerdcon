@@ -230,15 +230,19 @@ export function HubPage() {
                         className="overflow-hidden"
                       >
                         <div className="flex flex-wrap gap-1.5 pt-0.5">
-                          {event.participants.map((p) => (
-                            <span
-                              key={p}
-                              className="inline-flex items-center gap-1.5 rounded-full bg-white/8 border border-white/10 px-2 py-1 text-[11px] font-semibold text-sky-200"
-                            >
-                              <UserAvatar name={p} className="h-3.5 w-3.5 text-[7px] !border-0" />
-                              {p}
-                            </span>
-                          ))}
+                          {event.participants.map((p) => {
+                            const resolved = users?.find((u) => u.name === p || u.discord_username === p);
+                            const displayName = resolved?.name ?? p;
+                            return (
+                              <span
+                                key={p}
+                                className="inline-flex items-center gap-1.5 rounded-full bg-white/8 border border-white/10 px-2 py-1 text-[11px] font-semibold text-sky-200"
+                              >
+                                <UserAvatar name={p} className="h-3.5 w-3.5 text-[7px] !border-0" />
+                                {displayName}
+                              </span>
+                            );
+                          })}
                         </div>
                       </motion.div>
                     )}
