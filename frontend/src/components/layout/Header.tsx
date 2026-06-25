@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { routes } from "../../config/routes";
 import { motion, AnimatePresence } from "framer-motion";
 import { Moon, Sun, User, LogOut } from "lucide-react";
 import { APP_NAME } from "../../constants";
@@ -51,7 +52,7 @@ export function Header() {
       await logout();
     } finally {
       clearAuth();
-      navigate("/login", { replace: true });
+      navigate(routes.login, { replace: true });
     }
   }
 
@@ -143,9 +144,11 @@ export function Header() {
                   <div className="relative">
                     {/* Banner strip */}
                     <div
-                      className="h-14 w-full"
+                      className="h-24 w-full"
                       style={
-                        me?.banner_color
+                        me?.banner_url
+                          ? { backgroundImage: `url(${me.banner_url})`, backgroundSize: "cover", backgroundPosition: "center" }
+                          : me?.banner_color
                           ? { backgroundColor: me.banner_color }
                           : { background: "linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)" }
                       }
@@ -178,7 +181,7 @@ export function Header() {
                     <button
                       onClick={() => {
                         setMenuOpen(false);
-                        navigate(`/profile/${encodeURIComponent(currentUser)}`);
+                        navigate(routes.profile.view(currentUser));
                       }}
                       className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] font-medium text-slate-700 dark:text-white/70 hover:bg-slate-50 dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white transition-colors"
                     >

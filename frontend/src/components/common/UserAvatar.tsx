@@ -16,7 +16,7 @@ export function UserAvatar({
   const { data: users } = useUsers();
   const [imgError, setImgError] = useState(false);
 
-  const user = users?.find((u) => u.name === name);
+  const user = users?.find((u) => u.name === name || u.discord_username === name);
   const useInlineColor = user?.color && user.color.startsWith("#");
   const showImg = !!user?.avatar_url && !imgError;
 

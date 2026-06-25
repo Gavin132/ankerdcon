@@ -9,31 +9,29 @@ import {
   updatePreferences,
   uploadBanner,
 } from "../services/users.service";
-import { STALE_TIME } from "../constants";
+import { QUERY_KEYS, STALE_TIME } from "../constants";
 import type { LocationPingRequest, UpdateNameRequest, UpdatePreferencesRequest } from "../types";
 
 export function usePublicUserNames() {
   return useQuery({
-    queryKey: ["userNames"],
+    queryKey: QUERY_KEYS.userNames,
     queryFn: getPublicUserNames,
     staleTime: STALE_TIME,
   });
 }
 
-// For fetching one specific person safely
 export function useUser(name: string) {
   return useQuery({
-    queryKey: ["user", name], 
+    queryKey: QUERY_KEYS.user(name),
     queryFn: () => getUser(name),
-    enabled: !!name, 
+    enabled: !!name,
     staleTime: STALE_TIME,
   });
 }
 
-// For fetching the public, scrubbed list of everyone (for Hub, Transport, MorePage)
 export function useUsers() {
   return useQuery({
-    queryKey: ["users"],
+    queryKey: QUERY_KEYS.users,
     queryFn: getUsers,
     staleTime: STALE_TIME,
   });
@@ -44,7 +42,8 @@ export function usePingLocation() {
   return useMutation({
     mutationFn: (payload: LocationPingRequest) => pingLocation(payload),
     onSuccess: (_, variables) => {
-      qc.invalidateQueries({ queryKey: ["user", variables.user_name] });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.user(variables.user_name) });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.users });
     },
   });
 }
@@ -54,7 +53,7 @@ export function useUpdatePreferences() {
   return useMutation({
     mutationFn: (payload: UpdatePreferencesRequest) => updatePreferences(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["user"] });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.userBase });
     },
   });
 }
@@ -65,8 +64,8 @@ export function useUploadBanner() {
     mutationFn: ({ blob, mimeType }: { blob: Blob; mimeType: string }) =>
       uploadBanner(blob, mimeType),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["user"] });
-      qc.invalidateQueries({ queryKey: ["users"] });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.userBase });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.users });
     },
   });
 }
@@ -76,8 +75,8 @@ export function useDeleteBanner() {
   return useMutation({
     mutationFn: deleteBanner,
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["user"] });
-      qc.invalidateQueries({ queryKey: ["users"] });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.userBase });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.users });
     },
   });
 }
@@ -87,10 +86,9 @@ export function useUpdateName() {
   return useMutation({
     mutationFn: (payload: UpdateNameRequest) => updateName(payload),
     onSuccess: () => {
-      // Invalidate all user-related queries so the new name propagates everywhere
-      qc.invalidateQueries({ queryKey: ["user"] });
-      qc.invalidateQueries({ queryKey: ["users"] });
-      qc.invalidateQueries({ queryKey: ["userNames"] });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.userBase });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.users });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.userNames });
     },
   });
 }

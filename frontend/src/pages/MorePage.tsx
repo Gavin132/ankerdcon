@@ -29,6 +29,7 @@ import { UserNameDisplay } from "../components/common/UserNameDisplay";
 import { UserProfilePopup, type AnchorRect } from "../components/common/UserProfilePopup";
 import { logout } from "../services/auth.service";
 import { useNavigate } from "react-router-dom";
+import { routes } from "../config/routes";
 import { avatarColor } from "../utils/avatar";
 import { UserAvatar } from "../components/common/UserAvatar";
 import type { User } from "../types";
@@ -99,7 +100,7 @@ export function MorePage() {
       await logout();
     } finally {
       clearAuth();
-      navigate("/login", { replace: true });
+      navigate(routes.login, { replace: true });
     }
   }
 

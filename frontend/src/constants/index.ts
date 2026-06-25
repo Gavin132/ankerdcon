@@ -3,12 +3,17 @@ import type { TabId } from "../types";
 export const APP_NAME = "Ankerd Con";
 
 export const QUERY_KEYS = {
-  rides: ["rides"] as const,
-  meals: ["meals"] as const,
-  payments: ["payments"] as const,
-  calendar: ["calendar"] as const,
-  users: ["users"] as const,
-} as const;
+  rides:     ["rides"]     as const,
+  meals:     ["meals"]     as const,
+  payments:  ["payments"]  as const,
+  calendar:  ["calendar"]  as const,
+  users:     ["users"]     as const,
+  userNames: ["userNames"] as const,
+  /** Prefix key — use for broad invalidation of all single-user queries. */
+  userBase:  ["user"]      as const,
+  /** Full key for a specific user query. */
+  user: (name: string) => ["user", name] as const,
+};
 
 export const STALE_TIME = 30_000; // 30 seconds
 

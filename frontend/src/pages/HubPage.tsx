@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { routes } from "../config/routes";
 import { HubSkeleton } from "../components/common/Skeleton";
 import { DailyActionCheck } from "../components/hub/DailyActionCheck";
 import { CrewSection } from "../components/hub/CrewSection";
@@ -229,15 +230,19 @@ export function HubPage() {
                         className="overflow-hidden"
                       >
                         <div className="flex flex-wrap gap-1.5 pt-0.5">
-                          {event.participants.map((p) => (
-                            <span
-                              key={p}
-                              className="inline-flex items-center gap-1.5 rounded-full bg-white/8 border border-white/10 px-2 py-1 text-[11px] font-semibold text-sky-200"
-                            >
-                              <UserAvatar name={p} className="h-3.5 w-3.5 text-[7px] !border-0" />
-                              {p}
-                            </span>
-                          ))}
+                          {event.participants.map((p) => {
+                            const resolved = users?.find((u) => u.name === p || u.discord_username === p);
+                            const displayName = resolved?.name ?? p;
+                            return (
+                              <span
+                                key={p}
+                                className="inline-flex items-center gap-1.5 rounded-full bg-white/8 border border-white/10 px-2 py-1 text-[11px] font-semibold text-sky-200"
+                              >
+                                <UserAvatar name={p} className="h-3.5 w-3.5 text-[7px] !border-0" />
+                                {displayName}
+                              </span>
+                            );
+                          })}
                         </div>
                       </motion.div>
                     )}
@@ -259,7 +264,7 @@ export function HubPage() {
 
           {/* Ritten */}
           <motion.button
-            onClick={() => navigate("/transport")}
+            onClick={() => navigate(routes.transport)}
             className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 p-4 text-left shadow-stat"
             whileHover={{ y: -2, scale: 1.015 }}
             whileTap={{ scale: 0.97 }}
@@ -282,7 +287,7 @@ export function HubPage() {
 
           {/* Maaltijden */}
           <motion.button
-            onClick={() => navigate("/food")}
+            onClick={() => navigate(routes.food)}
             className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-400 to-sky-500 p-4 text-left shadow-stat"
             whileHover={{ y: -2, scale: 1.015 }}
             whileTap={{ scale: 0.97 }}
@@ -305,7 +310,7 @@ export function HubPage() {
 
           {/* Financiën */}
           <motion.button
-            onClick={() => navigate("/finance")}
+            onClick={() => navigate(routes.finance)}
             className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500 to-purple-700 p-4 text-left shadow-stat"
             whileHover={{ y: -2, scale: 1.015 }}
             whileTap={{ scale: 0.97 }}
@@ -325,7 +330,7 @@ export function HubPage() {
 
           {/* Locatie pingen */}
           <motion.button
-            onClick={() => navigate("/more")}
+            onClick={() => navigate(routes.more)}
             className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 p-4 text-left shadow-stat"
             whileHover={{ y: -2, scale: 1.015 }}
             whileTap={{ scale: 0.97 }}

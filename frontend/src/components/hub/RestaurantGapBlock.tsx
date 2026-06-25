@@ -1,5 +1,6 @@
 import { UtensilsCrossed, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { routes } from "../../config/routes";
 import { RestaurantGap } from "../../types";
 import { UserAvatar } from "../common/UserAvatar";
 import { formatDateTime } from "../../utils/format";
@@ -39,7 +40,7 @@ export function RestaurantGapBlock({ gap }: { gap: RestaurantGap }) {
         ))}
         <button
           onClick={() =>
-            navigate("/transport", { state: { tab: "Restaurant" } })
+            navigate(routes.transport, { state: { tab: "Restaurant" } })
           }
           className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-amber-600 hover:text-amber-700 transition-colors dark:text-amber-400"
         >

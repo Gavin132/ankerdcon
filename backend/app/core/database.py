@@ -1,15 +1,17 @@
-import os
-from supabase import create_client, Client
-from dotenv import load_dotenv
+from __future__ import annotations
 
-# Load the environment variables from your .env file
-load_dotenv()
+from supabase import Client, create_client
 
-url: str = os.environ.get("SUPABASE_URL")
-key: str = os.environ.get("SUPABASE_SECRET_KEY")
+from app.config import get_settings
 
-if not url or not key:
-    raise ValueError("Supabase credentials not found in environment variables")
 
-# This creates the connection engine we will use everywhere else
-supabase: Client = create_client(url, key)
+def _create_client() -> Client:
+    settings = get_settings()
+    if not settings.supabase_url or not settings.supabase_secret_key:
+        raise ValueError(
+            "SUPABASE_URL and SUPABASE_SECRET_KEY must be set in .env"
+        )
+    return create_client(settings.supabase_url, settings.supabase_secret_key)
+
+
+supabase: Client = _create_client()

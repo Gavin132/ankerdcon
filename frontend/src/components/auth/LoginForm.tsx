@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { LogIn } from "lucide-react";
-import { useNavigate } from "react-router-dom"; // Add this
+import { useNavigate } from "react-router-dom";
 import { Button } from "../common/Button";
 import { supabase } from "../../services/supabase";
-import { useAuthStore } from "../../store/auth.store"; // Add this
+import { useAuthStore } from "../../store/auth.store";
+import { routes } from "../../config/routes";
 
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -16,7 +17,7 @@ export function LoginForm() {
   // The Magic Redirect: If the token suddenly exists, send them to the dashboard!
   useEffect(() => {
     if (accessToken) {
-      navigate("/", { replace: true });
+      navigate(routes.hub, { replace: true });
     }
   }, [accessToken, navigate]);
 
