@@ -34,7 +34,8 @@ def get_current_user(
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User account not found in auth provider",
+                detail="Authenticatie mislukt.",
+                headers={"WWW-Authenticate": "Bearer"},
             )
 
         meta = user.user_metadata or {}
@@ -43,19 +44,20 @@ def get_current_user(
         if not discord_display_name:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not resolve name from auth provider metadata",
+                detail="Authenticatie mislukt.",
+                headers={"WWW-Authenticate": "Bearer"},
             )
 
-        discord_id = meta.get("provider_id")
-        discord_avatar = meta.get("avatar_url") or meta.get("picture")
+        discord_id       = meta.get("provider_id")
+        discord_avatar   = meta.get("avatar_url") or meta.get("picture")
         discord_username = meta.get("preferred_username") or meta.get("name")
+
         # All name fields Discord may populate (tried in order)
         discord_names = list(dict.fromkeys(filter(None, [
             meta.get("full_name"),
             meta.get("name"),
             meta.get("preferred_username"),
         ])))
-
 
         profile_name: str | None = None
 
@@ -65,12 +67,11 @@ def get_current_user(
                 resp = supabase.table("profiles").select("name").eq("discord_id", discord_id).execute()
                 if resp.data:
                     profile_name = resp.data[0]["name"]
-                    print(f"[AUTH] found by discord_id → {profile_name!r}")
+                    print(f"[AUTH] found by discord_id")
                 else:
-                    print(f"[AUTH] discord_id lookup returned no rows (column missing or value not set)")
+                    print("[AUTH] discord_id lookup returned no rows")
             except Exception as e:
                 print(f"[AUTH] discord_id lookup failed: {e}")
-                pass
 
         # ── 2. Fall back to Discord display name (first-time / pre-migration) ─
         if profile_name is None:
@@ -83,10 +84,7 @@ def get_current_user(
         if profile_name is None:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=(
-                    f"Toegang geweigerd. Discord-ID '{discord_id}' en naam(en) {discord_names} "
-                    "zijn niet gevonden in de profiellijst. Neem contact op met een beheerder."
-                ),
+                detail="Toegang geweigerd. Neem contact op met een beheerder.",
             )
 
         # ── 3. Best-effort: backfill discord_id + avatar_url ─────────────────
@@ -107,15 +105,15 @@ def get_current_user(
 
     except HTTPException:
         raise
-    except AuthApiError as e:
+    except AuthApiError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid or expired token: {e.message}",
+            detail="Ongeldige of verlopen sessie. Log opnieuw in.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid or expired token: {str(e)}",
+            detail="Authenticatie mislukt.",
             headers={"WWW-Authenticate": "Bearer"},
         )
