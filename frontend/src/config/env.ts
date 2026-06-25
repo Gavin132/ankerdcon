@@ -13,8 +13,8 @@ function requireEnv(key: string): string {
 }
 
 export const env = {
-  /** Backend base URL. Falls back to relative path for Docker proxy / local dev. */
-  API_BASE_URL: (import.meta.env["VITE_API_URL"] as string | undefined) ?? "/api",
+  /** Backend base URL. Empty string forces relative paths for the Vite Proxy! */
+  API_BASE_URL: (import.meta.env["VITE_API_URL"] as string | undefined) ?? "",
   SUPABASE_URL: requireEnv("VITE_SUPABASE_URL"),
   SUPABASE_PUBLISHABLE_KEY: requireEnv("VITE_SUPABASE_PUBLISHABLE_KEY"),
   DEV:  import.meta.env.DEV  as boolean,
