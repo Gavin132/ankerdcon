@@ -74,3 +74,6 @@
 > frontend/src/hooks/useRides.ts
 
 30. > Calender & rides ID zijn int ipv UUID
+
+31. Hoteloverzicht > is hier al naar gekeken/is het uberhaupt geïmplementeerd. Het zou alleen zichtbaar moeten zijn als het aankomende event een is_hotel TRUE heeft.
+   >gebruikers moeten ook kunnen aangeven welke kamer ze zittne
