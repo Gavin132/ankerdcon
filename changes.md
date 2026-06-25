@@ -77,3 +77,6 @@
 
 31. Hoteloverzicht > is hier al naar gekeken/is het uberhaupt geïmplementeerd. Het zou alleen zichtbaar moeten zijn als het aankomende event een is_hotel TRUE heeft.
    >gebruikers moeten ook kunnen aangeven welke kamer ze zittne
+
+32. hele payments page ?
+   >automatisch verwerken & bijhouden van payments? zou heel gaaf zijn

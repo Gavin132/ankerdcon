@@ -47,7 +47,8 @@ Een centrale planning in de vorm van een interactieve kalender:
 > 
 > * [ ] Logica voor kostenverdeling opzetten
 > * [ ] Status van betalingen per deelnemer inzichtelijk maken
-
+> * [ ] Automatisch bijhouden van betalingen
+> ### 
 
 
 
