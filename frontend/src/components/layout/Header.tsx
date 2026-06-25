@@ -144,7 +144,7 @@ export function Header() {
                   <div className="relative">
                     {/* Banner strip */}
                     <div
-                      className="h-14 w-full"
+                      className="h-24 w-full"
                       style={
                         me?.banner_url
                           ? { backgroundImage: `url(${me.banner_url})`, backgroundSize: "cover", backgroundPosition: "center" }
