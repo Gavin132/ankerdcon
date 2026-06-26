@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncGenerator
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -12,17 +13,29 @@ from app.config import get_settings
 from app.constants import API_PREFIX, Tables
 from app.core.database import supabase
 from app.routers import admin, badges, calendar, meals, payments, rides, users
+from app.services.reminder_scheduler import check_and_send_reminders
+
+_scheduler = AsyncIOScheduler(timezone="Europe/Amsterdam")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """Verify Supabase connectivity on startup."""
+    """Verify Supabase connectivity on startup, then start the reminder scheduler."""
     try:
         supabase.table(Tables.PROFILES).select("name").limit(1).execute()
         print("✅  Supabase connection established")
     except Exception:
         print("⚠️   Supabase warmup failed — check credentials in .env")
+
+    # Run daily at 08:00 Amsterdam time
+    _scheduler.add_job(check_and_send_reminders, "cron", hour=8, minute=0)
+    _scheduler.start()
+    print("✅  Reminder scheduler started (daily 08:00 Europe/Amsterdam)")
+
     yield
+
+    _scheduler.shutdown(wait=False)
+    print("🛑  Reminder scheduler stopped")
 
 
 settings = get_settings()
