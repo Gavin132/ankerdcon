@@ -20,6 +20,10 @@ class User(BaseModel):
     discord_username: Optional[str] = None
     avatar_url: Optional[str] = None
     is_admin: bool = False
+    is_active: bool = True
+    is_first_login: bool = True
+    onboarding_completed: bool = False
+    allow_dm: bool = True
     aliases: list[str] = []
     badge_ids: list[str] = []
     created_at: Optional[str] = None
@@ -85,3 +89,22 @@ class UpdatePreferencesRequest(BaseModel):
         if not re.match(r"^\+?[0-9]{7,15}$", stripped):
             raise ValueError("Voer een geldig telefoonnummer in (bijv. +31 6 12345678)")
         return v.strip()
+
+
+class CompleteOnboardingRequest(BaseModel):
+    pronouns: Optional[str] = None
+    bio: Optional[str] = None
+    phone_number: Optional[str] = None
+    color: Optional[str] = None
+    banner_color: Optional[str] = None
+    allow_dm: bool = True
+
+    @field_validator("color", "banner_color")
+    @classmethod
+    def valid_hex(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        v = v.strip()
+        if v and not (v.startswith("#") and len(v) in (4, 7)):
+            raise ValueError("Kleur moet een geldig hex-formaat zijn (#rgb of #rrggbb)")
+        return v
