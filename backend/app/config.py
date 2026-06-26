@@ -20,6 +20,7 @@ class Settings(BaseSettings):
 
     # Integrations
     discord_webhook_url: str = ""
+    discord_bot_token: str = ""
     app_url: str = ""
 
     # CORS — comma-separated string in .env, or a list when set programmatically
