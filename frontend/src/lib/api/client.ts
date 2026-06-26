@@ -80,15 +80,20 @@ apiClient.interceptors.response.use(
 
       try {
         const newAccessToken = await useAuthStore.getState().refreshAccessToken();
-        
+
         if (newAccessToken) {
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
           processQueue(null, newAccessToken);
-          return apiClient(originalRequest); // Retry the failed request!
+          return apiClient(originalRequest);
+        } else {
+          // If Supabase returns null, the session is completely dead. 
+          // Trigger the logout and redirect.
+          useAuthStore.getState().clearAuth();
+          processQueue(new Error("Session expired"), null);
         }
       } catch (refreshError) {
+        useAuthStore.getState().clearAuth();
         processQueue(refreshError, null);
-        // If refresh fails, let it fall through to your standard error handling
       } finally {
         isRefreshing = false;
       }
