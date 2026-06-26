@@ -6,6 +6,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.database import supabase
+from app.services import discord_bot
 
 try:
     from gotrue.errors import AuthApiError
@@ -62,11 +63,14 @@ def get_current_user(
         profile_name: str | None = None
 
         # ── 1. Stable lookup by discord_id (works even after a name change) ──
+        profile_row: dict | None = None
+        _select = "name, is_active, is_first_login, allow_dm"
         if discord_id:
             try:
-                resp = supabase.table("profiles").select("name").eq("discord_id", discord_id).execute()
+                resp = supabase.table("profiles").select(_select).eq("discord_id", discord_id).execute()
                 if resp.data:
-                    profile_name = resp.data[0]["name"]
+                    profile_row = resp.data[0]
+                    profile_name = profile_row["name"]
                     print(f"[AUTH] found by discord_id")
                 else:
                     print("[AUTH] discord_id lookup returned no rows")
@@ -76,9 +80,10 @@ def get_current_user(
         # ── 2. Fall back to Discord display name (first-time / pre-migration) ─
         if profile_name is None:
             for candidate in discord_names:
-                resp = supabase.table("profiles").select("name").eq("name", candidate).execute()
+                resp = supabase.table("profiles").select(_select).eq("name", candidate).execute()
                 if resp.data:
-                    profile_name = resp.data[0]["name"]
+                    profile_row = resp.data[0]
+                    profile_name = profile_row["name"]
                     break
 
         if profile_name is None:
@@ -86,6 +91,24 @@ def get_current_user(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Toegang geweigerd. Neem contact op met een beheerder.",
             )
+
+        # ── 2b. Check if account is active ───────────────────────────────────
+        if profile_row and profile_row.get("is_active") is False:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Je account is gedeactiveerd. Neem contact op met een beheerder.",
+            )
+
+        # ── 2c. First login — send welcome DM once ───────────────────────────
+        if profile_row and profile_row.get("is_first_login") and discord_id:
+            try:
+                supabase.table("profiles").update({"is_first_login": False}).eq("name", profile_name).execute()
+                if profile_row.get("allow_dm", True):
+                    from app.config import get_settings
+                    settings = get_settings()
+                    discord_bot.send_welcome_dm(settings.discord_bot_token, discord_id, profile_name)
+            except Exception as e:
+                print(f"[AUTH] first-login DM failed: {e}")
 
         # ── 3. Best-effort: backfill discord_id + avatar_url ─────────────────
         try:
