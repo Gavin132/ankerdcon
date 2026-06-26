@@ -55,13 +55,30 @@ def admin_list_users(_: str = Depends(get_admin_user)) -> list[User]:
 @router.post("/users", response_model=User, status_code=status.HTTP_201_CREATED)
 def admin_create_user(body: AdminCreateUserRequest, _: str = Depends(get_admin_user)) -> User:
     """Create a stub profile to allowlist a new user before they log in with Discord."""
-    data: dict = {"name": body.name, "is_admin": body.is_admin, "is_active": True}
+    data: dict = {"name": body.name, "is_admin": body.is_admin, "is_active": True, "is_first_login": True}
     if body.discord_id:
         data["discord_id"] = body.discord_id
     resp = supabase.table(Tables.PROFILES).insert(data).execute()
     if not resp.data:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kon gebruiker niet aanmaken.")
     return resp.data[0]
+
+
+def _remove_user_from_all_events(name: str) -> None:
+    """Strip a user's name from passengers/participants arrays across all tables."""
+    for table, field in [
+        (Tables.RIDES, "passengers"),
+        (Tables.MEALS, "participants"),
+        (Tables.CALENDAR, "participants"),
+    ]:
+        try:
+            rows = supabase.table(table).select(f"id, {field}").execute().data or []
+            for row in rows:
+                members: list = row.get(field) or []
+                if name in members:
+                    supabase.table(table).update({field: [m for m in members if m != name]}).eq("id", row["id"]).execute()
+        except Exception as e:
+            print(f"[admin] cleanup {table}.{field} failed for {name!r}: {e}")
 
 
 @router.put("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -76,7 +93,7 @@ def admin_update_user(
         return
 
     # Fetch current state before updating so we can detect is_active transitions
-    current = supabase.table(Tables.PROFILES).select("discord_id, is_active, allow_dm").eq("id", user_id).execute()
+    current = supabase.table(Tables.PROFILES).select("name, discord_id, is_active, allow_dm").eq("id", user_id).execute()
     if not current.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
     row = current.data[0]
@@ -85,14 +102,12 @@ def admin_update_user(
     if not resp.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
 
-    # Send deactivation DM if is_active is being switched off
-    if (
-        body.is_active is False
-        and row.get("is_active") is not False   # was active before
-        and row.get("allow_dm", True)
-        and row.get("discord_id")
-    ):
-        discord_bot.send_deactivated_dm(settings.discord_bot_token, row["discord_id"])
+    # Deactivation: send DM + remove from all events
+    if body.is_active is False and row.get("is_active") is not False:
+        if row.get("name"):
+            _remove_user_from_all_events(row["name"])
+        if row.get("allow_dm", True) and row.get("discord_id"):
+            discord_bot.send_deactivated_dm(settings.discord_bot_token, row["discord_id"])
 
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -101,11 +116,14 @@ def admin_delete_user(
     _: str = Depends(get_admin_user),
     settings: Settings = Depends(get_settings),
 ) -> None:
-    # Fetch discord_id + consent before deletion so we can DM them
-    current = supabase.table(Tables.PROFILES).select("discord_id, allow_dm").eq("id", user_id).execute()
+    # Fetch name + discord_id + consent before deletion
+    current = supabase.table(Tables.PROFILES).select("name, discord_id, allow_dm").eq("id", user_id).execute()
     if not current.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
     row = current.data[0]
+
+    if row.get("name"):
+        _remove_user_from_all_events(row["name"])
 
     supabase.table(Tables.PROFILES).delete().eq("id", user_id).execute()
 
