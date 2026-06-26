@@ -6,7 +6,9 @@ import { routes } from "../../config/routes";
 import { BedDouble, Phone, MapPin, Pencil, CalendarDays } from "lucide-react";
 import { avatarColor } from "../../utils/avatar";
 import { LocationPingDisplay } from "./LocationPingDisplay";
+import { BadgeIcon } from "./BadgeIcon";
 import { useUser } from "../../hooks/useUsers";
+import { useBadges } from "../../hooks/useBadges";
 import type { User, CalendarEvent } from "../../types";
 
 const FONT_MAP: Record<string, string> = {
@@ -55,8 +57,14 @@ export function UserProfilePopup({
   useEffect(() => { setImgErr(false); }, [user?.avatar_url]);
 
   // Fetch full profile (includes discord_username not in the list endpoint)
-  const { data: fullUser } = useUser(open && user?.id ? user.id : "");
+  const { data: fullUser }   = useUser(open && user?.id ? user.id : "");
+  const { data: allBadges = [] } = useBadges();
   const u = fullUser ?? user;
+
+  const userBadges = (u?.badge_ids ?? [])
+    .map((id) => allBadges.find((b) => b.id === id))
+    .filter(Boolean)
+    .sort((a, b) => a!.display_order - b!.display_order) as typeof allBadges;
 
   const hasAvatar = !!u?.avatar_url && !imgErr;
   const bannerStyle = getBannerStyle(u?.banner_color ?? "", u?.banner_url ?? undefined);
@@ -158,13 +166,18 @@ export function UserProfilePopup({
                     </div>
                   </div>
 
-                  {/* Name + pronouns */}
-                  <p
-                    className="text-[17px] font-black text-slate-900 dark:text-white leading-tight"
-                    style={nameStyle}
-                  >
-                    {u!.name}
-                  </p>
+                  {/* Name + inline badges */}
+                  <div className="flex items-center gap-1.5 flex-wrap leading-none">
+                    <p
+                      className="text-[17px] font-black text-slate-900 dark:text-white leading-tight"
+                      style={nameStyle}
+                    >
+                      {u!.name}
+                    </p>
+                    {userBadges.map((badge) => (
+                      <BadgeIcon key={badge.id} badge={badge} size="sm" />
+                    ))}
+                  </div>
                   {u?.pronouns && (
                     <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
                       {u.pronouns}

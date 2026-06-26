@@ -10,7 +10,7 @@ export function AdminPageHeader({ title, subtitle, action }: Props) {
       <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">
         Entiteiten
       </p>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-black text-slate-900 dark:text-white">
             {title}
@@ -19,7 +19,7 @@ export function AdminPageHeader({ title, subtitle, action }: Props) {
             {subtitle}
           </p>
         </div>
-        {action}
+        {action && <div className="flex items-center gap-2 shrink-0">{action}</div>}
       </div>
     </div>
   );

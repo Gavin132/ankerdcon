@@ -47,6 +47,11 @@ export const apiRoutes = {
     location:    (identifier: string) => `/api/users/${identifier}/location`,
   },
 
+  // ── Badges ────────────────────────────────────────────────────────
+  badges: {
+    base: "/api/badges/",
+  },
+
   // ── Admin ─────────────────────────────────────────────────────────
   admin: {
     stats: "/api/admin/stats",
@@ -72,6 +77,14 @@ export const apiRoutes = {
       base:        "/api/admin/calendar",
       byId:        (id: string) => `/api/admin/calendar/${id}`,
       participant: (id: string, p: string) => `/api/admin/calendar/${id}/participants/${encodeURIComponent(p)}`,
+    },
+
+    badges: {
+      base:         "/api/admin/badges",
+      byId:         (id: string) => `/api/admin/badges/${id}`,
+      reorder:      "/api/admin/badges/reorder",
+      assignUser:   (userId: string, badgeId: string) => `/api/admin/users/${userId}/badges/${badgeId}`,
+      unassignUser: (userId: string, badgeId: string) => `/api/admin/users/${userId}/badges/${badgeId}`,
     },
   },
 } as const;

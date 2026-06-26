@@ -21,6 +21,7 @@ class User(BaseModel):
     avatar_url: Optional[str] = None
     is_admin: bool = False
     aliases: list[str] = []
+    badge_ids: list[str] = []
     created_at: Optional[str] = None
 
 class UpdateNameRequest(BaseModel):

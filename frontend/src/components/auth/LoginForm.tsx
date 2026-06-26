@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { LogIn } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "../common/Button";
 import { supabase } from "../../services/supabase";
 import { useAuthStore } from "../../store/auth.store";
@@ -12,14 +12,15 @@ export function LoginForm() {
   
   // Bring in your router and your auth state
   const navigate = useNavigate();
+  const location = useLocation();
   const accessToken = useAuthStore((s) => s.accessToken);
+  const from = (location.state as { from?: string } | null)?.from ?? routes.hub;
 
-  // The Magic Redirect: If the token suddenly exists, send them to the dashboard!
   useEffect(() => {
     if (accessToken) {
-      navigate(routes.hub, { replace: true });
+      navigate(from, { replace: true });
     }
-  }, [accessToken, navigate]);
+  }, [accessToken, navigate, from]);
 
   async function handleDiscordLogin() {
     try {

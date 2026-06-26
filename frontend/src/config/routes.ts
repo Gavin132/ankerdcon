@@ -27,5 +27,6 @@ export const routes = {
     rides:  "/admin/rides",
     meals:  "/admin/meals",
     events: "/admin/events",
+    badges: "/admin/badges",
   },
 } as const;

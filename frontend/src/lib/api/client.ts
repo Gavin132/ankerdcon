@@ -54,7 +54,7 @@ apiClient.interceptors.response.use(
         error.response?.data?.message ??
         error.message;
 
-      if (status === 403) {
+      if (status === 403 && useAuthStore.getState().isAuthenticated) {
         useAuthStore.getState().setForbidden();
       }
 

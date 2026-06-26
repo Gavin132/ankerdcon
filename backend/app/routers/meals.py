@@ -32,13 +32,15 @@ def create_meal(
     }
     supabase.table(Tables.MEALS).insert(meal_data).execute()
 
-    transport_note = " 🚗 Transport needed!" if body.transport_needed else ""
     background_tasks.add_task(
-        discord_service.send_notification,
+        discord_service.notify_meal_created,
         settings.discord_webhook_url,
         settings.app_url,
-        "🍽️ New Meal Added",
-        f"**{body.meal_name}** at {body.time}.{transport_note}",
+        meal_name=body.meal_name,
+        time=body.time,
+        location=body.location or None,
+        cost=float(body.cost) if body.cost else None,
+        transport_needed=body.transport_needed,
     )
 
 

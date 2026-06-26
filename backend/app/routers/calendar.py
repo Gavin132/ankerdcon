@@ -1,4 +1,7 @@
+from datetime import datetime, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import PlainTextResponse
 
 from app.constants import Tables
 from app.dependencies import get_current_user
@@ -6,6 +9,67 @@ from app.models.calendar import CalendarEvent, CalendarRsvpRequest
 from app.core.database import supabase
 
 router = APIRouter(prefix="/calendar", tags=["calendar"])
+
+
+def _parse_event_date(date_str: str) -> datetime | None:
+    for fmt in ("%d-%m-%Y", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(date_str, fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def _ics_escape(s: str) -> str:
+    return s.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
+
+
+@router.get("/feed.ics", response_class=PlainTextResponse, include_in_schema=False)
+def calendar_feed() -> PlainTextResponse:
+    """Public ICS subscription feed — no auth required, compatible with Google Calendar."""
+    events = supabase.table(Tables.CALENDAR).select("*").execute().data
+    dtstamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+
+    lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//Ankerd Con//Calendar Feed//NL",
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH",
+        "X-WR-CALNAME:Ankerd Con",
+        "X-WR-CALDESC:Ankerd Con evenementen",
+        "X-WR-TIMEZONE:Europe/Amsterdam",
+    ]
+
+    for ev in events:
+        date = _parse_event_date(ev.get("date") or "")
+        if not date:
+            continue
+        dtstart = date.strftime("%Y%m%d")
+        dtend = (date + timedelta(days=1)).strftime("%Y%m%d")
+        lines += [
+            "BEGIN:VEVENT",
+            f"UID:{ev['id']}@ankerdcon",
+            f"DTSTART;VALUE=DATE:{dtstart}",
+            f"DTEND;VALUE=DATE:{dtend}",
+            f"DTSTAMP:{dtstamp}",
+            f"SUMMARY:{_ics_escape(ev.get('event_name') or 'Evenement')}",
+        ]
+        if ev.get("location"):
+            lines.append(f"LOCATION:{_ics_escape(ev['location'])}")
+        if ev.get("description"):
+            lines.append(f"DESCRIPTION:{_ics_escape(ev['description'])}")
+        if ev.get("website"):
+            lines.append(f"URL:{ev['website']}")
+        lines.append("END:VEVENT")
+
+    lines.append("END:VCALENDAR")
+
+    return PlainTextResponse(
+        "\r\n".join(lines),
+        media_type="text/calendar; charset=utf-8",
+        headers={"Content-Disposition": "inline; filename=ankerd-con.ics"},
+    )
 
 
 @router.get("/", response_model=list[CalendarEvent])

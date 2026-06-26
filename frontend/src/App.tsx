@@ -31,17 +31,17 @@ function ThemeSync() {
 
 // THE NEW FIX: This silently watches for Discord tokens
 function AuthSync() {
-  const setAccessToken = useAuthStore((s) => s.setAccessToken);
+  const setAccessToken  = useAuthStore((s) => s.setAccessToken);
+  const setInitialized  = useAuthStore((s) => s.setInitialized);
 
   useEffect(() => {
-    // 1. Check if they are logged in on load
+    // 1. Restore session on load — always mark initialized when done
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setAccessToken(session.access_token);
-      }
+      if (session) setAccessToken(session.access_token);
+      setInitialized();
     });
 
-    // 2. Catch the token when Discord redirects them back
+    // 2. Keep token fresh on auth state changes (Discord redirect, token refresh, sign-out)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         setAccessToken(session.access_token);
@@ -51,7 +51,7 @@ function AuthSync() {
     });
 
     return () => subscription.unsubscribe();
-  }, [setAccessToken]);
+  }, [setAccessToken, setInitialized]);
 
   return null;
 }

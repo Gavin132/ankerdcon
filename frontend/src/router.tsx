@@ -18,6 +18,7 @@ import { AdminUsersPage } from "./pages/admin/AdminUsersPage";
 import { AdminRidesPage } from "./pages/admin/AdminRidesPage";
 import { AdminMealsPage } from "./pages/admin/AdminMealsPage";
 import { AdminEventsPage } from "./pages/admin/AdminEventsPage";
+import { AdminBadgesPage } from "./pages/admin/AdminBadgesPage";
 
 export const router = createBrowserRouter([
   {
@@ -68,6 +69,7 @@ export const router = createBrowserRouter([
               { path: routes.admin.rides,      element: <AdminRidesPage /> },
               { path: routes.admin.meals,      element: <AdminMealsPage /> },
               { path: routes.admin.events,     element: <AdminEventsPage /> },
+              { path: routes.admin.badges,     element: <AdminBadgesPage /> },
             ],
           },
         ],

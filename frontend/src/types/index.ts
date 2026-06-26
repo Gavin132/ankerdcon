@@ -9,6 +9,15 @@ export interface TokenResponse {
   token_type: string;
 }
 
+// Badges
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  image_url: string;
+  display_order: number;
+}
+
 // Users
 export interface User {
   id?: string;
@@ -27,6 +36,7 @@ export interface User {
   discord_username?: string;
   is_admin?: boolean;
   aliases?: string[];
+  badge_ids?: string[];
   created_at?: string;
 }
 

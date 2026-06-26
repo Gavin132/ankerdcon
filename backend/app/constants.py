@@ -10,6 +10,7 @@ class Tables:
     MEALS    = "meals"
     PAYMENTS = "payments"
     CALENDAR = "calendar"
+    BADGES   = "badges"
 
 
 # ── API ───────────────────────────────────────────────────────────

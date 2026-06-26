@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 
+from app.config import Settings, get_settings
 from app.constants import Tables
 from app.dependencies import get_admin_user
 from app.models.admin import (
@@ -10,10 +11,12 @@ from app.models.admin import (
     AdminUpdateRideRequest,
     AdminUpdateUserRequest,
 )
+from app.models.badge import Badge, BadgeOrderItem, CreateBadgeRequest, UpdateBadgeRequest
 from app.models.calendar import CalendarEvent
 from app.models.meal import Meal
 from app.models.rides import CreateRideRequest, Ride
 from app.models.user import User
+import app.services.discord_service as discord_service
 from app.core.database import supabase
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -76,11 +79,32 @@ def admin_list_rides(_: str = Depends(get_admin_user)) -> list[Ride]:
 
 
 @router.post("/rides", response_model=Ride, status_code=status.HTTP_201_CREATED)
-def admin_create_ride(body: CreateRideRequest, _: str = Depends(get_admin_user)) -> Ride:
+def admin_create_ride(
+    body: CreateRideRequest,
+    background_tasks: BackgroundTasks,
+    _: str = Depends(get_admin_user),
+    settings: Settings = Depends(get_settings),
+) -> Ride:
     new_ride = body.model_dump()
     new_ride["passengers"] = []
     new_ride["restaurant_drivers"] = []
     resp = supabase.table(Tables.RIDES).insert(new_ride).execute()
+
+    background_tasks.add_task(
+        discord_service.notify_ride_created,
+        settings.discord_webhook_url,
+        settings.app_url,
+        direction=body.direction,
+        driver=body.driver,
+        vehicle_type=body.vehicle_type,
+        departure_time=body.departure_time,
+        start_location=body.start_location,
+        total_seats=body.total_seats,
+        is_public_transport=(body.vehicle_type == "Public Transport"),
+        parking_info=body.parking_info or None,
+        maps_link=body.maps_link or None,
+        action_required=body.action_required,
+    )
     return resp.data[0]
 
 
@@ -166,12 +190,45 @@ def admin_list_events(_: str = Depends(get_admin_user)) -> list[CalendarEvent]:
 
 @router.post("/calendar", response_model=CalendarEvent, status_code=status.HTTP_201_CREATED)
 def admin_create_event(
-    body: AdminCreateCalendarEventRequest, _: str = Depends(get_admin_user)
+    body: AdminCreateCalendarEventRequest,
+    background_tasks: BackgroundTasks,
+    _: str = Depends(get_admin_user),
+    settings: Settings = Depends(get_settings),
 ) -> CalendarEvent:
     event_data = {k: v for k, v in body.model_dump().items() if v is not None}
     event_data.setdefault("is_hotel", False)
     event_data["participants"] = []
     resp = supabase.table(Tables.CALENDAR).insert(event_data).execute()
+
+    background_tasks.add_task(
+        discord_service.notify_event_created,
+        settings.discord_webhook_url,
+        settings.app_url,
+        event_name=body.event_name,
+        date=body.date,
+        description=body.description,
+        location=body.location,
+        website=body.website,
+        ticket_url=body.ticket_url,
+        ticket_sale_start=body.ticket_sale_start,
+        ticket_types=body.ticket_types,
+        locker_info=body.locker_info,
+        parking_info=body.parking_info,
+        what_to_bring=body.what_to_bring,
+        special_instructions=body.special_instructions,
+    )
+    if body.ticket_sale_start:
+        background_tasks.add_task(
+            discord_service.notify_ticket_sale_opening,
+            settings.discord_webhook_url,
+            settings.app_url,
+            event_name=body.event_name,
+            date=body.date,
+            ticket_sale_start=body.ticket_sale_start,
+            ticket_url=body.ticket_url,
+            ticket_types=body.ticket_types,
+        )
+
     return resp.data[0]
 
 
@@ -204,3 +261,66 @@ def admin_remove_event_participant(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenement niet gevonden.")
     participants = [p for p in (resp.data[0].get("participants") or []) if p != participant]
     supabase.table(Tables.CALENDAR).update({"participants": participants}).eq("id", event_id).execute()
+
+
+# ── Badges ─────────────────────────────────────────────────────────────────────
+
+@router.get("/badges", response_model=list[Badge])
+def admin_list_badges(_: str = Depends(get_admin_user)) -> list[Badge]:
+    return supabase.table(Tables.BADGES).select("*").order("display_order").execute().data
+
+
+@router.patch("/badges/reorder", status_code=status.HTTP_204_NO_CONTENT)
+def admin_reorder_badges(body: list[BadgeOrderItem], _: str = Depends(get_admin_user)) -> None:
+    for item in body:
+        supabase.table(Tables.BADGES).update({"display_order": item.display_order}).eq("id", item.id).execute()
+
+
+@router.post("/badges", response_model=Badge, status_code=status.HTTP_201_CREATED)
+def admin_create_badge(body: CreateBadgeRequest, _: str = Depends(get_admin_user)) -> Badge:
+    resp = supabase.table(Tables.BADGES).insert(body.model_dump()).execute()
+    return resp.data[0]
+
+
+@router.put("/badges/{badge_id}", status_code=status.HTTP_204_NO_CONTENT)
+def admin_update_badge(
+    badge_id: str, body: UpdateBadgeRequest, _: str = Depends(get_admin_user)
+) -> None:
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not updates:
+        return
+    resp = supabase.table(Tables.BADGES).update(updates).eq("id", badge_id).execute()
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Badge niet gevonden.")
+
+
+@router.delete("/badges/{badge_id}", status_code=status.HTTP_204_NO_CONTENT)
+def admin_delete_badge(badge_id: str, _: str = Depends(get_admin_user)) -> None:
+    # Remove this badge_id from all users before deleting
+    users = supabase.table(Tables.PROFILES).select("id, badge_ids").execute().data
+    for user in users:
+        ids = user.get("badge_ids") or []
+        if badge_id in ids:
+            supabase.table(Tables.PROFILES).update(
+                {"badge_ids": [b for b in ids if b != badge_id]}
+            ).eq("id", user["id"]).execute()
+    supabase.table(Tables.BADGES).delete().eq("id", badge_id).execute()
+
+
+@router.post("/users/{user_id}/badges/{badge_id}", status_code=status.HTTP_204_NO_CONTENT)
+def admin_assign_badge(user_id: str, badge_id: str, _: str = Depends(get_admin_user)) -> None:
+    resp = supabase.table(Tables.PROFILES).select("badge_ids").eq("id", user_id).execute()
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
+    ids: list[str] = resp.data[0].get("badge_ids") or []
+    if badge_id not in ids:
+        supabase.table(Tables.PROFILES).update({"badge_ids": ids + [badge_id]}).eq("id", user_id).execute()
+
+
+@router.delete("/users/{user_id}/badges/{badge_id}", status_code=status.HTTP_204_NO_CONTENT)
+def admin_unassign_badge(user_id: str, badge_id: str, _: str = Depends(get_admin_user)) -> None:
+    resp = supabase.table(Tables.PROFILES).select("badge_ids").eq("id", user_id).execute()
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
+    ids: list[str] = resp.data[0].get("badge_ids") or []
+    supabase.table(Tables.PROFILES).update({"badge_ids": [b for b in ids if b != badge_id]}).eq("id", user_id).execute()

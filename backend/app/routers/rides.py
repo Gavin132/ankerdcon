@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 
+from app.config import Settings, get_settings
 from app.constants import Tables
 from app.dependencies import get_current_user
 from app.models.rides import (
@@ -11,6 +12,7 @@ from app.models.rides import (
     RestaurantUnassignRequest,
     Ride,
 )
+import app.services.discord_service as discord_service
 from app.core.database import supabase
 
 router = APIRouter(prefix="/rides", tags=["rides"])
@@ -25,12 +27,34 @@ def list_rides(direction: str | None = None, _: str = Depends(get_current_user))
 
 
 @router.post("/", response_model=Ride)
-def create_ride(body: CreateRideRequest, _: str = Depends(get_current_user)) -> Ride:
+def create_ride(
+    body: CreateRideRequest,
+    background_tasks: BackgroundTasks,
+    _: str = Depends(get_current_user),
+    settings: Settings = Depends(get_settings),
+) -> Ride:
     new_ride = body.model_dump()
     new_ride["passengers"] = []
     new_ride["restaurant_drivers"] = []
     response = supabase.table(Tables.RIDES).insert(new_ride).execute()
-    return response.data[0]
+    ride = response.data[0]
+
+    background_tasks.add_task(
+        discord_service.notify_ride_created,
+        settings.discord_webhook_url,
+        settings.app_url,
+        direction=body.direction,
+        driver=body.driver,
+        vehicle_type=body.vehicle_type,
+        departure_time=body.departure_time,
+        start_location=body.start_location,
+        total_seats=body.total_seats,
+        is_public_transport=(body.vehicle_type == "Public Transport"),
+        parking_info=body.parking_info or None,
+        maps_link=body.maps_link or None,
+        action_required=body.action_required,
+    )
+    return ride
 
 
 @router.post("/{ride_id}/claim", response_model=Ride)
