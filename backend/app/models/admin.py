@@ -5,6 +5,12 @@ from typing import Optional
 from pydantic import BaseModel
 
 
+class AdminCreateUserRequest(BaseModel):
+    name: str
+    discord_id: Optional[str] = None
+    is_admin: bool = False
+
+
 class AdminUpdateUserRequest(BaseModel):
     hotel_room: Optional[str] = None
     phone_number: Optional[str] = None
@@ -12,6 +18,7 @@ class AdminUpdateUserRequest(BaseModel):
     bio: Optional[str] = None
     color: Optional[str] = None
     is_admin: Optional[bool] = None
+    is_active: Optional[bool] = None
     aliases: Optional[list[str]] = None
 
 
