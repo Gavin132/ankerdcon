@@ -4,11 +4,6 @@ import { useAuthStore } from "../../store/auth.store";
 
 // ── Typed error class ──────────────────────────────────────────────
 
-/**
- * All non-2xx responses from the backend are thrown as ApiError.
- * The message is taken from the backend `detail` / `message` field —
- * never exposed raw to the user; pass it through getErrorMessage() first.
- */
 export class ApiError extends Error {
   readonly status: number;
 
@@ -44,9 +39,67 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// ── Token Refresh Variables ────────────────────────────────────────
+
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+// ── Response Interceptor ───────────────────────────────────────────
+
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
+    // 1. Intercept 401 Unauthorized for silent token refresh
+    if (axios.isAxiosError(error) && error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return apiClient(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const newAccessToken = await useAuthStore.getState().refreshAccessToken();
+
+        if (newAccessToken) {
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          processQueue(null, newAccessToken);
+          return apiClient(originalRequest);
+        } else {
+          // If Supabase returns null, the session is completely dead. 
+          // Trigger the logout and redirect.
+          useAuthStore.getState().clearAuth();
+          processQueue(new Error("Session expired"), null);
+        }
+      } catch (refreshError) {
+        useAuthStore.getState().clearAuth();
+        processQueue(refreshError, null);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    // 2. Your standard API Error formatting and 403 handling
     if (axios.isAxiosError(error)) {
       const status = error.response?.status ?? 0;
       const message =
@@ -60,6 +113,7 @@ apiClient.interceptors.response.use(
 
       return Promise.reject(new ApiError(status, String(message)));
     }
+
     return Promise.reject(error);
-  },
+  }
 );
