@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   deleteBanner,
+  getCurrentUser,
   getPublicUserNames,
   getUser,
   getUsers,
@@ -11,6 +12,14 @@ import {
 } from "../services/users.service";
 import { QUERY_KEYS, STALE_TIME } from "../constants";
 import type { LocationPingRequest, UpdateNameRequest, UpdatePreferencesRequest } from "../types";
+
+export function useCurrentUser() {
+  return useQuery({
+    queryKey: QUERY_KEYS.currentUser,
+    queryFn: getCurrentUser,
+    staleTime: STALE_TIME,
+  });
+}
 
 export function usePublicUserNames() {
   return useQuery({

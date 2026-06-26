@@ -2,6 +2,11 @@ import { apiClient } from "../lib/api/client";
 import { apiRoutes } from "../config/api-routes";
 import type { UpdateNameRequest, UpdatePreferencesRequest, User, LocationPingRequest } from "../types";
 
+export async function getCurrentUser(): Promise<User> {
+  const { data } = await apiClient.get<User>(apiRoutes.users.me);
+  return data;
+}
+
 export async function getPublicUserNames(): Promise<string[]> {
   const { data } = await apiClient.get<string[]>(apiRoutes.users.names);
   return data;

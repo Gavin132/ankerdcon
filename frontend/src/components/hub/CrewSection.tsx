@@ -23,7 +23,14 @@ export function CrewSection({ users }: CrewSectionProps) {
   const { data: calendarEvents } = useCalendar();
 
   const filtered = query
-    ? users.filter((u) => u.name.toLowerCase().includes(query.toLowerCase()))
+    ? users.filter((u) => {
+        const q = query.toLowerCase();
+        return (
+          u.name.toLowerCase().includes(q) ||
+          (u.discord_username ?? "").toLowerCase().includes(q) ||
+          u.aliases?.some((a) => a.toLowerCase().includes(q))
+        );
+      })
     : users;
 
   return (

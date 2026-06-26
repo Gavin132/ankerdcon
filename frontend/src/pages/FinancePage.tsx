@@ -104,27 +104,6 @@ export function FinancePage() {
                 </span>
               </div>
               <div className="text-4xl font-black text-white mt-1">{formatCurrency(totalAll)}</div>
-
-              {Object.keys(totals).length > 0 && (
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  {Object.entries(totals).map(([name, amount]) => (
-                    <div
-                      key={name}
-                      className="flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2.5 backdrop-blur-sm border border-white/10"
-                    >
-                      <div
-                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br text-xs font-black text-white ${avatarColor(name)}`}
-                      >
-                        {personInitial(name)}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-semibold text-white truncate">{name}</p>
-                        <p className="text-xs text-sky-200 font-bold">{formatCurrency(amount)}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         </motion.div>

@@ -15,4 +15,17 @@ export const routes = {
     view:    (name: string) => `/profile/${encodeURIComponent(name)}`,
     pattern: "/profile/:name",
   },
+
+  event: {
+    view:    (id: string) => `/events/${id}`,
+    pattern: "/events/:id",
+  },
+
+  admin: {
+    base:   "/admin",
+    users:  "/admin/users",
+    rides:  "/admin/rides",
+    meals:  "/admin/meals",
+    events: "/admin/events",
+  },
 } as const;

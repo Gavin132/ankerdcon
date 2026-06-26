@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { routes } from "../../config/routes";
 import { motion, AnimatePresence } from "framer-motion";
-import { Moon, Sun, User, LogOut } from "lucide-react";
+import { Moon, Sun, User, LogOut, Shield } from "lucide-react";
 import { APP_NAME } from "../../constants";
 import { useThemeStore } from "../../store/theme.store";
 import { useAuthStore } from "../../store/auth.store";
@@ -188,6 +188,19 @@ export function Header() {
                       <User size={14} className="shrink-0 text-slate-400 dark:text-white/35" />
                       Mijn profiel
                     </button>
+
+                    {me?.is_admin && (
+                      <button
+                        onClick={() => {
+                          setMenuOpen(false);
+                          navigate(routes.admin.base);
+                        }}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] font-medium text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-500/10 transition-colors"
+                      >
+                        <Shield size={14} className="shrink-0" />
+                        Admin Portal
+                      </button>
+                    )}
 
                     <div className="my-1 h-px bg-slate-100 dark:bg-white/[0.05] mx-1" />
 

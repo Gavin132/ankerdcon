@@ -8,18 +8,21 @@ import {
   UserPlus,
   UserMinus,
   Check,
+  Info,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Badge } from "../common/Badge";
 import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
 import { UserAvatar } from "../common/UserAvatar";
 import { parseEventDate, toDateKey, todayKey } from "../../utils/date";
-import type { CalendarEvent } from "../../types";
+import { routes } from "../../config/routes";
+import type { CalendarEvent, User } from "../../types";
 import { DAY_LABELS } from "../../constants";
 
 interface CalendarGridProps {
   events: CalendarEvent[];
-  allUsers?: string[];
+  allUsers?: User[];
   onRsvp?: (id: string, userName: string) => void;
   onLeave?: (id: string, userName: string) => void;
 }
@@ -30,6 +33,7 @@ export function CalendarGrid({
   onRsvp,
   onLeave,
 }: CalendarGridProps) {
+  const navigate = useNavigate();
   const [activeRsvpEvent, setActiveRsvpEvent] = useState<string | null>(null);
   const [rsvpMode, setRsvpMode] = useState<"join" | "leave">("join");
   const [rsvpNames, setRsvpNames] = useState<string[]>([]);
@@ -208,7 +212,7 @@ export function CalendarGrid({
                 {selectedEvents.map((ev) => {
                   const isPast = selectedDate !== null && selectedDate < today;
                   const isRsvpOpen = activeRsvpEvent === ev.id;
-                  const hasRsvp = !!onRsvp && !!onLeave && allUsers.length > 0;
+                  const hasRsvp = !!onRsvp && !!onLeave && (allUsers ?? []).length > 0;
 
                   return (
                     <div
@@ -230,18 +234,30 @@ export function CalendarGrid({
                                 Hotel
                               </Badge>
                             )}
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); navigate(routes.event.view(ev.id)); }}
+                              className="flex items-center gap-1 rounded-lg bg-sky-50 dark:bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-sky-600 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-500/20 transition-colors"
+                            >
+                              <Info size={10} />
+                              Details
+                            </button>
                           </div>
 
                           {/* Avatar Facepile */}
                           {ev.participants.length > 0 && (
                             <div className="mt-2.5 flex items-center -space-x-2">
-                              {ev.participants.map((p) => (
-                                <UserAvatar
-                                  key={p}
-                                  name={p}
-                                  className="h-7 w-7 text-[10px] ring-2 ring-white dark:ring-slate-800"
-                                />
-                              ))}
+                              {ev.participants.map((p) => {
+                                const resolved = allUsers?.find((u) => u.name === p || u.discord_username === p || u.aliases?.includes(p));
+                                return (
+                                  <UserAvatar
+                                    key={p}
+                                    name={resolved?.name ?? p}
+                                    user={resolved}
+                                    className="h-7 w-7 text-[10px] ring-2 ring-white dark:ring-slate-800"
+                                  />
+                                );
+                              })}
                             </div>
                           )}
 
@@ -272,7 +288,7 @@ export function CalendarGrid({
                                     options={
                                       rsvpMode === "leave"
                                         ? ev.participants
-                                        : allUsers
+                                        : (allUsers ?? []).map((u) => u.name)
                                     }
                                     value={rsvpNames}
                                     onChange={setRsvpNames}

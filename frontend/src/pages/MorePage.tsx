@@ -106,7 +106,14 @@ export function MorePage() {
 
   const allUsers = users ?? [];
   const filteredUsers = crewQuery
-    ? allUsers.filter((u) => u.name.toLowerCase().includes(crewQuery.toLowerCase()))
+    ? allUsers.filter((u) => {
+        const q = crewQuery.toLowerCase();
+        return (
+          u.name.toLowerCase().includes(q) ||
+          (u.discord_username ?? "").toLowerCase().includes(q) ||
+          u.aliases?.some((a) => a.toLowerCase().includes(q))
+        );
+      })
     : allUsers;
 
   // Find the next upcoming calendar event (include today)
@@ -204,7 +211,7 @@ export function MorePage() {
             >
               <CalendarArchive
                 events={calendarEvents ?? []}
-                allUsers={allUsers.map((u) => u.name)}
+                allUsers={allUsers}
                 onRsvp={onCalendarRsvp}
                 onLeave={onCalendarLeave}
               />
@@ -217,7 +224,7 @@ export function MorePage() {
             >
               <CalendarGrid
                 events={calendarEvents ?? []}
-                allUsers={allUsers.map((u) => u.name)}
+                allUsers={allUsers}
                 onRsvp={onCalendarRsvp}
                 onLeave={onCalendarLeave}
               />

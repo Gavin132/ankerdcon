@@ -12,6 +12,9 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../config/routes";
+
+import { useAuthStore } from "../store/auth.store";
+import { UserProfilePopup, type AnchorRect } from "../components/common/UserProfilePopup";
 import { HubSkeleton } from "../components/common/Skeleton";
 import { DailyActionCheck } from "../components/hub/DailyActionCheck";
 import { CrewSection } from "../components/hub/CrewSection";
@@ -19,8 +22,7 @@ import { useCalendar } from "../hooks/useCalendar";
 import { useRides } from "../hooks/useRides";
 import { useMeals } from "../hooks/useMeals";
 import { usePayments } from "../hooks/usePayments";
-import { useUsers } from "../hooks/useUsers";
-import { useAuthStore } from "../store/auth.store";
+import { useCurrentUser, useUsers } from "../hooks/useUsers";
 import { formatDate } from "../utils/format";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { listItem, listContainer } from "../utils/motion";
@@ -35,19 +37,19 @@ const MONTHS_NL = ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","
 
 export function HubPage() {
   const navigate = useNavigate();
-  const { currentUser: currentUserId } = useAuthStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
   const [participantsExpanded, setParticipantsExpanded] = useState(false);
+  const [popupUser, setPopupUser] = useState<User | null>(null);
+  const [popupAnchorRect, setPopupAnchorRect] = useState<AnchorRect>({ top: 0, left: 0, right: 0, height: 0 });
 
   const { data: events, isLoading: evLoading } = useCalendar();
   const { data: rides } = useRides();
   const { data: meals } = useMeals();
   const { data: payments } = usePayments();
   const { data: users } = useUsers();
+  const { data: me } = useCurrentUser();
 
   if (evLoading) return <HubSkeleton />;
-
-  // ── Derived data ────────────────────────────────────────────────────────────
-  const me = (users ?? []).find((u) => u.id === currentUserId);
 
   const now = new Date();
   const hour = now.getHours();
@@ -91,6 +93,7 @@ export function HubPage() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
+    <>
     <motion.div
       className="space-y-5"
       variants={listContainer}
@@ -118,9 +121,12 @@ export function HubPage() {
       {event && (
         <motion.div variants={listItem}>
           <div
-            className="relative overflow-hidden rounded-2xl"
+            onClick={() => navigate(routes.event.view(event.id))}
+            className="relative overflow-hidden rounded-2xl cursor-pointer group"
             style={{ background: "linear-gradient(145deg, #0c1628 0%, #0f1e38 60%, #0e172e 100%)" }}
           >
+            {/* Hover overlay */}
+            <div className="pointer-events-none absolute inset-0 bg-white/0 group-hover:bg-white/[0.03] transition-colors duration-200 rounded-2xl" />
             {/* Atmospheric glows */}
             <div className="pointer-events-none absolute -top-16 -right-8 h-56 w-56 rounded-full bg-sky-500/12 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-8 left-4 h-40 w-72 bg-indigo-600/10 blur-3xl" />
@@ -196,17 +202,21 @@ export function HubPage() {
 
                   {/* Avatar stack + toggle */}
                   <button
-                    onClick={() => setParticipantsExpanded((v) => !v)}
+                    onClick={(e) => { e.stopPropagation(); setParticipantsExpanded((v) => !v); }}
                     className="flex items-center gap-2.5 text-left"
                   >
                     <div className="flex -space-x-2">
-                      {event.participants.slice(0, 7).map((p) => (
-                        <UserAvatar
-                          key={p}
-                          name={p}
-                          className="h-6 w-6 text-[9px] !border-[#0f1e38]"
-                        />
-                      ))}
+                      {event.participants.slice(0, 7).map((p) => {
+                        const resolved = (users ?? []).find((u) => u.name === p || u.discord_username === p || u.aliases?.includes(p));
+                        return (
+                          <UserAvatar
+                            key={p}
+                            name={resolved?.name ?? p}
+                            user={resolved}
+                            className="h-6 w-6 text-[9px] !border-[#0f1e38]"
+                          />
+                        );
+                      })}
                       {event.participants.length > 7 && (
                         <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-[#0f1e38] bg-white/15 text-[9px] font-black text-white">
                           +{event.participants.length - 7}
@@ -231,16 +241,24 @@ export function HubPage() {
                       >
                         <div className="flex flex-wrap gap-1.5 pt-0.5">
                           {event.participants.map((p) => {
-                            const resolved = users?.find((u) => u.name === p || u.discord_username === p);
+                            const resolved = (users ?? []).find((u) => u.name === p || u.discord_username === p || u.aliases?.includes(p));
                             const displayName = resolved?.name ?? p;
                             return (
-                              <span
+                              <button
                                 key={p}
-                                className="inline-flex items-center gap-1.5 rounded-full bg-white/8 border border-white/10 px-2 py-1 text-[11px] font-semibold text-sky-200"
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!resolved) return;
+                                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                  setPopupAnchorRect({ top: rect.top, left: rect.left, right: rect.right, height: rect.height });
+                                  setPopupUser(resolved);
+                                }}
+                                className="inline-flex items-center gap-1.5 rounded-full bg-white/8 border border-white/10 px-2 py-1 text-[11px] font-semibold text-sky-200 hover:bg-white/15 hover:text-white transition-colors"
                               >
-                                <UserAvatar name={p} className="h-3.5 w-3.5 text-[7px] !border-0" />
+                                <UserAvatar name={displayName} user={resolved} className="h-3.5 w-3.5 text-[7px] !border-0" />
                                 {displayName}
-                              </span>
+                              </button>
                             );
                           })}
                         </div>
@@ -393,5 +411,15 @@ export function HubPage() {
       {(users ?? []).length > 0 && <CrewSection users={users ?? []} />}
 
     </motion.div>
+
+    <UserProfilePopup
+      user={popupUser}
+      open={popupUser !== null}
+      isOwn={currentUser === popupUser?.id}
+      anchorRect={popupAnchorRect}
+      onClose={() => setPopupUser(null)}
+      calendarEvents={events ?? []}
+    />
+    </>
   );
 }

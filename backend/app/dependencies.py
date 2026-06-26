@@ -117,3 +117,22 @@ def get_current_user(
             detail="Authenticatie mislukt.",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+
+def get_admin_user(current_user: str = Depends(get_current_user)) -> str:
+    """Extends get_current_user — additionally requires is_admin = true on the profile row."""
+    try:
+        resp = supabase.table("profiles").select("is_admin").eq("name", current_user).execute()
+        if not resp.data or not resp.data[0].get("is_admin"):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Toegang geweigerd. Alleen admins hebben toegang tot dit gedeelte.",
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Toegang geweigerd. Alleen admins hebben toegang tot dit gedeelte.",
+        )
+    return current_user
