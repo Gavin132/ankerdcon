@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from app.config import get_settings
 from app.constants import API_PREFIX, Tables
 from app.core.database import supabase
-from app.routers import calendar, meals, payments, rides, users
+from app.routers import admin, badges, calendar, meals, payments, rides, users
 
 
 @asynccontextmanager
@@ -50,6 +50,8 @@ app.include_router(rides.router,    prefix=API_PREFIX)
 app.include_router(meals.router,    prefix=API_PREFIX)
 app.include_router(payments.router, prefix=API_PREFIX)
 app.include_router(calendar.router, prefix=API_PREFIX)
+app.include_router(badges.router,   prefix=API_PREFIX)
+app.include_router(admin.router,    prefix=API_PREFIX)
 
 
 @app.get(f"{API_PREFIX}/health", tags=["meta"])

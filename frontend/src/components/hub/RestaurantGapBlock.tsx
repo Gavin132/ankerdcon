@@ -5,9 +5,11 @@ import { RestaurantGap } from "../../types";
 import { UserAvatar } from "../common/UserAvatar";
 import { formatDateTime } from "../../utils/format";
 import { CollapsibleSection } from "../common/CollapsibleSection";
+import { useUsers } from "../../hooks/useUsers";
 
 export function RestaurantGapBlock({ gap }: { gap: RestaurantGap }) {
   const navigate = useNavigate();
+  const { data: users = [] } = useUsers();
   return (
     <CollapsibleSection
       defaultOpen={false}
@@ -30,14 +32,17 @@ export function RestaurantGapBlock({ gap }: { gap: RestaurantGap }) {
     >
       <div className="px-4 pb-3 space-y-2">
         <p className="text-xs text-slate-400">Nog geen rit toegewezen:</p>
-        {gap.unassigned.map((name) => (
-          <div key={name} className="flex items-center gap-2.5">
-            <UserAvatar name={name} className="h-7 w-7 text-xs rounded-lg" />
-            <span className="flex-1 text-sm font-semibold text-slate-800 dark:text-slate-200 capitalize">
-              {name}
-            </span>
-          </div>
-        ))}
+        {gap.unassigned.map((name) => {
+          const displayName = users.find((u) => u.name === name || u.discord_username === name || u.aliases?.includes(name))?.name ?? name;
+          return (
+            <div key={name} className="flex items-center gap-2.5">
+              <UserAvatar name={name} className="h-7 w-7 text-xs rounded-lg" />
+              <span className="flex-1 text-sm font-semibold text-slate-800 dark:text-slate-200 capitalize">
+                {displayName}
+              </span>
+            </div>
+          );
+        })}
         <button
           onClick={() =>
             navigate(routes.transport, { state: { tab: "Restaurant" } })

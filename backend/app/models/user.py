@@ -19,6 +19,10 @@ class User(BaseModel):
     discord_id: Optional[str] = None
     discord_username: Optional[str] = None
     avatar_url: Optional[str] = None
+    is_admin: bool = False
+    aliases: list[str] = []
+    badge_ids: list[str] = []
+    created_at: Optional[str] = None
 
 class UpdateNameRequest(BaseModel):
     new_name: str
@@ -46,6 +50,7 @@ class UpdatePreferencesRequest(BaseModel):
     banner_color: Optional[str] = None
     pronouns: Optional[str] = None
     phone_number: Optional[str] = None
+    aliases: Optional[list[str]] = None
 
     @field_validator("color", "banner_color")
     @classmethod

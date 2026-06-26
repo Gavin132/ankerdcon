@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { UserAvatar } from "./UserAvatar";
 import { TOKENS } from "../../constants";
 import { NamePickerProps, MultiProps, SingleProps } from "../../types";
+import { useUsers } from "../../hooks/useUsers";
 
 export function NamePicker(props: NamePickerProps) {
   const { options, placeholder = "Zoek naam…", color = "sky" } = props;
@@ -12,6 +13,7 @@ export function NamePicker(props: NamePickerProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { data: users = [] } = useUsers();
 
   const isMulti = props.multiple === true;
   const selected = isMulti ? (props as MultiProps).value : [];
@@ -19,7 +21,17 @@ export function NamePicker(props: NamePickerProps) {
   const atMax = maxSelect !== undefined && selected.length >= maxSelect;
 
   const filtered = query.trim()
-    ? options.filter((o) => o.toLowerCase().includes(query.toLowerCase()))
+    ? options.filter((o) => {
+        const q = query.toLowerCase();
+        if (o.toLowerCase().includes(q)) return true;
+        const user = users.find((u) => u.name === o || u.discord_username === o || u.aliases?.includes(o));
+        if (!user) return false;
+        return (
+          user.name.toLowerCase().includes(q) ||
+          (user.discord_username ?? "").toLowerCase().includes(q) ||
+          (user.aliases?.some((a) => a.toLowerCase().includes(q)) ?? false)
+        );
+      })
     : [];
 
   // ── Multi-select: close on outside pointerdown only ──────────────────────
@@ -194,8 +206,20 @@ export function NamePicker(props: NamePickerProps) {
                   }`}
                 >
                   <UserAvatar name={name} className="h-7 w-7 text-xs" />
-                  <span className="flex-1 text-sm font-semibold text-slate-800 dark:text-slate-200">
-                    {name}
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200">
+                      {name}
+                    </span>
+                    {(() => {
+                      const q = query.toLowerCase();
+                      const user = users.find((u) => u.name === name || u.discord_username === name || u.aliases?.includes(name));
+                      const matchedAlias = !name.toLowerCase().includes(q)
+                        ? user?.aliases?.find((a) => a.toLowerCase().includes(q))
+                        : undefined;
+                      return matchedAlias ? (
+                        <span className="block text-[11px] text-slate-400 truncate">ook bekend als &ldquo;{matchedAlias}&rdquo;</span>
+                      ) : null;
+                    })()}
                   </span>
                   {isSelected && (
                     <Check size={15} className={`shrink-0 ${tk.check}`} />

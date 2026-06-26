@@ -4,6 +4,7 @@ import { User, Calendar, ChevronDown, Trash2, Receipt } from "lucide-react";
 import { Button } from "../common/Button";
 import { Modal } from "../common/Modal";
 import { useDeletePayment } from "../../hooks/usePayments";
+import { useUsers } from "../../hooks/useUsers";
 import { NamePicker } from "../common/NamePicker";
 import { formatDate, formatCurrency } from "../../utils/format";
 import { UserAvatar } from "../common/UserAvatar";
@@ -18,6 +19,14 @@ export function PaymentCard({ payment, userNames }: PaymentCardProps) {
 
   const deleteMutation = useDeletePayment();
   const hasSplits = payment.splits && payment.splits.length > 0;
+  const { data: users = [] } = useUsers();
+
+  function resolveUser(stored: string) {
+    return users.find((u) => u.name === stored || u.discord_username === stored || u.aliases?.includes(stored));
+  }
+  function resolveName(stored: string) {
+    return resolveUser(stored)?.name ?? stored;
+  }
 
   async function onDelete() {
     if (!deleteName) return;
@@ -39,7 +48,7 @@ export function PaymentCard({ payment, userNames }: PaymentCardProps) {
         <div className="card-surface rounded-2xl overflow-hidden">
           <div className="p-4">
             <div className="flex items-center gap-3">
-              <UserAvatar name={payment.paid_by} className="h-11 w-11 text-sm rounded-xl" />
+              <UserAvatar name={payment.paid_by} user={resolveUser(payment.paid_by)} className="h-11 w-11 text-sm rounded-xl" />
 
               <div className="flex-1 min-w-0">
                 <p className="font-black text-slate-900 text-sm truncate">
@@ -48,7 +57,7 @@ export function PaymentCard({ payment, userNames }: PaymentCardProps) {
                 <div className="flex items-center gap-2.5 mt-0.5">
                   <span className="flex items-center gap-1 text-xs text-slate-500 font-medium">
                     <User size={10} className="text-slate-400" />
-                    {payment.paid_by}
+                    {resolveName(payment.paid_by)}
                   </span>
                   <span className="flex items-center gap-1 text-xs text-slate-400">
                     <Calendar size={10} />
@@ -84,7 +93,7 @@ export function PaymentCard({ payment, userNames }: PaymentCardProps) {
                     key={s.name}
                     className="inline-flex items-center gap-1 rounded-full bg-sky-50 border border-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-700"
                   >
-                    {s.name} · {formatCurrency(s.amount)}
+                    {resolveName(s.name)} · {formatCurrency(s.amount)}
                   </span>
                 ))}
               </div>
@@ -111,9 +120,9 @@ export function PaymentCard({ payment, userNames }: PaymentCardProps) {
                           className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2"
                         >
                           <div className="flex items-center gap-2">
-                            <UserAvatar name={s.name} className="h-6 w-6 text-[9px] rounded-lg" />
+                            <UserAvatar name={s.name} user={resolveUser(s.name)} className="h-6 w-6 text-[9px] rounded-lg" />
                             <span className="text-xs font-semibold text-slate-700">
-                              {s.name}
+                              {resolveName(s.name)}
                             </span>
                           </div>
                           <span className="text-xs font-bold text-slate-800">

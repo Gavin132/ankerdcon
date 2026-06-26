@@ -9,6 +9,15 @@ export interface TokenResponse {
   token_type: string;
 }
 
+// Badges
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  image_url: string;
+  display_order: number;
+}
+
 // Users
 export interface User {
   id?: string;
@@ -25,6 +34,10 @@ export interface User {
   banner_url?: string;
   discord_id?: string;
   discord_username?: string;
+  is_admin?: boolean;
+  aliases?: string[];
+  badge_ids?: string[];
+  created_at?: string;
 }
 
 export type FontOption = "default" | "mono" | "serif" | "cursive" | "display";
@@ -40,6 +53,7 @@ export interface UpdatePreferencesRequest {
   banner_color?: string;
   pronouns?: string;
   phone_number?: string;
+  aliases?: string[];
 }
 
 export interface LocationPingRequest {
@@ -158,6 +172,11 @@ export interface CreatePaymentRequest {
   splits?: Split[];
 }
 
+export interface TicketType {
+  title: string;
+  price: number;
+}
+
 export interface CalendarEvent {
   id: string;
   event_group_id?: string;
@@ -165,6 +184,23 @@ export interface CalendarEvent {
   date: string;
   is_hotel: boolean;
   participants: string[];
+  description?: string;
+  location?: string;
+  website?: string;
+  ticket_url?: string;
+  ticket_sale_start?: string;
+  ticket_types?: TicketType[];
+  locker_info?: string;
+  parking_info?: string;
+  special_instructions?: string;
+  what_to_bring?: string;
+}
+
+export interface AdminStats {
+  users: number;
+  rides: number;
+  meals: number;
+  events: number;
 }
 
 export interface CalendarRsvpRequest {

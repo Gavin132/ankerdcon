@@ -8,25 +8,29 @@ import {
   Bus,
   UserCheck,
   UserMinus,
-  Users,
   ChevronDown,
   Trash2,
   CalendarPlus,
 } from "lucide-react";
+
 import { Badge } from "../common/Badge";
 import { Button } from "../common/Button";
 import { Modal } from "../common/Modal";
 import { NamePicker } from "../common/NamePicker";
+import { UserAvatar } from "../common/UserAvatar";
+import { UserProfilePopup, type AnchorRect } from "../common/UserProfilePopup";
 import {
   useRsvpMeal,
   useCancelRsvp,
   useDeleteMeal,
 } from "../../hooks/useMeals";
+import { useUsers } from "../../hooks/useUsers";
+import { useAuthStore } from "../../store/auth.store";
 import { formatDateTime } from "../../utils/format";
 import { exportMealToIcs } from "../../utils/ics";
 import { toast } from "../../store/toast.store";
 import { listItem } from "../../utils/motion";
-import type { Meal } from "../../types";
+import type { Meal, User } from "../../types";
 
 interface MealCardProps {
   meal: Meal;
@@ -35,15 +39,34 @@ interface MealCardProps {
 
 export function MealCard({ meal, userNames }: MealCardProps) {
   const [expanded, setExpanded] = useState(true);
+  const [participantsExpanded, setParticipantsExpanded] = useState(false);
   const [rsvpOpen, setRsvpOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [rsvpNames, setRsvpNames] = useState<string[]>([]);
   const [cancelNames, setCancelNames] = useState<string[]>([]);
+  const [popupUser, setPopupUser] = useState<User | null>(null);
+  const [popupAnchorRect, setPopupAnchorRect] = useState<AnchorRect>({
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 0,
+  });
 
   const rsvpMutation = useRsvpMeal();
   const cancelMutation = useCancelRsvp();
   const deleteMutation = useDeleteMeal();
+  const { data: users = [] } = useUsers();
+  const currentUser = useAuthStore((s) => s.currentUser);
+
+  function resolveUser(stored: string) {
+    return users.find(
+      (u) =>
+        u.name === stored ||
+        u.discord_username === stored ||
+        u.aliases?.includes(stored),
+    );
+  }
 
   // 1. Safe fallback for participants array
   const safeParticipants = meal.participants ?? [];
@@ -167,15 +190,86 @@ export function MealCard({ meal, userNames }: MealCardProps) {
               </div>
             )}
 
-            <div className="mt-3 px-1">
+            {/* ── Participant avatar strip ─────────────────────────── */}
+            <div className="mt-3">
               {safeParticipants.length > 0 ? (
-                <span className="flex items-center gap-1.5 text-xs text-slate-500">
-                  <Users size={11} className="text-slate-400" />
-                  <span className="font-bold text-slate-800">
-                    {safeParticipants.length}
-                  </span>
-                  {safeParticipants.length === 1 ? " persoon" : " personen"} aangemeld
-                </span>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setParticipantsExpanded((v) => !v)}
+                    className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                  >
+                    <div className="flex -space-x-1.5">
+                      {safeParticipants.slice(0, 6).map((p) => {
+                        const u = resolveUser(p);
+                        return (
+                          <UserAvatar
+                            key={p}
+                            name={p}
+                            user={u}
+                            className="h-6 w-6 text-[9px]"
+                          />
+                        );
+                      })}
+                      {safeParticipants.length > 6 && (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white dark:border-slate-800 bg-slate-200 dark:bg-slate-700 text-[9px] font-bold text-slate-600 dark:text-slate-300">
+                          +{safeParticipants.length - 6}
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-[11px] font-semibold text-slate-400/70 dark:text-slate-400/60 hover:text-slate-500 dark:hover:text-slate-400 transition-colors ">
+                      {participantsExpanded
+                        ? "Verbergen"
+                        : `${safeParticipants.length} aangemeld`}
+                    </span>
+                  </button>
+
+                  <AnimatePresence>
+                    {participantsExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.18 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="flex flex-wrap gap-1.5 pt-0.5 mt-2">
+                          {safeParticipants.map((p) => {
+                            const u = resolveUser(p);
+                            const displayName = u?.name ?? p;
+                            return (
+                              <button
+                                key={p}
+                                type="button"
+                                onClick={(e) => {
+                                  if (!u) return;
+                                  const rect = (
+                                    e.currentTarget as HTMLElement
+                                  ).getBoundingClientRect();
+                                  setPopupAnchorRect({
+                                    top: rect.top,
+                                    left: rect.left,
+                                    right: rect.right,
+                                    height: rect.height,
+                                  });
+                                  setPopupUser(u);
+                                }}
+                                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 px-2 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/15 hover:text-slate-900 dark:hover:text-white transition-colors"
+                              >
+                                <UserAvatar
+                                  name={p}
+                                  user={u}
+                                  className="h-3.5 w-3.5 text-[7px] !border-0"
+                                />
+                                {displayName}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </>
               ) : (
                 <span className="text-xs text-slate-400 italic">
                   Nog niemand aangemeld
@@ -192,25 +286,8 @@ export function MealCard({ meal, userNames }: MealCardProps) {
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden"
                 >
-                  <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
-                    {safeParticipants.length > 0 && (
-                      <div>
-                        <p className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">
-                          <UserCheck size={11} className="mr-1 inline" />
-                          Aangemeld
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {safeParticipants.map((r) => (
-                            <Badge key={r} variant="green">
-                              <UserCheck size={10} />
-                              {r}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex gap-2 pt-1">
+                  <div className="mt-4 space-y-3 border-t border-slate-100 dark:border-slate-700/50 pt-4">
+                    <div className="flex gap-2">
                       <Button
                         size="sm"
                         variant="primary"
@@ -314,8 +391,8 @@ export function MealCard({ meal, userNames }: MealCardProps) {
             {cancelNames.length === 0
               ? "Selecteer een naam"
               : cancelNames.length === 1
-              ? `${cancelNames[0]} afmelden`
-              : `${cancelNames.length} personen afmelden`}
+                ? `${cancelNames[0]} afmelden`
+                : `${cancelNames.length} personen afmelden`}
           </Button>
         </div>
       </Modal>
@@ -345,6 +422,14 @@ export function MealCard({ meal, userNames }: MealCardProps) {
           </Button>
         </div>
       </Modal>
+
+      <UserProfilePopup
+        user={popupUser}
+        open={popupUser !== null}
+        isOwn={currentUser === popupUser?.id}
+        anchorRect={popupAnchorRect}
+        onClose={() => setPopupUser(null)}
+      />
     </>
   );
 }

@@ -11,15 +11,17 @@ import {
   BedDouble,
   X,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { UserAvatar } from "../common/UserAvatar";
 import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
 import { parseEventDate, toDateKey, todayKey } from "../../utils/date";
-import type { CalendarEvent } from "../../types";
+import { routes } from "../../config/routes";
+import type { CalendarEvent, User } from "../../types";
 
 interface CalendarArchiveProps {
   events: CalendarEvent[];
-  allUsers?: string[];
+  allUsers?: User[];
   onRsvp?: (id: string, userName: string) => void;
   onLeave?: (id: string, userName: string) => void;
 }
@@ -33,6 +35,7 @@ export function CalendarArchive({
   onRsvp,
   onLeave,
 }: CalendarArchiveProps) {
+  const navigate = useNavigate();
   const PAGE_SIZE = 5;
   const [historyOpen, setHistoryOpen] = useState(false);
   const [upcomingPage, setUpcomingPage] = useState(0);
@@ -41,7 +44,7 @@ export function CalendarArchive({
   const [rsvpNames, setRsvpNames] = useState<string[]>([]);
 
   const today = todayKey();
-  const hasRsvp = !!onRsvp && !!onLeave && allUsers.length > 0;
+  const hasRsvp = !!onRsvp && !!onLeave && (allUsers ?? []).length > 0;
 
   // Flat list of all events with parsed dates, sorted chronologically
   const allEntries = events
@@ -77,7 +80,10 @@ export function CalendarArchive({
         className="border-b border-slate-50 last:border-b-0 dark:border-slate-800"
       >
         {/* Main row */}
-        <div className="flex items-center gap-3 px-4 py-3">
+        <div
+          onClick={() => { if (!isRsvpOpen) navigate(routes.event.view(ev.id)); }}
+          className={`flex items-center gap-3 px-4 py-3 transition-colors duration-150 ${!isRsvpOpen ? "cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.025]" : ""}`}
+        >
           {/* Date badge */}
           <div className="shrink-0 w-10 text-center">
             <p className={`text-[10px] font-bold uppercase ${isPast ? "text-slate-300 dark:text-slate-600" : "text-sky-500"}`}>
@@ -107,9 +113,12 @@ export function CalendarArchive({
             {ev.participants.length > 0 && (
               <div className="mt-1.5 flex items-center gap-1.5">
                 <div className="flex -space-x-1.5">
-                  {ev.participants.slice(0, 5).map((p) => (
-                    <UserAvatar key={p} name={p} className="h-5 w-5 text-[8px]" />
-                  ))}
+                  {ev.participants.slice(0, 5).map((p) => {
+                    const resolved = allUsers?.find((u) => u.name === p || u.discord_username === p || u.aliases?.includes(p));
+                    return (
+                      <UserAvatar key={p} name={resolved?.name ?? p} user={resolved} className="h-5 w-5 text-[8px]" />
+                    );
+                  })}
                 </div>
                 {ev.participants.length > 5 && (
                   <span className="text-[10px] font-bold text-slate-400">
@@ -125,7 +134,7 @@ export function CalendarArchive({
             <div className="flex shrink-0 items-center gap-1">
               <button
                 type="button"
-                onClick={() => openRsvp(ev.id, "join")}
+                onClick={(e) => { e.stopPropagation(); openRsvp(ev.id, "join"); }}
                 className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-50 text-sky-600 hover:bg-sky-100 transition-colors dark:bg-sky-900/25 dark:text-sky-400 dark:hover:bg-sky-900/40"
                 title="Aanmelden"
               >
@@ -134,7 +143,7 @@ export function CalendarArchive({
               {ev.participants.length > 0 && (
                 <button
                   type="button"
-                  onClick={() => openRsvp(ev.id, "leave")}
+                  onClick={(e) => { e.stopPropagation(); openRsvp(ev.id, "leave"); }}
                   className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100 transition-colors dark:bg-slate-800/60 dark:hover:bg-slate-700"
                   title="Afmelden"
                 >
@@ -148,7 +157,7 @@ export function CalendarArchive({
           {isRsvpOpen && (
             <button
               type="button"
-              onClick={closeRsvp}
+              onClick={(e) => { e.stopPropagation(); closeRsvp(); }}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 transition-colors dark:hover:bg-slate-700"
             >
               <X size={13} />
@@ -172,7 +181,7 @@ export function CalendarArchive({
                 </p>
                 <NamePicker
                   multiple
-                  options={rsvpMode === "leave" ? ev.participants : allUsers}
+                  options={rsvpMode === "leave" ? ev.participants : (allUsers ?? []).map((u) => u.name)}
                   value={rsvpNames}
                   onChange={setRsvpNames}
                   color={rsvpMode === "leave" ? "rose" : "sky"}

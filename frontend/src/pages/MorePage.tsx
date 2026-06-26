@@ -10,6 +10,9 @@ import {
   CalendarDays,
   Search,
   QrCode,
+  CalendarPlus,
+  Copy,
+  Check,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useForm } from "react-hook-form";
@@ -35,6 +38,7 @@ import { UserAvatar } from "../components/common/UserAvatar";
 import type { User } from "../types";
 import { formatDate } from "../utils/format";
 import { parseEventDate } from "../utils/date";
+import { env } from "../config/env";
 import { listContainer, listItem } from "../utils/motion";
 
 const ZONES = ["Op locatie", "Hotel", "Onderweg", "Off-site", "Thuis"] as const;
@@ -49,6 +53,18 @@ type PingForm = z.infer<typeof pingSchema>;
 export function MorePage() {
   const [pingOpen, setPingOpen] = useState(false);
   const [calendarView, setCalendarView] = useState<"list" | "calendar">("list");
+  const [subscribeOpen, setSubscribeOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const feedUrl = `${env.API_BASE_URL || window.location.origin}/api/calendar/feed.ics`;
+  const googleCalUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(feedUrl.replace(/^https?:/, "webcal:"))}`;
+
+  function copyFeedUrl() {
+    navigator.clipboard.writeText(feedUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
   const [crewExpanded, setCrewExpanded] = useState(false);
   const [crewQuery, setCrewQuery] = useState("");
   const [qrOpen, setQrOpen] = useState(false);
@@ -106,7 +122,14 @@ export function MorePage() {
 
   const allUsers = users ?? [];
   const filteredUsers = crewQuery
-    ? allUsers.filter((u) => u.name.toLowerCase().includes(crewQuery.toLowerCase()))
+    ? allUsers.filter((u) => {
+        const q = crewQuery.toLowerCase();
+        return (
+          u.name.toLowerCase().includes(q) ||
+          (u.discord_username ?? "").toLowerCase().includes(q) ||
+          u.aliases?.some((a) => a.toLowerCase().includes(q))
+        );
+      })
     : allUsers;
 
   // Find the next upcoming calendar event (include today)
@@ -176,6 +199,19 @@ export function MorePage() {
               <CalendarDays size={13} className="text-sky-500" />
               Con Kalender
             </p>
+            <div className="flex items-center gap-2">
+            <button
+                onClick={() => setSubscribeOpen((v) => !v)}
+                title="Abonneer op kalender"
+                className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[11px] font-semibold transition-colors ${
+                  subscribeOpen
+                    ? "bg-sky-500 text-white"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-sky-500"
+                }`}
+              >
+                <CalendarPlus size={12} />
+                Abonneren
+              </button>
             <div className="flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 gap-0.5">
               {(["list", "calendar"] as const).map((view) => (
                 <button
@@ -191,7 +227,42 @@ export function MorePage() {
                 </button>
               ))}
             </div>
+            </div>
           </div>
+
+          {/* Subscribe strip — collapsible */}
+          <AnimatePresence>
+            {subscribeOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                animate={{ opacity: 1, height: "auto", marginBottom: 12 }}
+                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                transition={{ duration: 0.2, ease: "easeInOut" }}
+                className="overflow-hidden"
+              >
+                <div className="flex items-center gap-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/50 px-3 py-2">
+                  <p className="flex-1 text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
+                    {feedUrl}
+                  </p>
+                  <button
+                    onClick={copyFeedUrl}
+                    title="Kopieer link"
+                    className="flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shrink-0"
+                  >
+                    {copied ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
+                  </button>
+                  <a
+                    href={googleCalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 rounded-lg bg-sky-500 hover:bg-sky-600 transition-colors px-2.5 py-1 text-[10px] font-bold text-white whitespace-nowrap"
+                  >
+                    Google Calendar
+                  </a>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Both views rendered simultaneously in the same grid cell so
               height never changes during the crossfade transition */}
@@ -204,7 +275,7 @@ export function MorePage() {
             >
               <CalendarArchive
                 events={calendarEvents ?? []}
-                allUsers={allUsers.map((u) => u.name)}
+                allUsers={allUsers}
                 onRsvp={onCalendarRsvp}
                 onLeave={onCalendarLeave}
               />
@@ -217,7 +288,7 @@ export function MorePage() {
             >
               <CalendarGrid
                 events={calendarEvents ?? []}
-                allUsers={allUsers.map((u) => u.name)}
+                allUsers={allUsers}
                 onRsvp={onCalendarRsvp}
                 onLeave={onCalendarLeave}
               />

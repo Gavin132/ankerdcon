@@ -1,22 +1,25 @@
 import { useState } from "react";
 import { useUsers } from "../../hooks/useUsers";
 import { avatarColor, personInitial } from "../../utils/avatar";
+import type { User } from "../../types";
 
 interface UserAvatarProps {
   name: string;
+  user?: User;
   className?: string;
   style?: React.CSSProperties;
 }
 
 export function UserAvatar({
   name,
+  user: userProp,
   className = "h-6 w-6 text-[9px]",
   style,
 }: UserAvatarProps) {
   const { data: users } = useUsers();
   const [imgError, setImgError] = useState(false);
 
-  const user = users?.find((u) => u.name === name || u.discord_username === name);
+  const user = userProp ?? users?.find((u) => u.name === name || u.discord_username === name || u.aliases?.includes(name));
   const useInlineColor = user?.color && user.color.startsWith("#");
   const showImg = !!user?.avatar_url && !imgError;
 

@@ -31,3 +31,21 @@
 ---
 
 9. Een admin dashboard voor het beheren van evenementen, gebruikers en andere belangrijke aspecten van de app. Dit kan helpen om de app efficiënter te beheren en te zorgen voor een betere gebruikerservaring.
+
+   Optional (for future calendar extended fields):
+   ALTER TABLE calendar ADD COLUMN description text;
+   ALTER TABLE calendar ADD COLUMN location text;
+   ALTER TABLE calendar ADD COLUMN website text;
+   ALTER TABLE calendar ADD COLUMN ticket_url text;
+   ALTER TABLE calendar ADD COLUMN ticket_sale_start text;
+   ALTER TABLE calendar ADD COLUMN ticket_price_day float;
+   ALTER TABLE calendar ADD COLUMN ticket_price_weekend float;
+   ALTER TABLE calendar ADD COLUMN locker_info text;
+
+Paginatie en filterering van zaken in het admin portaal
+
+After that go ahead with analyzing each file, ive found out, especially on the admin files, that a lot of files, such as the AdminLayout, include
+multiple constants, components that can be easily extracted to their own files. Do this for each case you find. I want clean code. Do this for
+every file u find, not only admin related files
+
+![alt text](image.png)

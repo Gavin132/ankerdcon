@@ -12,6 +12,8 @@ import {
   Pencil,
   Save,
   Smartphone,
+  Plus,
+  X,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "../components/common/Button";
@@ -342,6 +344,8 @@ export function ProfilePage() {
   const [draftFont, setDraftFont] = useState<FontOption>("default");
   const [draftPronouns, setDraftPronouns] = useState("");
   const [draftPhone, setDraftPhone] = useState("");
+  const [draftAliases, setDraftAliases] = useState<string[]>([]);
+  const [aliasInput, setAliasInput] = useState("");
   const [initialized, setInitialized] = useState(false);
   const [avatarImgErr, setAvatarImgErr] = useState(false);
   const [cropFile, setCropFile] = useState<File | null>(null);
@@ -362,6 +366,7 @@ export function ProfilePage() {
       setDraftFont((user.font as FontOption) || "default");
       setDraftPronouns(user.pronouns || "");
       setDraftPhone(user.phone_number || "");
+      setDraftAliases(user.aliases ?? []);
       setInitialized(true);
     }
   }, [user, initialized]);
@@ -422,6 +427,7 @@ export function ProfilePage() {
         banner_color: draftBanner,
         pronouns: draftPronouns,
         phone_number: draftPhone || "",
+        aliases: draftAliases,
       });
       toast("success", "Profiel opgeslagen!");
     } catch {
@@ -743,6 +749,67 @@ export function ProfilePage() {
                         {200 - draftBio.length}
                       </span>
                     </div>
+                  </Field>
+
+                  {/* Aliassen — full width */}
+                  <Field
+                    label="Aliassen"
+                    hint="Andere namen waaronder mensen jou kennen. Zoekopdrachten in aanmeldformulieren herkennen deze namen ook."
+                    className="sm:col-span-2"
+                  >
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        maxLength={30}
+                        className="input-field flex-1"
+                        placeholder="Voeg een alias toe…"
+                        value={aliasInput}
+                        onChange={(e) => setAliasInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const trimmed = aliasInput.trim();
+                            if (trimmed && !draftAliases.includes(trimmed) && draftAliases.length < 10) {
+                              setDraftAliases([...draftAliases, trimmed]);
+                              setAliasInput("");
+                            }
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        disabled={!aliasInput.trim() || draftAliases.includes(aliasInput.trim()) || draftAliases.length >= 10}
+                        onClick={() => {
+                          const trimmed = aliasInput.trim();
+                          if (trimmed && !draftAliases.includes(trimmed) && draftAliases.length < 10) {
+                            setDraftAliases([...draftAliases, trimmed]);
+                            setAliasInput("");
+                          }
+                        }}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500 text-white disabled:opacity-30 hover:bg-sky-600 transition-colors"
+                      >
+                        <Plus size={15} />
+                      </button>
+                    </div>
+                    {draftAliases.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {draftAliases.map((alias) => (
+                          <span
+                            key={alias}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300"
+                          >
+                            {alias}
+                            <button
+                              type="button"
+                              onClick={() => setDraftAliases(draftAliases.filter((a) => a !== alias))}
+                              className="text-slate-400 hover:text-rose-500 transition-colors"
+                            >
+                              <X size={11} />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </Field>
                 </div>
               </Card>

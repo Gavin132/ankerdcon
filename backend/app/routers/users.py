@@ -46,6 +46,7 @@ def update_preferences(
         "banner_color": body.banner_color,
         "pronouns":     body.pronouns,
         "phone_number": body.phone_number,
+        "aliases":      body.aliases,
     }.items() if v is not None}
 
     if not updates:
@@ -79,7 +80,16 @@ def update_name(
             detail="Deze naam is al in gebruik door een ander account.",
         )
 
-    response = supabase.table(Tables.PROFILES).update({"name": new_name}).eq("name", current_user).execute()
+    # Fetch current aliases so we can append the old name
+    profile_row = supabase.table(Tables.PROFILES).select("aliases").eq("name", current_user).execute()
+    current_aliases: list[str] = (profile_row.data[0].get("aliases") or []) if profile_row.data else []
+    if current_user not in current_aliases:
+        current_aliases = current_aliases + [current_user]
+
+    response = supabase.table(Tables.PROFILES).update({
+        "name": new_name,
+        "aliases": current_aliases,
+    }).eq("name", current_user).execute()
     if not response.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
 
@@ -97,6 +107,17 @@ def ping_location(
     response = supabase.table(Tables.PROFILES).update({"live_location_ping": value}).eq("name", identifier).execute()
     if not response.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
+
+
+@router.get("/me", response_model=User)
+def get_me(current_user: str = Depends(get_current_user)) -> User:
+    """Return the full profile for the currently authenticated user."""
+    response = supabase.table(Tables.PROFILES).select("*").eq("name", current_user).execute()
+    if not response.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profiel niet gevonden.")
+    user = response.data[0]
+    user.pop("passcode", None)
+    return user
 
 
 @router.get("/{identifier}", response_model=User)

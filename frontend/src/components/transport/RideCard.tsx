@@ -20,6 +20,7 @@ import { Button } from "../common/Button";
 import { Modal } from "../common/Modal";
 import { NamePicker } from "../common/NamePicker";
 import { useClaimSeat, useLeaveSeat } from "../../hooks/useRides";
+import { useUsers } from "../../hooks/useUsers";
 import { formatDateTime } from "../../utils/format";
 import { parseRoute, buildEmbedUrl, buildMapsOpenUrl } from "../../utils/maps";
 import { getRideStatus, formatCountdown } from "../../utils/rides";
@@ -45,6 +46,11 @@ export function RideCard({ ride, userNames }: RideCardProps) {
 
   const claimMutation = useClaimSeat();
   const leaveMutation = useLeaveSeat();
+  const { data: users = [] } = useUsers();
+
+  function resolveName(stored: string) {
+    return users.find((u) => u.name === stored || u.discord_username === stored || u.aliases?.includes(stored))?.name ?? stored;
+  }
 
   useEffect(() => {
     const id = setInterval(() => tick((n) => n + 1), 30_000);
@@ -94,7 +100,13 @@ await leaveMutation.mutateAsync({ id: ride.id, payload: { user_name: name } });
   const embedUrl  = route ? buildEmbedUrl(route.origin, route.destination) : buildEmbedUrl(ride.start_location);
   const openUrl   = buildMapsOpenUrl(ride.maps_link, ride.start_location);
 
-  const availableToJoin = userNames.filter((n) => !ride.passengers.includes(n));
+  const resolvedPassengers = new Set(
+    ride.passengers.map((p) => {
+      const u = users.find((u) => u.name === p || u.discord_username === p || u.aliases?.includes(p));
+      return u?.name ?? p;
+    })
+  );
+  const availableToJoin = userNames.filter((n) => !resolvedPassengers.has(n));
 
   // Icon for transport type
   const TransportIcon = isPT ? Train : isTimo ? Truck : Car;
@@ -193,7 +205,7 @@ await leaveMutation.mutateAsync({ id: ride.id, payload: { user_name: name } });
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-none mb-0.5">
                     {isPT ? "Lijn / vervoerder" : "Chauffeur"}
                   </p>
-                  <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{ride.driver}</p>
+                  <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{resolveName(ride.driver)}</p>
                 </div>
               </div>
               {!isPT && !isRecent && !isPast && (
@@ -285,7 +297,7 @@ await leaveMutation.mutateAsync({ id: ride.id, payload: { user_name: name } });
                           {ride.passengers.map((p) => (
                             <div key={p} className="flex items-center gap-2.5">
                               <UserAvatar name={p} className="h-7 w-7 text-xs" />
-                              <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{p}</span>
+                              <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{resolveName(p)}</span>
                             </div>
                           ))}
                         </div>

@@ -13,6 +13,18 @@ export const QUERY_KEYS = {
   userBase:  ["user"]      as const,
   /** Full key for a specific user query. */
   user: (name: string) => ["user", name] as const,
+  /** Current authenticated user's own profile. */
+  currentUser: ["currentUser"] as const,
+
+  badges: ["badges"] as const,
+
+  // Admin
+  adminStats:  ["admin", "stats"]  as const,
+  adminUsers:  ["admin", "users"]  as const,
+  adminRides:  ["admin", "rides"]  as const,
+  adminMeals:  ["admin", "meals"]  as const,
+  adminEvents: ["admin", "events"] as const,
+  adminBadges: ["admin", "badges"] as const,
 };
 
 export const STALE_TIME = 30_000; // 30 seconds

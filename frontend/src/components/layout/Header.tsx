@@ -2,11 +2,13 @@ import { useRef, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { routes } from "../../config/routes";
 import { motion, AnimatePresence } from "framer-motion";
-import { Moon, Sun, User, LogOut } from "lucide-react";
+import { Moon, Sun, User, LogOut, Shield } from "lucide-react";
 import { APP_NAME } from "../../constants";
 import { useThemeStore } from "../../store/theme.store";
 import { useAuthStore } from "../../store/auth.store";
 import { useUser } from "../../hooks/useUsers";
+import { useBadges } from "../../hooks/useBadges";
+import { BadgeIcon } from "../common/BadgeIcon";
 import { avatarColor } from "../../utils/avatar";
 import { logout } from "../../services/auth.service";
 
@@ -28,6 +30,11 @@ export function Header() {
   
   // This fetches your actual profile from the database using the UUID!
   const { data: me } = useUser(currentUser || "");
+  const { data: allBadges = [] } = useBadges();
+  const myBadges = (me?.badge_ids ?? [])
+    .map((id) => allBadges.find((b) => b.id === id))
+    .filter(Boolean)
+    .sort((a, b) => a!.display_order - b!.display_order) as typeof allBadges;
 
   const meta = PAGE_META[pathname] ?? { title: APP_NAME, subtitle: "" };
 
@@ -166,11 +173,16 @@ export function Header() {
                     </div>
                   </div>
 
-                  {/* Name + pronouns */}
+                  {/* Name + badges + pronouns */}
                   <div className="pt-7 px-4 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
-                    <p className="text-[14px] font-bold text-slate-900 dark:text-white leading-tight truncate">
-                      {displayName}
-                    </p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="text-[14px] font-bold text-slate-900 dark:text-white leading-tight truncate">
+                        {displayName}
+                      </p>
+                      {myBadges.map((badge) => (
+                        <BadgeIcon key={badge.id} badge={badge} size="sm" />
+                      ))}
+                    </div>
                     <p className="text-[11px] text-slate-400 dark:text-white/30 leading-none mt-0.5">
                       {me?.pronouns || "Ankerd Con"}
                     </p>
@@ -188,6 +200,19 @@ export function Header() {
                       <User size={14} className="shrink-0 text-slate-400 dark:text-white/35" />
                       Mijn profiel
                     </button>
+
+                    {me?.is_admin && (
+                      <button
+                        onClick={() => {
+                          setMenuOpen(false);
+                          navigate(routes.admin.base);
+                        }}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] font-medium text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-500/10 transition-colors"
+                      >
+                        <Shield size={14} className="shrink-0" />
+                        Admin Portal
+                      </button>
+                    )}
 
                     <div className="my-1 h-px bg-slate-100 dark:bg-white/[0.05] mx-1" />
 
