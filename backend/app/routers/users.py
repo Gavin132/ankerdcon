@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from app.constants import Tables
 from app.dependencies import get_current_user
-from app.models.user import LocationPingRequest, UpdateNameRequest, UpdatePreferencesRequest, User
+from app.models.user import CompleteOnboardingRequest, LocationPingRequest, UpdateNameRequest, UpdatePreferencesRequest, User
 from app.core.database import supabase
 
 BANNER_BUCKET = "banners"
@@ -107,6 +107,26 @@ def ping_location(
     response = supabase.table(Tables.PROFILES).update({"live_location_ping": value}).eq("name", identifier).execute()
     if not response.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
+
+
+@router.post("/me/onboarding", status_code=status.HTTP_204_NO_CONTENT)
+def complete_onboarding(
+    body: CompleteOnboardingRequest,
+    current_user: str = Depends(get_current_user),
+) -> None:
+    """Mark onboarding as completed and save initial profile preferences."""
+    updates: dict = {"onboarding_completed": True, "allow_dm": body.allow_dm}
+    if body.pronouns is not None:
+        updates["pronouns"] = body.pronouns
+    if body.bio is not None:
+        updates["bio"] = body.bio
+    if body.phone_number is not None:
+        updates["phone_number"] = body.phone_number
+    if body.color is not None:
+        updates["color"] = body.color
+    if body.banner_color is not None:
+        updates["banner_color"] = body.banner_color
+    supabase.table(Tables.PROFILES).update(updates).eq("name", current_user).execute()
 
 
 @router.get("/me", response_model=User)
