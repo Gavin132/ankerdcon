@@ -15,8 +15,12 @@ import { useAuthStore } from "./store/auth.store";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
+      retry: 3,
+      retryDelay: (attempt) => Math.min(500 * 2 ** attempt, 8000),
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+      staleTime: 30_000,
+      gcTime: 5 * 60_000, // keep cached data for 5 min so tab switches are instant
     },
   },
 });
