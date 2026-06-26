@@ -35,6 +35,10 @@ export interface User {
   discord_id?: string;
   discord_username?: string;
   is_admin?: boolean;
+  is_active?: boolean;
+  is_first_login?: boolean;
+  onboarding_completed?: boolean;
+  allow_dm?: boolean;
   aliases?: string[];
   badge_ids?: string[];
   created_at?: string;

@@ -39,6 +39,7 @@ export const apiRoutes = {
   users: {
     base:        "/api/users/",
     me:          "/api/users/me",
+    onboarding:  "/api/users/me/onboarding",
     names:       "/api/users/names",
     preferences: "/api/users/preferences",
     name:        "/api/users/name",

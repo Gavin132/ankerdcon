@@ -43,6 +43,19 @@ export async function deleteBanner(): Promise<void> {
   await apiClient.delete(apiRoutes.users.banner);
 }
 
+export interface CompleteOnboardingPayload {
+  pronouns?: string;
+  bio?: string;
+  phone_number?: string;
+  color?: string;
+  banner_color?: string;
+  allow_dm: boolean;
+}
+
+export async function completeOnboarding(payload: CompleteOnboardingPayload): Promise<void> {
+  await apiClient.post(apiRoutes.users.onboarding, payload);
+}
+
 export async function pingLocation(payload: LocationPingRequest): Promise<void> {
   const { user_name, zone, text } = payload;
   await apiClient.put(

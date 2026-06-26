@@ -4,6 +4,7 @@ import {
   createAdminEvent,
   createAdminMeal,
   createAdminRide,
+  createAdminUser,
   deleteAdminEvent,
   deleteAdminMeal,
   deleteAdminRide,
@@ -22,6 +23,7 @@ import {
   updateAdminUser,
   type AdminCreateEventPayload,
   type AdminCreateMealPayload,
+  type AdminCreateUserPayload,
   type AdminUpdateEventPayload,
   type AdminUpdateMealPayload,
   type AdminUpdateRidePayload,
@@ -52,6 +54,17 @@ export function useAdminEvents() {
 }
 
 // ── User mutations ────────────────────────────────────────────────────────────
+
+export function useAdminCreateUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: AdminCreateUserPayload) => createAdminUser(payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.adminUsers });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.users });
+    },
+  });
+}
 
 export function useAdminUpdateUser() {
   const qc = useQueryClient();

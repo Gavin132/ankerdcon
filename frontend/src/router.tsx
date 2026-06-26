@@ -11,6 +11,7 @@ import { FinancePage } from "./pages/FinancePage";
 import { MorePage } from "./pages/MorePage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { EventDetailPage } from "./pages/EventDetailPage";
+import { OnboardingPage } from "./pages/OnboardingPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { AdminLayout } from "./pages/admin/AdminLayout";
 import { AdminDashboardPage } from "./pages/admin/AdminDashboardPage";
@@ -28,6 +29,10 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
+      {
+        path: routes.onboarding,
+        element: <OnboardingPage />,
+      },
       {
         path: routes.hub,
         element: <AppShell><HubPage /></AppShell>,

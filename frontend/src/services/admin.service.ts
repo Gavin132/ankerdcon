@@ -23,6 +23,17 @@ export async function getAdminUsers(): Promise<User[]> {
   return data;
 }
 
+export interface AdminCreateUserPayload {
+  name: string;
+  discord_id?: string;
+  is_admin?: boolean;
+}
+
+export async function createAdminUser(payload: AdminCreateUserPayload): Promise<User> {
+  const { data } = await apiClient.post<User>(apiRoutes.admin.users.base, payload);
+  return data;
+}
+
 export interface AdminUpdateUserPayload {
   id: string;
   hotel_room?: string;
@@ -31,6 +42,7 @@ export interface AdminUpdateUserPayload {
   bio?: string;
   color?: string;
   is_admin?: boolean;
+  is_active?: boolean;
   aliases?: string[];
 }
 

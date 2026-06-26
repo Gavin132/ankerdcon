@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  completeOnboarding,
   deleteBanner,
   getCurrentUser,
   getPublicUserNames,
@@ -9,15 +10,28 @@ import {
   updateName,
   updatePreferences,
   uploadBanner,
+  type CompleteOnboardingPayload,
 } from "../services/users.service";
 import { QUERY_KEYS, STALE_TIME } from "../constants";
 import type { LocationPingRequest, UpdateNameRequest, UpdatePreferencesRequest } from "../types";
 
-export function useCurrentUser() {
+export function useCurrentUser(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: QUERY_KEYS.currentUser,
     queryFn: getCurrentUser,
     staleTime: STALE_TIME,
+    enabled: options?.enabled ?? true,
+    retry: false,
+  });
+}
+
+export function useCompleteOnboarding() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CompleteOnboardingPayload) => completeOnboarding(payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.userBase });
+    },
   });
 }
 

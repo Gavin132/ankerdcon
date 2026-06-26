@@ -3,8 +3,9 @@
  * Use `.pattern` variants for react-router `path` props.
  */
 export const routes = {
-  hub:       "/",
-  login:     "/login",
+  hub:        "/",
+  login:      "/login",
+  onboarding: "/onboarding",
   transport: "/transport",
   food:      "/food",
   finance:   "/finance",

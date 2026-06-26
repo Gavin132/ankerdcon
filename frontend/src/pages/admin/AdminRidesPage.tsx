@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Car, Train } from "lucide-react";
@@ -13,9 +13,10 @@ import {
 } from "../../hooks/useAdmin";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { AdminDrawer } from "./AdminDrawer";
+import { NamePicker } from "../../components/common/NamePicker";
 import { toast } from "../../store/toast.store";
 import type { Ride } from "../../types";
-import { F, L } from "./styles";
+import { F, FS, L } from "./styles";
 import { DIRECTION_COLORS } from "./constants";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminSearch } from "./components/AdminSearch";
@@ -55,6 +56,8 @@ function RideDrawer({
   const createMutation = useAdminCreateRide();
   const updateMutation = useAdminUpdateRide();
   const removePassenger = useAdminRemovePassenger();
+  const { data: allUsers = [] } = useAdminUsers();
+  const userNames = allUsers.map((u) => u.name);
   const isEdit = ride !== null && ride !== "new";
   const open = ride !== null;
 
@@ -62,6 +65,7 @@ function RideDrawer({
     register,
     handleSubmit,
     watch,
+    control,
     formState: { errors },
   } = useForm<RideForm>({
     resolver: zodResolver(rideSchema),
@@ -135,7 +139,7 @@ function RideDrawer({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={L}>Richting</label>
-            <select {...register("direction")} className={F}>
+            <select {...register("direction")} className={FS}>
               {DIRECTIONS.map((d) => (
                 <option key={d} value={d}>
                   {d}
@@ -145,7 +149,7 @@ function RideDrawer({
           </div>
           <div>
             <label className={L}>Voertuig</label>
-            <select {...register("vehicle_type")} className={F}>
+            <select {...register("vehicle_type")} className={FS}>
               {VEHICLE_TYPES.map((v) => (
                 <option key={v} value={v}>
                   {v}
@@ -155,29 +159,35 @@ function RideDrawer({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={L}>Chauffeur / Lijn</label>
-            <input
-              {...register("driver")}
-              className={F}
-              placeholder="Naam of trein"
-            />
-            {errors.driver && (
-              <p className="text-xs text-rose-400 mt-1">
-                {errors.driver.message}
-              </p>
+        <div>
+          <label className={L}>Chauffeur / Lijn</label>
+          <Controller
+            name="driver"
+            control={control}
+            render={({ field }) => (
+              <NamePicker
+                options={userNames}
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="Zoek naam of alias…"
+              />
             )}
-          </div>
-          <div>
-            <label className={L}>Vertrektijd</label>
-            <input {...register("departure_time")} type="time" className={F} />
-            {errors.departure_time && (
-              <p className="text-xs text-rose-400 mt-1">
-                {errors.departure_time.message}
-              </p>
-            )}
-          </div>
+          />
+          {errors.driver && (
+            <p className="text-xs text-rose-400 mt-1">
+              {errors.driver.message}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className={L}>Vertrektijd</label>
+          <input {...register("departure_time")} type="time" className={F} />
+          {errors.departure_time && (
+            <p className="text-xs text-rose-400 mt-1">
+              {errors.departure_time.message}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
