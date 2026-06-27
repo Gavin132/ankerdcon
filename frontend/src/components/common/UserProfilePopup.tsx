@@ -191,23 +191,54 @@ export function UserProfilePopup({
                     </div>
                   </div>
 
-                  {/* Name + inline badges */}
-                  <div className="flex items-center gap-1.5 flex-wrap leading-none">
-                    <p
-                      className="text-[17px] font-black text-slate-900 dark:text-white leading-tight"
-                      style={nameStyle}
-                    >
-                      {u!.name}
-                    </p>
-                    {userBadges.map((badge) => (
-                      <BadgeIcon key={badge.id} badge={badge} size="sm" />
-                    ))}
-                  </div>
-                  {u?.pronouns && (
-                    <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
-                      {u.pronouns}
-                    </p>
-                  )}
+                  {/* Name */}
+                  <p
+                    className="text-[17px] font-black text-slate-900 dark:text-white leading-tight"
+                    style={nameStyle}
+                  >
+                    {u!.name}
+                  </p>
+
+                  {/* Pronouns · Aliases · Badges */}
+                  {(u?.pronouns || (u?.aliases?.length ?? 0) > 0 || userBadges.length > 0) && (() => {
+                    const aliases = u?.aliases ?? [];
+                    const visibleAliases = aliases.slice(0, 4);
+                    const hiddenAliases = aliases.length - visibleAliases.length;
+                    const segments: React.ReactNode[] = [];
+
+                    if (u?.pronouns) {
+                      segments.push(
+                        <span key="pronouns" className="text-[11px] text-slate-400 font-medium">{u.pronouns}</span>
+                      );
+                    }
+                    if (visibleAliases.length > 0) {
+                      segments.push(
+                        <span key="aliases" className="text-[11px] text-slate-400">
+                          {visibleAliases.join(", ")}{hiddenAliases > 0 ? ` +${hiddenAliases}` : ""}
+                        </span>
+                      );
+                    }
+                    if (userBadges.length > 0) {
+                      segments.push(
+                        <span key="badges" className="flex items-center gap-0.5">
+                          {userBadges.map((badge) => (
+                            <BadgeIcon key={badge.id} badge={badge} size="sm" />
+                          ))}
+                        </span>
+                      );
+                    }
+
+                    return (
+                      <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                        {segments.map((seg, i) => (
+                          <span key={i} className="flex items-center gap-1.5">
+                            {i > 0 && <span className="text-slate-300 dark:text-slate-600 select-none">·</span>}
+                            {seg}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  })()}
 
                   {/* Bio */}
                   {u?.bio && (

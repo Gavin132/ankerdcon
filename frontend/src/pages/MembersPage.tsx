@@ -108,7 +108,7 @@ export function MembersPage() {
           <Users size={150} strokeWidth={1} className="text-white" />
         </div>
 
-        <div className="relative px-4 pt-7 pb-9">
+        <div className="relative max-w-4xl mx-auto px-4 pt-7 pb-9">
           <p className="text-[10px] font-bold uppercase tracking-widest text-sky-300/60 mb-1">
             Ankerd Con
           </p>
@@ -142,7 +142,7 @@ export function MembersPage() {
       </div>
 
       {/* ── Search ──────────────────────────────────────────────────── */}
-      <div className="px-4 pt-4 pb-3">
+      <div className="max-w-4xl mx-auto px-4 pt-4 pb-3">
         <div className="relative">
           <Search size={14} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -164,14 +164,17 @@ export function MembersPage() {
         </div>
       </div>
 
-      {/* ── Grid ────────────────────────────────────────────────────── */}
-      <div className="px-4 pb-10">
+      {/* ── List ────────────────────────────────────────────────────── */}
+      <div className="max-w-4xl mx-auto px-4 pb-10">
         {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="card-surface rounded-2xl p-4 animate-pulse flex flex-col items-center">
-                <div className="h-14 w-14 rounded-2xl bg-slate-200 dark:bg-slate-700 mb-3" />
-                <div className="h-3 w-20 rounded bg-slate-200 dark:bg-slate-700" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {Array.from({ length: 9 }).map((_, i) => (
+              <div key={i} className="card-surface rounded-xl px-3 py-2.5 animate-pulse flex items-center gap-3">
+                <div className="h-9 w-9 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3 w-24 rounded bg-slate-200 dark:bg-slate-700" />
+                  <div className="h-2.5 w-16 rounded bg-slate-200 dark:bg-slate-700" />
+                </div>
               </div>
             ))}
           </div>
@@ -191,7 +194,7 @@ export function MembersPage() {
         ) : (
           <>
             <motion.div
-              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"
               variants={container}
               initial="hidden"
               animate="show"
@@ -203,54 +206,44 @@ export function MembersPage() {
                     key={u.name}
                     variants={cardItem}
                     onClick={(e) => openPopup(u, e)}
-                    className="card-surface rounded-2xl p-4 flex flex-col items-center text-center
-                               hover:shadow-md active:scale-[0.97] transition-all duration-150
-                               cursor-pointer relative overflow-hidden"
+                    className="card-surface rounded-xl px-3 py-2.5 flex items-center gap-3 text-left
+                               hover:shadow-md active:scale-[0.98] transition-all duration-150 cursor-pointer"
                   >
-                    {/* Avatar with online dot */}
-                    <div className="relative mb-3">
-                      <UserAvatar
-                        name={u.name}
-                        user={u}
-                        className="h-14 w-14 text-xl rounded-2xl"
-                      />
+                    {/* Avatar */}
+                    <div className="relative shrink-0">
+                      <UserAvatar name={u.name} user={u} className="h-9 w-9 text-sm" />
                       {u.live_location_ping && (
-                        <span
-                          className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full
-                                     bg-emerald-400 ring-2 ring-white dark:ring-slate-900 animate-pulse"
-                        />
+                        <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-white dark:ring-slate-900 animate-pulse" />
                       )}
                     </div>
 
-                    {/* Name */}
-                    <p
-                      className="text-sm font-bold leading-tight truncate w-full text-slate-900 dark:text-white"
-                      style={u.color ? { color: u.color } : undefined}
-                    >
-                      {u.name}
-                    </p>
-
-                    {/* Pronouns */}
-                    {u.pronouns && (
-                      <p className="mt-0.5 text-[10px] text-slate-400 leading-tight">
-                        {u.pronouns}
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className="text-sm font-semibold leading-tight truncate text-slate-900 dark:text-white"
+                        style={u.color ? { color: u.color } : undefined}
+                      >
+                        {u.name}
                       </p>
-                    )}
+                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                        {u.discord_username && (
+                          <span className="text-[10px] text-slate-400 truncate">{u.discord_username}</span>
+                        )}
+                        {u.hotel_room && (
+                          <span className="flex items-center gap-0.5 text-[10px] text-slate-400">
+                            <BedDouble size={9} />
+                            {u.hotel_room}
+                          </span>
+                        )}
+                      </div>
+                    </div>
 
                     {/* Badges */}
                     {badges.length > 0 && (
-                      <div className="mt-2 flex flex-wrap items-center justify-center gap-1">
+                      <div className="flex items-center gap-0.5 shrink-0">
                         {badges.slice(0, 3).map((b) => (
                           <BadgeIcon key={b.id} badge={b} size="sm" />
                         ))}
-                      </div>
-                    )}
-
-                    {/* Hotel room */}
-                    {u.hotel_room && (
-                      <div className="mt-2 flex items-center gap-1 text-[10px] text-slate-400">
-                        <BedDouble size={10} />
-                        Kamer {u.hotel_room}
                       </div>
                     )}
                   </motion.button>
@@ -258,7 +251,7 @@ export function MembersPage() {
               })}
             </motion.div>
 
-            <p className="mt-6 text-center text-xs text-slate-400">
+            <p className="mt-5 text-center text-xs text-slate-400">
               {query
                 ? `${filtered.length} van ${users.length} leden`
                 : `${users.length} leden totaal`}
