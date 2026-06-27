@@ -10,6 +10,7 @@ import {
   useAdminUpdateRide,
   useAdminDeleteRide,
   useAdminRemovePassenger,
+  useAdminBulkDeleteRides,
 } from "../../hooks/useAdmin";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { AdminDrawer } from "./AdminDrawer";
@@ -25,6 +26,8 @@ import { AdminPagination } from "./components/AdminPagination";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 import { DrawerFooter } from "./components/DrawerFooter";
 import { ParticipantList } from "./components/ParticipantList";
+import { AdminBulkBar } from "./components/AdminBulkBar";
+import { useTableSelection } from "../../hooks/useTableSelection";
 
 const PAGE_SIZE = 15;
 const DIRECTIONS = ["Inbound", "Outbound", "Restaurant"] as const;
@@ -273,6 +276,7 @@ export function AdminRidesPage() {
   const { data: rides = [], isLoading } = useAdminRides();
   const { data: allUsers = [] } = useAdminUsers();
   const deleteMutation = useAdminDeleteRide();
+  const bulkDeleteMutation = useAdminBulkDeleteRides();
   const [dirFilter, setDirFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -296,6 +300,20 @@ export function AdminRidesPage() {
     currentPage * PAGE_SIZE,
     (currentPage + 1) * PAGE_SIZE,
   );
+
+  const { selectedIds, toggleSelect, selectAll, clearSelection, allSelected, indeterminate } =
+    useTableSelection(paginated.map((r) => r.id));
+
+  async function handleBulkDelete() {
+    const ids = [...selectedIds];
+    try {
+      await bulkDeleteMutation.mutateAsync(ids);
+      toast("success", `${ids.length} ritten verwijderd.`);
+      clearSelection();
+    } catch {
+      toast("error", "Kon ritten niet verwijderen.");
+    }
+  }
 
   function handleFilter(dir: string) {
     setDirFilter(dir);
@@ -362,6 +380,15 @@ export function AdminRidesPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
+                <th className="w-10 pl-4 pr-2 py-3">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    ref={(el) => { if (el) el.indeterminate = indeterminate; }}
+                    onChange={selectAll}
+                    className="cb"
+                  />
+                </th>
                 <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Rit
                 </th>
@@ -381,11 +408,11 @@ export function AdminRidesPage() {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
               {isLoading ? (
-                <AdminTableSkeleton cols={5} />
+                <AdminTableSkeleton cols={6} />
               ) : filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-5 py-10 text-center text-sm text-slate-400"
                   >
                     Geen ritten gevonden.
@@ -395,8 +422,20 @@ export function AdminRidesPage() {
                 paginated.map((ride) => (
                   <tr
                     key={ride.id}
-                    className="hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+                    className={`transition-colors ${selectedIds.has(ride.id) ? "bg-sky-500/[0.06] hover:bg-sky-500/[0.08]" : "hover:bg-slate-50 dark:hover:bg-white/[0.03]"}`}
                   >
+                    <td
+                      className="w-10 pl-4 pr-2 py-3.5"
+                      onClick={(e) => { e.stopPropagation(); toggleSelect(ride.id); }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(ride.id)}
+                        onChange={() => toggleSelect(ride.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="cb"
+                      />
+                    </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2.5">
                         <div
@@ -503,6 +542,13 @@ export function AdminRidesPage() {
         }
         ride={drawer}
         onClose={() => setDrawer(null)}
+      />
+
+      <AdminBulkBar
+        count={selectedIds.size}
+        isPending={bulkDeleteMutation.isPending}
+        onDelete={handleBulkDelete}
+        onClear={clearSelection}
       />
     </div>
   );

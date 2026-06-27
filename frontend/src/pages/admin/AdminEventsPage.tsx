@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, CalendarDays, Hotel, X as XIcon, Link2, Unlink2, Trash2, Tag, Check, Layers } from "lucide-react";
+import { Plus, CalendarDays, Hotel, X as XIcon, Link2, Unlink2, Tag, Check, Layers } from "lucide-react";
 import type { TicketType, CalendarEvent } from "../../types";
 import {
   useAdminEvents,
@@ -30,6 +30,9 @@ import { AdminPagination } from "./components/AdminPagination";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 import { DrawerFooter } from "./components/DrawerFooter";
 import { ParticipantList } from "./components/ParticipantList";
+import { AdminBulkBar } from "./components/AdminBulkBar";
+import { useTableSelection } from "../../hooks/useTableSelection";
+import { multiDayColor } from "../../utils/multiDay";
 
 const optStr = z.preprocess((v) => (v == null ? "" : v), z.string());
 const optUrl = z.preprocess(
@@ -55,165 +58,6 @@ const eventSchema = z.object({
 type EventForm = z.infer<typeof eventSchema>;
 
 const PAGE_SIZE = 15;
-
-// ── Multi-day color palette (hash-based, deterministic per multi_day_id) ───────
-
-const MULTI_DAY_COLORS = [
-  { accent: "#38bdf8", bg: "bg-sky-500/10",     text: "text-sky-400"     },
-  { accent: "#a78bfa", bg: "bg-violet-500/10",  text: "text-violet-400"  },
-  { accent: "#fbbf24", bg: "bg-amber-500/10",   text: "text-amber-400"   },
-  { accent: "#fb7185", bg: "bg-rose-500/10",    text: "text-rose-400"    },
-  { accent: "#34d399", bg: "bg-emerald-500/10", text: "text-emerald-400" },
-  { accent: "#22d3ee", bg: "bg-cyan-500/10",    text: "text-cyan-400"    },
-  { accent: "#f472b6", bg: "bg-pink-500/10",    text: "text-pink-400"    },
-  { accent: "#fb923c", bg: "bg-orange-500/10",  text: "text-orange-400"  },
-] as const;
-
-function multiDayColor(id: string) {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xffffff;
-  return MULTI_DAY_COLORS[h % MULTI_DAY_COLORS.length];
-}
-
-// ── Bulk action bar ───────────────────────────────────────────────────────────
-
-function BulkActionBar({
-  count,
-  anyMultiDay,
-  groups,
-  mode,
-  onModeChange,
-  onGroup,
-  onUngroup,
-  onSetGroup,
-  onDelete,
-  onClear,
-  isPending,
-}: {
-  count: number;
-  anyMultiDay: boolean;
-  groups: EventGroup[];
-  mode: "idle" | "confirm-delete" | "set-group";
-  onModeChange: (m: "idle" | "confirm-delete" | "set-group") => void;
-  onGroup: () => void;
-  onUngroup: () => void;
-  onSetGroup: (groupId: string | null) => void;
-  onDelete: () => void;
-  onClear: () => void;
-  isPending: boolean;
-}) {
-  const [pickedGroup, setPickedGroup] = useState("");
-  if (count === 0) return null;
-
-  return (
-    <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 pointer-events-none">
-      <div className="pointer-events-auto flex flex-wrap items-center gap-1 rounded-2xl border border-white/[0.12] bg-slate-900/95 backdrop-blur-sm shadow-2xl px-3 py-2">
-        <span className="px-2 text-sm font-semibold text-slate-300 select-none whitespace-nowrap">
-          {count} geselecteerd
-        </span>
-        <div className="h-4 w-px bg-white/[0.12] mx-1" />
-
-        {mode === "idle" && (
-          <>
-            <button
-              onClick={onGroup}
-              disabled={isPending}
-              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors disabled:opacity-40"
-            >
-              <Link2 size={14} />
-              Groepeer
-            </button>
-            {anyMultiDay && (
-              <button
-                onClick={onUngroup}
-                disabled={isPending}
-                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors disabled:opacity-40"
-              >
-                <Unlink2 size={14} />
-                Ontkoppelen
-              </button>
-            )}
-            <button
-              onClick={() => onModeChange("set-group")}
-              disabled={isPending}
-              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors disabled:opacity-40"
-            >
-              <Tag size={14} />
-              Label
-            </button>
-            <div className="h-4 w-px bg-white/[0.12] mx-1" />
-            <button
-              onClick={() => onModeChange("confirm-delete")}
-              disabled={isPending}
-              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors disabled:opacity-40"
-            >
-              <Trash2 size={14} />
-              Verwijder
-            </button>
-          </>
-        )}
-
-        {mode === "confirm-delete" && (
-          <>
-            <span className="px-2 text-sm text-rose-400 whitespace-nowrap">Zeker weten?</span>
-            <button
-              onClick={onDelete}
-              disabled={isPending}
-              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 transition-colors disabled:opacity-40"
-            >
-              {isPending ? "Bezig…" : "Ja, verwijder"}
-            </button>
-            <button
-              onClick={() => onModeChange("idle")}
-              disabled={isPending}
-              className="rounded-xl px-3 py-1.5 text-sm font-medium text-slate-400 hover:bg-white/[0.08] transition-colors"
-            >
-              Annuleer
-            </button>
-          </>
-        )}
-
-        {mode === "set-group" && (
-          <>
-            <select
-              value={pickedGroup}
-              onChange={(e) => setPickedGroup(e.target.value)}
-              className="[color-scheme:dark] rounded-xl border border-white/[0.12] bg-white/[0.06] px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-            >
-              <option value="">— Geen groep —</option>
-              {groups.map((g) => (
-                <option key={g.id} value={g.name}>{g.name}</option>
-              ))}
-            </select>
-            <button
-              onClick={() => { onSetGroup(pickedGroup || null); setPickedGroup(""); }}
-              disabled={isPending}
-              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold bg-sky-600 text-white hover:bg-sky-700 transition-colors disabled:opacity-40"
-            >
-              <Check size={14} />
-              {isPending ? "Bezig…" : "Toepassen"}
-            </button>
-            <button
-              onClick={() => { onModeChange("idle"); setPickedGroup(""); }}
-              disabled={isPending}
-              className="rounded-xl px-3 py-1.5 text-sm font-medium text-slate-400 hover:bg-white/[0.08] transition-colors"
-            >
-              Annuleer
-            </button>
-          </>
-        )}
-
-        <div className="h-4 w-px bg-white/[0.12] mx-1" />
-        <button
-          onClick={onClear}
-          className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-white/[0.08] hover:text-slate-300 transition-colors"
-        >
-          <XIcon size={14} />
-        </button>
-      </div>
-    </div>
-  );
-}
 
 // ── Event drawer ──────────────────────────────────────────────────────────────
 
@@ -552,8 +396,6 @@ export function AdminEventsPage() {
   const [page, setPage] = useState(0);
   const [drawer, setDrawer] = useState<CalendarEvent | "new" | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkMode, setBulkMode] = useState<"idle" | "confirm-delete" | "set-group">("idle");
 
   const filtered = events.filter((ev) => {
     if (groupFilter !== "All" && (ev.event_group_id ?? "") !== groupFilter) return false;
@@ -573,30 +415,20 @@ export function AdminEventsPage() {
     (currentPage + 1) * PAGE_SIZE,
   );
 
+  const { selectedIds, toggleSelect, selectAll, clearSelection, allSelected, indeterminate } =
+    useTableSelection(paginated.map((ev) => ev.id));
+  const [bulkMode, setBulkMode] = useState<"idle" | "set-group">("idle");
+  const [pickedGroup, setPickedGroup] = useState("");
+
   const selectedEvents = events.filter((ev) => selectedIds.has(ev.id));
   const anyMultiDay = selectedEvents.some((ev) => ev.multi_day_id);
   const bulkIsPending =
     bulkDeleteMutation.isPending || bulkGroupMutation.isPending || bulkSetGroupMutation.isPending;
 
-  function toggleSelect(id: string) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }
-
-  function selectAll() {
-    if (selectedIds.size === paginated.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(paginated.map((ev) => ev.id)));
-    }
-  }
-
-  function clearSelection() {
-    setSelectedIds(new Set());
+  function handleClearSelection() {
+    clearSelection();
     setBulkMode("idle");
+    setPickedGroup("");
   }
 
   function handleSearch(v: string) {
@@ -721,10 +553,8 @@ export function AdminEventsPage() {
                 <th className="w-10 pl-4 pr-2 py-3">
                   <input
                     type="checkbox"
-                    checked={paginated.length > 0 && selectedIds.size === paginated.length}
-                    ref={(el) => {
-                      if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < paginated.length;
-                    }}
+                    checked={allSelected}
+                    ref={(el) => { if (el) el.indeterminate = indeterminate; }}
                     onChange={selectAll}
                     className="cb"
                   />
@@ -890,18 +720,72 @@ export function AdminEventsPage() {
         onClose={() => setDrawer(null)}
       />
 
-      <BulkActionBar
+      <AdminBulkBar
         count={selectedIds.size}
-        anyMultiDay={anyMultiDay}
-        groups={eventGroups}
-        mode={bulkMode}
-        onModeChange={setBulkMode}
-        onGroup={handleBulkGroup}
-        onUngroup={handleBulkUngroup}
-        onSetGroup={handleBulkSetGroup}
-        onDelete={handleBulkDelete}
-        onClear={clearSelection}
         isPending={bulkIsPending}
+        onDelete={handleBulkDelete}
+        onClear={handleClearSelection}
+        extraActions={
+          <>
+            <button
+              onClick={handleBulkGroup}
+              disabled={bulkIsPending}
+              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors disabled:opacity-40"
+            >
+              <Link2 size={14} />
+              Groepeer
+            </button>
+            {anyMultiDay && (
+              <button
+                onClick={handleBulkUngroup}
+                disabled={bulkIsPending}
+                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors disabled:opacity-40"
+              >
+                <Unlink2 size={14} />
+                Ontkoppelen
+              </button>
+            )}
+            <button
+              onClick={() => setBulkMode("set-group")}
+              disabled={bulkIsPending}
+              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors disabled:opacity-40"
+            >
+              <Tag size={14} />
+              Label
+            </button>
+          </>
+        }
+        overrideContent={
+          bulkMode === "set-group" ? (
+            <>
+              <select
+                value={pickedGroup}
+                onChange={(e) => setPickedGroup(e.target.value)}
+                className="[color-scheme:dark] rounded-xl border border-white/[0.12] bg-white/[0.06] px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+              >
+                <option value="">— Geen groep —</option>
+                {eventGroups.map((g) => (
+                  <option key={g.id} value={g.name}>{g.name}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => { handleBulkSetGroup(pickedGroup || null); setPickedGroup(""); setBulkMode("idle"); }}
+                disabled={bulkIsPending}
+                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold bg-sky-600 text-white hover:bg-sky-700 transition-colors disabled:opacity-40"
+              >
+                <Check size={14} />
+                {bulkIsPending ? "Bezig…" : "Toepassen"}
+              </button>
+              <button
+                onClick={() => { setBulkMode("idle"); setPickedGroup(""); }}
+                disabled={bulkIsPending}
+                className="rounded-xl px-3 py-1.5 text-sm font-medium text-slate-400 hover:bg-white/[0.08] transition-colors"
+              >
+                Annuleer
+              </button>
+            </>
+          ) : undefined
+        }
       />
     </div>
   );

@@ -54,6 +54,14 @@ export async function deleteAdminUser(id: string): Promise<void> {
   await apiClient.delete(apiRoutes.admin.users.byId(id));
 }
 
+export async function bulkDeleteAdminUsers(userIds: string[]): Promise<void> {
+  await apiClient.post(apiRoutes.admin.users.bulkDelete, { user_ids: userIds });
+}
+
+export async function bulkDeactivateAdminUsers(userIds: string[]): Promise<void> {
+  await apiClient.post(apiRoutes.admin.users.bulkDeactivate, { user_ids: userIds });
+}
+
 // ── Rides ─────────────────────────────────────────────────────────────────────
 
 export async function getAdminRides(): Promise<Ride[]> {
@@ -86,6 +94,10 @@ export async function updateAdminRide({ id, ...payload }: AdminUpdateRidePayload
 
 export async function deleteAdminRide(id: string): Promise<void> {
   await apiClient.delete(apiRoutes.admin.rides.byId(id));
+}
+
+export async function bulkDeleteAdminRides(rideIds: string[]): Promise<void> {
+  await apiClient.post(apiRoutes.admin.rides.bulkDelete, { ride_ids: rideIds });
 }
 
 export async function removeAdminPassenger(rideId: string, passenger: string): Promise<void> {
@@ -127,6 +139,10 @@ export async function updateAdminMeal({ id, ...payload }: AdminUpdateMealPayload
 
 export async function deleteAdminMeal(id: string): Promise<void> {
   await apiClient.delete(apiRoutes.admin.meals.byId(id));
+}
+
+export async function bulkDeleteAdminMeals(mealIds: string[]): Promise<void> {
+  await apiClient.post(apiRoutes.admin.meals.bulkDelete, { meal_ids: mealIds });
 }
 
 export async function removeAdminMealParticipant(mealId: string, participant: string): Promise<void> {
@@ -249,4 +265,8 @@ export async function updateAdminEventGroup(id: string, name: string): Promise<v
 
 export async function deleteAdminEventGroup(id: string): Promise<void> {
   await apiClient.delete(apiRoutes.admin.eventGroups.byId(id));
+}
+
+export async function bulkDeleteAdminEventGroups(groupIds: string[]): Promise<void> {
+  await apiClient.post(apiRoutes.admin.eventGroups.bulkDelete, { group_ids: groupIds });
 }

@@ -107,6 +107,26 @@ class BulkDeleteEventsRequest(BaseModel):
     event_ids: list[str]
 
 
+class BulkDeleteUsersRequest(BaseModel):
+    user_ids: list[str]
+
+
+class BulkDeactivateUsersRequest(BaseModel):
+    user_ids: list[str]
+
+
+class BulkDeleteRidesRequest(BaseModel):
+    ride_ids: list[str]
+
+
+class BulkDeleteMealsRequest(BaseModel):
+    meal_ids: list[str]
+
+
+class BulkDeleteEventGroupsRequest(BaseModel):
+    group_ids: list[str]
+
+
 class BulkGroupEventsRequest(BaseModel):
     event_ids: list[str]
     multi_day_id: str | None = None  # None = ungroup; omit to auto-generate

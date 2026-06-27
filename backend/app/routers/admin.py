@@ -12,6 +12,11 @@ from app.models.admin import (
     AdminUpdateRideRequest,
     AdminUpdateUserRequest,
     BulkDeleteEventsRequest,
+    BulkDeleteUsersRequest,
+    BulkDeactivateUsersRequest,
+    BulkDeleteRidesRequest,
+    BulkDeleteMealsRequest,
+    BulkDeleteEventGroupsRequest,
     BulkGroupEventsRequest,
     BulkSetEventGroupRequest,
     EventGroup,
@@ -138,6 +143,30 @@ def admin_delete_user(
         discord_bot.send_removed_dm(settings.discord_bot_token, row["discord_id"])
 
 
+@router.post("/users/bulk-delete", status_code=status.HTTP_204_NO_CONTENT)
+def admin_bulk_delete_users(
+    body: BulkDeleteUsersRequest,
+    _: str = Depends(get_admin_user),
+    settings: Settings = Depends(get_settings),
+) -> None:
+    for user_id in body.user_ids:
+        current = supabase.table(Tables.PROFILES).select("name, discord_id, allow_dm").eq("id", user_id).execute()
+        if not current.data:
+            continue
+        row = current.data[0]
+        if row.get("name"):
+            _remove_user_from_all_events(row["name"])
+        supabase.table(Tables.PROFILES).delete().eq("id", user_id).execute()
+        if row.get("allow_dm", True) and row.get("discord_id"):
+            discord_bot.send_removed_dm(settings.discord_bot_token, row["discord_id"])
+
+
+@router.post("/users/bulk-deactivate", status_code=status.HTTP_204_NO_CONTENT)
+def admin_bulk_deactivate_users(body: BulkDeactivateUsersRequest, _: str = Depends(get_admin_user)) -> None:
+    for user_id in body.user_ids:
+        supabase.table(Tables.PROFILES).update({"is_active": False}).eq("id", user_id).execute()
+
+
 # ── Rides ──────────────────────────────────────────────────────────────────────
 
 @router.get("/rides", response_model=list[Ride])
@@ -194,6 +223,12 @@ def admin_delete_ride(ride_id: str, _: str = Depends(get_admin_user)) -> None:
     supabase.table(Tables.RIDES).delete().eq("id", ride_id).execute()
 
 
+@router.post("/rides/bulk-delete", status_code=status.HTTP_204_NO_CONTENT)
+def admin_bulk_delete_rides(body: BulkDeleteRidesRequest, _: str = Depends(get_admin_user)) -> None:
+    for ride_id in body.ride_ids:
+        supabase.table(Tables.RIDES).delete().eq("id", ride_id).execute()
+
+
 @router.delete("/rides/{ride_id}/passengers/{passenger}", status_code=status.HTTP_204_NO_CONTENT)
 def admin_remove_passenger(ride_id: str, passenger: str, _: str = Depends(get_admin_user)) -> None:
     resp = supabase.table(Tables.RIDES).select("passengers").eq("id", ride_id).execute()
@@ -235,6 +270,12 @@ def admin_update_meal(
 @router.delete("/meals/{meal_id}", status_code=status.HTTP_204_NO_CONTENT)
 def admin_delete_meal(meal_id: str, _: str = Depends(get_admin_user)) -> None:
     supabase.table(Tables.MEALS).delete().eq("id", meal_id).execute()
+
+
+@router.post("/meals/bulk-delete", status_code=status.HTTP_204_NO_CONTENT)
+def admin_bulk_delete_meals(body: BulkDeleteMealsRequest, _: str = Depends(get_admin_user)) -> None:
+    for meal_id in body.meal_ids:
+        supabase.table(Tables.MEALS).delete().eq("id", meal_id).execute()
 
 
 @router.delete("/meals/{meal_id}/participants/{participant}", status_code=status.HTTP_204_NO_CONTENT)
@@ -396,6 +437,12 @@ def admin_update_event_group(group_id: str, body: UpdateEventGroupRequest, _: st
 @router.delete("/event-groups/{group_id}", status_code=status.HTTP_204_NO_CONTENT)
 def admin_delete_event_group(group_id: str, _: str = Depends(get_admin_user)) -> None:
     supabase.table(Tables.EVENT_GROUPS).delete().eq("id", group_id).execute()
+
+
+@router.post("/event-groups/bulk-delete", status_code=status.HTTP_204_NO_CONTENT)
+def admin_bulk_delete_event_groups(body: BulkDeleteEventGroupsRequest, _: str = Depends(get_admin_user)) -> None:
+    for group_id in body.group_ids:
+        supabase.table(Tables.EVENT_GROUPS).delete().eq("id", group_id).execute()
 
 
 # ── Badges ─────────────────────────────────────────────────────────────────────

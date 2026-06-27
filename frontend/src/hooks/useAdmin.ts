@@ -2,6 +2,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "../constants";
 import {
   bulkDeleteAdminEvents,
+  bulkDeleteAdminUsers,
+  bulkDeactivateAdminUsers,
+  bulkDeleteAdminRides,
+  bulkDeleteAdminMeals,
+  bulkDeleteAdminEventGroups,
   bulkGroupAdminEvents,
   bulkSetAdminEventGroup,
   createAdminEvent,
@@ -96,6 +101,28 @@ export function useAdminDeleteUser() {
   });
 }
 
+export function useAdminBulkDeleteUsers() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userIds: string[]) => bulkDeleteAdminUsers(userIds),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.adminUsers });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.users });
+    },
+  });
+}
+
+export function useAdminBulkDeactivateUsers() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userIds: string[]) => bulkDeactivateAdminUsers(userIds),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.adminUsers });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.users });
+    },
+  });
+}
+
 // ── Ride mutations ────────────────────────────────────────────────────────────
 
 export function useAdminCreateRide() {
@@ -124,6 +151,17 @@ export function useAdminDeleteRide() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteAdminRide(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.adminRides });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.rides });
+    },
+  });
+}
+
+export function useAdminBulkDeleteRides() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (rideIds: string[]) => bulkDeleteAdminRides(rideIds),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.adminRides });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.rides });
@@ -171,6 +209,17 @@ export function useAdminDeleteMeal() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteAdminMeal(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.adminMeals });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.meals });
+    },
+  });
+}
+
+export function useAdminBulkDeleteMeals() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (mealIds: string[]) => bulkDeleteAdminMeals(mealIds),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.adminMeals });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.meals });
@@ -319,6 +368,14 @@ export function useAdminDeleteEventGroup() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteAdminEventGroup(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEventGroups }),
+  });
+}
+
+export function useAdminBulkDeleteEventGroups() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (groupIds: string[]) => bulkDeleteAdminEventGroups(groupIds),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEventGroups }),
   });
 }

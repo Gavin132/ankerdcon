@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Plus, Layers, Pencil, Check, X } from "lucide-react";
+import { Plus, Layers, Check, X } from "lucide-react";
 import {
   useAdminEventGroups,
   useAdminCreateEventGroup,
   useAdminUpdateEventGroup,
   useAdminDeleteEventGroup,
+  useAdminBulkDeleteEventGroups,
 } from "../../hooks/useAdmin";
 import { toast } from "../../store/toast.store";
 import { F } from "./styles";
@@ -12,6 +13,8 @@ import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 import { AdminPagination } from "./components/AdminPagination";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
+import { AdminBulkBar } from "./components/AdminBulkBar";
+import { useTableSelection } from "../../hooks/useTableSelection";
 
 const PAGE_SIZE = 15;
 
@@ -20,6 +23,7 @@ export function AdminEventGroupsPage() {
   const createMutation = useAdminCreateEventGroup();
   const updateMutation = useAdminUpdateEventGroup();
   const deleteMutation = useAdminDeleteEventGroup();
+  const bulkDeleteMutation = useAdminBulkDeleteEventGroups();
 
   const [newName, setNewName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -30,6 +34,20 @@ export function AdminEventGroupsPage() {
   const totalPages = Math.ceil(groups.length / PAGE_SIZE);
   const currentPage = Math.min(page, Math.max(0, totalPages - 1));
   const paginated = groups.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
+
+  const { selectedIds, toggleSelect, selectAll, clearSelection, allSelected, indeterminate } =
+    useTableSelection(paginated.map((g) => g.id));
+
+  async function handleBulkDelete() {
+    const ids = [...selectedIds];
+    try {
+      await bulkDeleteMutation.mutateAsync(ids);
+      toast("success", `${ids.length} groepen verwijderd.`);
+      clearSelection();
+    } catch {
+      toast("error", "Kon groepen niet verwijderen.");
+    }
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -101,6 +119,15 @@ export function AdminEventGroupsPage() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
+              <th className="w-10 pl-4 pr-2 py-3">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  ref={(el) => { if (el) el.indeterminate = indeterminate; }}
+                  onChange={selectAll}
+                  className="cb"
+                />
+              </th>
               <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                 Groepsnaam
               </th>
@@ -111,16 +138,31 @@ export function AdminEventGroupsPage() {
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
             {isLoading ? (
-              <AdminTableSkeleton cols={2} />
+              <AdminTableSkeleton cols={3} />
             ) : groups.length === 0 ? (
               <tr>
-                <td colSpan={2} className="px-5 py-10 text-center text-sm text-slate-400">
+                <td colSpan={3} className="px-5 py-10 text-center text-sm text-slate-400">
                   Nog geen groepen aangemaakt.
                 </td>
               </tr>
             ) : (
               paginated.map((group) => (
-                <tr key={group.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors">
+                <tr
+                  key={group.id}
+                  className={`transition-colors ${selectedIds.has(group.id) ? "bg-sky-500/[0.06] hover:bg-sky-500/[0.08]" : "hover:bg-slate-50 dark:hover:bg-white/[0.03]"}`}
+                >
+                  <td
+                    className="w-10 pl-4 pr-2 py-3.5"
+                    onClick={(e) => { e.stopPropagation(); toggleSelect(group.id); }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(group.id)}
+                      onChange={() => toggleSelect(group.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="cb"
+                    />
+                  </td>
                   <td className="px-5 py-3.5">
                     {editingId === group.id ? (
                       <input
@@ -186,6 +228,13 @@ export function AdminEventGroupsPage() {
           onPage={setPage}
         />
       </div>
+
+      <AdminBulkBar
+        count={selectedIds.size}
+        isPending={bulkDeleteMutation.isPending}
+        onDelete={handleBulkDelete}
+        onClear={clearSelection}
+      />
     </div>
   );
 }

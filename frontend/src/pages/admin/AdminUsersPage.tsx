@@ -8,6 +8,8 @@ import {
   useAdminCreateUser,
   useAdminUpdateUser,
   useAdminDeleteUser,
+  useAdminBulkDeleteUsers,
+  useAdminBulkDeactivateUsers,
 } from "../../hooks/useAdmin";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { AdminDrawer } from "./AdminDrawer";
@@ -20,6 +22,8 @@ import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 import { AdminPagination } from "./components/AdminPagination";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 import { DrawerFooter } from "./components/DrawerFooter";
+import { AdminBulkBar } from "./components/AdminBulkBar";
+import { useTableSelection } from "../../hooks/useTableSelection";
 
 const PAGE_SIZE = 15;
 
@@ -381,6 +385,8 @@ export function AdminUsersPage() {
   const { data: users = [], isLoading } = useAdminUsers();
   const updateMutation = useAdminUpdateUser();
   const deleteMutation = useAdminDeleteUser();
+  const bulkDeleteMutation = useAdminBulkDeleteUsers();
+  const bulkDeactivateMutation = useAdminBulkDeactivateUsers();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [editing, setEditing] = useState<User | null>(null);
@@ -406,6 +412,10 @@ export function AdminUsersPage() {
     currentPage * PAGE_SIZE,
     (currentPage + 1) * PAGE_SIZE,
   );
+
+  const { selectedIds, toggleSelect, selectAll, clearSelection, allSelected, indeterminate } =
+    useTableSelection(paginated.map((u) => u.id!));
+  const bulkIsPending = bulkDeleteMutation.isPending || bulkDeactivateMutation.isPending;
 
   function handleSearch(v: string) {
     setSearch(v);
@@ -447,6 +457,28 @@ export function AdminUsersPage() {
     }
   }
 
+  async function handleBulkDelete() {
+    const ids = [...selectedIds];
+    try {
+      await bulkDeleteMutation.mutateAsync(ids);
+      toast("success", `${ids.length} gebruikers verwijderd.`);
+      clearSelection();
+    } catch {
+      toast("error", "Kon gebruikers niet verwijderen.");
+    }
+  }
+
+  async function handleBulkDeactivate() {
+    const ids = [...selectedIds];
+    try {
+      await bulkDeactivateMutation.mutateAsync(ids);
+      toast("success", `${ids.length} gebruikers gedeactiveerd.`);
+      clearSelection();
+    } catch {
+      toast("error", "Kon gebruikers niet deactiveren.");
+    }
+  }
+
   const activeCount = users.filter((u) => u.is_active !== false).length;
 
   return (
@@ -476,6 +508,15 @@ export function AdminUsersPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
+                <th className="w-10 pl-4 pr-2 py-3">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    ref={(el) => { if (el) el.indeterminate = indeterminate; }}
+                    onChange={selectAll}
+                    className="cb"
+                  />
+                </th>
                 <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Gebruiker
                 </th>
@@ -495,11 +536,11 @@ export function AdminUsersPage() {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
               {isLoading ? (
-                <AdminTableSkeleton cols={5} />
+                <AdminTableSkeleton cols={6} />
               ) : filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-5 py-10 text-center text-sm text-slate-400"
                   >
                     Geen gebruikers gevonden.
@@ -511,8 +552,20 @@ export function AdminUsersPage() {
                   return (
                     <tr
                       key={user.id}
-                      className={`group hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors ${!isActive ? "opacity-50" : ""}`}
+                      className={`group transition-colors ${selectedIds.has(user.id!) ? "bg-sky-500/[0.06] hover:bg-sky-500/[0.08]" : "hover:bg-slate-50 dark:hover:bg-white/[0.03]"} ${!isActive ? "opacity-50" : ""}`}
                     >
+                      <td
+                        className="w-10 pl-4 pr-2 py-3.5"
+                        onClick={(e) => { e.stopPropagation(); toggleSelect(user.id!); }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(user.id!)}
+                          onChange={() => toggleSelect(user.id!)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="cb"
+                        />
+                      </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
                           <UserAvatar
@@ -654,6 +707,23 @@ export function AdminUsersPage() {
         key={editing?.id ?? "none"}
         user={editing}
         onClose={() => setEditing(null)}
+      />
+
+      <AdminBulkBar
+        count={selectedIds.size}
+        isPending={bulkIsPending}
+        onDelete={handleBulkDelete}
+        onClear={clearSelection}
+        extraActions={
+          <button
+            onClick={handleBulkDeactivate}
+            disabled={bulkIsPending}
+            className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium text-amber-400 hover:bg-amber-500/10 hover:text-amber-300 transition-colors disabled:opacity-40"
+          >
+            <Ban size={14} />
+            Deactiveer
+          </button>
+        }
       />
     </div>
   );

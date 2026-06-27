@@ -9,6 +9,7 @@ import {
   useAdminUpdateMeal,
   useAdminDeleteMeal,
   useAdminRemoveMealParticipant,
+  useAdminBulkDeleteMeals,
 } from "../../hooks/useAdmin";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { AdminDrawer } from "./AdminDrawer";
@@ -22,6 +23,8 @@ import { AdminPagination } from "./components/AdminPagination";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 import { DrawerFooter } from "./components/DrawerFooter";
 import { ParticipantList } from "./components/ParticipantList";
+import { AdminBulkBar } from "./components/AdminBulkBar";
+import { useTableSelection } from "../../hooks/useTableSelection";
 
 const PAGE_SIZE = 15;
 
@@ -181,6 +184,7 @@ function MealDrawer({
 export function AdminMealsPage() {
   const { data: meals = [], isLoading } = useAdminMeals();
   const deleteMutation = useAdminDeleteMeal();
+  const bulkDeleteMutation = useAdminBulkDeleteMeals();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [drawer, setDrawer] = useState<Meal | "new" | null>(null);
@@ -201,6 +205,20 @@ export function AdminMealsPage() {
     currentPage * PAGE_SIZE,
     (currentPage + 1) * PAGE_SIZE,
   );
+
+  const { selectedIds, toggleSelect, selectAll, clearSelection, allSelected, indeterminate } =
+    useTableSelection(paginated.map((m) => m.id));
+
+  async function handleBulkDelete() {
+    const ids = [...selectedIds];
+    try {
+      await bulkDeleteMutation.mutateAsync(ids);
+      toast("success", `${ids.length} maaltijden verwijderd.`);
+      clearSelection();
+    } catch {
+      toast("error", "Kon maaltijden niet verwijderen.");
+    }
+  }
 
   function handleSearch(v: string) {
     setSearch(v);
@@ -244,6 +262,15 @@ export function AdminMealsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
+                <th className="w-10 pl-4 pr-2 py-3">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    ref={(el) => { if (el) el.indeterminate = indeterminate; }}
+                    onChange={selectAll}
+                    className="cb"
+                  />
+                </th>
                 <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Maaltijd
                 </th>
@@ -263,11 +290,11 @@ export function AdminMealsPage() {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
               {isLoading ? (
-                <AdminTableSkeleton cols={5} rows={3} />
+                <AdminTableSkeleton cols={6} rows={3} />
               ) : filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-5 py-10 text-center text-sm text-slate-400"
                   >
                     Geen maaltijden gevonden.
@@ -277,8 +304,20 @@ export function AdminMealsPage() {
                 paginated.map((meal) => (
                   <tr
                     key={meal.id}
-                    className="hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+                    className={`transition-colors ${selectedIds.has(meal.id) ? "bg-sky-500/[0.06] hover:bg-sky-500/[0.08]" : "hover:bg-slate-50 dark:hover:bg-white/[0.03]"}`}
                   >
+                    <td
+                      className="w-10 pl-4 pr-2 py-3.5"
+                      onClick={(e) => { e.stopPropagation(); toggleSelect(meal.id); }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(meal.id)}
+                        onChange={() => toggleSelect(meal.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="cb"
+                      />
+                    </td>
                     <td className="px-5 py-3.5">
                       <p className="text-sm font-semibold text-slate-900 dark:text-white">
                         {meal.meal_name}
@@ -374,6 +413,13 @@ export function AdminMealsPage() {
         }
         meal={drawer}
         onClose={() => setDrawer(null)}
+      />
+
+      <AdminBulkBar
+        count={selectedIds.size}
+        isPending={bulkDeleteMutation.isPending}
+        onDelete={handleBulkDelete}
+        onClear={clearSelection}
       />
     </div>
   );
