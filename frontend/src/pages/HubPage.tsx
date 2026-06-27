@@ -453,29 +453,29 @@ export function HubPage() {
           </p>
           <div className="space-y-2.5">
             {hotelRooms.map(([room, roomUsers]) => (
-              <div
-                key={room}
-                className="card-surface flex items-center gap-4 rounded-2xl px-4 py-3.5"
-              >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600">
-                  <BedDouble size={16} className="text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
-                    Kamer {room}
-                  </p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <div className="flex -space-x-1.5">
-                      {roomUsers.map((u) => (
-                        <UserAvatar key={u.name} name={u.name} className="h-6 w-6 text-[9px]" />
-                      ))}
-                    </div>
-                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 truncate">
-                      {roomUsers.map((u) => u.name).join(", ")}
-                    </span>
+              <div key={room} className="card-surface rounded-2xl overflow-hidden">
+                <div className="h-[3px] bg-gradient-to-r from-sky-400 via-blue-400 to-sky-300" />
+                <div className="flex items-center gap-3 px-4 py-3.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600">
+                    <BedDouble size={15} className="text-white" />
                   </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
+                      Kamer {room}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex -space-x-1.5">
+                        {roomUsers.map((u) => (
+                          <UserAvatar key={u.name} name={u.name} className="h-6 w-6 text-[9px] ring-2 ring-white dark:ring-[#1e293b]" />
+                        ))}
+                      </div>
+                      <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 truncate">
+                        {roomUsers.map((u) => u.name).join(", ")}
+                      </span>
+                    </div>
+                  </div>
+                  <ArrowRight size={13} className="shrink-0 text-slate-300 dark:text-slate-600" />
                 </div>
-                <ArrowRight size={14} className="shrink-0 text-slate-300 dark:text-slate-600" />
               </div>
             ))}
           </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -32,7 +32,7 @@ import { DrawerFooter } from "./components/DrawerFooter";
 import { ParticipantList } from "./components/ParticipantList";
 import { AdminBulkBar } from "./components/AdminBulkBar";
 import { useTableSelection } from "../../hooks/useTableSelection";
-import { multiDayColor } from "../../utils/multiDay";
+import { buildGroupColorMap } from "../../utils/multiDay";
 import { formatDate } from "../../utils/format";
 import { parseEventDate } from "../../utils/date";
 
@@ -389,6 +389,7 @@ export function AdminEventsPage() {
   const { data: events = [], isLoading } = useAdminEvents();
   const { data: allUsers = [] } = useAdminUsers();
   const { data: eventGroups = [] } = useAdminEventGroups();
+  const groupColorMap = useMemo(() => buildGroupColorMap(events), [events]);
   const deleteMutation = useAdminDeleteEvent();
   const bulkDeleteMutation = useAdminBulkDeleteEvents();
   const bulkGroupMutation = useAdminBulkGroupEvents();
@@ -621,13 +622,14 @@ export function AdminEventsPage() {
                 </tr>
               ) : (
                 paginated.map((event) => {
-                  const mdColor = event.multi_day_id ? multiDayColor(event.multi_day_id) : null;
+                  const mdColor = event.multi_day_id ? groupColorMap.get(event.multi_day_id) : null;
                   const isSelected = selectedIds.has(event.id);
                   return (
                   <tr
                     key={event.id}
                     onClick={() => navigate(routes.event.view(event.id))}
                     className={`cursor-pointer transition-colors ${isSelected ? "bg-sky-500/[0.06] hover:bg-sky-500/[0.08]" : "hover:bg-slate-50 dark:hover:bg-white/[0.03]"}`}
+                    style={mdColor && !isSelected ? { backgroundColor: mdColor.accent + "0d" } : undefined}
                   >
                     <td
                       className="w-10 pl-4 pr-2 py-3.5"
@@ -643,12 +645,17 @@ export function AdminEventsPage() {
                     </td>
                     <td
                       className="px-5 py-3.5"
-                      style={mdColor ? { borderLeft: `3px solid ${mdColor.accent}` } : { borderLeft: "3px solid transparent" }}
+                      style={mdColor
+                        ? { borderLeft: `3px solid ${mdColor.accent}` }
+                        : { borderLeft: "3px solid transparent" }}
                     >
                       <div className="flex items-center gap-2.5">
-                        <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${mdColor ? mdColor.bg : "bg-emerald-100 dark:bg-emerald-500/10"}`}>
+                        <div
+                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${mdColor ? "" : "bg-emerald-100 dark:bg-emerald-500/10"}`}
+                          style={mdColor ? { backgroundColor: mdColor.accent + "22" } : undefined}
+                        >
                           {mdColor
-                            ? <Layers size={13} className={mdColor.text} />
+                            ? <Layers size={13} style={{ color: mdColor.accent }} />
                             : <CalendarDays size={13} className="text-emerald-500" />
                           }
                         </div>
@@ -657,7 +664,13 @@ export function AdminEventsPage() {
                             {event.event_name}
                           </p>
                           {event.event_group_id && (
-                            <span className="mt-0.5 inline-flex items-center rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-slate-400">
+                            <span
+                              className="mt-0.5 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
+                              style={mdColor
+                                ? { backgroundColor: mdColor.accent + "20", color: mdColor.accent }
+                                : { backgroundColor: "rgba(255,255,255,0.06)", color: "rgb(148,163,184)" }}
+                            >
+                              {mdColor && <Layers size={8} />}
                               {event.event_group_id}
                             </span>
                           )}

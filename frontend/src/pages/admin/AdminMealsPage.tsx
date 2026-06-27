@@ -11,12 +11,13 @@ import {
   useAdminDeleteMeal,
   useAdminRemoveMealParticipant,
   useAdminBulkDeleteMeals,
+  useAdminEvents,
 } from "../../hooks/useAdmin";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { AdminDrawer } from "./AdminDrawer";
 import { toast } from "../../store/toast.store";
 import type { Meal } from "../../types";
-import { F, L } from "./styles";
+import { F, L, SECTION, SECTION_TITLE } from "./styles";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminSearch } from "./components/AdminSearch";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
@@ -29,12 +30,21 @@ import { useTableSelection } from "../../hooks/useTableSelection";
 
 const PAGE_SIZE = 15;
 
+const optStr = (v: unknown) => (v == null ? "" : v);
+
 const mealSchema = z.object({
   meal_name: z.string().min(1, "Naam is verplicht"),
   time: z.string().min(1, "Tijdstip is verplicht"),
   location: z.string().optional(),
   cost: z.coerce.number().min(0),
   transport_needed: z.boolean().optional(),
+  linked_event_id: z.preprocess(optStr, z.string()).optional(),
+  website: z.preprocess(optStr, z.string()).optional(),
+  menu_url: z.preprocess(optStr, z.string()).optional(),
+  description: z.preprocess(optStr, z.string()).optional(),
+  dietary_options: z.preprocess(optStr, z.string()).optional(),
+  parking_info: z.preprocess(optStr, z.string()).optional(),
+  extra_notes: z.preprocess(optStr, z.string()).optional(),
 });
 type MealForm = z.infer<typeof mealSchema>;
 
@@ -50,6 +60,7 @@ function MealDrawer({
   const createMutation = useAdminCreateMeal();
   const updateMutation = useAdminUpdateMeal();
   const removeParticipant = useAdminRemoveMealParticipant();
+  const { data: allEvents = [] } = useAdminEvents();
   const isEdit = meal !== null && meal !== "new";
   const open = meal !== null;
 
@@ -65,16 +76,33 @@ function MealDrawer({
       location: isEdit ? meal.location : "",
       cost: isEdit ? meal.cost : 0,
       transport_needed: isEdit ? meal.transport_needed : false,
+      linked_event_id: isEdit ? (meal.linked_event_id ?? "") : "",
+      website: isEdit ? (meal.website ?? "") : "",
+      menu_url: isEdit ? (meal.menu_url ?? "") : "",
+      description: isEdit ? (meal.description ?? "") : "",
+      dietary_options: isEdit ? (meal.dietary_options ?? "") : "",
+      parking_info: isEdit ? (meal.parking_info ?? "") : "",
+      extra_notes: isEdit ? (meal.extra_notes ?? "") : "",
     },
   });
 
   async function onSubmit(values: MealForm) {
+    const payload = {
+      ...values,
+      linked_event_id: values.linked_event_id || null,
+      website: values.website || null,
+      menu_url: values.menu_url || null,
+      description: values.description || null,
+      dietary_options: values.dietary_options || null,
+      parking_info: values.parking_info || null,
+      extra_notes: values.extra_notes || null,
+    };
     try {
       if (isEdit) {
-        await updateMutation.mutateAsync({ id: meal.id, ...values });
+        await updateMutation.mutateAsync({ id: meal.id, ...payload });
         toast("success", "Maaltijd bijgewerkt.");
       } else {
-        await createMutation.mutateAsync(values);
+        await createMutation.mutateAsync(payload);
         toast("success", `${values.meal_name} aangemaakt.`);
       }
       onClose();
@@ -167,6 +195,85 @@ function MealDrawer({
           />
           <span className="text-sm text-slate-300">Transport nodig</span>
         </label>
+
+        {/* ── Extended info ─────────────────────────────────────────── */}
+        <div className={SECTION}>
+          <p className={SECTION_TITLE}>Koppeling & details</p>
+
+          <div>
+            <label className={L}>Koppel aan evenement</label>
+            <select {...register("linked_event_id")} className={`${F} [color-scheme:dark]`}>
+              <option value="">— Geen evenement —</option>
+              {allEvents.map((ev) => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.event_name} ({ev.date})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className={L}>Website restaurant</label>
+            <input
+              {...register("website")}
+              className={F}
+              placeholder="https://restauranturl.nl"
+            />
+          </div>
+
+          <div>
+            <label className={L}>Link naar menu</label>
+            <input
+              {...register("menu_url")}
+              className={F}
+              placeholder="https://restauranturl.nl/menu"
+            />
+          </div>
+
+          <div>
+            <label className={L}>Beschrijving / sfeer</label>
+            <textarea
+              {...register("description")}
+              rows={3}
+              className={`${F} resize-none`}
+              placeholder="Extra context over het restaurant, sfeer, dresscode..."
+            />
+          </div>
+        </div>
+
+        <div className={SECTION}>
+          <p className={SECTION_TITLE}>Praktisch</p>
+
+          <div>
+            <label className={L}>Dieet opties</label>
+            <textarea
+              {...register("dietary_options")}
+              rows={2}
+              className={`${F} resize-none`}
+              placeholder="Vegetarisch, vegan, glutenvrij beschikbaar..."
+            />
+          </div>
+
+          <div>
+            <label className={L}>Parkeerinfo</label>
+            <textarea
+              {...register("parking_info")}
+              rows={2}
+              className={`${F} resize-none`}
+              placeholder="Parkeergarage op 200m, gratis na 18:00..."
+            />
+          </div>
+
+          <div>
+            <label className={L}>Extra notities</label>
+            <textarea
+              {...register("extra_notes")}
+              rows={2}
+              className={`${F} resize-none`}
+              placeholder="Reservering vereist, ID meenemen..."
+            />
+          </div>
+        </div>
 
         {isEdit && (
           <ParticipantList

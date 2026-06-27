@@ -12,6 +12,7 @@ import {
   useAdminDeleteRide,
   useAdminRemovePassenger,
   useAdminBulkDeleteRides,
+  useAdminEvents,
 } from "../../hooks/useAdmin";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { AdminDrawer } from "./AdminDrawer";
@@ -45,6 +46,7 @@ const rideSchema = z.object({
   maps_link: z.string().optional(),
   car_available: z.boolean().optional(),
   action_required: z.boolean().optional(),
+  linked_event_id: z.string().optional(),
 });
 type RideForm = z.infer<typeof rideSchema>;
 
@@ -61,6 +63,7 @@ function RideDrawer({
   const updateMutation = useAdminUpdateRide();
   const removePassenger = useAdminRemovePassenger();
   const { data: allUsers = [] } = useAdminUsers();
+  const { data: allEvents = [] } = useAdminEvents();
   const userNames = allUsers.map((u) => u.name);
   const isEdit = ride !== null && ride !== "new";
   const open = ride !== null;
@@ -86,18 +89,20 @@ function RideDrawer({
       maps_link: isEdit ? ride.maps_link : "",
       car_available: isEdit ? ride.car_available : false,
       action_required: isEdit ? ride.action_required : false,
+      linked_event_id: isEdit ? (ride.linked_event_id ?? "") : "",
     },
   });
   const vehicleType = watch("vehicle_type");
   const isPT = vehicleType === "Public Transport";
 
   async function onSubmit(values: RideForm) {
+    const payload = { ...values, linked_event_id: values.linked_event_id || null };
     try {
       if (isEdit) {
-        await updateMutation.mutateAsync({ id: ride.id, ...values });
+        await updateMutation.mutateAsync({ id: ride.id, ...payload });
         toast("success", "Rit bijgewerkt.");
       } else {
-        await createMutation.mutateAsync(values);
+        await createMutation.mutateAsync(payload);
         toast("success", "Rit aangemaakt.");
       }
       onClose();
@@ -256,6 +261,18 @@ function RideDrawer({
             />
             <span className="text-sm text-slate-300">Actie vereist</span>
           </label>
+        </div>
+
+        <div>
+          <label className={L}>Koppel aan evenement</label>
+          <select {...register("linked_event_id")} className={`${F} [color-scheme:dark]`}>
+            <option value="">— Geen evenement —</option>
+            {allEvents.map((ev) => (
+              <option key={ev.id} value={ev.id}>
+                {ev.event_name} ({ev.date})
+              </option>
+            ))}
+          </select>
         </div>
 
         {isEdit && (

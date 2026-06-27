@@ -2,6 +2,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, CalendarDays } from "lucide-react";
 import { useCalendar } from "../hooks/useCalendar";
 import { useUsers } from "../hooks/useUsers";
+import { useMeals } from "../hooks/useMeals";
+import { useRides } from "../hooks/useRides";
 import { useEventWeather } from "../hooks/useEventWeather";
 import { parseEventDate } from "../utils/date";
 import { EventHero } from "../components/event/EventHero";
@@ -9,14 +11,20 @@ import { WeatherCard, WeatherSkeleton } from "../components/event/WeatherCard";
 import { EventLinks } from "../components/event/EventLinks";
 import { EventPractical } from "../components/event/EventPractical";
 import { EventAttendees } from "../components/event/EventAttendees";
+import { EventLinkedMeals } from "../components/event/EventLinkedMeals";
+import { EventLinkedRides } from "../components/event/EventLinkedRides";
 
 export function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate  = useNavigate();
   const { data: events = [] } = useCalendar();
   const { data: users  = [] } = useUsers();
+  const { data: meals  = [] } = useMeals();
+  const { data: rides  = [] } = useRides();
 
   const event = events.find((e) => e.id === id);
+  const linkedMeals = meals.filter((m) => m.linked_event_id === id);
+  const linkedRides = rides.filter((r) => r.linked_event_id === id);
 
   const weatherDate = (() => {
     if (!event?.date) return undefined;
@@ -111,6 +119,10 @@ export function EventDetailPage() {
 
         {/* ── Attendees ── */}
         <EventAttendees participants={event.participants} users={users} />
+
+        {/* ── Linked activities ── */}
+        <EventLinkedMeals meals={linkedMeals} />
+        <EventLinkedRides rides={linkedRides} />
 
       </div>
     </div>
