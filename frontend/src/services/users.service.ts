@@ -50,6 +50,7 @@ export interface CompleteOnboardingPayload {
   color?: string;
   banner_color?: string;
   allow_dm: boolean;
+  aliases?: string[];
 }
 
 export async function completeOnboarding(payload: CompleteOnboardingPayload): Promise<void> {

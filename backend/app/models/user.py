@@ -98,6 +98,7 @@ class CompleteOnboardingRequest(BaseModel):
     color: Optional[str] = None
     banner_color: Optional[str] = None
     allow_dm: bool = True
+    aliases: Optional[list[str]] = None
 
     @field_validator("color", "banner_color")
     @classmethod

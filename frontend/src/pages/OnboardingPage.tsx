@@ -15,6 +15,8 @@ import {
   AlertTriangle,
   Smartphone,
   Sparkles,
+  Plus,
+  X,
 } from "lucide-react";
 import { routes } from "../config/routes";
 import { useCurrentUser, useCompleteOnboarding } from "../hooks/useUsers";
@@ -205,13 +207,26 @@ interface ProfileState {
   color: string;
   bannerColor: string;
   allowDm: boolean;
+  aliases: string[];
 }
 
 function StepProfile({ state, onChange }: {
   state: ProfileState;
   onChange: (patch: Partial<ProfileState>) => void;
 }) {
+  const [aliasInput, setAliasInput] = useState("");
   const phoneError = state.phone ? validatePhoneNumber(state.phone) : null;
+
+  function addAlias() {
+    const trimmed = aliasInput.trim();
+    if (!trimmed || trimmed.length > 30 || state.aliases.includes(trimmed) || state.aliases.length >= 10) return;
+    onChange({ aliases: [...state.aliases, trimmed] });
+    setAliasInput("");
+  }
+
+  function removeAlias(alias: string) {
+    onChange({ aliases: state.aliases.filter((a) => a !== alias) });
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -309,6 +324,54 @@ function StepProfile({ state, onChange }: {
             style={state.bannerColor ? { backgroundColor: state.bannerColor } : { background: "linear-gradient(135deg, #0ea5e9, #6366f1)" }}
           />
           <ColorSwatch value={state.bannerColor} onChange={(v) => onChange({ bannerColor: v })} presets={BANNER_COLORS} />
+        </div>
+
+        {/* Aliases */}
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1.5">
+            Aliassen
+          </label>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">
+            Bijnamen waaronder andere deelnemers jou kennen (max. 10).
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              maxLength={30}
+              placeholder="bijv. een bijnaam"
+              className="input-field flex-1"
+              value={aliasInput}
+              onChange={(e) => setAliasInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addAlias(); } }}
+            />
+            <button
+              type="button"
+              onClick={addAlias}
+              disabled={!aliasInput.trim() || state.aliases.length >= 10}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-40 transition-colors"
+            >
+              <Plus size={15} />
+            </button>
+          </div>
+          {state.aliases.length > 0 && (
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {state.aliases.map((alias) => (
+                <span
+                  key={alias}
+                  className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-300"
+                >
+                  {alias}
+                  <button
+                    type="button"
+                    onClick={() => removeAlias(alias)}
+                    className="ml-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  >
+                    <X size={11} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Discord DM toggle */}
@@ -415,6 +478,7 @@ export function OnboardingPage() {
     color: "",
     bannerColor: "",
     allowDm: true,
+    aliases: [],
   });
 
   // Redirect to hub if onboarding was already completed
@@ -447,6 +511,7 @@ export function OnboardingPage() {
               color: profile.color || undefined,
               banner_color: profile.bannerColor || undefined,
               allow_dm: profile.allowDm,
+              aliases: profile.aliases.length > 0 ? profile.aliases : undefined,
             },
       );
       // Instantly reflect onboarding completion in cache

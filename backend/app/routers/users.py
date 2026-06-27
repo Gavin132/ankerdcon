@@ -126,6 +126,8 @@ def complete_onboarding(
         updates["color"] = body.color
     if body.banner_color is not None:
         updates["banner_color"] = body.banner_color
+    if body.aliases is not None:
+        updates["aliases"] = body.aliases
     supabase.table(Tables.PROFILES).update(updates).eq("name", current_user).execute()
 
 
