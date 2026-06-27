@@ -88,6 +88,7 @@ export interface Ride {
   is_public_transport: boolean;
   car_available: boolean;
   action_required: boolean;
+  linked_event_id?: string;
   restaurant_drivers?: RestaurantDriver[];
 }
 
@@ -102,6 +103,7 @@ export interface CreateRideRequest {
   maps_link?: string;
   car_available?: boolean;
   action_required?: boolean;
+  linked_event_id?: string;
 }
 
 export interface ClaimSeatRequest {
@@ -138,9 +140,16 @@ export interface Meal {
   meal_name: string;
   time: string;
   location: string;
-  cost: number; // was string
+  cost: number;
   transport_needed: boolean;
-  participants: string[]; // was rsvps
+  participants: string[];
+  linked_event_id?: string;
+  website?: string;
+  menu_url?: string;
+  description?: string;
+  dietary_options?: string;
+  parking_info?: string;
+  extra_notes?: string;
 }
 
 export interface CreateMealRequest {
@@ -149,6 +158,13 @@ export interface CreateMealRequest {
   location?: string;
   cost?: string;
   transport_needed?: boolean;
+  linked_event_id?: string;
+  website?: string;
+  menu_url?: string;
+  description?: string;
+  dietary_options?: string;
+  parking_info?: string;
+  extra_notes?: string;
 }
 
 export interface RsvpRequest {
