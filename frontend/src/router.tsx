@@ -11,6 +11,8 @@ import { FinancePage } from "./pages/FinancePage";
 import { MorePage } from "./pages/MorePage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { EventDetailPage } from "./pages/EventDetailPage";
+import { MealDetailPage } from "./pages/MealDetailPage";
+import { RideDetailPage } from "./pages/RideDetailPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { AdminLayout } from "./pages/admin/AdminLayout";
@@ -61,6 +63,14 @@ export const router = createBrowserRouter([
       {
         path: routes.event.pattern,
         element: <EventDetailPage />,
+      },
+      {
+        path: routes.meal.pattern,
+        element: <MealDetailPage />,
+      },
+      {
+        path: routes.ride.pattern,
+        element: <RideDetailPage />,
       },
       // ── Admin portal ──────────────────────────────────────────────
       {
