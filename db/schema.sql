@@ -51,7 +51,8 @@ CREATE TABLE IF NOT EXISTS rides (
   maps_link          TEXT,
   car_available      BOOLEAN  NOT NULL DEFAULT false,
   action_required    BOOLEAN  NOT NULL DEFAULT false,
-  restaurant_drivers JSONB    NOT NULL DEFAULT '[]'
+  restaurant_drivers JSONB    NOT NULL DEFAULT '[]',
+  linked_event_id    UUID     REFERENCES calendar(id) ON DELETE SET NULL
 );
 
 
@@ -64,7 +65,14 @@ CREATE TABLE IF NOT EXISTS meals (
   location         TEXT        NOT NULL DEFAULT '',
   cost             NUMERIC     NOT NULL DEFAULT 0,
   transport_needed BOOLEAN     NOT NULL DEFAULT false,
-  participants     TEXT[]      NOT NULL DEFAULT '{}'
+  participants     TEXT[]      NOT NULL DEFAULT '{}',
+  linked_event_id  UUID        REFERENCES calendar(id) ON DELETE SET NULL,
+  website          TEXT,
+  menu_url         TEXT,
+  description      TEXT,
+  dietary_options  TEXT,
+  parking_info     TEXT,
+  extra_notes      TEXT
 );
 
 
