@@ -75,7 +75,7 @@ function RideDrawer({
         ? (ride.vehicle_type as RideForm["vehicle_type"])
         : "Car",
       driver: isEdit ? ride.driver : "",
-      departure_time: isEdit ? ride.departure_time : "",
+      departure_time: isEdit ? ride.departure_time.replace(" ", "T").slice(0, 16) : "",
       start_location: isEdit ? ride.start_location : "",
       total_seats: isEdit ? ride.total_seats : 4,
       parking_info: isEdit ? ride.parking_info : "",
@@ -182,7 +182,7 @@ function RideDrawer({
 
         <div>
           <label className={L}>Vertrektijd</label>
-          <input {...register("departure_time")} type="time" className={F} />
+          <input {...register("departure_time")} type="datetime-local" className={F} />
           {errors.departure_time && (
             <p className="text-xs text-rose-400 mt-1">
               {errors.departure_time.message}

@@ -33,18 +33,19 @@ from app.services.weather_service import fetch_event_weather
 # ── Brand colour palette ───────────────────────────────────────────────────────
 # Using the Ankerd sky / indigo / amber scale consistently across embed types.
 _COLORS: dict[str, int] = {
-    "info":    0x38BDF8,  # sky-400    – generic / fallback
-    "event":   0x818CF8,  # indigo-400 – calendar events
-    "ticket":  0xFBBF24,  # amber-400  – ticket sale announcements
-    "ride":    0x34D399,  # emerald-400 – transport / rides
-    "meal":    0xFB923C,  # orange-400  – food / meals
+    "info": 0x38BDF8,  # sky-400    – generic / fallback
+    "event": 0x818CF8,  # indigo-400 – calendar events
+    "ticket": 0xFBBF24,  # amber-400  – ticket sale announcements
+    "ride": 0x34D399,  # emerald-400 – transport / rides
+    "meal": 0xFB923C,  # orange-400  – food / meals
 }
 
 _BOT_NAME = "Ankerd Con"
-_FOOTER   = {"text": "Ankerd Con"}
+_FOOTER = {"text": "Ankerd Con"}
 
 
 # ── Low-level helpers ──────────────────────────────────────────────────────────
+
 
 def _field(name: str, value: str, *, inline: bool = True) -> dict[str, Any]:
     return {"name": name, "value": value, "inline": inline}
@@ -100,6 +101,7 @@ def _links(*pairs: tuple[str, str | None]) -> str:
 
 
 # ── Public notification functions ──────────────────────────────────────────────
+
 
 async def notify_event_created(
     webhook_url: str,
@@ -158,9 +160,11 @@ async def notify_event_created(
     if parking_info:
         fields.append(_field(M.FIELD_PARKING, parking_info, inline=False))
     if what_to_bring:
-        bring_lines = "\n".join(
-            f"• {item.strip()}" for item in what_to_bring.split(",")
-        ) if "," in what_to_bring else what_to_bring
+        bring_lines = (
+            "\n".join(f"• {item.strip()}" for item in what_to_bring.split(","))
+            if "," in what_to_bring
+            else what_to_bring
+        )
         fields.append(_field(M.FIELD_WHAT_TO_BRING, bring_lines, inline=False))
     if special_instructions:
         fields.append(_field("⚠️ Let op", special_instructions, inline=False))
@@ -183,12 +187,14 @@ async def notify_event_created(
 
     await _post(
         webhook_url,
-        _payload(_embed(
-            title=M.EMBED_EVENT_TITLE.format(event_name=event_name),
-            color=_COLORS["event"],
-            description="\n\n".join(desc_parts) or None,
-            fields=fields or None,
-        )),
+        _payload(
+            _embed(
+                title=M.EMBED_EVENT_TITLE.format(event_name=event_name),
+                color=_COLORS["event"],
+                description="\n\n".join(desc_parts) or None,
+                fields=fields or None,
+            )
+        ),
     )
 
 
@@ -222,13 +228,15 @@ async def notify_ticket_sale_opening(
 
     await _post(
         webhook_url,
-        _payload(_embed(
-            title="🎟️  Kaartverkoop",
-            color=_COLORS["ticket"],
-            description=action_links or None,
-            fields=fields,
-            url=ticket_url,
-        )),
+        _payload(
+            _embed(
+                title="🎟️  Kaartverkoop",
+                color=_COLORS["ticket"],
+                description=action_links or None,
+                fields=fields,
+                url=ticket_url,
+            )
+        ),
     )
 
 
@@ -249,8 +257,8 @@ async def notify_ride_created(
 ) -> None:
     """Posted when a new ride is created (by a user or an admin)."""
     direction_label = {
-        "Inbound":    "Heen — naar het evenement",
-        "Outbound":   "Terug — naar huis",
+        "Inbound": "Heen — naar bestemming",
+        "Outbound": "Terug — naar huis",
         "Restaurant": "Restaurant",
     }.get(direction, direction)
 
@@ -287,12 +295,14 @@ async def notify_ride_created(
 
     await _post(
         webhook_url,
-        _payload(_embed(
-            title=M.EMBED_RIDE_TITLE.format(direction=direction_label),
-            color=_COLORS["ride"],
-            description="\n\n".join(desc_parts) or None,
-            fields=fields,
-        )),
+        _payload(
+            _embed(
+                title=M.EMBED_RIDE_TITLE.format(direction=direction_label),
+                color=_COLORS["ride"],
+                description="\n\n".join(desc_parts) or None,
+                fields=fields,
+            )
+        ),
     )
 
 
@@ -302,7 +312,7 @@ async def notify_event_reminder(
     *,
     event_name: str,
     date: str,
-    interval: str,          # "7d" | "1d" | "day_of"
+    interval: str,  # "7d" | "1d" | "day_of"
     location: str | None = None,
     ticket_url: str | None = None,
     website: str | None = None,
@@ -320,9 +330,11 @@ async def notify_event_reminder(
         fields.append(_field(M.FIELD_LOCATION, f"**{location}**"))
 
     if what_to_bring:
-        bring_lines = "\n".join(
-            f"• {item.strip()}" for item in what_to_bring.split(",")
-        ) if "," in what_to_bring else what_to_bring
+        bring_lines = (
+            "\n".join(f"• {item.strip()}" for item in what_to_bring.split(","))
+            if "," in what_to_bring
+            else what_to_bring
+        )
         fields.append(_field(M.FIELD_WHAT_TO_BRING, bring_lines, inline=False))
 
     if locker_info:
@@ -341,12 +353,16 @@ async def notify_event_reminder(
 
     await _post(
         webhook_url,
-        _payload(_embed(
-            title=M.EMBED_REMINDER_TITLE.format(icon=icon, event_name=event_name, urgency=urgency),
-            color=color,
-            description="  ·  ".join(link_parts) or None,
-            fields=fields,
-        )),
+        _payload(
+            _embed(
+                title=M.EMBED_REMINDER_TITLE.format(
+                    icon=icon, event_name=event_name, urgency=urgency
+                ),
+                color=color,
+                description="  ·  ".join(link_parts) or None,
+                fields=fields,
+            )
+        ),
     )
 
 
@@ -369,17 +385,21 @@ async def notify_meal_created(
     if cost:
         fields.append(_field(M.FIELD_MEAL_COST, f"**€{cost:.2f}**"))
     if transport_needed:
-        fields.append(_field(M.FIELD_MEAL_TRANSPORT, "Vervoer nodig naar locatie", inline=False))
+        fields.append(
+            _field(M.FIELD_MEAL_TRANSPORT, "Vervoer nodig naar locatie", inline=False)
+        )
 
     app_link = _app_link(app_url, "/food")
     desc = f"[{M.LINK_APP_FOOD}]({app_link})" if app_link else None
 
     await _post(
         webhook_url,
-        _payload(_embed(
-            title=M.EMBED_MEAL_TITLE.format(meal_name=meal_name),
-            color=_COLORS["meal"],
-            description=desc,
-            fields=fields,
-        )),
+        _payload(
+            _embed(
+                title=M.EMBED_MEAL_TITLE.format(meal_name=meal_name),
+                color=_COLORS["meal"],
+                description=desc,
+                fields=fields,
+            )
+        ),
     )
