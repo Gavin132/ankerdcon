@@ -83,7 +83,7 @@ export interface AdminUpdateRidePayload {
   start_location?: string;
   total_seats?: number;
   parking_info?: string;
-  maps_link?: string;
+  end_location?: string;
   car_available?: boolean;
   action_required?: boolean;
 }
