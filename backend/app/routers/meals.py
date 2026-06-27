@@ -29,6 +29,13 @@ def create_meal(
         "cost": float(body.cost) if body.cost else 0.0,
         "transport_needed": body.transport_needed,
         "participants": [],
+        "linked_event_id": body.linked_event_id,
+        "website": body.website,
+        "menu_url": body.menu_url,
+        "description": body.description,
+        "dietary_options": body.dietary_options,
+        "parking_info": body.parking_info,
+        "extra_notes": body.extra_notes,
     }
     supabase.table(Tables.MEALS).insert(meal_data).execute()
 
