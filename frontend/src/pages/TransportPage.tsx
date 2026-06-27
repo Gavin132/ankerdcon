@@ -75,7 +75,7 @@ export function TransportPage() {
     defaultValues: {
       direction: "Inbound",
       vehicle_type: "Car",
-      total_seats: 4,
+      total_seats: 5,
     },
   });
 
@@ -104,7 +104,7 @@ export function TransportPage() {
     );
 
   function openCreate() {
-    reset({ direction: tab, vehicle_type: "Car", total_seats: 4 });
+    reset({ direction: tab, vehicle_type: "Car", total_seats: 5 });
     setCreateOpen(true);
   }
 

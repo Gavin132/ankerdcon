@@ -34,7 +34,7 @@ def create_ride(
     settings: Settings = Depends(get_settings),
 ) -> Ride:
     new_ride = body.model_dump()
-    new_ride["passengers"] = []
+    new_ride["passengers"] = [body.driver] if body.vehicle_type == "Car" else []
     new_ride["restaurant_drivers"] = []
     response = supabase.table(Tables.RIDES).insert(new_ride).execute()
     ride = response.data[0]
