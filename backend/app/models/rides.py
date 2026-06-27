@@ -19,8 +19,9 @@ class Ride(BaseModel):
     maps_link: str | None = ""
     car_available: bool = False
     action_required: bool = False
+    linked_event_id: str | None = None
     restaurant_drivers: list[RestaurantDriver] = Field(default_factory=list)
-    
+
     # Computed fields that the frontend expects
     seats_left: int = 0
     is_full: bool = False
@@ -57,6 +58,7 @@ class CreateRideRequest(BaseModel):
     maps_link: str | None = None
     car_available: bool = False
     action_required: bool = False
+    linked_event_id: str | None = None
 
 class ClaimSeatRequest(BaseModel):
     user_name: str
