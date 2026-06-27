@@ -51,7 +51,7 @@ def create_ride(
         total_seats=body.total_seats,
         is_public_transport=(body.vehicle_type == "Public Transport"),
         parking_info=body.parking_info or None,
-        maps_link=body.maps_link or None,
+        end_location=body.end_location or None,
         action_required=body.action_required,
     )
     return ride

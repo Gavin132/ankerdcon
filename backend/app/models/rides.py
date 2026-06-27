@@ -16,7 +16,7 @@ class Ride(BaseModel):
     total_seats: int = 0
     passengers: list[str] = Field(default_factory=list)
     parking_info: str | None = ""
-    maps_link: str | None = ""
+    end_location: str | None = None
     car_available: bool = False
     action_required: bool = False
     linked_event_id: str | None = None
@@ -35,7 +35,7 @@ class Ride(BaseModel):
         data['passengers'] = passengers
         data['restaurant_drivers'] = data.get('restaurant_drivers') or []
         data['parking_info'] = data.get('parking_info') or ""
-        data['maps_link'] = data.get('maps_link') or ""
+        data['end_location'] = data.get('end_location') or None
         
         # Compute the frontend logic dynamically
         vehicle = data.get('vehicle_type', '')
@@ -55,7 +55,7 @@ class CreateRideRequest(BaseModel):
     start_location: str
     total_seats: int
     parking_info: str | None = None
-    maps_link: str | None = None
+    end_location: str | None = None
     car_available: bool = False
     action_required: bool = False
     linked_event_id: str | None = None

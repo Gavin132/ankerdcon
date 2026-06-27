@@ -252,7 +252,7 @@ async def notify_ride_created(
     total_seats: int,
     is_public_transport: bool = False,
     parking_info: str | None = None,
-    maps_link: str | None = None,
+    end_location: str | None = None,
     action_required: bool = False,
 ) -> None:
     """Posted when a new ride is created (by a user or an admin)."""
@@ -285,8 +285,9 @@ async def notify_ride_created(
             "⚠️ **Actie vereist** — neem contact op met de chauffeur voor meer informatie."
         )
     link_parts: list[str] = []
-    if maps_link:
-        link_parts.append(f"[{M.LINK_MAPS}]({maps_link})")
+    if end_location:
+        maps_url = f"https://www.google.com/maps/dir/?api=1&origin={start_location}&destination={end_location}"
+        link_parts.append(f"[{M.LINK_MAPS}]({maps_url})")
     app_link = _app_link(app_url, "/transport")
     if app_link:
         link_parts.append(f"[{M.LINK_APP_TRANSPORT}]({app_link})")
