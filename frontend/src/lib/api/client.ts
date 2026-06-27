@@ -99,7 +99,24 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // 2. Your standard API Error formatting and 403 handling
+    // 2. On 403, retry once after a short delay before treating as forbidden.
+    //    Guards against transient backend/DB blips that briefly fail the allowlist check.
+    if (
+      axios.isAxiosError(error) &&
+      error.response?.status === 403 &&
+      !originalRequest._retry403 &&
+      useAuthStore.getState().isAuthenticated
+    ) {
+      originalRequest._retry403 = true;
+      await new Promise<void>((resolve) => setTimeout(resolve, 500));
+      try {
+        return await apiClient(originalRequest);
+      } catch {
+        // falls through to standard error handling below
+      }
+    }
+
+    // 3. Your standard API Error formatting and 403 handling
     if (axios.isAxiosError(error)) {
       const status = error.response?.status ?? 0;
       const message =

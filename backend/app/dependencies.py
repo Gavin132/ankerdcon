@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import time
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -62,29 +64,45 @@ def get_current_user(
 
         profile_name: str | None = None
 
-        # ── 1. Stable lookup by discord_id (works even after a name change) ──
-        profile_row: dict | None = None
+        # ── 1 & 2. Profile lookup with one retry on transient DB failure ──────
         _select = "name, is_active, is_first_login, allow_dm"
-        if discord_id:
-            try:
-                resp = supabase.table("profiles").select(_select).eq("discord_id", discord_id).execute()
-                if resp.data:
-                    profile_row = resp.data[0]
-                    profile_name = profile_row["name"]
-                    print(f"[AUTH] found by discord_id")
-                else:
-                    print("[AUTH] discord_id lookup returned no rows")
-            except Exception as e:
-                print(f"[AUTH] discord_id lookup failed: {e}")
+        profile_row: dict | None = None
 
-        # ── 2. Fall back to Discord display name (first-time / pre-migration) ─
-        if profile_name is None:
-            for candidate in discord_names:
-                resp = supabase.table("profiles").select(_select).eq("name", candidate).execute()
-                if resp.data:
-                    profile_row = resp.data[0]
-                    profile_name = profile_row["name"]
-                    break
+        for _attempt in range(2):
+            profile_row = None
+            profile_name = None
+
+            # Stable lookup by discord_id (works even after a name change)
+            if discord_id:
+                try:
+                    resp = supabase.table("profiles").select(_select).eq("discord_id", discord_id).execute()
+                    if resp.data:
+                        profile_row = resp.data[0]
+                        profile_name = profile_row["name"]
+                        print("[AUTH] found by discord_id")
+                    else:
+                        print("[AUTH] discord_id lookup returned no rows")
+                except Exception as e:
+                    print(f"[AUTH] discord_id lookup failed: {e}")
+
+            # Fall back to Discord display name (first-time / pre-migration)
+            if profile_name is None:
+                for candidate in discord_names:
+                    try:
+                        resp = supabase.table("profiles").select(_select).eq("name", candidate).execute()
+                        if resp.data:
+                            profile_row = resp.data[0]
+                            profile_name = profile_row["name"]
+                            break
+                    except Exception as e:
+                        print(f"[AUTH] name lookup failed: {e}")
+
+            if profile_name is not None:
+                break
+
+            if _attempt == 0:
+                print("[AUTH] profile not found on first attempt, retrying after 300ms")
+                time.sleep(0.3)
 
         if profile_name is None:
             raise HTTPException(
