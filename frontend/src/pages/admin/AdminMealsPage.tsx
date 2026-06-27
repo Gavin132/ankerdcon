@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Euro, Clock, MapPin, Bus } from "lucide-react";
+import { formatDateTime } from "../../utils/format";
 import {
   useAdminMeals,
   useAdminCreateMeal,
@@ -335,7 +336,7 @@ export function AdminMealsPage() {
                       <div className="flex items-center gap-1.5">
                         <Clock size={12} className="text-slate-400" />
                         <span className="text-sm font-mono text-slate-700 dark:text-slate-300">
-                          {meal.time}
+                          {formatDateTime(meal.time)}
                         </span>
                       </div>
                     </td>

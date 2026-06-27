@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, CalendarDays, Hotel, X as XIcon, Link2, Unlink2, Tag, Check, Layers } from "lucide-react";
+import { Plus, CalendarDays, Hotel, X as XIcon, Link2, Unlink2, Tag, Check, Layers, History } from "lucide-react";
 import type { TicketType, CalendarEvent } from "../../types";
 import {
   useAdminEvents,
@@ -33,6 +33,8 @@ import { ParticipantList } from "./components/ParticipantList";
 import { AdminBulkBar } from "./components/AdminBulkBar";
 import { useTableSelection } from "../../hooks/useTableSelection";
 import { multiDayColor } from "../../utils/multiDay";
+import { formatDate } from "../../utils/format";
+import { parseEventDate } from "../../utils/date";
 
 const optStr = z.preprocess((v) => (v == null ? "" : v), z.string());
 const optUrl = z.preprocess(
@@ -396,17 +398,33 @@ export function AdminEventsPage() {
   const [page, setPage] = useState(0);
   const [drawer, setDrawer] = useState<CalendarEvent | "new" | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
-  const filtered = events.filter((ev) => {
-    if (groupFilter !== "All" && (ev.event_group_id ?? "") !== groupFilter) return false;
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (
-      ev.event_name.toLowerCase().includes(q) ||
-      (ev.event_group_id ?? "").toLowerCase().includes(q) ||
-      ev.date.includes(q)
-    );
-  });
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const filtered = events
+    .filter((ev) => {
+      const d = parseEventDate(ev.date);
+      const isPast = d ? d < today : false;
+      if (isPast !== showHistory) return false;
+      if (groupFilter !== "All" && (ev.event_group_id ?? "") !== groupFilter) return false;
+      if (!search) return true;
+      const q = search.toLowerCase();
+      return (
+        ev.event_name.toLowerCase().includes(q) ||
+        (ev.event_group_id ?? "").toLowerCase().includes(q) ||
+        ev.date.includes(q)
+      );
+    })
+    .sort((a, b) => {
+      const da = parseEventDate(a.date);
+      const db = parseEventDate(b.date);
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return showHistory ? db.getTime() - da.getTime() : da.getTime() - db.getTime();
+    });
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const currentPage = Math.min(page, Math.max(0, totalPages - 1));
@@ -494,15 +512,28 @@ export function AdminEventsPage() {
     <div className="p-5 lg:p-8 max-w-6xl mx-auto space-y-5">
       <AdminPageHeader
         title="Evenementen"
-        subtitle={`${events.length} kalender items`}
+        subtitle={`${filtered.length} ${showHistory ? "historische" : "aankomende"} items`}
         action={
-          <button
-            onClick={() => setDrawer("new")}
-            className="flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 transition-colors shadow-sm"
-          >
-            <Plus size={16} />
-            Nieuw evenement
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { setShowHistory((v) => !v); setPage(0); clearSelection(); }}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors shadow-sm ${
+                showHistory
+                  ? "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+                  : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600"
+              }`}
+            >
+              <History size={16} />
+              {showHistory ? "Terug naar aankomend" : "Geschiedenis"}
+            </button>
+            <button
+              onClick={() => setDrawer("new")}
+              className="flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 transition-colors shadow-sm"
+            >
+              <Plus size={16} />
+              Nieuw evenement
+            </button>
+          </div>
         }
       />
 
@@ -585,7 +616,7 @@ export function AdminEventsPage() {
                     colSpan={6}
                     className="px-5 py-10 text-center text-sm text-slate-400"
                   >
-                    Geen evenementen gevonden.
+                    {showHistory ? "Geen historische evenementen gevonden." : "Geen aankomende evenementen gevonden."}
                   </td>
                 </tr>
               ) : (
@@ -634,8 +665,8 @@ export function AdminEventsPage() {
                       </div>
                     </td>
                     <td className="px-5 py-3.5">
-                      <span className="text-sm font-mono text-slate-700 dark:text-slate-300">
-                        {event.date}
+                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                        {formatDate(event.date)}
                       </span>
                     </td>
                     <td className="px-5 py-3.5">

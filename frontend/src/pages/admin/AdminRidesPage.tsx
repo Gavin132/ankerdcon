@@ -3,6 +3,7 @@ import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Car, Train } from "lucide-react";
+import { formatDateTime } from "../../utils/format";
 import {
   useAdminRides,
   useAdminUsers,
@@ -465,7 +466,7 @@ export function AdminRidesPage() {
                     </td>
                     <td className="px-5 py-3.5">
                       <p className="text-sm text-slate-700 dark:text-slate-300 font-mono">
-                        {ride.departure_time}
+                        {formatDateTime(ride.departure_time)}
                       </p>
                       <p className="text-xs text-slate-400">
                         {ride.start_location}
