@@ -36,6 +36,21 @@ from app.core.database import supabase
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
+def _build_updates(body, nullable_fields: set[str] | None = None) -> dict:
+    """Build a partial-update dict.
+
+    Fields set to ``None`` are normally excluded so they don't accidentally
+    overwrite existing data.  Pass field names in *nullable_fields* to allow
+    those fields to be explicitly cleared (set to NULL) when the caller
+    includes them in the request body.
+    """
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    for field in (nullable_fields or set()):
+        if field in body.model_fields_set:
+            updates[field] = getattr(body, field)
+    return updates
+
+
 # ── Stats ──────────────────────────────────────────────────────────────────────
 
 @router.get("/stats")
@@ -210,7 +225,7 @@ def admin_update_ride(
     body: AdminUpdateRideRequest,
     _: str = Depends(get_admin_user),
 ) -> None:
-    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    updates = _build_updates(body, nullable_fields={"linked_event_id"})
     if not updates:
         return
     resp = supabase.table(Tables.RIDES).update(updates).eq("id", ride_id).execute()
@@ -259,7 +274,7 @@ def admin_update_meal(
     body: AdminUpdateMealRequest,
     _: str = Depends(get_admin_user),
 ) -> None:
-    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    updates = _build_updates(body, nullable_fields={"linked_event_id"})
     if not updates:
         return
     resp = supabase.table(Tables.MEALS).update(updates).eq("id", meal_id).execute()
