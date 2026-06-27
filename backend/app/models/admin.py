@@ -33,6 +33,7 @@ class AdminUpdateRideRequest(BaseModel):
     maps_link: Optional[str] = None
     car_available: Optional[bool] = None
     action_required: Optional[bool] = None
+    linked_event_id: Optional[str] = None
 
 
 class AdminCreateMealRequest(BaseModel):
@@ -41,6 +42,13 @@ class AdminCreateMealRequest(BaseModel):
     location: str = ""
     cost: float = 0.0
     transport_needed: bool = False
+    linked_event_id: Optional[str] = None
+    website: Optional[str] = None
+    menu_url: Optional[str] = None
+    description: Optional[str] = None
+    dietary_options: Optional[str] = None
+    parking_info: Optional[str] = None
+    extra_notes: Optional[str] = None
 
 
 class AdminUpdateMealRequest(BaseModel):
@@ -49,6 +57,13 @@ class AdminUpdateMealRequest(BaseModel):
     location: Optional[str] = None
     cost: Optional[float] = None
     transport_needed: Optional[bool] = None
+    linked_event_id: Optional[str] = None
+    website: Optional[str] = None
+    menu_url: Optional[str] = None
+    description: Optional[str] = None
+    dietary_options: Optional[str] = None
+    parking_info: Optional[str] = None
+    extra_notes: Optional[str] = None
 
 
 class AdminCreateCalendarEventRequest(BaseModel):
