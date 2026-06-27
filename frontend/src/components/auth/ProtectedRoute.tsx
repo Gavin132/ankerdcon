@@ -21,11 +21,11 @@ export function ProtectedRoute() {
     );
   }
 
+  if (forbidden) return <ForbiddenPage />;
+
   if (!accessToken) {
     return <Navigate to={routes.login} state={{ from: location.pathname }} replace />;
   }
-
-  if (forbidden) return <ForbiddenPage />;
 
   // Redirect to onboarding if user hasn't completed it yet.
   // Strict equality guards against undefined (migration not yet applied).

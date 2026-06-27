@@ -105,10 +105,44 @@ def get_current_user(
                 time.sleep(0.3)
 
         if profile_name is None:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Toegang geweigerd. Neem contact op met een beheerder.",
-            )
+            # No existing profile — auto-create one for this Discord user.
+            try:
+                new_name = (
+                    discord_username
+                    or discord_display_name
+                    or f"user_{user.id[:8]}"
+                )
+                insert_data: dict = {
+                    "id": user.id,
+                    "name": new_name,
+                    "is_active": True,
+                    "is_first_login": True,
+                    "allow_dm": True,
+                }
+                if discord_id:
+                    insert_data["discord_id"] = discord_id
+                if discord_avatar:
+                    insert_data["avatar_url"] = discord_avatar
+                if discord_username:
+                    insert_data["discord_username"] = discord_username
+                resp = supabase.table("profiles").insert(insert_data).execute()
+                if resp.data:
+                    profile_row = resp.data[0]
+                    profile_name = new_name
+                    print(f"[AUTH] auto-created profile for {new_name}")
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="Profiel aanmaken mislukt.",
+                    )
+            except HTTPException:
+                raise
+            except Exception as e:
+                print(f"[AUTH] auto-create profile failed: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Profiel aanmaken mislukt.",
+                )
 
         # ── 2b. Check if account is active ───────────────────────────────────
         if profile_row and profile_row.get("is_active") is False:

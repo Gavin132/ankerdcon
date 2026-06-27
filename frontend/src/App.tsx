@@ -33,24 +33,25 @@ function ThemeSync() {
   return null;
 }
 
-// THE NEW FIX: This silently watches for Discord tokens
+// Watches for Supabase auth state changes (Discord redirect, token refresh, sign-out).
+// Uses onAuthStateChange exclusively for initialization to avoid a race condition where
+// getSession() resolves before the OAuth hash is processed, returning null and causing
+// a spurious redirect to /login right after the Discord callback.
 function AuthSync() {
   const setAccessToken  = useAuthStore((s) => s.setAccessToken);
   const setInitialized  = useAuthStore((s) => s.setInitialized);
 
   useEffect(() => {
-    // 1. Restore session on load — always mark initialized when done
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setAccessToken(session.access_token);
-      setInitialized();
-    });
-
-    // 2. Keep token fresh on auth state changes (Discord redirect, token refresh, sign-out)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         setAccessToken(session.access_token);
       } else {
         setAccessToken(null);
+      }
+      // INITIAL_SESSION fires once on subscription, after Supabase has processed
+      // any OAuth hash/PKCE code in the URL — safe to mark as initialized here.
+      if (event === 'INITIAL_SESSION') {
+        setInitialized();
       }
     });
 
