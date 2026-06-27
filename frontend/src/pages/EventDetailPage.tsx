@@ -1,11 +1,12 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, CalendarDays } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { useCalendar } from "../hooks/useCalendar";
 import { useUsers } from "../hooks/useUsers";
 import { useMeals } from "../hooks/useMeals";
 import { useRides } from "../hooks/useRides";
 import { useEventWeather } from "../hooks/useEventWeather";
 import { parseEventDate } from "../utils/date";
+import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { EventHero } from "../components/event/EventHero";
 import { WeatherCard, WeatherSkeleton } from "../components/event/WeatherCard";
 import { EventLinks } from "../components/event/EventLinks";
@@ -64,25 +65,7 @@ export function EventDetailPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-
-      {/* Sticky topbar */}
-      <div className="sticky top-0 z-10 flex items-center gap-3 h-14 px-4
-                      bg-white/90 dark:bg-slate-950/90 backdrop-blur-md
-                      border-b border-slate-200 dark:border-white/[0.06]">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex h-8 w-8 items-center justify-center rounded-xl
-                     text-slate-500 dark:text-slate-400
-                     hover:bg-slate-100 dark:hover:bg-white/[0.08]
-                     hover:text-slate-900 dark:hover:text-white transition-colors"
-        >
-          <ArrowLeft size={18} />
-        </button>
-        <span className="font-bold text-slate-900 dark:text-white text-sm truncate">
-          {event.event_name}
-        </span>
-      </div>
-
+      <DetailTopbar title={event.event_name} onBack={() => navigate(-1)} />
       <EventHero event={event} daysUntil={daysUntil} users={users} />
 
       <div className="max-w-4xl mx-auto px-4 py-7 space-y-6">

@@ -3,6 +3,7 @@ import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Car, Train } from "lucide-react";
+import { LocationSearchInput } from "../../components/common/LocationSearchInput";
 import { formatDateTime } from "../../utils/format";
 import {
   useAdminRides,
@@ -41,9 +42,9 @@ const rideSchema = z.object({
   driver: z.string().min(1, "Driver is verplicht"),
   departure_time: z.string().min(1, "Vertrektijd is verplicht"),
   start_location: z.string().min(1, "Startlocatie is verplicht"),
+  end_location: z.string().optional(),
   total_seats: z.coerce.number().min(0),
   parking_info: z.string().optional(),
-  maps_link: z.string().optional(),
   car_available: z.boolean().optional(),
   action_required: z.boolean().optional(),
   linked_event_id: z.string().optional(),
@@ -84,9 +85,9 @@ function RideDrawer({
       driver: isEdit ? ride.driver : "",
       departure_time: isEdit ? ride.departure_time.replace(" ", "T").slice(0, 16) : "",
       start_location: isEdit ? ride.start_location : "",
+      end_location: isEdit ? (ride.end_location ?? "") : "",
       total_seats: isEdit ? ride.total_seats : 4,
       parking_info: isEdit ? ride.parking_info : "",
-      maps_link: isEdit ? ride.maps_link : "",
       car_available: isEdit ? ride.car_available : false,
       action_required: isEdit ? ride.action_required : false,
       linked_event_id: isEdit ? (ride.linked_event_id ?? "") : "",
@@ -96,7 +97,7 @@ function RideDrawer({
   const isPT = vehicleType === "Public Transport";
 
   async function onSubmit(values: RideForm) {
-    const payload = { ...values, linked_event_id: values.linked_event_id || null };
+    const payload = { ...values, linked_event_id: values.linked_event_id || undefined };
     try {
       if (isEdit) {
         await updateMutation.mutateAsync({ id: ride.id, ...payload });
@@ -199,49 +200,51 @@ function RideDrawer({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={L}>Startlocatie</label>
-            <input
-              {...register("start_location")}
-              className={F}
-              placeholder="Amsterdam CS"
-            />
-            {errors.start_location && (
-              <p className="text-xs text-rose-400 mt-1">
-                {errors.start_location.message}
-              </p>
-            )}
-          </div>
-          {!isPT && (
-            <div>
-              <label className={L}>Totaal zitplaatsen</label>
-              <input
-                {...register("total_seats")}
-                type="number"
-                min={0}
-                className={F}
+        <div>
+          <label className={L}>Startlocatie *</label>
+          <Controller
+            name="start_location"
+            control={control}
+            render={({ field }) => (
+              <LocationSearchInput
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                inputClassName={F}
+                placeholder="Zoek vertrekpunt…"
               />
-            </div>
+            )}
+          />
+          {errors.start_location && (
+            <p className="text-xs text-rose-400 mt-1">{errors.start_location.message}</p>
           )}
         </div>
 
         <div>
-          <label className={L}>Parkeertips</label>
-          <input
-            {...register("parking_info")}
-            className={F}
-            placeholder="Optioneel"
+          <label className={L}>Bestemming (optioneel)</label>
+          <Controller
+            name="end_location"
+            control={control}
+            render={({ field }) => (
+              <LocationSearchInput
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                inputClassName={F}
+                placeholder="Zoek eindbestemming…"
+              />
+            )}
           />
         </div>
 
+        {!isPT && (
+          <div>
+            <label className={L}>Totaal zitplaatsen</label>
+            <input {...register("total_seats")} type="number" min={0} className={F} />
+          </div>
+        )}
+
         <div>
-          <label className={L}>Maps link</label>
-          <input
-            {...register("maps_link")}
-            className={`${F} font-mono text-xs`}
-            placeholder="https://maps.google.com/..."
-          />
+          <label className={L}>Parkeertips</label>
+          <input {...register("parking_info")} className={F} placeholder="Optioneel" />
         </div>
 
         <div className="flex gap-6 pt-1">

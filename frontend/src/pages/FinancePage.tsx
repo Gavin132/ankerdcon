@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Wallet, Plus, ArrowRight, MessageCircle, Banknote } from "lucide-react";
+import { Wallet, Plus, ArrowRight, MessageCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";

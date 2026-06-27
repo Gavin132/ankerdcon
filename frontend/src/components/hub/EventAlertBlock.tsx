@@ -11,7 +11,7 @@ export function EventAlertBlock({ alert }: { alert: ActionAlert }) {
   return (
     <CollapsibleSection
       defaultOpen={false}
-      className="border-b border-slate-100 dark:border-slate-800 last:border-0"
+      className="border-b border-slate-100 dark:border-slate-700/60 last:border-0"
       titleClassName="py-2.5 px-4"
       title={
         <div className="flex items-center gap-2 min-w-0">

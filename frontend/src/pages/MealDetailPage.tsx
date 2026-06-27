@@ -53,12 +53,25 @@ export function MealDetailPage() {
       <DetailTopbar title={meal.meal_name} onBack={() => navigate(-1)} />
       <MealHero meal={meal} linkedEvent={linkedEvent} users={users} />
 
-      <div className="max-w-4xl mx-auto px-4 py-7 space-y-5">
-        <MealLinks website={meal.website} menuUrl={meal.menu_url} />
-        <MealPractical meal={meal} />
-        <MealRsvpSection meal={meal} userNames={userNames} users={users} />
-        {linkedEvent && <LinkedEventCard event={linkedEvent} />}
-      </div>
+      {(() => {
+        const hasSidePanel = !!(meal.website || meal.menu_url || meal.location?.trim() || meal.transport_needed || meal.parking_info || meal.dietary_options || meal.extra_notes);
+        return (
+          <div className="max-w-4xl mx-auto px-4 py-7">
+            <div className={`grid gap-5 items-start ${hasSidePanel ? "grid-cols-1 lg:grid-cols-3" : ""}`}>
+              <div className={`${hasSidePanel ? "lg:col-span-2" : ""} space-y-5`}>
+                <MealRsvpSection meal={meal} userNames={userNames} users={users} />
+                {linkedEvent && <LinkedEventCard event={linkedEvent} />}
+              </div>
+              {hasSidePanel && (
+                <div className="space-y-4">
+                  <MealLinks website={meal.website} menuUrl={meal.menu_url} />
+                  <MealPractical meal={meal} />
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

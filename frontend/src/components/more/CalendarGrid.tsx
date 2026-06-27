@@ -18,7 +18,7 @@ import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
 import { UserAvatar } from "../common/UserAvatar";
 import { parseEventDate, toDateKey, todayKey } from "../../utils/date";
-import { multiDayColor } from "../../utils/multiDay";
+import { buildGroupColorMap } from "../../utils/multiDay";
 import { routes } from "../../config/routes";
 import type { CalendarEvent, User } from "../../types";
 import { DAY_LABELS } from "../../constants";
@@ -56,14 +56,17 @@ export function CalendarGrid({
   }, [events]);
 
   // Group bands: which days have a multi-day span and their position (start/mid/end)
-  const { dayBands, groupEventIds, groupAllParticipants } = useMemo(() => {
+  const { dayBands, groupEventIds, groupAllParticipants, groupColorMap } = useMemo(() => {
+    // Build collision-free color map from all events (not just visible month)
+    const colorMap = buildGroupColorMap(events);
+
     const spans: Record<string, { dates: string[]; accent: string }> = {};
-    // Only consider events in visible month
     for (const [dateKey, evs] of Object.entries(eventMap)) {
       for (const ev of evs) {
         if (!ev.multi_day_id) continue;
         if (!spans[ev.multi_day_id]) {
-          spans[ev.multi_day_id] = { dates: [], accent: multiDayColor(ev.multi_day_id).accent };
+          const accent = colorMap.get(ev.multi_day_id)?.accent ?? "#38bdf8";
+          spans[ev.multi_day_id] = { dates: [], accent };
         }
         if (!spans[ev.multi_day_id].dates.includes(dateKey)) {
           spans[ev.multi_day_id].dates.push(dateKey);
@@ -73,7 +76,7 @@ export function CalendarGrid({
     for (const s of Object.values(spans)) s.dates.sort();
 
     const bands: Record<string, { accent: string; isStart: boolean; isEnd: boolean }[]> = {};
-    for (const [id, span] of Object.entries(spans)) {
+    for (const [, span] of Object.entries(spans)) {
       for (let i = 0; i < span.dates.length; i++) {
         const dk = span.dates[i];
         if (!bands[dk]) bands[dk] = [];
@@ -93,7 +96,7 @@ export function CalendarGrid({
       }
     }
 
-    return { dayBands: bands, groupEventIds: evIds, groupAllParticipants: evParts };
+    return { dayBands: bands, groupEventIds: evIds, groupAllParticipants: evParts, groupColorMap: colorMap };
   }, [eventMap, events]);
 
   const [currentMonth, setCurrentMonth] = useState<{
@@ -160,7 +163,7 @@ export function CalendarGrid({
   return (
     <div className="card-surface rounded-2xl overflow-hidden">
       {/* Month navigation */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-slate-50 dark:border-slate-800">
+      <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-700/60">
         <button
           onClick={prevMonth}
           className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 active:bg-slate-100 transition-colors dark:hover:bg-slate-700"
@@ -199,71 +202,85 @@ export function CalendarGrid({
         </div>
 
         {/* Day cells */}
-        <div className="grid grid-cols-7 gap-0.5">
+        <div className="grid grid-cols-7 gap-0">
           {cells.map((day, i) => {
-            if (day === null) return <div key={i} className="h-10" />;
+            if (day === null) return <div key={i} className="h-11" />;
             const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
             const hasEvents = !!eventMap[dateKey]?.length;
             const isSelected = selectedDate === dateKey;
             const isToday = today === dateKey;
-            const eventCount = eventMap[dateKey]?.length ?? 0;
+            const primaryBand = dayBands[dateKey]?.[0];
+            const isInGroup = !!primaryBand;
 
             return (
               <button
                 key={i}
-                onClick={() =>
-                  hasEvents && setSelectedDate(isSelected ? null : dateKey)
-                }
+                onClick={() => hasEvents && setSelectedDate(isSelected ? null : dateKey)}
                 disabled={!hasEvents}
                 className={[
-                  "relative flex h-10 flex-col items-center justify-center rounded-xl text-sm transition-all",
-                  isSelected
-                    ? "bg-sky-500 text-white shadow-sm font-black"
-                    : "",
-                  !isSelected && hasEvents
-                    ? "text-sky-700 font-black hover:bg-sky-50 cursor-pointer dark:text-sky-400 dark:hover:bg-sky-900/30"
-                    : "",
-                  !isSelected && !hasEvents
-                    ? "text-slate-300 font-medium cursor-default"
-                    : "",
-                  isToday && !isSelected
-                    ? "ring-2 ring-sky-400 ring-offset-1"
-                    : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
+                  "relative flex h-11 flex-col items-center justify-center text-sm transition-all select-none",
+                  hasEvents ? "cursor-pointer" : "cursor-default",
+                  // Hover for non-group single-event days
+                  !isSelected && hasEvents && !isInGroup ? "rounded-xl hover:bg-sky-50 dark:hover:bg-sky-900/20" : "",
+                  // Hover for group days
+                  !isSelected && isInGroup ? "hover:brightness-95 dark:hover:brightness-110" : "",
+                ].filter(Boolean).join(" ")}
               >
-                <span className="leading-none z-10 relative">{day}</span>
-
-                {/* Multi-day group bands: colored strip connecting consecutive days */}
-                {!isSelected && dayBands[dateKey]?.map((band, bi) => (
+                {/* ── Multi-day group background span ── */}
+                {!isSelected && primaryBand && (
                   <div
-                    key={bi}
-                    className="absolute pointer-events-none"
+                    className="absolute inset-y-1 pointer-events-none z-0"
                     style={{
-                      bottom: `${4 + bi * 5}px`,
-                      height: "3px",
-                      left: band.isStart ? "25%" : "-1px",
-                      right: band.isEnd ? "25%" : "-1px",
-                      backgroundColor: band.accent,
-                      borderRadius: band.isStart && band.isEnd
-                        ? "3px"
-                        : band.isStart
-                          ? "3px 0 0 3px"
-                          : band.isEnd
-                            ? "0 3px 3px 0"
-                            : "0",
+                      left: primaryBand.isStart ? "20%" : 0,
+                      right: primaryBand.isEnd ? "20%" : 0,
+                      backgroundColor: primaryBand.accent + "2a",
+                      borderRadius:
+                        primaryBand.isStart && primaryBand.isEnd ? "9999px"
+                        : primaryBand.isStart ? "9999px 0 0 9999px"
+                        : primaryBand.isEnd ? "0 9999px 9999px 0"
+                        : 0,
                     }}
                   />
-                ))}
+                )}
 
-                {/* Dots only for days with no group bands */}
-                {hasEvents && !isSelected && !dayBands[dateKey] && (
-                  <span className="mt-0.5 flex gap-0.5">
-                    {(eventMap[dateKey] ?? []).slice(0, 3).map((_ev, j) => (
-                      <span key={j} className="h-1 w-1 rounded-full bg-sky-400" />
-                    ))}
-                  </span>
+                {/* ── Selected state circle ── */}
+                {isSelected && (
+                  <div className="absolute inset-y-1 left-[12%] right-[12%] bg-sky-500 rounded-full shadow-sm pointer-events-none z-0" />
+                )}
+
+                {/* ── Today ring ── */}
+                {isToday && !isSelected && (
+                  <div
+                    className="absolute inset-y-1 left-[12%] right-[12%] rounded-full pointer-events-none z-0"
+                    style={{ boxShadow: "0 0 0 2px #38bdf8" }}
+                  />
+                )}
+
+                {/* ── Day number ── */}
+                <span
+                  className={[
+                    "relative z-10 leading-none",
+                    isSelected ? "font-black text-white" : "",
+                    !isSelected && isInGroup ? "font-black" : "",
+                    !isSelected && !isInGroup && hasEvents ? "font-black text-sky-700 dark:text-sky-400" : "",
+                    !isSelected && !hasEvents ? "font-medium text-slate-300 dark:text-slate-600" : "",
+                  ].filter(Boolean).join(" ")}
+                  style={!isSelected && primaryBand ? { color: primaryBand.accent } : undefined}
+                >
+                  {day}
+                </span>
+
+                {/* ── Dot for single (non-group) events ── */}
+                {hasEvents && !isSelected && !isInGroup && (
+                  <span className="mt-0.5 h-1 w-1 rounded-full bg-sky-400 z-10" />
+                )}
+
+                {/* ── Extra band dot when day has 2+ groups ── */}
+                {!isSelected && (dayBands[dateKey]?.length ?? 0) > 1 && (
+                  <span
+                    className="absolute bottom-1 right-1 h-1.5 w-1.5 rounded-full z-10"
+                    style={{ backgroundColor: dayBands[dateKey][1].accent }}
+                  />
                 )}
               </button>
             );
@@ -280,24 +297,37 @@ export function CalendarGrid({
               transition={{ duration: 0.22 }}
               className="overflow-hidden"
             >
-              <div className="mt-3 space-y-2.5 border-t border-slate-100 pt-3 dark:border-slate-700">
+              <div className="mt-3 space-y-2.5 border-t border-slate-100 dark:border-slate-700/60 pt-3">
                 {selectedEvents.map((ev) => {
                   const isPast = selectedDate !== null && selectedDate < today;
                   const isRsvpOpen = activeRsvpEvent === ev.id;
                   const hasRsvp = !!onRsvp && !!onLeave && (allUsers ?? []).length > 0;
+                  const evColor = ev.multi_day_id ? groupColorMap.get(ev.multi_day_id) : null;
 
                   return (
                     <div
                       key={ev.id}
-                      className="rounded-xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-3 dark:border-sky-900/50 dark:from-sky-900/20 dark:to-slate-800/50"
+                      className="rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-black/20"
                     >
+                      {/* Accent line */}
+                      <div
+                        className="h-[3px]"
+                        style={{
+                          background: evColor
+                            ? `linear-gradient(to right, ${evColor.accent}, ${evColor.accent}80)`
+                            : "linear-gradient(to right, #38bdf8, #818cf8)",
+                        }}
+                      />
+                      <div className="p-3">
                       <div className="flex items-start gap-2.5">
                         <div
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${ev.multi_day_id ? "" : "gradient-brand"}`}
-                          style={ev.multi_day_id ? { backgroundColor: multiDayColor(ev.multi_day_id).accent + "22" } : undefined}
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                          style={evColor
+                            ? { backgroundColor: evColor.accent + "22" }
+                            : { background: "linear-gradient(135deg,#38bdf8,#818cf8)" }}
                         >
-                          {ev.multi_day_id
-                            ? <Layers size={14} style={{ color: multiDayColor(ev.multi_day_id).accent }} />
+                          {evColor
+                            ? <Layers size={14} style={{ color: evColor.accent }} />
                             : <CalendarDays size={14} className="text-white" />}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -331,7 +361,7 @@ export function CalendarGrid({
                                     key={p}
                                     name={resolved?.name ?? p}
                                     user={resolved}
-                                    className="h-7 w-7 text-[10px] ring-2 ring-white dark:ring-slate-800"
+                                    className="h-7 w-7 text-[10px] ring-2 ring-white dark:ring-[#1e293b]"
                                   />
                                 );
                               })}
@@ -438,7 +468,7 @@ export function CalendarGrid({
                                         type="button"
                                         onClick={() => { setGroupRsvpId(ev.multi_day_id!); setGroupRsvpMode("join"); setRsvpNames([]); setActiveRsvpEvent(null); }}
                                         className="flex w-full items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition-colors"
-                                        style={{ border: `1px solid ${multiDayColor(ev.multi_day_id!).accent}40`, backgroundColor: `${multiDayColor(ev.multi_day_id!).accent}12`, color: multiDayColor(ev.multi_day_id!).accent }}
+                                        style={{ border: `1px solid ${evColor?.accent ?? "#38bdf8"}40`, backgroundColor: `${evColor?.accent ?? "#38bdf8"}12`, color: evColor?.accent ?? "#38bdf8" }}
                                       >
                                         <Layers size={11} />
                                         Alle {groupIds.length} dagen aanmelden
@@ -451,6 +481,7 @@ export function CalendarGrid({
                           })()}
                         </div>
                       </div>
+                      </div>{/* /p-3 */}
                     </div>
                   );
                 })}

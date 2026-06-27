@@ -21,7 +21,7 @@ import {
   groupCalendarEntries,
   getGroupTitle,
   formatDateRange,
-  multiDayColor,
+  buildGroupColorMap,
   dayShort,
   monthShort,
   type GroupItem,
@@ -62,6 +62,8 @@ export function CalendarArchive({
 
   const today = todayKey();
   const hasRsvp = !!onRsvp && !!onLeave && allUsers.length > 0;
+
+  const groupColorMap = buildGroupColorMap(events);
 
   const allEntries = events
     .map((ev) => ({ ev, date: parseEventDate(ev.date) }))
@@ -320,7 +322,7 @@ export function CalendarArchive({
   // ── Multi-day group block ────────────────────────────────────────────────
 
   function renderGroupBlock(item: GroupItem, isPast: boolean) {
-    const color = multiDayColor(item.multiDayId);
+    const color = groupColorMap.get(item.multiDayId) ?? { accent: "#38bdf8", bg: "bg-sky-500/10", text: "text-sky-400" } as MultiDayColor;
     const isExpanded = expandedGroups.has(item.multiDayId);
     const title = getGroupTitle(item.events);
     const dateRange = formatDateRange(item.events.map((e) => e.date));

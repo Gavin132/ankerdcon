@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Euro, Clock, MapPin, Bus } from "lucide-react";
+import { Plus, Euro, Clock, Bus, MapPin } from "lucide-react";
+import { LocationSearchInput } from "../../components/common/LocationSearchInput";
 import { formatDateTime } from "../../utils/format";
 import {
   useAdminMeals,
@@ -66,6 +67,7 @@ function MealDrawer({
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<MealForm>({
@@ -162,7 +164,9 @@ function MealDrawer({
             <label className={L}>Tijdstip *</label>
             <input {...register("time")} type="time" className={F} />
             {errors.time && (
-              <p className="text-xs text-rose-400 mt-1">{errors.time.message}</p>
+              <p className="text-xs text-rose-400 mt-1">
+                {errors.time.message}
+              </p>
             )}
           </div>
           <div>
@@ -180,11 +184,21 @@ function MealDrawer({
 
         <div>
           <label className={L}>Locatie</label>
-          <input
-            {...register("location")}
-            className={F}
-            placeholder="Adres of naam"
+          <Controller
+            name="location"
+            control={control}
+            render={({ field }) => (
+              <LocationSearchInput
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                inputClassName={F}
+              />
+            )}
           />
+          <p className="text-[10px] text-slate-500 mt-1.5">
+            Zoek een naam of adres — selecteer een resultaat om de locatie te
+            bevestigen met een kaartpreview.
+          </p>
         </div>
 
         <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 hover:bg-white/[0.06] transition-colors">
@@ -202,7 +216,10 @@ function MealDrawer({
 
           <div>
             <label className={L}>Koppel aan evenement</label>
-            <select {...register("linked_event_id")} className={`${F} [color-scheme:dark]`}>
+            <select
+              {...register("linked_event_id")}
+              className={`${F} [color-scheme:dark]`}
+            >
               <option value="">— Geen evenement —</option>
               {allEvents.map((ev) => (
                 <option key={ev.id} value={ev.id}>
@@ -314,8 +331,14 @@ export function AdminMealsPage() {
     (currentPage + 1) * PAGE_SIZE,
   );
 
-  const { selectedIds, toggleSelect, selectAll, clearSelection, allSelected, indeterminate } =
-    useTableSelection(paginated.map((m) => m.id));
+  const {
+    selectedIds,
+    toggleSelect,
+    selectAll,
+    clearSelection,
+    allSelected,
+    indeterminate,
+  } = useTableSelection(paginated.map((m) => m.id));
 
   async function handleBulkDelete() {
     const ids = [...selectedIds];
@@ -374,7 +397,9 @@ export function AdminMealsPage() {
                   <input
                     type="checkbox"
                     checked={allSelected}
-                    ref={(el) => { if (el) el.indeterminate = indeterminate; }}
+                    ref={(el) => {
+                      if (el) el.indeterminate = indeterminate;
+                    }}
                     onChange={selectAll}
                     className="cb"
                   />
@@ -416,7 +441,10 @@ export function AdminMealsPage() {
                   >
                     <td
                       className="w-10 pl-4 pr-2 py-3.5"
-                      onClick={(e) => { e.stopPropagation(); toggleSelect(meal.id); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSelect(meal.id);
+                      }}
                     >
                       <input
                         type="checkbox"

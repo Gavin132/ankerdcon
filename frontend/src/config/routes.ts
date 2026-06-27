@@ -10,6 +10,7 @@ export const routes = {
   food:      "/food",
   finance:   "/finance",
   more:      "/more",
+  members:   "/members",
 
   profile: {
     /** Build the URL for a user profile page. Name is URI-encoded automatically. */

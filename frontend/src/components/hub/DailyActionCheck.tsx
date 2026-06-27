@@ -32,13 +32,16 @@ export function DailyActionCheck({
           </span>
         }
       >
-        <div className="card-surface rounded-2xl overflow-hidden divide-y divide-slate-50 dark:divide-slate-800">
+        <div className="card-surface rounded-2xl overflow-hidden">
+          <div className="h-[3px] bg-gradient-to-r from-amber-400 via-orange-400 to-amber-300" />
+          <div>
           {alerts.map((alert) => (
             <EventAlertBlock key={alert.date + alert.eventName} alert={alert} />
           ))}
           {restaurantGaps.map((gap) => (
             <RestaurantGapBlock key={gap.id} gap={gap} />
           ))}
+          </div>
         </div>
       </CollapsibleSection>
     </motion.div>

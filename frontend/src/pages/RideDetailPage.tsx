@@ -54,9 +54,17 @@ export function RideDetailPage() {
       />
       <RideHero ride={ride} linkedEvent={linkedEvent} users={users} />
 
-      <div className="max-w-4xl mx-auto px-4 py-7 space-y-5">
-        <RideActions ride={ride} userNames={userNames} users={users} />
-        {linkedEvent && <LinkedEventCard event={linkedEvent} />}
+      <div className="max-w-4xl mx-auto px-4 py-7">
+        <div className={`grid gap-5 items-start ${linkedEvent ? "grid-cols-1 lg:grid-cols-3" : ""}`}>
+          <div className={linkedEvent ? "lg:col-span-2" : ""}>
+            <RideActions ride={ride} userNames={userNames} users={users} />
+          </div>
+          {linkedEvent && (
+            <div>
+              <LinkedEventCard event={linkedEvent} />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

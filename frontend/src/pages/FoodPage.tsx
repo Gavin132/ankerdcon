@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { UtensilsCrossed, Plus, History, ChevronDown } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
+import { LocationSearchInput } from "../components/common/LocationSearchInput";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "../components/common/Button";
@@ -213,23 +214,29 @@ export function FoodPage() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={SL}>Locatie</label>
-                  <input
-                    className="input-field"
-                    placeholder="Restaurant of adres"
-                    {...register("location")}
-                  />
-                </div>
-                <div>
-                  <label className={SL}>Kosten p.p.</label>
-                  <input
-                    className="input-field"
-                    placeholder="Bijv. €25"
-                    {...register("cost")}
-                  />
-                </div>
+              <div>
+                <label className={SL}>Locatie</label>
+                <Controller
+                  name="location"
+                  control={control}
+                  render={({ field }) => (
+                    <LocationSearchInput
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      inputClassName="input-field"
+                      placeholder="Zoek restaurant of locatie…"
+                    />
+                  )}
+                />
+              </div>
+
+              <div>
+                <label className={SL}>Kosten p.p.</label>
+                <input
+                  className="input-field"
+                  placeholder="Bijv. €25"
+                  {...register("cost")}
+                />
               </div>
             </div>
           </div>

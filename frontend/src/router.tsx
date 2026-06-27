@@ -13,6 +13,7 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { EventDetailPage } from "./pages/EventDetailPage";
 import { MealDetailPage } from "./pages/MealDetailPage";
 import { RideDetailPage } from "./pages/RideDetailPage";
+import { MembersPage } from "./pages/MembersPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { AdminLayout } from "./pages/admin/AdminLayout";
@@ -71,6 +72,10 @@ export const router = createBrowserRouter([
       {
         path: routes.ride.pattern,
         element: <RideDetailPage />,
+      },
+      {
+        path: routes.members,
+        element: <MembersPage />,
       },
       // ── Admin portal ──────────────────────────────────────────────
       {

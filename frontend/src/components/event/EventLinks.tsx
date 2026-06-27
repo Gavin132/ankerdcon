@@ -12,7 +12,7 @@ export function EventLinks({ event }: EventLinksProps) {
   const hasSaleInfo = !!event.ticket_sale_start;
 
   return (
-    <div className="h-full flex flex-col rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden bg-white dark:bg-slate-900">
+    <div className="h-full flex flex-col card-surface rounded-2xl overflow-hidden">
 
       {/* Panel header */}
       <div className="relative overflow-hidden bg-gradient-to-br from-indigo-500 via-violet-500 to-violet-600 px-5 py-4">

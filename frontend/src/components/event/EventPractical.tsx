@@ -20,10 +20,10 @@ function buildItems(event: CalendarEvent): PracticalItem[] {
 }
 
 const COLOR_MAP = {
-  sky:     { bg: "bg-sky-100 dark:bg-sky-500/10",     icon: "text-sky-600 dark:text-sky-400"     },
-  violet:  { bg: "bg-violet-100 dark:bg-violet-500/10", icon: "text-violet-600 dark:text-violet-400" },
-  emerald: { bg: "bg-emerald-100 dark:bg-emerald-500/10", icon: "text-emerald-600 dark:text-emerald-400" },
-  amber:   { bg: "bg-amber-100 dark:bg-amber-500/10", icon: "text-amber-600 dark:text-amber-400" },
+  sky:     { bg: "bg-sky-100 dark:bg-sky-500/10",       icon: "text-sky-600 dark:text-sky-400",       bar: "from-sky-400 to-blue-500"      },
+  violet:  { bg: "bg-violet-100 dark:bg-violet-500/10", icon: "text-violet-600 dark:text-violet-400", bar: "from-violet-400 to-purple-500"  },
+  emerald: { bg: "bg-emerald-100 dark:bg-emerald-500/10", icon: "text-emerald-600 dark:text-emerald-400", bar: "from-emerald-400 to-teal-500" },
+  amber:   { bg: "bg-amber-100 dark:bg-amber-500/10",   icon: "text-amber-600 dark:text-amber-400",   bar: "from-amber-400 to-orange-500"   },
 };
 
 function PracticalCard({ icon: Icon, label, content, color, alert }: PracticalItem) {
@@ -31,10 +31,11 @@ function PracticalCard({ icon: Icon, label, content, color, alert }: PracticalIt
 
   if (alert) {
     return (
-      <div className="rounded-2xl border border-amber-200 dark:border-amber-500/25 bg-amber-50 dark:bg-amber-500/[0.07] p-5">
-        <div className="flex items-start gap-4">
-          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${cls.bg}`}>
-            <Icon size={18} className={cls.icon} />
+      <div className="rounded-2xl border border-amber-200 dark:border-amber-500/25 bg-amber-50 dark:bg-amber-500/[0.07] overflow-hidden">
+        <div className="h-[3px] bg-gradient-to-r from-amber-400 to-orange-500" />
+        <div className="flex items-start gap-3 px-4 py-4">
+          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${cls.bg}`}>
+            <Icon size={14} className={cls.icon} />
           </div>
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600/70 dark:text-amber-400/60 mb-1.5">
@@ -50,16 +51,21 @@ function PracticalCard({ icon: Icon, label, content, color, alert }: PracticalIt
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
-      <div className={`flex h-10 w-10 items-center justify-center rounded-xl mb-4 ${cls.bg}`}>
-        <Icon size={18} className={cls.icon} />
+    <div className="card-surface rounded-2xl overflow-hidden">
+      <div className={`h-[3px] bg-gradient-to-r ${cls.bar}`} />
+      <div className="flex items-start gap-3 px-4 py-4">
+        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${cls.bg}`}>
+          <Icon size={14} className={cls.icon} />
+        </div>
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
+            {label}
+          </p>
+          <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">
+            {content}
+          </p>
+        </div>
       </div>
-      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
-        {label}
-      </p>
-      <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">
-        {content}
-      </p>
     </div>
   );
 }

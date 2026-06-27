@@ -15,12 +15,34 @@ export const MULTI_DAY_COLORS = [
 
 export type MultiDayColor = (typeof MULTI_DAY_COLORS)[number];
 
-/** Deterministic color for a multi_day_id string (hash-based). */
+/** Deterministic color for a multi_day_id string (hash-based, kept as fallback). */
 export function multiDayColor(id: string): MultiDayColor {
   let h = 0;
   for (let i = 0; i < id.length; i++)
     h = (h * 31 + id.charCodeAt(i)) & 0xffffff;
   return MULTI_DAY_COLORS[h % MULTI_DAY_COLORS.length];
+}
+
+/**
+ * Build a collision-free color map for all multi-day groups in a list of events.
+ * Colors are assigned by ascending first-event-date order, so ungrouping/regrouping
+ * a set of events never produces the same color as an unrelated group.
+ */
+export function buildGroupColorMap(events: CalendarEvent[]): Map<string, MultiDayColor> {
+  // Find the earliest date string per multi_day_id
+  const groupFirstDate = new Map<string, string>();
+  for (const ev of events) {
+    if (!ev.multi_day_id) continue;
+    const existing = groupFirstDate.get(ev.multi_day_id);
+    if (!existing || ev.date < existing) {
+      groupFirstDate.set(ev.multi_day_id, ev.date);
+    }
+  }
+  // Sort groups by first date (ISO strings sort correctly)
+  const sorted = [...groupFirstDate.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  const map = new Map<string, MultiDayColor>();
+  sorted.forEach(([id], i) => map.set(id, MULTI_DAY_COLORS[i % MULTI_DAY_COLORS.length]));
+  return map;
 }
 
 // ── Data model ────────────────────────────────────────────────────────────────

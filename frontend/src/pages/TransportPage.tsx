@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
+import { LocationSearchInput } from "../components/common/LocationSearchInput";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "../components/common/Button";
@@ -29,8 +30,6 @@ import { useCalendar } from "../hooks/useCalendar";
 import { toast } from "../store/toast.store";
 import { getRideStatus } from "../utils/rides";
 import type { Direction, VehicleType } from "../types";
-
-const enc = encodeURIComponent;
 
 const createSchema = z.object({
   direction: z.enum(["Inbound", "Outbound", "Restaurant"]),
@@ -123,10 +122,6 @@ export function TransportPage() {
   }
 
   async function onCreate(values: CreateForm) {
-    const mapsLink = values.end_location
-      ? `https://www.google.com/maps/dir/?api=1&origin=${enc(values.start_location)}&destination=${enc(values.end_location)}`
-      : `https://www.google.com/maps/search/?api=1&query=${enc(values.start_location)}`;
-
     try {
       await createMutation.mutateAsync({
         direction: values.direction as Direction,
@@ -134,9 +129,9 @@ export function TransportPage() {
         driver: values.driver,
         departure_time: values.departure_time,
         start_location: values.start_location,
+        end_location: values.end_location || undefined,
         total_seats: values.total_seats,
         parking_info: values.parking_info ?? "",
-        maps_link: mapsLink,
         car_available: values.car_available ?? false,
         action_required: values.action_required ?? false,
         linked_event_id: values.linked_event_id || undefined,
@@ -386,14 +381,21 @@ export function TransportPage() {
               <label className={SL}>
                 {formDirection === "Restaurant" ? "Restaurant / locatie" : "Vertrekpunt"}
               </label>
-              <input
-                className="input-field"
-                placeholder={
-                  formDirection === "Restaurant"
-                    ? "Bijv. La Piazza, Rotterdam"
-                    : "Bijv. Amsterdam Sloterdijk, Westmaas"
-                }
-                {...register("start_location")}
+              <Controller
+                name="start_location"
+                control={control}
+                render={({ field }) => (
+                  <LocationSearchInput
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    inputClassName="input-field"
+                    placeholder={
+                      formDirection === "Restaurant"
+                        ? "Zoek restaurant of locatie…"
+                        : "Zoek vertrekpunt…"
+                    }
+                  />
+                )}
               />
               {errors.start_location && (
                 <p className="mt-1.5 text-xs text-rose-500">{errors.start_location.message}</p>
@@ -402,10 +404,17 @@ export function TransportPage() {
             {formDirection !== "Restaurant" && (
               <div>
                 <label className={SL}>Bestemming (optioneel)</label>
-                <input
-                  className="input-field"
-                  placeholder="Bijv. Rotterdam Ahoy"
-                  {...register("end_location")}
+                <Controller
+                  name="end_location"
+                  control={control}
+                  render={({ field }) => (
+                    <LocationSearchInput
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      inputClassName="input-field"
+                      placeholder="Zoek bestemming…"
+                    />
+                  )}
                 />
               </div>
             )}

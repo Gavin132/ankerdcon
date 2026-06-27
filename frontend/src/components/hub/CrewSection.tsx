@@ -92,7 +92,7 @@ export function CrewSection({ users }: CrewSectionProps) {
                 />
               </div>
 
-              <div className="card-surface rounded-2xl divide-y divide-slate-50 dark:divide-slate-800">
+              <div className="card-surface rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-700/60">
                 {filtered.length === 0 ? (
                   <p className="px-4 py-6 text-center text-sm text-slate-400">
                     Geen resultaten voor &ldquo;{query}&rdquo;
@@ -106,7 +106,7 @@ export function CrewSection({ users }: CrewSectionProps) {
                         setPopupAnchorRect({ top: rect.top, left: rect.left, right: rect.right, height: rect.height });
                         setPopupUser(u);
                       }}
-                      className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-slate-50 active:bg-slate-50 transition-colors dark:hover:bg-slate-800/60"
+                      className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-slate-50 active:bg-slate-50 dark:hover:bg-black/20 dark:active:bg-black/20 transition-colors"
                     >
                       <UserAvatar name={u.name} className="h-10 w-10 text-sm rounded-xl" />
                       <div className="flex-1 min-w-0">

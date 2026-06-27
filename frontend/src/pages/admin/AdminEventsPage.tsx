@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, CalendarDays, Hotel, X as XIcon, Link2, Unlink2, Tag, Check, Layers, History } from "lucide-react";
@@ -17,12 +17,12 @@ import {
   useAdminBulkGroupEvents,
   useAdminBulkSetEventGroup,
 } from "../../hooks/useAdmin";
-import type { EventGroup } from "../../services/admin.service";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { AdminDrawer } from "./AdminDrawer";
 import { toast } from "../../store/toast.store";
 import { routes } from "../../config/routes";
 import { F, FS, SECTION, SECTION_TITLE } from "./styles";
+import { LocationSearchInput } from "../../components/common/LocationSearchInput";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminSearch } from "./components/AdminSearch";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
@@ -94,6 +94,7 @@ function EventDrawer({
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<EventForm>({
@@ -234,7 +235,18 @@ function EventDrawer({
           </div>
           <div>
             <label className="block text-xs text-slate-400 mb-1">Locatie</label>
-            <input {...register("location")} className={F} placeholder="Biddinghuizen" />
+            <Controller
+              name="location"
+              control={control}
+              render={({ field }) => (
+                <LocationSearchInput
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  inputClassName={F}
+                  placeholder="Zoek locatie of adres…"
+                />
+              )}
+            />
           </div>
         </div>
 

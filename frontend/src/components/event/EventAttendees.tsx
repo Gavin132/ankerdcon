@@ -41,9 +41,10 @@ export function EventAttendees({ participants, users }: EventAttendeesProps) {
     <div className="space-y-3">
       <SectionLabel>Aanmeldingen</SectionLabel>
 
-      <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+      <div className="card-surface rounded-2xl overflow-hidden">
+        <div className="h-[3px] bg-gradient-to-r from-indigo-400 to-violet-500" />
         {/* Header strip — facepile + count */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800/60">
           <div className="flex -space-x-3">
             {participants.slice(0, 12).map((p) => {
               const u = resolveUser(p);

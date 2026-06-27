@@ -82,7 +82,7 @@ export interface Ride {
   total_seats: number;
   passengers: string[];
   parking_info: string;
-  maps_link: string;
+  end_location: string | null;
   seats_left: number;
   is_full: boolean;
   is_public_transport: boolean;
@@ -100,7 +100,7 @@ export interface CreateRideRequest {
   start_location: string;
   total_seats: number;
   parking_info?: string;
-  maps_link?: string;
+  end_location?: string;
   car_available?: boolean;
   action_required?: boolean;
   linked_event_id?: string;
