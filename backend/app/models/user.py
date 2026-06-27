@@ -16,6 +16,7 @@ class User(BaseModel):
     bio: Optional[str] = None
     banner_color: Optional[str] = None
     banner_url: Optional[str] = None
+    banner_position: Optional[str] = None
     discord_id: Optional[str] = None
     discord_username: Optional[str] = None
     avatar_url: Optional[str] = None
@@ -52,6 +53,7 @@ class UpdatePreferencesRequest(BaseModel):
     font: Optional[Literal["default", "mono", "serif", "cursive", "display"]] = None
     bio: Optional[str] = None
     banner_color: Optional[str] = None
+    banner_position: Optional[str] = None
     pronouns: Optional[str] = None
     phone_number: Optional[str] = None
     aliases: Optional[list[str]] = None

@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   color                TEXT,
   banner_color         TEXT,
   banner_url           TEXT,
+  banner_position      TEXT,
   font                 TEXT,
   live_location_ping   TEXT,
   aliases              TEXT[]      NOT NULL DEFAULT '{}',

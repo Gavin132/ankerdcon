@@ -13,8 +13,8 @@ interface Props {
   open: boolean;
   file: File | null;
   onClose: () => void;
-  /** Called with the cropped Blob and whether it's an animated GIF */
-  onConfirm: (blob: Blob, isGif: boolean) => void;
+  /** Called with the cropped Blob, whether it's an animated GIF, and the CSS background-position (GIF only) */
+  onConfirm: (blob: Blob, isGif: boolean, position?: string) => void;
 }
 
 function clamp(v: number, lo: number, hi: number) {
@@ -139,8 +139,11 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
     setSaving(true);
     try {
       if (isGif) {
-        // Canvas cannot export animated GIFs — upload the original file
-        onConfirm(file, true);
+        // Canvas cannot export animated GIFs — upload the original file and pass the drag position
+        const bgX = maxPx > 0 ? 50 - (cx / maxPx) * 50 : 50;
+        const bgY = maxPy > 0 ? 50 - (cy / maxPy) * 50 : 50;
+        const position = `${Math.round(bgX)}% ${Math.round(bgY)}%`;
+        onConfirm(file, true, position);
         return;
       }
 

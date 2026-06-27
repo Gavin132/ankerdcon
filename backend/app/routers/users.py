@@ -1,7 +1,7 @@
 from datetime import datetime
 import uuid
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 
 from app.constants import Tables
 from app.dependencies import get_current_user
@@ -40,13 +40,14 @@ def update_preferences(
     current_user: str = Depends(get_current_user),
 ) -> None:
     updates = {k: v for k, v in {
-        "color":        body.color,
-        "font":         body.font,
-        "bio":          body.bio,
-        "banner_color": body.banner_color,
-        "pronouns":     body.pronouns,
-        "phone_number": body.phone_number,
-        "aliases":      body.aliases,
+        "color":           body.color,
+        "font":            body.font,
+        "bio":             body.bio,
+        "banner_color":    body.banner_color,
+        "banner_position": body.banner_position,
+        "pronouns":        body.pronouns,
+        "phone_number":    body.phone_number,
+        "aliases":         body.aliases,
     }.items() if v is not None}
 
     if not updates:
@@ -167,6 +168,7 @@ def get_user(identifier: str, _: str = Depends(get_current_user)) -> User:
 @router.post("/banner", response_model=dict)
 async def upload_banner(
     file: UploadFile = File(...),
+    position: str | None = Form(None),
     current_user: str = Depends(get_current_user),
 ) -> dict:
     """Upload a banner image/GIF for the current user to Supabase Storage."""
@@ -209,7 +211,10 @@ async def upload_banner(
     public_url = supabase.storage.from_(BANNER_BUCKET).get_public_url(path)
     versioned_url = f"{public_url}?v={uuid.uuid4().hex[:8]}"
 
-    supabase.table(Tables.PROFILES).update({"banner_url": versioned_url}).eq("name", current_user).execute()
+    supabase.table(Tables.PROFILES).update({
+        "banner_url": versioned_url,
+        "banner_position": position or None,
+    }).eq("name", current_user).execute()
     return {"url": versioned_url}
 
 
@@ -228,4 +233,4 @@ def delete_banner(current_user: str = Depends(get_current_user)) -> None:
         except Exception:
             pass
 
-    supabase.table(Tables.PROFILES).update({"banner_url": None}).eq("name", current_user).execute()
+    supabase.table(Tables.PROFILES).update({"banner_url": None, "banner_position": None}).eq("name", current_user).execute()

@@ -84,8 +84,8 @@ export function useUpdatePreferences() {
 export function useUploadBanner() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ blob, mimeType }: { blob: Blob; mimeType: string }) =>
-      uploadBanner(blob, mimeType),
+    mutationFn: ({ blob, mimeType, position }: { blob: Blob; mimeType: string; position?: string }) =>
+      uploadBanner(blob, mimeType, position),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.userBase });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.users });

@@ -30,9 +30,10 @@ export async function updateName(payload: UpdateNameRequest): Promise<void> {
   await apiClient.patch(apiRoutes.users.name, payload);
 }
 
-export async function uploadBanner(blob: Blob, mimeType: string): Promise<{ url: string }> {
+export async function uploadBanner(blob: Blob, mimeType: string, position?: string): Promise<{ url: string }> {
   const form = new FormData();
   form.append("file", blob, `banner.${mimeType === "image/gif" ? "gif" : "jpg"}`);
+  if (position) form.append("position", position);
   const { data } = await apiClient.post<{ url: string }>(apiRoutes.users.banner, form, {
     headers: { "Content-Type": "multipart/form-data" },
   });

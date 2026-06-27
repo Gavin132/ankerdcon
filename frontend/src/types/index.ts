@@ -32,6 +32,7 @@ export interface User {
   pronouns: string;
   avatar_url?: string;
   banner_url?: string;
+  banner_position?: string;
   discord_id?: string;
   discord_username?: string;
   is_admin?: boolean;
@@ -55,6 +56,7 @@ export interface UpdatePreferencesRequest {
   font?: FontOption;
   bio?: string;
   banner_color?: string;
+  banner_position?: string;
   pronouns?: string;
   phone_number?: string;
   aliases?: string[];

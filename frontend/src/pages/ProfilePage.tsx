@@ -81,12 +81,13 @@ const BANNER_COLORS = [
 function getBannerStyle(
   bannerColor: string,
   bannerUrl?: string,
+  bannerPosition?: string,
 ): React.CSSProperties {
   if (bannerUrl)
     return {
       backgroundImage: `url(${bannerUrl})`,
       backgroundSize: "cover",
-      backgroundPosition: "center",
+      backgroundPosition: bannerPosition || "center",
     };
   if (bannerColor) return { backgroundColor: bannerColor };
   return { background: "linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)" };
@@ -345,6 +346,7 @@ export function ProfilePage() {
   const [draftPronouns, setDraftPronouns] = useState("");
   const [draftPhone, setDraftPhone] = useState("");
   const [draftAliases, setDraftAliases] = useState<string[]>([]);
+  const [draftBannerPosition, setDraftBannerPosition] = useState<string>("");
   const [aliasInput, setAliasInput] = useState("");
   const [initialized, setInitialized] = useState(false);
   const [avatarImgErr, setAvatarImgErr] = useState(false);
@@ -367,6 +369,7 @@ export function ProfilePage() {
       setDraftPronouns(user.pronouns || "");
       setDraftPhone(user.phone_number || "");
       setDraftAliases(user.aliases ?? []);
+      setDraftBannerPosition(user.banner_position || "");
       setInitialized(true);
     }
   }, [user, initialized]);
@@ -392,13 +395,15 @@ export function ProfilePage() {
     setCropOpen(true);
   }
 
-  async function onBannerConfirm(blob: Blob, isGif: boolean) {
+  async function onBannerConfirm(blob: Blob, isGif: boolean, position?: string) {
     setCropOpen(false);
     try {
       await uploadBannerMutation.mutateAsync({
         blob,
         mimeType: isGif ? "image/gif" : "image/jpeg",
+        position: isGif ? position : undefined,
       });
+      setDraftBannerPosition(isGif && position ? position : "");
       toast("success", "Banner bijgewerkt!");
     } catch {
       toast("error", "Kon banner niet uploaden.");
@@ -408,6 +413,7 @@ export function ProfilePage() {
   async function onBannerDelete() {
     try {
       await deleteBannerMutation.mutateAsync();
+      setDraftBannerPosition("");
       toast("success", "Banner verwijderd.");
     } catch {
       toast("error", "Kon banner niet verwijderen.");
@@ -425,6 +431,7 @@ export function ProfilePage() {
         color: draftColor || "",
         font: draftFont,
         banner_color: draftBanner,
+        banner_position: draftBannerPosition || undefined,
         pronouns: draftPronouns,
         phone_number: draftPhone || "",
         aliases: draftAliases,
@@ -443,9 +450,11 @@ export function ProfilePage() {
   const displayBio = isOwn ? draftBio : user?.bio || "";
   const displayPronouns = isOwn ? draftPronouns : user?.pronouns || "";
 
+  const displayBannerPosition = isOwn ? draftBannerPosition : user?.banner_position || "";
   const bannerStyle = getBannerStyle(
     displayBanner,
     user?.banner_url ?? undefined,
+    displayBannerPosition || undefined,
   );
   const nameStyle: React.CSSProperties = {
     color: displayColor || undefined,
