@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS rides (
   total_seats        INTEGER  NOT NULL DEFAULT 0,
   passengers         TEXT[]   NOT NULL DEFAULT '{}',
   parking_info       TEXT,
-  maps_link          TEXT,
+  end_location       TEXT,
   car_available      BOOLEAN  NOT NULL DEFAULT false,
   action_required    BOOLEAN  NOT NULL DEFAULT false,
   restaurant_drivers JSONB    NOT NULL DEFAULT '[]',
