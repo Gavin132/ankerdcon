@@ -142,6 +142,13 @@ class BulkDeleteEventGroupsRequest(BaseModel):
     group_ids: list[str]
 
 
+class AdminUpdateHotelRoomRequest(BaseModel):
+    room_number: Optional[str] = None
+    floor: Optional[str] = None
+    instructions: Optional[str] = None
+    occupants: Optional[list[str]] = None
+
+
 class BulkGroupEventsRequest(BaseModel):
     event_ids: list[str]
     multi_day_id: str | None = None  # None = ungroup; omit to auto-generate

@@ -12,6 +12,7 @@ class Tables:
     CALENDAR     = "calendar"
     BADGES       = "badges"
     EVENT_GROUPS = "event_groups"
+    HOTEL_ROOMS  = "hotel_rooms"
 
 
 # ── API ───────────────────────────────────────────────────────────

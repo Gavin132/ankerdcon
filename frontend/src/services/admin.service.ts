@@ -241,6 +241,27 @@ export async function bulkSetAdminEventGroup(
   });
 }
 
+// ── Hotel Rooms (admin) ───────────────────────────────────────────────────────
+
+export interface AdminUpdateHotelRoomPayload {
+  room_number?: string;
+  floor?: string;
+  instructions?: string;
+  occupants?: string[];
+}
+
+export async function adminUpdateHotelRoom(
+  eventId: string,
+  roomId: string,
+  payload: AdminUpdateHotelRoomPayload,
+): Promise<void> {
+  await apiClient.put(apiRoutes.admin.calendar.hotelRoomById(eventId, roomId), payload);
+}
+
+export async function adminDeleteHotelRoom(eventId: string, roomId: string): Promise<void> {
+  await apiClient.delete(apiRoutes.admin.calendar.hotelRoomById(eventId, roomId));
+}
+
 // ── Event groups ──────────────────────────────────────────────────────────────
 
 export interface EventGroup {

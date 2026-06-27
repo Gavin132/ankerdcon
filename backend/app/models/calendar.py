@@ -32,3 +32,28 @@ class CalendarEvent(BaseModel):
 
 class CalendarRsvpRequest(BaseModel):
     user_name: str
+
+
+class HotelRoom(BaseModel):
+    id: str
+    event_id: str
+    room_number: str
+    floor: str | None = None
+    instructions: str | None = None
+    occupants: list[str] = []
+    created_at: str | None = None
+
+
+class CreateHotelRoomRequest(BaseModel):
+    room_number: str
+    floor: str | None = None
+    instructions: str | None = None
+    occupants: list[str] = []
+
+
+class HotelRoomAssignRequest(BaseModel):
+    user_names: list[str]
+
+
+class HotelRoomLeaveRequest(BaseModel):
+    user_name: str

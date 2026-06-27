@@ -34,10 +34,13 @@ import {
   updateAdminMeal,
   updateAdminRide,
   updateAdminUser,
+  adminUpdateHotelRoom,
+  adminDeleteHotelRoom,
   type AdminCreateEventPayload,
   type AdminCreateMealPayload,
   type AdminCreateUserPayload,
   type AdminUpdateEventPayload,
+  type AdminUpdateHotelRoomPayload,
   type AdminUpdateMealPayload,
   type AdminUpdateRidePayload,
   type AdminUpdateUserPayload,
@@ -338,6 +341,32 @@ export function useAdminSetEventGroup() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEvents });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.calendar });
+    },
+  });
+}
+
+// ── Hotel Room (admin) hooks ──────────────────────────────────────────────────
+
+export function useAdminUpdateHotelRoom() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ eventId, roomId, payload }: { eventId: string; roomId: string; payload: AdminUpdateHotelRoomPayload }) =>
+      adminUpdateHotelRoom(eventId, roomId, payload),
+    onSuccess: (_d, { eventId }) => {
+      qc.invalidateQueries({ queryKey: ["hotel-rooms", eventId] });
+      qc.invalidateQueries({ queryKey: ["admin", "hotel-rooms", eventId] });
+    },
+  });
+}
+
+export function useAdminDeleteHotelRoom() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ eventId, roomId }: { eventId: string; roomId: string }) =>
+      adminDeleteHotelRoom(eventId, roomId),
+    onSuccess: (_d, { eventId }) => {
+      qc.invalidateQueries({ queryKey: ["hotel-rooms", eventId] });
+      qc.invalidateQueries({ queryKey: ["admin", "hotel-rooms", eventId] });
     },
   });
 }

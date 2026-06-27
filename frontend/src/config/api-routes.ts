@@ -30,9 +30,12 @@ export const apiRoutes = {
 
   // ── Calendar ─────────────────────────────────────────────────────
   calendar: {
-    base:  "/api/calendar/",
-    rsvp:  (id: string) => `/api/calendar/${id}/rsvp`,
-    leave: (id: string) => `/api/calendar/${id}/leave`,
+    base:         "/api/calendar/",
+    rsvp:         (id: string) => `/api/calendar/${id}/rsvp`,
+    leave:        (id: string) => `/api/calendar/${id}/leave`,
+    hotelRooms:   (eventId: string) => `/api/calendar/${eventId}/hotel-rooms`,
+    assignRoom:   (eventId: string, roomId: string) => `/api/calendar/${eventId}/hotel-rooms/${roomId}/assign`,
+    leaveRoom:    (eventId: string, roomId: string) => `/api/calendar/${eventId}/hotel-rooms/${roomId}/leave`,
   },
 
   // ── Users ────────────────────────────────────────────────────────
@@ -79,13 +82,15 @@ export const apiRoutes = {
     },
 
     calendar: {
-      base:        "/api/admin/calendar",
-      byId:        (id: string) => `/api/admin/calendar/${id}`,
-      group:       (id: string) => `/api/admin/calendar/${id}/group`,
-      participant: (id: string, p: string) => `/api/admin/calendar/${id}/participants/${encodeURIComponent(p)}`,
-      bulkDelete:  "/api/admin/calendar/bulk-delete",
-      bulkGroup:   "/api/admin/calendar/bulk-group",
-      bulkSetGroup:"/api/admin/calendar/bulk-set-group",
+      base:         "/api/admin/calendar",
+      byId:         (id: string) => `/api/admin/calendar/${id}`,
+      group:        (id: string) => `/api/admin/calendar/${id}/group`,
+      participant:  (id: string, p: string) => `/api/admin/calendar/${id}/participants/${encodeURIComponent(p)}`,
+      bulkDelete:   "/api/admin/calendar/bulk-delete",
+      bulkGroup:    "/api/admin/calendar/bulk-group",
+      bulkSetGroup: "/api/admin/calendar/bulk-set-group",
+      hotelRooms:   (eventId: string) => `/api/admin/calendar/${eventId}/hotel-rooms`,
+      hotelRoomById:(eventId: string, roomId: string) => `/api/admin/calendar/${eventId}/hotel-rooms/${roomId}`,
     },
 
     eventGroups: {

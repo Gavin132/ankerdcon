@@ -23,6 +23,11 @@ export const routes = {
     pattern: "/events/:id",
   },
 
+  eventHotel: {
+    view:    (id: string) => `/events/${id}/hotel`,
+    pattern: "/events/:id/hotel",
+  },
+
   meal: {
     view:    (id: string) => `/meals/${id}`,
     pattern: "/meals/:id",

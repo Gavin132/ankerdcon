@@ -8,6 +8,7 @@ from app.models.admin import (
     AdminCreateMealRequest,
     AdminCreateUserRequest,
     AdminUpdateCalendarEventRequest,
+    AdminUpdateHotelRoomRequest,
     AdminUpdateMealRequest,
     AdminUpdateRideRequest,
     AdminUpdateUserRequest,
@@ -25,7 +26,8 @@ from app.models.admin import (
     UpdateEventGroupRequest,
 )
 from app.models.badge import Badge, BadgeOrderItem, CreateBadgeRequest, UpdateBadgeRequest
-from app.models.calendar import CalendarEvent
+from app.models.calendar import CalendarEvent, HotelRoom
+from app.routers.calendar import _hotel_group_key
 from app.models.meal import Meal
 from app.models.rides import CreateRideRequest, Ride
 from app.models.user import User
@@ -414,6 +416,41 @@ def admin_set_event_group(
 @router.delete("/calendar/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
 def admin_delete_event(event_id: str, _: str = Depends(get_admin_user)) -> None:
     supabase.table(Tables.CALENDAR).delete().eq("id", event_id).execute()
+
+
+@router.get("/calendar/{event_id}/hotel-rooms", response_model=list[HotelRoom])
+def admin_list_hotel_rooms(event_id: str, _: str = Depends(get_admin_user)) -> list[HotelRoom]:
+    group_key, _ = _hotel_group_key(event_id)
+    return supabase.table(Tables.HOTEL_ROOMS).select("*").eq("event_id", group_key).order("room_number").execute().data
+
+
+@router.put("/calendar/{event_id}/hotel-rooms/{room_id}", status_code=status.HTTP_204_NO_CONTENT)
+def admin_update_hotel_room(
+    event_id: str,
+    room_id: str,
+    body: AdminUpdateHotelRoomRequest,
+    _: str = Depends(get_admin_user),
+) -> None:
+    updates: dict = {}
+    for field, value in body.model_dump(exclude_unset=False).items():
+        if field in body.model_fields_set:
+            updates[field] = value
+        elif value is not None:
+            updates[field] = value
+    if not updates:
+        return
+    resp = supabase.table(Tables.HOTEL_ROOMS).update(updates).eq("id", room_id).execute()
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kamer niet gevonden.")
+
+
+@router.delete("/calendar/{event_id}/hotel-rooms/{room_id}", status_code=status.HTTP_204_NO_CONTENT)
+def admin_delete_hotel_room(
+    event_id: str,
+    room_id: str,
+    _: str = Depends(get_admin_user),
+) -> None:
+    supabase.table(Tables.HOTEL_ROOMS).delete().eq("id", room_id).execute()
 
 
 @router.delete("/calendar/{event_id}/participants/{participant}", status_code=status.HTTP_204_NO_CONTENT)

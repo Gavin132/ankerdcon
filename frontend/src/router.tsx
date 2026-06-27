@@ -14,6 +14,7 @@ import { EventDetailPage } from "./pages/EventDetailPage";
 import { MealDetailPage } from "./pages/MealDetailPage";
 import { RideDetailPage } from "./pages/RideDetailPage";
 import { MembersPage } from "./pages/MembersPage";
+import { HotelRoomsPage } from "./pages/HotelRoomsPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { AdminLayout } from "./pages/admin/AdminLayout";
@@ -76,6 +77,10 @@ export const router = createBrowserRouter([
       {
         path: routes.members,
         element: <MembersPage />,
+      },
+      {
+        path: routes.eventHotel.pattern,
+        element: <HotelRoomsPage />,
       },
       // ── Admin portal ──────────────────────────────────────────────
       {

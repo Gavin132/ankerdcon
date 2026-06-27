@@ -199,6 +199,23 @@ export interface TicketType {
   price: number;
 }
 
+export interface HotelRoom {
+  id: string;
+  event_id: string;
+  room_number: string;
+  floor?: string;
+  instructions?: string;
+  occupants: string[];
+  created_at?: string;
+}
+
+export interface CreateHotelRoomRequest {
+  room_number: string;
+  floor?: string;
+  instructions?: string;
+  occupants?: string[];
+}
+
 export interface CalendarEvent {
   id: string;
   event_group_id?: string;

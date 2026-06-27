@@ -5,7 +5,14 @@ from fastapi.responses import PlainTextResponse
 
 from app.constants import Tables
 from app.dependencies import get_current_user
-from app.models.calendar import CalendarEvent, CalendarRsvpRequest
+from app.models.calendar import (
+    CalendarEvent,
+    CalendarRsvpRequest,
+    HotelRoom,
+    CreateHotelRoomRequest,
+    HotelRoomAssignRequest,
+    HotelRoomLeaveRequest,
+)
 from app.core.database import supabase
 
 router = APIRouter(prefix="/calendar", tags=["calendar"])
@@ -113,3 +120,68 @@ def leave_event(event_id: str, body: CalendarRsvpRequest, _: str = Depends(get_c
             supabase.table(Tables.CALENDAR).update({"participants": participants}).eq("event_group_id", group_id).execute()
         else:
             supabase.table(Tables.CALENDAR).update({"participants": participants}).eq("id", event_id).execute()
+
+
+# ── Hotel Rooms ────────────────────────────────────────────────────────────────
+
+def _hotel_group_key(event_id: str) -> str:
+    """Return the multi_day_id if this event belongs to a multi-day group,
+    otherwise return the event_id itself.  This ensures all days in a group
+    share exactly the same set of hotel rooms."""
+    resp = supabase.table(Tables.CALENDAR).select("multi_day_id, is_hotel").eq("id", event_id).execute()
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenement niet gevonden.")
+    row = resp.data[0]
+    return row["multi_day_id"] or event_id, row.get("is_hotel", False)
+
+
+@router.get("/{event_id}/hotel-rooms", response_model=list[HotelRoom])
+def list_hotel_rooms(event_id: str, _: str = Depends(get_current_user)) -> list[HotelRoom]:
+    group_key, _ = _hotel_group_key(event_id)
+    return supabase.table(Tables.HOTEL_ROOMS).select("*").eq("event_id", group_key).order("room_number").execute().data
+
+
+@router.post("/{event_id}/hotel-rooms", response_model=HotelRoom, status_code=status.HTTP_201_CREATED)
+def create_hotel_room(
+    event_id: str,
+    body: CreateHotelRoomRequest,
+    _: str = Depends(get_current_user),
+) -> HotelRoom:
+    group_key, is_hotel = _hotel_group_key(event_id)
+    if not is_hotel:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Dit evenement heeft geen hotel.")
+    data = {k: v for k, v in body.model_dump().items() if v is not None}
+    data["event_id"] = group_key
+    data.setdefault("occupants", [])
+    resp = supabase.table(Tables.HOTEL_ROOMS).insert(data).execute()
+    return resp.data[0]
+
+
+@router.post("/{event_id}/hotel-rooms/{room_id}/assign", status_code=status.HTTP_204_NO_CONTENT)
+def assign_hotel_room(
+    event_id: str,
+    room_id: str,
+    body: HotelRoomAssignRequest,
+    _: str = Depends(get_current_user),
+) -> None:
+    # Look up by room id only — event_id already resolved to group_key at creation time
+    resp = supabase.table(Tables.HOTEL_ROOMS).select("occupants").eq("id", room_id).execute()
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kamer niet gevonden.")
+    current = resp.data[0].get("occupants") or []
+    merged = list(dict.fromkeys(current + body.user_names))
+    supabase.table(Tables.HOTEL_ROOMS).update({"occupants": merged}).eq("id", room_id).execute()
+
+
+@router.post("/{event_id}/hotel-rooms/{room_id}/leave", status_code=status.HTTP_204_NO_CONTENT)
+def leave_hotel_room(
+    event_id: str,
+    room_id: str,
+    body: HotelRoomLeaveRequest,
+    _: str = Depends(get_current_user),
+) -> None:
+    resp = supabase.table(Tables.HOTEL_ROOMS).select("occupants").eq("id", room_id).execute()
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kamer niet gevonden.")
+    occupants = [o for o in (resp.data[0].get("occupants") or []) if o != body.user_name]
+    supabase.table(Tables.HOTEL_ROOMS).update({"occupants": occupants}).eq("id", room_id).execute()
