@@ -58,20 +58,24 @@ export const apiRoutes = {
     stats: "/api/admin/stats",
 
     users: {
-      base: "/api/admin/users",
-      byId: (id: string) => `/api/admin/users/${id}`,
+      base:             "/api/admin/users",
+      byId:             (id: string) => `/api/admin/users/${id}`,
+      bulkDelete:       "/api/admin/users/bulk-delete",
+      bulkDeactivate:   "/api/admin/users/bulk-deactivate",
     },
 
     rides: {
-      base:      "/api/admin/rides",
-      byId:      (id: string) => `/api/admin/rides/${id}`,
-      passenger: (id: string, p: string) => `/api/admin/rides/${id}/passengers/${encodeURIComponent(p)}`,
+      base:        "/api/admin/rides",
+      byId:        (id: string) => `/api/admin/rides/${id}`,
+      passenger:   (id: string, p: string) => `/api/admin/rides/${id}/passengers/${encodeURIComponent(p)}`,
+      bulkDelete:  "/api/admin/rides/bulk-delete",
     },
 
     meals: {
       base:        "/api/admin/meals",
       byId:        (id: string) => `/api/admin/meals/${id}`,
       participant: (id: string, p: string) => `/api/admin/meals/${id}/participants/${encodeURIComponent(p)}`,
+      bulkDelete:  "/api/admin/meals/bulk-delete",
     },
 
     calendar: {
@@ -85,8 +89,9 @@ export const apiRoutes = {
     },
 
     eventGroups: {
-      base: "/api/admin/event-groups",
-      byId: (id: string) => `/api/admin/event-groups/${id}`,
+      base:       "/api/admin/event-groups",
+      byId:       (id: string) => `/api/admin/event-groups/${id}`,
+      bulkDelete: "/api/admin/event-groups/bulk-delete",
     },
 
     badges: {
