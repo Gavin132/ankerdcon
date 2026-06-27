@@ -12,12 +12,13 @@ import {
   useAdminUpdateEvent,
   useAdminDeleteEvent,
   useAdminRemoveEventParticipant,
+  useAdminEventGroups,
 } from "../../hooks/useAdmin";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { AdminDrawer } from "./AdminDrawer";
 import { toast } from "../../store/toast.store";
 import { routes } from "../../config/routes";
-import { F, SECTION, SECTION_TITLE } from "./styles";
+import { F, FS, SECTION, SECTION_TITLE } from "./styles";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminSearch } from "./components/AdminSearch";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
@@ -63,6 +64,7 @@ function EventDrawer({
   const createMutation = useAdminCreateEvent();
   const updateMutation = useAdminUpdateEvent();
   const removeParticipant = useAdminRemoveEventParticipant();
+  const { data: eventGroups = [] } = useAdminEventGroups();
   const isEdit = event !== null && event !== "new";
   const open = event !== null;
 
@@ -105,10 +107,21 @@ function EventDrawer({
   });
 
   async function onSubmit(values: EventForm) {
+    const strip = (v: string | undefined) => v || undefined;
     const cleaned = {
-      ...values,
-      website: values.website || undefined,
-      ticket_url: values.ticket_url || undefined,
+      event_name: values.event_name,
+      date: values.date,
+      is_hotel: values.is_hotel,
+      event_group_id: strip(values.event_group_id),
+      description: strip(values.description),
+      location: strip(values.location),
+      website: strip(values.website),
+      ticket_url: strip(values.ticket_url),
+      ticket_sale_start: strip(values.ticket_sale_start),
+      locker_info: strip(values.locker_info),
+      parking_info: strip(values.parking_info),
+      special_instructions: strip(values.special_instructions),
+      what_to_bring: strip(values.what_to_bring),
       ticket_types: ticketTypes,
     };
     try {
@@ -183,8 +196,13 @@ function EventDrawer({
               )}
             </div>
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Groep ID</label>
-              <input {...register("event_group_id")} className={F} placeholder="Comic Con" />
+              <label className="block text-xs text-slate-400 mb-1">Groep</label>
+              <select {...register("event_group_id")} className={FS}>
+                <option value="">— Geen groep —</option>
+                {eventGroups.map((g) => (
+                  <option key={g.id} value={g.name}>{g.name}</option>
+                ))}
+              </select>
             </div>
           </div>
           <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 hover:bg-white/[0.06] transition-colors">
@@ -361,13 +379,16 @@ export function AdminEventsPage() {
   const navigate = useNavigate();
   const { data: events = [], isLoading } = useAdminEvents();
   const { data: allUsers = [] } = useAdminUsers();
+  const { data: eventGroups = [] } = useAdminEventGroups();
   const deleteMutation = useAdminDeleteEvent();
   const [search, setSearch] = useState("");
+  const [groupFilter, setGroupFilter] = useState("All");
   const [page, setPage] = useState(0);
   const [drawer, setDrawer] = useState<CalendarEvent | "new" | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const filtered = events.filter((ev) => {
+    if (groupFilter !== "All" && (ev.event_group_id ?? "") !== groupFilter) return false;
     if (!search) return true;
     const q = search.toLowerCase();
     return (
@@ -415,11 +436,30 @@ export function AdminEventsPage() {
         }
       />
 
-      <AdminSearch
-        value={search}
-        onChange={handleSearch}
-        placeholder="Zoek op naam, groep of datum..."
-      />
+      <div className="flex flex-col sm:flex-row gap-3">
+        {eventGroups.length > 0 && (
+          <div className="flex gap-1.5 overflow-x-auto pb-1">
+            {["All", ...eventGroups.map((g) => g.name)].map((g) => (
+              <button
+                key={g}
+                onClick={() => { setGroupFilter(g); setPage(0); }}
+                className={`shrink-0 rounded-xl px-3.5 py-1.5 text-sm font-semibold transition-colors ${
+                  groupFilter === g
+                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
+                    : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                }`}
+              >
+                {g === "All" ? "Alle" : g}
+              </button>
+            ))}
+          </div>
+        )}
+        <AdminSearch
+          value={search}
+          onChange={handleSearch}
+          placeholder="Zoek op naam, groep of datum..."
+        />
+      </div>
 
       <div className="rounded-2xl border border-slate-200/80 dark:border-white/[0.06] bg-white dark:bg-slate-800/60 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">

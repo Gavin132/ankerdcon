@@ -23,11 +23,12 @@ export const routes = {
   },
 
   admin: {
-    base:   "/admin",
-    users:  "/admin/users",
-    rides:  "/admin/rides",
-    meals:  "/admin/meals",
-    events: "/admin/events",
-    badges: "/admin/badges",
+    base:        "/admin",
+    users:       "/admin/users",
+    rides:       "/admin/rides",
+    meals:       "/admin/meals",
+    events:      "/admin/events",
+    eventGroups: "/admin/event-groups",
+    badges:      "/admin/badges",
   },
 } as const;

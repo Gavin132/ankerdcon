@@ -6,14 +6,23 @@ import {
   UtensilsCrossed,
   CalendarDays,
   ShieldCheck,
+  Layers,
 } from "lucide-react";
 import { routes } from "../../config/routes";
+
+export interface SubNavItem {
+  label: string;
+  path: string;
+  icon: LucideIcon;
+  end?: boolean;
+}
 
 export interface NavItem {
   label: string;
   path: string;
   icon: LucideIcon;
   end?: boolean;
+  children?: SubNavItem[];
 }
 
 export interface NavGroup {
@@ -42,19 +51,28 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Gebruikers",  path: routes.admin.users,  icon: Users },
       { label: "Ritten",      path: routes.admin.rides,  icon: Car },
       { label: "Maaltijden",  path: routes.admin.meals,  icon: UtensilsCrossed },
-      { label: "Evenementen", path: routes.admin.events, icon: CalendarDays },
+      {
+        label: "Evenementen",
+        path: routes.admin.events,
+        icon: CalendarDays,
+        children: [
+          { label: "Overzicht", path: routes.admin.events,      icon: CalendarDays, end: true },
+          { label: "Groepen",   path: routes.admin.eventGroups, icon: Layers },
+        ],
+      },
       { label: "Badges",      path: routes.admin.badges, icon: ShieldCheck },
     ],
   },
 ];
 
 export const PAGE_TITLES: Record<string, string> = {
-  [routes.admin.base]:   "Dashboard",
-  [routes.admin.users]:  "Gebruikers",
-  [routes.admin.rides]:  "Ritten",
-  [routes.admin.meals]:  "Maaltijden",
-  [routes.admin.events]: "Evenementen",
-  [routes.admin.badges]: "Badges",
+  [routes.admin.base]:        "Dashboard",
+  [routes.admin.users]:       "Gebruikers",
+  [routes.admin.rides]:       "Ritten",
+  [routes.admin.meals]:       "Maaltijden",
+  [routes.admin.events]:      "Evenementen",
+  [routes.admin.eventGroups]: "Evenementgroepen",
+  [routes.admin.badges]:      "Badges",
 };
 
 export const DIRECTION_COLORS: Record<string, string> = {

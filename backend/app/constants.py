@@ -5,12 +5,13 @@ from __future__ import annotations
 
 # ── Supabase table names ───────────────────────────────────────────
 class Tables:
-    PROFILES = "profiles"
-    RIDES    = "rides"
-    MEALS    = "meals"
-    PAYMENTS = "payments"
-    CALENDAR = "calendar"
-    BADGES   = "badges"
+    PROFILES     = "profiles"
+    RIDES        = "rides"
+    MEALS        = "meals"
+    PAYMENTS     = "payments"
+    CALENDAR     = "calendar"
+    BADGES       = "badges"
+    EVENT_GROUPS = "event_groups"
 
 
 # ── API ───────────────────────────────────────────────────────────

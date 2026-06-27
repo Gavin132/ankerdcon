@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Shield,
   ChevronDown,
@@ -21,6 +21,7 @@ interface Props {
 
 export function AdminSidebar({ collapsed, onClose }: Props) {
   const navigate = useNavigate();
+  const location = useLocation();
   const currentUser = useAuthStore((s) => s.currentUser);
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const { data: me } = useUser(currentUser ?? "");
@@ -28,6 +29,8 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
     beheer: true,
     entiteiten: true,
   });
+  // Track which nav items with children are expanded (keyed by path)
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
 
   function toggleGroup(key: string) {
     setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -102,55 +105,99 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
                     : "space-y-0.5 px-2"
                 }
               >
-                {group.items.map(({ label, path, icon: Icon, end }) => (
-                  <NavLink
-                    key={path}
-                    to={path}
-                    end={end}
-                    onClick={onClose}
-                    title={collapsed ? label : undefined}
-                    className={({ isActive }) =>
-                      collapsed
-                        ? `flex h-9 w-9 items-center justify-center rounded-xl transition-colors ${
-                            isActive
-                              ? "bg-sky-600 text-white"
-                              : "text-slate-500 hover:bg-white/[0.06] hover:text-slate-200"
-                          }`
-                        : `group flex items-center gap-2.5 rounded-xl px-3 py-2.5 transition-colors ${
-                            isActive
-                              ? "bg-sky-600 text-white font-bold"
+                {group.items.map((item) => {
+                  const { label, path, icon: Icon, end, children } = item;
+                  const hasChildren = !!children?.length;
+                  const isChildActive = hasChildren && children!.some((c) => location.pathname === c.path);
+                  const isExpanded = expandedItems[path] ?? isChildActive;
+
+                  if (hasChildren && !collapsed) {
+                    return (
+                      <div key={path}>
+                        <button
+                          onClick={() => setExpandedItems((prev) => ({ ...prev, [path]: !isExpanded }))}
+                          className={`group flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 transition-colors ${
+                            isChildActive
+                              ? "text-sky-400 font-bold"
                               : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-100 font-medium"
-                          }`
-                    }
-                  >
-                    {({ isActive }) => (
-                      <>
-                        {!collapsed && (
-                          <span
-                            className={`text-[8px] shrink-0 transition-opacity ${
-                              isActive ? "opacity-100 text-white" : "opacity-0"
-                            }`}
-                          >
-                            ●
-                          </span>
-                        )}
-                        <Icon
-                          size={collapsed ? 17 : 14}
-                          className={`shrink-0 ${
-                            isActive
-                              ? "text-white"
-                              : "text-slate-500 group-hover:text-slate-300"
                           }`}
-                        />
-                        {!collapsed && (
-                          <span className="text-[13px] leading-none">
-                            {label}
-                          </span>
+                        >
+                          <span className={`text-[8px] shrink-0 transition-opacity ${isChildActive ? "opacity-100 text-sky-400" : "opacity-0"}`}>●</span>
+                          <Icon size={14} className={`shrink-0 ${isChildActive ? "text-sky-400" : "text-slate-500 group-hover:text-slate-300"}`} />
+                          <span className="flex-1 text-[13px] leading-none text-left">{label}</span>
+                          <ChevronDown
+                            size={11}
+                            className={`shrink-0 text-slate-600 transition-transform duration-200 ${isExpanded ? "" : "-rotate-90"}`}
+                          />
+                        </button>
+                        {isExpanded && (
+                          <div className="ml-5 mt-0.5 space-y-0.5 border-l border-white/[0.06] pl-3">
+                            {children!.map(({ label: cLabel, path: cPath, icon: CIcon, end: cEnd }) => (
+                              <NavLink
+                                key={cPath}
+                                to={cPath}
+                                end={cEnd}
+                                onClick={onClose}
+                                className={({ isActive }) =>
+                                  `group flex items-center gap-2 rounded-xl px-2.5 py-2 transition-colors ${
+                                    isActive
+                                      ? "bg-sky-600 text-white font-bold"
+                                      : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-100 font-medium"
+                                  }`
+                                }
+                              >
+                                {({ isActive }) => (
+                                  <>
+                                    <CIcon size={13} className={`shrink-0 ${isActive ? "text-white" : "text-slate-500 group-hover:text-slate-300"}`} />
+                                    <span className="text-[12px] leading-none">{cLabel}</span>
+                                  </>
+                                )}
+                              </NavLink>
+                            ))}
+                          </div>
                         )}
-                      </>
-                    )}
-                  </NavLink>
-                ))}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <NavLink
+                      key={path}
+                      to={path}
+                      end={end}
+                      onClick={onClose}
+                      title={collapsed ? label : undefined}
+                      className={({ isActive }) =>
+                        collapsed
+                          ? `flex h-9 w-9 items-center justify-center rounded-xl transition-colors ${
+                              isActive
+                                ? "bg-sky-600 text-white"
+                                : "text-slate-500 hover:bg-white/[0.06] hover:text-slate-200"
+                            }`
+                          : `group flex items-center gap-2.5 rounded-xl px-3 py-2.5 transition-colors ${
+                              isActive
+                                ? "bg-sky-600 text-white font-bold"
+                                : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-100 font-medium"
+                            }`
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          {!collapsed && (
+                            <span className={`text-[8px] shrink-0 transition-opacity ${isActive ? "opacity-100 text-white" : "opacity-0"}`}>●</span>
+                          )}
+                          <Icon
+                            size={collapsed ? 17 : 14}
+                            className={`shrink-0 ${isActive ? "text-white" : "text-slate-500 group-hover:text-slate-300"}`}
+                          />
+                          {!collapsed && (
+                            <span className="text-[13px] leading-none">{label}</span>
+                          )}
+                        </>
+                      )}
+                    </NavLink>
+                  );
+                })}
               </div>
             )}
           </div>

@@ -80,6 +80,11 @@ export const apiRoutes = {
       participant: (id: string, p: string) => `/api/admin/calendar/${id}/participants/${encodeURIComponent(p)}`,
     },
 
+    eventGroups: {
+      base: "/api/admin/event-groups",
+      byId: (id: string) => `/api/admin/event-groups/${id}`,
+    },
+
     badges: {
       base:         "/api/admin/badges",
       byId:         (id: string) => `/api/admin/badges/${id}`,

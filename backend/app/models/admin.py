@@ -71,6 +71,7 @@ class AdminCreateCalendarEventRequest(BaseModel):
 class AdminUpdateCalendarEventRequest(BaseModel):
     event_name: Optional[str] = None
     date: Optional[str] = None
+    event_group_id: Optional[str] = None
     is_hotel: Optional[bool] = None
     description: Optional[str] = None
     location: Optional[str] = None
@@ -82,3 +83,17 @@ class AdminUpdateCalendarEventRequest(BaseModel):
     parking_info: Optional[str] = None
     special_instructions: Optional[str] = None
     what_to_bring: Optional[str] = None
+
+
+class EventGroup(BaseModel):
+    id: str
+    name: str
+    created_at: str
+
+
+class CreateEventGroupRequest(BaseModel):
+    name: str
+
+
+class UpdateEventGroupRequest(BaseModel):
+    name: str

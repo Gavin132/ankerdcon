@@ -2,13 +2,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "../constants";
 import {
   createAdminEvent,
+  createAdminEventGroup,
   createAdminMeal,
   createAdminRide,
   createAdminUser,
   deleteAdminEvent,
+  deleteAdminEventGroup,
   deleteAdminMeal,
   deleteAdminRide,
   deleteAdminUser,
+  getAdminEventGroups,
   getAdminEvents,
   getAdminMeals,
   getAdminRides,
@@ -18,6 +21,7 @@ import {
   removeAdminMealParticipant,
   removeAdminPassenger,
   updateAdminEvent,
+  updateAdminEventGroup,
   updateAdminMeal,
   updateAdminRide,
   updateAdminUser,
@@ -224,5 +228,35 @@ export function useAdminRemoveEventParticipant() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEvents });
     },
+  });
+}
+
+// ── Event group hooks ─────────────────────────────────────────────────────────
+
+export function useAdminEventGroups() {
+  return useQuery({ queryKey: QUERY_KEYS.adminEventGroups, queryFn: getAdminEventGroups });
+}
+
+export function useAdminCreateEventGroup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) => createAdminEventGroup(name),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEventGroups }),
+  });
+}
+
+export function useAdminUpdateEventGroup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) => updateAdminEventGroup(id, name),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEventGroups }),
+  });
+}
+
+export function useAdminDeleteEventGroup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteAdminEventGroup(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEventGroups }),
   });
 }

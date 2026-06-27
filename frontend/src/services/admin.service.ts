@@ -193,3 +193,29 @@ export async function removeAdminEventParticipant(
 ): Promise<void> {
   await apiClient.delete(apiRoutes.admin.calendar.participant(eventId, participant));
 }
+
+// ── Event groups ──────────────────────────────────────────────────────────────
+
+export interface EventGroup {
+  id: string;
+  name: string;
+  created_at: string;
+}
+
+export async function getAdminEventGroups(): Promise<EventGroup[]> {
+  const { data } = await apiClient.get<EventGroup[]>(apiRoutes.admin.eventGroups.base);
+  return data;
+}
+
+export async function createAdminEventGroup(name: string): Promise<EventGroup> {
+  const { data } = await apiClient.post<EventGroup>(apiRoutes.admin.eventGroups.base, { name });
+  return data;
+}
+
+export async function updateAdminEventGroup(id: string, name: string): Promise<void> {
+  await apiClient.put(apiRoutes.admin.eventGroups.byId(id), { name });
+}
+
+export async function deleteAdminEventGroup(id: string): Promise<void> {
+  await apiClient.delete(apiRoutes.admin.eventGroups.byId(id));
+}

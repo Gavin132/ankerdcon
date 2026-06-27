@@ -11,6 +11,9 @@ from app.models.admin import (
     AdminUpdateMealRequest,
     AdminUpdateRideRequest,
     AdminUpdateUserRequest,
+    EventGroup,
+    CreateEventGroupRequest,
+    UpdateEventGroupRequest,
 )
 from app.models.badge import Badge, BadgeOrderItem, CreateBadgeRequest, UpdateBadgeRequest
 from app.models.calendar import CalendarEvent
@@ -255,7 +258,7 @@ def admin_create_event(
     _: str = Depends(get_admin_user),
     settings: Settings = Depends(get_settings),
 ) -> CalendarEvent:
-    event_data = {k: v for k, v in body.model_dump().items() if v is not None}
+    event_data = {k: v for k, v in body.model_dump().items() if v is not None and v != ""}
     event_data.setdefault("is_hotel", False)
     event_data["participants"] = []
     resp = supabase.table(Tables.CALENDAR).insert(event_data).execute()
@@ -321,6 +324,33 @@ def admin_remove_event_participant(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenement niet gevonden.")
     participants = [p for p in (resp.data[0].get("participants") or []) if p != participant]
     supabase.table(Tables.CALENDAR).update({"participants": participants}).eq("id", event_id).execute()
+
+
+# ── Event groups ────────────────────────────────────────────────────────────────
+
+@router.get("/event-groups", response_model=list[EventGroup])
+def admin_list_event_groups(_: str = Depends(get_admin_user)) -> list[EventGroup]:
+    return supabase.table(Tables.EVENT_GROUPS).select("*").order("name").execute().data
+
+
+@router.post("/event-groups", response_model=EventGroup, status_code=status.HTTP_201_CREATED)
+def admin_create_event_group(body: CreateEventGroupRequest, _: str = Depends(get_admin_user)) -> EventGroup:
+    resp = supabase.table(Tables.EVENT_GROUPS).insert({"name": body.name}).execute()
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kon groep niet aanmaken.")
+    return resp.data[0]
+
+
+@router.put("/event-groups/{group_id}", status_code=status.HTTP_204_NO_CONTENT)
+def admin_update_event_group(group_id: str, body: UpdateEventGroupRequest, _: str = Depends(get_admin_user)) -> None:
+    resp = supabase.table(Tables.EVENT_GROUPS).update({"name": body.name}).eq("id", group_id).execute()
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Groep niet gevonden.")
+
+
+@router.delete("/event-groups/{group_id}", status_code=status.HTTP_204_NO_CONTENT)
+def admin_delete_event_group(group_id: str, _: str = Depends(get_admin_user)) -> None:
+    supabase.table(Tables.EVENT_GROUPS).delete().eq("id", group_id).execute()
 
 
 # ── Badges ─────────────────────────────────────────────────────────────────────

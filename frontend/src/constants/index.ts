@@ -24,7 +24,8 @@ export const QUERY_KEYS = {
   adminRides:  ["admin", "rides"]  as const,
   adminMeals:  ["admin", "meals"]  as const,
   adminEvents: ["admin", "events"] as const,
-  adminBadges: ["admin", "badges"] as const,
+  adminBadges:       ["admin", "badges"]       as const,
+  adminEventGroups:  ["admin", "event-groups"] as const,
 };
 
 export const STALE_TIME = 30_000; // 30 seconds
