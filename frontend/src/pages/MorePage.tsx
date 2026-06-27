@@ -264,36 +264,39 @@ export function MorePage() {
             )}
           </AnimatePresence>
 
-          {/* Both views rendered simultaneously in the same grid cell so
-              height never changes during the crossfade transition */}
-          <div className="grid">
-            <motion.div
-              style={{ gridArea: "1 / 1" }}
-              animate={{ opacity: calendarView === "list" ? 1 : 0 }}
-              transition={{ duration: 0.2 }}
-              className={calendarView !== "list" ? "pointer-events-none" : ""}
-            >
-              <CalendarArchive
-                events={calendarEvents ?? []}
-                allUsers={allUsers}
-                onRsvp={onCalendarRsvp}
-                onLeave={onCalendarLeave}
-              />
-            </motion.div>
-            <motion.div
-              style={{ gridArea: "1 / 1" }}
-              animate={{ opacity: calendarView === "calendar" ? 1 : 0 }}
-              transition={{ duration: 0.2 }}
-              className={calendarView !== "calendar" ? "pointer-events-none" : ""}
-            >
-              <CalendarGrid
-                events={calendarEvents ?? []}
-                allUsers={allUsers}
-                onRsvp={onCalendarRsvp}
-                onLeave={onCalendarLeave}
-              />
-            </motion.div>
-          </div>
+          <AnimatePresence mode="wait">
+            {calendarView === "list" ? (
+              <motion.div
+                key="list"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                <CalendarArchive
+                  events={calendarEvents ?? []}
+                  allUsers={allUsers}
+                  onRsvp={onCalendarRsvp}
+                  onLeave={onCalendarLeave}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="calendar"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                <CalendarGrid
+                  events={calendarEvents ?? []}
+                  allUsers={allUsers}
+                  onRsvp={onCalendarRsvp}
+                  onLeave={onCalendarLeave}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
 
