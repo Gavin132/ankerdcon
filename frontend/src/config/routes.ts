@@ -22,6 +22,16 @@ export const routes = {
     pattern: "/events/:id",
   },
 
+  meal: {
+    view:    (id: string) => `/meals/${id}`,
+    pattern: "/meals/:id",
+  },
+
+  ride: {
+    view:    (id: string) => `/rides/${id}`,
+    pattern: "/rides/:id",
+  },
+
   admin: {
     base:        "/admin",
     users:       "/admin/users",
