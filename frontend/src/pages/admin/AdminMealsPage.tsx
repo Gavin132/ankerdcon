@@ -159,7 +159,7 @@ function MealDrawer({
           <input
             type="checkbox"
             {...register("transport_needed")}
-            className="h-4 w-4 rounded accent-sky-500"
+            className="cb"
           />
           <span className="text-sm text-slate-300">Transport nodig</span>
         </label>

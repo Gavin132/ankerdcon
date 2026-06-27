@@ -186,6 +186,7 @@ export interface TicketType {
 export interface CalendarEvent {
   id: string;
   event_group_id?: string;
+  multi_day_id?: string;
   event_name: string;
   date: string;
   is_hotel: boolean;

@@ -240,7 +240,7 @@ function RideDrawer({
             <input
               type="checkbox"
               {...register("car_available")}
-              className="h-4 w-4 rounded accent-sky-500"
+              className="cb"
             />
             <span className="text-sm text-slate-300">Auto beschikbaar</span>
           </label>
@@ -248,7 +248,7 @@ function RideDrawer({
             <input
               type="checkbox"
               {...register("action_required")}
-              className="h-4 w-4 rounded accent-sky-500"
+              className="cb"
             />
             <span className="text-sm text-slate-300">Actie vereist</span>
           </label>

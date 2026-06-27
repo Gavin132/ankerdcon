@@ -194,6 +194,37 @@ export async function removeAdminEventParticipant(
   await apiClient.delete(apiRoutes.admin.calendar.participant(eventId, participant));
 }
 
+export async function setAdminEventGroup(
+  eventId: string,
+  groupId: string | null,
+): Promise<void> {
+  await apiClient.patch(apiRoutes.admin.calendar.group(eventId), { group_id: groupId });
+}
+
+export async function bulkDeleteAdminEvents(eventIds: string[]): Promise<void> {
+  await apiClient.post(apiRoutes.admin.calendar.bulkDelete, { event_ids: eventIds });
+}
+
+export async function bulkGroupAdminEvents(
+  eventIds: string[],
+  multiDayId: string | null,
+): Promise<void> {
+  await apiClient.post(apiRoutes.admin.calendar.bulkGroup, {
+    event_ids: eventIds,
+    multi_day_id: multiDayId,
+  });
+}
+
+export async function bulkSetAdminEventGroup(
+  eventIds: string[],
+  groupId: string | null,
+): Promise<void> {
+  await apiClient.post(apiRoutes.admin.calendar.bulkSetGroup, {
+    event_ids: eventIds,
+    group_id: groupId,
+  });
+}
+
 // ── Event groups ──────────────────────────────────────────────────────────────
 
 export interface EventGroup {

@@ -4,6 +4,7 @@ from typing import Any
 class CalendarEvent(BaseModel):
     id: str
     event_group_id: str | None = None
+    multi_day_id: str | None = None
     event_name: str
     date: str
     is_hotel: bool = False

@@ -97,3 +97,21 @@ class CreateEventGroupRequest(BaseModel):
 
 class UpdateEventGroupRequest(BaseModel):
     name: str
+
+
+class SetEventGroupRequest(BaseModel):
+    group_id: str | None = None
+
+
+class BulkDeleteEventsRequest(BaseModel):
+    event_ids: list[str]
+
+
+class BulkGroupEventsRequest(BaseModel):
+    event_ids: list[str]
+    multi_day_id: str | None = None  # None = ungroup; omit to auto-generate
+
+
+class BulkSetEventGroupRequest(BaseModel):
+    event_ids: list[str]
+    group_id: str | None = None  # None = clear group label

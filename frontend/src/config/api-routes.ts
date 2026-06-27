@@ -77,7 +77,11 @@ export const apiRoutes = {
     calendar: {
       base:        "/api/admin/calendar",
       byId:        (id: string) => `/api/admin/calendar/${id}`,
+      group:       (id: string) => `/api/admin/calendar/${id}/group`,
       participant: (id: string, p: string) => `/api/admin/calendar/${id}/participants/${encodeURIComponent(p)}`,
+      bulkDelete:  "/api/admin/calendar/bulk-delete",
+      bulkGroup:   "/api/admin/calendar/bulk-group",
+      bulkSetGroup:"/api/admin/calendar/bulk-set-group",
     },
 
     eventGroups: {

@@ -99,7 +99,8 @@ CREATE TABLE IF NOT EXISTS calendar (
   parking_info         TEXT,
   special_instructions TEXT,
   what_to_bring        TEXT,
-  ticket_types         JSONB                DEFAULT '[]'
+  ticket_types         JSONB                DEFAULT '[]',
+  multi_day_id         TEXT
 );
 
 

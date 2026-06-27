@@ -11,8 +11,12 @@ from app.models.admin import (
     AdminUpdateMealRequest,
     AdminUpdateRideRequest,
     AdminUpdateUserRequest,
+    BulkDeleteEventsRequest,
+    BulkGroupEventsRequest,
+    BulkSetEventGroupRequest,
     EventGroup,
     CreateEventGroupRequest,
+    SetEventGroupRequest,
     UpdateEventGroupRequest,
 )
 from app.models.badge import Badge, BadgeOrderItem, CreateBadgeRequest, UpdateBadgeRequest
@@ -251,6 +255,35 @@ def admin_list_events(_: str = Depends(get_admin_user)) -> list[CalendarEvent]:
     return supabase.table(Tables.CALENDAR).select("*").order("date").execute().data
 
 
+@router.post("/calendar/bulk-delete", status_code=status.HTTP_204_NO_CONTENT)
+def admin_bulk_delete_events(body: BulkDeleteEventsRequest, _: str = Depends(get_admin_user)) -> None:
+    """Delete multiple calendar events in one request."""
+    for event_id in body.event_ids:
+        supabase.table(Tables.CALENDAR).delete().eq("id", event_id).execute()
+
+
+@router.post("/calendar/bulk-group", status_code=status.HTTP_204_NO_CONTENT)
+def admin_bulk_group_events(body: BulkGroupEventsRequest, _: str = Depends(get_admin_user)) -> None:
+    """Link events as a multi-day group (or ungroup by passing multi_day_id=null).
+    When multi_day_id is omitted from the request, a new ID is auto-generated."""
+    import uuid as _uuid
+    if body.multi_day_id == "":
+        mid = None  # empty string = ungroup (clear multi_day_id)
+    elif body.multi_day_id is not None:
+        mid = body.multi_day_id  # use provided ID
+    else:
+        mid = f"mdg_{_uuid.uuid4().hex[:8]}"  # auto-generate new group ID
+    for event_id in body.event_ids:
+        supabase.table(Tables.CALENDAR).update({"multi_day_id": mid}).eq("id", event_id).execute()
+
+
+@router.post("/calendar/bulk-set-group", status_code=status.HTTP_204_NO_CONTENT)
+def admin_bulk_set_event_group(body: BulkSetEventGroupRequest, _: str = Depends(get_admin_user)) -> None:
+    """Assign or clear the event_group_id label on multiple events."""
+    for event_id in body.event_ids:
+        supabase.table(Tables.CALENDAR).update({"event_group_id": body.group_id}).eq("id", event_id).execute()
+
+
 @router.post("/calendar", response_model=CalendarEvent, status_code=status.HTTP_201_CREATED)
 def admin_create_event(
     body: AdminCreateCalendarEventRequest,
@@ -308,6 +341,18 @@ def admin_update_event(
     resp = supabase.table(Tables.CALENDAR).update(updates).eq("id", event_id).execute()
     if not resp.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenement niet gevonden.")
+
+
+@router.patch("/calendar/{event_id}/group", status_code=status.HTTP_204_NO_CONTENT)
+def admin_set_event_group(
+    event_id: str,
+    body: SetEventGroupRequest,
+    _: str = Depends(get_admin_user),
+) -> None:
+    """Assign or remove a group from a calendar event without touching other fields."""
+    supabase.table(Tables.CALENDAR).update(
+        {"event_group_id": body.group_id}
+    ).eq("id", event_id).execute()
 
 
 @router.delete("/calendar/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
