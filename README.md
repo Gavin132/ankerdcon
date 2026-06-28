@@ -1,124 +1,161 @@
-# Ankerd Con App
+<div align="center">
 
-De **Ankerd Con App** is een webapplicatie die is ontworpen om evenementen met grote groepen deelnemers efficiënt te beheren. De app stroomlijnt de logistiek rondom transport, etentjes, hotelovernachtingen en betalingen.
+<h1>⚓ Ankerd Con ⚓</h1>
+<p><em>Private event app for Ankerd</em></p>
 
-### Doelstelling
-Het creëren van een centraal en helder overzicht voor grote groepen op reis. Hierdoor hoeven deelnemers niet langer te zoeken in chaotische chatgeschiedenissen naar planningen, tijden of afspraken. Gebruikers kunnen eenvoudig inloggen via **Discord** en zichzelf direct aanmelden voor de gewenste onderdelen.
+<p>
+  <img src="https://img.shields.io/badge/version-1.4.0-6366f1?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/license-MIT-22c55e?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/PWA-ready-f59e0b?style=for-the-badge&logo=pwa&logoColor=white" />
+</p>
 
----
+<p>
+  <img src="https://img.shields.io/badge/React-18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
+  <img src="https://img.shields.io/badge/TypeScript-5-007ACC?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Vite-4-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tailwind-3-0ea5e9?style=for-the-badge&logo=tailwindcss&logoColor=white" />
+</p>
 
-## Functionaliteiten
+<p>
+  <img src="https://img.shields.io/badge/FastAPI-0.111-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
+  <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" />
+  <img src="https://img.shields.io/badge/Discord_OAuth-5865F2?style=for-the-badge&logo=discord&logoColor=white" />
+</p>
 
-### Algemeen Overzicht
-Dit dashboard biedt in één oogopslag de meest kritieke informatie:
-* **Status aanmelders:** Zie direct welke gebruikers zich nog *niet* hebben aangemeld voor bijvoorbeeld een specifieke autorit.
-* **Locatie delen:** Geef direct je huidige locatie door aan de rest van de groep.
-* **Eerstvolgende event:** Wordt prominent bovenaan weergegeven, inclusief de complete lijst met actieve deelnemers.
+<br />
 
-### Overzicht van Autoritten
-Maak de logistiek rondom vervoer inzichtelijk en flexibel:
-* **Ritten aanmaken:** Chauffeurs kunnen een autorit aanmaken en hierbij de vertrektijd en vertreklocatie opgeven.
-* **Meereizen:** Andere gebruikers van de app kunnen zich vervolgens eenvoudig aanmelden om met een specifieke rit mee te rijden.
-* **Flexibiliteit:** Geschikt voor zowel de heen- en terugreis als voor kortere ritten tussendoor (bijvoorbeeld de rit naar een restaurant).
+> A full-stack PWA that keeps the group organized at every con —
+> rides, meals, finances, hotel rooms, and events in one place.
 
-### Overzicht van Etentjes
-Samen eten zonder organisatorische rompslomp:
-* Gebruikers kunnen zelf een eetplanning of restaurantbezoek aanmaken.
-* Andere groepsleden kunnen zich flexibel aanmelden, zodat het exacte aantal gasten altijd direct bekend is.
+</div>
 
-### Overzicht van Hotelkamers
-Houd overzicht over de verblijfslocaties met oog op privacy:
-* **Kamernummers:** Administrators of gebruikers kunnen hun kamernummer invoeren, zodat je snel de kamer van een vriend kunt opzoeken.
-* **Privacy-focused:** De app registreert enkel het kamernummer; er worden *geen* specifieke hoteladressen of privacygevoelige gegevens in opgeslagen.
-
-### Overzicht van Events
-Een centrale planning in de vorm van een interactieve kalender:
-* Toont overzichtelijk alle aankomende evenementen en activiteiten.
-* Per event is direct zichtbaar welke deelnemers aanwezig zijn en wat de exacte data zijn.
-* Geeft duidelijk aan of er voor een specifiek evenement ook een overnachting is gepland.
-
-### Profiel customisation
-De mogelijkheid voor een gebruiker om diens profiel helemaal zo in te stellen zoals ze dat willen.
-* Banners
-* Profielfoto's
-* Displaynames
-* Badges
-* En nog veel meer!
-
+<br />
 
 ---
 
-## Roadmap & Toekomstige Features
+## 🗂️ Features
 
-> [!NOTE]
-> ### Overzicht van Betalingen
-> Deze feature moet momenteel nog verder worden uitgewerkt en functioneel worden ingericht binnen de applicatie.
-> 
-> * [ ] Logica voor kostenverdeling opzetten
-> * [ ] Status van betalingen per deelnemer inzichtelijk maken
-> * [ ] Automatisch bijhouden van betalingen
-> ### 
+|     | Module          | Description                                                                  |
+| --- | --------------- | ---------------------------------------------------------------------------- |
+| 🏠  | **Hub**         | Active event overview, crew roster, hotel room grouping                      |
+| 🚗  | **Transport**   | Ride coordination — offer seats, join rides, restaurant runs, public transit |
+| 🍜  | **Food**        | Meal planning with cost tracking, dietary info, and transport links          |
+| 💸  | **Finance**     | Shared expense splitting with balance overview and payment history           |
+| 📅  | **Calendar**    | Event schedule with RSVP, weather forecast, tickets, and practical info      |
+| 🏨  | **Hotel Rooms** | Room assignments per event with occupant list                                |
+| 👥  | **Members**     | Crew directory with profiles, badges, and Discord avatars                    |
+| 🛠️  | **Admin Panel** | Full CRUD for users, rides, meals, events, badges, and event groups          |
 
+---
 
+## 🧱 Tech Stack
 
-# Installatieinstructies
+```
+Frontend       React 18 · TypeScript · Vite · Tailwind CSS · Framer Motion
+Backend        Python 3.11 · FastAPI · Uvicorn
+Database       Supabase (PostgreSQL)
+Auth           Discord OAuth via Supabase Auth
+Server State   TanStack Query v5
+Client State   Zustand
+Forms          react-hook-form + Zod
+Charts         Recharts
+Icons          Lucide React
+```
 
-### Backend
+---
 
-1. Installeer de vereiste Python-versie (bijvoorbeeld 3.10).
-2. Maak een virtuele omgeving aan:
-   ```bash
-   cd backend
-   python -m venv venv
-   ```
-3. Activeer de virtuele omgeving:
-   - Op Windows:
-     ```bash
-     venv\Scripts\activate
-     ```
-   - Op macOS/Linux:
-     ```bash
-     source venv/bin/activate
-     ```
-4. Installeer de vereiste pakketten:
-   ```bash
-    pip install -r requirements.txt
-   ```
-5. Maak een `.env`-bestand aan in de `backend`-map en vul het met de vereiste omgevingsvariabelen.
-   -APP_URL
-   -CORS_ORIGINS
-   -SUPABASE_URL
-   -SUPABASE_SECRET_KEY
-6. Start de backend-server:
+## 📁 Project Structure
 
-   ```bash
-   cd backend
-   uvicorn main:app --reload
-   ```
+```
+ankerdcon/
+├── 🎨 frontend/src/
+│   ├── pages/            Route-level components (Hub, Transport, Food, …)
+│   │   └── admin/        Admin panel pages
+│   ├── components/       Shared UI — Modal, Drawer, Badge, Button, …
+│   ├── hooks/            TanStack Query hooks per domain
+│   ├── lib/api/          Axios client + ApiError class
+│   ├── config/           env.ts · api-routes.ts · routes.ts
+│   ├── store/            Zustand stores (auth, theme)
+│   ├── types/            Global TypeScript types
+│   └── utils/            Date formatting, helpers
+│
+├── ⚙️  backend/app/
+│   ├── routers/          FastAPI routers (rides, meals, payments, …)
+│   ├── core/             Supabase client, config
+│   ├── services/         Discord bot, business logic
+│   └── dependencies.py   Auth middleware — JWT → profile → whitelist
+│
+└── 🗄️  db/
+    ├── schema.sql         Full schema for fresh projects
+    └── migrations/        Incremental migrations (v1.1 → v2.6)
+```
 
-   of
+---
 
-   ```bash
-   cd backend
-    ..\\venv\\Scripts\\uvicorn.exe main:app --reload
-   ```
+## 🚀 Getting Started
 
-7. De backend is nu toegankelijk op `http://localhost:8000`.
+### Prerequisites
 
-### Frontend
+- Node.js 18+ · Python 3.11+ · A [Supabase](https://supabase.com) project with Discord OAuth enabled
 
-1. Installeer Node.js (bijvoorbeeld versie 18).
-2. Installeer de vereiste pakketten:
-   ```bash
-   cd frontend
-   npm install
-   ```
-3. Maak een `.env`-bestand aan in de `frontend`-map en vul het met de vereiste omgevingsvariabelen.
-   -VITE_SUPABASE_URL
-   -VITE_SUPABASE_PUBLISHABLE_KEY
+### 1 · Install
 
-4. Start de frontend-server:
-   ```bash
-   npm run dev
-   ```
-5. De frontend is nu toegankelijk op `http://localhost:5173`.
+```bash
+git clone https://github.com/your-org/ankerdcon.git && cd ankerdcon
+
+# Frontend
+cd frontend && npm install
+
+# Backend
+cd ../backend && python -m venv ../.venv
+source ../.venv/Scripts/activate      # Windows
+# source ../.venv/bin/activate        # macOS / Linux
+pip install -r requirements.txt
+```
+
+### 2 · Database
+
+Run `db/schema.sql` in the Supabase SQL editor for a fresh project. For an existing database, apply `db/migrations/` in version order.
+
+### 3 · Run
+
+```bash
+# Frontend  →  http://localhost:5173
+cd frontend && npm run dev
+
+# Backend   →  http://localhost:8000  (docs at /docs)
+cd backend && uvicorn app.main:app --reload
+```
+
+---
+
+## 🔐 Authentication
+
+```
+Discord login  →  Supabase OAuth  →  JWT issued
+                                          ↓
+                               Backend validates JWT
+                                          ↓
+                          Check whitelist table by discord_id
+                                          ↓
+                    ✅ Whitelisted → auto-create profile + welcome DM
+                    ❌ Not found  → 403 Forbidden
+```
+
+Access is **invite-only**. Grant entry by adding a Discord ID to the whitelist:
+
+```sql
+INSERT INTO whitelist (discord_id) VALUES ('123456789012345678');
+```
+
+---
+
+## 📱 PWA
+
+| Feature           | Detail                                                      |
+| ----------------- | ----------------------------------------------------------- |
+| Safe area support | Notch, home indicator, Android nav bar                      |
+| Modals            | Bottom sheet on mobile · standard dialog on desktop         |
+| Dark mode         | User-controlled toggle, persisted to `localStorage`         |
+| Keyboard          | `viewport-fit=cover` + `interactive-widget=resizes-content` |
