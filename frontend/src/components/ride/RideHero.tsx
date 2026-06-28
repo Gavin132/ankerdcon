@@ -1,18 +1,19 @@
 import { Link } from "react-router-dom";
-import { Car, Train, Truck, Clock, Timer, AlertCircle, CalendarDays, Users, ArrowRight } from "lucide-react";
+import { Car, Train, Truck, Clock, Timer, AlertCircle, CalendarDays, Users, ArrowRight, Utensils } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { formatDateTime } from "../../utils/format";
 import { getRideStatus, formatCountdown } from "../../utils/rides";
 import { routes } from "../../config/routes";
-import type { CalendarEvent, Ride, User } from "../../types";
+import type { CalendarEvent, Meal, Ride, User } from "../../types";
 
 interface RideHeroProps {
   ride: Ride;
   linkedEvent?: CalendarEvent;
+  linkedMeal?: Meal;
   users: User[];
 }
 
-export function RideHero({ ride, linkedEvent, users }: RideHeroProps) {
+export function RideHero({ ride, linkedEvent, linkedMeal, users }: RideHeroProps) {
   const { status, minutesUntil } = getRideStatus(ride.departure_time);
   const isPT = ride.is_public_transport;
   const isTimo = ride.driver.trim().toLowerCase().startsWith("timo");
@@ -95,7 +96,18 @@ export function RideHero({ ride, linkedEvent, users }: RideHeroProps) {
         {/* Linked event */}
         {/* Chips row */}
         <div className="flex flex-wrap items-center gap-2 mb-4">
-          {linkedEvent && (
+          {linkedMeal && (
+            <Link
+              to={routes.meal.view(linkedMeal.id)}
+              className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/20
+                         backdrop-blur-sm px-3 py-1 text-[11px] font-semibold text-white/80
+                         hover:bg-white/20 transition-colors"
+            >
+              <Utensils size={10} />
+              {linkedMeal.meal_name}
+            </Link>
+          )}
+          {linkedEvent && !linkedMeal && (
             <Link
               to={routes.event.view(linkedEvent.id)}
               className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/20
@@ -132,7 +144,7 @@ export function RideHero({ ride, linkedEvent, users }: RideHeroProps) {
             {formatDateTime(ride.departure_time)}
           </span>
 
-          {!isPT && !isRecent && !isPast && (
+          {!isPT && !isRecent && !isPast && ride.direction !== "Restaurant" && (
             <span className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold backdrop-blur-sm border ${
               ride.is_full
                 ? "bg-rose-900/50 border-rose-500/20 text-rose-200"
@@ -157,7 +169,7 @@ export function RideHero({ ride, linkedEvent, users }: RideHeroProps) {
           )}
         </div>
 
-        {/* Driver */}
+        {/* Driver / Organizer */}
         {!isPT && (
           <div className="mt-5 flex items-center gap-2.5">
             <UserAvatar
@@ -166,7 +178,9 @@ export function RideHero({ ride, linkedEvent, users }: RideHeroProps) {
               className="h-9 w-9 text-xs ring-2 ring-white/20"
             />
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">Chauffeur</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                {ride.direction === "Restaurant" ? "Organisator" : "Chauffeur"}
+              </p>
               <p className="text-sm font-bold text-white">{ride.driver}</p>
             </div>
           </div>
