@@ -474,7 +474,6 @@ export function TransportPage() {
                         field.onChange(id ?? "");
                         if (id) {
                           const event = events.find((e) => e.id === id);
-                          if (event?.date) setValue("departure_time", `${event.date}T12:00`, { shouldValidate: true });
                           if (event?.location) setValue("end_location", event.location, { shouldValidate: true });
                           if (event?.parking_info) setValue("parking_info", event.parking_info, { shouldValidate: true });
                         }

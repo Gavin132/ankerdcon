@@ -274,9 +274,6 @@ export function FoodPage() {
                         field.onChange(id ?? "");
                         if (id) {
                           const event = events.find((e) => e.id === id);
-                          if (event?.date) {
-                            setValue("time", `${event.date}T12:00`, { shouldValidate: true });
-                          }
                         }
                       }}
                       placeholder="Zoek en koppel een event…"
