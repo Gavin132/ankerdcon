@@ -105,7 +105,26 @@ def get_current_user(
                 time.sleep(0.3)
 
         if profile_name is None:
-            # No existing profile — auto-create one for this Discord user.
+            # No existing profile — check whitelist before creating one.
+            if not discord_id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Toegang geweigerd. Neem contact op met een beheerder.",
+                )
+            try:
+                wl = supabase.table("whitelist").select("discord_id").eq("discord_id", discord_id).execute()
+            except Exception as e:
+                print(f"[AUTH] whitelist check failed: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Toegang geweigerd. Neem contact op met een beheerder.",
+                )
+            if not wl.data:
+                print(f"[AUTH] discord_id {discord_id} not in whitelist")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Toegang geweigerd. Neem contact op met een beheerder.",
+                )
             try:
                 new_name = (
                     discord_username
@@ -118,9 +137,8 @@ def get_current_user(
                     "is_active": True,
                     "is_first_login": True,
                     "allow_dm": True,
+                    "discord_id": discord_id,
                 }
-                if discord_id:
-                    insert_data["discord_id"] = discord_id
                 if discord_avatar:
                     insert_data["avatar_url"] = discord_avatar
                 if discord_username:
