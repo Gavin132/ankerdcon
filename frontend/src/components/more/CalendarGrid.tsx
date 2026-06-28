@@ -26,8 +26,8 @@ import { DAY_LABELS } from "../../constants";
 interface CalendarGridProps {
   events: CalendarEvent[];
   allUsers?: User[];
-  onRsvp?: (id: string, userName: string) => void;
-  onLeave?: (id: string, userName: string) => void;
+  onRsvp?: (id: string, userNames: string[]) => void;
+  onLeave?: (id: string, userNames: string[]) => void;
 }
 
 export function CalendarGrid({
@@ -414,10 +414,8 @@ export function CalendarGrid({
                                     leaveOptions={ev.participants}
                                     onClose={() => { setActiveRsvpEvent(null); setRsvpNames([]); }}
                                     onConfirm={() => {
-                                      rsvpNames.forEach((name) => {
-                                        if (rsvpMode === "join") onRsvp!(ev.id, name);
-                                        else onLeave!(ev.id, name);
-                                      });
+                                      if (rsvpMode === "join") onRsvp!(ev.id, rsvpNames);
+                                      else onLeave!(ev.id, rsvpNames);
                                       setActiveRsvpEvent(null);
                                       setRsvpNames([]);
                                     }}
@@ -429,11 +427,9 @@ export function CalendarGrid({
                                     leaveOptions={groupParts}
                                     onClose={() => { setGroupRsvpId(null); setRsvpNames([]); }}
                                     onConfirm={() => {
-                                      rsvpNames.forEach((name) => {
-                                        groupIds.forEach((eid) => {
-                                          if (groupRsvpMode === "join") onRsvp!(eid, name);
-                                          else onLeave!(eid, name);
-                                        });
+                                      groupIds.forEach((eid) => {
+                                        if (groupRsvpMode === "join") onRsvp!(eid, rsvpNames);
+                                        else onLeave!(eid, rsvpNames);
                                       });
                                       setGroupRsvpId(null);
                                       setRsvpNames([]);

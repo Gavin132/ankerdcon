@@ -86,19 +86,23 @@ export function MorePage() {
     setPingOpen(false);
   }
 
-  async function onCalendarRsvp(id: string, userName: string) {
-    try {
-      await rsvpMutation.mutateAsync({ id, userName });
-    } catch {
-      // silently ignore duplicate sign-ups
+  async function onCalendarRsvp(id: string, userNames: string[]) {
+    for (const userName of userNames) {
+      try {
+        await rsvpMutation.mutateAsync({ id, userName });
+      } catch {
+        // silently ignore duplicate sign-ups
+      }
     }
   }
 
-  async function onCalendarLeave(id: string, userName: string) {
-    try {
-      await leaveMutation.mutateAsync({ id, userName });
-    } catch {
-      // silently ignore if not found
+  async function onCalendarLeave(id: string, userNames: string[]) {
+    for (const userName of userNames) {
+      try {
+        await leaveMutation.mutateAsync({ id, userName });
+      } catch {
+        // silently ignore if not found
+      }
     }
   }
 

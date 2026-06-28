@@ -33,8 +33,8 @@ import type { CalendarEvent, User } from "../../types";
 interface CalendarArchiveProps {
   events: CalendarEvent[];
   allUsers?: User[];
-  onRsvp?: (id: string, userName: string) => void;
-  onLeave?: (id: string, userName: string) => void;
+  onRsvp?: (id: string, userNames: string[]) => void;
+  onLeave?: (id: string, userNames: string[]) => void;
 }
 
 interface RsvpTarget {
@@ -98,11 +98,9 @@ export function CalendarArchive({
 
   function confirmRsvp() {
     if (!activeRsvp) return;
-    rsvpNames.forEach((name) => {
-      activeRsvp.eventIds.forEach((eventId) => {
-        if (activeRsvp.mode === "join") onRsvp!(eventId, name);
-        else onLeave!(eventId, name);
-      });
+    activeRsvp.eventIds.forEach((eventId) => {
+      if (activeRsvp.mode === "join") onRsvp!(eventId, rsvpNames);
+      else onLeave!(eventId, rsvpNames);
     });
     closeRsvp();
   }
