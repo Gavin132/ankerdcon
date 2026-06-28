@@ -39,8 +39,8 @@ export function RideActions({ ride, userNames, users }: RideActionsProps) {
   const isPT = ride.is_public_transport;
 
   const isInbound = ride.direction === "Inbound";
-  const fromLabel = isInbound ? ride.start_location : "Con locatie";
-  const toLabel   = ride.end_location || (isInbound ? "Con locatie" : ride.start_location);
+  const fromLabel = ride.start_location;
+  const toLabel   = ride.end_location || (isInbound ? "Con locatie" : "Bestemming");
   const embedUrl  = buildEmbedUrl(fromLabel, toLabel !== fromLabel ? toLabel : undefined);
   const openUrl   = ride.end_location
     ? `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(fromLabel)}&destination=${encodeURIComponent(toLabel)}`

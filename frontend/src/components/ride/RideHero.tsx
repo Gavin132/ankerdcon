@@ -21,8 +21,8 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users }: RideHeroProps
   const isPast = status === "past";
 
   const isInbound = ride.direction === "Inbound";
-  const fromLabel = isInbound ? ride.start_location : "Con locatie";
-  const toLabel   = ride.end_location || (isInbound ? "Con locatie" : ride.start_location);
+  const fromLabel = ride.start_location;
+  const toLabel   = ride.end_location || (isInbound ? "Con locatie" : "Bestemming");
 
   const TransportIcon = isPT ? Train : isTimo ? Truck : Car;
 

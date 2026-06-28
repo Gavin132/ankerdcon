@@ -73,8 +73,8 @@ export function RideCard({ ride, userNames }: RideCardProps) {
   const isPast    = status === "past";
   const canAct    = !isRecent && !isPast;
 
-  const fromLabel = isInbound ? ride.start_location : "Con locatie";
-  const toLabel   = ride.end_location || (isInbound ? "Con locatie" : ride.start_location);
+  const fromLabel = ride.start_location;
+  const toLabel   = ride.end_location || (isInbound ? "Con locatie" : "Bestemming");
 
   const resolvedPassengers = new Set(
     ride.passengers.map((p) => {
