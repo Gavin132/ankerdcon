@@ -89,6 +89,7 @@ export interface Ride {
   car_available: boolean;
   action_required: boolean;
   linked_event_id?: string;
+  linked_meal_id?: string;
   restaurant_drivers?: RestaurantDriver[];
 }
 
@@ -104,6 +105,7 @@ export interface CreateRideRequest {
   car_available?: boolean;
   action_required?: boolean;
   linked_event_id?: string;
+  linked_meal_id?: string;
 }
 
 export interface ClaimSeatRequest {

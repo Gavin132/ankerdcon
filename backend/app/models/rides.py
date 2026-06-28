@@ -20,6 +20,7 @@ class Ride(BaseModel):
     car_available: bool = False
     action_required: bool = False
     linked_event_id: str | None = None
+    linked_meal_id: str | None = None
     restaurant_drivers: list[RestaurantDriver] = Field(default_factory=list)
 
     # Computed fields that the frontend expects
@@ -59,6 +60,7 @@ class CreateRideRequest(BaseModel):
     car_available: bool = False
     action_required: bool = False
     linked_event_id: str | None = None
+    linked_meal_id: str | None = None
 
 class ClaimSeatRequest(BaseModel):
     user_name: str

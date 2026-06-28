@@ -1,3 +1,6 @@
+-- Rides: add linked_meal_id column
+ALTER TABLE rides ADD COLUMN IF NOT EXISTS linked_meal_id uuid REFERENCES meals(id) ON DELETE SET NULL;
+
 -- Whitelist table: only Discord users listed here can create a new profile
 CREATE TABLE IF NOT EXISTS whitelist (
     discord_id text PRIMARY KEY,

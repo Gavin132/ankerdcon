@@ -24,9 +24,11 @@ import { NamePicker } from "../components/common/NamePicker";
 import { RideCard } from "../components/transport/RideCard";
 import { RestaurantCard } from "../components/transport/RestaurantCard";
 import { RideTimeline } from "../components/transport/RideTimeline";
+import { MealPicker } from "../components/common/MealPicker";
 import { useRides, useCreateRide } from "../hooks/useRides";
 import { useUsers } from "../hooks/useUsers";
 import { useCalendar } from "../hooks/useCalendar";
+import { useMeals } from "../hooks/useMeals";
 import { toast } from "../store/toast.store";
 import { getRideStatus } from "../utils/rides";
 import type { Direction, VehicleType } from "../types";
@@ -43,6 +45,7 @@ const createSchema = z.object({
   car_available: z.boolean().optional(),
   action_required: z.boolean().optional(),
   linked_event_id: z.string().optional(),
+  linked_meal_id: z.string().optional(),
 });
 
 type CreateForm = z.infer<typeof createSchema>;
@@ -67,6 +70,7 @@ export function TransportPage() {
   const { data: rides, isLoading } = useRides();
   const { data: users } = useUsers();
   const { data: events = [] } = useCalendar();
+  const { data: meals = [] } = useMeals();
   const userNames = (users ?? []).map((u) => u.name);
   const createMutation = useCreateRide();
 
@@ -135,6 +139,7 @@ export function TransportPage() {
         car_available: values.car_available ?? false,
         action_required: values.action_required ?? false,
         linked_event_id: values.linked_event_id || undefined,
+        linked_meal_id: values.linked_meal_id || undefined,
       });
       handleClose();
       toast("success", "Rit toegevoegd aan het schema!");
@@ -420,31 +425,66 @@ export function TransportPage() {
             )}
           </div>
 
-          {/* Event koppeling */}
-          {events.length > 0 && (
-            <div className={SF}>
-              <p className={ST}>Koppel aan event</p>
-              <Controller
-                name="linked_event_id"
-                control={control}
-                render={({ field }) => (
-                  <EventPicker
-                    events={events}
-                    value={field.value || undefined}
-                    onChange={(id) => {
-                      field.onChange(id ?? "");
-                      if (id) {
-                        const event = events.find((e) => e.id === id);
-                        if (event?.date) {
-                          setValue("departure_time", `${event.date}T12:00`, { shouldValidate: true });
+          {/* Event / etentje koppeling */}
+          {formDirection === "Restaurant" ? (
+            meals.length > 0 && (
+              <div className={SF}>
+                <p className={ST}>Koppel aan etentje</p>
+                <Controller
+                  name="linked_meal_id"
+                  control={control}
+                  render={({ field }) => (
+                    <MealPicker
+                      meals={meals}
+                      value={field.value || undefined}
+                      onChange={(id) => {
+                        field.onChange(id ?? "");
+                        if (id) {
+                          const meal = meals.find((m) => m.id === id);
+                          if (meal?.time) {
+                            const d = new Date(meal.time);
+                            if (!isNaN(d.getTime())) {
+                              const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+                                .toISOString()
+                                .slice(0, 16);
+                              setValue("departure_time", local, { shouldValidate: true });
+                            }
+                          }
+                          if (meal?.location) setValue("start_location", meal.location, { shouldValidate: true });
+                          if (meal?.parking_info) setValue("parking_info", meal.parking_info, { shouldValidate: true });
                         }
-                      }
-                    }}
-                    placeholder="Zoek en koppel een event…"
-                  />
-                )}
-              />
-            </div>
+                      }}
+                    />
+                  )}
+                />
+              </div>
+            )
+          ) : (
+            events.length > 0 && (
+              <div className={SF}>
+                <p className={ST}>Koppel aan event</p>
+                <Controller
+                  name="linked_event_id"
+                  control={control}
+                  render={({ field }) => (
+                    <EventPicker
+                      events={events}
+                      value={field.value || undefined}
+                      onChange={(id) => {
+                        field.onChange(id ?? "");
+                        if (id) {
+                          const event = events.find((e) => e.id === id);
+                          if (event?.date) setValue("departure_time", `${event.date}T12:00`, { shouldValidate: true });
+                          if (event?.location) setValue("end_location", event.location, { shouldValidate: true });
+                          if (event?.parking_info) setValue("parking_info", event.parking_info, { shouldValidate: true });
+                        }
+                      }}
+                      placeholder="Zoek en koppel een event…"
+                    />
+                  )}
+                />
+              </div>
+            )
           )}
 
           {/* Restaurant opties */}
