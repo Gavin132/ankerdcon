@@ -464,6 +464,35 @@ def admin_remove_event_participant(
     supabase.table(Tables.CALENDAR).update({"participants": participants}).eq("id", event_id).execute()
 
 
+@router.post("/calendar/{event_id}/sync-group", status_code=status.HTTP_204_NO_CONTENT)
+def admin_sync_event_group(event_id: str, _: str = Depends(get_admin_user)) -> None:
+    """Copy all shared detail fields from one event to every other day with the same multi_day_id."""
+    resp = supabase.table(Tables.CALENDAR).select("*").eq("id", event_id).execute()
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenement niet gevonden.")
+
+    event = resp.data[0]
+    multi_day_id = event.get("multi_day_id")
+    if not multi_day_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Evenement heeft geen meerdaagse koppeling.")
+
+    shared = {k: v for k, v in {
+        "description":          event.get("description"),
+        "location":             event.get("location"),
+        "website":              event.get("website"),
+        "ticket_url":           event.get("ticket_url"),
+        "ticket_sale_start":    event.get("ticket_sale_start"),
+        "ticket_types":         event.get("ticket_types"),
+        "locker_info":          event.get("locker_info"),
+        "parking_info":         event.get("parking_info"),
+        "special_instructions": event.get("special_instructions"),
+        "what_to_bring":        event.get("what_to_bring"),
+        "is_hotel":             event.get("is_hotel"),
+    }.items() if v is not None}
+
+    supabase.table(Tables.CALENDAR).update(shared).eq("multi_day_id", multi_day_id).neq("id", event_id).execute()
+
+
 # ── Event groups ────────────────────────────────────────────────────────────────
 
 @router.get("/event-groups", response_model=list[EventGroup])

@@ -26,7 +26,41 @@ export function EventDetailPage() {
   const { data: rides  = [] } = useRides();
   const { data: me } = useCurrentUser();
 
-  const event = events.find((e) => e.id === id);
+  const rawEvent = events.find((e) => e.id === id);
+
+  // For multi-day events, fall back to sibling day data for any empty field.
+  // This lets the admin fill in details once and have them appear on all day pages.
+  const event = (() => {
+    if (!rawEvent?.multi_day_id) return rawEvent;
+    const siblings = events.filter(
+      (e) => e.multi_day_id === rawEvent.multi_day_id && e.id !== rawEvent.id,
+    );
+    const pick = <K extends keyof typeof rawEvent>(
+      key: K,
+    ): typeof rawEvent[K] => {
+      const v = rawEvent[key];
+      if (v != null && v !== "" && !(Array.isArray(v) && v.length === 0)) return v;
+      for (const s of siblings) {
+        const sv = s[key];
+        if (sv != null && sv !== "" && !(Array.isArray(sv) && sv.length === 0)) return sv;
+      }
+      return v;
+    };
+    return {
+      ...rawEvent,
+      description:          pick("description"),
+      location:             pick("location"),
+      website:              pick("website"),
+      ticket_url:           pick("ticket_url"),
+      ticket_sale_start:    pick("ticket_sale_start"),
+      ticket_types:         pick("ticket_types"),
+      locker_info:          pick("locker_info"),
+      parking_info:         pick("parking_info"),
+      special_instructions: pick("special_instructions"),
+      what_to_bring:        pick("what_to_bring"),
+    };
+  })();
+
   const isAdmin = me?.is_admin ?? false;
   const showHotel = event?.is_hotel || isAdmin;
   const { data: hotelRooms = [] } = useHotelRooms(id ?? "", { enabled: !!showHotel });
@@ -53,7 +87,7 @@ export function EventDetailPage() {
     weatherDate,
   );
 
-  if (!event) {
+  if (!rawEvent || !event) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4 text-slate-400">
         <CalendarDays size={40} className="opacity-30" />

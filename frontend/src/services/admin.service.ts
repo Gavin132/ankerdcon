@@ -221,6 +221,10 @@ export async function bulkDeleteAdminEvents(eventIds: string[]): Promise<void> {
   await apiClient.post(apiRoutes.admin.calendar.bulkDelete, { event_ids: eventIds });
 }
 
+export async function syncAdminEventGroup(eventId: string): Promise<void> {
+  await apiClient.post(apiRoutes.admin.calendar.syncGroup(eventId));
+}
+
 export async function bulkGroupAdminEvents(
   eventIds: string[],
   multiDayId: string | null,

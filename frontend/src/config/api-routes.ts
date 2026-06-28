@@ -89,6 +89,7 @@ export const apiRoutes = {
       bulkDelete:   "/api/admin/calendar/bulk-delete",
       bulkGroup:    "/api/admin/calendar/bulk-group",
       bulkSetGroup: "/api/admin/calendar/bulk-set-group",
+      syncGroup:    (id: string) => `/api/admin/calendar/${id}/sync-group`,
       hotelRooms:   (eventId: string) => `/api/admin/calendar/${eventId}/hotel-rooms`,
       hotelRoomById:(eventId: string, roomId: string) => `/api/admin/calendar/${eventId}/hotel-rooms/${roomId}`,
     },

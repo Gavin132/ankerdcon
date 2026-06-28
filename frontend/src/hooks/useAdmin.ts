@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "../constants";
 import {
   bulkDeleteAdminEvents,
+  syncAdminEventGroup,
   bulkDeleteAdminUsers,
   bulkDeactivateAdminUsers,
   bulkDeleteAdminRides,
@@ -291,6 +292,17 @@ export function useAdminBulkDeleteEvents() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (eventIds: string[]) => bulkDeleteAdminEvents(eventIds),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEvents });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.calendar });
+    },
+  });
+}
+
+export function useAdminSyncEventGroup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (eventId: string) => syncAdminEventGroup(eventId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEvents });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.calendar });

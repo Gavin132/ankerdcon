@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, CalendarDays, Hotel, X as XIcon, Link2, Unlink2, Tag, Check, Layers, History } from "lucide-react";
+import { Plus, CalendarDays, Hotel, X as XIcon, Link2, Unlink2, Tag, Check, Layers, History, Copy } from "lucide-react";
 import type { TicketType, CalendarEvent } from "../../types";
 import {
   useAdminEvents,
@@ -16,6 +16,7 @@ import {
   useAdminBulkDeleteEvents,
   useAdminBulkGroupEvents,
   useAdminBulkSetEventGroup,
+  useAdminSyncEventGroup,
 } from "../../hooks/useAdmin";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { AdminDrawer } from "./AdminDrawer";
@@ -73,8 +74,10 @@ function EventDrawer({
   const createMutation = useAdminCreateEvent();
   const updateMutation = useAdminUpdateEvent();
   const removeParticipant = useAdminRemoveEventParticipant();
+  const syncGroupMutation = useAdminSyncEventGroup();
   const { data: eventGroups = [] } = useAdminEventGroups();
   const isEdit = event !== null && event !== "new";
+  const editEvent = event !== null && event !== "new" ? event : null;
   const open = event !== null;
 
   // Ticket types list state
@@ -382,6 +385,32 @@ function EventDrawer({
           </div>
         </div>
 
+        {editEvent?.multi_day_id && (
+          <div className={SECTION}>
+            <p className={SECTION_TITLE}>Meerdaagse synchronisatie</p>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Kopieer de huidige beschrijving, locatie, links, tickets en praktische info naar alle andere
+              dagen in dit meerdaagse evenement.
+            </p>
+            <button
+              type="button"
+              disabled={syncGroupMutation.isPending}
+              onClick={async () => {
+                try {
+                  await syncGroupMutation.mutateAsync(editEvent.id);
+                  toast("success", "Info gekopieerd naar alle andere dagen in de groep.");
+                } catch {
+                  toast("error", "Synchronisatie mislukt.");
+                }
+              }}
+              className="flex items-center gap-2 rounded-xl bg-violet-600/20 border border-violet-500/30 px-4 py-2.5 text-sm font-semibold text-violet-400 hover:bg-violet-600/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Copy size={14} />
+              {syncGroupMutation.isPending ? "Bezig…" : "Kopieer naar alle dagen"}
+            </button>
+          </div>
+        )}
+
         {isEdit && (
           <ParticipantList
             participants={event.participants}
@@ -406,10 +435,13 @@ export function AdminEventsPage() {
   const bulkDeleteMutation = useAdminBulkDeleteEvents();
   const bulkGroupMutation = useAdminBulkGroupEvents();
   const bulkSetGroupMutation = useAdminBulkSetEventGroup();
+  const syncGroupMutation = useAdminSyncEventGroup();
   const [search, setSearch] = useState("");
   const [groupFilter, setGroupFilter] = useState("All");
   const [page, setPage] = useState(0);
-  const [drawer, setDrawer] = useState<CalendarEvent | "new" | null>(null);
+  const [drawerId, setDrawerId] = useState<string | "new" | null>(null);
+  const drawerEvent: CalendarEvent | "new" | null =
+    drawerId === "new" ? "new" : drawerId ? (events.find((e) => e.id === drawerId) ?? null) : null;
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
@@ -448,18 +480,39 @@ export function AdminEventsPage() {
 
   const { selectedIds, toggleSelect, selectAll, clearSelection, allSelected, indeterminate } =
     useTableSelection(paginated.map((ev) => ev.id));
-  const [bulkMode, setBulkMode] = useState<"idle" | "set-group">("idle");
+  const [bulkMode, setBulkMode] = useState<"idle" | "set-group" | "sync">("idle");
   const [pickedGroup, setPickedGroup] = useState("");
+  const [syncSourceId, setSyncSourceId] = useState("");
 
   const selectedEvents = events.filter((ev) => selectedIds.has(ev.id));
   const anyMultiDay = selectedEvents.some((ev) => ev.multi_day_id);
+  // Sync is available when all selected events share the same multi_day_id
+  const sharedMultiDayId = selectedEvents.length > 1 &&
+    selectedEvents[0]?.multi_day_id &&
+    selectedEvents.every((ev) => ev.multi_day_id === selectedEvents[0].multi_day_id)
+      ? selectedEvents[0].multi_day_id
+      : null;
   const bulkIsPending =
-    bulkDeleteMutation.isPending || bulkGroupMutation.isPending || bulkSetGroupMutation.isPending;
+    bulkDeleteMutation.isPending || bulkGroupMutation.isPending ||
+    bulkSetGroupMutation.isPending || syncGroupMutation.isPending;
 
   function handleClearSelection() {
     clearSelection();
     setBulkMode("idle");
     setPickedGroup("");
+    setSyncSourceId("");
+  }
+
+  async function handleBulkSync(sourceId: string) {
+    try {
+      await syncGroupMutation.mutateAsync(sourceId);
+      toast("success", "Info gesynchroniseerd naar alle andere dagen.");
+      setBulkMode("idle");
+      setSyncSourceId("");
+      clearSelection();
+    } catch {
+      toast("error", "Synchronisatie mislukt.");
+    }
   }
 
   function handleSearch(v: string) {
@@ -540,7 +593,7 @@ export function AdminEventsPage() {
               {showHistory ? "Terug naar aankomend" : "Geschiedenis"}
             </button>
             <button
-              onClick={() => setDrawer("new")}
+              onClick={() => setDrawerId("new")}
               className="flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 transition-colors shadow-sm"
             >
               <Plus size={16} />
@@ -742,7 +795,7 @@ export function AdminEventsPage() {
                         id={event.id}
                         confirmId={confirmDeleteId}
                         isPending={deleteMutation.isPending}
-                        onEdit={() => setDrawer(event)}
+                        onEdit={() => setDrawerId(event.id)}
                         onRequestDelete={() => setConfirmDeleteId(event.id)}
                         onConfirmDelete={() =>
                           handleDelete(event.id, event.event_name)
@@ -768,12 +821,10 @@ export function AdminEventsPage() {
 
       <EventDrawer
         key={
-          typeof drawer === "object" && drawer !== null
-            ? drawer.id
-            : (drawer ?? "none")
+          drawerId ?? "none"
         }
-        event={drawer}
-        onClose={() => setDrawer(null)}
+        event={drawerEvent}
+        onClose={() => setDrawerId(null)}
       />
 
       <AdminBulkBar
@@ -809,6 +860,16 @@ export function AdminEventsPage() {
               <Tag size={14} />
               Label
             </button>
+            {sharedMultiDayId && (
+              <button
+                onClick={() => { setBulkMode("sync"); setSyncSourceId(selectedEvents[0]?.id ?? ""); }}
+                disabled={bulkIsPending}
+                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium text-violet-400 hover:bg-violet-500/10 hover:text-violet-300 transition-colors disabled:opacity-40"
+              >
+                <Copy size={14} />
+                Synchroniseer
+              </button>
+            )}
           </>
         }
         overrideContent={
@@ -817,11 +878,11 @@ export function AdminEventsPage() {
               <select
                 value={pickedGroup}
                 onChange={(e) => setPickedGroup(e.target.value)}
-                className="[color-scheme:dark] rounded-xl border border-white/[0.12] bg-white/[0.06] px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                className="[color-scheme:dark] rounded-xl border border-white/[0.12] bg-slate-800 px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500/50"
               >
-                <option value="">— Geen groep —</option>
+                <option value="" className="bg-slate-800 text-white">— Geen groep —</option>
                 {eventGroups.map((g) => (
-                  <option key={g.id} value={g.name}>{g.name}</option>
+                  <option key={g.id} value={g.name} className="bg-slate-800 text-white">{g.name}</option>
                 ))}
               </select>
               <button
@@ -834,6 +895,34 @@ export function AdminEventsPage() {
               </button>
               <button
                 onClick={() => { setBulkMode("idle"); setPickedGroup(""); }}
+                disabled={bulkIsPending}
+                className="rounded-xl px-3 py-1.5 text-sm font-medium text-slate-400 hover:bg-white/[0.08] transition-colors"
+              >
+                Annuleer
+              </button>
+            </>
+          ) : bulkMode === "sync" ? (
+            <>
+              <span className="px-1 text-sm text-slate-400 whitespace-nowrap">Sync van:</span>
+              <select
+                value={syncSourceId}
+                onChange={(e) => setSyncSourceId(e.target.value)}
+                className="[color-scheme:dark] rounded-xl border border-white/[0.12] bg-slate-800 px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+              >
+                {selectedEvents.map((ev) => (
+                  <option key={ev.id} value={ev.id} className="bg-slate-800 text-white">{ev.event_name}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => handleBulkSync(syncSourceId)}
+                disabled={bulkIsPending || !syncSourceId}
+                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold bg-violet-600 text-white hover:bg-violet-700 transition-colors disabled:opacity-40"
+              >
+                <Check size={14} />
+                {bulkIsPending ? "Bezig…" : "Synchroniseer"}
+              </button>
+              <button
+                onClick={() => { setBulkMode("idle"); setSyncSourceId(""); }}
                 disabled={bulkIsPending}
                 className="rounded-xl px-3 py-1.5 text-sm font-medium text-slate-400 hover:bg-white/[0.08] transition-colors"
               >
