@@ -171,11 +171,10 @@ export function NamePicker(props: NamePickerProps) {
           onBlur={handleBlur}
           autoComplete="off"
         />
-      </div>
 
       {/* ── Options list ─────────────────────────────────────────────────── */}
       {open && query.trim() && (
-        <div className="max-h-[220px] overflow-y-auto overscroll-contain rounded-xl border border-slate-100 dark:border-slate-700 divide-y divide-slate-50 dark:divide-slate-800">
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-[220px] overflow-y-auto overscroll-contain rounded-xl border border-slate-100 dark:border-slate-700 divide-y divide-slate-50 dark:divide-slate-800 bg-white dark:bg-slate-900 shadow-lg">
           {filtered.length === 0 ? (
             <p className="px-4 py-4 text-center text-xs text-slate-400">
               Geen resultaten voor &ldquo;{query}&rdquo;
@@ -233,6 +232,7 @@ export function NamePicker(props: NamePickerProps) {
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }
