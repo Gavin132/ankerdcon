@@ -1,78 +1,19 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  ArrowRight,
-  ArrowLeft,
-  LayoutDashboard,
-  Car,
-  UtensilsCrossed,
-  Wallet,
-  CalendarDays,
-  Check,
-  Bell,
-  BellOff,
-  AlertTriangle,
-  Smartphone,
-  Sparkles,
-  Plus,
-  X,
-} from "lucide-react";
+import { ArrowRight, ArrowLeft, Check } from "lucide-react";
 import { routes } from "../config/routes";
 import { useCurrentUser, useCompleteOnboarding } from "../hooks/useUsers";
 import { useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "../constants";
 import { validatePhoneNumber } from "../utils/validation";
 import type { User } from "../types";
-
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-const TOTAL_STEPS = 4;
-
-const NAME_COLORS = [
-  "#0ea5e9", "#8b5cf6", "#10b981", "#f43f5e",
-  "#f59e0b", "#6366f1", "#ec4899", "#14b8a6",
-  "#fb923c", "#a3e635",
-];
-
-const BANNER_COLORS = [
-  "#0f172a", "#1e293b", "#1a1a2e", "#2d1b69",
-  "#0c4a6e", "#14532d", "#7c2d12", "#0369a1",
-  "#064e3b", "#4c0519",
-];
-
-const FEATURES = [
-  {
-    icon: LayoutDashboard,
-    color: "bg-sky-500/10 text-sky-500",
-    title: "Hub",
-    desc: "Overzicht van alle activiteiten, het aankomende evenement en wie er aanwezig is.",
-  },
-  {
-    icon: Car,
-    color: "bg-violet-500/10 text-violet-500",
-    title: "Transport",
-    desc: "Plan je rit naar het evenement, meld je aan als passagier of bied een lift aan.",
-  },
-  {
-    icon: UtensilsCrossed,
-    color: "bg-amber-500/10 text-amber-500",
-    title: "Eten",
-    desc: "Bekijk geplande maaltijden en meld je eenvoudig aan.",
-  },
-  {
-    icon: Wallet,
-    color: "bg-emerald-500/10 text-emerald-500",
-    title: "Financien",
-    desc: "Houd gedeelde kosten bij en verdeel uitgaven eerlijk met de groep.",
-  },
-  {
-    icon: CalendarDays,
-    color: "bg-rose-500/10 text-rose-500",
-    title: "Agenda & Meer",
-    desc: "Bekijk alle aankomende evenementen, geef je op en beheer je profiel.",
-  },
-];
+import { TOTAL_STEPS } from "./onboarding/constants";
+import type { ProfileState } from "./onboarding/types";
+import { DialogueIntro } from "./onboarding/DialogueIntro";
+import { StepFeatures } from "./onboarding/StepFeatures";
+import { StepProfile } from "./onboarding/StepProfile";
+import { StepDone } from "./onboarding/StepDone";
 
 // ── Slide animation variants ───────────────────────────────────────────────────
 
@@ -82,381 +23,6 @@ function variants(direction: 1 | -1) {
     animate: { opacity: 1, x: 0, transition: { duration: 0.32, ease: [0.25, 0.46, 0.45, 0.94] } },
     exit: { opacity: 0, x: direction * -40, transition: { duration: 0.22, ease: [0.55, 0, 1, 0.45] } },
   };
-}
-
-// ── Sub-components ─────────────────────────────────────────────────────────────
-
-function ColorSwatch({
-  value,
-  onChange,
-  presets,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  presets: string[];
-}) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      <button
-        type="button"
-        onClick={() => onChange("")}
-        title="Automatisch"
-        className={`h-7 w-7 rounded-full transition-all hover:scale-110 ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 ${
-          value === "" ? "ring-sky-500 scale-110" : "ring-transparent"
-        }`}
-        style={{ background: "linear-gradient(135deg, #cbd5e1, #94a3b8)" }}
-      >
-        {value === "" && <Check size={9} className="m-auto text-white drop-shadow" />}
-      </button>
-      {presets.map((c) => (
-        <button
-          key={c}
-          type="button"
-          onClick={() => onChange(value === c ? "" : c)}
-          title={c}
-          className={`h-7 w-7 rounded-full transition-all hover:scale-110 ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 ${
-            value === c ? "ring-sky-500 scale-110" : "ring-transparent"
-          }`}
-          style={{ backgroundColor: c }}
-        >
-          {value === c && <Check size={9} className="m-auto text-white drop-shadow" />}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// ── Step components ────────────────────────────────────────────────────────────
-
-function StepWelcome({ me }: { me: User | undefined }) {
-  return (
-    <div className="flex flex-col items-center text-center gap-6">
-      {/* Logo */}
-      <motion.div
-        initial={{ scale: 0.7, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", bounce: 0.45, delay: 0.1 }}
-        className="h-20 w-20 rounded-3xl bg-white border border-sky-100 shadow-lg overflow-hidden flex items-center justify-center"
-      >
-        <img src="/assets/images/ankerd-logo.png" alt="Ankerd" className="h-14 w-14 object-contain" />
-      </motion.div>
-
-      <div className="space-y-2">
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-          Welkom{me?.name ? `, ${me.name}` : ""}!
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs mx-auto">
-          Fijn dat je er bent. Dit is het Ankerd Con ledenportaal — je centrale plek voor evenementen, transport en meer.
-        </p>
-      </div>
-
-      {/* Dev notice */}
-      <div className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 p-4 text-left">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-amber-400/20">
-            <AlertTriangle size={12} className="text-amber-500" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-amber-700 dark:text-amber-400 mb-1">
-              Nog in ontwikkeling
-            </p>
-            <p className="text-xs text-amber-600/80 dark:text-amber-300/70 leading-relaxed">
-              De app wordt actief verbeterd en nieuwe functies worden regelmatig toegevoegd. Loop je ergens tegenaan? Meld het via Discord.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StepFeatures() {
-  return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <h2 className="text-xl font-black text-slate-900 dark:text-white">Wat kun je doen?</h2>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Een korte rondleiding door de app.
-        </p>
-      </div>
-
-      <div className="space-y-3">
-        {FEATURES.map(({ icon: Icon, color, title, desc }) => (
-          <div
-            key={title}
-            className="flex items-start gap-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm"
-          >
-            <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${color}`}>
-              <Icon size={17} />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-bold text-slate-900 dark:text-white">{title}</p>
-              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{desc}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-interface ProfileState {
-  pronouns: string;
-  bio: string;
-  phone: string;
-  color: string;
-  bannerColor: string;
-  allowDm: boolean;
-  aliases: string[];
-}
-
-function StepProfile({ state, onChange }: {
-  state: ProfileState;
-  onChange: (patch: Partial<ProfileState>) => void;
-}) {
-  const [aliasInput, setAliasInput] = useState("");
-  const phoneError = state.phone ? validatePhoneNumber(state.phone) : null;
-
-  function addAlias() {
-    const trimmed = aliasInput.trim();
-    if (!trimmed || trimmed.length > 30 || state.aliases.includes(trimmed) || state.aliases.length >= 10) return;
-    onChange({ aliases: [...state.aliases, trimmed] });
-    setAliasInput("");
-  }
-
-  function removeAlias(alias: string) {
-    onChange({ aliases: state.aliases.filter((a) => a !== alias) });
-  }
-
-  return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <h2 className="text-xl font-black text-slate-900 dark:text-white">Stel je profiel in</h2>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Alle velden zijn optioneel — je kunt dit later altijd aanpassen.
-        </p>
-      </div>
-
-      <div className="space-y-5">
-        {/* Pronouns */}
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1.5">
-            Voornaamwoorden
-          </label>
-          <input
-            type="text"
-            maxLength={40}
-            placeholder="bijv. hij/hem, zij/haar, die/hen"
-            className="input-field"
-            value={state.pronouns}
-            onChange={(e) => onChange({ pronouns: e.target.value })}
-          />
-        </div>
-
-        {/* Phone */}
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1.5">
-            Telefoonnummer
-          </label>
-          <div className="relative">
-            <Smartphone size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="tel"
-              maxLength={20}
-              placeholder="+31 6 12345678"
-              className={`input-field pl-9 ${phoneError && state.phone ? "border-rose-400 dark:border-rose-700" : ""}`}
-              value={state.phone}
-              onChange={(e) => onChange({ phone: e.target.value })}
-            />
-          </div>
-          {phoneError && state.phone && (
-            <p className="mt-1.5 flex items-center gap-1 text-xs text-rose-500">
-              <AlertTriangle size={11} /> {phoneError}
-            </p>
-          )}
-          <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">
-            Zichtbaar voor andere deelnemers.
-          </p>
-        </div>
-
-        {/* Bio */}
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1.5">
-            Bio
-          </label>
-          <div className="relative">
-            <textarea
-              rows={3}
-              maxLength={200}
-              placeholder="Vertel iets over jezelf..."
-              className="input-field resize-none"
-              value={state.bio}
-              onChange={(e) => onChange({ bio: e.target.value })}
-            />
-            <span className="absolute bottom-3 right-3 text-[11px] text-slate-300 dark:text-slate-600 pointer-events-none select-none">
-              {200 - state.bio.length}
-            </span>
-          </div>
-        </div>
-
-        {/* Name color */}
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-2">
-            Naamkleur
-          </label>
-          <ColorSwatch value={state.color} onChange={(v) => onChange({ color: v })} presets={NAME_COLORS} />
-          {state.color && (
-            <div className="mt-2.5 inline-flex items-center rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5">
-              <span className="text-sm font-black" style={{ color: state.color }}>
-                Voorbeeld naam
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Banner color */}
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-2">
-            Profielbanner
-          </label>
-          <div
-            className="h-10 w-full rounded-xl mb-3 border border-slate-100 dark:border-slate-800 transition-colors"
-            style={state.bannerColor ? { backgroundColor: state.bannerColor } : { background: "linear-gradient(135deg, #0ea5e9, #6366f1)" }}
-          />
-          <ColorSwatch value={state.bannerColor} onChange={(v) => onChange({ bannerColor: v })} presets={BANNER_COLORS} />
-        </div>
-
-        {/* Aliases */}
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1.5">
-            Aliassen
-          </label>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">
-            Bijnamen waaronder andere deelnemers jou kennen (max. 10).
-          </p>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              maxLength={30}
-              placeholder="bijv. een bijnaam"
-              className="input-field flex-1"
-              value={aliasInput}
-              onChange={(e) => setAliasInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addAlias(); } }}
-            />
-            <button
-              type="button"
-              onClick={addAlias}
-              disabled={!aliasInput.trim() || state.aliases.length >= 10}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-40 transition-colors"
-            >
-              <Plus size={15} />
-            </button>
-          </div>
-          {state.aliases.length > 0 && (
-            <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {state.aliases.map((alias) => (
-                <span
-                  key={alias}
-                  className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-300"
-                >
-                  {alias}
-                  <button
-                    type="button"
-                    onClick={() => removeAlias(alias)}
-                    className="ml-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                  >
-                    <X size={11} />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Discord DM toggle */}
-        <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${state.allowDm ? "bg-sky-500/10" : "bg-slate-100 dark:bg-slate-800"}`}>
-                {state.allowDm
-                  ? <Bell size={16} className="text-sky-500" />
-                  : <BellOff size={16} className="text-slate-400" />
-                }
-              </div>
-              <div>
-                <p className="text-sm font-bold text-slate-900 dark:text-white">Discord notificaties</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-                  Ontvang een DM bij accountwijzigingen
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={state.allowDm}
-              onClick={() => onChange({ allowDm: !state.allowDm })}
-              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
-                state.allowDm ? "bg-sky-500" : "bg-slate-200 dark:bg-slate-700"
-              }`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
-                  state.allowDm ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StepDone() {
-  return (
-    <div className="flex flex-col items-center text-center gap-6 py-4">
-      <motion.div
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", bounce: 0.5, delay: 0.1 }}
-        className="relative flex h-24 w-24 items-center justify-center rounded-full bg-emerald-500"
-      >
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.3, type: "spring", bounce: 0.6 }}
-        >
-          <Check size={40} strokeWidth={3} className="text-white" />
-        </motion.div>
-        {/* Ripple ring */}
-        <motion.div
-          className="absolute inset-0 rounded-full border-4 border-emerald-400"
-          initial={{ scale: 1, opacity: 0.8 }}
-          animate={{ scale: 1.5, opacity: 0 }}
-          transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
-        />
-      </motion.div>
-
-      <div className="space-y-2">
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-          Je bent er klaar voor!
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs mx-auto">
-          Welkom aan boord. We hopen dat de app goed van pas komt — geniet van het evenement!
-        </p>
-      </div>
-
-      <div className="w-full rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-4 text-left">
-        <div className="flex items-center gap-3">
-          <Sparkles size={15} className="text-sky-500 shrink-0" />
-          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-            Je kunt je profiel en voorkeuren altijd aanpassen via de <strong className="text-slate-700 dark:text-slate-300">Meer</strong> pagina.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
@@ -489,8 +55,6 @@ export function OnboardingPage() {
   }, [me?.onboarding_completed, navigate]);
 
   const phoneError = profile.phone ? validatePhoneNumber(profile.phone) : null;
-  // "Save" is blocked when the user typed a phone number that's invalid.
-  // "Skip" is always available and sends no profile data.
   const canSave = !phoneError;
 
   function goTo(next: number) {
@@ -514,7 +78,6 @@ export function OnboardingPage() {
               aliases: profile.aliases.length > 0 ? profile.aliases : undefined,
             },
       );
-      // Instantly reflect onboarding completion in cache
       qc.setQueryData(QUERY_KEYS.currentUser, (old: User | undefined) =>
         old ? { ...old, onboarding_completed: true } : old,
       );
@@ -525,8 +88,13 @@ export function OnboardingPage() {
     }
   }
 
+  // step 0 = dialogue intro (full-screen, dark)
+  if (step === 0) {
+    return <DialogueIntro me={me} onDone={() => goTo(1)} />;
+  }
+
   const stepContent = [
-    <StepWelcome key="welcome" me={me} />,
+    null,
     <StepFeatures key="features" />,
     <StepProfile key="profile" state={profile} onChange={(p) => setProfile((prev) => ({ ...prev, ...p }))} />,
     <StepDone key="done" />,
@@ -534,6 +102,7 @@ export function OnboardingPage() {
 
   const isLastInputStep = step === 2;
   const isDoneStep = step === 3;
+  const showProgress = step === 1 || step === 2;
 
   return (
     <div className="relative flex min-h-[100dvh] flex-col bg-slate-50 dark:bg-slate-950 pt-[env(safe-area-inset-top,0px)]">
@@ -544,18 +113,18 @@ export function OnboardingPage() {
       </div>
 
       {/* Progress bar */}
-      {!isDoneStep && (
+      {showProgress && (
         <div className="relative z-10 px-5 pt-5 pb-2">
           <div className="mx-auto max-w-sm">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-600">
-                Stap {step + 1} van {TOTAL_STEPS - 1}
+                Stap {step - 1} van {TOTAL_STEPS - 1}
               </span>
             </div>
             <div className="h-1 w-full rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
               <motion.div
                 className="h-full rounded-full bg-sky-500"
-                animate={{ width: `${((step + 1) / (TOTAL_STEPS - 1)) * 100}%` }}
+                animate={{ width: `${((step - 1) / (TOTAL_STEPS - 1)) * 100}%` }}
                 transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
               />
             </div>
@@ -588,8 +157,7 @@ export function OnboardingPage() {
         >
           <div className="mx-auto max-w-sm space-y-2">
             <div className="flex items-center gap-3">
-              {/* Back button */}
-              {step > 0 && !isDoneStep && (
+              {step > 1 && !isDoneStep && (
                 <button
                   type="button"
                   onClick={() => goTo(step - 1)}
@@ -599,7 +167,6 @@ export function OnboardingPage() {
                 </button>
               )}
 
-              {/* Primary action */}
               {isDoneStep ? (
                 <motion.button
                   type="button"
@@ -622,10 +189,7 @@ export function OnboardingPage() {
                   {submitting ? (
                     <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
                   ) : (
-                    <>
-                      Opslaan & afronden
-                      <Check size={15} />
-                    </>
+                    <>Opslaan & afronden <Check size={15} /></>
                   )}
                 </button>
               ) : (
@@ -634,13 +198,11 @@ export function OnboardingPage() {
                   onClick={() => goTo(step + 1)}
                   className="flex flex-1 h-11 items-center justify-center gap-2 rounded-xl bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-white font-bold text-sm transition-colors"
                 >
-                  {step === 0 ? "Aan de slag" : "Volgende"}
-                  <ArrowRight size={15} />
+                  Volgende <ArrowRight size={15} />
                 </button>
               )}
             </div>
 
-            {/* Skip link — only shown on the profile step */}
             {isLastInputStep && (
               <div className="flex justify-center">
                 <button
