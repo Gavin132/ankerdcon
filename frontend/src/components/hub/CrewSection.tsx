@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BedDouble, Phone, ChevronDown, Search } from "lucide-react";
+import { BedDouble, ChevronDown, Search } from "lucide-react";
 import { LocationPingDisplay } from "../common/LocationPingDisplay";
-import { avatarColor } from "../../utils/avatar";
+import { UserNameDisplay } from "../common/UserNameDisplay";
+import { UserProfilePopup, type AnchorRect } from "../common/UserProfilePopup";
+import { UserAvatar } from "../common/UserAvatar";
 import { listItem } from "../../utils/motion";
+import { useAuthStore } from "../../store/auth.store";
+import { useCalendar } from "../../hooks/useCalendar";
 import type { User } from "../../types";
 
 interface CrewSectionProps {
@@ -13,9 +17,20 @@ interface CrewSectionProps {
 export function CrewSection({ users }: CrewSectionProps) {
   const [expanded, setExpanded] = useState(false);
   const [query, setQuery] = useState("");
+  const [popupUser, setPopupUser] = useState<User | null>(null);
+  const [popupAnchorRect, setPopupAnchorRect] = useState<AnchorRect>({ top: 0, left: 0, right: 0, height: 0 });
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const { data: calendarEvents } = useCalendar();
 
   const filtered = query
-    ? users.filter((u) => u.name.toLowerCase().includes(query.toLowerCase()))
+    ? users.filter((u) => {
+        const q = query.toLowerCase();
+        return (
+          u.name.toLowerCase().includes(q) ||
+          (u.discord_username ?? "").toLowerCase().includes(q) ||
+          u.aliases?.some((a) => a.toLowerCase().includes(q))
+        );
+      })
     : users;
 
   return (
@@ -36,16 +51,13 @@ export function CrewSection({ users }: CrewSectionProps) {
 
       {/* Avatar strip when collapsed */}
       {!expanded && users.length > 0 && (
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setExpanded(true)}>
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => setExpanded(true)}
+        >
           <div className="flex -space-x-2">
             {users.slice(0, 8).map((u) => (
-              <div
-                key={u.name}
-                title={u.name}
-                className={`flex h-9 w-9 items-center justify-center rounded-full border-2 border-white dark:border-slate-900 bg-gradient-to-br text-xs font-black text-white ${avatarColor(u.name)}`}
-              >
-                {u.name[0]}
-              </div>
+              <UserAvatar key={u.name} name={u.name} className="h-9 w-9 text-xs" />
             ))}
             {users.length > 8 && (
               <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-700 text-xs font-black text-slate-600 dark:text-slate-300">
@@ -80,21 +92,29 @@ export function CrewSection({ users }: CrewSectionProps) {
                 />
               </div>
 
-              <div className="card-surface rounded-2xl divide-y divide-slate-50 dark:divide-slate-800">
+              <div className="card-surface rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-700/60">
                 {filtered.length === 0 ? (
                   <p className="px-4 py-6 text-center text-sm text-slate-400">
                     Geen resultaten voor &ldquo;{query}&rdquo;
                   </p>
                 ) : (
                   filtered.map((u) => (
-                    <div key={u.name} className="flex items-center gap-3 px-4 py-3.5">
-                      <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-black text-white ${avatarColor(u.name)}`}
-                      >
-                        {u.name[0]}
-                      </div>
+                    <button
+                      key={u.name}
+                      onClick={(e) => {
+                        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                        setPopupAnchorRect({ top: rect.top, left: rect.left, right: rect.right, height: rect.height });
+                        setPopupUser(u);
+                      }}
+                      className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-slate-50 active:bg-slate-50 dark:hover:bg-black/20 dark:active:bg-black/20 transition-colors"
+                    >
+                      <UserAvatar name={u.name} className="h-10 w-10 text-sm rounded-xl" />
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-slate-900 dark:text-white text-sm">{u.name}</p>
+                        <UserNameDisplay
+                          name={u.name}
+                          clickable={false}
+                          className="font-bold text-sm block"
+                        />
                         <div className="flex flex-wrap items-center gap-3 mt-0.5">
                           {u.hotel_room && (
                             <span className="flex items-center gap-1 text-xs text-slate-400">
@@ -102,18 +122,12 @@ export function CrewSection({ users }: CrewSectionProps) {
                               Kamer {u.hotel_room}
                             </span>
                           )}
-                          {u.phone_number && (
-                            <span className="flex items-center gap-1 text-xs text-slate-400">
-                              <Phone size={11} />
-                              {u.phone_number}
-                            </span>
-                          )}
                         </div>
                       </div>
                       {u.live_location_ping && (
                         <LocationPingDisplay raw={u.live_location_ping} />
                       )}
-                    </div>
+                    </button>
                   ))
                 )}
               </div>
@@ -121,6 +135,16 @@ export function CrewSection({ users }: CrewSectionProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Profile popup */}
+      <UserProfilePopup
+        user={popupUser}
+        open={popupUser !== null}
+        isOwn={currentUser === popupUser?.id}
+        anchorRect={popupAnchorRect}
+        onClose={() => setPopupUser(null)}
+        calendarEvents={calendarEvents ?? []}
+      />
     </motion.div>
   );
 }

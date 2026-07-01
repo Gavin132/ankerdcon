@@ -3,12 +3,36 @@ import type { TabId } from "../types";
 export const APP_NAME = "Ankerd Con";
 
 export const QUERY_KEYS = {
-  rides: ["rides"] as const,
-  meals: ["meals"] as const,
-  payments: ["payments"] as const,
-  calendar: ["calendar"] as const,
-  users: ["users"] as const,
-} as const;
+  rides:     ["rides"]     as const,
+  meals:     ["meals"]     as const,
+  payments:  ["payments"]  as const,
+  calendar:  ["calendar"]  as const,
+  users:     ["users"]     as const,
+  userNames: ["userNames"] as const,
+  /** Prefix key — use for broad invalidation of all single-user queries. */
+  userBase:  ["user"]      as const,
+  /** Full key for a specific user query. */
+  user: (name: string) => ["user", name] as const,
+  /** Current authenticated user's own profile. */
+  currentUser: ["currentUser"] as const,
+
+  badges: ["badges"] as const,
+
+  // Admin
+  adminStats:  ["admin", "stats"]  as const,
+  adminUsers:  ["admin", "users"]  as const,
+  adminRides:  ["admin", "rides"]  as const,
+  adminMeals:  ["admin", "meals"]  as const,
+  adminEvents: ["admin", "events"] as const,
+  adminBadges:       ["admin", "badges"]       as const,
+  adminEventGroups:  ["admin", "event-groups"] as const,
+
+  cosplays: ["cosplays"] as const,
+  expenses: ["expenses"] as const,
+
+  hotelRooms:      (eventId: string) => ["hotel-rooms", eventId]       as const,
+  adminHotelRooms: (eventId: string) => ["admin", "hotel-rooms", eventId] as const,
+};
 
 export const STALE_TIME = 30_000; // 30 seconds
 
@@ -68,6 +92,17 @@ export const TOKENS = {
       "text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-200",
     check: "text-emerald-500",
     bar: "bg-emerald-400",
+    barFull: "bg-amber-400",
+    counter: "text-slate-400",
+    counterFull: "text-amber-500",
+  },
+  violet: {
+    dot: "bg-violet-500",
+    activeRow: "bg-violet-50 dark:bg-violet-900/20",
+    chip: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
+    chipX: "text-violet-400 hover:text-violet-700 dark:hover:text-violet-200",
+    check: "text-violet-500",
+    bar: "bg-violet-400",
     barFull: "bg-amber-400",
     counter: "text-slate-400",
     counterFull: "text-amber-500",

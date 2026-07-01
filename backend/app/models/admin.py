@@ -1,0 +1,159 @@
+from __future__ import annotations
+
+from typing import Optional
+
+from pydantic import BaseModel
+
+
+class AdminCreateUserRequest(BaseModel):
+    name: str
+    discord_id: Optional[str] = None
+    is_admin: bool = False
+
+
+class AdminUpdateUserRequest(BaseModel):
+    hotel_room: Optional[str] = None
+    phone_number: Optional[str] = None
+    pronouns: Optional[str] = None
+    bio: Optional[str] = None
+    color: Optional[str] = None
+    is_admin: Optional[bool] = None
+    is_active: Optional[bool] = None
+    aliases: Optional[list[str]] = None
+
+
+class AdminUpdateRideRequest(BaseModel):
+    direction: Optional[str] = None
+    vehicle_type: Optional[str] = None
+    driver: Optional[str] = None
+    departure_time: Optional[str] = None
+    start_location: Optional[str] = None
+    total_seats: Optional[int] = None
+    parking_info: Optional[str] = None
+    maps_link: Optional[str] = None
+    car_available: Optional[bool] = None
+    action_required: Optional[bool] = None
+    linked_event_id: Optional[str] = None
+
+
+class AdminCreateMealRequest(BaseModel):
+    meal_name: str
+    time: str
+    location: str = ""
+    cost: float = 0.0
+    transport_needed: bool = False
+    linked_event_id: Optional[str] = None
+    website: Optional[str] = None
+    menu_url: Optional[str] = None
+    description: Optional[str] = None
+    dietary_options: Optional[str] = None
+    parking_info: Optional[str] = None
+    extra_notes: Optional[str] = None
+
+
+class AdminUpdateMealRequest(BaseModel):
+    meal_name: Optional[str] = None
+    time: Optional[str] = None
+    location: Optional[str] = None
+    cost: Optional[float] = None
+    transport_needed: Optional[bool] = None
+    linked_event_id: Optional[str] = None
+    website: Optional[str] = None
+    menu_url: Optional[str] = None
+    description: Optional[str] = None
+    dietary_options: Optional[str] = None
+    parking_info: Optional[str] = None
+    extra_notes: Optional[str] = None
+
+
+class AdminCreateCalendarEventRequest(BaseModel):
+    event_name: str
+    date: str
+    event_group_id: Optional[str] = None
+    is_hotel: bool = False
+    description: Optional[str] = None
+    location: Optional[str] = None
+    website: Optional[str] = None
+    ticket_url: Optional[str] = None
+    ticket_sale_start: Optional[str] = None
+    ticket_types: Optional[list[dict]] = None
+    locker_info: Optional[str] = None
+    parking_info: Optional[str] = None
+    special_instructions: Optional[str] = None
+    what_to_bring: Optional[str] = None
+
+
+class AdminUpdateCalendarEventRequest(BaseModel):
+    event_name: Optional[str] = None
+    date: Optional[str] = None
+    event_group_id: Optional[str] = None
+    is_hotel: Optional[bool] = None
+    description: Optional[str] = None
+    location: Optional[str] = None
+    website: Optional[str] = None
+    ticket_url: Optional[str] = None
+    ticket_sale_start: Optional[str] = None
+    ticket_types: Optional[list[dict]] = None
+    locker_info: Optional[str] = None
+    parking_info: Optional[str] = None
+    special_instructions: Optional[str] = None
+    what_to_bring: Optional[str] = None
+
+
+class EventGroup(BaseModel):
+    id: str
+    name: str
+    created_at: str
+
+
+class CreateEventGroupRequest(BaseModel):
+    name: str
+
+
+class UpdateEventGroupRequest(BaseModel):
+    name: str
+
+
+class SetEventGroupRequest(BaseModel):
+    group_id: str | None = None
+
+
+class BulkDeleteEventsRequest(BaseModel):
+    event_ids: list[str]
+
+
+class BulkDeleteUsersRequest(BaseModel):
+    user_ids: list[str]
+
+
+class BulkDeactivateUsersRequest(BaseModel):
+    user_ids: list[str]
+
+
+class BulkDeleteRidesRequest(BaseModel):
+    ride_ids: list[str]
+
+
+class BulkDeleteMealsRequest(BaseModel):
+    meal_ids: list[str]
+
+
+class BulkDeleteEventGroupsRequest(BaseModel):
+    group_ids: list[str]
+
+
+class AdminUpdateHotelRoomRequest(BaseModel):
+    room_number: Optional[str] = None
+    floor: Optional[str] = None
+    instructions: Optional[str] = None
+    occupants: Optional[list[str]] = None
+
+
+class BulkGroupEventsRequest(BaseModel):
+    event_ids: list[str]
+    multi_day_id: str | None = None  # None = ungroup; omit to auto-generate
+
+
+class BulkSetEventGroupRequest(BaseModel):
+    event_ids: list[str]
+    group_id: str | None = None  # None = clear group label

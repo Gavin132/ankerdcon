@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { Search, X, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { avatarColor } from "../../utils/avatar";
+import { UserAvatar } from "./UserAvatar";
 import { TOKENS } from "../../constants";
 import { NamePickerProps, MultiProps, SingleProps } from "../../types";
+import { useUsers } from "../../hooks/useUsers";
 
 export function NamePicker(props: NamePickerProps) {
   const { options, placeholder = "Zoek naam…", color = "sky" } = props;
@@ -12,6 +13,7 @@ export function NamePicker(props: NamePickerProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { data: users = [] } = useUsers();
 
   const isMulti = props.multiple === true;
   const selected = isMulti ? (props as MultiProps).value : [];
@@ -19,8 +21,18 @@ export function NamePicker(props: NamePickerProps) {
   const atMax = maxSelect !== undefined && selected.length >= maxSelect;
 
   const filtered = query.trim()
-    ? options.filter((o) => o.toLowerCase().includes(query.toLowerCase()))
-    : options;
+    ? options.filter((o) => {
+        const q = query.toLowerCase();
+        if (o.toLowerCase().includes(q)) return true;
+        const user = users.find((u) => u.name === o || u.discord_username === o || u.aliases?.includes(o));
+        if (!user) return false;
+        return (
+          user.name.toLowerCase().includes(q) ||
+          (user.discord_username ?? "").toLowerCase().includes(q) ||
+          (user.aliases?.some((a) => a.toLowerCase().includes(q)) ?? false)
+        );
+      })
+    : [];
 
   // ── Multi-select: close on outside pointerdown only ──────────────────────
   useEffect(() => {
@@ -99,11 +111,7 @@ export function NamePicker(props: NamePickerProps) {
                       transition={{ duration: 0.13 }}
                       className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${tk.chip}`}
                     >
-                      <div
-                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[9px] font-black text-white ${avatarColor(name)}`}
-                      >
-                        {name[0].toUpperCase()}
-                      </div>
+                      <UserAvatar name={name} className="h-4 w-4 text-[9px] !border-0" />
                       <span>{name}</span>
                       <button
                         type="button"
@@ -163,11 +171,10 @@ export function NamePicker(props: NamePickerProps) {
           onBlur={handleBlur}
           autoComplete="off"
         />
-      </div>
 
       {/* ── Options list ─────────────────────────────────────────────────── */}
-      {open && (
-        <div className="max-h-[220px] overflow-y-auto overscroll-contain rounded-xl border border-slate-100 dark:border-slate-700 divide-y divide-slate-50 dark:divide-slate-800">
+      {open && query.trim() && (
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-[220px] overflow-y-auto overscroll-contain rounded-xl border border-slate-100 dark:border-slate-700 divide-y divide-slate-50 dark:divide-slate-800 bg-white dark:bg-slate-900 shadow-lg">
           {filtered.length === 0 ? (
             <p className="px-4 py-4 text-center text-xs text-slate-400">
               Geen resultaten voor &ldquo;{query}&rdquo;
@@ -197,13 +204,21 @@ export function NamePicker(props: NamePickerProps) {
                         : "hover:bg-slate-50 active:bg-slate-50 dark:hover:bg-slate-800/60 dark:active:bg-slate-800/60"
                   }`}
                 >
-                  <div
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-black text-white ${avatarColor(name)}`}
-                  >
-                    {name[0].toUpperCase()}
-                  </div>
-                  <span className="flex-1 text-sm font-semibold text-slate-800 dark:text-slate-200">
-                    {name}
+                  <UserAvatar name={name} className="h-7 w-7 text-xs" />
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200">
+                      {name}
+                    </span>
+                    {(() => {
+                      const q = query.toLowerCase();
+                      const user = users.find((u) => u.name === name || u.discord_username === name || u.aliases?.includes(name));
+                      const matchedAlias = !name.toLowerCase().includes(q)
+                        ? user?.aliases?.find((a) => a.toLowerCase().includes(q))
+                        : undefined;
+                      return matchedAlias ? (
+                        <span className="block text-[11px] text-slate-400 truncate">ook bekend als &ldquo;{matchedAlias}&rdquo;</span>
+                      ) : null;
+                    })()}
                   </span>
                   {isSelected && (
                     <Check size={15} className={`shrink-0 ${tk.check}`} />
@@ -217,6 +232,7 @@ export function NamePicker(props: NamePickerProps) {
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

@@ -22,8 +22,8 @@ export function useCreatePayment() {
 export function useDeletePayment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ rowNumber, userName }: { rowNumber: number; userName: string }) =>
-      deletePayment(rowNumber, userName),
+    mutationFn: ({ id, userName }: { id: string; userName: string }) =>
+      deletePayment(id, userName),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.payments }),
   });
 }

@@ -16,7 +16,7 @@ export function computeRestaurantGaps(rides: Ride[]): RestaurantGap[] {
       if (unassigned.length === 0) return [];
       return [
         {
-          rowNumber: ride.row_number,
+          id: ride.id,
           location: ride.start_location,
           departureTime: ride.departure_time,
           unassigned,

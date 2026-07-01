@@ -1,6 +1,7 @@
 // Auth
 export interface LoginRequest {
-  passphrase: string;
+  user_name: string;
+  passcode: string;
 }
 
 export interface TokenResponse {
@@ -8,13 +9,57 @@ export interface TokenResponse {
   token_type: string;
 }
 
+// Badges
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  image_url: string;
+  display_order: number;
+}
+
 // Users
 export interface User {
+  id?: string;
   name: string;
   phone_number: string;
   hotel_room: string;
   live_location_ping: string;
-  row_number: number;
+  color: string;
+  font: string;
+  bio: string;
+  banner_color: string;
+  pronouns: string;
+  avatar_url?: string;
+  banner_url?: string;
+  banner_position?: string;
+  discord_id?: string;
+  discord_username?: string;
+  is_admin?: boolean;
+  is_active?: boolean;
+  is_first_login?: boolean;
+  onboarding_completed?: boolean;
+  allow_dm?: boolean;
+  aliases?: string[];
+  badge_ids?: string[];
+  created_at?: string;
+}
+
+export type FontOption = "default" | "mono" | "serif" | "cursive" | "display";
+
+export interface UpdateNameRequest {
+  new_name: string;
+}
+
+export interface UpdatePreferencesRequest {
+  color?: string;
+  font?: FontOption;
+  bio?: string;
+  banner_color?: string;
+  banner_position?: string;
+  pronouns?: string;
+  phone_number?: string;
+  aliases?: string[];
 }
 
 export interface LocationPingRequest {
@@ -28,6 +73,7 @@ export type VehicleType = "Car" | "Public Transport";
 export type Direction = "Inbound" | "Outbound" | "Restaurant";
 
 export interface Ride {
+  id: string;
   direction: Direction;
   vehicle_type: VehicleType;
   driver: string;
@@ -36,13 +82,15 @@ export interface Ride {
   total_seats: number;
   passengers: string[];
   parking_info: string;
-  maps_link: string;
-  row_number: number;
+  end_location: string | null;
   seats_left: number;
   is_full: boolean;
   is_public_transport: boolean;
   car_available: boolean;
   action_required: boolean;
+  linked_event_id?: string;
+  linked_meal_id?: string;
+  restaurant_drivers?: RestaurantDriver[];
 }
 
 export interface CreateRideRequest {
@@ -53,9 +101,11 @@ export interface CreateRideRequest {
   start_location: string;
   total_seats: number;
   parking_info?: string;
-  maps_link?: string;
+  end_location?: string;
   car_available?: boolean;
   action_required?: boolean;
+  linked_event_id?: string;
+  linked_meal_id?: string;
 }
 
 export interface ClaimSeatRequest {
@@ -88,13 +138,41 @@ export interface RestaurantUnassignRequest {
 
 // Meals
 export interface Meal {
+  id: string;
   meal_name: string;
   time: string;
   location: string;
-  cost: string;
-  rsvps: string[];
+  cost: number;
   transport_needed: boolean;
-  row_number: number;
+  participants: string[];
+  linked_event_id?: string;
+  website?: string;
+  menu_url?: string;
+  description?: string;
+  dietary_options?: string;
+  parking_info?: string;
+  extra_notes?: string;
+}
+
+// Cosplays
+export interface Cosplay {
+  id: string;
+  user_name: string;
+  character_name: string;
+  series?: string;
+  notes?: string;
+  inspo_images: string[];
+  linked_event_ids: string[];
+  created_at: string;
+}
+
+export interface CreateCosplayRequest {
+  user_name: string;
+  character_name: string;
+  series?: string;
+  notes?: string;
+  inspo_images: string[];
+  linked_event_ids: string[];
 }
 
 export interface CreateMealRequest {
@@ -103,6 +181,13 @@ export interface CreateMealRequest {
   location?: string;
   cost?: string;
   transport_needed?: boolean;
+  linked_event_id?: string;
+  website?: string;
+  menu_url?: string;
+  description?: string;
+  dietary_options?: string;
+  parking_info?: string;
+  extra_notes?: string;
 }
 
 export interface RsvpRequest {
@@ -116,11 +201,11 @@ export interface Split {
 }
 
 export interface Payment {
+  id: string;
   paid_by: string;
   amount: number;
   description: string;
   date: string;
-  row_number: number;
   splits: Split[];
 }
 
@@ -132,14 +217,53 @@ export interface CreatePaymentRequest {
   splits?: Split[];
 }
 
-// Calendar
-export interface CalendarEvent {
-  date: string;
+export interface TicketType {
+  title: string;
+  price: number;
+}
+
+export interface HotelRoom {
+  id: string;
   event_id: string;
+  room_number: string;
+  floor?: string;
+  instructions?: string;
+  occupants: string[];
+  created_at?: string;
+}
+
+export interface CreateHotelRoomRequest {
+  room_number: string;
+  floor?: string;
+  instructions?: string;
+  occupants?: string[];
+}
+
+export interface CalendarEvent {
+  id: string;
+  event_group_id?: string;
+  multi_day_id?: string;
   event_name: string;
+  date: string;
   is_hotel: boolean;
   participants: string[];
-  row_number: number;
+  description?: string;
+  location?: string;
+  website?: string;
+  ticket_url?: string;
+  ticket_sale_start?: string;
+  ticket_types?: TicketType[];
+  locker_info?: string;
+  parking_info?: string;
+  special_instructions?: string;
+  what_to_bring?: string;
+}
+
+export interface AdminStats {
+  users: number;
+  rides: number;
+  meals: number;
+  events: number;
 }
 
 export interface CalendarRsvpRequest {
@@ -152,7 +276,7 @@ export type TabId = "hub" | "transport" | "food" | "finance" | "more";
 export type BaseProps = {
   options: string[];
   placeholder?: string;
-  color?: "sky" | "rose" | "green";
+  color?: "sky" | "rose" | "green" | "violet";
 };
 
 export type SingleProps = BaseProps & {
@@ -182,8 +306,45 @@ export interface ActionAlert {
   missing: MissingItem[];
 }
 
+// Expenses
+export interface ExpenseShare {
+  id: string;
+  expense_id: string;
+  participant: string;
+  amount: number;
+  payment_ref: string;
+  status: "pending" | "claimed" | "confirmed";
+  claimed_at?: string;
+  confirmed_at?: string;
+}
+
+export interface Expense {
+  id: string;
+  paid_by: string;
+  amount: number;
+  currency: string;
+  description: string;
+  date: string;
+  created_at?: string;
+  shares: ExpenseShare[];
+}
+
+export interface CreateExpenseShareInput {
+  participant: string;
+  amount: number;
+}
+
+export interface CreateExpenseRequest {
+  paid_by: string;
+  amount: number;
+  currency?: string;
+  description: string;
+  date: string;
+  shares: CreateExpenseShareInput[];
+}
+
 export interface RestaurantGap {
-  rowNumber: number;
+  id: string;
   location: string;
   departureTime: string;
   unassigned: string[];

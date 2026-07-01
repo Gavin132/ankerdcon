@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Utensils, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { routes } from "../../config/routes";
 import { avatarColor } from "../../utils/avatar";
 import { parseRestaurantDrivers, getRideStatus } from "../../utils/rides";
 import { formatDateTime } from "../../utils/format";
@@ -50,8 +51,8 @@ export function RestaurantStatus({ rides }: RestaurantStatusProps) {
       <div className="space-y-2">
         {relevant.map(({ ride, drivers, unassigned, totalCapacity, allClear }) => (
           <button
-            key={ride.row_number}
-            onClick={() => navigate("/transport")}
+            key={ride.id}
+            onClick={() => navigate(routes.transport)}
             className="w-full text-left"
           >
             <div className={`card-surface rounded-2xl overflow-hidden border-l-4 transition-opacity hover:opacity-90 ${

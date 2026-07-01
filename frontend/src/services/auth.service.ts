@@ -1,22 +1,12 @@
-import axios from "axios";
-import type { LoginRequest, TokenResponse } from "../types";
+import { supabase } from "./supabase";
 
-export async function login(payload: LoginRequest): Promise<TokenResponse> {
-  const { data } = await axios.post<TokenResponse>("/api/auth/login", payload, {
-    withCredentials: true,
-  });
-  return data;
-}
+// We no longer need a custom `login` or `refresh` function!
+// - Login is handled by the Discord OAuth button in LoginForm.tsx
+// - Refresh is handled completely invisibly by the Supabase client in the background.
 
 export async function logout(): Promise<void> {
-  await axios.post("/api/auth/logout", {}, { withCredentials: true });
-}
-
-export async function refresh(): Promise<TokenResponse> {
-  const { data } = await axios.post<TokenResponse>(
-    "/api/auth/refresh",
-    {},
-    { withCredentials: true },
-  );
-  return data;
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    console.error("Error logging out:", error.message);
+  }
 }

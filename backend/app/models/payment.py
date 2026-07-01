@@ -7,7 +7,7 @@ class Split(BaseModel):
 
 
 class Payment(BaseModel):
-    row_number: int
+    id: str
     paid_by: str
     amount: float
     description: str

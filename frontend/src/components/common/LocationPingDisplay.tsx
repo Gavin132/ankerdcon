@@ -16,15 +16,16 @@ function parsePing(raw: string): { zone: string | null; text: string; time: stri
 
 interface Props {
   raw: string;
+  align?: "start" | "end";
 }
 
-export function LocationPingDisplay({ raw }: Props) {
+export function LocationPingDisplay({ raw, align = "end" }: Props) {
   const { zone, text, time } = parsePing(raw);
   const label = text || zone || raw;
   const meta = [zone, time].filter(Boolean).join(" · ");
 
   return (
-    <div className="flex flex-col items-end gap-0.5 min-w-0">
+    <div className={`flex flex-col gap-0.5 min-w-0 ${align === "start" ? "items-start" : "items-end"}`}>
       <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 whitespace-nowrap">
         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400 animate-pulse" />
         {label}

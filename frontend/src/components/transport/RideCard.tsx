@@ -1,32 +1,34 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Car,
   Truck,
   Train,
-  Clock,
   ParkingCircle,
   Plus,
-  ExternalLink,
   ChevronDown,
-  MapPin,
   Timer,
   AlertCircle,
-  Map,
-  Users,
   CalendarPlus,
+  ArrowRight,
+  Link2,
+  UserMinus,
+  Users,
 } from "lucide-react";
 import { Button } from "../common/Button";
 import { Modal } from "../common/Modal";
 import { NamePicker } from "../common/NamePicker";
+import { UserAvatar } from "../common/UserAvatar";
 import { useClaimSeat, useLeaveSeat } from "../../hooks/useRides";
-import { formatDateTime } from "../../utils/format";
-import { parseRoute, buildEmbedUrl, buildMapsOpenUrl } from "../../utils/maps";
+import { useUsers } from "../../hooks/useUsers";
+import { useCalendar } from "../../hooks/useCalendar";
+import { formatDate, formatTime } from "../../utils/format";
 import { getRideStatus, formatCountdown } from "../../utils/rides";
 import { exportRideToIcs } from "../../utils/ics";
-import { avatarColor } from "../../utils/avatar";
 import { toast } from "../../store/toast.store";
 import { listItem } from "../../utils/motion";
+import { routes } from "../../config/routes";
 import type { Ride } from "../../types";
 
 interface RideCardProps {
@@ -35,8 +37,7 @@ interface RideCardProps {
 }
 
 export function RideCard({ ride, userNames }: RideCardProps) {
-  const [expanded, setExpanded] = useState(false);
-  const [showMap, setShowMap] = useState(false);
+  const [passengersOpen, setPassengersOpen] = useState(false);
   const [claimOpen, setClaimOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [claimNames, setClaimNames] = useState<string[]>([]);
@@ -45,6 +46,18 @@ export function RideCard({ ride, userNames }: RideCardProps) {
 
   const claimMutation = useClaimSeat();
   const leaveMutation = useLeaveSeat();
+  const { data: users = [] } = useUsers();
+  const { data: events = [] } = useCalendar();
+
+  const linkedEvent = ride.linked_event_id
+    ? events.find((e) => e.id === ride.linked_event_id)
+    : undefined;
+
+  function resolveName(stored: string) {
+    return (
+      users.find((u) => u.name === stored || u.discord_username === stored || u.aliases?.includes(stored))?.name ?? stored
+    );
+  }
 
   useEffect(() => {
     const id = setInterval(() => tick((n) => n + 1), 30_000);
@@ -53,11 +66,64 @@ export function RideCard({ ride, userNames }: RideCardProps) {
 
   const { status, minutesUntil } = getRideStatus(ride.departure_time);
 
+  const isPT      = ride.is_public_transport;
+  const isInbound = ride.direction === "Inbound";
+  const isTimo    = ride.driver.trim().toLowerCase().startsWith("timo");
+  const isRecent  = status === "recent";
+  const isPast    = status === "past";
+  const canAct    = !isRecent && !isPast;
+
+  const fromLabel = ride.start_location;
+  const toLabel   = ride.end_location || (isInbound ? "Con locatie" : "Bestemming");
+
+  const resolvedPassengers = new Set(
+    ride.passengers.map((p) => {
+      const u = users.find((u) => u.name === p || u.discord_username === p || u.aliases?.includes(p));
+      return u?.name ?? p;
+    }),
+  );
+  const availableToJoin = userNames.filter((n) => !resolvedPassengers.has(n));
+
+  const TransportIcon = isPT ? Train : isTimo ? Truck : Car;
+
+  // Accent gradient per status/type (used for top bar + route track)
+  const accentGradient = isPT
+    ? "from-violet-500 to-purple-500"
+    : status === "urgent"
+      ? "from-rose-500 to-rose-400"
+      : status === "soon"
+        ? "from-amber-400 to-orange-400"
+        : "from-sky-500 to-blue-500";
+
+  // Icon: subtle tinted bg (consistent with HubPage stat tiles)
+  const iconBg = isPT
+    ? "bg-violet-100 dark:bg-violet-500/10"
+    : status === "urgent"
+    ? "bg-rose-100 dark:bg-rose-500/10"
+    : status === "soon"
+    ? "bg-amber-100 dark:bg-amber-500/10"
+    : "bg-sky-100 dark:bg-sky-500/10";
+  const iconColor = isPT
+    ? "text-violet-500"
+    : status === "urgent"
+    ? "text-rose-500"
+    : status === "soon"
+    ? "text-amber-500"
+    : "text-sky-500";
+
+  // Status badge styling
+  const statusBadge = status === "urgent" || status === "soon" || status === "recent";
+  const statusBadgeClass = status === "urgent"
+    ? "bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300"
+    : status === "soon"
+      ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
+      : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300";
+
   async function handleClaim() {
     if (claimNames.length === 0) return;
     try {
       for (const name of claimNames) {
-        await claimMutation.mutateAsync({ rowNumber: ride.row_number, payload: { user_name: name } });
+        await claimMutation.mutateAsync({ id: ride.id, payload: { user_name: name } });
       }
       setClaimNames([]);
       setClaimOpen(false);
@@ -71,7 +137,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
     if (leaveNames.length === 0) return;
     try {
       for (const name of leaveNames) {
-        await leaveMutation.mutateAsync({ rowNumber: ride.row_number, payload: { user_name: name } });
+        await leaveMutation.mutateAsync({ id: ride.id, payload: { user_name: name } });
       }
       setLeaveNames([]);
       setLeaveOpen(false);
@@ -81,308 +147,231 @@ export function RideCard({ ride, userNames }: RideCardProps) {
     }
   }
 
-  const isPT       = ride.is_public_transport;
-  const isInbound  = ride.direction === "Inbound";
-  const isTimo     = ride.driver.trim().toLowerCase().startsWith("timo");
-  const isRecent   = status === "recent";
-  const isPast     = status === "past";
-  const canAct     = !isRecent && !isPast;
-
-  const route     = parseRoute(ride.maps_link);
-  const fromLabel = route?.origin      ?? (isInbound ? ride.start_location : "Con locatie");
-  const toLabel   = route?.destination ?? (isInbound ? "Con locatie" : ride.start_location);
-  const embedUrl  = route ? buildEmbedUrl(route.origin, route.destination) : buildEmbedUrl(ride.start_location);
-  const openUrl   = buildMapsOpenUrl(ride.maps_link, ride.start_location);
-
-  const availableToJoin = userNames.filter((n) => !ride.passengers.includes(n));
-
-  // Icon for transport type
-  const TransportIcon = isPT ? Train : isTimo ? Truck : Car;
-
-  const headerGradient = isPT
-    ? "from-violet-500 to-purple-600"
-    : status === "urgent"
-    ? "from-rose-500 to-pink-600"
-    : status === "soon"
-    ? "from-amber-400 to-orange-500"
-    : "from-sky-500 to-blue-600";
-
   return (
     <>
-      <motion.div variants={listItem} className={isRecent || isPast ? "opacity-55" : ""}>
+      <motion.div variants={listItem} className={isRecent || isPast ? "opacity-60" : ""}>
         <div className="card-surface rounded-2xl overflow-hidden">
 
-          {/* ── Alert banners ───────────────────────────────────────────── */}
+          {/* Status-colored accent line */}
+          <div className={`h-[3px] bg-gradient-to-r ${accentGradient}`} />
+
+          {/* Action required banner */}
           {ride.action_required && !isPast && (
-            <div className="flex items-center gap-2 border-b border-amber-100 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700 dark:border-amber-900/30 dark:bg-amber-900/20 dark:text-amber-400">
-              <AlertCircle size={12} />
+            <div className="flex items-center gap-2 border-b border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/25 px-4 py-2 text-xs font-bold text-amber-700 dark:text-amber-300">
+              <AlertCircle size={12} className="shrink-0" />
               Actie vereist — reageer hieronder
             </div>
           )}
 
-          {/* ── Gradient header with route track ────────────────────────── */}
-          <div className={`relative bg-gradient-to-br ${headerGradient} px-4 pt-3 pb-3.5`}>
-            {/* Route track + expand chevron */}
-            <div className="flex items-center gap-3">
-              {/* Transport icon */}
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/20">
-                <TransportIcon size={14} className="text-white" strokeWidth={2.5} />
+          {/* ── Top row: icon + direction + status + date/time ── */}
+          <div className="px-4 pt-3.5 pb-3 border-b border-slate-200 dark:border-slate-700 space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${iconBg}`}>
+                  <TransportIcon size={13} className={iconColor} strokeWidth={2.5} />
+                </div>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                  {ride.direction === "Inbound" ? "Heen" : ride.direction === "Outbound" ? "Terug" : "Restaurant"}
+                </span>
+                {statusBadge && (
+                  <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${statusBadgeClass} ${status === "urgent" ? "animate-pulse" : ""}`}>
+                    <Timer size={9} />
+                    {status === "urgent" && `Over ${formatCountdown(minutesUntil)}`}
+                    {status === "soon"   && `Over ${formatCountdown(minutesUntil)}`}
+                    {status === "recent" && "Vertrokken"}
+                  </span>
+                )}
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{formatDate(ride.departure_time)}</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">{formatTime(ride.departure_time)}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Route section ─────────────────────────────────── */}
+          <div className="px-4 pt-4 pb-3">
+            <div className="flex items-stretch gap-4">
+
+              {/* Dot → line → dot track */}
+              <div className="flex flex-col items-center pt-1 pb-1">
+                <div className="h-2.5 w-2.5 rounded-full border-2 border-slate-300 dark:border-slate-500 bg-white dark:bg-[#1e293b] shrink-0" />
+                <div className={`w-0.5 flex-1 my-1.5 rounded-full bg-gradient-to-b ${accentGradient}`} style={{ minHeight: "1.5rem" }} />
+                <div className={`h-2.5 w-2.5 rounded-full shrink-0 bg-gradient-to-br ${accentGradient}`} />
               </div>
 
-              {/* Visual track */}
-              <div className="flex items-stretch gap-2 flex-1 min-w-0">
-                <div className="flex flex-col items-center py-0.5 shrink-0">
-                  <div className="h-2 w-2 rounded-full border-2 border-white/60 bg-white/30" />
-                  <div className="my-1 w-px flex-1 bg-white/30" style={{ minHeight: "0.75rem" }} />
-                  <div className="h-2 w-2 rounded-full bg-white" />
+              {/* From / To */}
+              <div className="flex flex-col justify-between flex-1 min-w-0">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Van</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{fromLabel}</p>
                 </div>
-                <div className="flex flex-1 min-w-0 flex-col justify-between gap-1">
-                  <p className="text-xs font-semibold text-white/70 leading-tight truncate">{fromLabel}</p>
-                  <p className="text-sm font-black text-white leading-tight truncate">{toLabel}</p>
+                <div className="mt-3.5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Naar</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{toLabel}</p>
                 </div>
               </div>
 
-              {/* Time + chevron */}
-              <div className="shrink-0 flex flex-col items-end gap-1.5">
-                <div className={`flex items-center gap-1 rounded-lg bg-white/20 px-2 py-0.5 ${status === "urgent" ? "animate-pulse" : ""}`}>
-                  <Clock size={10} className="text-white" />
-                  <span className="text-[11px] font-bold text-white">{formatDateTime(ride.departure_time)}</span>
+              {/* Driver + availability (right column) */}
+              <div className="shrink-0 flex flex-col items-end justify-between">
+                <div className="flex items-center gap-2">
+                  {!isPT && <UserAvatar name={ride.driver} className="h-7 w-7 text-[11px]" />}
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">
+                      {isPT ? "Vervoerder" : "Chauffeur"}
+                    </p>
+                    <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate max-w-[90px]">
+                      {resolveName(ride.driver)}
+                    </p>
+                  </div>
                 </div>
-                <button
-                  onClick={() => setExpanded((e) => !e)}
-                  className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/20 text-white hover:bg-white/30 active:bg-white/30 transition-colors"
-                >
-                  <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                    <ChevronDown size={14} />
-                  </motion.div>
-                </button>
+                {!isPT && !isRecent && !isPast && (
+                  <span className={`mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                    ride.is_full
+                      ? "bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300"
+                      : "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
+                  }`}>
+                    <Users size={10} />
+                    {ride.is_full ? "Vol" : `${ride.seats_left} vrij`}
+                  </span>
+                )}
               </div>
             </div>
 
-            {/* Status ribbon (urgent/soon/recent) */}
-            {(status === "urgent" || status === "soon" || status === "recent") && (
-              <div className="mt-2 flex items-center gap-1.5 rounded-md bg-black/20 px-2 py-1 w-fit">
-                {status === "recent" ? (
-                  <Clock size={10} className="text-white/80" />
-                ) : (
-                  <Timer size={10} className="text-white/80" />
-                )}
-                <span className="text-[11px] font-bold text-white/90">
-                  {status === "urgent" && `Vertrekt over ${formatCountdown(minutesUntil)}!`}
-                  {status === "soon"   && `Vertrekt over ${formatCountdown(minutesUntil)}`}
-                  {status === "recent" && "Vertrokken"}
-                </span>
+            {/* Capacity bar */}
+            {!isPT && ride.total_seats < 99 && (
+              <div className="mt-3.5 space-y-1.5">
+                <div className="h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                  <motion.div
+                    className={`h-full rounded-full bg-gradient-to-r ${ride.is_full ? "from-rose-400 to-rose-500" : accentGradient}`}
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: (ride.total_seats - ride.seats_left) / ride.total_seats }}
+                    style={{ transformOrigin: "left" }}
+                    transition={{ duration: 0.6, ease: "easeOut", delay: 0.15 }}
+                  />
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  <span className="font-bold text-slate-600 dark:text-slate-300">{ride.total_seats - ride.seats_left}</span>/{ride.total_seats} plekken bezet
+                </p>
               </div>
             )}
           </div>
 
-          {/* ── Card body ───────────────────────────────────────────────── */}
-          <div className="px-4 py-3 space-y-3">
-
-            {/* Driver row + seats badge */}
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-black text-white ${avatarColor(ride.driver)}`}>
-                  {ride.driver[0].toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-none mb-0.5">
-                    {isPT ? "Lijn / vervoerder" : "Chauffeur"}
-                  </p>
-                  <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{ride.driver}</p>
-                </div>
-              </div>
-              {!isPT && !isRecent && !isPast && (
-                <div className={`shrink-0 flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-bold ${
-                  ride.is_full
-                    ? "bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400"
-                    : "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
-                }`}>
-                  <Users size={11} />
-                  {ride.is_full ? "Vol" : `${ride.seats_left} ${ride.seats_left === 1 ? "plek" : "plekken"} vrij`}
-                </div>
-              )}
-            </div>
-
-            {/* Seat progress bar (replaces plain divider for car rides) */}
-            {!isPT && ride.total_seats < 99 ? (
-              <div className="space-y-1">
-                <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
-                  <motion.div
-                    className={`h-full rounded-full ${ride.is_full ? "bg-rose-400" : "bg-sky-400"}`}
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: (ride.total_seats - ride.seats_left) / ride.total_seats }}
-                    style={{ transformOrigin: "left" }}
-                    transition={{ duration: 0.7, ease: "easeOut", delay: 0.1 }}
-                  />
-                </div>
-                <p className="text-[11px] text-slate-400">
-                  <span className="font-bold text-slate-600 dark:text-slate-300">
-                    {ride.total_seats - ride.seats_left}
-                  </span>
-                  /{ride.total_seats} plekken bezet
-                </p>
-              </div>
-            ) : (
-              <div className="border-t border-slate-100 dark:border-slate-700/60" />
-            )}
-
-            {/* Passengers strip + stap-in CTA */}
-            {!isPT && (
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 min-w-0">
-                  {ride.passengers.length > 0 ? (
-                    <>
-                      <div className="flex -space-x-1.5">
-                        {ride.passengers.slice(0, 5).map((p) => (
-                          <div
-                            key={p}
-                            title={p}
-                            className={`flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br text-[9px] font-black text-white dark:border-slate-800 ${avatarColor(p)}`}
-                          >
-                            {p[0].toUpperCase()}
-                          </div>
-                        ))}
-                        {ride.passengers.length > 5 && (
-                          <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-slate-200 text-[9px] font-bold text-slate-600 dark:border-slate-800 dark:bg-slate-700 dark:text-slate-300">
-                            +{ride.passengers.length - 5}
-                          </div>
-                        )}
+          {/* ── Passengers toggle row ────────────────────────── */}
+          <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-t border-slate-200 dark:border-slate-700">
+            <button
+              type="button"
+              onClick={() => ride.passengers.length > 0 && setPassengersOpen((v) => !v)}
+              className={`flex items-center gap-2 min-w-0 ${ride.passengers.length > 0 ? "hover:opacity-75 transition-opacity" : "cursor-default"}`}
+            >
+              {ride.passengers.length > 0 ? (
+                <>
+                  <div className="flex -space-x-2">
+                    {ride.passengers.slice(0, 4).map((p) => (
+                      <UserAvatar key={p} name={p} className="h-6 w-6 text-[9px] ring-2 ring-white dark:ring-slate-900" />
+                    ))}
+                    {ride.passengers.length > 4 && (
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full ring-2 ring-white dark:ring-slate-900 bg-slate-200 dark:bg-slate-600 text-[9px] font-bold text-slate-600 dark:text-slate-200">
+                        +{ride.passengers.length - 4}
                       </div>
-                      <span className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
-                        {ride.passengers.length} meerijder{ride.passengers.length !== 1 ? "s" : ""}
-                      </span>
-                    </>
-                  ) : (
-                    <span className="text-xs text-slate-400 italic">Nog geen meerijders</span>
+                    )}
+                  </div>
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                    <span className="font-bold text-slate-700 dark:text-slate-200">{ride.passengers.length}</span> meerijder{ride.passengers.length !== 1 ? "s" : ""}
+                  </span>
+                  <motion.div animate={{ rotate: passengersOpen ? 180 : 0 }} transition={{ duration: 0.18 }}>
+                    <ChevronDown size={11} className="text-slate-400" />
+                  </motion.div>
+                </>
+              ) : (
+                <span className="flex items-center gap-1.5 text-[11px] text-slate-400 italic">
+                  <Users size={11} />
+                  Geen meerijders
+                </span>
+              )}
+            </button>
+
+            {linkedEvent && (
+              <Link
+                to={routes.event.view(linkedEvent.id)}
+                className="shrink-0 flex items-center gap-1.5 rounded-lg border border-sky-200 dark:border-sky-700/60 bg-sky-50 dark:bg-sky-900/30 px-2 py-1 text-[11px] font-semibold text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition-colors max-w-[140px]"
+              >
+                <Link2 size={10} className="shrink-0" />
+                <span className="truncate">{linkedEvent.event_name}</span>
+              </Link>
+            )}
+          </div>
+
+          {/* Expanded passengers */}
+          <AnimatePresence>
+            {passengersOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.18 }}
+                className="overflow-hidden"
+              >
+                <div className="px-4 pb-3 flex flex-wrap gap-1.5">
+                  {ride.passengers.map((p) => (
+                    <div
+                      key={p}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-600 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300"
+                    >
+                      <UserAvatar name={p} className="h-4 w-4 text-[8px] !border-0" />
+                      {resolveName(p)}
+                    </div>
+                  ))}
+                  {ride.parking_info && (
+                    <div className="w-full mt-1.5 flex items-start gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-black/20 px-3 py-2.5">
+                      <ParkingCircle size={13} className="shrink-0 text-sky-500 mt-0.5" />
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Parkeerinfo</p>
+                        <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{ride.parking_info}</p>
+                      </div>
+                    </div>
                   )}
                 </div>
-                {canAct && !ride.is_full && (
-                  <Button size="sm" onClick={() => { setClaimNames([]); setClaimOpen(true); }} className="shrink-0">
-                    <Plus size={13} />
-                    Stap in
-                  </Button>
-                )}
-              </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── Action bar ──────────────────────────────────────── */}
+          <div className="flex items-center gap-1.5 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-black/20 px-3 py-2">
+            <Link
+              to={routes.ride.view(ride.id)}
+              className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+            >
+              Details
+              <ArrowRight size={11} />
+            </Link>
+
+            <div className="flex-1" />
+
+            <button
+              onClick={() => exportRideToIcs(ride)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-sky-500 transition-colors"
+              title="Exporteer naar kalender"
+            >
+              <CalendarPlus size={14} />
+            </button>
+
+            {canAct && ride.passengers.length > 0 && (
+              <button
+                onClick={() => { setLeaveNames([]); setLeaveOpen(true); }}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-rose-500 transition-colors"
+                title="Uitstappen"
+              >
+                <UserMinus size={14} />
+              </button>
             )}
 
-            {/* ── Expanded section ────────────────────────────────────── */}
-            <AnimatePresence>
-              {expanded && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden"
-                >
-                  <div className="space-y-3 border-t border-slate-100 dark:border-slate-700 pt-3">
-
-                    {/* Passengers detail */}
-                    {ride.passengers.length > 0 && (
-                      <div>
-                        <p className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1">
-                          <Users size={11} />
-                          Meerijders
-                        </p>
-                        <div className="space-y-1">
-                          {ride.passengers.map((p) => (
-                            <div key={p} className="flex items-center gap-2.5">
-                              <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-black text-white ${avatarColor(p)}`}>
-                                {p[0].toUpperCase()}
-                              </div>
-                              <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{p}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Parking info */}
-                    {ride.parking_info && (
-                      <div className="flex items-start gap-3 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3 dark:bg-slate-800/50 dark:border-slate-700">
-                        <ParkingCircle size={15} className="shrink-0 text-sky-500 mt-0.5" />
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Parkeerinfo</p>
-                          <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{ride.parking_info}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Map card */}
-                    <div className="rounded-xl border border-slate-100 bg-slate-50 overflow-hidden dark:border-slate-700 dark:bg-slate-800/50">
-                      <div className="flex items-center justify-between px-3 py-2.5">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <MapPin size={12} className="text-sky-500 shrink-0" />
-                          <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 truncate">
-                            {fromLabel}{route ? ` → ${toLabel}` : ""}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                          <button
-                            onClick={() => setShowMap((v) => !v)}
-                            className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold transition-colors ${
-                              showMap
-                                ? "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400"
-                                : "text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
-                            }`}
-                          >
-                            <Map size={11} />
-                            Kaart
-                          </button>
-                          <a
-                            href={openUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 rounded-lg bg-sky-500 px-2.5 py-1 text-xs font-bold text-white hover:bg-sky-600 transition-colors"
-                          >
-                            <ExternalLink size={11} />
-                            Open
-                          </a>
-                        </div>
-                      </div>
-                      <AnimatePresence>
-                        {showMap && (
-                          <motion.div
-                            initial={{ height: 0 }}
-                            animate={{ height: 200 }}
-                            exit={{ height: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="overflow-hidden"
-                          >
-                            <iframe
-                              title="Kaart"
-                              src={embedUrl}
-                              className="w-full h-[200px] border-0 block border-t border-slate-100 dark:border-slate-700"
-                              referrerPolicy="no-referrer-when-downgrade"
-                            />
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-
-                    {/* Actions row */}
-                    <div className="flex items-center justify-between pt-1">
-                      <button
-                        onClick={() => exportRideToIcs(ride)}
-                        className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-sky-500 active:text-sky-500 transition-colors"
-                      >
-                        <CalendarPlus size={12} />
-                        Kalender
-                      </button>
-                      {!isPT && canAct && ride.passengers.length > 0 && (
-                        <button
-                          onClick={() => { setLeaveNames([]); setLeaveOpen(true); }}
-                          className="text-xs font-semibold text-slate-400 hover:text-rose-500 active:text-rose-500 transition-colors"
-                        >
-                          Uitstappen
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {canAct && !ride.is_full && (
+              <Button size="sm" variant="primary" onClick={() => { setClaimNames([]); setClaimOpen(true); }}>
+                <Plus size={13} />
+                Stap in
+              </Button>
+            )}
           </div>
         </div>
       </motion.div>
@@ -392,24 +381,13 @@ export function RideCard({ ride, userNames }: RideCardProps) {
         open={claimOpen}
         onClose={() => { setClaimOpen(false); setClaimNames([]); }}
         title="Stap in"
-        description={`${fromLabel} → ${toLabel} · ${ride.seats_left} ${ride.seats_left === 1 ? "plek" : "plekken"} vrij`}
+        description={`${fromLabel} → ${toLabel}${isPT ? "" : ` · ${ride.seats_left} ${ride.seats_left === 1 ? "plek" : "plekken"} vrij`}`}
       >
         <div className="space-y-3">
-          <NamePicker
-            multiple
-            options={availableToJoin}
-            value={claimNames}
-            onChange={setClaimNames}
-            maxSelect={ride.seats_left}
-            color="sky"
-          />
+          <NamePicker multiple options={availableToJoin} value={claimNames} onChange={setClaimNames} maxSelect={isPT ? undefined : ride.seats_left} color="sky" />
           <Button onClick={handleClaim} loading={claimMutation.isPending} className="w-full" disabled={claimNames.length === 0}>
             <Plus size={15} />
-            {claimNames.length === 0
-              ? "Selecteer een naam"
-              : claimNames.length === 1
-              ? `${claimNames[0]} stapt in`
-              : `${claimNames.length} personen stappen in`}
+            {claimNames.length === 0 ? "Selecteer een naam" : claimNames.length === 1 ? `${claimNames[0]} stapt in` : `${claimNames.length} personen stappen in`}
           </Button>
         </div>
       </Modal>
@@ -422,19 +400,9 @@ export function RideCard({ ride, userNames }: RideCardProps) {
         description="Wie stappen er uit?"
       >
         <div className="space-y-3">
-          <NamePicker
-            multiple
-            options={ride.passengers}
-            value={leaveNames}
-            onChange={setLeaveNames}
-            color="rose"
-          />
-          <Button onClick={handleLeave} variant="danger" loading={leaveMutation.isPending} className="w-full" disabled={leaveNames.length === 0}>
-            {leaveNames.length === 0
-              ? "Selecteer een naam"
-              : leaveNames.length === 1
-              ? `${leaveNames[0]} uitstappen`
-              : `${leaveNames.length} personen uitstappen`}
+          <NamePicker multiple options={ride.passengers} value={leaveNames} onChange={setLeaveNames} color="rose" />
+          <Button variant="danger" onClick={handleLeave} loading={leaveMutation.isPending} className="w-full" disabled={leaveNames.length === 0}>
+            {leaveNames.length === 0 ? "Selecteer een naam" : leaveNames.length === 1 ? `${leaveNames[0]} uitstappen` : `${leaveNames.length} personen uitstappen`}
           </Button>
         </div>
       </Modal>

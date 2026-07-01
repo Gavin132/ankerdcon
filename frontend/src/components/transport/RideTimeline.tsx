@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight, ArrowLeft, Utensils, Users, Clock } from "lucide-react";
-import { avatarColor } from "../../utils/avatar";
+import { UserAvatar } from "../common/UserAvatar";
 import { getRideStatus } from "../../utils/rides";
 import { listContainer, listItem } from "../../utils/motion";
 import { EmptyState } from "../common/EmptyState";
@@ -58,7 +58,7 @@ export function RideTimeline({ rides }: RideTimelineProps) {
         const isLast = index === sorted.length - 1;
 
         return (
-          <motion.div key={ride.row_number} variants={listItem} className="flex gap-3">
+          <motion.div key={ride.id} variants={listItem} className="flex gap-3">
             {/* Time column */}
             <div className="w-14 shrink-0 text-right pt-2">
               <p className="text-sm font-black text-slate-900 dark:text-white leading-tight">
@@ -94,11 +94,7 @@ export function RideTimeline({ rides }: RideTimelineProps) {
                 {/* Driver + seats */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <div
-                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[10px] font-black text-white ${avatarColor(ride.driver)}`}
-                    >
-                      {ride.driver[0].toUpperCase()}
-                    </div>
+                    <UserAvatar name={ride.driver} className="h-6 w-6 text-[10px]" />
                     <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 truncate">
                       {ride.driver}
                     </span>

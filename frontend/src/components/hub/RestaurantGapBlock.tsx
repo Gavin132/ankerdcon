@@ -1,16 +1,19 @@
 import { UtensilsCrossed, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { routes } from "../../config/routes";
 import { RestaurantGap } from "../../types";
-import { avatarColor } from "../../utils/avatar";
+import { UserAvatar } from "../common/UserAvatar";
 import { formatDateTime } from "../../utils/format";
 import { CollapsibleSection } from "../common/CollapsibleSection";
+import { useUsers } from "../../hooks/useUsers";
 
 export function RestaurantGapBlock({ gap }: { gap: RestaurantGap }) {
   const navigate = useNavigate();
+  const { data: users = [] } = useUsers();
   return (
     <CollapsibleSection
       defaultOpen={false}
-      className="border-b border-slate-100 dark:border-slate-800 last:border-0"
+      className="border-b border-slate-100 dark:border-slate-700/60 last:border-0"
       titleClassName="py-2.5 px-4"
       title={
         <div className="flex items-center gap-2 min-w-0">
@@ -29,21 +32,20 @@ export function RestaurantGapBlock({ gap }: { gap: RestaurantGap }) {
     >
       <div className="px-4 pb-3 space-y-2">
         <p className="text-xs text-slate-400">Nog geen rit toegewezen:</p>
-        {gap.unassigned.map((name) => (
-          <div key={name} className="flex items-center gap-2.5">
-            <div
-              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br text-xs font-black text-white ${avatarColor(name)}`}
-            >
-              {name[0].toUpperCase()}
+        {gap.unassigned.map((name) => {
+          const displayName = users.find((u) => u.name === name || u.discord_username === name || u.aliases?.includes(name))?.name ?? name;
+          return (
+            <div key={name} className="flex items-center gap-2.5">
+              <UserAvatar name={name} className="h-7 w-7 text-xs rounded-lg" />
+              <span className="flex-1 text-sm font-semibold text-slate-800 dark:text-slate-200 capitalize">
+                {displayName}
+              </span>
             </div>
-            <span className="flex-1 text-sm font-semibold text-slate-800 dark:text-slate-200 capitalize">
-              {name}
-            </span>
-          </div>
-        ))}
+          );
+        })}
         <button
           onClick={() =>
-            navigate("/transport", { state: { tab: "Restaurant" } })
+            navigate(routes.transport, { state: { tab: "Restaurant" } })
           }
           className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-amber-600 hover:text-amber-700 transition-colors dark:text-amber-400"
         >
