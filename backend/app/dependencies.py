@@ -7,7 +7,7 @@ from typing import Any
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError
+from jose import ExpiredSignatureError, JWTError
 from jose import jwt as jose_jwt
 
 from app.config import Settings, get_settings
@@ -20,8 +20,13 @@ _JWT_ALGORITHM = "HS256"
 _JWT_AUDIENCE = "authenticated"
 
 
-def _decode_token(token: str, jwt_secret: str) -> dict[str, Any]:
-    """Verify and decode a Supabase JWT locally — no HTTP call to Supabase Auth."""
+def _decode_token(token: str, jwt_secret: str) -> dict[str, Any] | None:
+    """Verify and decode a Supabase JWT locally — no HTTP call to Supabase Auth.
+
+    Returns the payload on success.
+    Raises HTTP 401 if the token is definitively expired.
+    Returns None for any other JWTError (e.g. wrong secret) so the caller can fall back.
+    """
     try:
         return jose_jwt.decode(
             token,
@@ -29,12 +34,15 @@ def _decode_token(token: str, jwt_secret: str) -> dict[str, Any]:
             algorithms=[_JWT_ALGORITHM],
             audience=_JWT_AUDIENCE,
         )
-    except JWTError:
+    except ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Ongeldige of verlopen sessie. Log opnieuw in.",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    except JWTError as e:
+        print(f"[AUTH] Local JWT decode failed, falling back to Supabase API: {e}")
+        return None
 
 
 def get_current_user(
@@ -51,8 +59,22 @@ def get_current_user(
     token = credentials.credentials
 
     try:
-        payload = _decode_token(token, settings.supabase_jwt_secret)
-        meta = payload.get("user_metadata") or {}
+        # Prefer local JWT verification (fast, no network call).
+        # Falls back to Supabase Auth API if the secret is not set or decode fails.
+        payload = _decode_token(token, settings.supabase_jwt_secret) if settings.supabase_jwt_secret else None
+        if payload is not None:
+            meta = payload.get("user_metadata") or {}
+        else:
+            auth_response = supabase.auth.get_user(token)
+            user = auth_response.user
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Authenticatie mislukt.",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            meta = user.user_metadata or {}
+
         discord_display_name = meta.get("full_name") or meta.get("name")
 
         if not discord_display_name:

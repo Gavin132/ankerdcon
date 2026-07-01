@@ -74,15 +74,25 @@ export function RestaurantCard({ ride }: RestaurantCardProps) {
 
         {/* Banners */}
         {hasGap && !isPast && !isRecent && (
-          <div className="flex items-center gap-2 border-b border-rose-200 dark:border-rose-800/40 bg-rose-50 dark:bg-rose-900/25 px-4 py-2 text-xs font-bold text-rose-700 dark:text-rose-300">
-            <AlertCircle size={12} className="shrink-0" />
-            {unassigned.length} {unassigned.length === 1 ? "persoon heeft" : "personen hebben"} nog geen rit
+          <div className="flex items-center justify-between gap-2 border-b border-rose-200 dark:border-rose-800/40 bg-rose-50 dark:bg-rose-900/25 px-4 py-2">
+            <span className="flex items-center gap-1.5 text-xs font-bold text-rose-700 dark:text-rose-300">
+              <AlertCircle size={12} className="shrink-0" />
+              {unassigned.length} {unassigned.length === 1 ? "persoon heeft" : "personen hebben"} nog geen rit
+            </span>
+            <Link to={routes.ride.view(ride.id)} className="shrink-0 text-xs font-bold text-rose-700 dark:text-rose-300 hover:underline">
+              Wijs toe →
+            </Link>
           </div>
         )}
         {!hasGap && ride.action_required && !isPast && !isRecent && !allClear && (
-          <div className="flex items-center gap-2 border-b border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/25 px-4 py-2 text-xs font-bold text-amber-700 dark:text-amber-300">
-            <AlertCircle size={12} className="shrink-0" />
-            Actie vereist — laat weten of je meekomt
+          <div className="flex items-center justify-between gap-2 border-b border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/25 px-4 py-2">
+            <span className="flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-300">
+              <AlertCircle size={12} className="shrink-0" />
+              {drivers.length === 0 ? "Nog geen auto's — wie rijdt er?" : "Actie vereist — laat weten of je meekomt"}
+            </span>
+            <Link to={routes.ride.view(ride.id)} className="shrink-0 text-xs font-bold text-amber-700 dark:text-amber-300 hover:underline">
+              {drivers.length === 0 ? "Ik rijd →" : "Bekijk →"}
+            </Link>
           </div>
         )}
         {allClear && !isPast && !isRecent && (

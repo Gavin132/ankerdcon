@@ -42,11 +42,14 @@ export function RestaurantDetailActions({
   const [driverOpen, setDriverOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  const [assignPersonOpen, setAssignPersonOpen] = useState(false);
   const [joinTarget, setJoinTarget] = useState("");
   const [driverName, setDriverName] = useState("");
   const [driverSeats, setDriverSeats] = useState(4);
   const [joinNames, setJoinNames] = useState<string[]>([]);
   const [leaveName, setLeaveName] = useState("");
+  const [assignPersonName, setAssignPersonName] = useState("");
+  const [assignPersonDriver, setAssignPersonDriver] = useState("");
 
   const addDriverMutation = useAddRestaurantDriver();
   const leaveDriverMutation = useLeaveRestaurantDriver();
@@ -142,6 +145,25 @@ export function RestaurantDetailActions({
       toast("info", `${userName} verwijderd uit auto`);
     } catch {
       toast("error", "Kon niet verwijderen.");
+    }
+  }
+
+  async function handleAssignPerson() {
+    if (!assignPersonName || !assignPersonDriver) return;
+    try {
+      if (!attendees.includes(assignPersonName)) {
+        await claimMutation.mutateAsync({ id: ride.id, payload: { user_name: assignPersonName } });
+      }
+      await assignMutation.mutateAsync({
+        id: ride.id,
+        payload: { user_name: assignPersonName, driver_name: assignPersonDriver },
+      });
+      toast("success", `${assignPersonName} rijdt mee met ${assignPersonDriver}`);
+      setAssignPersonOpen(false);
+      setAssignPersonName("");
+      setAssignPersonDriver("");
+    } catch {
+      toast("error", "Kon niet toewijzen.");
     }
   }
 
@@ -312,23 +334,37 @@ export function RestaurantDetailActions({
 
         {/* Zonder rit strip */}
         {unassigned.length > 0 && (
-          <div className="flex items-start gap-3 rounded-2xl border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 px-4 py-3.5">
-            <AlertCircle size={16} className="text-rose-500 shrink-0 mt-0.5" />
-            <div className="min-w-0 flex-1">
+          <div className="rounded-2xl border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 px-4 py-3.5 space-y-3">
+            <div className="flex items-center gap-2">
+              <AlertCircle size={16} className="text-rose-500 shrink-0" />
               <p className="text-sm font-bold text-rose-800 dark:text-rose-300 leading-tight">
                 {unassigned.length}{" "}
                 {unassigned.length === 1 ? "persoon heeft" : "personen hebben"}{" "}
                 nog geen auto
               </p>
-              <div className="mt-1.5 flex -space-x-1.5">
-                {unassigned.map((name) => (
-                  <UserAvatar
-                    key={name}
-                    name={name}
-                    className="h-6 w-6 text-[8px] ring-2 ring-white dark:ring-slate-900"
-                  />
-                ))}
-              </div>
+            </div>
+            <div className="space-y-2">
+              {unassigned.map((name) => (
+                <div key={name} className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <UserAvatar name={name} className="h-6 w-6 text-[8px] ring-2 ring-white dark:ring-slate-900 shrink-0" />
+                    <span className="text-sm font-semibold text-rose-800 dark:text-rose-300 truncate">{name}</span>
+                  </div>
+                  {canAct && drivers.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAssignPersonName(name);
+                        setAssignPersonDriver("");
+                        setAssignPersonOpen(true);
+                      }}
+                      className="shrink-0 rounded-lg border border-rose-300 dark:border-rose-600 bg-white dark:bg-rose-900/30 px-2.5 py-1 text-xs font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors"
+                    >
+                      Wijs toe
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -459,6 +495,55 @@ export function RestaurantDetailActions({
             disabled={!leaveName.trim()}
           >
             {leaveName ? `${leaveName} afmelden` : "Selecteer een naam"}
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Wijs toe modal */}
+      <Modal
+        open={assignPersonOpen}
+        onClose={() => { setAssignPersonOpen(false); setAssignPersonName(""); setAssignPersonDriver(""); }}
+        title={`${assignPersonName} toewijzen`}
+        description="Kies een auto om deze persoon in te plaatsen"
+      >
+        <div className="space-y-3">
+          {drivers.map((d) => {
+            const isFull = d.passengers.length >= d.seats;
+            const isSelected = assignPersonDriver === d.name;
+            return (
+              <button
+                key={d.name}
+                type="button"
+                disabled={isFull}
+                onClick={() => setAssignPersonDriver(d.name)}
+                className={`w-full flex items-center justify-between rounded-xl border px-4 py-3 transition-colors text-left ${
+                  isSelected
+                    ? "border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+                    : isFull
+                    ? "border-slate-200 dark:border-slate-700 opacity-50 cursor-not-allowed"
+                    : "border-slate-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-600 cursor-pointer"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Car size={14} className={isSelected ? "text-amber-500" : "text-slate-400"} />
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">{d.name}</span>
+                </div>
+                <span className={`text-xs font-bold ${isFull ? "text-rose-500" : "text-emerald-500"}`}>
+                  {d.passengers.length}/{d.seats} {isFull ? "vol" : "vrij"}
+                </span>
+              </button>
+            );
+          })}
+          <Button
+            onClick={handleAssignPerson}
+            loading={assignMutation.isPending || claimMutation.isPending}
+            className="w-full"
+            disabled={!assignPersonDriver}
+          >
+            <ArrowRight size={15} />
+            {assignPersonDriver
+              ? `${assignPersonName} → ${assignPersonDriver}`
+              : "Selecteer een auto"}
           </Button>
         </div>
       </Modal>
