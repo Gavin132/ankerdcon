@@ -14,6 +14,12 @@ export const apiRoutes = {
     restaurantDriverUnassign: (id: string | number) => `/api/rides/${id}/restaurant-driver/unassign`,
   },
 
+  // ── Cosplays ─────────────────────────────────────────────────────
+  cosplays: {
+    base:  "/api/cosplays/",
+    byId:  (id: string) => `/api/cosplays/${id}`,
+  },
+
   // ── Meals ────────────────────────────────────────────────────────
   meals: {
     base:       "/api/meals/",

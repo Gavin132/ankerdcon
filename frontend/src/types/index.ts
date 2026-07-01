@@ -154,6 +154,27 @@ export interface Meal {
   extra_notes?: string;
 }
 
+// Cosplays
+export interface Cosplay {
+  id: string;
+  user_name: string;
+  character_name: string;
+  series?: string;
+  notes?: string;
+  inspo_images: string[];
+  linked_event_ids: string[];
+  created_at: string;
+}
+
+export interface CreateCosplayRequest {
+  user_name: string;
+  character_name: string;
+  series?: string;
+  notes?: string;
+  inspo_images: string[];
+  linked_event_ids: string[];
+}
+
 export interface CreateMealRequest {
   meal_name: string;
   time: string;
@@ -255,7 +276,7 @@ export type TabId = "hub" | "transport" | "food" | "finance" | "more";
 export type BaseProps = {
   options: string[];
   placeholder?: string;
-  color?: "sky" | "rose" | "green";
+  color?: "sky" | "rose" | "green" | "violet";
 };
 
 export type SingleProps = BaseProps & {

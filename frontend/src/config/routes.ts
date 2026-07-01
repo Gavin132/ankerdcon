@@ -28,6 +28,11 @@ export const routes = {
     pattern: "/events/:id/hotel",
   },
 
+  eventCosplays: {
+    view:    (id: string) => `/events/${id}/cosplays`,
+    pattern: "/events/:id/cosplays",
+  },
+
   meal: {
     view:    (id: string) => `/meals/${id}`,
     pattern: "/meals/:id",

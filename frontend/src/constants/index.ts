@@ -27,6 +27,8 @@ export const QUERY_KEYS = {
   adminBadges:       ["admin", "badges"]       as const,
   adminEventGroups:  ["admin", "event-groups"] as const,
 
+  cosplays: ["cosplays"] as const,
+
   hotelRooms:      (eventId: string) => ["hotel-rooms", eventId]       as const,
   adminHotelRooms: (eventId: string) => ["admin", "hotel-rooms", eventId] as const,
 };
@@ -89,6 +91,17 @@ export const TOKENS = {
       "text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-200",
     check: "text-emerald-500",
     bar: "bg-emerald-400",
+    barFull: "bg-amber-400",
+    counter: "text-slate-400",
+    counterFull: "text-amber-500",
+  },
+  violet: {
+    dot: "bg-violet-500",
+    activeRow: "bg-violet-50 dark:bg-violet-900/20",
+    chip: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
+    chipX: "text-violet-400 hover:text-violet-700 dark:hover:text-violet-200",
+    check: "text-violet-500",
+    bar: "bg-violet-400",
     barFull: "bg-amber-400",
     counter: "text-slate-400",
     counterFull: "text-amber-500",

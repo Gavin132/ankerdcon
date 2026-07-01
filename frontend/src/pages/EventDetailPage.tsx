@@ -1,9 +1,10 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { CalendarDays, BedDouble, ChevronRight } from "lucide-react";
+import { CalendarDays, BedDouble, ChevronRight, Sparkles } from "lucide-react";
 import { useCalendar, useHotelRooms } from "../hooks/useCalendar";
 import { useUsers, useCurrentUser } from "../hooks/useUsers";
 import { useMeals } from "../hooks/useMeals";
 import { useRides } from "../hooks/useRides";
+import { useCosplays } from "../hooks/useCosplays";
 import { useEventWeather } from "../hooks/useEventWeather";
 import { parseEventDate } from "../utils/date";
 import { routes } from "../config/routes";
@@ -23,7 +24,8 @@ export function EventDetailPage() {
   const { data: events = [] } = useCalendar();
   const { data: users  = [] } = useUsers();
   const { data: meals  = [] } = useMeals();
-  const { data: rides  = [] } = useRides();
+  const { data: rides    = [] } = useRides();
+  const { data: cosplays = [] } = useCosplays();
   const { data: me } = useCurrentUser();
 
   const rawEvent = events.find((e) => e.id === id);
@@ -66,6 +68,19 @@ export function EventDetailPage() {
   const { data: hotelRooms = [] } = useHotelRooms(id ?? "", { enabled: !!showHotel });
   const linkedMeals = meals.filter((m) => m.linked_event_id === id);
   const linkedRides = rides.filter((r) => r.linked_event_id === id);
+
+  const siblingEvents = rawEvent?.multi_day_id
+    ? events.filter(
+        (e) => e.multi_day_id === rawEvent.multi_day_id && e.id !== rawEvent.id,
+      )
+    : [];
+
+  // Cosplays for this event + siblings
+  const allRelatedIds = new Set([event.id, ...siblingEvents.map((e) => e.id)]);
+  const eventCosplays = cosplays.filter((c) =>
+    c.linked_event_ids.some((eid) => allRelatedIds.has(eid)),
+  );
+  const cosplayerNames = [...new Set(eventCosplays.map((c) => c.user_name))];
 
   const weatherDate = (() => {
     if (!event?.date) return undefined;
@@ -185,8 +200,62 @@ export function EventDetailPage() {
           </button>
         )}
 
-        {/* ── Attendees ── */}
-        <EventAttendees participants={event.participants} users={users} />
+        {/* ── Aanmeldingen + Cosplays — unified card ── */}
+        <div className="card-surface rounded-2xl overflow-hidden">
+          {/* Split gradient bar: indigo→violet | violet→purple */}
+          <div className="flex h-[3px]">
+            <div className="flex-1 bg-gradient-to-r from-indigo-400 to-violet-500" />
+            <div className="flex-1 bg-gradient-to-r from-violet-500 to-purple-500" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-100 dark:divide-slate-800/60">
+
+            {/* Left: Aanmeldingen */}
+            <div>
+              <p className="px-5 pt-4 pb-0 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                Aanmeldingen
+              </p>
+              <EventAttendees participants={event.participants} users={users} bare />
+            </div>
+
+            {/* Right: Cosplays */}
+            <button
+              onClick={() => navigate(routes.eventCosplays.view(event.id))}
+              className="w-full h-full text-left flex flex-col hover:bg-slate-50 dark:hover:bg-white/[0.02] active:bg-slate-100 dark:active:bg-white/[0.04] transition-colors"
+            >
+              <p className="px-5 pt-4 pb-0 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                Cosplays
+              </p>
+              <div className="flex-1 px-5 py-4 flex items-center gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-500/10">
+                  <Sparkles size={18} className="text-violet-600 dark:text-violet-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">
+                    {eventCosplays.length === 0 ? "Nog geen cosplays" : `${eventCosplays.length} cosplay${eventCosplays.length !== 1 ? "s" : ""}`}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {eventCosplays.length === 0
+                      ? "Klik om cosplays toe te voegen"
+                      : `${cosplayerNames.length} ${cosplayerNames.length === 1 ? "persoon" : "personen"}`}
+                  </p>
+                  {cosplayerNames.length > 0 && (
+                    <div className="mt-2 flex -space-x-1.5">
+                      {cosplayerNames.slice(0, 6).map((name) => {
+                        const u = users.find((x) => x.name === name || x.discord_username === name || x.aliases?.includes(name));
+                        return (
+                          <UserAvatar key={name} name={u?.name ?? name} user={u} className="h-6 w-6 text-[8px] ring-2 ring-white dark:ring-slate-900" />
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                <ChevronRight size={16} className="text-slate-400 shrink-0" />
+              </div>
+            </button>
+
+          </div>
+        </div>
 
         {/* ── Linked activities ── */}
         <EventLinkedMeals meals={linkedMeals} />

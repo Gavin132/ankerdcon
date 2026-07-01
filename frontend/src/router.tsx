@@ -13,6 +13,7 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { EventDetailPage } from "./pages/EventDetailPage";
 import { MealDetailPage } from "./pages/MealDetailPage";
 import { RideDetailPage } from "./pages/RideDetailPage";
+import { EventCosplaysPage } from "./pages/EventCosplaysPage";
 import { MembersPage } from "./pages/MembersPage";
 import { HotelRoomsPage } from "./pages/HotelRoomsPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
@@ -73,6 +74,10 @@ export const router = createBrowserRouter([
       {
         path: routes.ride.pattern,
         element: <RideDetailPage />,
+      },
+      {
+        path: routes.eventCosplays.pattern,
+        element: <EventCosplaysPage />,
       },
       {
         path: routes.members,
