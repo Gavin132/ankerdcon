@@ -6,7 +6,6 @@ import {
   ChevronRight,
   Navigation,
   CalendarDays,
-  Users,
   QrCode,
   CalendarPlus,
   Copy,
@@ -133,30 +132,6 @@ export function MorePage() {
       initial="hidden"
       animate="show"
     >
-      {/* Live locatie */}
-      <motion.div variants={listItem}>
-        <p className="section-label mb-3">Live locatie</p>
-        <div className="card-surface rounded-2xl overflow-hidden">
-          <button
-            onClick={() => setPingOpen(true)}
-            className="flex w-full items-center gap-4 px-5 py-4 text-left hover:bg-slate-50 active:bg-slate-50 transition-colors dark:hover:bg-slate-800/60 dark:active:bg-slate-800/60"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-brand">
-              <Navigation size={18} className="text-white" />
-            </div>
-            <div className="flex-1">
-              <p className="font-bold text-slate-900 dark:text-white text-sm">
-                Locatie pingen
-              </p>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Stuur je locatie naar de groep
-              </p>
-            </div>
-            <ChevronRight size={16} className="text-slate-300" />
-          </button>
-        </div>
-      </motion.div>
-
       {/* Upcoming event banner */}
       {nextEvent && (
         <motion.div variants={listItem}>
@@ -182,10 +157,29 @@ export function MorePage() {
         </motion.div>
       )}
 
-      {/* Con Calendar — list or grid view */}
+      {/* Acties */}
+      <motion.div variants={listItem}>
+        <p className="section-label mb-3">Acties</p>
+        <div className="card-surface rounded-2xl overflow-hidden">
+          <button
+            onClick={() => setPingOpen(true)}
+            className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-50 dark:active:bg-slate-800/50 transition-colors"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-500/10">
+              <Navigation size={16} className="text-sky-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-slate-900 dark:text-white">Locatie pingen</p>
+              <p className="text-xs text-slate-400 mt-0.5">Stuur je locatie naar de groep</p>
+            </div>
+            <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0" />
+          </button>
+        </div>
+      </motion.div>
+
+      {/* Con Calendar */}
       {(calendarEvents ?? []).length > 0 && (
         <motion.div variants={listItem}>
-          {/* Header + view toggle */}
           <div className="flex items-center justify-between mb-3">
             <p className="section-label flex items-center gap-2">
               <CalendarDays size={13} className="text-sky-500" />
@@ -222,7 +216,6 @@ export function MorePage() {
             </div>
           </div>
 
-          {/* Subscribe strip — collapsible */}
           <AnimatePresence>
             {subscribeOpen && (
               <motion.div
@@ -232,26 +225,22 @@ export function MorePage() {
                 transition={{ duration: 0.2, ease: "easeInOut" }}
                 className="overflow-hidden"
               >
-                <div className="flex items-center gap-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/50 px-3 py-2">
+                <div className="card-surface rounded-xl flex items-center gap-2 px-3.5 py-2.5">
                   <p className="flex-1 text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
                     {feedUrl}
                   </p>
                   <button
                     onClick={copyFeedUrl}
                     title="Kopieer link"
-                    className="flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shrink-0"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shrink-0"
                   >
-                    {copied ? (
-                      <Check size={11} className="text-emerald-500" />
-                    ) : (
-                      <Copy size={11} />
-                    )}
+                    {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
                   </button>
                   <a
                     href={googleCalUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="shrink-0 rounded-lg bg-sky-500 hover:bg-sky-600 transition-colors px-2.5 py-1 text-[10px] font-bold text-white whitespace-nowrap"
+                    className="shrink-0 rounded-lg bg-sky-500 hover:bg-sky-600 transition-colors px-2.5 py-1.5 text-[11px] font-bold text-white whitespace-nowrap"
                   >
                     Google Calendar
                   </a>
@@ -262,90 +251,78 @@ export function MorePage() {
 
           <AnimatePresence mode="wait">
             {calendarView === "list" ? (
-              <motion.div
-                key="list"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-              >
-                <CalendarArchive
-                  events={calendarEvents ?? []}
-                  allUsers={allUsers}
-                  onRsvp={onCalendarRsvp}
-                  onLeave={onCalendarLeave}
-                />
+              <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                <CalendarArchive events={calendarEvents ?? []} allUsers={allUsers} onRsvp={onCalendarRsvp} onLeave={onCalendarLeave} />
               </motion.div>
             ) : (
-              <motion.div
-                key="calendar"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-              >
-                <CalendarGrid
-                  events={calendarEvents ?? []}
-                  allUsers={allUsers}
-                  onRsvp={onCalendarRsvp}
-                  onLeave={onCalendarLeave}
-                />
+              <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                <CalendarGrid events={calendarEvents ?? []} allUsers={allUsers} onRsvp={onCalendarRsvp} onLeave={onCalendarLeave} />
               </motion.div>
             )}
           </AnimatePresence>
         </motion.div>
       )}
 
-      {/* Members — link to dedicated page */}
+      {/* Community */}
       <motion.div variants={listItem}>
-        <p className="section-label mb-3">Leden</p>
-        <button
-          onClick={() => navigate(routes.members)}
-          className="card-surface w-full rounded-2xl px-4 py-3.5 flex items-center gap-3 text-left hover:shadow-md active:scale-[0.98] transition-all duration-150"
-        >
-          <div className="flex -space-x-2 shrink-0">
-            {allUsers.slice(0, 6).map((u) => (
-              <UserAvatar key={u.name} name={u.name} user={u} className="h-9 w-9 text-xs ring-2 ring-white dark:ring-slate-900" />
-            ))}
-            {allUsers.length > 6 && (
-              <div className="flex h-9 w-9 items-center justify-center rounded-full ring-2 ring-white dark:ring-slate-900 bg-slate-200 dark:bg-slate-700 text-xs font-black text-slate-600 dark:text-slate-300 tabular-nums">
-                +{allUsers.length - 6}
-              </div>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-slate-900 dark:text-white">Bekijk alle leden</p>
-            <p className="text-xs text-slate-400 mt-0.5">
-              {allUsers.length} {allUsers.length === 1 ? "lid" : "leden"} aanwezig
-            </p>
-          </div>
-          <Users size={16} className="text-slate-400 shrink-0" />
-        </button>
+        <p className="section-label mb-3">Community</p>
+        <div className="card-surface rounded-2xl overflow-hidden">
+          <button
+            onClick={() => navigate(routes.members)}
+            className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-50 dark:active:bg-slate-800/50 transition-colors"
+          >
+            <div className="flex -space-x-2 shrink-0">
+              {allUsers.slice(0, 5).map((u) => (
+                <UserAvatar key={u.name} name={u.name} user={u} className="h-8 w-8 text-[10px] ring-2 ring-white dark:ring-slate-900" />
+              ))}
+              {allUsers.length > 5 && (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full ring-2 ring-white dark:ring-slate-900 bg-slate-200 dark:bg-slate-700 text-[10px] font-black text-slate-600 dark:text-slate-300">
+                  +{allUsers.length - 5}
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0 ml-1">
+              <p className="text-sm font-bold text-slate-900 dark:text-white">Bekijk alle leden</p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {allUsers.length} {allUsers.length === 1 ? "lid" : "leden"} aanwezig
+              </p>
+            </div>
+            <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0" />
+          </button>
+        </div>
       </motion.div>
 
-      {/* App info + QR share */}
+      {/* App */}
       <motion.div variants={listItem}>
-        <div className="rounded-2xl border border-slate-100 bg-white/60 px-5 py-4 text-center dark:border-slate-800 dark:bg-slate-900/60">
-          <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-sky-100 shadow-sm overflow-hidden">
-            <img
-              src="/assets/images/ankerd-logo.png"
-              alt="Ankerd"
-              className="h-8 w-8 object-contain"
-            />
-          </div>
-          <p className="font-black text-slate-800 dark:text-white text-sm">
-            Ankerd Con
-          </p>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Event portal · v{__APP_VERSION__}
-          </p>
+        <p className="section-label mb-3">App</p>
+        <div className="card-surface rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
 
+          {/* App identity */}
+          <div className="flex items-center gap-3.5 px-4 py-3.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+              <img src="/assets/images/ankerd-logo.png" alt="Ankerd" className="h-7 w-7 object-contain" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-slate-900 dark:text-white">Ankerd Con</p>
+              <p className="text-xs text-slate-400">Event portal · v{__APP_VERSION__}</p>
+            </div>
+          </div>
+
+          {/* QR code row */}
           <button
             onClick={() => setQrOpen((v) => !v)}
-            className="mt-3 flex items-center gap-1.5 mx-auto text-xs font-semibold text-sky-500 hover:text-sky-600 transition-colors"
+            className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-50 dark:active:bg-slate-800/50 transition-colors"
           >
-            <QrCode size={13} />
-            {qrOpen ? "Verberg QR-code" : "Deel via QR-code"}
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
+              <QrCode size={16} className="text-slate-500 dark:text-slate-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-slate-900 dark:text-white">Deel via QR-code</p>
+              <p className="text-xs text-slate-400">Scan om de app te openen</p>
+            </div>
+            <motion.div animate={{ rotate: qrOpen ? 90 : 0 }} transition={{ duration: 0.18 }}>
+              <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0" />
+            </motion.div>
           </button>
 
           <AnimatePresence>
@@ -357,39 +334,33 @@ export function MorePage() {
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <div className="mt-4 flex flex-col items-center gap-2">
+                <div className="px-4 pb-5 pt-1 flex flex-col items-center gap-3">
                   <div className="rounded-2xl bg-white p-3 shadow-sm border border-slate-100">
                     <QRCodeSVG
-                      value={
-                        typeof window !== "undefined"
-                          ? window.location.origin
-                          : ""
-                      }
+                      value={typeof window !== "undefined" ? window.location.origin : ""}
                       size={160}
                       bgColor="#ffffff"
                       fgColor="#0f172a"
                       level="M"
                     />
                   </div>
-                  <p className="text-xs text-slate-400">
-                    Scan om de app te openen
-                  </p>
+                  <p className="text-xs text-slate-400">Scan om de app te openen</p>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
-      </motion.div>
 
-      {/* Logout */}
-      <motion.div variants={listItem}>
-        <button
-          onClick={onLogout}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 py-3.5 min-h-[52px] text-sm font-semibold text-rose-600 hover:bg-rose-100 active:bg-rose-100 transition-colors dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-900/40 dark:active:bg-rose-900/40"
-        >
-          <LogOut size={16} />
-          Uitloggen
-        </button>
+          {/* Logout row */}
+          <button
+            onClick={onLogout}
+            className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left hover:bg-rose-50 dark:hover:bg-rose-500/5 active:bg-rose-50 dark:active:bg-rose-500/5 transition-colors"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-500/10">
+              <LogOut size={16} className="text-rose-500" />
+            </div>
+            <p className="text-sm font-bold text-rose-600 dark:text-rose-400">Uitloggen</p>
+          </button>
+        </div>
       </motion.div>
 
       {/* Ping modal */}

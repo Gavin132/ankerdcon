@@ -15,6 +15,7 @@ import { MealDetailPage } from "./pages/MealDetailPage";
 import { RideDetailPage } from "./pages/RideDetailPage";
 import { EventCosplaysPage } from "./pages/EventCosplaysPage";
 import { MembersPage } from "./pages/MembersPage";
+import { ActiesPage } from "./pages/ActiesPage";
 import { HotelRoomsPage } from "./pages/HotelRoomsPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
@@ -82,6 +83,10 @@ export const router = createBrowserRouter([
       {
         path: routes.members,
         element: <MembersPage />,
+      },
+      {
+        path: routes.acties,
+        element: <ActiesPage />,
       },
       {
         path: routes.eventHotel.pattern,

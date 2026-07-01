@@ -244,7 +244,7 @@ export function TransportPage() {
             <div>
               <button
                 onClick={() => setShowHistory((v) => !v)}
-                className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 min-h-[48px] text-sm font-semibold text-slate-500 hover:bg-slate-100 active:bg-slate-100 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+                className="card-surface flex w-full items-center justify-between rounded-2xl px-4 py-3 min-h-[48px] text-sm font-semibold text-slate-500 dark:text-slate-400 hover:shadow-sm transition-all"
               >
                 <span className="flex items-center gap-2">
                   <History size={14} />

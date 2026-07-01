@@ -13,7 +13,9 @@ class Tables:
     BADGES       = "badges"
     EVENT_GROUPS = "event_groups"
     HOTEL_ROOMS  = "hotel_rooms"
-    COSPLAYS     = "cosplays"
+    COSPLAYS       = "cosplays"
+    EXPENSES       = "expenses"
+    EXPENSE_SHARES = "expense_shares"
 
 
 # ── API ───────────────────────────────────────────────────────────

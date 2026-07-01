@@ -1,14 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  CalendarDays,
-  Bus,
-  UtensilsCrossed,
-  Wallet,
-  BedDouble,
-  MapPin,
-  Hotel,
-  ArrowRight,
-  Layers,
+  CalendarDays, Bus, UtensilsCrossed, Wallet, BedDouble,
+  MapPin, Hotel, ArrowRight, Layers, ChevronRight,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -22,20 +15,61 @@ import { CrewSection } from "../components/hub/CrewSection";
 import { useCalendar } from "../hooks/useCalendar";
 import { useRides } from "../hooks/useRides";
 import { useMeals } from "../hooks/useMeals";
-import { usePayments } from "../hooks/usePayments";
+import { useExpenses } from "../hooks/useExpenses";
 import { useCurrentUser, useUsers } from "../hooks/useUsers";
-import { formatDate } from "../utils/format";
+import { formatDate, formatAmount } from "../utils/format";
 import { multiDayColor, getGroupTitle, formatDateRange, dayShort, monthShort } from "../utils/multiDay";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { listItem, listContainer } from "../utils/motion";
 import { parseEventDate, toDateKey, todayKey } from "../utils/date";
 import { getRideStatus } from "../utils/rides";
-import { computeRestaurantGaps } from "../components/hub/ComputeRestaurantGap";
-import { computeActionAlerts } from "../components/hub/ComputeActionAlert";
+import { computeAllActions } from "../utils/actionItems";
 import type { User } from "../types";
 
 const DAYS_NL = ["Zondag","Maandag","Dinsdag","Woensdag","Donderdag","Vrijdag","Zaterdag"];
 const MONTHS_NL = ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
+
+// ── Stat tile ─────────────────────────────────────────────────────────────────
+
+interface StatTileProps {
+  icon: React.ElementType;
+  label: string;
+  sublabel: string;
+  metric: React.ReactNode;
+  iconBg: string;
+  iconColor: string;
+  borderHover: string;
+  onClick: () => void;
+}
+
+function StatTile({ icon: Icon, label, sublabel, metric, iconBg, iconColor, borderHover, onClick }: StatTileProps) {
+  return (
+    <motion.button
+      onClick={onClick}
+      className={`card-surface rounded-2xl p-4 text-left flex flex-col gap-4 transition-all duration-150 hover:shadow-md border border-transparent ${borderHover}`}
+      whileHover={{ y: -1 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.12 }}
+    >
+      <div className="flex items-center justify-between">
+        <div className={`flex h-8 w-8 items-center justify-center rounded-xl ${iconBg}`}>
+          <Icon size={15} className={iconColor} />
+        </div>
+        <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+          {sublabel}
+        </span>
+      </div>
+      <div>
+        <p className="text-[22px] font-black text-slate-900 dark:text-white leading-none tabular-nums">
+          {metric}
+        </p>
+        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">{label}</p>
+      </div>
+    </motion.button>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export function HubPage() {
   const navigate = useNavigate();
@@ -47,7 +81,7 @@ export function HubPage() {
   const { data: events, isLoading: evLoading } = useCalendar();
   const { data: rides } = useRides();
   const { data: meals } = useMeals();
-  const { data: payments } = usePayments();
+  const { data: expenses = [] } = useExpenses();
   const { data: users } = useUsers();
   const { data: me } = useCurrentUser();
 
@@ -58,7 +92,7 @@ export function HubPage() {
   const greeting = hour < 12 ? "Goedemorgen" : hour < 18 ? "Goedemiddag" : "Goedenavond";
   const todayFormatted = `${DAYS_NL[now.getDay()]} ${now.getDate()} ${MONTHS_NL[now.getMonth()]}`;
 
-  const totalSpend = (payments ?? []).reduce((s, p) => s + p.amount, 0);
+  const totalSpend = expenses.reduce((s, e) => s + e.amount, 0);
 
   const todayStr = todayKey();
   const event =
@@ -92,8 +126,7 @@ export function HubPage() {
     return !isNaN(d.getTime()) && d > now;
   }).length;
 
-  const actionAlerts = computeActionAlerts(events ?? [], rides ?? [], meals ?? []);
-  const restaurantGaps = computeRestaurantGaps(rides ?? []);
+  const allActions = computeAllActions({ events: events ?? [], rides: rides ?? [], meals: meals ?? [], expenses, myName: me?.name });
 
   const hotelRooms: [string, User[]][] = event?.is_hotel
     ? Object.entries(
@@ -110,196 +143,178 @@ export function HubPage() {
   return (
     <>
     <motion.div
-      className="space-y-5"
+      className="space-y-4"
       variants={listContainer}
       initial="hidden"
       animate="show"
     >
 
       {/* ── Greeting ──────────────────────────────────────────────────────── */}
-      <motion.div variants={listItem} className="flex items-center justify-between pt-1">
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
-            {greeting}
-          </p>
-          <h1 className="mt-0.5 text-[22px] font-black leading-tight tracking-tight text-slate-900 dark:text-white truncate">
-            {me?.name ?? "…"}
-          </h1>
-          <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500 font-medium">{todayFormatted}</p>
+      <motion.div variants={listItem}>
+        <div className="flex items-center justify-between pt-1">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+              {greeting}
+            </p>
+            <h1 className="mt-0.5 text-[22px] font-black leading-tight tracking-tight text-slate-900 dark:text-white truncate">
+              {me?.name ?? "…"}
+            </h1>
+            <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500 font-medium">{todayFormatted}</p>
+          </div>
+          {me && (
+            <UserAvatar name={me.name} className="h-12 w-12 text-base shrink-0 ml-4" />
+          )}
         </div>
-        {me && (
-          <UserAvatar name={me.name} className="h-12 w-12 text-base shrink-0 ml-4" />
-        )}
       </motion.div>
 
-      {/* ── Next event card ───────────────────────────────────────────────── */}
+      {/* ── Action banner ─────────────────────────────────────────────────── */}
+      <DailyActionCheck actions={allActions} />
+
+      {/* ── Upcoming event card ───────────────────────────────────────────── */}
       {event && (
         <motion.div variants={listItem}>
           {isGroupEvent ? (
-            /* ── Multi-day group card ── */
-            <div
-              className="relative overflow-hidden rounded-2xl"
-              style={{ background: "linear-gradient(145deg, #0c1628 0%, #0f1e38 60%, #0e172e 100%)" }}
-            >
-              <div className="pointer-events-none absolute -top-16 -right-8 h-56 w-56 rounded-full blur-3xl" style={{ backgroundColor: groupColor!.accent + "18" }} />
-              <div className="pointer-events-none absolute -bottom-8 left-4 h-40 w-72 bg-indigo-600/10 blur-3xl" />
+            /* ── Multi-day ── */
+            <div className="card-surface rounded-2xl overflow-hidden">
+              {/* Accent bar uses group color */}
               <div
-                className="pointer-events-none absolute inset-0 opacity-[0.035]"
-                style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px)", backgroundSize: "28px 28px" }}
+                className="h-[3px]"
+                style={{ background: `linear-gradient(90deg, ${groupColor!.accent}, ${groupColor!.accent}88)` }}
               />
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${groupColor!.accent}50, transparent)` }} />
-
-              <div className="relative p-5">
+              <div className="p-5">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3 mb-4">
-                  <div className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1" style={{ backgroundColor: groupColor!.accent + "20", borderColor: groupColor!.accent + "30" }}>
+                  <div
+                    className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1"
+                    style={{ backgroundColor: groupColor!.accent + "18", borderColor: groupColor!.accent + "35" }}
+                  >
                     <Layers size={10} style={{ color: groupColor!.accent }} />
-                    <span className="text-[10px] font-extrabold uppercase tracking-[0.12em]" style={{ color: groupColor!.accent }}>
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-[0.12em]"
+                      style={{ color: groupColor!.accent }}
+                    >
                       Meerdaags evenement
                     </span>
                   </div>
                   {daysUntil !== null && (
-                    <div className="shrink-0 rounded-xl bg-white/10 border border-white/8 px-3 py-2 text-center min-w-[52px]">
-                      <p className="text-[22px] font-black text-white leading-none tabular-nums">
-                        {daysUntil === 0 ? "!" : daysUntil}
-                      </p>
-                      <p className="text-[9px] font-bold text-white/40 uppercase tracking-wider mt-0.5">
-                        {daysUntil === 0 ? "vandaag" : daysUntil === 1 ? "dag" : "dagen"}
-                      </p>
-                    </div>
+                    <CountdownBadge daysUntil={daysUntil} />
                   )}
                 </div>
 
-                {/* Title */}
-                <h2 className="text-[21px] font-black text-white leading-tight tracking-tight">
+                <h2 className="text-[20px] font-black text-slate-900 dark:text-white leading-tight tracking-tight">
                   {groupTitle}
                 </h2>
-
-                {/* Date range */}
-                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
-                  <span className="flex items-center gap-1.5 text-sm" style={{ color: groupColor!.accent + "99" }}>
-                    <CalendarDays size={12} style={{ color: groupColor!.accent + "99" }} />
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                  <span className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+                    <CalendarDays size={12} />
                     {groupDateRange}
                   </span>
-                  <span className="flex items-center gap-1.5 text-sm text-white/30">
+                  <span className="text-sm text-slate-400 dark:text-slate-500">
                     {groupEvents!.length} {groupEvents!.length === 1 ? "dag" : "dagen"}
                   </span>
                 </div>
 
                 {/* Per-day rows */}
-                <div className="mt-4 space-y-1.5" style={{ borderLeft: `2px solid ${groupColor!.accent}35`, paddingLeft: "12px" }}>
-                  {groupEvents!.map(({ ev: dayEv, date }) => {
-                    return (
-                      <button
-                        key={dayEv.id}
-                        onClick={() => navigate(routes.event.view(dayEv.id))}
-                        className="w-full flex items-center gap-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] active:bg-white/[0.05] transition-colors px-3 py-2.5 text-left"
-                      >
-                        <div className="shrink-0 text-center w-7">
-                          <p className="text-[9px] font-bold uppercase text-white/30">{dayShort(date)}</p>
-                          <p className="text-sm font-black text-white leading-none">{date.getDate()}</p>
-                          <p className="text-[9px] text-white/30 font-medium">{monthShort(date)}</p>
-                        </div>
-                        <p className="flex-1 text-xs font-semibold text-white/75 truncate">{dayEv.event_name}</p>
-                        {dayEv.participants.length > 0 && (
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <div className="flex -space-x-1">
-                              {dayEv.participants.slice(0, 3).map((p) => {
-                                const resolved = (users ?? []).find((u) => u.name === p || u.discord_username === p || u.aliases?.includes(p));
-                                return <UserAvatar key={p} name={resolved?.name ?? p} user={resolved} className="h-4 w-4 text-[7px] !border-[#0f1e38]" />;
-                              })}
-                            </div>
-                            <span className="text-[10px] font-bold text-white/30 tabular-nums">{dayEv.participants.length}</span>
+                <div
+                  className="mt-4 space-y-1.5 pl-3"
+                  style={{ borderLeft: `2px solid ${groupColor!.accent}30` }}
+                >
+                  {groupEvents!.map(({ ev: dayEv, date }) => (
+                    <button
+                      key={dayEv.id}
+                      onClick={() => navigate(routes.event.view(dayEv.id))}
+                      className="w-full flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors px-3 py-2.5 text-left"
+                    >
+                      <div className="shrink-0 text-center w-7">
+                        <p className="text-[9px] font-bold uppercase text-slate-400">{dayShort(date)}</p>
+                        <p className="text-sm font-black text-slate-900 dark:text-white leading-none">{date.getDate()}</p>
+                        <p className="text-[9px] text-slate-400 font-medium">{monthShort(date)}</p>
+                      </div>
+                      <p className="flex-1 text-xs font-semibold text-slate-600 dark:text-slate-300 truncate">{dayEv.event_name}</p>
+                      {dayEv.participants.length > 0 && (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <div className="flex -space-x-1">
+                            {dayEv.participants.slice(0, 3).map((p) => {
+                              const resolved = (users ?? []).find(u => u.name === p || u.discord_username === p || u.aliases?.includes(p));
+                              return <UserAvatar key={p} name={resolved?.name ?? p} user={resolved} className="h-4 w-4 text-[7px] ring-[1.5px] ring-white dark:ring-slate-800" />;
+                            })}
                           </div>
-                        )}
-                        <ArrowRight size={10} className="text-white/20 shrink-0" />
-                      </button>
-                    );
-                  })}
+                          <span className="text-[10px] font-bold text-slate-400 tabular-nums">{dayEv.participants.length}</span>
+                        </div>
+                      )}
+                      <ChevronRight size={12} className="text-slate-300 dark:text-slate-600 shrink-0" />
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
           ) : (
-            /* ── Single event card (original) ── */
+            /* ── Single event ── */
             <div
               onClick={() => navigate(routes.event.view(event.id))}
-              className="relative overflow-hidden rounded-2xl cursor-pointer group"
-              style={{ background: "linear-gradient(145deg, #0c1628 0%, #0f1e38 60%, #0e172e 100%)" }}
+              className="card-surface rounded-2xl overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
             >
-              <div className="pointer-events-none absolute inset-0 bg-white/0 group-hover:bg-white/[0.03] transition-colors duration-200 rounded-2xl" />
-              <div className="pointer-events-none absolute -top-16 -right-8 h-56 w-56 rounded-full bg-sky-500/12 blur-3xl" />
-              <div className="pointer-events-none absolute -bottom-8 left-4 h-40 w-72 bg-indigo-600/10 blur-3xl" />
-              <div
-                className="pointer-events-none absolute inset-0 opacity-[0.035]"
-                style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px)", backgroundSize: "28px 28px" }}
-              />
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-500/30 to-transparent" />
-
-              <div className="relative p-5">
+              <div className="h-[3px] bg-gradient-to-r from-sky-500 to-indigo-500" />
+              <div className="p-5">
                 <div className="flex items-start justify-between gap-3 mb-4">
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/15 border border-sky-500/20 px-2.5 py-1">
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400 animate-pulse" />
-                    <span className="text-[10px] font-extrabold text-sky-400 uppercase tracking-[0.12em]">Aankomend</span>
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/10 border border-sky-500/15 px-2.5 py-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-sky-500 animate-pulse" />
+                    <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-[0.12em]">
+                      Aankomend evenement
+                    </span>
                   </div>
                   {daysUntil !== null && (
-                    <div className="shrink-0 rounded-xl bg-white/10 border border-white/8 px-3 py-2 text-center min-w-[52px]">
-                      <p className="text-[22px] font-black text-white leading-none tabular-nums">
-                        {daysUntil === 0 ? "!" : daysUntil}
-                      </p>
-                      <p className="text-[9px] font-bold text-white/40 uppercase tracking-wider mt-0.5">
-                        {daysUntil === 0 ? "vandaag" : daysUntil === 1 ? "dag" : "dagen"}
-                      </p>
-                    </div>
+                    <CountdownBadge daysUntil={daysUntil} />
                   )}
                 </div>
 
-                <h2 className="text-[21px] font-black text-white leading-tight tracking-tight">
+                <h2 className="text-[20px] font-black text-slate-900 dark:text-white leading-tight tracking-tight">
                   {event.event_name}
                 </h2>
-
-                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
-                  <span className="flex items-center gap-1.5 text-sm text-sky-300/60">
-                    <CalendarDays size={12} className="text-sky-400/60" />
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                  <span className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+                    <CalendarDays size={12} />
                     {formatDate(event.date)}
                   </span>
                   {event.is_hotel && (
-                    <span className="flex items-center gap-1.5 text-sm text-sky-300/60">
-                      <BedDouble size={12} className="text-sky-400/60" />
+                    <span className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+                      <BedDouble size={12} />
                       Hotel inbegrepen
                     </span>
                   )}
                 </div>
 
+                {/* Participants */}
                 {(users ?? []).length > 0 && event.participants.length > 0 && (
-                  <div className="mt-4 space-y-3">
+                  <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="flex-1 h-1 rounded-full bg-white/10 overflow-hidden">
+                      <div className="flex-1 h-1 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-sky-400 transition-all duration-700"
+                          className="h-full rounded-full bg-sky-500 transition-all duration-700"
                           style={{ width: `${Math.round((event.participants.length / (users ?? []).length) * 100)}%` }}
                         />
                       </div>
-                      <span className="shrink-0 text-[11px] font-bold text-white/40 tabular-nums">
+                      <span className="shrink-0 text-[11px] font-bold text-slate-400 tabular-nums">
                         {event.participants.length}/{(users ?? []).length}
                       </span>
                     </div>
 
                     <button
-                      onClick={(e) => { e.stopPropagation(); setParticipantsExpanded((v) => !v); }}
-                      className="flex items-center gap-2.5 text-left"
+                      onClick={(e) => { e.stopPropagation(); setParticipantsExpanded(v => !v); }}
+                      className="flex items-center gap-2 text-left"
                     >
                       <div className="flex -space-x-2">
                         {event.participants.slice(0, 7).map((p) => {
-                          const resolved = (users ?? []).find((u) => u.name === p || u.discord_username === p || u.aliases?.includes(p));
-                          return <UserAvatar key={p} name={resolved?.name ?? p} user={resolved} className="h-6 w-6 text-[9px] !border-[#0f1e38]" />;
+                          const resolved = (users ?? []).find(u => u.name === p || u.discord_username === p || u.aliases?.includes(p));
+                          return <UserAvatar key={p} name={resolved?.name ?? p} user={resolved} className="h-6 w-6 text-[9px] ring-2 ring-white dark:ring-slate-900" />;
                         })}
                         {event.participants.length > 7 && (
-                          <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-[#0f1e38] bg-white/15 text-[9px] font-black text-white">
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full ring-2 ring-white dark:ring-slate-900 bg-slate-200 dark:bg-slate-700 text-[9px] font-black text-slate-600 dark:text-slate-300">
                             +{event.participants.length - 7}
                           </div>
                         )}
                       </div>
-                      <span className="text-[11px] font-semibold text-sky-400/60 hover:text-sky-400 transition-colors">
+                      <span className="text-[11px] font-semibold text-slate-400 hover:text-sky-500 transition-colors">
                         {participantsExpanded ? "Verbergen" : `${event.participants.length} aangemeld`}
                       </span>
                     </button>
@@ -315,7 +330,7 @@ export function HubPage() {
                         >
                           <div className="flex flex-wrap gap-1.5 pt-0.5">
                             {event.participants.map((p) => {
-                              const resolved = (users ?? []).find((u) => u.name === p || u.discord_username === p || u.aliases?.includes(p));
+                              const resolved = (users ?? []).find(u => u.name === p || u.discord_username === p || u.aliases?.includes(p));
                               const displayName = resolved?.name ?? p;
                               return (
                                 <button
@@ -328,7 +343,7 @@ export function HubPage() {
                                     setPopupAnchorRect({ top: rect.top, left: rect.left, right: rect.right, height: rect.height });
                                     setPopupUser(resolved);
                                   }}
-                                  className="inline-flex items-center gap-1.5 rounded-full bg-white/8 border border-white/10 px-2 py-1 text-[11px] font-semibold text-sky-200 hover:bg-white/15 hover:text-white transition-colors"
+                                  className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-200 hover:border-sky-500/30 transition-colors"
                                 >
                                   <UserAvatar name={displayName} user={resolved} className="h-3.5 w-3.5 text-[7px] !border-0" />
                                   {displayName}
@@ -347,134 +362,83 @@ export function HubPage() {
         </motion.div>
       )}
 
-      {/* ── Daily action alerts ───────────────────────────────────────────── */}
-      <DailyActionCheck alerts={actionAlerts} restaurantGaps={restaurantGaps} />
-
-      {/* ── Quick nav grid ────────────────────────────────────────────────── */}
+      {/* ── Stat tiles ────────────────────────────────────────────────────── */}
       <motion.div variants={listItem}>
-        <p className="section-label mb-3">Snelle navigatie</p>
         <div className="grid grid-cols-2 gap-3">
-
-          {/* Ritten */}
-          <motion.button
+          <StatTile
+            icon={Bus}
+            label="Ritten gepland"
+            sublabel="Transport"
+            metric={futureRidesCount}
+            iconBg="bg-sky-100 dark:bg-sky-500/10"
+            iconColor="text-sky-500"
+            borderHover="hover:border-sky-500/20 dark:hover:border-sky-500/15"
             onClick={() => navigate(routes.transport)}
-            className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 p-4 text-left shadow-stat"
-            whileHover={{ y: -2, scale: 1.015 }}
-            whileTap={{ scale: 0.97 }}
-            transition={{ duration: 0.15 }}
-          >
-            <div className="pointer-events-none absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-white/10 blur-xl" />
-            <div className="relative">
-              <div className="mb-3 flex items-center justify-between">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/20">
-                  <Bus size={15} className="text-white" />
-                </div>
-                <span className="rounded-full bg-white/20 border border-white/15 px-2 py-0.5 text-[11px] font-black text-white tabular-nums">
-                  {futureRidesCount}
-                </span>
-              </div>
-              <p className="text-[15px] font-black text-white leading-tight">Ritten</p>
-              <p className="mt-0.5 text-[10px] font-bold text-white/55 uppercase tracking-wider">Transport</p>
-            </div>
-          </motion.button>
-
-          {/* Maaltijden */}
-          <motion.button
+          />
+          <StatTile
+            icon={UtensilsCrossed}
+            label="Maaltijden"
+            sublabel="Eten"
+            metric={futureMealsCount}
+            iconBg="bg-cyan-100 dark:bg-cyan-500/10"
+            iconColor="text-cyan-500"
+            borderHover="hover:border-cyan-500/20 dark:hover:border-cyan-500/15"
             onClick={() => navigate(routes.food)}
-            className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-400 to-sky-500 p-4 text-left shadow-stat"
-            whileHover={{ y: -2, scale: 1.015 }}
-            whileTap={{ scale: 0.97 }}
-            transition={{ duration: 0.15 }}
-          >
-            <div className="pointer-events-none absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-white/10 blur-xl" />
-            <div className="relative">
-              <div className="mb-3 flex items-center justify-between">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/20">
-                  <UtensilsCrossed size={15} className="text-white" />
-                </div>
-                <span className="rounded-full bg-white/20 border border-white/15 px-2 py-0.5 text-[11px] font-black text-white tabular-nums">
-                  {futureMealsCount}
-                </span>
-              </div>
-              <p className="text-[15px] font-black text-white leading-tight">Maaltijden</p>
-              <p className="mt-0.5 text-[10px] font-bold text-white/55 uppercase tracking-wider">Eten</p>
-            </div>
-          </motion.button>
-
-          {/* Financiën */}
-          <motion.button
+          />
+          <StatTile
+            icon={Wallet}
+            label="Totaal uitgegeven"
+            sublabel="Financiën"
+            metric={formatAmount(totalSpend)}
+            iconBg="bg-violet-100 dark:bg-violet-500/10"
+            iconColor="text-violet-500"
+            borderHover="hover:border-violet-500/20 dark:hover:border-violet-500/15"
             onClick={() => navigate(routes.finance)}
-            className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500 to-purple-700 p-4 text-left shadow-stat"
-            whileHover={{ y: -2, scale: 1.015 }}
-            whileTap={{ scale: 0.97 }}
-            transition={{ duration: 0.15 }}
-          >
-            <div className="pointer-events-none absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-white/10 blur-xl" />
-            <div className="relative">
-              <div className="mb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/20">
-                  <Wallet size={15} className="text-white" />
-                </div>
-              </div>
-              <p className="text-[15px] font-black text-white leading-none">€{totalSpend.toFixed(0)}</p>
-              <p className="mt-0.5 text-[10px] font-bold text-white/55 uppercase tracking-wider">Uitgaven</p>
-            </div>
-          </motion.button>
-
-          {/* Locatie pingen */}
-          <motion.button
+          />
+          <StatTile
+            icon={MapPin}
+            label="Locatie pingen"
+            sublabel="Meer"
+            metric={<ArrowRight size={20} className="text-emerald-500" />}
+            iconBg="bg-emerald-100 dark:bg-emerald-500/10"
+            iconColor="text-emerald-500"
+            borderHover="hover:border-emerald-500/20 dark:hover:border-emerald-500/15"
             onClick={() => navigate(routes.more)}
-            className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 p-4 text-left shadow-stat"
-            whileHover={{ y: -2, scale: 1.015 }}
-            whileTap={{ scale: 0.97 }}
-            transition={{ duration: 0.15 }}
-          >
-            <div className="pointer-events-none absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-white/10 blur-xl" />
-            <div className="relative">
-              <div className="mb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/20">
-                  <MapPin size={15} className="text-white" />
-                </div>
-              </div>
-              <p className="text-[15px] font-black text-white leading-none">Locatie</p>
-              <p className="mt-0.5 text-[10px] font-bold text-white/55 uppercase tracking-wider">Pingen</p>
-            </div>
-          </motion.button>
-
+          />
         </div>
       </motion.div>
 
       {/* ── Hotel rooms ───────────────────────────────────────────────────── */}
       {hotelRooms.length > 0 && (
         <motion.div variants={listItem}>
-          <p className="section-label mb-3 flex items-center gap-2">
-            <Hotel size={12} className="text-sky-500" />
+          <p className="section-label mb-3 flex items-center gap-1.5">
+            <Hotel size={11} className="text-sky-500" />
             Hotelkamers
           </p>
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             {hotelRooms.map(([room, roomUsers]) => (
               <div key={room} className="card-surface rounded-2xl overflow-hidden">
-                <div className="h-[3px] bg-gradient-to-r from-sky-400 via-blue-400 to-sky-300" />
+                <div className="h-[2px] bg-gradient-to-r from-sky-400 to-blue-400" />
                 <div className="flex items-center gap-3 px-4 py-3.5">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600">
-                    <BedDouble size={15} className="text-white" />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-500/10">
+                    <BedDouble size={14} className="text-sky-500" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
                       Kamer {room}
                     </p>
                     <div className="flex items-center gap-2">
                       <div className="flex -space-x-1.5">
                         {roomUsers.map((u) => (
-                          <UserAvatar key={u.name} name={u.name} className="h-6 w-6 text-[9px] ring-2 ring-white dark:ring-[#1e293b]" />
+                          <UserAvatar key={u.name} name={u.name} className="h-5 w-5 text-[8px] ring-[1.5px] ring-white dark:ring-slate-900" />
                         ))}
                       </div>
-                      <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 truncate">
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate">
                         {roomUsers.map((u) => u.name).join(", ")}
                       </span>
                     </div>
                   </div>
-                  <ArrowRight size={13} className="shrink-0 text-slate-300 dark:text-slate-600" />
+                  <ChevronRight size={13} className="shrink-0 text-slate-300 dark:text-slate-600" />
                 </div>
               </div>
             ))}
@@ -496,5 +460,20 @@ export function HubPage() {
       calendarEvents={events ?? []}
     />
     </>
+  );
+}
+
+// ── Countdown badge ───────────────────────────────────────────────────────────
+
+function CountdownBadge({ daysUntil }: { daysUntil: number }) {
+  return (
+    <div className="shrink-0 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 text-center min-w-[52px]">
+      <p className="text-[20px] font-black text-slate-900 dark:text-white leading-none tabular-nums">
+        {daysUntil === 0 ? "!" : daysUntil}
+      </p>
+      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
+        {daysUntil === 0 ? "vandaag" : daysUntil === 1 ? "dag" : "dagen"}
+      </p>
+    </div>
   );
 }

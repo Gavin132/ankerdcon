@@ -11,6 +11,7 @@ export const routes = {
   finance:   "/finance",
   more:      "/more",
   members:   "/members",
+  acties:    "/acties",
 
   profile: {
     /** Build the URL for a user profile page. Name is URI-encoded automatically. */

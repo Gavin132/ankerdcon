@@ -106,8 +106,8 @@ export function RestaurantCard({ ride }: RestaurantCardProps) {
         <div className="px-4 pt-3.5 pb-3 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-400">
-                <Utensils size={13} className="text-white" strokeWidth={2.5} />
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/10">
+                <Utensils size={13} className="text-amber-500" strokeWidth={2.5} />
               </div>
               <span className="text-xs font-bold text-slate-700 dark:text-slate-200">Restaurant</span>
               {statusBadge && (
@@ -178,10 +178,10 @@ export function RestaurantCard({ ride }: RestaurantCardProps) {
               <>
                 <div className="flex -space-x-2">
                   {allParticipants.slice(0, 4).map((p) => (
-                    <UserAvatar key={p} name={p} className="h-6 w-6 text-[9px] ring-2 ring-white dark:ring-[#1e293b]" />
+                    <UserAvatar key={p} name={p} className="h-6 w-6 text-[9px] ring-2 ring-white dark:ring-slate-900" />
                   ))}
                   {allParticipants.length > 4 && (
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full ring-2 ring-white dark:ring-[#1e293b] bg-slate-200 dark:bg-slate-600 text-[9px] font-bold text-slate-600 dark:text-slate-200">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full ring-2 ring-white dark:ring-slate-900 bg-slate-200 dark:bg-slate-600 text-[9px] font-bold text-slate-600 dark:text-slate-200">
                       +{allParticipants.length - 4}
                     </div>
                   )}

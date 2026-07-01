@@ -86,7 +86,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
 
   const TransportIcon = isPT ? Train : isTimo ? Truck : Car;
 
-  // Accent gradient per status/type
+  // Accent gradient per status/type (used for top bar + route track)
   const accentGradient = isPT
     ? "from-violet-500 to-purple-500"
     : status === "urgent"
@@ -94,6 +94,22 @@ export function RideCard({ ride, userNames }: RideCardProps) {
       : status === "soon"
         ? "from-amber-400 to-orange-400"
         : "from-sky-500 to-blue-500";
+
+  // Icon: subtle tinted bg (consistent with HubPage stat tiles)
+  const iconBg = isPT
+    ? "bg-violet-100 dark:bg-violet-500/10"
+    : status === "urgent"
+    ? "bg-rose-100 dark:bg-rose-500/10"
+    : status === "soon"
+    ? "bg-amber-100 dark:bg-amber-500/10"
+    : "bg-sky-100 dark:bg-sky-500/10";
+  const iconColor = isPT
+    ? "text-violet-500"
+    : status === "urgent"
+    ? "text-rose-500"
+    : status === "soon"
+    ? "text-amber-500"
+    : "text-sky-500";
 
   // Status badge styling
   const statusBadge = status === "urgent" || status === "soon" || status === "recent";
@@ -151,8 +167,8 @@ export function RideCard({ ride, userNames }: RideCardProps) {
           <div className="px-4 pt-3.5 pb-3 border-b border-slate-200 dark:border-slate-700 space-y-2">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <div className={`flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br ${accentGradient}`}>
-                  <TransportIcon size={13} className="text-white" strokeWidth={2.5} />
+                <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${iconBg}`}>
+                  <TransportIcon size={13} className={iconColor} strokeWidth={2.5} />
                 </div>
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
                   {ride.direction === "Inbound" ? "Heen" : ride.direction === "Outbound" ? "Terug" : "Restaurant"}
@@ -252,10 +268,10 @@ export function RideCard({ ride, userNames }: RideCardProps) {
                 <>
                   <div className="flex -space-x-2">
                     {ride.passengers.slice(0, 4).map((p) => (
-                      <UserAvatar key={p} name={p} className="h-6 w-6 text-[9px] ring-2 ring-white dark:ring-[#1e293b]" />
+                      <UserAvatar key={p} name={p} className="h-6 w-6 text-[9px] ring-2 ring-white dark:ring-slate-900" />
                     ))}
                     {ride.passengers.length > 4 && (
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full ring-2 ring-white dark:ring-[#1e293b] bg-slate-200 dark:bg-slate-600 text-[9px] font-bold text-slate-600 dark:text-slate-200">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full ring-2 ring-white dark:ring-slate-900 bg-slate-200 dark:bg-slate-600 text-[9px] font-bold text-slate-600 dark:text-slate-200">
                         +{ride.passengers.length - 4}
                       </div>
                     )}

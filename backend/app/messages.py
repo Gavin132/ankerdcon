@@ -48,11 +48,12 @@ Groet,
 # Webhook embed titles
 # ══════════════════════════════════════════════════════════════════════════════
 
-EMBED_EVENT_TITLE   = "📅  {event_name}"
-EMBED_RIDE_TITLE    = "🚗  Nieuwe rit — {direction}"
-EMBED_MEAL_TITLE    = "🍽️  {meal_name}"
-EMBED_TICKET_TITLE  = "🎟️  Kaartverkoop"
+EMBED_EVENT_TITLE    = "📅  {event_name}"
+EMBED_RIDE_TITLE     = "🚗  Nieuwe rit — {direction}"
+EMBED_MEAL_TITLE     = "🍽️  {meal_name}"
+EMBED_TICKET_TITLE   = "🎟️  Kaartverkoop"
 EMBED_REMINDER_TITLE = "{icon}  {event_name} — {urgency}"
+EMBED_EXPENSE_TITLE  = "💸  {description}"
 
 # ── Reminder urgency levels: label → (icon, Dutch label, embed colour) ────────
 
@@ -93,6 +94,13 @@ FIELD_MEAL_TRANSPORT = "🚌 Transport"
 LINK_APP_TRANSPORT = "📱 Open de app"
 LINK_APP_FOOD      = "📱 Open de app"
 LINK_APP_CALENDAR  = "📱 Open de app"
+LINK_APP_FINANCE   = "📱 Open de app"
 LINK_TICKETS       = "🎟️ Koop tickets"
 LINK_WEBSITE       = "🌐 Website"
 LINK_MAPS          = "🗺️ Google Maps"
+
+FIELD_EXPENSE_PAYER  = "💳 Betaald door"
+FIELD_EXPENSE_AMOUNT = "💰 Totaalbedrag"
+FIELD_EXPENSE_SHARES = "👥 Verdeling"
+
+EXPENSE_INTRO = "**{paid_by}** heeft een nieuwe groepsuitgave aangemaakt. Open de app om je aandeel te verrekenen."

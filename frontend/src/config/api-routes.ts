@@ -34,6 +34,14 @@ export const apiRoutes = {
     byId: (id: string) => `/api/payments/${id}`,
   },
 
+  // ── Expenses ──────────────────────────────────────────────────────
+  expenses: {
+    base:         "/api/expenses/",
+    byId:         (id: string) => `/api/expenses/${id}`,
+    claimShare:   (shareId: string) => `/api/expenses/shares/${shareId}/claim`,
+    confirmShare: (shareId: string) => `/api/expenses/shares/${shareId}/confirm`,
+  },
+
   // ── Calendar ─────────────────────────────────────────────────────
   calendar: {
     base:         "/api/calendar/",

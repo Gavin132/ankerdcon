@@ -76,11 +76,39 @@ function SplashController() {
   );
 }
 
+function AppBackdrop() {
+  return (
+    <div
+      className="pointer-events-none fixed inset-0 overflow-hidden"
+      style={{ zIndex: -1 }}
+      aria-hidden="true"
+    >
+      {/* Mascot — large, bottom-right, partially clipped */}
+      <img
+        src="/assets/images/ankerd-mascotte.svg"
+        alt=""
+        draggable={false}
+        className="absolute -bottom-12 -right-12 w-[380px] select-none opacity-[0.045] dark:opacity-[0.055]"
+        style={{ transform: "rotate(6deg)" }}
+      />
+      {/* Nerd logo — smaller, top-left, softly rotated */}
+      <img
+        src="/assets/images/ankerdmascotteankerdlogountitlednerd.png"
+        alt=""
+        draggable={false}
+        className="absolute -top-10 -left-10 w-[200px] select-none opacity-[0.035] dark:opacity-[0.045]"
+        style={{ transform: "rotate(-8deg)" }}
+      />
+    </div>
+  );
+}
+
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeSync />
       <AuthSync /> {/* <- Dropped it right here! */}
+      <AppBackdrop />
       <RouterProvider router={router} />
       <ToastContainer />
       <SplashController />

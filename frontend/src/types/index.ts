@@ -306,6 +306,43 @@ export interface ActionAlert {
   missing: MissingItem[];
 }
 
+// Expenses
+export interface ExpenseShare {
+  id: string;
+  expense_id: string;
+  participant: string;
+  amount: number;
+  payment_ref: string;
+  status: "pending" | "claimed" | "confirmed";
+  claimed_at?: string;
+  confirmed_at?: string;
+}
+
+export interface Expense {
+  id: string;
+  paid_by: string;
+  amount: number;
+  currency: string;
+  description: string;
+  date: string;
+  created_at?: string;
+  shares: ExpenseShare[];
+}
+
+export interface CreateExpenseShareInput {
+  participant: string;
+  amount: number;
+}
+
+export interface CreateExpenseRequest {
+  paid_by: string;
+  amount: number;
+  currency?: string;
+  description: string;
+  date: string;
+  shares: CreateExpenseShareInput[];
+}
+
 export interface RestaurantGap {
   id: string;
   location: string;

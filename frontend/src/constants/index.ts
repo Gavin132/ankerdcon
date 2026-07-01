@@ -28,6 +28,7 @@ export const QUERY_KEYS = {
   adminEventGroups:  ["admin", "event-groups"] as const,
 
   cosplays: ["cosplays"] as const,
+  expenses: ["expenses"] as const,
 
   hotelRooms:      (eventId: string) => ["hotel-rooms", eventId]       as const,
   adminHotelRooms: (eventId: string) => ["admin", "hotel-rooms", eventId] as const,

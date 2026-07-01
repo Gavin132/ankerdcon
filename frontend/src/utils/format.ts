@@ -50,6 +50,13 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
+export function formatAmount(amount: number, currency = "EUR"): string {
+  return new Intl.NumberFormat("nl-NL", {
+    style: "currency",
+    currency,
+  }).format(amount);
+}
+
 /** "zaterdag 4 juli 2026" — parses both YYYY-MM-DD and DD-MM-YYYY */
 export function formatEventDate(s: string): string {
   const d = parseEventDate(s);

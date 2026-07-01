@@ -37,7 +37,8 @@ _COLORS: dict[str, int] = {
     "event": 0x818CF8,  # indigo-400 – calendar events
     "ticket": 0xFBBF24,  # amber-400  – ticket sale announcements
     "ride": 0x34D399,  # emerald-400 – transport / rides
-    "meal": 0xFB923C,  # orange-400  – food / meals
+    "meal":    0xFB923C,  # orange-400  – food / meals
+    "expense": 0xA78BFA,  # violet-400 – finance / expenses
 }
 
 _BOT_NAME = "Ankerd Con"
@@ -361,6 +362,49 @@ async def notify_event_reminder(
                 ),
                 color=color,
                 description="  ·  ".join(link_parts) or None,
+                fields=fields,
+            )
+        ),
+    )
+
+
+async def notify_expense_created(
+    webhook_url: str,
+    app_url: str,
+    *,
+    paid_by: str,
+    amount: float,
+    currency: str,
+    description: str,
+    date: str,
+    shares: list[dict],
+) -> None:
+    """Posted when a new group expense is created."""
+    fields: list[dict] = [
+        _field(M.FIELD_EXPENSE_PAYER,  f"**{paid_by}**"),
+        _field(M.FIELD_EXPENSE_AMOUNT, f"**{amount:,.2f} {currency}**"),
+        _field(M.FIELD_DATE,           f"**{date}**"),
+    ]
+
+    if shares:
+        lines = "\n".join(
+            f"• **{s['participant']}** — {s['amount']:,.2f} {currency}"
+            for s in shares
+        )
+        fields.append(_field(M.FIELD_EXPENSE_SHARES, lines, inline=False))
+
+    app_link = _app_link(app_url, "/finance")
+    desc_parts: list[str] = [M.EXPENSE_INTRO.format(paid_by=paid_by)]
+    if app_link:
+        desc_parts.append(f"[{M.LINK_APP_FINANCE}]({app_link})")
+
+    await _post(
+        webhook_url,
+        _payload(
+            _embed(
+                title=M.EMBED_EXPENSE_TITLE.format(description=description),
+                color=_COLORS["expense"],
+                description="  ·  ".join(desc_parts),
                 fields=fields,
             )
         ),
