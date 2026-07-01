@@ -40,7 +40,8 @@ export function RestaurantCard({ ride }: RestaurantCardProps) {
   const isRecent = status === "recent";
 
   const drivers = ride.restaurant_drivers ?? [];
-  const attendees = ride.passengers;
+  const linkedMeal = ride.linked_meal_id ? meals.find((m) => m.id === ride.linked_meal_id) : undefined;
+  const attendees = linkedMeal ? (linkedMeal.participants ?? []) : ride.passengers;
   const driverNames = new Set(drivers.map((d) => d.name));
   const assignedPax = new Set(drivers.flatMap((d) => d.passengers));
   const unassigned = attendees.filter((a) => !driverNames.has(a) && !assignedPax.has(a));
@@ -50,8 +51,6 @@ export function RestaurantCard({ ride }: RestaurantCardProps) {
   const nonDriverAttendees = attendees.filter((a) => !driverNames.has(a));
   const allClear = drivers.length > 0 && nonDriverAttendees.length > 0 && unassigned.length === 0;
   const allParticipants = Array.from(new Set([...attendees, ...drivers.map((d) => d.name)]));
-
-  const linkedMeal = ride.linked_meal_id ? meals.find((m) => m.id === ride.linked_meal_id) : undefined;
   const linkedEvent = ride.linked_event_id ? events.find((e) => e.id === ride.linked_event_id) : undefined;
 
   function resolveName(stored: string) {

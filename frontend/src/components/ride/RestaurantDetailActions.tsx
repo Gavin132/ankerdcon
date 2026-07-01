@@ -24,18 +24,20 @@ import {
 import { exportRideToIcs } from "../../utils/ics";
 import { getRideStatus } from "../../utils/rides";
 import { toast } from "../../store/toast.store";
-import type { Ride, User } from "../../types";
+import type { Meal, Ride, User } from "../../types";
 
 interface Props {
   ride: Ride;
   userNames: string[];
   users: User[];
+  linkedMeal?: Meal;
 }
 
 export function RestaurantDetailActions({
   ride,
   userNames,
   users: _users,
+  linkedMeal,
 }: Props) {
   const [driverOpen, setDriverOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
@@ -57,7 +59,7 @@ export function RestaurantDetailActions({
   const canAct = status !== "past" && status !== "recent";
 
   const drivers = ride.restaurant_drivers ?? [];
-  const attendees = ride.passengers;
+  const attendees = linkedMeal ? (linkedMeal.participants ?? []) : ride.passengers;
   const driverNames = new Set(drivers.map((d) => d.name));
   const assignedPax = new Set(drivers.flatMap((d) => d.passengers));
   const unassigned = attendees.filter(

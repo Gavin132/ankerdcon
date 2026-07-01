@@ -66,7 +66,7 @@ export function RideDetailPage() {
         <div className={`grid gap-5 items-start ${linkedCard ? "grid-cols-1 lg:grid-cols-3" : ""}`}>
           <div className={linkedCard ? "lg:col-span-2" : ""}>
             {isRestaurant ? (
-              <RestaurantDetailActions ride={ride} userNames={userNames} users={users} />
+              <RestaurantDetailActions ride={ride} userNames={userNames} users={users} linkedMeal={linkedMeal} />
             ) : (
               <RideActions ride={ride} userNames={userNames} users={users} />
             )}
