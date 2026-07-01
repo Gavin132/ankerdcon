@@ -9,13 +9,19 @@ import { useThemeStore } from "./store/theme.store";
 import { useSplash } from "./hooks/useSplash";
 
 // Add these two imports!
-import { supabase } from "./services/supabase"; 
+import { supabase } from "./services/supabase";
 import { useAuthStore } from "./store/auth.store";
+import { ApiError } from "./lib/api/client";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 3,
+      // Don't retry on 401 — the axios interceptor already handles token refresh + one retry.
+      // Retrying 401s here would just flood the backend with bad requests.
+      retry: (failureCount, error) => {
+        if (error instanceof ApiError && error.isUnauthorized) return false;
+        return failureCount < 2;
+      },
       retryDelay: (attempt) => Math.min(500 * 2 ** attempt, 8000),
       refetchOnWindowFocus: true,
       refetchOnReconnect: true,

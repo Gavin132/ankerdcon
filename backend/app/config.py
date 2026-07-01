@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     # Supabase
     supabase_url: str = ""
     supabase_secret_key: str = ""
+    supabase_jwt_secret: str = ""
 
     # Integrations
     discord_webhook_url: str = ""
