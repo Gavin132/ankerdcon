@@ -477,6 +477,7 @@ def admin_sync_event_group(event_id: str, _: str = Depends(get_admin_user)) -> N
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Evenement heeft geen meerdaagse koppeling.")
 
     shared = {k: v for k, v in {
+        "image_url":            event.get("image_url"),
         "description":          event.get("description"),
         "location":             event.get("location"),
         "website":              event.get("website"),

@@ -1,9 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, CalendarDays, Hotel, X as XIcon, Link2, Unlink2, Tag, Check, Layers, History, Copy } from "lucide-react";
+import { Plus, CalendarDays, Hotel, X as XIcon, Link2, Unlink2, Tag, Check, Layers, History, Copy, Upload } from "lucide-react";
 import type { TicketType, CalendarEvent } from "../../types";
 import {
   useAdminEvents,
@@ -24,6 +24,7 @@ import { toast } from "../../store/toast.store";
 import { routes } from "../../config/routes";
 import { F, FS, SECTION, SECTION_TITLE } from "./styles";
 import { LocationSearchInput } from "../../components/common/LocationSearchInput";
+import { uploadEventCoverImage } from "../../services/storage.service";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminSearch } from "./components/AdminSearch";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
@@ -48,6 +49,7 @@ const eventSchema = z.object({
   date: z.string().min(1, "Datum is verplicht"),
   event_group_id: optStr,
   is_hotel: z.boolean().optional(),
+  image_url: optUrl,
   description: optStr,
   location: optStr,
   website: optUrl,
@@ -87,6 +89,12 @@ function EventDrawer({
   const [ttTitle, setTtTitle] = useState("");
   const [ttPrice, setTtPrice] = useState("");
 
+  // Cover image upload state
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUrlMode, setImageUrlMode] = useState(false);
+  const [imageDragOver, setImageDragOver] = useState(false);
+  const imageFileRef = useRef<HTMLInputElement>(null);
+
   function addTicketType() {
     const price = parseFloat(ttPrice);
     if (!ttTitle.trim() || isNaN(price) || price < 0) return;
@@ -99,6 +107,8 @@ function EventDrawer({
     register,
     control,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<EventForm>({
     resolver: zodResolver(eventSchema),
@@ -107,6 +117,7 @@ function EventDrawer({
       date: isEdit ? event.date : "",
       event_group_id: isEdit ? (event.event_group_id ?? "") : "",
       is_hotel: isEdit ? event.is_hotel : false,
+      image_url: isEdit ? (event.image_url ?? "") : "",
       description: isEdit ? (event.description ?? "") : "",
       location: isEdit ? (event.location ?? "") : "",
       website: isEdit ? (event.website ?? "") : "",
@@ -126,6 +137,7 @@ function EventDrawer({
       date: values.date,
       is_hotel: values.is_hotel,
       event_group_id: strip(values.event_group_id),
+      image_url: strip(values.image_url),
       description: strip(values.description),
       location: strip(values.location),
       website: strip(values.website),
@@ -164,7 +176,26 @@ function EventDrawer({
     }
   }
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
+  const isPending = createMutation.isPending || updateMutation.isPending || imageUploading;
+
+  const currentImageUrl = watch("image_url");
+
+  async function handleImageFile(file: File) {
+    if (!file.type.startsWith("image/")) {
+      toast("error", "Alleen afbeeldingen zijn toegestaan.");
+      return;
+    }
+    setImageUploading(true);
+    try {
+      const url = await uploadEventCoverImage(file);
+      setValue("image_url", url, { shouldValidate: true });
+    } catch (err) {
+      console.error("[event-cover upload]", err);
+      toast("error", "Afbeelding kon niet worden geüpload. Probeer het opnieuw.");
+    } finally {
+      setImageUploading(false);
+    }
+  }
 
   return (
     <AdminDrawer
@@ -227,6 +258,91 @@ function EventDrawer({
         {/* ── Beschrijving & Locatie ────────────────────────────────── */}
         <div className={SECTION}>
           <p className={SECTION_TITLE}>Details</p>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs text-slate-400">Cover afbeelding</label>
+              <button
+                type="button"
+                onClick={() => setImageUrlMode((v) => !v)}
+                className="flex items-center gap-1 text-[10px] text-slate-500 hover:text-sky-400 transition-colors"
+              >
+                {imageUrlMode
+                  ? <><Upload size={10} /> Upload</>
+                  : <><Link2 size={10} /> URL invoeren</>}
+              </button>
+            </div>
+
+            {/* Always registered so setValue persists through form submission */}
+            <input type="hidden" {...register("image_url")} />
+
+            {imageUrlMode ? (
+              <input
+                className={F}
+                placeholder="https://..."
+                value={currentImageUrl ?? ""}
+                onChange={(e) => setValue("image_url", e.target.value, { shouldValidate: true })}
+              />
+            ) : (
+              <>
+                <input
+                  ref={imageFileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleImageFile(file);
+                    e.target.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => imageFileRef.current?.click()}
+                  onDragOver={(e) => { e.preventDefault(); setImageDragOver(true); }}
+                  onDragLeave={() => setImageDragOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setImageDragOver(false);
+                    const file = e.dataTransfer.files[0];
+                    if (file) handleImageFile(file);
+                  }}
+                  disabled={imageUploading}
+                  className={`w-full rounded-xl border-2 border-dashed px-4 py-5 text-center transition-colors ${
+                    imageDragOver
+                      ? "border-sky-500 bg-sky-500/10"
+                      : "border-white/[0.12] bg-white/[0.03] hover:border-white/25 hover:bg-white/[0.05]"
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {imageUploading ? (
+                    <p className="text-xs text-slate-400">Uploaden...</p>
+                  ) : (
+                    <>
+                      <Upload size={18} className="mx-auto mb-1.5 text-slate-500" />
+                      <p className="text-xs font-medium text-slate-400">Klik of sleep een afbeelding hierheen</p>
+                      <p className="text-[10px] text-slate-600 mt-0.5">PNG, JPG, WebP · liggend formaat aanbevolen</p>
+                    </>
+                  )}
+                </button>
+              </>
+            )}
+
+            {errors.image_url && (
+              <p className="text-xs text-rose-400 mt-1">{errors.image_url.message}</p>
+            )}
+
+            {currentImageUrl && (
+              <div className="mt-2 relative rounded-xl overflow-hidden border border-white/10">
+                <img src={currentImageUrl} alt="preview" className="w-full h-28 object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setValue("image_url", "", { shouldValidate: true })}
+                  className="absolute top-1.5 right-1.5 rounded-lg bg-black/60 p-1 text-white hover:bg-black/80 transition-colors"
+                >
+                  <XIcon size={12} />
+                </button>
+              </div>
+            )}
+          </div>
           <div>
             <label className="block text-xs text-slate-400 mb-1">Beschrijving</label>
             <textarea

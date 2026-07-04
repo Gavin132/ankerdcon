@@ -161,6 +161,7 @@ export interface AdminCreateEventPayload {
   date: string;
   event_group_id?: string;
   is_hotel?: boolean;
+  image_url?: string;
   description?: string;
   location?: string;
   website?: string;
@@ -183,6 +184,7 @@ export interface AdminUpdateEventPayload {
   event_name?: string;
   date?: string;
   is_hotel?: boolean;
+  image_url?: string;
   description?: string;
   location?: string;
   website?: string;

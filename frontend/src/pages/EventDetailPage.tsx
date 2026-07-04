@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useCallback, useRef } from "react";
+import { motion } from "framer-motion";
 import { CalendarDays, ChevronRight, Sparkles, Users } from "lucide-react";
 import { useCalendar, useHotelRooms } from "../hooks/useCalendar";
 import { useUsers, useCurrentUser } from "../hooks/useUsers";
@@ -23,7 +24,7 @@ import { DayStrip } from "../components/event/DayStrip";
 export function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data: events   = [] } = useCalendar();
+  const { data: events = [], isLoading: eventsLoading } = useCalendar();
   const { data: users    = [] } = useUsers();
   const { data: meals    = [] } = useMeals();
   const { data: rides    = [] } = useRides();
@@ -132,6 +133,19 @@ export function EventDetailPage() {
 
   const { data: weather, isLoading: weatherLoading } = useEventWeather(event?.location, weatherDate);
 
+  if (eventsLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+        <div className="h-14 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800" />
+        <div className="animate-pulse space-y-4 p-4 max-w-4xl mx-auto pt-6">
+          <div className="h-[280px] rounded-2xl bg-slate-200 dark:bg-slate-800" />
+          <div className="h-32 rounded-2xl bg-slate-200 dark:bg-slate-800" />
+          <div className="h-24 rounded-2xl bg-slate-200 dark:bg-slate-800" />
+        </div>
+      </div>
+    );
+  }
+
   if (!rawEvent || !event) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4 text-slate-400">
@@ -149,7 +163,10 @@ export function EventDetailPage() {
   );
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 22 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
       className="min-h-screen bg-slate-50 dark:bg-slate-950"
       onTouchStart={(e) => {
         touchStartX.current = e.touches[0].clientX;
@@ -278,6 +295,6 @@ export function EventDetailPage() {
         <EventLinkedRides rides={linkedRides} />
 
       </div>
-    </div>
+    </motion.div>
   );
 }

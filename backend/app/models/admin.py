@@ -71,6 +71,7 @@ class AdminCreateCalendarEventRequest(BaseModel):
     date: str
     event_group_id: Optional[str] = None
     is_hotel: bool = False
+    image_url: Optional[str] = None
     description: Optional[str] = None
     location: Optional[str] = None
     website: Optional[str] = None
@@ -88,6 +89,7 @@ class AdminUpdateCalendarEventRequest(BaseModel):
     date: Optional[str] = None
     event_group_id: Optional[str] = None
     is_hotel: Optional[bool] = None
+    image_url: Optional[str] = None
     description: Optional[str] = None
     location: Optional[str] = None
     website: Optional[str] = None

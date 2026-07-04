@@ -10,6 +10,7 @@ class CalendarEvent(BaseModel):
     is_hotel: bool = False
     participants: list[str] = []
     # Info fields
+    image_url: str | None = None
     description: str | None = None
     location: str | None = None
     website: str | None = None

@@ -247,6 +247,7 @@ export interface CalendarEvent {
   date: string;
   is_hotel: boolean;
   participants: string[];
+  image_url?: string;
   description?: string;
   location?: string;
   website?: string;

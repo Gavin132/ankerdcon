@@ -27,16 +27,26 @@ export function EventHero({ event, daysUntil, users }: EventHeroProps) {
 
   return (
     <div className={`relative overflow-hidden ${isPast ? "opacity-75" : ""}`} style={{ minHeight: 280 }}>
-      {/* Layered gradient */}
+      {/* Cover image (if set) */}
+      {event.image_url && (
+        <img
+          src={event.image_url}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
+      )}
+      {/* Layered gradient (sits on top of image to ensure text legibility) */}
       <div
         className="absolute inset-0"
         style={{
-          background: `
-            radial-gradient(ellipse at 0% 50%, ${bgGradient.a}ff 0%, transparent 60%),
-            radial-gradient(ellipse at 100% 0%, ${bgGradient.c}cc 0%, transparent 55%),
-            radial-gradient(ellipse at 60% 100%, ${bgGradient.b}88 0%, transparent 50%),
-            linear-gradient(135deg, ${bgGradient.a} 0%, ${bgGradient.b} 45%, ${bgGradient.c} 100%)
-          `,
+          background: event.image_url
+            ? `linear-gradient(135deg, ${bgGradient.a}e6 0%, ${bgGradient.b}cc 50%, ${bgGradient.c}99 100%)`
+            : `
+              radial-gradient(ellipse at 0% 50%, ${bgGradient.a}ff 0%, transparent 60%),
+              radial-gradient(ellipse at 100% 0%, ${bgGradient.c}cc 0%, transparent 55%),
+              radial-gradient(ellipse at 60% 100%, ${bgGradient.b}88 0%, transparent 50%),
+              linear-gradient(135deg, ${bgGradient.a} 0%, ${bgGradient.b} 45%, ${bgGradient.c} 100%)
+            `,
         }}
       />
       {/* Film grain */}
