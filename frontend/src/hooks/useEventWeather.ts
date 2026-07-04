@@ -40,16 +40,29 @@ function wmoInfo(code: number): { description: string; icon: string } {
   return { description: "Onbekend", icon: "🌡️" };
 }
 
+async function geocode(location: string): Promise<{ latitude: number; longitude: number } | null> {
+  // Try the full string first, then fall back through each word (e.g. "Tomofair Houten" → "Houten")
+  const candidates = [
+    location,
+    ...location.split(/\s+/).filter((w) => w.length > 2).reverse(),
+  ];
+  for (const candidate of candidates) {
+    const res = await fetch(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(candidate)}&count=1&language=nl&format=json`,
+    );
+    const data = await res.json();
+    const place = data.results?.[0];
+    if (place) return { latitude: place.latitude, longitude: place.longitude };
+  }
+  return null;
+}
+
 async function fetchEventWeather(
   location: string,
   date: string,
 ): Promise<EventWeather | null> {
-  // 1. Geocode
-  const geoRes = await fetch(
-    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=nl&format=json`,
-  );
-  const geoData = await geoRes.json();
-  const place = geoData.results?.[0];
+  // 1. Geocode (with word-level fallback)
+  const place = await geocode(location);
   if (!place) return null;
 
   const { latitude, longitude } = place;
