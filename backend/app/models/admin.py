@@ -151,6 +151,10 @@ class AdminUpdateHotelRoomRequest(BaseModel):
     occupants: Optional[list[str]] = None
 
 
+class BulkRsvpRequest(BaseModel):
+    user_names: list[str]
+
+
 class BulkGroupEventsRequest(BaseModel):
     event_ids: list[str]
     multi_day_id: str | None = None  # None = ungroup; omit to auto-generate

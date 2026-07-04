@@ -100,6 +100,7 @@ export const apiRoutes = {
       byId:         (id: string) => `/api/admin/calendar/${id}`,
       group:        (id: string) => `/api/admin/calendar/${id}/group`,
       participant:  (id: string, p: string) => `/api/admin/calendar/${id}/participants/${encodeURIComponent(p)}`,
+      bulkRsvp:     (id: string) => `/api/admin/calendar/${id}/bulk-rsvp`,
       bulkDelete:   "/api/admin/calendar/bulk-delete",
       bulkGroup:    "/api/admin/calendar/bulk-group",
       bulkSetGroup: "/api/admin/calendar/bulk-set-group",

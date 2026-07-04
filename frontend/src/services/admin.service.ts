@@ -212,6 +212,13 @@ export async function removeAdminEventParticipant(
   await apiClient.delete(apiRoutes.admin.calendar.participant(eventId, participant));
 }
 
+export async function bulkRsvpAdminEvent(
+  eventId: string,
+  userNames: string[],
+): Promise<void> {
+  await apiClient.post(apiRoutes.admin.calendar.bulkRsvp(eventId), { user_names: userNames });
+}
+
 export async function setAdminEventGroup(
   eventId: string,
   groupId: string | null,

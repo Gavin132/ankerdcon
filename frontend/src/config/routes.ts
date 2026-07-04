@@ -52,5 +52,6 @@ export const routes = {
     events:      "/admin/events",
     eventGroups: "/admin/event-groups",
     badges:      "/admin/badges",
+    betalingen:  "/admin/betalingen",
   },
 } as const;

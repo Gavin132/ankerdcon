@@ -7,6 +7,7 @@ import {
   CalendarDays,
   ShieldCheck,
   Layers,
+  Euro,
 } from "lucide-react";
 import { routes } from "../../config/routes";
 
@@ -60,7 +61,8 @@ export const NAV_GROUPS: NavGroup[] = [
           { label: "Groepen",   path: routes.admin.eventGroups, icon: Layers },
         ],
       },
-      { label: "Badges",      path: routes.admin.badges, icon: ShieldCheck },
+      { label: "Badges",      path: routes.admin.badges,     icon: ShieldCheck },
+      { label: "Betalingen",  path: routes.admin.betalingen, icon: Euro },
     ],
   },
 ];
@@ -73,6 +75,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [routes.admin.events]:      "Evenementen",
   [routes.admin.eventGroups]: "Evenementgroepen",
   [routes.admin.badges]:      "Badges",
+  [routes.admin.betalingen]:  "Betalingen",
 };
 
 export const DIRECTION_COLORS: Record<string, string> = {

@@ -27,6 +27,7 @@ import { AdminMealsPage } from "./pages/admin/AdminMealsPage";
 import { AdminEventsPage } from "./pages/admin/AdminEventsPage";
 import { AdminBadgesPage } from "./pages/admin/AdminBadgesPage";
 import { AdminEventGroupsPage } from "./pages/admin/AdminEventGroupsPage";
+import { AdminBetalingenPage } from "./pages/admin/AdminBetalingenPage";
 
 export const router = createBrowserRouter([
   {
@@ -107,6 +108,7 @@ export const router = createBrowserRouter([
               { path: routes.admin.events,      element: <AdminEventsPage /> },
               { path: routes.admin.eventGroups, element: <AdminEventGroupsPage /> },
               { path: routes.admin.badges,      element: <AdminBadgesPage /> },
+              { path: routes.admin.betalingen,  element: <AdminBetalingenPage /> },
             ],
           },
         ],

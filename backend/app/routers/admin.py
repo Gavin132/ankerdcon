@@ -19,6 +19,7 @@ from app.models.admin import (
     BulkDeleteMealsRequest,
     BulkDeleteEventGroupsRequest,
     BulkGroupEventsRequest,
+    BulkRsvpRequest,
     BulkSetEventGroupRequest,
     EventGroup,
     CreateEventGroupRequest,
@@ -462,6 +463,20 @@ def admin_remove_event_participant(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenement niet gevonden.")
     participants = [p for p in (resp.data[0].get("participants") or []) if p != participant]
     supabase.table(Tables.CALENDAR).update({"participants": participants}).eq("id", event_id).execute()
+
+
+@router.post("/calendar/{event_id}/bulk-rsvp", status_code=status.HTTP_204_NO_CONTENT)
+def admin_bulk_rsvp_event(event_id: str, body: BulkRsvpRequest, _: str = Depends(get_admin_user)) -> None:
+    """Add multiple users to the participants array for an event at once."""
+    resp = supabase.table(Tables.CALENDAR).select("participants").eq("id", event_id).execute()
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenement niet gevonden.")
+
+    participants = list(resp.data[0].get("participants") or [])
+    new_names = [n for n in body.user_names if n not in participants]
+    if new_names:
+        participants.extend(new_names)
+        supabase.table(Tables.CALENDAR).update({"participants": participants}).eq("id", event_id).execute()
 
 
 @router.post("/calendar/{event_id}/sync-group", status_code=status.HTTP_204_NO_CONTENT)
