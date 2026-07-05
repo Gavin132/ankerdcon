@@ -2,20 +2,29 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 
 from app.config import Settings, get_settings
 from app.constants import Tables
+from app.core.logging import get_logger
 from app.dependencies import get_current_user
 from app.models.meal import CreateMealRequest, Meal, RsvpRequest
+from app.routes import MealRoutes
 import app.services.discord_service as discord_service
 from app.core.database import supabase
 
-router = APIRouter(prefix="/meals", tags=["meals"])
+logger = get_logger(__name__)
+router = APIRouter(prefix=MealRoutes.PREFIX, tags=["meals"])
+
+_DB_ERROR = "Databasefout. Probeer het opnieuw."
 
 
-@router.get("/", response_model=list[Meal])
+@router.get(MealRoutes.LIST, response_model=list[Meal])
 def list_meals(_: str = Depends(get_current_user)) -> list[Meal]:
-    return supabase.table(Tables.MEALS).select("*").execute().data
+    try:
+        return supabase.table(Tables.MEALS).select("*").execute().data
+    except Exception as e:
+        logger.error("Failed to list meals: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post(MealRoutes.LIST, status_code=status.HTTP_201_CREATED)
 def create_meal(
     body: CreateMealRequest,
     background_tasks: BackgroundTasks,
@@ -37,7 +46,11 @@ def create_meal(
         "parking_info": body.parking_info,
         "extra_notes": body.extra_notes,
     }
-    supabase.table(Tables.MEALS).insert(meal_data).execute()
+    try:
+        supabase.table(Tables.MEALS).insert(meal_data).execute()
+    except Exception as e:
+        logger.error("Failed to create meal: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
     background_tasks.add_task(
         discord_service.notify_meal_created,
@@ -51,30 +64,52 @@ def create_meal(
     )
 
 
-@router.post("/{meal_id}/rsvp", status_code=status.HTTP_204_NO_CONTENT)
+@router.post(MealRoutes.RSVP, status_code=status.HTTP_204_NO_CONTENT)
 def rsvp(meal_id: str, body: RsvpRequest, _: str = Depends(get_current_user)) -> None:
-    meal = supabase.table(Tables.MEALS).select("participants").eq("id", meal_id).single().execute()
+    try:
+        meal = supabase.table(Tables.MEALS).select("participants").eq("id", meal_id).single().execute()
+    except Exception as e:
+        logger.error("Failed to fetch meal %s for RSVP: %s", meal_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
     if not meal.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Maaltijd niet gevonden.")
 
     participants = meal.data.get("participants") or []
     if body.user_name not in participants:
         participants.append(body.user_name)
-        supabase.table(Tables.MEALS).update({"participants": participants}).eq("id", meal_id).execute()
+        try:
+            supabase.table(Tables.MEALS).update({"participants": participants}).eq("id", meal_id).execute()
+        except Exception as e:
+            logger.error("Failed to update participants for meal %s: %s", meal_id, e)
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
-@router.post("/{meal_id}/cancel-rsvp", status_code=status.HTTP_204_NO_CONTENT)
+@router.post(MealRoutes.CANCEL_RSVP, status_code=status.HTTP_204_NO_CONTENT)
 def cancel_rsvp(meal_id: str, body: RsvpRequest, _: str = Depends(get_current_user)) -> None:
-    meal = supabase.table(Tables.MEALS).select("participants").eq("id", meal_id).single().execute()
+    try:
+        meal = supabase.table(Tables.MEALS).select("participants").eq("id", meal_id).single().execute()
+    except Exception as e:
+        logger.error("Failed to fetch meal %s for cancel RSVP: %s", meal_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
     if not meal.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Maaltijd niet gevonden.")
 
     participants = meal.data.get("participants") or []
     if body.user_name in participants:
         participants.remove(body.user_name)
-        supabase.table(Tables.MEALS).update({"participants": participants}).eq("id", meal_id).execute()
+        try:
+            supabase.table(Tables.MEALS).update({"participants": participants}).eq("id", meal_id).execute()
+        except Exception as e:
+            logger.error("Failed to update participants for meal %s: %s", meal_id, e)
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
-@router.delete("/{meal_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(MealRoutes.DETAIL, status_code=status.HTTP_204_NO_CONTENT)
 def delete_meal(meal_id: str, _: str = Depends(get_current_user)) -> None:
-    supabase.table(Tables.MEALS).delete().eq("id", meal_id).execute()
+    try:
+        supabase.table(Tables.MEALS).delete().eq("id", meal_id).execute()
+    except Exception as e:
+        logger.error("Failed to delete meal %s: %s", meal_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)

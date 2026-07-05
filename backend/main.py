@@ -5,15 +5,22 @@ from pathlib import Path
 from typing import AsyncGenerator
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import get_settings
 from app.constants import API_PREFIX, Tables
 from app.core.database import supabase
+from app.core.logging import configure_logging, get_logger
 from app.routers import admin, badges, calendar, cosplays, expenses, meals, payments, rides, users
 from app.services.reminder_scheduler import check_and_send_reminders
+
+configure_logging()
+logger = get_logger(__name__)
 
 _scheduler = AsyncIOScheduler(timezone="Europe/Amsterdam")
 
@@ -23,19 +30,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Verify Supabase connectivity on startup, then start the reminder scheduler."""
     try:
         supabase.table(Tables.PROFILES).select("name").limit(1).execute()
-        print("✅  Supabase connection established")
-    except Exception:
-        print("⚠️   Supabase warmup failed — check credentials in .env")
+        logger.info("Supabase connection established")
+    except Exception as e:
+        logger.warning("Supabase warmup failed — check credentials in .env: %s", e)
 
-    # Run daily at 08:00 Amsterdam time
     _scheduler.add_job(check_and_send_reminders, "cron", hour=8, minute=0)
     _scheduler.start()
-    print("✅  Reminder scheduler started (daily 08:00 Europe/Amsterdam)")
+    logger.info("Reminder scheduler started (daily 08:00 Europe/Amsterdam)")
 
     yield
 
     _scheduler.shutdown(wait=False)
-    print("🛑  Reminder scheduler stopped")
+    logger.info("Reminder scheduler stopped")
 
 
 settings = get_settings()
@@ -56,6 +62,47 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+    """Pass through HTTPExceptions as clean JSON — no tracebacks."""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers=getattr(exc, "headers", None),
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    """Return a user-friendly Dutch message for Pydantic validation failures."""
+    logger.warning(
+        "Validation error on %s %s: %s",
+        request.method,
+        request.url.path,
+        exc.errors(),
+    )
+    return JSONResponse(
+        status_code=422,
+        content={"detail": "Ongeldige invoer. Controleer je gegevens en probeer het opnieuw."},
+    )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Catch-all — ensures no raw tracebacks ever reach the client."""
+    logger.error(
+        "Unhandled exception on %s %s",
+        request.method,
+        request.url.path,
+        exc_info=True,
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Er is een onverwachte fout opgetreden. Probeer het opnieuw."},
+    )
+
 
 # ── API routers ────────────────────────────────────────────────────
 app.include_router(users.router,    prefix=API_PREFIX)

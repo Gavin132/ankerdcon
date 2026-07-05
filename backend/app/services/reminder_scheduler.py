@@ -13,7 +13,10 @@ from datetime import datetime, date, timedelta
 from app.config import get_settings
 from app.constants import Tables
 from app.core.database import supabase
+from app.core.logging import get_logger
 from app.services import discord_service
+
+logger = get_logger(__name__)
 
 # Intervals checked each run: label → days before event
 _INTERVALS: dict[str, int] = {
@@ -45,7 +48,7 @@ async def check_and_send_reminders() -> None:
             "what_to_bring, locker_info, parking_info, reminders_sent"
         ).execute()
     except Exception as e:
-        print(f"[reminders] DB fetch failed: {e}")
+        logger.error("Reminders: DB fetch failed: %s", e)
         return
 
     for event in resp.data:
@@ -79,6 +82,11 @@ async def check_and_send_reminders() -> None:
                 supabase.table(Tables.CALENDAR).update(
                     {"reminders_sent": already_sent + [label]}
                 ).eq("id", event["id"]).execute()
-                print(f"[reminders] Sent '{label}' reminder for '{event['event_name']}'")
+                logger.info("Reminders: sent '%s' reminder for '%s'", label, event["event_name"])
             except Exception as e:
-                print(f"[reminders] Failed to send '{label}' for '{event['event_name']}': {e}")
+                logger.error(
+                    "Reminders: failed to send '%s' for '%s': %s",
+                    label,
+                    event["event_name"],
+                    e,
+                )

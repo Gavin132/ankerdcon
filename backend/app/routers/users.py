@@ -4,29 +4,44 @@ import uuid
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 
 from app.constants import Tables
+from app.core.logging import get_logger
 from app.dependencies import get_current_user
 from app.models.user import CompleteOnboardingRequest, LocationPingRequest, UpdateNameRequest, UpdatePreferencesRequest, User
+from app.routes import UserRoutes
 from app.core.database import supabase
+
+logger = get_logger(__name__)
 
 BANNER_BUCKET = "banners"
 BANNER_MAX_BYTES = 8 * 1024 * 1024  # 8 MB
 BANNER_ALLOWED_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 BANNER_EXT = {"image/jpeg": "jpg", "image/png": "png", "image/gif": "gif", "image/webp": "webp"}
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix=UserRoutes.PREFIX, tags=["users"])
+
+_DB_ERROR = "Databasefout. Probeer het opnieuw."
 
 
-@router.get("/names", response_model=list[str])
+@router.get(UserRoutes.NAMES, response_model=list[str])
 def list_names() -> list[str]:
     """Public endpoint — returns only names for the login name picker."""
-    response = supabase.table(Tables.PROFILES).select("name").execute()
-    return [row["name"] for row in response.data if row.get("name") and str(row.get("name")).strip()]
+    try:
+        response = supabase.table(Tables.PROFILES).select("name").execute()
+        return [row["name"] for row in response.data if row.get("name") and str(row.get("name")).strip()]
+    except Exception as e:
+        logger.error("Failed to list user names: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
-@router.get("/", response_model=list[User])
+@router.get(UserRoutes.LIST, response_model=list[User])
 def list_all_users_safely(_: str = Depends(get_current_user)) -> list[User]:
     """Fetch all users — scrubs sensitive fields before returning."""
-    response = supabase.table(Tables.PROFILES).select("*").execute()
+    try:
+        response = supabase.table(Tables.PROFILES).select("*").execute()
+    except Exception as e:
+        logger.error("Failed to list users: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
     safe_users = []
     for user in response.data:
         user.pop("passcode", None)
@@ -34,7 +49,7 @@ def list_all_users_safely(_: str = Depends(get_current_user)) -> list[User]:
     return safe_users
 
 
-@router.put("/preferences", status_code=status.HTTP_204_NO_CONTENT)
+@router.put(UserRoutes.PREFERENCES, status_code=status.HTTP_204_NO_CONTENT)
 def update_preferences(
     body: UpdatePreferencesRequest,
     current_user: str = Depends(get_current_user),
@@ -53,12 +68,17 @@ def update_preferences(
     if not updates:
         return
 
-    response = supabase.table(Tables.PROFILES).update(updates).eq("name", current_user).execute()
+    try:
+        response = supabase.table(Tables.PROFILES).update(updates).eq("name", current_user).execute()
+    except Exception as e:
+        logger.error("Failed to update preferences for %s: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
     if not response.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
 
 
-@router.patch("/name", status_code=status.HTTP_204_NO_CONTENT)
+@router.patch(UserRoutes.NAME, status_code=status.HTTP_204_NO_CONTENT)
 def update_name(
     body: UpdateNameRequest,
     current_user: str = Depends(get_current_user),
@@ -74,28 +94,42 @@ def update_name(
     if new_name == current_user:
         return
 
-    existing = supabase.table(Tables.PROFILES).select("name").eq("name", new_name).execute()
+    try:
+        existing = supabase.table(Tables.PROFILES).select("name").eq("name", new_name).execute()
+    except Exception as e:
+        logger.error("Failed to check name uniqueness for %s: %s", new_name, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
     if existing.data:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Deze naam is al in gebruik door een ander account.",
         )
 
-    # Fetch current aliases so we can append the old name
-    profile_row = supabase.table(Tables.PROFILES).select("aliases").eq("name", current_user).execute()
+    try:
+        profile_row = supabase.table(Tables.PROFILES).select("aliases").eq("name", current_user).execute()
+    except Exception as e:
+        logger.error("Failed to fetch aliases for %s: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
     current_aliases: list[str] = (profile_row.data[0].get("aliases") or []) if profile_row.data else []
     if current_user not in current_aliases:
         current_aliases = current_aliases + [current_user]
 
-    response = supabase.table(Tables.PROFILES).update({
-        "name": new_name,
-        "aliases": current_aliases,
-    }).eq("name", current_user).execute()
+    try:
+        response = supabase.table(Tables.PROFILES).update({
+            "name": new_name,
+            "aliases": current_aliases,
+        }).eq("name", current_user).execute()
+    except Exception as e:
+        logger.error("Failed to update name for %s: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
     if not response.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
 
 
-@router.put("/{identifier}/location", status_code=status.HTTP_204_NO_CONTENT)
+@router.put(UserRoutes.LOCATION, status_code=status.HTTP_204_NO_CONTENT)
 def ping_location(
     identifier: str,
     body: LocationPingRequest,
@@ -105,12 +139,17 @@ def ping_location(
     now = datetime.now().strftime("%H:%M")
     base = f"{body.zone}|{body.text}" if body.text else body.zone
     value = f"{base} (at {now})"
-    response = supabase.table(Tables.PROFILES).update({"live_location_ping": value}).eq("name", identifier).execute()
+    try:
+        response = supabase.table(Tables.PROFILES).update({"live_location_ping": value}).eq("name", identifier).execute()
+    except Exception as e:
+        logger.error("Failed to update location ping for %s: %s", identifier, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
     if not response.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
 
 
-@router.post("/me/onboarding", status_code=status.HTTP_204_NO_CONTENT)
+@router.post(UserRoutes.ONBOARDING, status_code=status.HTTP_204_NO_CONTENT)
 def complete_onboarding(
     body: CompleteOnboardingRequest,
     current_user: str = Depends(get_current_user),
@@ -129,13 +168,23 @@ def complete_onboarding(
         updates["banner_color"] = body.banner_color
     if body.aliases is not None:
         updates["aliases"] = body.aliases
-    supabase.table(Tables.PROFILES).update(updates).eq("name", current_user).execute()
+
+    try:
+        supabase.table(Tables.PROFILES).update(updates).eq("name", current_user).execute()
+    except Exception as e:
+        logger.error("Failed to complete onboarding for %s: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
-@router.get("/me", response_model=User)
+@router.get(UserRoutes.ME, response_model=User)
 def get_me(current_user: str = Depends(get_current_user)) -> User:
     """Return the full profile for the currently authenticated user."""
-    response = supabase.table(Tables.PROFILES).select("*").eq("name", current_user).execute()
+    try:
+        response = supabase.table(Tables.PROFILES).select("*").eq("name", current_user).execute()
+    except Exception as e:
+        logger.error("Failed to fetch profile for %s: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
     if not response.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profiel niet gevonden.")
     user = response.data[0]
@@ -143,7 +192,7 @@ def get_me(current_user: str = Depends(get_current_user)) -> User:
     return user
 
 
-@router.get("/{identifier}", response_model=User)
+@router.get(UserRoutes.DETAIL, response_model=User)
 def get_user(identifier: str, _: str = Depends(get_current_user)) -> User:
     """Fetch a single user by either their secure UUID or their readable name."""
     try:
@@ -152,10 +201,14 @@ def get_user(identifier: str, _: str = Depends(get_current_user)) -> User:
     except ValueError:
         is_uuid = False
 
-    if is_uuid:
-        response = supabase.table(Tables.PROFILES).select("*").eq("id", identifier).execute()
-    else:
-        response = supabase.table(Tables.PROFILES).select("*").eq("name", identifier).execute()
+    try:
+        if is_uuid:
+            response = supabase.table(Tables.PROFILES).select("*").eq("id", identifier).execute()
+        else:
+            response = supabase.table(Tables.PROFILES).select("*").eq("name", identifier).execute()
+    except Exception as e:
+        logger.error("Failed to fetch user %s: %s", identifier, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
     if not response.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
@@ -165,7 +218,7 @@ def get_user(identifier: str, _: str = Depends(get_current_user)) -> User:
     return user
 
 
-@router.post("/banner", response_model=dict)
+@router.post(UserRoutes.BANNER, response_model=dict)
 async def upload_banner(
     file: UploadFile = File(...),
     position: str | None = Form(None),
@@ -185,7 +238,12 @@ async def upload_banner(
             detail="Bestand te groot. Maximum is 8 MB.",
         )
 
-    user_row = supabase.table(Tables.PROFILES).select("id, banner_url").eq("name", current_user).execute()
+    try:
+        user_row = supabase.table(Tables.PROFILES).select("id, banner_url").eq("name", current_user).execute()
+    except Exception as e:
+        logger.error("Failed to fetch profile for banner upload (%s): %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
     if not user_row.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
 
@@ -197,31 +255,47 @@ async def upload_banner(
             old_path = old_url.split(f"/public/{BANNER_BUCKET}/")[-1].split("?")[0]
             supabase.storage.from_(BANNER_BUCKET).remove([old_path])
         except Exception:
-            pass
+            pass  # non-fatal — old banner cleanup is best-effort
 
     ext = BANNER_EXT.get(file.content_type, "jpg")
     path = f"{user_id}/banner.{ext}"
 
-    supabase.storage.from_(BANNER_BUCKET).upload(
-        path,
-        content,
-        {"upsert": "true", "content-type": file.content_type},
-    )
+    try:
+        supabase.storage.from_(BANNER_BUCKET).upload(
+            path,
+            content,
+            {"upsert": "true", "content-type": file.content_type},
+        )
+    except Exception as e:
+        logger.error("Storage upload failed for user %s: %s", current_user, e)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Uploaden mislukt. Probeer het opnieuw.",
+        )
 
-    public_url = supabase.storage.from_(BANNER_BUCKET).get_public_url(path)
-    versioned_url = f"{public_url}?v={uuid.uuid4().hex[:8]}"
+    try:
+        public_url = supabase.storage.from_(BANNER_BUCKET).get_public_url(path)
+        versioned_url = f"{public_url}?v={uuid.uuid4().hex[:8]}"
+        supabase.table(Tables.PROFILES).update({
+            "banner_url": versioned_url,
+            "banner_position": position or None,
+        }).eq("name", current_user).execute()
+    except Exception as e:
+        logger.error("Failed to save banner URL for user %s: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
-    supabase.table(Tables.PROFILES).update({
-        "banner_url": versioned_url,
-        "banner_position": position or None,
-    }).eq("name", current_user).execute()
     return {"url": versioned_url}
 
 
-@router.delete("/banner", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(UserRoutes.BANNER, status_code=status.HTTP_204_NO_CONTENT)
 def delete_banner(current_user: str = Depends(get_current_user)) -> None:
     """Remove the current user's banner image."""
-    user_row = supabase.table(Tables.PROFILES).select("id, banner_url").eq("name", current_user).execute()
+    try:
+        user_row = supabase.table(Tables.PROFILES).select("id, banner_url").eq("name", current_user).execute()
+    except Exception as e:
+        logger.error("Failed to fetch profile for banner delete (%s): %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
     if not user_row.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
 
@@ -231,6 +305,10 @@ def delete_banner(current_user: str = Depends(get_current_user)) -> None:
             old_path = old_url.split(f"/public/{BANNER_BUCKET}/")[-1].split("?")[0]
             supabase.storage.from_(BANNER_BUCKET).remove([old_path])
         except Exception:
-            pass
+            pass  # non-fatal
 
-    supabase.table(Tables.PROFILES).update({"banner_url": None, "banner_position": None}).eq("name", current_user).execute()
+    try:
+        supabase.table(Tables.PROFILES).update({"banner_url": None, "banner_position": None}).eq("name", current_user).execute()
+    except Exception as e:
+        logger.error("Failed to clear banner URL for user %s: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)

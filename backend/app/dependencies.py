@@ -1,5 +1,4 @@
 """FastAPI dependency providers shared across routers."""
-
 from __future__ import annotations
 
 import time
@@ -12,7 +11,10 @@ from jose import jwt as jose_jwt
 
 from app.config import Settings, get_settings
 from app.core.database import supabase
+from app.core.logging import get_logger
 from app.services import discord_bot
+
+logger = get_logger(__name__)
 
 _bearer = HTTPBearer()
 
@@ -41,7 +43,7 @@ def _decode_token(token: str, jwt_secret: str) -> dict[str, Any] | None:
             headers={"WWW-Authenticate": "Bearer"},
         )
     except JWTError as e:
-        print(f"[AUTH] Local JWT decode failed, falling back to Supabase API: {e}")
+        logger.debug("Local JWT decode failed, falling back to Supabase API: %s", e)
         return None
 
 
@@ -114,11 +116,11 @@ def get_current_user(
                     if resp.data:
                         profile_row = resp.data[0]
                         profile_name = profile_row["name"]
-                        print("[AUTH] found by discord_id")
+                        logger.debug("Auth: found profile by discord_id")
                     else:
-                        print("[AUTH] discord_id lookup returned no rows")
+                        logger.debug("Auth: discord_id lookup returned no rows")
                 except Exception as e:
-                    print(f"[AUTH] discord_id lookup failed: {e}")
+                    logger.warning("Auth: discord_id lookup failed: %s", e)
                     _db_error = True
 
             # Fall back to Discord display name (first-time / pre-migration)
@@ -131,7 +133,7 @@ def get_current_user(
                             profile_name = profile_row["name"]
                             break
                     except Exception as e:
-                        print(f"[AUTH] name lookup failed: {e}")
+                        logger.warning("Auth: name lookup failed: %s", e)
                         _db_error = True
                         break
 
@@ -140,9 +142,9 @@ def get_current_user(
 
             if _attempt == 0:
                 if _db_error:
-                    print("[AUTH] DB error on first attempt, retrying after 300ms")
+                    logger.warning("Auth: DB error on first attempt, retrying after 300ms")
                 else:
-                    print("[AUTH] profile not found on first attempt, retrying after 300ms")
+                    logger.debug("Auth: profile not found on first attempt, retrying after 300ms")
                 time.sleep(0.3)
 
         # If DB errors prevented lookup, fail with 401 rather than falling through to
@@ -164,13 +166,13 @@ def get_current_user(
             try:
                 wl = supabase.table("whitelist").select("discord_id").eq("discord_id", discord_id).execute()
             except Exception as e:
-                print(f"[AUTH] whitelist check failed: {e}")
+                logger.error("Auth: whitelist check failed: %s", e)
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Toegang geweigerd. Neem contact op met een beheerder.",
                 )
             if not wl.data:
-                print(f"[AUTH] discord_id {discord_id} not in whitelist")
+                logger.info("Auth: discord_id %s not in whitelist", discord_id)
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Toegang geweigerd. Neem contact op met een beheerder.",
@@ -197,7 +199,7 @@ def get_current_user(
                 if resp.data:
                     profile_row = resp.data[0]
                     profile_name = new_name
-                    print(f"[AUTH] auto-created profile for {new_name}")
+                    logger.info("Auth: auto-created profile for %s", new_name)
                 else:
                     raise HTTPException(
                         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -206,7 +208,7 @@ def get_current_user(
             except HTTPException:
                 raise
             except Exception as e:
-                print(f"[AUTH] auto-create profile failed: {e}")
+                logger.error("Auth: auto-create profile failed: %s", e)
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Profiel aanmaken mislukt.",
@@ -226,7 +228,7 @@ def get_current_user(
                 if profile_row.get("allow_dm", True):
                     discord_bot.send_welcome_dm(settings.discord_bot_token, discord_id, profile_name)
             except Exception as e:
-                print(f"[AUTH] first-login DM failed: {e}")
+                logger.warning("Auth: first-login DM failed: %s", e)
 
         # ── 3. Best-effort: backfill discord_id + avatar_url ─────────────────
         try:
@@ -247,6 +249,7 @@ def get_current_user(
     except HTTPException:
         raise
     except Exception:
+        logger.error("Auth: unexpected error during authentication", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authenticatie mislukt.",
@@ -265,7 +268,8 @@ def get_admin_user(current_user: str = Depends(get_current_user)) -> str:
             )
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        logger.error("Admin check failed for %s: %s", current_user, e)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Toegang geweigerd. Alleen admins hebben toegang tot dit gedeelte.",
