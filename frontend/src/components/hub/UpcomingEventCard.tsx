@@ -69,7 +69,17 @@ export function UpcomingEventCard({
   onParticipantClick,
 }: UpcomingEventCardProps) {
   const [participantsExpanded, setParticipantsExpanded] = useState(false);
-  const hasCover = !!event.image_url && !isGroupEvent;
+
+  // For group (multi-day) events, fall back across sibling days for a cover image/description.
+  const groupImage = isGroupEvent
+    ? (groupEvents!.map(({ ev }) => ev.image_url).find(Boolean) ?? null)
+    : null;
+  const groupDescription = isGroupEvent
+    ? (groupEvents!.map(({ ev }) => ev.description).find(Boolean) ?? null)
+    : null;
+
+  const coverImage = isGroupEvent ? groupImage : event.image_url;
+  const hasCover = !!coverImage;
 
   return (
 
@@ -77,14 +87,14 @@ export function UpcomingEventCard({
 
       {/* ── Cover image (when available, full-bleed top section) ── */}
       {hasCover && (
-        <div className="relative h-36 overflow-hidden">
+        <div className="relative h-40 overflow-hidden">
           <img
-            src={event.image_url!}
+            src={coverImage!}
             alt=""
             className="absolute inset-0 h-full w-full object-cover"
           />
           {/* Gradient: transparent top → card-surface bottom — seamless blend */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/30 to-[#1e293b]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-[#1e293b]" />
           {/* Urgency chip over image */}
           <div className="absolute bottom-3 left-4 flex items-center gap-2">
             <UrgencyChip urgency={urgency} daysUntil={daysUntil} />
@@ -106,7 +116,10 @@ export function UpcomingEventCard({
 
       {/* ── Card body ── */}
       {isGroupEvent ? (
-        <div className="p-5">
+        <div
+          onClick={() => onNavigate(groupEvents![0].ev.id)}
+          className="p-5 cursor-pointer group transition-colors hover:bg-slate-100/80 dark:hover:bg-white/10"
+        >
           {/* Header */}
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2 flex-wrap">
@@ -119,8 +132,17 @@ export function UpcomingEventCard({
                   Meerdaags evenement
                 </span>
               </div>
-              <UrgencyChip urgency={urgency} daysUntil={daysUntil} />
+              {groupEvents!.some(({ ev }) => ev.is_hotel) && (
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/25 bg-sky-500/10 px-2.5 py-1">
+                  <BedDouble size={10} className="text-sky-500" />
+                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-sky-500">
+                    Hotel
+                  </span>
+                </div>
+              )}
+              {!hasCover && <UrgencyChip urgency={urgency} daysUntil={daysUntil} />}
             </div>
+            <ArrowRight size={14} className="text-slate-400 dark:text-slate-600 shrink-0 transition-transform group-hover:translate-x-0.5" />
           </div>
 
           <h2 className="text-[22px] font-black text-slate-900 dark:text-white leading-tight tracking-tight">
@@ -135,12 +157,18 @@ export function UpcomingEventCard({
             </span>
           </div>
 
+          {groupDescription && (
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
+              {groupDescription}
+            </p>
+          )}
+
           {/* Per-day rows */}
           <div className="mt-4 space-y-1.5 pl-3" style={{ borderLeft: `2px solid ${groupColor!.accent}30` }}>
             {groupEvents!.map(({ ev: dayEv, date }) => (
               <button
                 key={dayEv.id}
-                onClick={() => onNavigate(dayEv.id)}
+                onClick={(e) => { e.stopPropagation(); onNavigate(dayEv.id); }}
                 className="w-full flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors px-3 py-2.5 text-left"
               >
                 <div className="shrink-0 text-center w-7">
@@ -199,6 +227,12 @@ export function UpcomingEventCard({
                 </span>
               )}
             </div>
+
+            {event.description && (
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
+                {event.description}
+              </p>
+            )}
           </div>
 
           {/* Participants */}

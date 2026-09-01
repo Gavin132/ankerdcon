@@ -20,6 +20,7 @@ import { HotelRoomsPage } from "./pages/HotelRoomsPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { AdminLayout } from "./pages/admin/AdminLayout";
+import { AdminOnboardingPreviewPage } from "./pages/admin/AdminOnboardingPreviewPage";
 import { AdminDashboardPage } from "./pages/admin/AdminDashboardPage";
 import { AdminUsersPage } from "./pages/admin/AdminUsersPage";
 import { AdminRidesPage } from "./pages/admin/AdminRidesPage";
@@ -97,6 +98,12 @@ export const router = createBrowserRouter([
       {
         element: <AdminRoute />,
         children: [
+          {
+            // Rendered outside AdminLayout so it's a true full-screen replica of
+            // the real onboarding flow, without the admin sidebar/topbar chrome.
+            path: routes.admin.previewOnboarding,
+            element: <AdminOnboardingPreviewPage />,
+          },
           {
             path: routes.admin.base,
             element: <AdminLayout />,

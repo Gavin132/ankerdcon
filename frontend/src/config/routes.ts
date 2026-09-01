@@ -45,13 +45,14 @@ export const routes = {
   },
 
   admin: {
-    base:        "/admin",
-    users:       "/admin/users",
-    rides:       "/admin/rides",
-    meals:       "/admin/meals",
-    events:      "/admin/events",
-    eventGroups: "/admin/event-groups",
-    badges:      "/admin/badges",
-    betalingen:  "/admin/betalingen",
+    base:              "/admin",
+    users:             "/admin/users",
+    rides:             "/admin/rides",
+    meals:             "/admin/meals",
+    events:            "/admin/events",
+    eventGroups:       "/admin/event-groups",
+    badges:            "/admin/badges",
+    betalingen:        "/admin/betalingen",
+    previewOnboarding: "/admin/preview/onboarding",
   },
 } as const;

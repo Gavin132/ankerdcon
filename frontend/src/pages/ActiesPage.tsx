@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { useCalendar } from "../hooks/useCalendar";
 import { useRides } from "../hooks/useRides";
 import { useMeals } from "../hooks/useMeals";
@@ -10,7 +11,9 @@ import {
   actionCountByKind,
   actionTotalCount,
   type ActionKind,
+  type AnyAction,
 } from "../utils/actionItems";
+import { firstUpcomingEvents } from "../utils/multiDay";
 import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { PAGE_SIZE } from "./acties/constants";
 import { getActionId } from "./acties/helpers";
@@ -21,7 +24,7 @@ import { MobileFilterBar } from "./acties/components/MobileFilterBar";
 import { SectionDivider } from "./acties/components/SectionDivider";
 import { Pagination } from "./acties/components/Pagination";
 import { PaymentConfirmDrawer } from "./acties/components/PaymentConfirmDrawer";
-import { CheckCheck, Users, CalendarDays } from "lucide-react";
+import { CheckCheck, Users, CalendarDays, CalendarClock, ChevronDown } from "lucide-react";
 import type { Expense, ExpenseShare } from "../types";
 
 export function ActiesPage() {
@@ -29,6 +32,7 @@ export function ActiesPage() {
   const [filter, setFilter]       = useState<ActionKind | "all">("all");
   const [page, setPage]           = useState(0);
   const [expandedIds, setExpanded] = useState<Set<string>>(new Set());
+  const [futureOpen, setFutureOpen] = useState(false);
   const [drawerExpense, setDrawerExpense] = useState<{
     expense: Expense;
     shares: ExpenseShare[];
@@ -46,10 +50,26 @@ export function ActiesPage() {
     [events, rides, meals, expenses, me?.name],
   );
 
-  const byKind = useMemo(() => actionCountByKind(allActions), [allActions]);
-  const total  = useMemo(() => actionTotalCount(allActions),  [allActions]);
+  // Transport/food gaps only nag for whichever event is happening first — later
+  // events' gaps move into the collapsed "Toekomstige evenementen" section below,
+  // mirroring how past events collapse under Geschiedenis elsewhere in the app.
+  // Restaurant and payment actions aren't tied to a specific event, so those
+  // always stay in the current list.
+  const firstEventKeys = useMemo(() => {
+    const evs = firstUpcomingEvents(events);
+    return new Set(evs.map((ev) => `${ev.event_name}|${ev.date}`));
+  }, [events]);
 
-  const filtered   = filter === "all" ? allActions : allActions.filter((a) => a.kind === filter);
+  const isCurrent = (a: AnyAction) =>
+    a.kind !== "event_gap" || firstEventKeys.has(`${a.alert.eventName}|${a.alert.date}`);
+
+  const currentActions = useMemo(() => allActions.filter(isCurrent), [allActions, firstEventKeys]);
+  const futureActions  = useMemo(() => allActions.filter((a) => !isCurrent(a)), [allActions, firstEventKeys]);
+
+  const byKind = useMemo(() => actionCountByKind(currentActions), [currentActions]);
+  const total  = useMemo(() => actionTotalCount(currentActions),  [currentActions]);
+
+  const filtered   = filter === "all" ? currentActions : currentActions.filter((a) => a.kind === filter);
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paged      = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
@@ -119,6 +139,57 @@ export function ActiesPage() {
             )}
 
             <Pagination page={page} total={totalPages} onChange={setPage} />
+
+            {/* ── Future events (collapsed) ── */}
+            {futureActions.length > 0 && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setFutureOpen((o) => !o)}
+                  className="flex w-full items-center justify-between mb-3 group"
+                >
+                  <p className="section-label flex items-center gap-2">
+                    <CalendarClock size={13} className="text-slate-400" />
+                    Toekomstige evenementen ({futureActions.length})
+                  </p>
+                  <motion.div
+                    animate={{ rotate: futureOpen ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-slate-400 group-hover:text-slate-600 transition-colors"
+                  >
+                    <ChevronDown size={16} />
+                  </motion.div>
+                </button>
+
+                <AnimatePresence>
+                  {futureOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.22 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-3">
+                        {futureActions.map((action) => {
+                          const id         = getActionId(action);
+                          const isExpanded = expandedIds.has(id);
+                          return (
+                            <ActionCard
+                              key={id}
+                              action={action}
+                              users={users}
+                              expanded={isExpanded}
+                              onToggle={() => toggleExpand(id)}
+                            />
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
           </div>
 
           {/* ── Sidebar (desktop only) ── */}
@@ -128,7 +199,7 @@ export function ActiesPage() {
             {total > 0 && (() => {
               const people = new Set<string>();
               const evts   = new Set<string>();
-              for (const a of allActions) {
+              for (const a of currentActions) {
                 if (a.kind === "event_gap") {
                   a.alert.missing.forEach((m) => people.add(m.name));
                   evts.add(a.alert.eventName);

@@ -1,4 +1,5 @@
 import type { CalendarEvent } from "../types";
+import { parseEventDate, toDateKey, todayKey } from "./date";
 
 // ── Color palette ─────────────────────────────────────────────────────────────
 
@@ -93,6 +94,23 @@ export function groupCalendarEntries(
     const bDate = b.type === "single" ? b.date : b.events[0].date;
     return aDate.getTime() - bDate.getTime();
   });
+}
+
+/**
+ * The events belonging to whichever event is happening first — either a single
+ * event, or every day of the nearest upcoming multi-day group. Empty when there
+ * are no upcoming events.
+ */
+export function firstUpcomingEvents(events: CalendarEvent[]): CalendarEvent[] {
+  const today = todayKey();
+  const upcomingEntries = events
+    .map((ev) => ({ ev, date: parseEventDate(ev.date) }))
+    .filter((x): x is { ev: CalendarEvent; date: Date } => x.date !== null && toDateKey(x.date) >= today)
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+  const first = groupCalendarEntries(upcomingEntries)[0];
+  if (!first) return [];
+  return first.type === "single" ? [first.ev] : first.events.map((x) => x.ev);
 }
 
 // ── Display helpers ───────────────────────────────────────────────────────────

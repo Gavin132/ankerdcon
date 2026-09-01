@@ -17,15 +17,17 @@ import { useRides } from "../hooks/useRides";
 import { useMeals } from "../hooks/useMeals";
 import { useExpenses } from "../hooks/useExpenses";
 import { useCurrentUser, useUsers } from "../hooks/useUsers";
-import { formatDate, formatAmount } from "../utils/format";
-import { multiDayColor, getGroupTitle, formatDateRange } from "../utils/multiDay";
+import { formatAmount } from "../utils/format";
+import { buildGroupColorMap, groupCalendarEntries, firstUpcomingEvents } from "../utils/multiDay";
 import { UserAvatar } from "../components/common/UserAvatar";
-import { UpcomingEventCard } from "../components/hub/UpcomingEventCard";
+import { UpcomingEventsCarousel } from "../components/hub/UpcomingEventsCarousel";
 import { listItem, listContainer } from "../utils/motion";
 import { parseEventDate, toDateKey, todayKey } from "../utils/date";
 import { getRideStatus } from "../utils/rides";
 import { computeAllActions } from "../utils/actionItems";
-import type { User } from "../types";
+import type { CalendarEvent, User } from "../types";
+
+const MAX_CAROUSEL_ITEMS = 8;
 
 const DAYS_NL = ["Zondag","Maandag","Dinsdag","Woensdag","Donderdag","Vrijdag","Zaterdag"];
 const MONTHS_NL = ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
@@ -95,30 +97,17 @@ export function HubPage() {
   const totalSpend = expenses.reduce((s, e) => s + e.amount, 0);
 
   const todayStr = todayKey();
-  const event =
-    (events ?? [])
-      .map((ev) => ({ ev, date: parseEventDate(ev.date) }))
-      .filter(({ date }) => date !== null && toDateKey(date) >= todayStr)
-      .sort((a, b) => a.date!.getTime() - b.date!.getTime())[0]?.ev ?? null;
+  const groupColorMap = buildGroupColorMap(events ?? []);
+  const upcomingEntries = (events ?? [])
+    .map((ev) => ({ ev, date: parseEventDate(ev.date) }))
+    .filter((x): x is { ev: CalendarEvent; date: Date } => x.date !== null && toDateKey(x.date) >= todayStr)
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+  const upcomingItems = groupCalendarEntries(upcomingEntries).slice(0, MAX_CAROUSEL_ITEMS);
 
-  const eventDate = event ? parseEventDate(event.date) : null;
-  const msUntil = eventDate ? eventDate.getTime() - Date.now() : null;
-  const daysUntil = msUntil !== null ? Math.max(0, Math.ceil(msUntil / 86_400_000)) : null;
-  const urgency: "today" | "tomorrow" | "normal" =
-    daysUntil === 0 ? "today" : daysUntil === 1 ? "tomorrow" : "normal";
-
-  // Multi-day group detection
-  const groupEvents = event?.multi_day_id
-    ? (events ?? [])
-        .filter((ev) => ev.multi_day_id === event.multi_day_id)
-        .map((ev) => ({ ev, date: parseEventDate(ev.date) }))
-        .filter((x): x is { ev: typeof event; date: Date } => x.date !== null)
-        .sort((a, b) => a.date.getTime() - b.date.getTime())
+  // Nearest upcoming event — drives the hotel-rooms section below.
+  const event = upcomingItems[0]
+    ? (upcomingItems[0].type === "single" ? upcomingItems[0].ev : upcomingItems[0].events[0].ev)
     : null;
-  const isGroupEvent = groupEvents !== null && groupEvents.length > 1;
-  const groupColor = isGroupEvent ? multiDayColor(event!.multi_day_id!) : null;
-  const groupTitle = isGroupEvent ? getGroupTitle(groupEvents!) : null;
-  const groupDateRange = isGroupEvent ? formatDateRange(groupEvents!.map((x) => x.date)) : null;
 
   const futureRidesCount = (rides ?? []).filter(
     (r) => getRideStatus(r.departure_time).status !== "past",
@@ -128,7 +117,17 @@ export function HubPage() {
     return !isNaN(d.getTime()) && d > now;
   }).length;
 
-  const allActions = computeAllActions({ events: events ?? [], rides: rides ?? [], meals: meals ?? [], expenses, myName: me?.name });
+  // Only the soonest event/trip's transport-and-food gaps drive the hub's action
+  // alert — later events shouldn't nag you before the one right in front of you
+  // is sorted. Restaurant and payment actions aren't tied to a specific event, so
+  // those stay unfiltered.
+  const allActions = computeAllActions({
+    events: firstUpcomingEvents(events ?? []),
+    rides: rides ?? [],
+    meals: meals ?? [],
+    expenses,
+    myName: me?.name,
+  });
 
   const hotelRooms: [string, User[]][] = event?.is_hotel
     ? Object.entries(
@@ -172,18 +171,13 @@ export function HubPage() {
       {/* ── Action banner ─────────────────────────────────────────────────── */}
       <DailyActionCheck actions={allActions} />
 
-      {/* ── Upcoming event card ───────────────────────────────────────────── */}
-      {event && (
+      {/* ── Upcoming events carousel ─────────────────────────────────────── */}
+      {upcomingItems.length > 0 && (
         <motion.div variants={listItem}>
-          <UpcomingEventCard
-            event={event}
-            daysUntil={daysUntil ?? 999}
-            urgency={urgency}
-            isGroupEvent={isGroupEvent}
-            groupEvents={groupEvents}
-            groupColor={groupColor}
-            groupTitle={groupTitle}
-            groupDateRange={groupDateRange}
+          <UpcomingEventsCarousel
+            items={upcomingItems}
+            allEvents={events ?? []}
+            groupColorMap={groupColorMap}
             users={users ?? []}
             onNavigate={(id) => navigate(routes.event.view(id))}
             onParticipantClick={(user, rect) => {

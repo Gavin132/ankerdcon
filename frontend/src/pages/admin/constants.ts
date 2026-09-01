@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   Layers,
   Euro,
+  FlaskConical,
 } from "lucide-react";
 import { routes } from "../../config/routes";
 
@@ -63,6 +64,13 @@ export const NAV_GROUPS: NavGroup[] = [
       },
       { label: "Badges",      path: routes.admin.badges,     icon: ShieldCheck },
       { label: "Betalingen",  path: routes.admin.betalingen, icon: Euro },
+    ],
+  },
+  {
+    key: "testen",
+    label: "Testen",
+    items: [
+      { label: "Preview: Onboarding", path: routes.admin.previewOnboarding, icon: FlaskConical },
     ],
   },
 ];

@@ -75,7 +75,7 @@ export function Header() {
         {/* Logo */}
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white border border-sky-100 shadow-sm overflow-hidden dark:bg-slate-800 dark:border-slate-700">
           <img
-            src="/assets/images/ankerd-logo.png"
+            src="/icons/icon-192.png"
             alt="Ankerd"
             className="h-6 w-6 object-contain"
           />

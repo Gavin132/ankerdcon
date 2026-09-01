@@ -61,7 +61,7 @@ export const ACTIVITY_STOPS = [
   { label: "Lang!",     tag: "OG-lid",              emoji: "🏆" },
 ] as const;
 
-export const YEAR_MIN = 2000;
+export const YEAR_MIN = 1990;
 export const YEAR_MAX = new Date().getFullYear();
 export const YEAR_DEFAULT = 2005;
 

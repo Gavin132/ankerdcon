@@ -125,7 +125,7 @@ Run `db/schema.sql` in the Supabase SQL editor for a fresh project. For an exist
 cd frontend && npm run dev
 
 # Backend   →  http://localhost:8000  (docs at /docs)
-cd backend && uvicorn app.main:app --reload
+cd backend && uvicorn main:app --reload
 ```
 
 ---

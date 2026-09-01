@@ -28,6 +28,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     beheer: true,
     entiteiten: true,
+    testen: true,
   });
   // Track which nav items with children are expanded (keyed by path)
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});

@@ -16,6 +16,9 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
   const [birthYear, setBirthYear]     = useState(YEAR_DEFAULT);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const holdRef     = useRef<ReturnType<typeof setInterval> | null>(null);
+  const holdDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [manualEntry, setManualEntry] = useState(false);
+  const [yearInput, setYearInput]     = useState(String(YEAR_DEFAULT));
 
   const introLines = useMemo(() => [
     `Hé${me?.name ? `, ${me.name}` : ""}! Welkom bij het Ankerd portaal! 👋`,
@@ -67,6 +70,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
   useEffect(() => () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (holdRef.current) clearInterval(holdRef.current);
+    if (holdDelayRef.current) clearTimeout(holdDelayRef.current);
   }, []);
 
   function handleBoxTap() {
@@ -90,16 +94,33 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
     typeText(getReaction(), () => setTimeout(() => setPhase("ready"), 300));
   }
 
-  // Year stepper with hold-to-fast-change
+  // Year stepper with hold-to-fast-change. The fast-repeat only kicks in after a
+  // deliberate hold — a normal click/tap (down+up within ~400ms) always changes
+  // the year by exactly one step, however long the press happens to take.
   function adjustYear(dir: 1 | -1) {
     setBirthYear(y => Math.max(YEAR_MIN, Math.min(YEAR_MAX, y + dir)));
   }
   function startHold(dir: 1 | -1) {
     adjustYear(dir);
-    holdRef.current = setInterval(() => adjustYear(dir), 80);
+    holdDelayRef.current = setTimeout(() => {
+      holdRef.current = setInterval(() => adjustYear(dir), 80);
+    }, 400);
   }
   function stopHold() {
+    if (holdDelayRef.current) { clearTimeout(holdDelayRef.current); holdDelayRef.current = null; }
     if (holdRef.current) { clearInterval(holdRef.current); holdRef.current = null; }
+  }
+
+  function commitYearInput() {
+    const v = parseInt(yearInput, 10);
+    const clamped = isNaN(v) ? birthYear : Math.max(YEAR_MIN, Math.min(YEAR_MAX, v));
+    setBirthYear(clamped);
+    setYearInput(String(clamped));
+  }
+
+  function toggleManualEntry() {
+    if (!manualEntry) setYearInput(String(birthYear));
+    setManualEntry(v => !v);
   }
 
   return (
@@ -268,68 +289,98 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                   En jouw geboortejaar?
                 </p>
 
-                <div
-                  className="flex items-center justify-between gap-4 rounded-2xl px-6 py-5 mb-5 select-none"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
-                >
-                  {/* Decrease */}
-                  <motion.button
-                    type="button"
-                    whileTap={{ scale: 0.92 }}
-                    onPointerDown={() => startHold(-1)}
-                    onPointerUp={stopHold}
-                    onPointerLeave={stopHold}
-                    onPointerCancel={stopHold}
-                    disabled={birthYear <= YEAR_MIN}
-                    className="h-11 w-11 rounded-2xl flex items-center justify-center transition-all disabled:opacity-25"
-                    style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.08)" }}
-                  >
-                    <Minus size={18} className="text-slate-300" />
-                  </motion.button>
-
-                  {/* Year display */}
-                  <div className="flex flex-col items-center gap-1">
-                    <AnimatePresence mode="popLayout">
-                      <motion.span
-                        key={birthYear}
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        transition={{ duration: 0.12 }}
-                        className="text-5xl font-black text-white tabular-nums leading-none"
+                {!manualEntry ? (
+                  <>
+                    <div
+                      className="flex items-center justify-between gap-4 rounded-2xl px-6 py-5 mb-3 select-none"
+                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+                    >
+                      {/* Decrease */}
+                      <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.92 }}
+                        onPointerDown={() => startHold(-1)}
+                        onPointerUp={stopHold}
+                        onPointerLeave={stopHold}
+                        onPointerCancel={stopHold}
+                        disabled={birthYear <= YEAR_MIN}
+                        className="h-11 w-11 rounded-2xl flex items-center justify-center transition-all disabled:opacity-25"
+                        style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.08)" }}
                       >
-                        {birthYear}
-                      </motion.span>
-                    </AnimatePresence>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">
-                      {new Date().getFullYear() - birthYear} jaar oud
+                        <Minus size={18} className="text-slate-300" />
+                      </motion.button>
+
+                      {/* Year display */}
+                      <div className="flex flex-col items-center gap-1">
+                        <AnimatePresence mode="popLayout">
+                          <motion.span
+                            key={birthYear}
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            transition={{ duration: 0.12 }}
+                            className="text-5xl font-black text-white tabular-nums leading-none"
+                          >
+                            {birthYear}
+                          </motion.span>
+                        </AnimatePresence>
+                        <span className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">
+                          {new Date().getFullYear() - birthYear} jaar oud
+                        </span>
+                      </div>
+
+                      {/* Increase */}
+                      <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.92 }}
+                        onPointerDown={() => startHold(1)}
+                        onPointerUp={stopHold}
+                        onPointerLeave={stopHold}
+                        onPointerCancel={stopHold}
+                        disabled={birthYear >= YEAR_MAX}
+                        className="h-11 w-11 rounded-2xl flex items-center justify-center transition-all disabled:opacity-25"
+                        style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.08)" }}
+                      >
+                        <Plus size={18} className="text-slate-300" />
+                      </motion.button>
+                    </div>
+
+                    {/* Mini progress bar */}
+                    <div className="relative h-1 rounded-full mb-3 overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                      <motion.div
+                        className="absolute left-0 top-0 h-full rounded-full bg-sky-500/60"
+                        animate={{ width: `${((birthYear - YEAR_MIN) / (YEAR_MAX - YEAR_MIN)) * 100}%` }}
+                        transition={{ duration: 0.08 }}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <div
+                    className="flex flex-col items-center gap-1.5 rounded-2xl px-6 py-5 mb-3"
+                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+                  >
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      value={yearInput}
+                      onChange={e => setYearInput(e.target.value)}
+                      onBlur={commitYearInput}
+                      onKeyDown={e => { if (e.key === "Enter") { commitYearInput(); (e.target as HTMLInputElement).blur(); } }}
+                      className="w-32 bg-transparent text-center text-5xl font-black text-white tabular-nums leading-none focus:outline-none"
+                    />
+                    <span className="text-[10px] text-slate-500 uppercase tracking-widest">
+                      {new Date().getFullYear() - birthYear} jaar oud · {YEAR_MIN}–{YEAR_MAX}
                     </span>
                   </div>
+                )}
 
-                  {/* Increase */}
-                  <motion.button
-                    type="button"
-                    whileTap={{ scale: 0.92 }}
-                    onPointerDown={() => startHold(1)}
-                    onPointerUp={stopHold}
-                    onPointerLeave={stopHold}
-                    onPointerCancel={stopHold}
-                    disabled={birthYear >= YEAR_MAX}
-                    className="h-11 w-11 rounded-2xl flex items-center justify-center transition-all disabled:opacity-25"
-                    style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.08)" }}
-                  >
-                    <Plus size={18} className="text-slate-300" />
-                  </motion.button>
-                </div>
-
-                {/* Mini progress bar */}
-                <div className="relative h-1 rounded-full mb-5 overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                  <motion.div
-                    className="absolute left-0 top-0 h-full rounded-full bg-sky-500/60"
-                    animate={{ width: `${((birthYear - YEAR_MIN) / (YEAR_MAX - YEAR_MIN)) * 100}%` }}
-                    transition={{ duration: 0.08 }}
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={toggleManualEntry}
+                  className="block text-[11px] text-sky-400/70 hover:text-sky-400 underline underline-offset-2 mb-5 transition-colors"
+                >
+                  {manualEntry ? "Terug naar de schuifknop" : "Liever het jaar zelf intypen?"}
+                </button>
 
                 <div className="flex justify-end">
                   <motion.button
