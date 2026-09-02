@@ -1,8 +1,23 @@
 import { create } from "zustand";
 
+const WIDGET_ENABLED_KEY = "ankerd-timetravel-widget-enabled";
+
+function loadWidgetEnabled(): boolean {
+  try {
+    const raw = localStorage.getItem(WIDGET_ENABLED_KEY);
+    return raw === null ? true : raw === "true";
+  } catch {
+    return true;
+  }
+}
+
 interface TimeState {
   override: Date | null;
   setOverride: (d: Date | null) => void;
+  /** Whether the floating time-travel button should render at all — toggled
+   *  from Admin > Testen, persisted so it stays hidden across reloads. */
+  widgetEnabled: boolean;
+  setWidgetEnabled: (v: boolean) => void;
 }
 
 /**
@@ -19,6 +34,13 @@ interface TimeState {
 export const useTimeStore = create<TimeState>((set) => ({
   override: null,
   setOverride: (d) => set({ override: d }),
+  widgetEnabled: loadWidgetEnabled(),
+  setWidgetEnabled: (v) => {
+    try {
+      localStorage.setItem(WIDGET_ENABLED_KEY, String(v));
+    } catch {}
+    set({ widgetEnabled: v });
+  },
 }));
 
 export function getNow(): Date {

@@ -59,5 +59,6 @@ export const routes = {
     changelog:         "/admin/changelog",
     previewOnboarding: "/admin/preview/onboarding",
     impersonate:       "/admin/impersonate",
+    timeTravel:        "/admin/time-travel",
   },
 } as const;

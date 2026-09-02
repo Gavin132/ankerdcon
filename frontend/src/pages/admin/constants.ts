@@ -12,6 +12,7 @@ import {
   Megaphone,
   UserCog,
   Sparkles,
+  Clock,
 } from "lucide-react";
 import { routes } from "../../config/routes";
 
@@ -77,6 +78,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Preview: Onboarding", path: routes.admin.previewOnboarding, icon: FlaskConical },
       { label: "Inloggen als gebruiker", path: routes.admin.impersonate, icon: UserCog },
+      { label: "Tijdreis-widget", path: routes.admin.timeTravel, icon: Clock },
     ],
   },
 ];
@@ -93,6 +95,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [routes.admin.announcements]: "Aankondigingen",
   [routes.admin.impersonate]: "Inloggen als gebruiker",
   [routes.admin.changelog]: "Wijzigingslog",
+  [routes.admin.timeTravel]: "Tijdreis-widget",
 };
 
 export const DIRECTION_COLORS: Record<string, string> = {

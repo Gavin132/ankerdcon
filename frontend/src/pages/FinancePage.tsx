@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Wallet, Plus, TrendingUp, ArrowDownLeft, ArrowUpRight, CheckCircle2 } from "lucide-react";
 import { Button } from "../components/common/Button";
 import { EmptyState } from "../components/common/EmptyState";
+import { StickyActionBar } from "../components/common/StickyActionBar";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { ExpenseCard } from "../components/finance/ExpenseCard";
 import { CreateExpenseDrawer } from "../components/finance/CreateExpenseDrawer";
@@ -72,7 +73,7 @@ export function FinancePage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 pb-20">
 
       {/* ── Personal balance card ────────────────────────────── */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
@@ -176,12 +177,6 @@ export function FinancePage() {
         </motion.div>
       )}
 
-      {/* ── Add expense button ───────────────────────────────── */}
-      <Button className="w-full" onClick={() => setCreateOpen(true)}>
-        <Plus size={16} />
-        Uitgave toevoegen
-      </Button>
-
       {/* ── Expense list ─────────────────────────────────────── */}
       {expenses.length === 0 ? (
         <EmptyState
@@ -202,6 +197,14 @@ export function FinancePage() {
           ))}
         </motion.div>
       )}
+
+      {/* ── Add expense button ───────────────────────────────── */}
+      <StickyActionBar>
+        <Button className="w-full shadow-lg" onClick={() => setCreateOpen(true)}>
+          <Plus size={16} />
+          Uitgave toevoegen
+        </Button>
+      </StickyActionBar>
 
       {/* ── Drawers ───────────────────────────────────────────── */}
       <CreateExpenseDrawer

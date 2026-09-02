@@ -9,6 +9,7 @@ import { ErrorBoundary } from "./components/common/ErrorBoundary";
 import { TimeTravelWidget } from "./components/common/TimeTravelWidget";
 import { ImpersonationBanner } from "./components/common/ImpersonationBanner";
 import { useThemeStore } from "./store/theme.store";
+import { useTimeStore } from "./store/time.store";
 import { useSplash } from "./hooks/useSplash";
 
 // Add these two imports!
@@ -158,7 +159,8 @@ function AppBackdrop() {
 
 function TimeTravelGate() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  if (!isAuthenticated) return null;
+  const widgetEnabled = useTimeStore((s) => s.widgetEnabled);
+  if (!isAuthenticated || !widgetEnabled) return null;
   return <TimeTravelWidget />;
 }
 

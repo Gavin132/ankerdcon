@@ -34,6 +34,7 @@ import { AdminBetalingenPage } from "./pages/admin/AdminBetalingenPage";
 import { AdminAnnouncementsPage } from "./pages/admin/AdminAnnouncementsPage";
 import { AdminChangelogPage } from "./pages/admin/AdminChangelogPage";
 import { AdminImpersonatePage } from "./pages/admin/AdminImpersonatePage";
+import { AdminTimeTravelPage } from "./pages/admin/AdminTimeTravelPage";
 
 export const router = createBrowserRouter([
   {
@@ -132,6 +133,7 @@ export const router = createBrowserRouter([
               { path: routes.admin.announcements, element: <AdminAnnouncementsPage /> },
               { path: routes.admin.changelog, element: <AdminChangelogPage /> },
               { path: routes.admin.impersonate, element: <AdminImpersonatePage /> },
+              { path: routes.admin.timeTravel, element: <AdminTimeTravelPage /> },
             ],
           },
         ],

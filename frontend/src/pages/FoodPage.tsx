@@ -6,6 +6,7 @@ import { LocationSearchInput } from "../components/common/LocationSearchInput";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "../components/common/Button";
+import { StickyActionBar } from "../components/common/StickyActionBar";
 import { Drawer } from "../components/common/Drawer";
 import { EventPicker } from "../components/common/EventPicker";
 import { MealCardSkeleton } from "../components/common/Skeleton";
@@ -99,12 +100,7 @@ export function FoodPage() {
   );
 
   return (
-    <div className="space-y-5">
-      <Button variant="secondary" className="w-full" onClick={() => setCreateOpen(true)}>
-        <Plus size={16} />
-        Maaltijd toevoegen
-      </Button>
-
+    <div className="space-y-5 pb-20">
       {isLoading ? (
         <div className="space-y-3">
           {[0, 1, 2].map((i) => <MealCardSkeleton key={i} />)}
@@ -179,6 +175,13 @@ export function FoodPage() {
           </>
         );
       })()}
+
+      <StickyActionBar>
+        <Button className="w-full shadow-lg" onClick={() => setCreateOpen(true)}>
+          <Plus size={16} />
+          Maaltijd toevoegen
+        </Button>
+      </StickyActionBar>
 
       <Drawer
         open={createOpen}

@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useCallback, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, ChevronRight, Sparkles, Users, UserCheck, UserMinus } from "lucide-react";
+import { CalendarDays, ChevronRight, Sparkles, Users, UserCheck, UserMinus, Layers } from "lucide-react";
 import { useCalendar, useHotelRooms, useRsvpCalendarEvent, useLeaveCalendarEvent } from "../hooks/useCalendar";
 import { useUsers, useCurrentUser } from "../hooks/useUsers";
 import { useMeals } from "../hooks/useMeals";
@@ -41,6 +41,8 @@ export function EventDetailPage() {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [rsvpNames, setRsvpNames] = useState<string[]>([]);
   const [cancelNames, setCancelNames] = useState<string[]>([]);
+  const [rsvpAllDays, setRsvpAllDays] = useState(false);
+  const [cancelAllDays, setCancelAllDays] = useState(false);
   const rsvpMutation = useRsvpCalendarEvent();
   const leaveMutation = useLeaveCalendarEvent();
 
@@ -99,6 +101,12 @@ export function EventDetailPage() {
   const currentDayIndex = groupDays?.findIndex((d) => d.ev.id === id) ?? -1;
   const prevDay         = groupDays && currentDayIndex > 0 ? groupDays[currentDayIndex - 1] : null;
   const nextDay         = groupDays && currentDayIndex < groupDays.length - 1 ? groupDays[currentDayIndex + 1] : null;
+
+  const isMultiDay      = !!groupDays && groupDays.length > 1;
+  const groupEventIds   = groupDays?.map((d) => d.ev.id) ?? [];
+  const groupParticipants = groupDays
+    ? [...new Set(groupDays.flatMap((d) => d.ev.participants))]
+    : [];
 
   const navigateToDay = useCallback(
     (dayId: string) => navigate(routes.event.view(dayId), { replace: true }),
@@ -177,17 +185,22 @@ export function EventDetailPage() {
 
   async function onRsvp() {
     if (rsvpNames.length === 0) return;
+    const targetIds = rsvpAllDays && isMultiDay ? groupEventIds : [event!.id];
     try {
       for (const name of rsvpNames) {
-        await rsvpMutation.mutateAsync({ id: event!.id, userName: name });
+        for (const eventId of targetIds) {
+          await rsvpMutation.mutateAsync({ id: eventId, userName: name });
+        }
       }
       setRsvpNames([]);
+      setRsvpAllDays(false);
       setRsvpOpen(false);
+      const what = rsvpAllDays && isMultiDay ? `alle ${targetIds.length} dagen van ${event!.event_name}` : event!.event_name;
       toast(
         "success",
         rsvpNames.length === 1
-          ? `${rsvpNames[0]} is aangemeld voor ${event!.event_name}!`
-          : `${rsvpNames.length} personen aangemeld voor ${event!.event_name}!`,
+          ? `${rsvpNames[0]} is aangemeld voor ${what}!`
+          : `${rsvpNames.length} personen aangemeld voor ${what}!`,
       );
     } catch {
       toast("error", "Kon je niet aanmelden. Probeer opnieuw.");
@@ -196,11 +209,15 @@ export function EventDetailPage() {
 
   async function onCancelRsvp() {
     if (cancelNames.length === 0) return;
+    const targetIds = cancelAllDays && isMultiDay ? groupEventIds : [event!.id];
     try {
       for (const name of cancelNames) {
-        await leaveMutation.mutateAsync({ id: event!.id, userName: name });
+        for (const eventId of targetIds) {
+          await leaveMutation.mutateAsync({ id: eventId, userName: name });
+        }
       }
       setCancelNames([]);
+      setCancelAllDays(false);
       setCancelOpen(false);
       toast(
         "success",
@@ -363,7 +380,7 @@ export function EventDetailPage() {
       {/* RSVP modal */}
       <Modal
         open={rsvpOpen}
-        onClose={() => { setRsvpOpen(false); setRsvpNames([]); }}
+        onClose={() => { setRsvpOpen(false); setRsvpNames([]); setRsvpAllDays(false); }}
         title={`Aanmelden — ${event.event_name}`}
         description={event.location || undefined}
       >
@@ -375,6 +392,36 @@ export function EventDetailPage() {
             onChange={setRsvpNames}
             color="green"
           />
+          {isMultiDay && (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${rsvpAllDays ? "bg-sky-500/10" : "bg-slate-100 dark:bg-slate-800"}`}>
+                  <Layers size={14} className={rsvpAllDays ? "text-sky-500" : "text-slate-400"} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">Aanmelden voor elke dag</p>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    Geldt voor alle {groupEventIds.length} dagen van {event.event_name}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={rsvpAllDays}
+                onClick={() => setRsvpAllDays((v) => !v)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
+                  rsvpAllDays ? "bg-sky-500" : "bg-slate-200 dark:bg-slate-700"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
+                    rsvpAllDays ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+          )}
           <Button onClick={onRsvp} loading={rsvpMutation.isPending} className="w-full" disabled={rsvpNames.length === 0}>
             <UserCheck size={15} />
             {rsvpNames.length === 0 ? "Selecteer een naam" : rsvpNames.length === 1 ? `${rsvpNames[0]} aanmelden` : `${rsvpNames.length} personen aanmelden`}
@@ -385,12 +432,48 @@ export function EventDetailPage() {
       {/* Cancel modal */}
       <Modal
         open={cancelOpen}
-        onClose={() => { setCancelOpen(false); setCancelNames([]); }}
+        onClose={() => { setCancelOpen(false); setCancelNames([]); setCancelAllDays(false); }}
         title="Aanmelding annuleren"
         description={event.event_name}
       >
         <div className="space-y-3">
-          <NamePicker multiple options={event.participants} value={cancelNames} onChange={setCancelNames} color="rose" />
+          <NamePicker
+            multiple
+            options={cancelAllDays && isMultiDay ? groupParticipants : event.participants}
+            value={cancelNames}
+            onChange={setCancelNames}
+            color="rose"
+          />
+          {isMultiDay && (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${cancelAllDays ? "bg-rose-500/10" : "bg-slate-100 dark:bg-slate-800"}`}>
+                  <Layers size={14} className={cancelAllDays ? "text-rose-500" : "text-slate-400"} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">Afmelden voor elke dag</p>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    Geldt voor alle {groupEventIds.length} dagen van {event.event_name}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={cancelAllDays}
+                onClick={() => { setCancelAllDays((v) => !v); setCancelNames([]); }}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 ${
+                  cancelAllDays ? "bg-rose-500" : "bg-slate-200 dark:bg-slate-700"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
+                    cancelAllDays ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+          )}
           <Button variant="danger" onClick={onCancelRsvp} loading={leaveMutation.isPending} className="w-full" disabled={cancelNames.length === 0}>
             <UserMinus size={15} />
             {cancelNames.length === 0 ? "Selecteer een naam" : cancelNames.length === 1 ? `${cancelNames[0]} afmelden` : `${cancelNames.length} personen afmelden`}

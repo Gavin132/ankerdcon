@@ -22,6 +22,16 @@ _JWT_ALGORITHM = "HS256"
 _JWT_AUDIENCE = "authenticated"
 
 
+def _strip_discriminator(name: str | None) -> str | None:
+    """Discord retired the old username#discriminator format, but every migrated
+    account was assigned discriminator "0" for backwards compatibility — the OAuth
+    API still returns it literally as e.g. "someuser#0". Strip that trailing
+    artifact so display names read clean."""
+    if name and name.endswith("#0"):
+        return name[:-2]
+    return name
+
+
 def _decode_token(token: str, jwt_secret: str) -> dict[str, Any] | None:
     """Verify and decode a Supabase JWT locally — no HTTP call to Supabase Auth.
 
@@ -88,7 +98,7 @@ def get_current_user(
 
         discord_id       = meta.get("provider_id")
         discord_avatar   = meta.get("avatar_url") or meta.get("picture")
-        discord_username = meta.get("preferred_username") or meta.get("name")
+        discord_username = _strip_discriminator(meta.get("preferred_username") or meta.get("name"))
 
         # All name fields Discord may populate (tried in order)
         discord_names = list(dict.fromkeys(filter(None, [
@@ -180,7 +190,7 @@ def get_current_user(
             try:
                 new_name = (
                     discord_username
-                    or discord_display_name
+                    or _strip_discriminator(discord_display_name)
                     or f"user_{user.id[:8]}"
                 )
                 insert_data: dict = {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Car,
@@ -20,6 +20,7 @@ import { Drawer } from "../components/common/Drawer";
 import { EventPicker } from "../components/common/EventPicker";
 import { RideCardSkeleton } from "../components/common/Skeleton";
 import { EmptyState } from "../components/common/EmptyState";
+import { StickyActionBar } from "../components/common/StickyActionBar";
 import { NamePicker } from "../components/common/NamePicker";
 import { RideCard } from "../components/transport/RideCard";
 import { RestaurantCard } from "../components/transport/RestaurantCard";
@@ -61,6 +62,8 @@ const container = {
   show: { opacity: 1, transition: { staggerChildren: 0.07 } },
 };
 
+const TAB_ORDER: Direction[] = ["Inbound", "Outbound", "Restaurant"];
+
 /** "Vandaag" / "Morgen" / a Dutch weekday+date, for grouping the ride list by day. */
 function rideDayLabel(date: Date): string {
   const key = toDateKey(date);
@@ -93,6 +96,8 @@ export function TransportPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showTimeline, setShowTimeline] = useState(false);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
   const { data: rides, isLoading } = useRides();
   const { data: users } = useUsers();
   const { data: events = [] } = useCalendar();
@@ -186,44 +191,25 @@ export function TransportPage() {
   );
 
   return (
-    <div className="space-y-5">
-      {/* Direction tabs + timeline toggle */}
-      <div className="flex gap-2">
-        <div className="flex flex-1 gap-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800 p-1">
-          {(["Inbound", "Outbound", "Restaurant"] as const).map((d) => (
-            <button
-              key={d}
-              onClick={() => { setTab(d); setShowTimeline(false); }}
-              className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-semibold transition-all duration-200 ${tab === d && !showTimeline
-                ? "bg-white text-slate-900 shadow-card dark:bg-slate-700 dark:text-slate-100"
-                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                }`}
-            >
-              {d === "Inbound" && <ArrowRight size={13} className={tab === d && !showTimeline ? "text-sky-500" : ""} />}
-              {d === "Outbound" && <ArrowLeft size={13} className={tab === d && !showTimeline ? "text-sky-500" : ""} />}
-              {d === "Restaurant" && <Utensils size={13} className={tab === d && !showTimeline ? "text-amber-500" : ""} />}
-              {d === "Inbound" ? "Heen" : d === "Outbound" ? "Terug" : "Restaurant"}
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={() => setShowTimeline((v) => !v)}
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-all ${showTimeline
-            ? "bg-sky-500 text-white shadow-card"
-            : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:text-slate-400"
-            }`}
-          title="Tijdlijn"
-        >
-          <CalendarClock size={16} />
-        </button>
-      </div>
-
-      {/* Add button */}
-      <Button variant="secondary" className="w-full" onClick={openCreate}>
-        <Plus size={16} />
-        {tab === "Restaurant" ? "Route toevoegen" : "Rit toevoegen"}
-      </Button>
-
+    <div
+      className="space-y-5 pb-36 min-h-[65vh]"
+      onTouchStart={(e) => {
+        touchStartX.current = e.touches[0].clientX;
+        touchStartY.current = e.touches[0].clientY;
+      }}
+      onTouchEnd={(e) => {
+        if (touchStartX.current === null || touchStartY.current === null) return;
+        const dx = e.changedTouches[0].clientX - touchStartX.current;
+        const dy = e.changedTouches[0].clientY - touchStartY.current;
+        touchStartX.current = null;
+        touchStartY.current = null;
+        if (showTimeline) return;
+        if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+        const currentIndex = TAB_ORDER.indexOf(tab);
+        if (dx < 0 && currentIndex < TAB_ORDER.length - 1) setTab(TAB_ORDER[currentIndex + 1]);
+        if (dx > 0 && currentIndex > 0) setTab(TAB_ORDER[currentIndex - 1]);
+      }}
+    >
       {/* Timeline view */}
       {showTimeline && (
         <RideTimeline rides={rides ?? []} />
@@ -323,6 +309,45 @@ export function TransportPage() {
           )}
         </>
       ))}
+
+      {/* Direction tabs + timeline toggle + add button */}
+      <StickyActionBar>
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <div className="flex flex-1 gap-1.5 rounded-2xl bg-white dark:bg-slate-800 shadow-lg p-1">
+              {TAB_ORDER.map((d) => (
+                <button
+                  key={d}
+                  onClick={() => { setTab(d); setShowTimeline(false); }}
+                  className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-semibold transition-all duration-200 ${tab === d && !showTimeline
+                    ? "bg-slate-900 text-white dark:bg-slate-700 dark:text-slate-100"
+                    : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    }`}
+                >
+                  {d === "Inbound" && <ArrowRight size={13} className={tab === d && !showTimeline ? "text-sky-400" : ""} />}
+                  {d === "Outbound" && <ArrowLeft size={13} className={tab === d && !showTimeline ? "text-sky-400" : ""} />}
+                  {d === "Restaurant" && <Utensils size={13} className={tab === d && !showTimeline ? "text-amber-400" : ""} />}
+                  {d === "Inbound" ? "Heen" : d === "Outbound" ? "Terug" : "Restaurant"}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowTimeline((v) => !v)}
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-lg transition-all ${showTimeline
+                ? "bg-sky-500 text-white"
+                : "bg-white text-slate-500 hover:text-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                }`}
+              title="Tijdlijn"
+            >
+              <CalendarClock size={16} />
+            </button>
+          </div>
+          <Button className="w-full shadow-lg" onClick={openCreate}>
+            <Plus size={16} />
+            {tab === "Restaurant" ? "Route toevoegen" : "Rit toevoegen"}
+          </Button>
+        </div>
+      </StickyActionBar>
 
       {/* Create drawer */}
       <Drawer
