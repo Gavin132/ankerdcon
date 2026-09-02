@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   live_location_ping   TEXT,
   aliases              TEXT[]      NOT NULL DEFAULT '{}',
   badge_ids            UUID[]      NOT NULL DEFAULT '{}',
+  notification_categories TEXT[]  NOT NULL DEFAULT '{}',
   is_admin             BOOLEAN              DEFAULT false,
   is_active            BOOLEAN     NOT NULL DEFAULT true,
   is_first_login       BOOLEAN     NOT NULL DEFAULT true,
@@ -96,8 +97,10 @@ CREATE TABLE IF NOT EXISTS calendar (
   date                 TEXT        NOT NULL,
   event_group_id       TEXT,
   is_hotel             BOOLEAN     NOT NULL DEFAULT false,
+  hotel_location       TEXT,
   participants         TEXT[]      NOT NULL DEFAULT '{}',
   reminders_sent       TEXT[]      NOT NULL DEFAULT '{}',
+  ticket_reminders_sent TEXT[]     NOT NULL DEFAULT '{}',
   description          TEXT,
   location             TEXT,
   website              TEXT,
@@ -133,12 +136,27 @@ CREATE TABLE IF NOT EXISTS event_groups (
 );
 
 
+-- ── announcements ─────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS announcements (
+  id             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  message        TEXT        NOT NULL,
+  severity       TEXT        NOT NULL DEFAULT 'info',
+  active         BOOLEAN     NOT NULL DEFAULT true,
+  dismissible    BOOLEAN     NOT NULL DEFAULT true,
+  notify_discord BOOLEAN     NOT NULL DEFAULT false,
+  created_by     TEXT,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+
 -- ── grants (service_role) ─────────────────────────────────────────────────────
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles     TO service_role;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.rides        TO service_role;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.meals        TO service_role;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.payments     TO service_role;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.calendar     TO service_role;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.badges       TO service_role;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.event_groups TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles      TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.rides         TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.meals         TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.payments      TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.calendar      TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.badges        TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.event_groups  TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.announcements TO service_role;

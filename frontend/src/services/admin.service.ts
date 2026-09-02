@@ -4,6 +4,7 @@ import type {
   AdminStats,
   CalendarEvent,
   CreateRideRequest,
+  ExpenseShare,
   Meal,
   Ride,
   User,
@@ -60,6 +61,16 @@ export async function bulkDeleteAdminUsers(userIds: string[]): Promise<void> {
 
 export async function bulkDeactivateAdminUsers(userIds: string[]): Promise<void> {
   await apiClient.post(apiRoutes.admin.users.bulkDeactivate, { user_ids: userIds });
+}
+
+export interface ImpersonateResponse {
+  access_token: string;
+  name: string;
+}
+
+export async function impersonateAdminUser(id: string): Promise<ImpersonateResponse> {
+  const { data } = await apiClient.post<ImpersonateResponse>(apiRoutes.admin.users.impersonate(id));
+  return data;
 }
 
 // ── Rides ─────────────────────────────────────────────────────────────────────
@@ -161,6 +172,7 @@ export interface AdminCreateEventPayload {
   date: string;
   event_group_id?: string;
   is_hotel?: boolean;
+  hotel_location?: string;
   image_url?: string;
   description?: string;
   location?: string;
@@ -184,6 +196,7 @@ export interface AdminUpdateEventPayload {
   event_name?: string;
   date?: string;
   is_hotel?: boolean;
+  hotel_location?: string;
   image_url?: string;
   description?: string;
   location?: string;
@@ -303,4 +316,18 @@ export async function deleteAdminEventGroup(id: string): Promise<void> {
 
 export async function bulkDeleteAdminEventGroups(groupIds: string[]): Promise<void> {
   await apiClient.post(apiRoutes.admin.eventGroups.bulkDelete, { group_ids: groupIds });
+}
+
+// ── Expenses ──────────────────────────────────────────────────────────────────
+
+export async function updateAdminExpense(id: string, linkedEventId: string | null): Promise<void> {
+  await apiClient.put(apiRoutes.admin.expenses.byId(id), { linked_event_id: linkedEventId });
+}
+
+export async function deleteAdminExpense(id: string): Promise<void> {
+  await apiClient.delete(apiRoutes.admin.expenses.byId(id));
+}
+
+export async function setAdminShareStatus(shareId: string, status: ExpenseShare["status"]): Promise<void> {
+  await apiClient.put(apiRoutes.admin.expenseShares.byId(shareId), { status });
 }

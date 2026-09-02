@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, Bell, BellOff, Plus, Smartphone, X } from "lucide-react";
+import { AlertTriangle, Plus, Smartphone, X } from "lucide-react";
 import { validatePhoneNumber } from "../../utils/validation";
 import { ColorSwatch } from "./ColorSwatch";
 import { NAME_COLORS, BANNER_COLORS } from "./constants";
@@ -129,7 +129,7 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
             Aliassen
           </label>
           <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">
-            Bijnamen waaronder andere deelnemers jou kennen (max. 10).
+            Bijnamen waaronder andere leden jou kennen (max. 10). Dit maakt het zoeken naar jou makkelijker voor andere leden. Je kunt dit later altijd aanpassen in je profiel.
           </p>
           <div className="flex gap-2">
             <input
@@ -169,41 +169,6 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
               ))}
             </div>
           )}
-        </div>
-
-        {/* Discord DM toggle */}
-        <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${state.allowDm ? "bg-sky-500/10" : "bg-slate-100 dark:bg-slate-800"}`}>
-                {state.allowDm
-                  ? <Bell size={16} className="text-sky-500" />
-                  : <BellOff size={16} className="text-slate-400" />
-                }
-              </div>
-              <div>
-                <p className="text-sm font-bold text-slate-900 dark:text-white">Discord notificaties</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-                  Ontvang een DM bij accountwijzigingen
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={state.allowDm}
-              onClick={() => onChange({ allowDm: !state.allowDm })}
-              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
-                state.allowDm ? "bg-sky-500" : "bg-slate-200 dark:bg-slate-700"
-              }`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
-                  state.allowDm ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </button>
-          </div>
         </div>
       </div>
     </div>

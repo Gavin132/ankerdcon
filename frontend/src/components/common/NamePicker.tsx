@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { Search, X, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { UserAvatar } from "./UserAvatar";
@@ -13,6 +14,9 @@ export function NamePicker(props: NamePickerProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuRect, setMenuRect] = useState<{ top: number; left: number; width: number } | null>(null);
   const { data: users = [] } = useUsers();
 
   const isMulti = props.multiple === true;
@@ -40,6 +44,7 @@ export function NamePicker(props: NamePickerProps) {
 
     function onOutside(e: PointerEvent) {
       if (containerRef.current?.contains(e.target as Node)) return;
+      if (menuRef.current?.contains(e.target as Node)) return;
       setOpen(false);
       setQuery("");
     }
@@ -52,12 +57,33 @@ export function NamePicker(props: NamePickerProps) {
   function handleBlur() {
     if (isMulti) return;
     setTimeout(() => {
-      if (!containerRef.current?.contains(document.activeElement)) {
+      const active = document.activeElement;
+      if (!containerRef.current?.contains(active) && !menuRef.current?.contains(active)) {
         setOpen(false);
         setQuery("");
       }
     }, 150);
   }
+
+  // ── Options list: rendered in a fixed-position portal so it can't be
+  // clipped by a scrolling/overflow-hidden ancestor (e.g. a Drawer or Modal
+  // body) and always sits above them regardless of stacking context. ──────
+  const showMenu = open && query.trim().length > 0;
+
+  useLayoutEffect(() => {
+    if (!showMenu) return;
+    function updatePosition() {
+      const rect = wrapperRef.current?.getBoundingClientRect();
+      if (rect) setMenuRect({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+    }
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [showMenu]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -149,7 +175,7 @@ export function NamePicker(props: NamePickerProps) {
       )}
 
       {/* ── Search input ─────────────────────────────────────────────────── */}
-      <div className="relative">
+      <div ref={wrapperRef} className="relative">
         <Search
           size={13}
           className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -171,10 +197,15 @@ export function NamePicker(props: NamePickerProps) {
           onBlur={handleBlur}
           autoComplete="off"
         />
+      </div>
 
-      {/* ── Options list ─────────────────────────────────────────────────── */}
-      {open && query.trim() && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-[220px] overflow-y-auto overscroll-contain rounded-xl border border-slate-100 dark:border-slate-700 divide-y divide-slate-50 dark:divide-slate-800 bg-white dark:bg-slate-900 shadow-lg">
+      {/* ── Options list — portaled so it escapes any clipping/scrolling ancestor ── */}
+      {showMenu && menuRect && createPortal(
+        <div
+          ref={menuRef}
+          style={{ position: "fixed", top: menuRect.top, left: menuRect.left, width: menuRect.width }}
+          className="z-[300] max-h-[220px] overflow-y-auto overscroll-contain rounded-xl border border-slate-100 dark:border-slate-700 divide-y divide-slate-50 dark:divide-slate-800 bg-white dark:bg-slate-900 shadow-lg"
+        >
           {filtered.length === 0 ? (
             <p className="px-4 py-4 text-center text-xs text-slate-400">
               Geen resultaten voor &ldquo;{query}&rdquo;
@@ -230,9 +261,9 @@ export function NamePicker(props: NamePickerProps) {
               );
             })
           )}
-        </div>
+        </div>,
+        document.body,
       )}
-      </div>
     </div>
   );
 }

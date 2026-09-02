@@ -55,14 +55,16 @@ def update_preferences(
     current_user: str = Depends(get_current_user),
 ) -> None:
     updates = {k: v for k, v in {
-        "color":           body.color,
-        "font":            body.font,
-        "bio":             body.bio,
-        "banner_color":    body.banner_color,
-        "banner_position": body.banner_position,
-        "pronouns":        body.pronouns,
-        "phone_number":    body.phone_number,
-        "aliases":         body.aliases,
+        "color":                   body.color,
+        "font":                    body.font,
+        "bio":                     body.bio,
+        "banner_color":            body.banner_color,
+        "banner_position":         body.banner_position,
+        "pronouns":                body.pronouns,
+        "phone_number":            body.phone_number,
+        "aliases":                 body.aliases,
+        "allow_dm":                body.allow_dm,
+        "notification_categories": body.notification_categories,
     }.items() if v is not None}
 
     if not updates:
@@ -168,6 +170,8 @@ def complete_onboarding(
         updates["banner_color"] = body.banner_color
     if body.aliases is not None:
         updates["aliases"] = body.aliases
+    if body.notification_categories is not None:
+        updates["notification_categories"] = body.notification_categories
 
     try:
         supabase.table(Tables.PROFILES).update(updates).eq("name", current_user).execute()

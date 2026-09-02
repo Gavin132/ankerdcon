@@ -1,10 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { RouterProvider } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AnimatePresence } from "framer-motion";
 import { router } from "./router";
 import { ToastContainer } from "./components/common/Toast";
 import { SplashScreen } from "./components/splash/SplashScreen";
+import { ErrorBoundary } from "./components/common/ErrorBoundary";
+import { TimeTravelWidget } from "./components/common/TimeTravelWidget";
+import { ImpersonationBanner } from "./components/common/ImpersonationBanner";
 import { useThemeStore } from "./store/theme.store";
 import { useSplash } from "./hooks/useSplash";
 
@@ -31,10 +34,21 @@ const queryClient = new QueryClient({
   },
 });
 
+// Matches Header.tsx's actual background: bg-white in light, slate-900 in dark.
+const THEME_COLOR_LIGHT = "#ffffff";
+const THEME_COLOR_DARK = "#0f172a";
+
 function ThemeSync() {
   const isDark = useThemeStore((s) => s.isDark);
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
+
+    // Keep the Android status bar / browser toolbar color in sync with the
+    // navbar. This tracks the app's actual active theme (including a manual
+    // toggle), not just OS preference, so a `media` attribute alone wouldn't
+    // be enough — it has to be updated at runtime.
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", isDark ? THEME_COLOR_DARK : THEME_COLOR_LIGHT);
   }, [isDark]);
   return null;
 }
@@ -48,6 +62,16 @@ function AuthSync() {
   const setInitialized  = useAuthStore((s) => s.setInitialized);
 
   useEffect(() => {
+    // While impersonating, the store already has a minted token (restored
+    // from sessionStorage at module init) and the real Supabase session is
+    // still alive in the background — don't let it clobber the impersonated
+    // one. Impersonation only starts/stops via a hard reload, so this flag
+    // is stable for the lifetime of this effect.
+    if (useAuthStore.getState().impersonating) {
+      setInitialized();
+      return;
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         setAccessToken(session.access_token);
@@ -63,6 +87,35 @@ function AuthSync() {
 
     return () => subscription.unsubscribe();
   }, [setAccessToken, setInitialized]);
+
+  return null;
+}
+
+// On Android, an installed app backgrounded for a while can have its renderer
+// frozen or discarded by the OS; resuming sometimes leaves the page in a dead
+// state (blank/gray, no re-render) that nothing short of force-closing recovers
+// from. Forcing a real reload after a long hidden period reproduces exactly
+// what that force-close does, automatically.
+const STALE_HIDDEN_MS = 5 * 60_000;
+
+function StaleResumeGuard() {
+  const hiddenAt = useRef<number | null>(null);
+
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.hidden) {
+        hiddenAt.current = Date.now();
+        return;
+      }
+      if (hiddenAt.current !== null && Date.now() - hiddenAt.current > STALE_HIDDEN_MS) {
+        window.location.reload();
+      }
+      hiddenAt.current = null;
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
 
   return null;
 }
@@ -103,15 +156,26 @@ function AppBackdrop() {
   );
 }
 
+function TimeTravelGate() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  if (!isAuthenticated) return null;
+  return <TimeTravelWidget />;
+}
+
 export function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeSync />
-      <AuthSync /> {/* <- Dropped it right here! */}
-      <AppBackdrop />
-      <RouterProvider router={router} />
-      <ToastContainer />
-      <SplashController />
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeSync />
+        <AuthSync /> {/* <- Dropped it right here! */}
+        <StaleResumeGuard />
+        <AppBackdrop />
+        <ImpersonationBanner />
+        <RouterProvider router={router} />
+        <ToastContainer />
+        <SplashController />
+        <TimeTravelGate />
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

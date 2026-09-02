@@ -8,4 +8,5 @@ export interface ProfileState {
   bannerColor: string;
   allowDm: boolean;
   aliases: string[];
+  notificationCategories: string[];
 }

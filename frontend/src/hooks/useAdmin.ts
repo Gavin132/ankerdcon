@@ -38,6 +38,10 @@ import {
   updateAdminUser,
   adminUpdateHotelRoom,
   adminDeleteHotelRoom,
+  updateAdminExpense,
+  deleteAdminExpense,
+  setAdminShareStatus,
+  impersonateAdminUser,
   type AdminCreateEventPayload,
   type AdminCreateMealPayload,
   type AdminCreateUserPayload,
@@ -47,7 +51,7 @@ import {
   type AdminUpdateRidePayload,
   type AdminUpdateUserPayload,
 } from "../services/admin.service";
-import type { CalendarEvent, CreateRideRequest } from "../types";
+import type { CalendarEvent, CreateRideRequest, ExpenseShare } from "../types";
 
 // ── Queries ───────────────────────────────────────────────────────────────────
 
@@ -125,6 +129,12 @@ export function useAdminBulkDeactivateUsers() {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.adminUsers });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.users });
     },
+  });
+}
+
+export function useAdminImpersonateUser() {
+  return useMutation({
+    mutationFn: (id: string) => impersonateAdminUser(id),
   });
 }
 
@@ -431,5 +441,33 @@ export function useAdminBulkDeleteEventGroups() {
   return useMutation({
     mutationFn: (groupIds: string[]) => bulkDeleteAdminEventGroups(groupIds),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEventGroups }),
+  });
+}
+
+// ── Expense mutations ─────────────────────────────────────────────────────────
+
+export function useAdminUpdateExpense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, linkedEventId }: { id: string; linkedEventId: string | null }) =>
+      updateAdminExpense(id, linkedEventId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.expenses }),
+  });
+}
+
+export function useAdminDeleteExpense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteAdminExpense(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.expenses }),
+  });
+}
+
+export function useAdminSetShareStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ shareId, status }: { shareId: string; status: ExpenseShare["status"] }) =>
+      setAdminShareStatus(shareId, status),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.expenses }),
   });
 }

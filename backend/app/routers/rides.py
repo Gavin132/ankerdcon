@@ -17,6 +17,8 @@ from app.models.rides import (
 )
 from app.routes import RideRoutes
 import app.services.discord_service as discord_service
+from app.services import notification_service
+from app import messages as M
 from app.core.database import supabase
 
 logger = get_logger(__name__)
@@ -86,6 +88,16 @@ def create_ride(
         end_location=body.end_location or None,
         action_required=body.action_required,
     )
+    background_tasks.add_task(
+        notification_service.broadcast_category_dm,
+        settings.discord_bot_token,
+        notification_service.NotificationCategory.RIDE_CREATED,
+        M.DM_RIDE_CREATED.format(
+            driver=body.driver,
+            departure_time=body.departure_time,
+            start_location=body.start_location,
+        ),
+    )
     return ride
 
 
@@ -143,7 +155,9 @@ def add_restaurant_driver(ride_id: str, body: RestaurantDriverRequest, _: str = 
     drivers = row.get("restaurant_drivers") or []
 
     if not any(d.get("name") == body.user_name for d in drivers):
-        drivers.append({"name": body.user_name, "seats": body.seats, "passengers": []})
+        # The driver counts as one of their own seats, so a new car with 5
+        # seats starts at 1/5 rather than 0/5.
+        drivers.append({"name": body.user_name, "seats": body.seats, "passengers": [body.user_name]})
         try:
             supabase.table(Tables.RIDES).update({"restaurant_drivers": drivers}).eq("id", ride_id).execute()
         except Exception as e:

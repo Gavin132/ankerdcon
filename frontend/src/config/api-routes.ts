@@ -70,6 +70,15 @@ export const apiRoutes = {
     base: "/api/badges/",
   },
 
+  // ── Announcements ────────────────────────────────────────────────
+  announcements: {
+    active: "/api/announcements/active",
+  },
+
+  changelog: {
+    base: "/api/changelog/",
+  },
+
   // ── Admin ─────────────────────────────────────────────────────────
   admin: {
     stats: "/api/admin/stats",
@@ -79,6 +88,7 @@ export const apiRoutes = {
       byId:             (id: string) => `/api/admin/users/${id}`,
       bulkDelete:       "/api/admin/users/bulk-delete",
       bulkDeactivate:   "/api/admin/users/bulk-deactivate",
+      impersonate:      (id: string) => `/api/admin/impersonate/${id}`,
     },
 
     rides: {
@@ -121,6 +131,24 @@ export const apiRoutes = {
       reorder:      "/api/admin/badges/reorder",
       assignUser:   (userId: string, badgeId: string) => `/api/admin/users/${userId}/badges/${badgeId}`,
       unassignUser: (userId: string, badgeId: string) => `/api/admin/users/${userId}/badges/${badgeId}`,
+    },
+
+    announcements: {
+      base: "/api/admin/announcements",
+      byId: (id: string) => `/api/admin/announcements/${id}`,
+    },
+
+    changelog: {
+      base: "/api/admin/changelog",
+      byId: (id: string) => `/api/admin/changelog/${id}`,
+    },
+
+    expenses: {
+      byId: (id: string) => `/api/admin/expenses/${id}`,
+    },
+
+    expenseShares: {
+      byId: (id: string) => `/api/admin/expense-shares/${id}`,
     },
   },
 } as const;

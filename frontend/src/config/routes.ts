@@ -12,6 +12,8 @@ export const routes = {
   more:      "/more",
   members:   "/members",
   acties:    "/acties",
+  notifications: "/notifications",
+  changelog: "/changelog",
 
   profile: {
     /** Build the URL for a user profile page. Name is URI-encoded automatically. */
@@ -53,6 +55,9 @@ export const routes = {
     eventGroups:       "/admin/event-groups",
     badges:            "/admin/badges",
     betalingen:        "/admin/betalingen",
+    announcements:     "/admin/announcements",
+    changelog:         "/admin/changelog",
     previewOnboarding: "/admin/preview/onboarding",
+    impersonate:       "/admin/impersonate",
   },
 } as const;

@@ -16,6 +16,8 @@ import { RideDetailPage } from "./pages/RideDetailPage";
 import { EventCosplaysPage } from "./pages/EventCosplaysPage";
 import { MembersPage } from "./pages/MembersPage";
 import { ActiesPage } from "./pages/ActiesPage";
+import { NotificationSettingsPage } from "./pages/NotificationSettingsPage";
+import { ChangelogPage } from "./pages/ChangelogPage";
 import { HotelRoomsPage } from "./pages/HotelRoomsPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
@@ -29,6 +31,9 @@ import { AdminEventsPage } from "./pages/admin/AdminEventsPage";
 import { AdminBadgesPage } from "./pages/admin/AdminBadgesPage";
 import { AdminEventGroupsPage } from "./pages/admin/AdminEventGroupsPage";
 import { AdminBetalingenPage } from "./pages/admin/AdminBetalingenPage";
+import { AdminAnnouncementsPage } from "./pages/admin/AdminAnnouncementsPage";
+import { AdminChangelogPage } from "./pages/admin/AdminChangelogPage";
+import { AdminImpersonatePage } from "./pages/admin/AdminImpersonatePage";
 
 export const router = createBrowserRouter([
   {
@@ -91,6 +96,14 @@ export const router = createBrowserRouter([
         element: <ActiesPage />,
       },
       {
+        path: routes.notifications,
+        element: <NotificationSettingsPage />,
+      },
+      {
+        path: routes.changelog,
+        element: <ChangelogPage />,
+      },
+      {
         path: routes.eventHotel.pattern,
         element: <HotelRoomsPage />,
       },
@@ -116,6 +129,9 @@ export const router = createBrowserRouter([
               { path: routes.admin.eventGroups, element: <AdminEventGroupsPage /> },
               { path: routes.admin.badges,      element: <AdminBadgesPage /> },
               { path: routes.admin.betalingen,  element: <AdminBetalingenPage /> },
+              { path: routes.admin.announcements, element: <AdminAnnouncementsPage /> },
+              { path: routes.admin.changelog, element: <AdminChangelogPage /> },
+              { path: routes.admin.impersonate, element: <AdminImpersonatePage /> },
             ],
           },
         ],

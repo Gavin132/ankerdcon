@@ -52,6 +52,7 @@ export interface CompleteOnboardingPayload {
   banner_color?: string;
   allow_dm: boolean;
   aliases?: string[];
+  notification_categories?: string[];
 }
 
 export async function completeOnboarding(payload: CompleteOnboardingPayload): Promise<void> {

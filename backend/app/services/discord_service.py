@@ -104,6 +104,29 @@ def _links(*pairs: tuple[str, str | None]) -> str:
 # ── Public notification functions ──────────────────────────────────────────────
 
 
+_ANNOUNCEMENT_STYLE: dict[str, tuple[str, int]] = {
+    "info":    ("ℹ️", _COLORS["info"]),
+    "warning": ("⚠️", 0xF59E0B),  # amber-500
+    "urgent":  ("🚨", 0xE11D48),  # rose-600
+}
+
+
+async def notify_announcement(webhook_url: str, app_url: str, *, message: str, severity: str) -> None:
+    """Posted when an admin creates an announcement with 'ook naar Discord sturen' checked."""
+    icon, color = _ANNOUNCEMENT_STYLE.get(severity, _ANNOUNCEMENT_STYLE["info"])
+    app_link = _app_link(app_url)
+    await _post(
+        webhook_url,
+        _payload(
+            _embed(
+                title=f"{icon} Aankondiging",
+                color=color,
+                description=f"{message}\n\n[{M.LINK_APP_CALENDAR}]({app_link})" if app_link else message,
+            )
+        ),
+    )
+
+
 async def notify_event_created(
     webhook_url: str,
     app_url: str,
@@ -235,6 +258,32 @@ async def notify_ticket_sale_opening(
                 color=_COLORS["ticket"],
                 description=action_links or None,
                 fields=fields,
+                url=ticket_url,
+            )
+        ),
+    )
+
+
+async def notify_ticket_sale_open(
+    webhook_url: str,
+    app_url: str,
+    *,
+    event_name: str,
+    ticket_url: str | None = None,
+) -> None:
+    """Posted the moment ticket sales actually open (as opposed to
+    notify_ticket_sale_opening, which fires at event-creation time)."""
+    action_links = _links(
+        ("🎟️ Koop tickets", ticket_url),
+        ("📱 Bekijk in de app", _app_link(app_url, "/calendar")),
+    )
+    await _post(
+        webhook_url,
+        _payload(
+            _embed(
+                title="🎉  Kaartverkoop is nu geopend!",
+                color=_COLORS["ticket"],
+                description=f"**{event_name}**" + (f"\n\n{action_links}" if action_links else ""),
                 url=ticket_url,
             )
         ),

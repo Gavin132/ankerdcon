@@ -6,7 +6,7 @@ import {
   CalendarDays,
 } from "lucide-react";
 
-export const TOTAL_STEPS = 3; // features(1) + profile(2) + done(3); dialogue is step 0
+export const TOTAL_STEPS = 4; // features(1) + profile(2) + notifications(3) + done(4); dialogue is step 0
 
 export const NAME_COLORS = [
   "#0ea5e9", "#8b5cf6", "#10b981", "#f43f5e",

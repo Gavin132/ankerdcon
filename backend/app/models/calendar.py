@@ -8,6 +8,7 @@ class CalendarEvent(BaseModel):
     event_name: str
     date: str
     is_hotel: bool = False
+    hotel_location: str | None = None
     participants: list[str] = []
     # Info fields
     image_url: str | None = None

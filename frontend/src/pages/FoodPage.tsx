@@ -16,6 +16,7 @@ import { useCalendar } from "../hooks/useCalendar";
 import { useUsers } from "../hooks/useUsers";
 import { toast } from "../store/toast.store";
 import { listContainer } from "../utils/motion";
+import { useTimeStore, getNow } from "../store/time.store";
 
 const createSchema = z.object({
   meal_name: z.string().min(1, "Verplicht"),
@@ -33,7 +34,7 @@ type CreateForm = z.infer<typeof createSchema>;
 
 function isMealPast(time: string): boolean {
   const d = new Date(time.replace(" ", "T"));
-  return !isNaN(d.getTime()) && d < new Date();
+  return !isNaN(d.getTime()) && d < getNow();
 }
 
 const SL = "block text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5";
@@ -41,6 +42,7 @@ const SF = "space-y-4 rounded-2xl border border-slate-100 dark:border-white/[0.0
 const ST = "text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3";
 
 export function FoodPage() {
+  useTimeStore((s) => s.override); // re-render when the time-travel override changes
   const [createOpen, setCreateOpen] = useState(false);
   const [showPastMeals, setShowPastMeals] = useState(false);
   const [showDetails, setShowDetails] = useState(false);

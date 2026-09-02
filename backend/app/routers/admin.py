@@ -1,4 +1,7 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from jose import jwt as jose_jwt
 
 from app.config import Settings, get_settings
 from app.constants import Tables
@@ -8,7 +11,9 @@ from app.models.admin import (
     AdminCreateCalendarEventRequest,
     AdminCreateMealRequest,
     AdminCreateUserRequest,
+    AdminSetShareStatusRequest,
     AdminUpdateCalendarEventRequest,
+    AdminUpdateExpenseRequest,
     AdminUpdateHotelRoomRequest,
     AdminUpdateMealRequest,
     AdminUpdateRideRequest,
@@ -27,6 +32,8 @@ from app.models.admin import (
     SetEventGroupRequest,
     UpdateEventGroupRequest,
 )
+from app.models.announcement import Announcement, CreateAnnouncementRequest, UpdateAnnouncementRequest
+from app.models.changelog import ChangelogEntry, CreateChangelogEntryRequest, UpdateChangelogEntryRequest
 from app.models.badge import Badge, BadgeOrderItem, CreateBadgeRequest, UpdateBadgeRequest
 from app.models.calendar import CalendarEvent, HotelRoom
 from app.routers.calendar import _hotel_group_key
@@ -35,7 +42,8 @@ from app.models.rides import CreateRideRequest, Ride
 from app.models.user import User
 from app.routes import AdminRoutes
 import app.services.discord_service as discord_service
-from app.services import discord_bot
+from app.services import discord_bot, notification_service
+from app import messages as M
 from app.core.database import supabase
 
 logger = get_logger(__name__)
@@ -109,6 +117,56 @@ def admin_create_user(body: AdminCreateUserRequest, _: str = Depends(get_admin_u
     if not resp.data:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kon gebruiker niet aanmaken.")
     return resp.data[0]
+
+
+@router.post(AdminRoutes.IMPERSONATE)
+def admin_impersonate_user(
+    user_id: str,
+    _: str = Depends(get_admin_user),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    """Mints a short-lived session token for another profile, so an admin can
+    browse and act in the app as that user. Mainly for guest ("dummy")
+    profiles that have no Discord account and can't log in themselves, but
+    works for any profile."""
+    if not settings.supabase_jwt_secret:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Inloggen als gebruiker is niet geconfigureerd op deze server.",
+        )
+    try:
+        resp = (
+            supabase.table(Tables.PROFILES)
+            .select("id, name, discord_id, discord_username, is_active")
+            .eq("id", user_id)
+            .execute()
+        )
+    except Exception as e:
+        logger.error("Failed to fetch profile %s for impersonation: %s", user_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
+
+    profile = resp.data[0]
+    if profile.get("is_active") is False:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Deze gebruiker is gedeactiveerd.")
+
+    now = int(datetime.now(timezone.utc).timestamp())
+    payload = {
+        "sub": profile["id"],
+        "aud": "authenticated",
+        "role": "authenticated",
+        "iat": now,
+        "exp": now + 2 * 60 * 60,  # 2 hours
+        "user_metadata": {
+            "full_name": profile["name"],
+            "name": profile["name"],
+            "preferred_username": profile.get("discord_username") or profile["name"],
+            "provider_id": profile.get("discord_id"),
+        },
+    }
+    token = jose_jwt.encode(payload, settings.supabase_jwt_secret, algorithm="HS256")
+    return {"access_token": token, "name": profile["name"]}
 
 
 def _remove_user_from_all_events(name: str) -> None:
@@ -258,7 +316,7 @@ def admin_create_ride(
     settings: Settings = Depends(get_settings),
 ) -> Ride:
     new_ride = body.model_dump()
-    new_ride["passengers"] = []
+    new_ride["passengers"] = [body.driver] if body.vehicle_type == "Car" else []
     new_ride["restaurant_drivers"] = []
     try:
         resp = supabase.table(Tables.RIDES).insert(new_ride).execute()
@@ -414,6 +472,74 @@ def admin_remove_meal_participant(
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
+# ── Expenses ───────────────────────────────────────────────────────────────────
+
+@router.put(AdminRoutes.EXPENSE_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
+def admin_update_expense(
+    expense_id: str,
+    body: AdminUpdateExpenseRequest,
+    _: str = Depends(get_admin_user),
+) -> None:
+    updates = _build_updates(body, nullable_fields={"linked_event_id"})
+    if not updates:
+        return
+    try:
+        resp = supabase.table(Tables.EXPENSES).update(updates).eq("id", expense_id).execute()
+    except Exception as e:
+        logger.error("Failed to update expense %s: %s", expense_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Uitgave niet gevonden.")
+
+
+@router.delete(AdminRoutes.EXPENSE_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
+def admin_delete_expense(expense_id: str, _: str = Depends(get_admin_user)) -> None:
+    """Admin override of the user-facing delete — bypasses the "only the payer
+    can delete" restriction so admins can clean up any transaction."""
+    try:
+        supabase.table(Tables.EXPENSES).delete().eq("id", expense_id).execute()
+    except Exception as e:
+        logger.error("Failed to delete expense %s: %s", expense_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+
+@router.put(AdminRoutes.EXPENSE_SHARE_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
+def admin_set_share_status(
+    share_id: str,
+    body: AdminSetShareStatusRequest,
+    _: str = Depends(get_admin_user),
+) -> None:
+    """Lets an admin directly set a share's status (including reverting it),
+    unlike the user-facing claim/confirm endpoints which only move forward
+    one step at a time."""
+    now = datetime.now(timezone.utc).isoformat()
+    updates: dict = {"status": body.status}
+    if body.status == "pending":
+        updates["claimed_at"] = None
+        updates["confirmed_at"] = None
+    elif body.status == "claimed":
+        updates["claimed_at"] = now
+        updates["confirmed_at"] = None
+    elif body.status == "confirmed":
+        updates["confirmed_at"] = now
+        try:
+            existing = (
+                supabase.table(Tables.EXPENSE_SHARES).select("claimed_at").eq("id", share_id).single().execute()
+            )
+            if existing.data and not existing.data.get("claimed_at"):
+                updates["claimed_at"] = now
+        except Exception:
+            pass  # non-fatal — worst case claimed_at stays as it was
+
+    try:
+        resp = supabase.table(Tables.EXPENSE_SHARES).update(updates).eq("id", share_id).execute()
+    except Exception as e:
+        logger.error("Failed to set status for expense share %s: %s", share_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Aandeel niet gevonden.")
+
+
 # ── Calendar Events ────────────────────────────────────────────────────────────
 
 @router.get(AdminRoutes.CALENDAR, response_model=list[CalendarEvent])
@@ -494,6 +620,16 @@ def admin_create_event(
         parking_info=body.parking_info,
         what_to_bring=body.what_to_bring,
         special_instructions=body.special_instructions,
+    )
+    background_tasks.add_task(
+        notification_service.broadcast_category_dm,
+        settings.discord_bot_token,
+        notification_service.NotificationCategory.EVENT_CREATED,
+        M.DM_EVENT_CREATED.format(
+            event_name=body.event_name,
+            date=body.date,
+            location_line=f"\n📍 {body.location}" if body.location else "",
+        ),
     )
     if body.ticket_sale_start:
         background_tasks.add_task(
@@ -835,4 +971,134 @@ def admin_unassign_badge(user_id: str, badge_id: str, _: str = Depends(get_admin
         supabase.table(Tables.PROFILES).update({"badge_ids": [b for b in ids if b != badge_id]}).eq("id", user_id).execute()
     except Exception as e:
         logger.error("Failed to unassign badge %s from user %s: %s", badge_id, user_id, e)
+
+
+# ── Announcements ────────────────────────────────────────────────────────────
+
+@router.get(AdminRoutes.ANNOUNCEMENTS, response_model=list[Announcement])
+def admin_list_announcements(_: str = Depends(get_admin_user)) -> list[Announcement]:
+    try:
+        return (
+            supabase.table(Tables.ANNOUNCEMENTS)
+            .select("*")
+            .order("created_at", desc=True)
+            .execute()
+            .data
+        )
+    except Exception as e:
+        logger.error("Failed to list announcements: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+
+@router.post(AdminRoutes.ANNOUNCEMENTS, response_model=Announcement, status_code=status.HTTP_201_CREATED)
+def admin_create_announcement(
+    body: CreateAnnouncementRequest,
+    background_tasks: BackgroundTasks,
+    admin: str = Depends(get_admin_user),
+    settings: Settings = Depends(get_settings),
+) -> Announcement:
+    try:
+        resp = (
+            supabase.table(Tables.ANNOUNCEMENTS)
+            .insert({**body.model_dump(), "created_by": admin})
+            .execute()
+        )
+    except Exception as e:
+        logger.error("Failed to create announcement: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+    if body.notify_discord:
+        background_tasks.add_task(
+            discord_service.notify_announcement,
+            settings.discord_webhook_url,
+            settings.app_url,
+            message=body.message,
+            severity=body.severity,
+        )
+
+    return resp.data[0]
+
+
+@router.put(AdminRoutes.ANNOUNCEMENT_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
+def admin_update_announcement(
+    announcement_id: str, body: UpdateAnnouncementRequest, _: str = Depends(get_admin_user)
+) -> None:
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not updates:
+        return
+    try:
+        resp = supabase.table(Tables.ANNOUNCEMENTS).update(updates).eq("id", announcement_id).execute()
+    except Exception as e:
+        logger.error("Failed to update announcement %s: %s", announcement_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Aankondiging niet gevonden.")
+
+
+@router.delete(AdminRoutes.ANNOUNCEMENT_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
+def admin_delete_announcement(announcement_id: str, _: str = Depends(get_admin_user)) -> None:
+    try:
+        supabase.table(Tables.ANNOUNCEMENTS).delete().eq("id", announcement_id).execute()
+    except Exception as e:
+        logger.error("Failed to delete announcement %s: %s", announcement_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+
+# ── Changelog ──────────────────────────────────────────────────────────────────
+
+@router.get(AdminRoutes.CHANGELOG, response_model=list[ChangelogEntry])
+def admin_list_changelog_entries(_: str = Depends(get_admin_user)) -> list[ChangelogEntry]:
+    try:
+        return (
+            supabase.table(Tables.CHANGELOG_ENTRIES)
+            .select("*")
+            .order("released_at", desc=True)
+            .order("created_at", desc=True)
+            .execute()
+            .data
+        )
+    except Exception as e:
+        logger.error("Failed to list changelog entries: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+
+@router.post(AdminRoutes.CHANGELOG, response_model=ChangelogEntry, status_code=status.HTTP_201_CREATED)
+def admin_create_changelog_entry(
+    body: CreateChangelogEntryRequest,
+    admin: str = Depends(get_admin_user),
+) -> ChangelogEntry:
+    try:
+        resp = (
+            supabase.table(Tables.CHANGELOG_ENTRIES)
+            .insert({**body.model_dump(), "created_by": admin})
+            .execute()
+        )
+    except Exception as e:
+        logger.error("Failed to create changelog entry: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    return resp.data[0]
+
+
+@router.put(AdminRoutes.CHANGELOG_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
+def admin_update_changelog_entry(
+    entry_id: str, body: UpdateChangelogEntryRequest, _: str = Depends(get_admin_user)
+) -> None:
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not updates:
+        return
+    try:
+        resp = supabase.table(Tables.CHANGELOG_ENTRIES).update(updates).eq("id", entry_id).execute()
+    except Exception as e:
+        logger.error("Failed to update changelog entry %s: %s", entry_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Wijzigingslog-item niet gevonden.")
+
+
+@router.delete(AdminRoutes.CHANGELOG_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
+def admin_delete_changelog_entry(entry_id: str, _: str = Depends(get_admin_user)) -> None:
+    try:
+        supabase.table(Tables.CHANGELOG_ENTRIES).delete().eq("id", entry_id).execute()
+    except Exception as e:
+        logger.error("Failed to delete changelog entry %s: %s", entry_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)

@@ -21,6 +21,7 @@ class Expense(BaseModel):
     description: str
     date: str
     created_at: Optional[str] = None
+    linked_event_id: Optional[str] = None
     shares: list[ExpenseShare] = []
 
 

@@ -4,6 +4,61 @@ All notable changes to Ankerd Con are documented here.
 
 ---
 
+## [1.5.0] - 2026-09-02
+
+### Added
+- Quick-ride tiles on the Hub for offering or finding a ride to/from the
+  hotel, and a matching pair for restaurant outings — both open a minimal
+  popup instead of the full ride form.
+- Restaurant rides can now be organized and joined directly from the linked
+  meal's detail page, without needing to open the separate ride page.
+- Notification category preferences added as a new onboarding step, all off
+  by default.
+- Admin-only time-travel widget for testing time-dependent features without
+  waiting for the real clock.
+- Admin-only "log in as user" tool, mainly for guest profiles that have no
+  Discord account of their own.
+- Admins can now change a payment's status directly, delete a transaction,
+  and link a payment to a specific event; settled payments automatically
+  move into a collapsible history section grouped by event.
+- New changelog system: a dismissible "what's new" banner plus a full
+  history page (**Meer → Wat is nieuw**), with an admin page to manage
+  entries.
+
+### Changed
+- New main event card, including a carousel for upcoming events.
+- The driver now always counts as one of their own car's seats (a new ride
+  starts at 1/5, not 0/5), and every "how many seats" prompt defaults to 5.
+- Ride and restaurant cards in the Transport tab are now clickable anywhere
+  on the card, not just via a small "Details" link, with a clearer hover
+  effect.
+- Ride locations that match a linked event's venue or hotel address now show
+  as "the event name" / "Hotel" instead of a raw street address; a
+  destination that hasn't been filled in yet is shown as a muted placeholder
+  instead of looking like real data.
+- Restaurant ride prompts now say "Route toevoegen" instead of "Rit
+  toevoegen", since nothing is a real ride until someone signs up as driver.
+- Clarified that adding a guest user (no Discord ID) is fully supported from
+  the admin panel — reworded the help text so it's no longer implied every
+  account will eventually log in.
+- Linking a meal to a restaurant route now only links it — it no longer
+  silently overwrites the departure time, location, and parking info you
+  already typed in. The location field is now always labeled "Vertrekpunt"
+  so it's clear it's the starting point, not the restaurant's address.
+
+### Fixed
+- Meals created through the admin panel stored only a bare time-of-day
+  value instead of a full date and time, which silently broke every
+  time-dependent meal feature (including the new quick-ride tiles).
+- A quick-created ride showed the creator's account UUID instead of their
+  display name.
+- Rides created through the admin panel never added the driver as a
+  passenger, unlike the same action taken by a regular user.
+- A restaurant ride's destination showed the literal word "Bestemming"
+  instead of an address, since there was no destination field for that
+  direction — it now shows the linked meal's actual location.
+
+
 ## [1.4.0] - 2026-06-25
 
 ### Features

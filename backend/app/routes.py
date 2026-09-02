@@ -74,6 +74,16 @@ class BadgeRoutes:
     LIST = "/"
 
 
+class AnnouncementRoutes:
+    PREFIX = "/announcements"
+    ACTIVE = "/active"
+
+
+class ChangelogRoutes:
+    PREFIX = "/changelog"
+    LIST = "/"
+
+
 class AdminRoutes:
     PREFIX = "/admin"
     STATS = "/stats"
@@ -84,6 +94,7 @@ class AdminRoutes:
     USERS_BULK_DELETE = "/users/bulk-delete"
     USERS_BULK_DEACTIVATE = "/users/bulk-deactivate"
     USER_BADGE = "/users/{user_id}/badges/{badge_id}"
+    IMPERSONATE = "/impersonate/{user_id}"
 
     # Rides
     RIDES = "/rides"
@@ -119,3 +130,15 @@ class AdminRoutes:
     BADGES = "/badges"
     BADGES_REORDER = "/badges/reorder"
     BADGE_DETAIL = "/badges/{badge_id}"
+
+    # Announcements
+    ANNOUNCEMENTS = "/announcements"
+    ANNOUNCEMENT_DETAIL = "/announcements/{announcement_id}"
+
+    # Changelog
+    CHANGELOG = "/changelog"
+    CHANGELOG_DETAIL = "/changelog/{entry_id}"
+
+    # Expenses
+    EXPENSE_DETAIL = "/expenses/{expense_id}"
+    EXPENSE_SHARE_DETAIL = "/expense-shares/{share_id}"

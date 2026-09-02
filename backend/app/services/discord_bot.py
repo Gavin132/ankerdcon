@@ -64,6 +64,11 @@ def _send_dm(bot_token: str, discord_id: str, content: str) -> None:
 
 # ── Public send functions ──────────────────────────────────────────────────────
 
+def send_dm(bot_token: str, discord_id: str, content: str) -> None:
+    """Generic DM send — used by notification_service for per-category broadcasts."""
+    _send_dm(bot_token, discord_id, content)
+
+
 def send_welcome_dm(bot_token: str, discord_id: str, name: str) -> None:
     """Sent once on the user's first login after being whitelisted."""
     _send_dm(bot_token, discord_id, messages.DM_WELCOME.format(name=name))

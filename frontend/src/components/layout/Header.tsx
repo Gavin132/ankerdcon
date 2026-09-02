@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { routes } from "../../config/routes";
 import { motion, AnimatePresence } from "framer-motion";
-import { Moon, Sun, User, LogOut, Shield } from "lucide-react";
+import { Moon, Sun, User, LogOut, Shield, Bell } from "lucide-react";
 import { APP_NAME } from "../../constants";
 import { useThemeStore } from "../../store/theme.store";
 import { useAuthStore } from "../../store/auth.store";
@@ -199,6 +199,17 @@ export function Header() {
                     >
                       <User size={14} className="shrink-0 text-slate-400 dark:text-white/35" />
                       Mijn profiel
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        navigate(routes.notifications);
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] font-medium text-slate-700 dark:text-white/70 hover:bg-slate-50 dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white transition-colors"
+                    >
+                      <Bell size={14} className="shrink-0 text-slate-400 dark:text-white/35" />
+                      Notificaties
                     </button>
 
                     {me?.is_admin && (

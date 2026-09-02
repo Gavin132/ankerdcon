@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Car,
@@ -8,10 +8,10 @@ import {
   ParkingCircle,
   Plus,
   ChevronDown,
+  ChevronRight,
   Timer,
   AlertCircle,
   CalendarPlus,
-  ArrowRight,
   Link2,
   UserMinus,
   Users,
@@ -24,7 +24,7 @@ import { useClaimSeat, useLeaveSeat } from "../../hooks/useRides";
 import { useUsers } from "../../hooks/useUsers";
 import { useCalendar } from "../../hooks/useCalendar";
 import { formatDate, formatTime } from "../../utils/format";
-import { getRideStatus, formatCountdown } from "../../utils/rides";
+import { getRideStatus, formatCountdown, rideLocationLabel } from "../../utils/rides";
 import { exportRideToIcs } from "../../utils/ics";
 import { toast } from "../../store/toast.store";
 import { listItem } from "../../utils/motion";
@@ -37,6 +37,7 @@ interface RideCardProps {
 }
 
 export function RideCard({ ride, userNames }: RideCardProps) {
+  const navigate = useNavigate();
   const [passengersOpen, setPassengersOpen] = useState(false);
   const [claimOpen, setClaimOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
@@ -73,8 +74,9 @@ export function RideCard({ ride, userNames }: RideCardProps) {
   const isPast    = status === "past";
   const canAct    = !isRecent && !isPast;
 
-  const fromLabel = ride.start_location;
-  const toLabel   = ride.end_location || (isInbound ? "Con locatie" : "Bestemming");
+  const fromLabel = rideLocationLabel(ride.start_location, linkedEvent, "Onbekende locatie");
+  const toLabel   = rideLocationLabel(ride.end_location, linkedEvent, isInbound ? "Con locatie" : "Bestemming");
+  const toIsPlaceholder = !ride.end_location;
 
   const resolvedPassengers = new Set(
     ride.passengers.map((p) => {
@@ -149,8 +151,17 @@ export function RideCard({ ride, userNames }: RideCardProps) {
 
   return (
     <>
-      <motion.div variants={listItem} className={isRecent || isPast ? "opacity-60" : ""}>
-        <div className="card-surface rounded-2xl overflow-hidden">
+      <motion.div
+        variants={listItem}
+        whileHover={{ y: -2 }}
+        whileTap={{ scale: 0.985 }}
+        transition={{ duration: 0.12 }}
+        className={isRecent || isPast ? "opacity-60" : ""}
+      >
+        <div
+          onClick={() => navigate(routes.ride.view(ride.id))}
+          className="card-surface rounded-2xl overflow-hidden cursor-pointer transition-shadow hover:shadow-md"
+        >
 
           {/* Status-colored accent line */}
           <div className={`h-[3px] bg-gradient-to-r ${accentGradient}`} />
@@ -208,7 +219,9 @@ export function RideCard({ ride, userNames }: RideCardProps) {
                 </div>
                 <div className="mt-3.5">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Naar</p>
-                  <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{toLabel}</p>
+                  <p className={`text-sm truncate ${toIsPlaceholder ? "italic font-medium text-slate-400 dark:text-slate-500" : "font-bold text-slate-900 dark:text-white"}`}>
+                    {toLabel}
+                  </p>
                 </div>
               </div>
 
@@ -261,7 +274,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
           <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-t border-slate-200 dark:border-slate-700">
             <button
               type="button"
-              onClick={() => ride.passengers.length > 0 && setPassengersOpen((v) => !v)}
+              onClick={(e) => { e.stopPropagation(); if (ride.passengers.length > 0) setPassengersOpen((v) => !v); }}
               className={`flex items-center gap-2 min-w-0 ${ride.passengers.length > 0 ? "hover:opacity-75 transition-opacity" : "cursor-default"}`}
             >
               {ride.passengers.length > 0 ? (
@@ -294,6 +307,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
             {linkedEvent && (
               <Link
                 to={routes.event.view(linkedEvent.id)}
+                onClick={(e) => e.stopPropagation()}
                 className="shrink-0 flex items-center gap-1.5 rounded-lg border border-sky-200 dark:border-sky-700/60 bg-sky-50 dark:bg-sky-900/30 px-2 py-1 text-[11px] font-semibold text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition-colors max-w-[140px]"
               >
                 <Link2 size={10} className="shrink-0" />
@@ -338,18 +352,12 @@ export function RideCard({ ride, userNames }: RideCardProps) {
 
           {/* ── Action bar ──────────────────────────────────────── */}
           <div className="flex items-center gap-1.5 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-black/20 px-3 py-2">
-            <Link
-              to={routes.ride.view(ride.id)}
-              className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-            >
-              Details
-              <ArrowRight size={11} />
-            </Link>
+            <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0" />
 
             <div className="flex-1" />
 
             <button
-              onClick={() => exportRideToIcs(ride)}
+              onClick={(e) => { e.stopPropagation(); exportRideToIcs(ride); }}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-sky-500 transition-colors"
               title="Exporteer naar kalender"
             >
@@ -358,7 +366,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
 
             {canAct && ride.passengers.length > 0 && (
               <button
-                onClick={() => { setLeaveNames([]); setLeaveOpen(true); }}
+                onClick={(e) => { e.stopPropagation(); setLeaveNames([]); setLeaveOpen(true); }}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-rose-500 transition-colors"
                 title="Uitstappen"
               >
@@ -367,7 +375,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
             )}
 
             {canAct && !ride.is_full && (
-              <Button size="sm" variant="primary" onClick={() => { setClaimNames([]); setClaimOpen(true); }}>
+              <Button size="sm" variant="primary" onClick={(e) => { e.stopPropagation(); setClaimNames([]); setClaimOpen(true); }}>
                 <Plus size={13} />
                 Stap in
               </Button>

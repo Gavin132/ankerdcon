@@ -71,7 +71,7 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
       open={open}
       onClose={onClose}
       title="Nieuwe gebruiker"
-      subtitle="Voeg een gebruiker toe aan de allowlist"
+      subtitle="Voeg een gebruiker toe, met of zonder eigen account"
       footer={
         <DrawerFooter
           onCancel={onClose}
@@ -94,7 +94,7 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
             <p className="text-xs text-rose-400 mt-1">{errors.name.message}</p>
           )}
           <p className="mt-1.5 text-[11px] text-slate-500">
-            Moet exact overeenkomen met de Discord weergavenaam zodat de gebruiker ingelogd kan worden.
+            Zichtbaar voor de hele groep bij ritten, maaltijden, kamers en uitgaven.
           </p>
         </div>
 
@@ -106,7 +106,7 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
             placeholder="123456789012345678"
           />
           <p className="mt-1.5 text-[11px] text-slate-500">
-            Geef het Discord-gebruikers-ID op voor een stabielere koppeling na naamwijzigingen.
+            Alleen nodig als deze persoon zelf met Discord gaat inloggen — voor een stabielere koppeling na naamwijzigingen. Laat dit leeg voor iemand zonder eigen account (bijv. iemand die niet mee wil doen aan de app); je kunt ze dan nog steeds overal aan toevoegen.
           </p>
         </div>
 

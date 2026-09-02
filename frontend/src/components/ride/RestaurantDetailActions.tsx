@@ -45,7 +45,7 @@ export function RestaurantDetailActions({
   const [assignPersonOpen, setAssignPersonOpen] = useState(false);
   const [joinTarget, setJoinTarget] = useState("");
   const [driverName, setDriverName] = useState("");
-  const [driverSeats, setDriverSeats] = useState(4);
+  const [driverSeats, setDriverSeats] = useState(5);
   const [joinNames, setJoinNames] = useState<string[]>([]);
   const [leaveName, setLeaveName] = useState("");
   const [assignPersonName, setAssignPersonName] = useState("");
@@ -398,7 +398,7 @@ export function RestaurantDetailActions({
           />
           <div>
             <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
-              Beschikbare plaatsen
+              Totaal aantal plekken in je auto
             </label>
             <div className="flex gap-2">
               {[2, 3, 4, 5, 6, 7].map((n) => (
@@ -412,6 +412,7 @@ export function RestaurantDetailActions({
                 </button>
               ))}
             </div>
+            <p className="mt-1.5 text-xs text-slate-400">Incl. de chauffeur</p>
           </div>
           <Button
             onClick={handleAddDriver}

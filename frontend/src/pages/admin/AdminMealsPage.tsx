@@ -161,8 +161,8 @@ function MealDrawer({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className={L}>Tijdstip *</label>
-            <input {...register("time")} type="time" className={F} />
+            <label className={L}>Datum & tijd *</label>
+            <input {...register("time")} type="datetime-local" className={F} />
             {errors.time && (
               <p className="text-xs text-rose-400 mt-1">
                 {errors.time.message}

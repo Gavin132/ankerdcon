@@ -86,7 +86,7 @@ function RideDrawer({
       departure_time: isEdit ? ride.departure_time.replace(" ", "T").slice(0, 16) : "",
       start_location: isEdit ? ride.start_location : "",
       end_location: isEdit ? (ride.end_location ?? "") : "",
-      total_seats: isEdit ? ride.total_seats : 4,
+      total_seats: isEdit ? ride.total_seats : 5,
       parking_info: isEdit ? ride.parking_info : "",
       car_available: isEdit ? ride.car_available : false,
       action_required: isEdit ? ride.action_required : false,
@@ -237,8 +237,9 @@ function RideDrawer({
 
         {!isPT && (
           <div>
-            <label className={L}>Totaal zitplaatsen</label>
+            <label className={L}>Totaal aantal plekken in de auto</label>
             <input {...register("total_seats")} type="number" min={0} className={F} />
+            <p className="mt-1.5 text-[11px] text-slate-500">Incl. de chauffeur</p>
           </div>
         )}
 

@@ -1,6 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { routes } from "../config/routes";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
+import { UnsavedChangesModal } from "../components/common/UnsavedChangesModal";
 import {
   ArrowLeft,
   Check,
@@ -14,6 +16,8 @@ import {
   Smartphone,
   Plus,
   X,
+  Bell,
+  ChevronRight,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "../components/common/Button";
@@ -349,6 +353,10 @@ export function ProfilePage() {
   const [draftBannerPosition, setDraftBannerPosition] = useState<string>("");
   const [aliasInput, setAliasInput] = useState("");
   const [initialized, setInitialized] = useState(false);
+  const [savedSnapshot, setSavedSnapshot] = useState<{
+    name: string; bio: string; color: string; banner: string; font: FontOption;
+    pronouns: string; phone: string; aliases: string[]; bannerPosition: string;
+  } | null>(null);
   const [avatarImgErr, setAvatarImgErr] = useState(false);
   const [cropFile, setCropFile] = useState<File | null>(null);
   const [cropOpen, setCropOpen] = useState(false);
@@ -361,31 +369,47 @@ export function ProfilePage() {
 
   useEffect(() => {
     if (user && !initialized) {
-      setDraftName(user.name);
-      setDraftBio(user.bio || "");
-      setDraftColor(user.color || "");
-      setDraftBanner(user.banner_color || "");
-      setDraftFont((user.font as FontOption) || "default");
-      setDraftPronouns(user.pronouns || "");
-      setDraftPhone(user.phone_number || "");
-      setDraftAliases(user.aliases ?? []);
-      setDraftBannerPosition(user.banner_position || "");
+      const name = user.name;
+      const bio = user.bio || "";
+      const color = user.color || "";
+      const banner = user.banner_color || "";
+      const font = (user.font as FontOption) || "default";
+      const pronouns = user.pronouns || "";
+      const phone = user.phone_number || "";
+      const aliases = user.aliases ?? [];
+      const bannerPosition = user.banner_position || "";
+
+      setDraftName(name);
+      setDraftBio(bio);
+      setDraftColor(color);
+      setDraftBanner(banner);
+      setDraftFont(font);
+      setDraftPronouns(pronouns);
+      setDraftPhone(phone);
+      setDraftAliases(aliases);
+      setDraftBannerPosition(bannerPosition);
+      setSavedSnapshot({ name, bio, color, banner, font, pronouns, phone, aliases, bannerPosition });
       setInitialized(true);
     }
   }, [user, initialized]);
 
-  async function onRename() {
-    const trimmed = draftName.trim();
-    if (!trimmed || nameError || trimmed === user?.name) return;
-    try {
-      await renameMutation.mutateAsync({ new_name: trimmed });
-      toast("success", `Naam gewijzigd naar "${trimmed}".`);
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } } })
-        ?.response?.data?.detail;
-      toast("error", msg ?? "Kon naam niet wijzigen.");
-    }
-  }
+  const isDirty = useMemo(() => {
+    if (!isOwn || !savedSnapshot) return false;
+    return (
+      draftName.trim() !== savedSnapshot.name ||
+      draftBio !== savedSnapshot.bio ||
+      draftColor !== savedSnapshot.color ||
+      draftBanner !== savedSnapshot.banner ||
+      draftFont !== savedSnapshot.font ||
+      draftPronouns !== savedSnapshot.pronouns ||
+      draftPhone !== savedSnapshot.phone ||
+      draftBannerPosition !== savedSnapshot.bannerPosition ||
+      draftAliases.length !== savedSnapshot.aliases.length ||
+      draftAliases.some((a, i) => a !== savedSnapshot.aliases[i])
+    );
+  }, [isOwn, savedSnapshot, draftName, draftBio, draftColor, draftBanner, draftFont, draftPronouns, draftPhone, draftBannerPosition, draftAliases]);
+
+  const blocker = useUnsavedChangesGuard(isDirty);
 
   function onBannerFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -425,7 +449,16 @@ export function ProfilePage() {
       toast("error", phoneError);
       return;
     }
+    const trimmedName = draftName.trim();
+    const nameChanged = trimmedName !== user?.name;
+    if (nameChanged && (!trimmedName || nameError)) {
+      toast("error", nameError ?? "Ongeldige weergavenaam.");
+      return;
+    }
     try {
+      if (nameChanged) {
+        await renameMutation.mutateAsync({ new_name: trimmedName });
+      }
       await updateMutation.mutateAsync({
         bio: draftBio,
         color: draftColor || "",
@@ -436,9 +469,22 @@ export function ProfilePage() {
         phone_number: draftPhone || "",
         aliases: draftAliases,
       });
+      setSavedSnapshot({
+        name: trimmedName,
+        bio: draftBio,
+        color: draftColor,
+        banner: draftBanner,
+        font: draftFont,
+        pronouns: draftPronouns,
+        phone: draftPhone,
+        aliases: draftAliases,
+        bannerPosition: draftBannerPosition,
+      });
       toast("success", "Profiel opgeslagen!");
-    } catch {
-      toast("error", "Kon profiel niet opslaan.");
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })
+        ?.response?.data?.detail;
+      toast("error", msg ?? "Kon profiel niet opslaan.");
     }
   }
 
@@ -638,7 +684,7 @@ export function ProfilePage() {
                 <Button
                   size="sm"
                   onClick={onSave}
-                  loading={updateMutation.isPending}
+                  loading={updateMutation.isPending || renameMutation.isPending}
                 >
                   <Save size={13} />
                   Opslaan
@@ -673,27 +719,13 @@ export function ProfilePage() {
                     label="Weergavenaam"
                     hint="Historische data blijft onder de oude naam staan."
                   >
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        maxLength={30}
-                        className={`input-field flex-1 ${nameError && draftName !== user.name ? "border-rose-400 dark:border-rose-700" : ""}`}
-                        value={draftName}
-                        onChange={(e) => setDraftName(e.target.value)}
-                      />
-                      <button
-                        onClick={onRename}
-                        disabled={
-                          !draftName.trim() ||
-                          !!nameError ||
-                          draftName.trim() === user.name ||
-                          renameMutation.isPending
-                        }
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500 text-white disabled:opacity-30 hover:bg-sky-600 transition-colors"
-                      >
-                        <Check size={15} />
-                      </button>
-                    </div>
+                    <input
+                      type="text"
+                      maxLength={30}
+                      className={`input-field ${nameError && draftName !== user.name ? "border-rose-400 dark:border-rose-700" : ""}`}
+                      value={draftName}
+                      onChange={(e) => setDraftName(e.target.value)}
+                    />
                     {nameError && draftName !== user.name && (
                       <p className="mt-1.5 flex items-center gap-1 text-xs text-rose-500">
                         <AlertTriangle size={11} /> {nameError}
@@ -900,6 +932,30 @@ export function ProfilePage() {
                 </div>
               </Card>
             </motion.div>
+
+            {/* ── Notificaties ───────────────────────────────────────── */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: 0.15 }}
+            >
+              <button
+                type="button"
+                onClick={() => navigate(routes.notifications)}
+                className="w-full flex items-center gap-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm px-5 py-4 text-left hover:border-sky-200 dark:hover:border-sky-500/30 transition-colors"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-500/10">
+                  <Bell size={17} className="text-sky-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">Notificaties</p>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Kies welke Discord DM's je van de bot ontvangt
+                  </p>
+                </div>
+                <ChevronRight size={15} className="text-slate-300 dark:text-slate-600 shrink-0" />
+              </button>
+            </motion.div>
           </div>
 
           {/* RIGHT column */}
@@ -1056,6 +1112,8 @@ export function ProfilePage() {
         onClose={() => setCropOpen(false)}
         onConfirm={onBannerConfirm}
       />
+
+      <UnsavedChangesModal blocker={blocker} />
     </div>
   );
 }

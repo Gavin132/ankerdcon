@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { CheckCircle2, Clock, AlertCircle, Euro, ChevronDown, ChevronUp, X } from "lucide-react";
-import { useExpenses, useConfirmShare } from "../../hooks/useExpenses";
+import { CheckCircle2, Clock, AlertCircle, ChevronDown, ChevronUp, X, Trash2, History } from "lucide-react";
+import { useExpenses } from "../../hooks/useExpenses";
+import { useAdminUpdateExpense, useAdminDeleteExpense, useAdminSetShareStatus } from "../../hooks/useAdmin";
+import { useCalendar } from "../../hooks/useCalendar";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { toast } from "../../store/toast.store";
-import type { Expense, ExpenseShare } from "../../types";
+import type { CalendarEvent, Expense, ExpenseShare } from "../../types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -29,6 +31,54 @@ function StatusBadge({ status }: { status: ExpenseShare["status"] }) {
   return <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${pill}`}>{label}</span>;
 }
 
+// ── Admin status picker — lets an admin set a share to any status directly ────
+
+const STATUS_ORDER: ExpenseShare["status"][] = ["pending", "claimed", "confirmed"];
+
+function AdminStatusPicker({
+  status,
+  onSetStatus,
+}: {
+  status: ExpenseShare["status"];
+  onSetStatus: (status: ExpenseShare["status"]) => void;
+}) {
+  const [pending, setPending] = useState(false);
+
+  async function handleClick(next: ExpenseShare["status"]) {
+    if (next === status || pending) return;
+    setPending(true);
+    try {
+      await onSetStatus(next);
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-1 shrink-0">
+      {STATUS_ORDER.map((s) => {
+        const active = s === status;
+        return (
+          <button
+            key={s}
+            type="button"
+            disabled={pending}
+            onClick={() => handleClick(s)}
+            title={STATUS_CONFIG[s].label}
+            className={`h-6 w-6 rounded-full border flex items-center justify-center text-[9px] font-bold transition-colors disabled:opacity-50 ${
+              active
+                ? STATUS_CONFIG[s].pill
+                : "border-white/[0.1] text-slate-500 hover:text-slate-300 hover:border-white/[0.2]"
+            }`}
+          >
+            {s === "pending" ? "O" : s === "claimed" ? "G" : "B"}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Share row inside expanded person ─────────────────────────────────────────
 
 interface ShareWithMeta extends ExpenseShare {
@@ -39,22 +89,11 @@ interface ShareWithMeta extends ExpenseShare {
 
 function PersonShareRow({
   share,
-  onConfirm,
+  onSetStatus,
 }: {
   share: ShareWithMeta;
-  onConfirm: (id: string) => void;
+  onSetStatus: (id: string, status: ExpenseShare["status"]) => void;
 }) {
-  const [confirming, setConfirming] = useState(false);
-
-  async function handleConfirm() {
-    setConfirming(true);
-    try {
-      await onConfirm(share.id);
-    } finally {
-      setConfirming(false);
-    }
-  }
-
   return (
     <div className="flex items-center gap-3 py-2.5 px-4 border-t border-white/[0.05]">
       <div className="flex-1 min-w-0">
@@ -62,16 +101,7 @@ function PersonShareRow({
       </div>
       <span className="text-sm font-medium text-white shrink-0">{fmt(share.amount, share.currency)}</span>
       <StatusBadge status={share.status} />
-      {share.status === "claimed" && (
-        <button
-          onClick={handleConfirm}
-          disabled={confirming}
-          className="flex items-center gap-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-xs font-medium text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors shrink-0"
-        >
-          <CheckCircle2 size={11} />
-          {confirming ? "…" : "Bevestigen"}
-        </button>
-      )}
+      <AdminStatusPicker status={share.status} onSetStatus={(s) => onSetStatus(share.id, s)} />
     </div>
   );
 }
@@ -90,12 +120,12 @@ function PersonCard({
   person,
   statusFilter,
   expenseFilter,
-  onConfirm,
+  onSetStatus,
 }: {
   person: PersonBalance;
   statusFilter: "all" | ExpenseShare["status"];
   expenseFilter: string | null;
-  onConfirm: (id: string) => void;
+  onSetStatus: (id: string, status: ExpenseShare["status"]) => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -149,7 +179,7 @@ function PersonCard({
       {open && (
         <div className="bg-white/[0.02]">
           {visibleShares.map((share) => (
-            <PersonShareRow key={share.id} share={share} onConfirm={onConfirm} />
+            <PersonShareRow key={share.id} share={share} onSetStatus={onSetStatus} />
           ))}
         </div>
       )}
@@ -161,12 +191,26 @@ function PersonCard({
 
 function ExpenseCard({
   expense,
+  events,
   statusFilter,
-  onConfirmShare,
+  onSetStatus,
+  onSetEvent,
+  confirmDeleteId,
+  onRequestDelete,
+  onCancelDelete,
+  onConfirmDelete,
+  isDeleting,
 }: {
   expense: Expense;
+  events: CalendarEvent[];
   statusFilter: "all" | ExpenseShare["status"];
-  onConfirmShare: (id: string) => void;
+  onSetStatus: (id: string, status: ExpenseShare["status"]) => void;
+  onSetEvent: (expenseId: string, eventId: string | null) => void;
+  confirmDeleteId: string | null;
+  onRequestDelete: (id: string) => void;
+  onCancelDelete: () => void;
+  onConfirmDelete: (id: string) => void;
+  isDeleting: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -179,6 +223,7 @@ function ExpenseCard({
   const pendingCount   = expense.shares.filter((s) => s.status === "pending").length;
   const claimedCount   = expense.shares.filter((s) => s.status === "claimed").length;
   const confirmedCount = expense.shares.filter((s) => s.status === "confirmed").length;
+  const linkedEvent = expense.linked_event_id ? events.find((e) => e.id === expense.linked_event_id) : undefined;
 
   return (
     <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] overflow-hidden">
@@ -190,6 +235,11 @@ function ExpenseCard({
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-medium text-white truncate">{expense.description}</span>
             <span className="text-xs text-slate-500">{formatDate(expense.date)}</span>
+            {linkedEvent && (
+              <span className="rounded-full bg-violet-500/15 border border-violet-500/25 px-2 py-0.5 text-[10px] font-semibold text-violet-300 truncate max-w-[160px]">
+                {linkedEvent.event_name}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-xs text-slate-400">
@@ -222,6 +272,53 @@ function ExpenseCard({
 
       {open && (
         <div className="border-t border-white/[0.07] bg-white/[0.02]">
+          {/* Admin controls: event link + delete */}
+          <div
+            className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-white/[0.05]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 shrink-0">Evenement</span>
+              <select
+                value={expense.linked_event_id ?? ""}
+                onChange={(e) => onSetEvent(expense.id, e.target.value || null)}
+                className="rounded-lg border border-white/[0.1] bg-white/[0.04] px-2 py-1.5 text-xs text-slate-200 max-w-[220px]"
+              >
+                <option value="">Geen evenement</option>
+                {events.map((ev) => (
+                  <option key={ev.id} value={ev.id}>{ev.event_name}</option>
+                ))}
+              </select>
+            </div>
+
+            {confirmDeleteId === expense.id ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500">Verwijderen?</span>
+                <button
+                  onClick={() => onConfirmDelete(expense.id)}
+                  disabled={isDeleting}
+                  className="rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 disabled:opacity-50 transition-colors"
+                >
+                  {isDeleting ? "…" : "Ja"}
+                </button>
+                <button
+                  onClick={onCancelDelete}
+                  className="rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-white/[0.06] text-slate-400 hover:bg-white/[0.1] transition-colors"
+                >
+                  Nee
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => onRequestDelete(expense.id)}
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors"
+              >
+                <Trash2 size={12} />
+                Verwijderen
+              </button>
+            )}
+          </div>
+
           {filteredShares.length === 0 ? (
             <p className="px-4 py-3 text-sm text-slate-500">Geen aandelen voor dit filter.</p>
           ) : (
@@ -233,7 +330,7 @@ function ExpenseCard({
                 <span className="w-24 shrink-0" />
               </div>
               {filteredShares.map((share) => (
-                <ShareRow key={share.id} share={share} onConfirm={onConfirmShare} />
+                <ShareRow key={share.id} share={share} onSetStatus={onSetStatus} />
               ))}
             </>
           )}
@@ -245,18 +342,7 @@ function ExpenseCard({
 
 // ── Simple share row for expense card ─────────────────────────────────────────
 
-function ShareRow({ share, onConfirm }: { share: ExpenseShare; onConfirm: (id: string) => void }) {
-  const [confirming, setConfirming] = useState(false);
-
-  async function handleConfirm() {
-    setConfirming(true);
-    try {
-      await onConfirm(share.id);
-    } finally {
-      setConfirming(false);
-    }
-  }
-
+function ShareRow({ share, onSetStatus }: { share: ExpenseShare; onSetStatus: (id: string, status: ExpenseShare["status"]) => void }) {
   return (
     <div className="flex items-center gap-3 py-2 px-4 border-t border-white/[0.05] first:border-t-0">
       <div className="flex flex-1 items-center gap-2 min-w-0">
@@ -268,16 +354,7 @@ function ShareRow({ share, onConfirm }: { share: ExpenseShare; onConfirm: (id: s
         <StatusBadge status={share.status} />
       </div>
       <div className="w-24 shrink-0 flex justify-end">
-        {share.status === "claimed" && (
-          <button
-            onClick={handleConfirm}
-            disabled={confirming}
-            className="flex items-center gap-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-xs font-medium text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
-          >
-            <CheckCircle2 size={11} />
-            {confirming ? "…" : "Bevestigen"}
-          </button>
-        )}
+        <AdminStatusPicker status={share.status} onSetStatus={(s) => onSetStatus(share.id, s)} />
       </div>
     </div>
   );
@@ -326,19 +403,47 @@ const STATUS_CHIPS: { key: StatusFilter; label: string; activeClass: string }[] 
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
+function isSettled(expense: Expense): boolean {
+  return expense.shares.length > 0 && expense.shares.every((s) => s.status === "confirmed");
+}
+
 export function AdminBetalingenPage() {
   const { data: expenses = [], isLoading } = useExpenses();
-  const confirmShare = useConfirmShare();
+  const { data: events = [] } = useCalendar();
+  const setShareStatus = useAdminSetShareStatus();
+  const updateExpense = useAdminUpdateExpense();
+  const deleteExpense = useAdminDeleteExpense();
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [expenseFilter, setExpenseFilter] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
-  async function handleConfirmShare(shareId: string) {
+  async function handleSetStatus(shareId: string, status: ExpenseShare["status"]) {
     try {
-      await confirmShare.mutateAsync(shareId);
-      toast("success", "Aandeel bevestigd.");
+      await setShareStatus.mutateAsync({ shareId, status });
+      toast("success", "Status bijgewerkt.");
     } catch {
-      toast("error", "Bevestigen mislukt.");
+      toast("error", "Bijwerken mislukt.");
+    }
+  }
+
+  async function handleSetEvent(expenseId: string, eventId: string | null) {
+    try {
+      await updateExpense.mutateAsync({ id: expenseId, linkedEventId: eventId });
+      toast("success", "Evenement bijgewerkt.");
+    } catch {
+      toast("error", "Bijwerken mislukt.");
+    }
+  }
+
+  async function handleDeleteExpense(expenseId: string) {
+    try {
+      await deleteExpense.mutateAsync(expenseId);
+      toast("success", "Uitgave verwijderd.");
+      setConfirmDeleteId(null);
+    } catch {
+      toast("error", "Verwijderen mislukt.");
     }
   }
 
@@ -352,6 +457,23 @@ export function AdminBetalingenPage() {
 
   const personData = buildPersonData(expenses);
   const selectedExpense = expenseFilter ? expenses.find((e) => e.id === expenseFilter) : null;
+
+  const scopedExpenses = expenses.filter((e) => !expenseFilter || e.id === expenseFilter);
+  const openExpenses = scopedExpenses.filter((e) => !isSettled(e));
+  const historyExpenses = scopedExpenses.filter(isSettled);
+
+  const historyGroups: { label: string; expenses: Expense[] }[] = (() => {
+    const map = new Map<string, Expense[]>();
+    for (const expense of historyExpenses) {
+      const label = expense.linked_event_id
+        ? (events.find((ev) => ev.id === expense.linked_event_id)?.event_name ?? "Onbekend evenement")
+        : "Geen evenement";
+      const group = map.get(label);
+      if (group) group.push(expense);
+      else map.set(label, [expense]);
+    }
+    return Array.from(map.entries()).map(([label, exps]) => ({ label, expenses: exps }));
+  })();
 
   return (
     <div className="p-5 lg:p-8 max-w-6xl mx-auto space-y-6">
@@ -456,16 +578,16 @@ export function AdminBetalingenPage() {
               person={person}
               statusFilter={statusFilter}
               expenseFilter={expenseFilter}
-              onConfirm={handleConfirmShare}
+              onSetStatus={handleSetStatus}
             />
           ))}
         </div>
       )}
 
-      {/* Expense list */}
+      {/* Open expense list */}
       <div className="space-y-2">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-          Uitgaven ({expenses.length})
+          Openstaande uitgaven ({openExpenses.length})
         </p>
 
         {isLoading && (
@@ -482,18 +604,72 @@ export function AdminBetalingenPage() {
           </div>
         )}
 
+        {!isLoading && expenses.length > 0 && openExpenses.length === 0 && (
+          <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-8 text-center text-sm text-slate-500">
+            Alles is vereffend — check de geschiedenis hieronder.
+          </div>
+        )}
+
         {!isLoading &&
-          expenses
-            .filter((e) => !expenseFilter || e.id === expenseFilter)
-            .map((expense) => (
-              <ExpenseCard
-                key={expense.id}
-                expense={expense}
-                statusFilter={statusFilter}
-                onConfirmShare={handleConfirmShare}
-              />
-            ))}
+          openExpenses.map((expense) => (
+            <ExpenseCard
+              key={expense.id}
+              expense={expense}
+              events={events}
+              statusFilter={statusFilter}
+              onSetStatus={handleSetStatus}
+              onSetEvent={handleSetEvent}
+              confirmDeleteId={confirmDeleteId}
+              onRequestDelete={setConfirmDeleteId}
+              onCancelDelete={() => setConfirmDeleteId(null)}
+              onConfirmDelete={handleDeleteExpense}
+              isDeleting={deleteExpense.isPending}
+            />
+          ))}
       </div>
+
+      {/* History — fully settled expenses, grouped per event */}
+      {!isLoading && historyExpenses.length > 0 && (
+        <div className="space-y-2">
+          <button
+            onClick={() => setHistoryOpen((v) => !v)}
+            className="flex w-full items-center justify-between rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-3 text-left hover:bg-white/[0.04] transition-colors"
+          >
+            <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
+              <History size={13} />
+              Geschiedenis ({historyExpenses.length})
+            </span>
+            {historyOpen ? <ChevronUp size={14} className="text-slate-500" /> : <ChevronDown size={14} className="text-slate-500" />}
+          </button>
+
+          {historyOpen && (
+            <div className="space-y-4">
+              {historyGroups.map((group) => (
+                <div key={group.label} className="space-y-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-400/70">
+                    {group.label}
+                  </p>
+                  {group.expenses.map((expense) => (
+                    <ExpenseCard
+                      key={expense.id}
+                      expense={expense}
+                      events={events}
+                      statusFilter={statusFilter}
+                      onSetStatus={handleSetStatus}
+                      onSetEvent={handleSetEvent}
+                      confirmDeleteId={confirmDeleteId}
+                      onRequestDelete={setConfirmDeleteId}
+                      onCancelDelete={() => setConfirmDeleteId(null)}
+                      onConfirmDelete={handleDeleteExpense}
+                      isDeleting={deleteExpense.isPending}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -9,6 +9,9 @@ import {
   Layers,
   Euro,
   FlaskConical,
+  Megaphone,
+  UserCog,
+  Sparkles,
 } from "lucide-react";
 import { routes } from "../../config/routes";
 
@@ -64,6 +67,8 @@ export const NAV_GROUPS: NavGroup[] = [
       },
       { label: "Badges",      path: routes.admin.badges,     icon: ShieldCheck },
       { label: "Betalingen",  path: routes.admin.betalingen, icon: Euro },
+      { label: "Aankondigingen", path: routes.admin.announcements, icon: Megaphone },
+      { label: "Wijzigingslog", path: routes.admin.changelog, icon: Sparkles },
     ],
   },
   {
@@ -71,6 +76,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Testen",
     items: [
       { label: "Preview: Onboarding", path: routes.admin.previewOnboarding, icon: FlaskConical },
+      { label: "Inloggen als gebruiker", path: routes.admin.impersonate, icon: UserCog },
     ],
   },
 ];
@@ -84,6 +90,9 @@ export const PAGE_TITLES: Record<string, string> = {
   [routes.admin.eventGroups]: "Evenementgroepen",
   [routes.admin.badges]:      "Badges",
   [routes.admin.betalingen]:  "Betalingen",
+  [routes.admin.announcements]: "Aankondigingen",
+  [routes.admin.impersonate]: "Inloggen als gebruiker",
+  [routes.admin.changelog]: "Wijzigingslog",
 };
 
 export const DIRECTION_COLORS: Record<string, string> = {

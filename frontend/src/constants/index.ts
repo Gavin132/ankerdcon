@@ -17,6 +17,8 @@ export const QUERY_KEYS = {
   currentUser: ["currentUser"] as const,
 
   badges: ["badges"] as const,
+  announcements: ["announcements"] as const,
+  changelog: ["changelog"] as const,
 
   // Admin
   adminStats:  ["admin", "stats"]  as const,
@@ -26,6 +28,8 @@ export const QUERY_KEYS = {
   adminEvents: ["admin", "events"] as const,
   adminBadges:       ["admin", "badges"]       as const,
   adminEventGroups:  ["admin", "event-groups"] as const,
+  adminAnnouncements: ["admin", "announcements"] as const,
+  adminChangelog: ["admin", "changelog"] as const,
 
   cosplays: ["cosplays"] as const,
   expenses: ["expenses"] as const,

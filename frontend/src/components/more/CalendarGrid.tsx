@@ -19,6 +19,7 @@ import { NamePicker } from "../common/NamePicker";
 import { UserAvatar } from "../common/UserAvatar";
 import { parseEventDate, toDateKey, todayKey } from "../../utils/date";
 import { buildGroupColorMap } from "../../utils/multiDay";
+import { useTimeStore, getNow } from "../../store/time.store";
 import { routes } from "../../config/routes";
 import type { CalendarEvent, User } from "../../types";
 import { DAY_LABELS } from "../../constants";
@@ -37,6 +38,7 @@ export function CalendarGrid({
   onLeave,
 }: CalendarGridProps) {
   const navigate = useNavigate();
+  useTimeStore((s) => s.override); // re-render when the time-travel override changes
   const [activeRsvpEvent, setActiveRsvpEvent] = useState<string | null>(null);
   const [rsvpMode, setRsvpMode] = useState<"join" | "leave">("join");
   const [rsvpNames, setRsvpNames] = useState<string[]>([]);
@@ -103,7 +105,7 @@ export function CalendarGrid({
     year: number;
     month: number;
   }>(() => {
-    const today = new Date();
+    const today = getNow();
     const keys = Object.keys(eventMap).sort();
     const futureKey = keys.find((k) => k >= toDateKey(today));
     if (futureKey) {

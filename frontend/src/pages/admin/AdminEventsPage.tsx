@@ -49,6 +49,7 @@ const eventSchema = z.object({
   date: z.string().min(1, "Datum is verplicht"),
   event_group_id: optStr,
   is_hotel: z.boolean().optional(),
+  hotel_location: optStr,
   image_url: optUrl,
   description: optStr,
   location: optStr,
@@ -117,6 +118,7 @@ function EventDrawer({
       date: isEdit ? event.date : "",
       event_group_id: isEdit ? (event.event_group_id ?? "") : "",
       is_hotel: isEdit ? event.is_hotel : false,
+      hotel_location: isEdit ? (event.hotel_location ?? "") : "",
       image_url: isEdit ? (event.image_url ?? "") : "",
       description: isEdit ? (event.description ?? "") : "",
       location: isEdit ? (event.location ?? "") : "",
@@ -136,6 +138,7 @@ function EventDrawer({
       event_name: values.event_name,
       date: values.date,
       is_hotel: values.is_hotel,
+      hotel_location: strip(values.hotel_location),
       event_group_id: strip(values.event_group_id),
       image_url: strip(values.image_url),
       description: strip(values.description),
@@ -253,6 +256,26 @@ function EventDrawer({
             <input type="checkbox" {...register("is_hotel")} className="cb" />
             <span className="text-sm text-slate-300">Hotel beschikbaar</span>
           </label>
+          {watch("is_hotel") && (
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Hotellocatie</label>
+              <Controller
+                name="hotel_location"
+                control={control}
+                render={({ field }) => (
+                  <LocationSearchInput
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    inputClassName={F}
+                    placeholder="Zoek hotelnaam of adres…"
+                  />
+                )}
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                Gebruikt voor de snelle "rit naar hotel"-knop op het hoofdscherm.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* ── Beschrijving & Locatie ────────────────────────────────── */}

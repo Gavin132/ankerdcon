@@ -10,6 +10,8 @@ import {
   CalendarPlus,
   Copy,
   Check,
+  Bell,
+  Sparkles,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useForm } from "react-hook-form";
@@ -349,6 +351,36 @@ export function MorePage() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Notifications row */}
+          <button
+            onClick={() => navigate(routes.notifications)}
+            className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-50 dark:active:bg-slate-800/50 transition-colors"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-500/10">
+              <Bell size={16} className="text-sky-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-slate-900 dark:text-white">Notificaties</p>
+              <p className="text-xs text-slate-400">Kies welke Discord DM's je ontvangt</p>
+            </div>
+            <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0" />
+          </button>
+
+          {/* Changelog row */}
+          <button
+            onClick={() => navigate(routes.changelog)}
+            className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-50 dark:active:bg-slate-800/50 transition-colors"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-500/10">
+              <Sparkles size={16} className="text-violet-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-slate-900 dark:text-white">Wat is nieuw</p>
+              <p className="text-xs text-slate-400">Recente updates en verbeteringen</p>
+            </div>
+            <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0" />
+          </button>
 
           {/* Logout row */}
           <button

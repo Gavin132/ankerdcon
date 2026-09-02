@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { UtensilsCrossed } from "lucide-react";
+import { Car, UtensilsCrossed } from "lucide-react";
 import { useMeals } from "../hooks/useMeals";
 import { useCalendar } from "../hooks/useCalendar";
+import { useRides } from "../hooks/useRides";
 import { useUsers } from "../hooks/useUsers";
 import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { LinkedEventCard } from "../components/detail/LinkedEventCard";
@@ -9,18 +11,25 @@ import { MealHero } from "../components/meal/MealHero";
 import { MealLinks } from "../components/meal/MealLinks";
 import { MealPractical } from "../components/meal/MealPractical";
 import { MealRsvpSection } from "../components/meal/MealRsvpSection";
+import { RestaurantDetailActions } from "../components/ride/RestaurantDetailActions";
+import { RestaurantQuickDriverModal } from "../components/transport/RestaurantQuickDriverModal";
 
 export function MealDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [quickRideOpen, setQuickRideOpen] = useState(false);
 
   const { data: meals = [], isLoading } = useMeals();
   const { data: events = [] } = useCalendar();
+  const { data: rides = [] } = useRides();
   const { data: users = [] } = useUsers();
 
   const meal = meals.find((m) => m.id === id);
   const linkedEvent = meal?.linked_event_id
     ? events.find((e) => e.id === meal.linked_event_id)
+    : undefined;
+  const restaurantRide = meal
+    ? rides.find((r) => r.direction === "Restaurant" && r.linked_meal_id === meal.id)
     : undefined;
 
   const userNames = users.map((u) => u.name);
@@ -56,7 +65,7 @@ export function MealDetailPage() {
       {(() => {
         const hasSidePanel = !!(meal.website || meal.menu_url || meal.location?.trim() || meal.transport_needed || meal.parking_info || meal.dietary_options || meal.extra_notes);
         return (
-          <div className="max-w-4xl mx-auto px-4 py-7">
+          <div className="max-w-4xl mx-auto px-4 py-7 space-y-5">
             <div className={`grid gap-5 items-start ${hasSidePanel ? "grid-cols-1 lg:grid-cols-3" : ""}`}>
               <div className={`${hasSidePanel ? "lg:col-span-2" : ""} space-y-5`}>
                 <MealRsvpSection meal={meal} userNames={userNames} users={users} />
@@ -69,9 +78,35 @@ export function MealDetailPage() {
                 </div>
               )}
             </div>
+
+            {/* ── Transport for this meal ─────────────────────────────────── */}
+            {restaurantRide ? (
+              <RestaurantDetailActions ride={restaurantRide} userNames={userNames} users={users} linkedMeal={meal} />
+            ) : (
+              meal.transport_needed && linkedEvent && (
+                <button
+                  type="button"
+                  onClick={() => setQuickRideOpen(true)}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 py-6 text-sm font-semibold text-slate-400 hover:border-amber-400 hover:text-amber-500 dark:hover:border-amber-500 dark:hover:text-amber-400 transition-colors"
+                >
+                  <Car size={16} />
+                  Nog geen rit georganiseerd — bied een auto aan
+                </button>
+              )
+            )}
           </div>
         );
       })()}
+
+      {linkedEvent && (
+        <RestaurantQuickDriverModal
+          open={quickRideOpen}
+          onClose={() => setQuickRideOpen(false)}
+          event={linkedEvent}
+          meal={meal}
+          existingRide={restaurantRide}
+        />
+      )}
     </div>
   );
 }

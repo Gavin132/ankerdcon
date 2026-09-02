@@ -27,6 +27,7 @@ class User(BaseModel):
     allow_dm: bool = True
     aliases: list[str] = []
     badge_ids: list[str] = []
+    notification_categories: list[str] = []
     created_at: Optional[str] = None
 
 class UpdateNameRequest(BaseModel):
@@ -57,6 +58,19 @@ class UpdatePreferencesRequest(BaseModel):
     pronouns: Optional[str] = None
     phone_number: Optional[str] = None
     aliases: Optional[list[str]] = None
+    allow_dm: Optional[bool] = None
+    notification_categories: Optional[list[str]] = None
+
+    @field_validator("notification_categories")
+    @classmethod
+    def valid_categories(cls, v: Optional[list[str]]) -> Optional[list[str]]:
+        if v is None:
+            return v
+        from app.services.notification_service import ALL_CATEGORIES
+        invalid = [c for c in v if c not in ALL_CATEGORIES]
+        if invalid:
+            raise ValueError(f"Onbekende notificatiecategorie: {', '.join(invalid)}")
+        return v
 
     @field_validator("color", "banner_color")
     @classmethod
@@ -101,6 +115,18 @@ class CompleteOnboardingRequest(BaseModel):
     banner_color: Optional[str] = None
     allow_dm: bool = True
     aliases: Optional[list[str]] = None
+    notification_categories: Optional[list[str]] = None
+
+    @field_validator("notification_categories")
+    @classmethod
+    def valid_categories(cls, v: Optional[list[str]]) -> Optional[list[str]]:
+        if v is None:
+            return v
+        from app.services.notification_service import ALL_CATEGORIES
+        invalid = set(v) - set(ALL_CATEGORIES)
+        if invalid:
+            raise ValueError(f"Onbekende notificatiecategorie(ën): {', '.join(sorted(invalid))}")
+        return v
 
     @field_validator("color", "banner_color")
     @classmethod

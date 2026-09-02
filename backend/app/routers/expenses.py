@@ -11,6 +11,8 @@ from app.models.expense import CreateExpenseRequest, Expense
 from app.routes import ExpenseRoutes
 from app.core.database import supabase
 import app.services.discord_service as discord_service
+from app.services import notification_service
+from app import messages as M
 
 logger = get_logger(__name__)
 router = APIRouter(prefix=ExpenseRoutes.PREFIX, tags=["expenses"])
@@ -115,6 +117,17 @@ def create_expense(
         description=body.description,
         date=body.date,
         shares=[{"participant": s["participant"], "amount": s["amount"]} for s in inserted_shares],
+    )
+    background_tasks.add_task(
+        notification_service.broadcast_category_dm,
+        settings.discord_bot_token,
+        notification_service.NotificationCategory.EXPENSE_CREATED,
+        M.DM_EXPENSE_CREATED.format(
+            paid_by=body.paid_by,
+            amount=body.amount,
+            currency=body.currency,
+            description=body.description,
+        ),
     )
 
 

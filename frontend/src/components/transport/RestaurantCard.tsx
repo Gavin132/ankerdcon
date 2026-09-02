@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Car,
   Truck,
   Users,
   ChevronDown,
+  ChevronRight,
   Timer,
   AlertCircle,
   CheckCircle2,
-  ArrowRight,
   Link2,
   Utensils,
 } from "lucide-react";
@@ -29,6 +29,7 @@ interface RestaurantCardProps {
 }
 
 export function RestaurantCard({ ride }: RestaurantCardProps) {
+  const navigate = useNavigate();
   const [attendeesOpen, setAttendeesOpen] = useState(false);
 
   const { data: users = [] } = useUsers();
@@ -66,8 +67,17 @@ export function RestaurantCard({ ride }: RestaurantCardProps) {
         : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300";
 
   return (
-    <motion.div variants={listItem} className={isPast || isRecent ? "opacity-60" : ""}>
-      <div className="card-surface rounded-2xl overflow-hidden">
+    <motion.div
+      variants={listItem}
+      whileHover={{ y: -2 }}
+      whileTap={{ scale: 0.985 }}
+      transition={{ duration: 0.12 }}
+      className={isPast || isRecent ? "opacity-60" : ""}
+    >
+      <div
+        onClick={() => navigate(routes.ride.view(ride.id))}
+        className="card-surface rounded-2xl overflow-hidden cursor-pointer transition-shadow hover:shadow-md"
+      >
 
         {/* Amber accent line */}
         <div className="h-[3px] bg-gradient-to-r from-amber-400 to-orange-400" />
@@ -79,7 +89,7 @@ export function RestaurantCard({ ride }: RestaurantCardProps) {
               <AlertCircle size={12} className="shrink-0" />
               {unassigned.length} {unassigned.length === 1 ? "persoon heeft" : "personen hebben"} nog geen rit
             </span>
-            <Link to={routes.ride.view(ride.id)} className="shrink-0 text-xs font-bold text-rose-700 dark:text-rose-300 hover:underline">
+            <Link to={routes.ride.view(ride.id)} onClick={(e) => e.stopPropagation()} className="shrink-0 text-xs font-bold text-rose-700 dark:text-rose-300 hover:underline">
               Wijs toe →
             </Link>
           </div>
@@ -90,7 +100,7 @@ export function RestaurantCard({ ride }: RestaurantCardProps) {
               <AlertCircle size={12} className="shrink-0" />
               {drivers.length === 0 ? "Nog geen auto's — wie rijdt er?" : "Actie vereist — laat weten of je meekomt"}
             </span>
-            <Link to={routes.ride.view(ride.id)} className="shrink-0 text-xs font-bold text-amber-700 dark:text-amber-300 hover:underline">
+            <Link to={routes.ride.view(ride.id)} onClick={(e) => e.stopPropagation()} className="shrink-0 text-xs font-bold text-amber-700 dark:text-amber-300 hover:underline">
               {drivers.length === 0 ? "Ik rijd →" : "Bekijk →"}
             </Link>
           </div>
@@ -171,7 +181,7 @@ export function RestaurantCard({ ride }: RestaurantCardProps) {
         <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-t border-slate-200 dark:border-slate-700">
           <button
             type="button"
-            onClick={() => allParticipants.length > 0 && setAttendeesOpen((v) => !v)}
+            onClick={(e) => { e.stopPropagation(); if (allParticipants.length > 0) setAttendeesOpen((v) => !v); }}
             className={`flex items-center gap-2 min-w-0 ${allParticipants.length > 0 ? "hover:opacity-75 transition-opacity" : "cursor-default"}`}
           >
             {allParticipants.length > 0 ? (
@@ -204,6 +214,7 @@ export function RestaurantCard({ ride }: RestaurantCardProps) {
           {linkedMeal && (
             <Link
               to={routes.meal.view(linkedMeal.id)}
+              onClick={(e) => e.stopPropagation()}
               className="shrink-0 flex items-center gap-1.5 rounded-lg border border-amber-200 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors max-w-[130px]"
             >
               <Utensils size={10} className="shrink-0" />
@@ -213,6 +224,7 @@ export function RestaurantCard({ ride }: RestaurantCardProps) {
           {!linkedMeal && linkedEvent && (
             <Link
               to={routes.event.view(linkedEvent.id)}
+              onClick={(e) => e.stopPropagation()}
               className="shrink-0 flex items-center gap-1.5 rounded-lg border border-sky-200 dark:border-sky-700/60 bg-sky-50 dark:bg-sky-900/30 px-2 py-1 text-[11px] font-semibold text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition-colors max-w-[130px]"
             >
               <Link2 size={10} className="shrink-0" />
@@ -246,12 +258,7 @@ export function RestaurantCard({ ride }: RestaurantCardProps) {
 
         {/* ── Footer ── */}
         <div className="flex items-center border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-black/20 px-3 py-2">
-          <Link
-            to={routes.ride.view(ride.id)}
-            className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-          >
-            Details <ArrowRight size={11} />
-          </Link>
+          <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0 ml-auto" />
         </div>
       </div>
     </motion.div>

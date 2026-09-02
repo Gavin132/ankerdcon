@@ -9,6 +9,7 @@ import { useRides } from "../hooks/useRides";
 import { useCosplays } from "../hooks/useCosplays";
 import { useEventWeather } from "../hooks/useEventWeather";
 import { parseEventDate } from "../utils/date";
+import { useTimeStore, getNow } from "../store/time.store";
 import { routes } from "../config/routes";
 import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { EventHero } from "../components/event/EventHero";
@@ -24,6 +25,7 @@ import { DayStrip } from "../components/event/DayStrip";
 export function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  useTimeStore((s) => s.override); // re-render when the time-travel override changes
   const { data: events = [], isLoading: eventsLoading } = useCalendar();
   const { data: users    = [] } = useUsers();
   const { data: meals    = [] } = useMeals();
@@ -126,7 +128,7 @@ export function EventDetailPage() {
     if (!event?.date) return null;
     const d = parseEventDate(event.date);
     if (!d) return null;
-    const today = new Date();
+    const today = new Date(getNow());
     today.setHours(0, 0, 0, 0);
     return Math.round((d.getTime() - today.getTime()) / 86_400_000);
   })();

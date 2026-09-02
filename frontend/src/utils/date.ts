@@ -1,3 +1,5 @@
+import { getNow } from "../store/time.store";
+
 /**
  * Parse a date string in YYYY-MM-DD or DD-MM-YYYY format.
  * Returns null for invalid or empty values.
@@ -21,5 +23,5 @@ export function toDateKey(d: Date): string {
 }
 
 export function todayKey(): string {
-  return toDateKey(new Date());
+  return toDateKey(getNow());
 }

@@ -1,4 +1,5 @@
 import { parseEventDate, todayKey, toDateKey } from "../../utils/date";
+import { getNow } from "../../store/time.store";
 import type { AnyAction } from "../../utils/actionItems";
 import type { User } from "../../types";
 
@@ -36,7 +37,7 @@ export function urgencyTag(dateStr: string): "today" | "tomorrow" | null {
   const key = toDateKey(d);
   const today = todayKey();
   if (key === today) return "today";
-  const tomorrow = new Date();
+  const tomorrow = new Date(getNow());
   tomorrow.setDate(tomorrow.getDate() + 1);
   if (key === toDateKey(tomorrow)) return "tomorrow";
   return null;

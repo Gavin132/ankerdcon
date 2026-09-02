@@ -16,8 +16,8 @@ from app.config import get_settings
 from app.constants import API_PREFIX, Tables
 from app.core.database import supabase
 from app.core.logging import configure_logging, get_logger
-from app.routers import admin, badges, calendar, cosplays, expenses, meals, payments, rides, users
-from app.services.reminder_scheduler import check_and_send_reminders
+from app.routers import admin, announcements, badges, calendar, changelog, cosplays, expenses, meals, payments, rides, users
+from app.services.reminder_scheduler import check_and_send_reminders, check_and_send_ticket_reminders
 
 configure_logging()
 logger = get_logger(__name__)
@@ -35,8 +35,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.warning("Supabase warmup failed — check credentials in .env: %s", e)
 
     _scheduler.add_job(check_and_send_reminders, "cron", hour=8, minute=0)
+    # Ticket-sale timing needs finer granularity than a daily check — sale_start
+    # carries an exact time, not just a date.
+    _scheduler.add_job(check_and_send_ticket_reminders, "interval", minutes=15)
     _scheduler.start()
-    logger.info("Reminder scheduler started (daily 08:00 Europe/Amsterdam)")
+    logger.info("Reminder scheduler started (daily 08:00 + ticket checks every 15 min, Europe/Amsterdam)")
 
     yield
 
@@ -48,7 +51,7 @@ settings = get_settings()
 
 app = FastAPI(
     title="Ankerd Con API",
-    version="1.4.0",
+    version="1.5.0",
     docs_url=f"{API_PREFIX}/docs",
     redoc_url=f"{API_PREFIX}/redoc",
     openapi_url=f"{API_PREFIX}/openapi.json",
@@ -111,6 +114,8 @@ app.include_router(meals.router,    prefix=API_PREFIX)
 app.include_router(payments.router, prefix=API_PREFIX)
 app.include_router(calendar.router, prefix=API_PREFIX)
 app.include_router(badges.router,    prefix=API_PREFIX)
+app.include_router(announcements.router, prefix=API_PREFIX)
+app.include_router(changelog.router,    prefix=API_PREFIX)
 app.include_router(cosplays.router,  prefix=API_PREFIX)
 app.include_router(expenses.router,  prefix=API_PREFIX)
 app.include_router(admin.router,     prefix=API_PREFIX)

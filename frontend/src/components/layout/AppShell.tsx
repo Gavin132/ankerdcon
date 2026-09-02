@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { Header } from "./Header";
 import { BottomNav } from "./BottomNav";
+import { AnnouncementBanner } from "./AnnouncementBanner";
+import { ChangelogBanner } from "./ChangelogBanner";
 import { ScrollToTop } from "../common/ScrollToTop";
 import { PullToRefresh } from "../common/PullToRefresh";
 
@@ -13,6 +15,8 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="flex min-h-[100dvh] flex-col">
       <ScrollToTop />
+      <AnnouncementBanner />
+      <ChangelogBanner />
       <Header />
       <PullToRefresh />
       <motion.main

@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Car, Train, Truck, Clock, Timer, AlertCircle, CalendarDays, Users, ArrowRight, Utensils } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { formatDateTime } from "../../utils/format";
-import { getRideStatus, formatCountdown } from "../../utils/rides";
+import { getRideStatus, formatCountdown, rideLocationLabel } from "../../utils/rides";
 import { routes } from "../../config/routes";
 import type { CalendarEvent, Meal, Ride, User } from "../../types";
 
@@ -21,8 +21,15 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users }: RideHeroProps
   const isPast = status === "past";
 
   const isInbound = ride.direction === "Inbound";
-  const fromLabel = ride.start_location;
-  const toLabel   = ride.end_location || (isInbound ? "Con locatie" : "Bestemming");
+  const isRestaurant = ride.direction === "Restaurant";
+  const fromLabel = rideLocationLabel(ride.start_location, linkedEvent, "Onbekende locatie");
+  // A restaurant ride's destination is always the linked meal's own location —
+  // there's no separate "end_location" input for these, so derive it here
+  // instead of falling back to a generic placeholder.
+  const toLabel = isRestaurant
+    ? linkedMeal?.location || "Onbekende locatie"
+    : rideLocationLabel(ride.end_location, linkedEvent, isInbound ? "Con locatie" : "Bestemming");
+  const toIsPlaceholder = isRestaurant ? !linkedMeal?.location : !ride.end_location;
 
   const TransportIcon = isPT ? Train : isTimo ? Truck : Car;
 
@@ -133,7 +140,9 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users }: RideHeroProps
           <ArrowRight size={20} className="text-white/30 shrink-0 mt-4" />
           <div className="min-w-0">
             <p className="text-xs font-semibold text-white/50 mb-0.5 uppercase tracking-wider">Naar</p>
-            <p className="text-2xl lg:text-3xl font-black text-white leading-tight truncate drop-shadow-md">{toLabel}</p>
+            <p className={`leading-tight truncate ${toIsPlaceholder ? "text-lg lg:text-xl font-semibold italic text-white/50" : "text-2xl lg:text-3xl font-black text-white drop-shadow-md"}`}>
+              {toLabel}
+            </p>
           </div>
         </div>
 

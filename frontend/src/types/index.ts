@@ -18,6 +18,28 @@ export interface Badge {
   display_order: number;
 }
 
+export type AnnouncementSeverity = "info" | "warning" | "urgent";
+
+export interface Announcement {
+  id: string;
+  message: string;
+  severity: AnnouncementSeverity;
+  active: boolean;
+  dismissible: boolean;
+  notify_discord: boolean;
+  created_at?: string;
+  created_by?: string;
+}
+
+export interface ChangelogEntry {
+  id: string;
+  title: string;
+  items: string[];
+  released_at: string;
+  created_at?: string;
+  created_by?: string;
+}
+
 // Users
 export interface User {
   id?: string;
@@ -42,6 +64,7 @@ export interface User {
   allow_dm?: boolean;
   aliases?: string[];
   badge_ids?: string[];
+  notification_categories?: string[];
   created_at?: string;
 }
 
@@ -60,6 +83,8 @@ export interface UpdatePreferencesRequest {
   pronouns?: string;
   phone_number?: string;
   aliases?: string[];
+  allow_dm?: boolean;
+  notification_categories?: string[];
 }
 
 export interface LocationPingRequest {
@@ -246,6 +271,7 @@ export interface CalendarEvent {
   event_name: string;
   date: string;
   is_hotel: boolean;
+  hotel_location?: string;
   participants: string[];
   image_url?: string;
   description?: string;
@@ -327,6 +353,7 @@ export interface Expense {
   description: string;
   date: string;
   created_at?: string;
+  linked_event_id?: string;
   shares: ExpenseShare[];
 }
 

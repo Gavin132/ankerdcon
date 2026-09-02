@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import {
-  Bus, UtensilsCrossed, Wallet, BedDouble,
+  UtensilsCrossed, BedDouble,
   MapPin, Hotel, ArrowRight, ChevronRight,
 } from "lucide-react";
 import { useState } from "react";
@@ -17,15 +17,16 @@ import { useRides } from "../hooks/useRides";
 import { useMeals } from "../hooks/useMeals";
 import { useExpenses } from "../hooks/useExpenses";
 import { useCurrentUser, useUsers } from "../hooks/useUsers";
-import { formatAmount } from "../utils/format";
 import { buildGroupColorMap, groupCalendarEntries, firstUpcomingEvents } from "../utils/multiDay";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { UpcomingEventsCarousel } from "../components/hub/UpcomingEventsCarousel";
+import { QuickRideTiles } from "../components/hub/QuickRideTiles";
+import { RestaurantRideTiles } from "../components/hub/RestaurantRideTiles";
 import { listItem, listContainer } from "../utils/motion";
 import { parseEventDate, toDateKey, todayKey } from "../utils/date";
-import { getRideStatus } from "../utils/rides";
 import { computeAllActions } from "../utils/actionItems";
-import type { CalendarEvent, User } from "../types";
+import { useTimeStore } from "../store/time.store";
+import type { CalendarEvent, Meal, User } from "../types";
 
 const MAX_CAROUSEL_ITEMS = 8;
 
@@ -86,15 +87,14 @@ export function HubPage() {
   const { data: expenses = [] } = useExpenses();
   const { data: users } = useUsers();
   const { data: me } = useCurrentUser();
+  const timeOverride = useTimeStore((s) => s.override);
 
   if (evLoading) return <HubSkeleton />;
 
-  const now = new Date();
+  const now = timeOverride ?? new Date();
   const hour = now.getHours();
   const greeting = hour < 12 ? "Goedemorgen" : hour < 18 ? "Goedemiddag" : "Goedenavond";
   const todayFormatted = `${DAYS_NL[now.getDay()]} ${now.getDate()} ${MONTHS_NL[now.getMonth()]}`;
-
-  const totalSpend = expenses.reduce((s, e) => s + e.amount, 0);
 
   const todayStr = todayKey();
   const groupColorMap = buildGroupColorMap(events ?? []);
@@ -109,13 +109,22 @@ export function HubPage() {
     ? (upcomingItems[0].type === "single" ? upcomingItems[0].ev : upcomingItems[0].events[0].ev)
     : null;
 
-  const futureRidesCount = (rides ?? []).filter(
-    (r) => getRideStatus(r.departure_time).status !== "past",
-  ).length;
   const futureMealsCount = (meals ?? []).filter((m) => {
     const d = new Date(m.time.replace(" ", "T"));
     return !isNaN(d.getTime()) && d > now;
   }).length;
+
+  // Nearest upcoming meal that needs transport organised, for the event's own
+  // restaurant quick-ride tiles — only relevant when the event has no hotel
+  // (hotel events get the hotel-shuttle tiles instead).
+  const restaurantMeal: Meal | undefined = event && !event.is_hotel
+    ? (meals ?? [])
+        .filter((m) => m.linked_event_id === event.id && m.transport_needed)
+        .map((m) => ({ m, d: new Date(m.time.replace(" ", "T")) }))
+        .filter((x) => !isNaN(x.d.getTime()) && x.d > now)
+        .sort((a, b) => a.d.getTime() - b.d.getTime())
+        .map((x) => x.m)[0]
+    : undefined;
 
   // Only the soonest event/trip's transport-and-food gaps drive the hub's action
   // alert — later events shouldn't nag you before the one right in front of you
@@ -188,19 +197,23 @@ export function HubPage() {
         </motion.div>
       )}
 
+      {/* ── Quick ride shortcuts (only for events with a hotel component) ──── */}
+      {event?.is_hotel && (
+        <motion.div variants={listItem}>
+          <QuickRideTiles event={event} />
+        </motion.div>
+      )}
+
+      {/* ── Restaurant ride shortcuts (events without a hotel, but with a meal that needs transport) ──── */}
+      {event && restaurantMeal && (
+        <motion.div variants={listItem}>
+          <RestaurantRideTiles event={event} meal={restaurantMeal} rides={rides ?? []} />
+        </motion.div>
+      )}
+
       {/* ── Stat tiles ────────────────────────────────────────────────────── */}
       <motion.div variants={listItem}>
         <div className="grid grid-cols-2 gap-3">
-          <StatTile
-            icon={Bus}
-            label="Ritten gepland"
-            sublabel="Transport"
-            metric={futureRidesCount}
-            iconBg="bg-sky-100 dark:bg-sky-500/10"
-            iconColor="text-sky-500"
-            borderHover="hover:border-sky-500/20 dark:hover:border-sky-500/15"
-            onClick={() => navigate(routes.transport)}
-          />
           <StatTile
             icon={UtensilsCrossed}
             label="Maaltijden"
@@ -210,16 +223,6 @@ export function HubPage() {
             iconColor="text-cyan-500"
             borderHover="hover:border-cyan-500/20 dark:hover:border-cyan-500/15"
             onClick={() => navigate(routes.food)}
-          />
-          <StatTile
-            icon={Wallet}
-            label="Totaal uitgegeven"
-            sublabel="Financiën"
-            metric={formatAmount(totalSpend)}
-            iconBg="bg-violet-100 dark:bg-violet-500/10"
-            iconColor="text-violet-500"
-            borderHover="hover:border-violet-500/20 dark:hover:border-violet-500/15"
-            onClick={() => navigate(routes.finance)}
           />
           <StatTile
             icon={MapPin}

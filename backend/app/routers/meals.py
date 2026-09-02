@@ -7,6 +7,8 @@ from app.dependencies import get_current_user
 from app.models.meal import CreateMealRequest, Meal, RsvpRequest
 from app.routes import MealRoutes
 import app.services.discord_service as discord_service
+from app.services import notification_service
+from app import messages as M
 from app.core.database import supabase
 
 logger = get_logger(__name__)
@@ -61,6 +63,16 @@ def create_meal(
         location=body.location or None,
         cost=float(body.cost) if body.cost else None,
         transport_needed=body.transport_needed,
+    )
+    background_tasks.add_task(
+        notification_service.broadcast_category_dm,
+        settings.discord_bot_token,
+        notification_service.NotificationCategory.MEAL_CREATED,
+        M.DM_MEAL_CREATED.format(
+            meal_name=body.meal_name,
+            time=body.time,
+            location_line=f"\n📍 {body.location}" if body.location else "",
+        ),
     )
 
 

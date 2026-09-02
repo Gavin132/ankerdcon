@@ -31,7 +31,9 @@ import { useCalendar } from "../hooks/useCalendar";
 import { useMeals } from "../hooks/useMeals";
 import { toast } from "../store/toast.store";
 import { getRideStatus } from "../utils/rides";
-import type { Direction, VehicleType } from "../types";
+import { toDateKey, todayKey } from "../utils/date";
+import { useTimeStore, getNow } from "../store/time.store";
+import type { Direction, VehicleType, Ride } from "../types";
 
 const createSchema = z.object({
   direction: z.enum(["Inbound", "Outbound", "Restaurant"]),
@@ -59,8 +61,32 @@ const container = {
   show: { opacity: 1, transition: { staggerChildren: 0.07 } },
 };
 
+/** "Vandaag" / "Morgen" / a Dutch weekday+date, for grouping the ride list by day. */
+function rideDayLabel(date: Date): string {
+  const key = toDateKey(date);
+  if (key === todayKey()) return "Vandaag";
+  const tomorrow = new Date(getNow());
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  if (key === toDateKey(tomorrow)) return "Morgen";
+  return date.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" });
+}
+
+/** Buckets an already time-sorted ride list into consecutive same-day groups. */
+function groupRidesByDay(rides: Ride[]): { label: string; rides: Ride[] }[] {
+  const groups: { label: string; rides: Ride[] }[] = [];
+  for (const ride of rides) {
+    const parsed = new Date(ride.departure_time.replace(" ", "T"));
+    const label = isNaN(parsed.getTime()) ? "Onbekende datum" : rideDayLabel(parsed);
+    const last = groups[groups.length - 1];
+    if (last && last.label === label) last.rides.push(ride);
+    else groups.push({ label, rides: [ride] });
+  }
+  return groups;
+}
+
 export function TransportPage() {
   const location = useLocation();
+  useTimeStore((s) => s.override); // re-render when the time-travel override changes
   const [tab, setTab] = useState<Direction>(
     (location.state as { tab?: Direction })?.tab ?? "Inbound",
   );
@@ -155,7 +181,7 @@ export function TransportPage() {
       loading={isSubmitting}
       className="w-full"
     >
-      Rit opslaan
+      {formDirection === "Restaurant" ? "Route opslaan" : "Rit opslaan"}
     </Button>
   );
 
@@ -195,7 +221,7 @@ export function TransportPage() {
       {/* Add button */}
       <Button variant="secondary" className="w-full" onClick={openCreate}>
         <Plus size={16} />
-        Rit toevoegen
+        {tab === "Restaurant" ? "Route toevoegen" : "Rit toevoegen"}
       </Button>
 
       {/* Timeline view */}
@@ -225,18 +251,27 @@ export function TransportPage() {
           ) : (
             <motion.div
               key={tab}
-              className="space-y-3"
+              className="space-y-5"
               variants={container}
               initial="hidden"
               animate="show"
             >
-              {activeRides.map((ride) =>
-                ride.direction === "Restaurant" ? (
-                  <RestaurantCard key={ride.id} ride={ride} userNames={userNames} />
-                ) : (
-                  <RideCard key={ride.id} ride={ride} userNames={userNames} />
-                ),
-              )}
+              {groupRidesByDay(activeRides).map((group) => (
+                <div key={group.label}>
+                  <p className="mb-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                    {group.label}
+                  </p>
+                  <div className="space-y-3">
+                    {group.rides.map((ride) =>
+                      ride.direction === "Restaurant" ? (
+                        <RestaurantCard key={ride.id} ride={ride} userNames={userNames} />
+                      ) : (
+                        <RideCard key={ride.id} ride={ride} userNames={userNames} />
+                      ),
+                    )}
+                  </div>
+                </div>
+              ))}
             </motion.div>
           )}
 
@@ -293,8 +328,12 @@ export function TransportPage() {
       <Drawer
         open={createOpen}
         onClose={handleClose}
-        title="Rit toevoegen"
-        subtitle="Vul de details van de rit in"
+        title={formDirection === "Restaurant" ? "Route toevoegen" : "Rit toevoegen"}
+        subtitle={
+          formDirection === "Restaurant"
+            ? "Zet tijd en locatie neer — pas als iemand “Ik rijd” aangeeft, is er echt een rit"
+            : "Vul de details van de rit in"
+        }
         footer={footer}
       >
         <form id="create-ride-form" onSubmit={handleSubmit(onCreate)} className="space-y-5">
@@ -365,7 +404,7 @@ export function TransportPage() {
               </div>
               {vehicleType !== "Public Transport" && formDirection !== "Restaurant" && (
                 <div>
-                  <label className={SL}>Zitplaatsen</label>
+                  <label className={SL}>Totaal aantal plekken in je auto</label>
                   <input
                     type="number"
                     min={1}
@@ -381,11 +420,9 @@ export function TransportPage() {
 
           {/* Route */}
           <div className={SF}>
-            <p className={ST}>{formDirection === "Restaurant" ? "Locatie" : "Route"}</p>
+            <p className={ST}>{formDirection === "Restaurant" ? "Vertrek" : "Route"}</p>
             <div>
-              <label className={SL}>
-                {formDirection === "Restaurant" ? "Restaurant / locatie" : "Vertrekpunt"}
-              </label>
+              <label className={SL}>Vertrekpunt</label>
               <Controller
                 name="start_location"
                 control={control}
@@ -394,16 +431,17 @@ export function TransportPage() {
                     value={field.value ?? ""}
                     onChange={field.onChange}
                     inputClassName="input-field"
-                    placeholder={
-                      formDirection === "Restaurant"
-                        ? "Zoek restaurant of locatie…"
-                        : "Zoek vertrekpunt…"
-                    }
+                    placeholder="Zoek vertrekpunt…"
                   />
                 )}
               />
               {errors.start_location && (
                 <p className="mt-1.5 text-xs text-rose-500">{errors.start_location.message}</p>
+              )}
+              {formDirection === "Restaurant" && (
+                <p className="mt-1.5 text-xs text-slate-400">
+                  Waar vertrekt deze rit vandaan? De bestemming (het restaurant) komt automatisch uit het gekoppelde etentje hieronder.
+                </p>
               )}
             </div>
             {formDirection !== "Restaurant" && (
@@ -437,23 +475,7 @@ export function TransportPage() {
                     <MealPicker
                       meals={meals}
                       value={field.value || undefined}
-                      onChange={(id) => {
-                        field.onChange(id ?? "");
-                        if (id) {
-                          const meal = meals.find((m) => m.id === id);
-                          if (meal?.time) {
-                            const d = new Date(meal.time);
-                            if (!isNaN(d.getTime())) {
-                              const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-                                .toISOString()
-                                .slice(0, 16);
-                              setValue("departure_time", local, { shouldValidate: true });
-                            }
-                          }
-                          if (meal?.location) setValue("start_location", meal.location, { shouldValidate: true });
-                          if (meal?.parking_info) setValue("parking_info", meal.parking_info, { shouldValidate: true });
-                        }
-                      }}
+                      onChange={(id) => field.onChange(id ?? "")}
                     />
                   )}
                 />

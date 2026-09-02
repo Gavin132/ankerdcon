@@ -13,6 +13,7 @@ import type { ProfileState } from "./onboarding/types";
 import { DialogueIntro } from "./onboarding/DialogueIntro";
 import { StepFeatures } from "./onboarding/StepFeatures";
 import { StepProfile } from "./onboarding/StepProfile";
+import { StepNotifications } from "./onboarding/StepNotifications";
 import { StepDone } from "./onboarding/StepDone";
 
 // ── Slide animation variants ───────────────────────────────────────────────────
@@ -45,6 +46,7 @@ export function OnboardingPage() {
     bannerColor: "",
     allowDm: true,
     aliases: [],
+    notificationCategories: [],
   });
 
   // Redirect to hub if onboarding was already completed
@@ -76,13 +78,15 @@ export function OnboardingPage() {
               banner_color: profile.bannerColor || undefined,
               allow_dm: profile.allowDm,
               aliases: profile.aliases.length > 0 ? profile.aliases : undefined,
+              notification_categories:
+                profile.notificationCategories.length > 0 ? profile.notificationCategories : undefined,
             },
       );
       qc.setQueryData(QUERY_KEYS.currentUser, (old: User | undefined) =>
         old ? { ...old, onboarding_completed: true } : old,
       );
       setDirection(1);
-      setStep(3);
+      setStep(4);
     } finally {
       setSubmitting(false);
     }
@@ -97,12 +101,13 @@ export function OnboardingPage() {
     null,
     <StepFeatures key="features" />,
     <StepProfile key="profile" state={profile} onChange={(p) => setProfile((prev) => ({ ...prev, ...p }))} />,
+    <StepNotifications key="notifications" state={profile} onChange={(p) => setProfile((prev) => ({ ...prev, ...p }))} />,
     <StepDone key="done" />,
   ];
 
-  const isLastInputStep = step === 2;
-  const isDoneStep = step === 3;
-  const showProgress = step === 1 || step === 2;
+  const isLastInputStep = step === 3;
+  const isDoneStep = step === 4;
+  const showProgress = step === 1 || step === 2 || step === 3;
 
   return (
     <div className="relative flex min-h-[100dvh] flex-col bg-slate-50 dark:bg-slate-950 pt-[env(safe-area-inset-top,0px)]">
@@ -118,13 +123,13 @@ export function OnboardingPage() {
           <div className="mx-auto max-w-sm">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-600">
-                Stap {step - 1} van {TOTAL_STEPS - 1}
+                Stap {step} van {TOTAL_STEPS - 1}
               </span>
             </div>
             <div className="h-1 w-full rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
               <motion.div
                 className="h-full rounded-full bg-sky-500"
-                animate={{ width: `${((step - 1) / (TOTAL_STEPS - 1)) * 100}%` }}
+                animate={{ width: `${(step / (TOTAL_STEPS - 1)) * 100}%` }}
                 transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
               />
             </div>
