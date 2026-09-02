@@ -1,8 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, ChevronRight, Sparkles, Users } from "lucide-react";
-import { useCalendar, useHotelRooms } from "../hooks/useCalendar";
+import { CalendarDays, ChevronRight, Sparkles, Users, UserCheck, UserMinus } from "lucide-react";
+import { useCalendar, useHotelRooms, useRsvpCalendarEvent, useLeaveCalendarEvent } from "../hooks/useCalendar";
 import { useUsers, useCurrentUser } from "../hooks/useUsers";
 import { useMeals } from "../hooks/useMeals";
 import { useRides } from "../hooks/useRides";
@@ -10,6 +10,7 @@ import { useCosplays } from "../hooks/useCosplays";
 import { useEventWeather } from "../hooks/useEventWeather";
 import { parseEventDate } from "../utils/date";
 import { useTimeStore, getNow } from "../store/time.store";
+import { toast } from "../store/toast.store";
 import { routes } from "../config/routes";
 import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { EventHero } from "../components/event/EventHero";
@@ -21,6 +22,9 @@ import { EventLinkedMeals } from "../components/event/EventLinkedMeals";
 import { EventLinkedRides } from "../components/event/EventLinkedRides";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { DayStrip } from "../components/event/DayStrip";
+import { Button } from "../components/common/Button";
+import { Modal } from "../components/common/Modal";
+import { NamePicker } from "../components/common/NamePicker";
 
 export function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -32,6 +36,13 @@ export function EventDetailPage() {
   const { data: rides    = [] } = useRides();
   const { data: cosplays = [] } = useCosplays();
   const { data: me }            = useCurrentUser();
+
+  const [rsvpOpen, setRsvpOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [rsvpNames, setRsvpNames] = useState<string[]>([]);
+  const [cancelNames, setCancelNames] = useState<string[]>([]);
+  const rsvpMutation = useRsvpCalendarEvent();
+  const leaveMutation = useLeaveCalendarEvent();
 
   const rawEvent = events.find((e) => e.id === id);
 
@@ -164,6 +175,44 @@ export function EventDetailPage() {
     (event.ticket_types?.length ?? 0) > 0
   );
 
+  async function onRsvp() {
+    if (rsvpNames.length === 0) return;
+    try {
+      for (const name of rsvpNames) {
+        await rsvpMutation.mutateAsync({ id: event!.id, userName: name });
+      }
+      setRsvpNames([]);
+      setRsvpOpen(false);
+      toast(
+        "success",
+        rsvpNames.length === 1
+          ? `${rsvpNames[0]} is aangemeld voor ${event!.event_name}!`
+          : `${rsvpNames.length} personen aangemeld voor ${event!.event_name}!`,
+      );
+    } catch {
+      toast("error", "Kon je niet aanmelden. Probeer opnieuw.");
+    }
+  }
+
+  async function onCancelRsvp() {
+    if (cancelNames.length === 0) return;
+    try {
+      for (const name of cancelNames) {
+        await leaveMutation.mutateAsync({ id: event!.id, userName: name });
+      }
+      setCancelNames([]);
+      setCancelOpen(false);
+      toast(
+        "success",
+        cancelNames.length === 1
+          ? `${cancelNames[0]} afgemeld.`
+          : `${cancelNames.length} personen afgemeld.`,
+      );
+    } catch {
+      toast("error", "Kon aanmelding niet annuleren.");
+    }
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 22 }}
@@ -223,18 +272,31 @@ export function EventDetailPage() {
           </div>
 
           {/* Aanmeldingen */}
-          {event.participants.length > 0 ? (
-            <>
-              <div className="px-5 pt-4 pb-0 flex items-center gap-2">
-                <div className="flex h-5 w-5 items-center justify-center rounded-md bg-indigo-100 dark:bg-indigo-500/10">
-                  <Users size={11} className="text-indigo-500" />
-                </div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                  Aanmeldingen
-                </p>
+          <div className="px-5 pt-4 pb-0 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-5 w-5 items-center justify-center rounded-md bg-indigo-100 dark:bg-indigo-500/10">
+                <Users size={11} className="text-indigo-500" />
               </div>
-              <EventAttendees participants={event.participants} users={users} bare />
-            </>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                Aanmeldingen
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {event.participants.length > 0 && (
+                <Button size="sm" variant="ghost" onClick={() => setCancelOpen(true)}>
+                  <UserMinus size={13} />
+                  Afmelden
+                </Button>
+              )}
+              <Button size="sm" variant="secondary" onClick={() => setRsvpOpen(true)}>
+                <UserCheck size={13} />
+                Aanmelden
+              </Button>
+            </div>
+          </div>
+
+          {event.participants.length > 0 ? (
+            <EventAttendees participants={event.participants} users={users} bare />
           ) : (
             <div className="px-5 py-4 flex items-center gap-3 text-slate-400 dark:text-slate-500">
               <Users size={15} className="shrink-0" />
@@ -297,6 +359,44 @@ export function EventDetailPage() {
         <EventLinkedRides rides={linkedRides} />
 
       </div>
+
+      {/* RSVP modal */}
+      <Modal
+        open={rsvpOpen}
+        onClose={() => { setRsvpOpen(false); setRsvpNames([]); }}
+        title={`Aanmelden — ${event.event_name}`}
+        description={event.location || undefined}
+      >
+        <div className="space-y-3">
+          <NamePicker
+            multiple
+            options={users.map((u) => u.name).filter((n) => !event.participants.includes(n))}
+            value={rsvpNames}
+            onChange={setRsvpNames}
+            color="green"
+          />
+          <Button onClick={onRsvp} loading={rsvpMutation.isPending} className="w-full" disabled={rsvpNames.length === 0}>
+            <UserCheck size={15} />
+            {rsvpNames.length === 0 ? "Selecteer een naam" : rsvpNames.length === 1 ? `${rsvpNames[0]} aanmelden` : `${rsvpNames.length} personen aanmelden`}
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Cancel modal */}
+      <Modal
+        open={cancelOpen}
+        onClose={() => { setCancelOpen(false); setCancelNames([]); }}
+        title="Aanmelding annuleren"
+        description={event.event_name}
+      >
+        <div className="space-y-3">
+          <NamePicker multiple options={event.participants} value={cancelNames} onChange={setCancelNames} color="rose" />
+          <Button variant="danger" onClick={onCancelRsvp} loading={leaveMutation.isPending} className="w-full" disabled={cancelNames.length === 0}>
+            <UserMinus size={15} />
+            {cancelNames.length === 0 ? "Selecteer een naam" : cancelNames.length === 1 ? `${cancelNames[0]} afmelden` : `${cancelNames.length} personen afmelden`}
+          </Button>
+        </div>
+      </Modal>
     </motion.div>
   );
 }

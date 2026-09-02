@@ -89,18 +89,18 @@ export function RestaurantCard({ ride }: RestaurantCardProps) {
               <AlertCircle size={12} className="shrink-0" />
               {unassigned.length} {unassigned.length === 1 ? "persoon heeft" : "personen hebben"} nog geen rit
             </span>
-            <Link to={routes.ride.view(ride.id)} onClick={(e) => e.stopPropagation()} className="shrink-0 text-xs font-bold text-rose-700 dark:text-rose-300 hover:underline">
+            <Link to={routes.ride.view(ride.id)} onClick={(e) => e.stopPropagation()} className="shrink-0 whitespace-nowrap text-xs font-bold text-rose-700 dark:text-rose-300 hover:underline">
               Wijs toe →
             </Link>
           </div>
         )}
         {!hasGap && ride.action_required && !isPast && !isRecent && !allClear && (
           <div className="flex items-center justify-between gap-2 border-b border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/25 px-4 py-2">
-            <span className="flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-300">
+            <span className="flex items-center gap-1.5 min-w-0 text-xs font-bold text-amber-700 dark:text-amber-300">
               <AlertCircle size={12} className="shrink-0" />
-              {drivers.length === 0 ? "Nog geen auto's — wie rijdt er?" : "Actie vereist — laat weten of je meekomt"}
+              <span className="truncate">{drivers.length === 0 ? "Nog geen auto's — wie rijdt er?" : "Actie vereist — laat weten of je meekomt"}</span>
             </span>
-            <Link to={routes.ride.view(ride.id)} onClick={(e) => e.stopPropagation()} className="shrink-0 text-xs font-bold text-amber-700 dark:text-amber-300 hover:underline">
+            <Link to={routes.ride.view(ride.id)} onClick={(e) => e.stopPropagation()} className="shrink-0 whitespace-nowrap text-xs font-bold text-amber-700 dark:text-amber-300 hover:underline">
               {drivers.length === 0 ? "Ik rijd →" : "Bekijk →"}
             </Link>
           </div>
@@ -134,18 +134,12 @@ export function RestaurantCard({ ride }: RestaurantCardProps) {
           </div>
         </div>
 
-        {/* ── Location + organizer ── */}
-        <div className="px-4 pt-3.5 pb-3 flex items-center gap-4">
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Locatie</p>
-            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{ride.start_location}</p>
-          </div>
-          <div className="shrink-0 flex items-center gap-2">
-            <UserAvatar name={ride.driver} className="h-7 w-7 text-[11px]" />
-            <div className="text-right">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Organisator</p>
-              <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate max-w-[80px]">{resolveName(ride.driver)}</p>
-            </div>
+        {/* ── Organizer ── */}
+        <div className="px-4 pt-3.5 pb-3 flex items-center gap-2">
+          <UserAvatar name={ride.driver} className="h-7 w-7 text-[11px]" />
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Organisator</p>
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{resolveName(ride.driver)}</p>
           </div>
         </div>
 

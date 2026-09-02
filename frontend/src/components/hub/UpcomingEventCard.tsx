@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  CalendarDays, BedDouble, ChevronRight, Layers, ArrowRight,
+  CalendarDays, BedDouble, Utensils, ChevronRight, Layers, ArrowRight,
 } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { formatDate } from "../../utils/format";
 import { dayShort, monthShort } from "../../utils/multiDay";
-import type { CalendarEvent, User } from "../../types";
+import type { CalendarEvent, Meal, User } from "../../types";
 import type { AnchorRect } from "../common/UserProfilePopup";
 
 export type EventUrgency = "today" | "tomorrow" | "normal";
@@ -48,6 +48,7 @@ interface UpcomingEventCardProps {
   groupColor: { accent: string } | null;
   groupTitle: string | null;
   groupDateRange: string | null;
+  meals?: Meal[];
   users: User[];
   onNavigate: (id: string) => void;
   onParticipantClick: (user: User, rect: AnchorRect) => void;
@@ -64,11 +65,16 @@ export function UpcomingEventCard({
   groupColor,
   groupTitle,
   groupDateRange,
+  meals = [],
   users,
   onNavigate,
   onParticipantClick,
 }: UpcomingEventCardProps) {
   const [participantsExpanded, setParticipantsExpanded] = useState(false);
+
+  function hasMeal(eventId: string) {
+    return meals.some((m) => m.linked_event_id === eventId);
+  }
 
   // For group (multi-day) events, fall back across sibling days for a cover image/description.
   const groupImage = isGroupEvent
@@ -167,6 +173,7 @@ export function UpcomingEventCard({
                   <p className="text-[9px] text-sky-300/50 font-medium">{monthShort(date)}</p>
                 </div>
                 <p className="flex-1 text-xs font-semibold text-sky-100/80 truncate">{dayEv.event_name}</p>
+                {hasMeal(dayEv.id) && <Utensils size={11} className="shrink-0 text-amber-400" />}
                 {dayEv.participants.length > 0 && (
                   <div className="flex items-center gap-1.5 shrink-0">
                     <div className="flex -space-x-1">
@@ -212,6 +219,11 @@ export function UpcomingEventCard({
               {event.is_hotel && (
                 <span className="flex items-center gap-1.5 text-sm text-sky-300">
                   <BedDouble size={12} className="text-sky-400" /> Hotel inbegrepen
+                </span>
+              )}
+              {hasMeal(event.id) && (
+                <span className="flex items-center gap-1.5 text-sm text-sky-300">
+                  <Utensils size={12} className="text-amber-400" /> Etentje gepland
                 </span>
               )}
             </div>

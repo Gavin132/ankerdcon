@@ -23,6 +23,7 @@ import { NamePicker } from "../components/common/NamePicker";
 import { CalendarGrid } from "../components/more/CalendarGrid";
 import { CalendarArchive } from "../components/more/CalendarArchive";
 import { useUsers, usePingLocation } from "../hooks/useUsers";
+import { useMeals } from "../hooks/useMeals";
 import {
   useCalendar,
   useRsvpCalendarEvent,
@@ -66,6 +67,7 @@ export function MorePage() {
 
   const { data: users } = useUsers();
   const { data: calendarEvents } = useCalendar();
+  const { data: meals } = useMeals();
   const pingMutation = usePingLocation();
   const rsvpMutation = useRsvpCalendarEvent();
   const leaveMutation = useLeaveCalendarEvent();
@@ -254,11 +256,11 @@ export function MorePage() {
           <AnimatePresence mode="wait">
             {calendarView === "list" ? (
               <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                <CalendarArchive events={calendarEvents ?? []} allUsers={allUsers} onRsvp={onCalendarRsvp} onLeave={onCalendarLeave} />
+                <CalendarArchive events={calendarEvents ?? []} meals={meals ?? []} allUsers={allUsers} onRsvp={onCalendarRsvp} onLeave={onCalendarLeave} />
               </motion.div>
             ) : (
               <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                <CalendarGrid events={calendarEvents ?? []} allUsers={allUsers} onRsvp={onCalendarRsvp} onLeave={onCalendarLeave} />
+                <CalendarGrid events={calendarEvents ?? []} meals={meals ?? []} allUsers={allUsers} onRsvp={onCalendarRsvp} onLeave={onCalendarLeave} />
               </motion.div>
             )}
           </AnimatePresence>

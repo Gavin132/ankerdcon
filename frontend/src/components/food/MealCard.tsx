@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   UtensilsCrossed,
@@ -8,11 +8,10 @@ import {
   Bus,
   UserCheck,
   UserMinus,
-  Trash2,
   CalendarPlus,
-  ArrowRight,
   Link2,
   ChevronDown,
+  ChevronRight,
   Users,
 } from "lucide-react";
 
@@ -21,7 +20,7 @@ import { Modal } from "../common/Modal";
 import { NamePicker } from "../common/NamePicker";
 import { UserAvatar } from "../common/UserAvatar";
 import { UserProfilePopup, type AnchorRect } from "../common/UserProfilePopup";
-import { useRsvpMeal, useCancelRsvp, useDeleteMeal } from "../../hooks/useMeals";
+import { useRsvpMeal, useCancelRsvp } from "../../hooks/useMeals";
 import { useUsers } from "../../hooks/useUsers";
 import { useCalendar } from "../../hooks/useCalendar";
 import { useAuthStore } from "../../store/auth.store";
@@ -38,9 +37,9 @@ interface MealCardProps {
 }
 
 export function MealCard({ meal, userNames }: MealCardProps) {
+  const navigate = useNavigate();
   const [rsvpOpen, setRsvpOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [participantsOpen, setParticipantsOpen] = useState(false);
   const [rsvpNames, setRsvpNames] = useState<string[]>([]);
   const [cancelNames, setCancelNames] = useState<string[]>([]);
@@ -51,7 +50,6 @@ export function MealCard({ meal, userNames }: MealCardProps) {
 
   const rsvpMutation = useRsvpMeal();
   const cancelMutation = useCancelRsvp();
-  const deleteMutation = useDeleteMeal();
   const { data: users = [] } = useUsers();
   const { data: events = [] } = useCalendar();
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -106,21 +104,14 @@ export function MealCard({ meal, userNames }: MealCardProps) {
     }
   }
 
-  async function onDelete() {
-    try {
-      await deleteMutation.mutateAsync(meal.id);
-      setDeleteOpen(false);
-      toast("success", `${meal.meal_name} is verwijderd.`);
-    } catch {
-      toast("error", "Kon het event niet verwijderen.");
-    }
-  }
-
   return (
     <>
-      <motion.div variants={listItem}>
+      <motion.div variants={listItem} whileHover={{ y: -2 }} whileTap={{ scale: 0.985 }} transition={{ duration: 0.12 }}>
         {/* card-surface provides correct bg + border + shadow in both light and dark */}
-        <div className="card-surface rounded-2xl overflow-hidden">
+        <div
+          onClick={() => navigate(routes.meal.view(meal.id))}
+          className="card-surface rounded-2xl overflow-hidden cursor-pointer transition-shadow hover:shadow-md"
+        >
 
           {/* Amber accent line */}
           <div className="h-[3px] bg-gradient-to-r from-amber-400 via-orange-400 to-amber-300" />
@@ -170,7 +161,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
           <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-t border-slate-200 dark:border-slate-700">
             <button
               type="button"
-              onClick={() => safeParticipants.length > 0 && setParticipantsOpen((v) => !v)}
+              onClick={(e) => { e.stopPropagation(); if (safeParticipants.length > 0) setParticipantsOpen((v) => !v); }}
               className={`flex items-center gap-2 min-w-0 ${safeParticipants.length > 0 ? "hover:opacity-75 transition-opacity" : "cursor-default"}`}
             >
               {safeParticipants.length > 0 ? (
@@ -208,6 +199,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
             {linkedEvent && (
               <Link
                 to={routes.event.view(linkedEvent.id)}
+                onClick={(e) => e.stopPropagation()}
                 className="shrink-0 flex items-center gap-1.5 rounded-lg border border-sky-200 dark:border-sky-700/60 bg-sky-50 dark:bg-sky-900/30 px-2 py-1 text-[11px] font-semibold text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition-colors max-w-[140px]"
               >
                 <Link2 size={10} className="shrink-0" />
@@ -234,6 +226,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
                         key={p}
                         type="button"
                         onClick={(e) => {
+                          e.stopPropagation();
                           if (!u) return;
                           const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
                           setPopupAnchorRect({ top: rect.top, left: rect.left, right: rect.right, height: rect.height });
@@ -253,19 +246,9 @@ export function MealCard({ meal, userNames }: MealCardProps) {
 
           {/* ── Action bar ──────────────────────────────────────── */}
           <div className="flex items-center gap-1.5 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-black/20 px-3 py-2">
-            <Link
-              to={routes.meal.view(meal.id)}
-              className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-            >
-              Details
-              <ArrowRight size={11} />
-            </Link>
-
-            <div className="flex-1" />
-
             {safeParticipants.length > 0 && (
               <button
-                onClick={() => setCancelOpen(true)}
+                onClick={(e) => { e.stopPropagation(); setCancelOpen(true); }}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-rose-500 transition-colors"
                 title="Afmelden"
               >
@@ -274,25 +257,21 @@ export function MealCard({ meal, userNames }: MealCardProps) {
             )}
 
             <button
-              onClick={() => exportMealToIcs(meal)}
+              onClick={(e) => { e.stopPropagation(); exportMealToIcs(meal); }}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-sky-500 transition-colors"
               title="Exporteer naar kalender"
             >
               <CalendarPlus size={14} />
             </button>
 
-            <button
-              onClick={() => setDeleteOpen(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-rose-500 transition-colors"
-              title="Verwijderen"
-            >
-              <Trash2 size={14} />
-            </button>
+            <div className="flex-1" />
 
-            <Button size="sm" variant="primary" onClick={() => setRsvpOpen(true)}>
+            <Button size="sm" variant="primary" onClick={(e) => { e.stopPropagation(); setRsvpOpen(true); }}>
               <UserCheck size={13} />
               Aanmelden
             </Button>
+
+            <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0 ml-1" />
           </div>
         </div>
       </motion.div>
@@ -331,17 +310,6 @@ export function MealCard({ meal, userNames }: MealCardProps) {
           <Button variant="danger" onClick={onCancel} loading={cancelMutation.isPending} className="w-full" disabled={cancelNames.length === 0}>
             <UserMinus size={15} />
             {cancelNames.length === 0 ? "Selecteer een naam" : cancelNames.length === 1 ? `${cancelNames[0]} afmelden` : `${cancelNames.length} personen afmelden`}
-          </Button>
-        </div>
-      </Modal>
-
-      {/* Delete modal */}
-      <Modal open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Maaltijd verwijderen" description={`Weet je zeker dat je "${meal.meal_name}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`}>
-        <div className="flex gap-3">
-          <Button variant="ghost" className="flex-1" onClick={() => setDeleteOpen(false)}>Annuleren</Button>
-          <Button variant="danger" className="flex-1" loading={deleteMutation.isPending} onClick={onDelete}>
-            <Trash2 size={14} />
-            Verwijderen
           </Button>
         </div>
       </Modal>

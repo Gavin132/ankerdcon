@@ -186,6 +186,7 @@ export function HubPage() {
           <UpcomingEventsCarousel
             items={upcomingItems}
             allEvents={events ?? []}
+            meals={meals ?? []}
             groupColorMap={groupColorMap}
             users={users ?? []}
             onNavigate={(id) => navigate(routes.event.view(id))}

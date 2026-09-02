@@ -9,7 +9,7 @@ import {
   type CalendarItem,
   type MultiDayColor,
 } from "../../utils/multiDay";
-import type { CalendarEvent, User } from "../../types";
+import type { CalendarEvent, Meal, User } from "../../types";
 import type { AnchorRect } from "../common/UserProfilePopup";
 
 interface UpcomingEventsCarouselProps {
@@ -17,6 +17,7 @@ interface UpcomingEventsCarouselProps {
   items: CalendarItem[];
   /** Full (unfiltered) event list, used to resolve a multi-day group's full date range. */
   allEvents: CalendarEvent[];
+  meals?: Meal[];
   groupColorMap: Map<string, MultiDayColor>;
   users: User[];
   onNavigate: (id: string) => void;
@@ -76,6 +77,7 @@ function keyFor(item: CalendarItem): string {
 export function UpcomingEventsCarousel({
   items,
   allEvents,
+  meals = [],
   groupColorMap,
   users,
   onNavigate,
@@ -105,6 +107,7 @@ export function UpcomingEventsCarousel({
     return (
       <UpcomingEventCard
         {...cardProps}
+        meals={meals}
         users={users}
         onNavigate={onNavigate}
         onParticipantClick={onParticipantClick}
@@ -127,6 +130,7 @@ export function UpcomingEventsCarousel({
             <div key={keyFor(item)} className="w-full shrink-0 snap-center">
               <UpcomingEventCard
                 {...cardPropsFor(item, allEvents, groupColorMap)}
+                meals={meals}
                 users={users}
                 onNavigate={onNavigate}
                 onParticipantClick={onParticipantClick}

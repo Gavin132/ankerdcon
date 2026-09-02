@@ -9,6 +9,7 @@ import {
   UserMinus,
   Check,
   BedDouble,
+  Utensils,
   X,
   Layers,
 } from "lucide-react";
@@ -28,10 +29,11 @@ import {
   type MultiDayColor,
 } from "../../utils/multiDay";
 import { routes } from "../../config/routes";
-import type { CalendarEvent, User } from "../../types";
+import type { CalendarEvent, Meal, User } from "../../types";
 
 interface CalendarArchiveProps {
   events: CalendarEvent[];
+  meals?: Meal[];
   allUsers?: User[];
   onRsvp?: (id: string, userNames: string[]) => void;
   onLeave?: (id: string, userNames: string[]) => void;
@@ -49,6 +51,7 @@ const PAGE_SIZE = 5;
 
 export function CalendarArchive({
   events,
+  meals = [],
   allUsers = [],
   onRsvp,
   onLeave,
@@ -107,6 +110,10 @@ export function CalendarArchive({
 
   function resolvedName(p: string) {
     return allUsers.find((u) => u.name === p || u.discord_username === p || u.aliases?.includes(p));
+  }
+
+  function hasMeal(eventId: string) {
+    return meals.some((m) => m.linked_event_id === eventId);
   }
 
   // ── Inline RSVP panel (shared) ───────────────────────────────────────────
@@ -196,6 +203,7 @@ export function CalendarArchive({
                 {ev.event_name}
               </p>
               {ev.is_hotel && <BedDouble size={11} className="shrink-0 text-violet-400" />}
+              {hasMeal(ev.id) && <Utensils size={11} className="shrink-0 text-amber-400" />}
             </div>
             {ev.participants.length > 0 && (
               <div className="mt-1.5 flex items-center gap-1.5">
@@ -267,9 +275,12 @@ export function CalendarArchive({
           </div>
 
           <div className="flex-1 min-w-0">
-            <p className={`text-xs font-semibold truncate ${isPast ? "text-slate-400 dark:text-slate-600" : "text-slate-700 dark:text-slate-300"}`}>
-              {ev.event_name}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <p className={`text-xs font-semibold truncate ${isPast ? "text-slate-400 dark:text-slate-600" : "text-slate-700 dark:text-slate-300"}`}>
+                {ev.event_name}
+              </p>
+              {hasMeal(ev.id) && <Utensils size={10} className="shrink-0 text-amber-400" />}
+            </div>
             {ev.participants.length > 0 ? (
               <div className="mt-1 flex items-center gap-1.5">
                 <div className="flex -space-x-1">

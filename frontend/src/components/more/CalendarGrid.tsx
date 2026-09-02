@@ -5,6 +5,7 @@ import {
   ChevronRight,
   CalendarDays,
   BedDouble,
+  Utensils,
   UserPlus,
   UserMinus,
   Check,
@@ -21,11 +22,12 @@ import { parseEventDate, toDateKey, todayKey } from "../../utils/date";
 import { buildGroupColorMap } from "../../utils/multiDay";
 import { useTimeStore, getNow } from "../../store/time.store";
 import { routes } from "../../config/routes";
-import type { CalendarEvent, User } from "../../types";
+import type { CalendarEvent, Meal, User } from "../../types";
 import { DAY_LABELS } from "../../constants";
 
 interface CalendarGridProps {
   events: CalendarEvent[];
+  meals?: Meal[];
   allUsers?: User[];
   onRsvp?: (id: string, userNames: string[]) => void;
   onLeave?: (id: string, userNames: string[]) => void;
@@ -33,6 +35,7 @@ interface CalendarGridProps {
 
 export function CalendarGrid({
   events,
+  meals = [],
   allUsers = [],
   onRsvp,
   onLeave,
@@ -140,6 +143,10 @@ export function CalendarGrid({
 
   const today = todayKey();
   const selectedEvents = selectedDate ? (eventMap[selectedDate] ?? []) : [];
+
+  function hasMeal(eventId: string) {
+    return meals.some((m) => m.linked_event_id === eventId);
+  }
 
   const monthEventCount = Object.entries(eventMap)
     .filter(([key]) => {
@@ -341,6 +348,11 @@ export function CalendarGrid({
                               <Badge variant="violet">
                                 <BedDouble size={10} />
                                 Hotel
+                              </Badge>
+                            )}
+                            {hasMeal(ev.id) && (
+                              <Badge variant="yellow">
+                                <Utensils size={10} />
                               </Badge>
                             )}
                             <button

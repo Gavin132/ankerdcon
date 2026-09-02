@@ -224,19 +224,19 @@ export function RestaurantDetailActions({
           <div className="h-[3px] bg-gradient-to-r from-amber-400 to-orange-400" />
           <div className="px-4 py-4 space-y-4">
             {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="whitespace-nowrap">
                 <h2 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                   Auto's
                 </h2>
-                <p className="text-lg font-black text-slate-900 dark:text-white mt-0.5">
+                <p className="text-lg font-black text-slate-900 dark:text-white mt-0.5 whitespace-nowrap">
                   {drivers.length}{" "}
                   <span className="text-sm font-semibold text-slate-400">
                     {drivers.length === 1 ? "auto" : "auto's"} beschikbaar
                   </span>
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 {canAct && allParticipants.length > 0 && (
                   <Button
                     variant="ghost"
