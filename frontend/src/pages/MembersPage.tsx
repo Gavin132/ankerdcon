@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Search, Users, X, BedDouble } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUsers } from "../hooks/useUsers";
@@ -9,6 +8,8 @@ import { useBadges } from "../hooks/useBadges";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { UserProfilePopup, type AnchorRect } from "../components/common/UserProfilePopup";
 import { BadgeIcon } from "../components/common/BadgeIcon";
+import { useSmartBack } from "../hooks/useSmartBack";
+import { routes } from "../config/routes";
 import type { User } from "../types";
 
 const CLOSED_RECT: AnchorRect = { top: 0, left: 0, right: 0, height: 0 };
@@ -23,7 +24,7 @@ const cardItem = {
 };
 
 export function MembersPage() {
-  const navigate = useNavigate();
+  const goBack = useSmartBack(routes.more);
   const [query, setQuery] = useState("");
   const [popupUser, setPopupUser] = useState<User | null>(null);
   const [anchorRect, setAnchorRect] = useState<AnchorRect>(CLOSED_RECT);
@@ -66,7 +67,7 @@ export function MembersPage() {
                       bg-white/90 dark:bg-slate-950/90 backdrop-blur-md
                       border-b border-slate-200 dark:border-white/[0.06]">
         <button
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           className="flex h-8 w-8 items-center justify-center rounded-xl
                      text-slate-500 dark:text-slate-400
                      hover:bg-slate-100 dark:hover:bg-white/[0.08]

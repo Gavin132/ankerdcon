@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useCallback, useRef, useState } from "react";
+import { useSmartBack } from "../hooks/useSmartBack";
 import { motion } from "framer-motion";
 import { CalendarDays, ChevronRight, Sparkles, Users, UserCheck, UserMinus, Layers } from "lucide-react";
 import { useCalendar, useHotelRooms, useRsvpCalendarEvent, useLeaveCalendarEvent } from "../hooks/useCalendar";
@@ -29,6 +30,7 @@ import { NamePicker } from "../components/common/NamePicker";
 export function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const goBack = useSmartBack(routes.hub);
   useTimeStore((s) => s.override); // re-render when the time-travel override changes
   const { data: events = [], isLoading: eventsLoading } = useCalendar();
   const { data: users    = [] } = useUsers();
@@ -172,7 +174,7 @@ export function EventDetailPage() {
       <div className="flex flex-col items-center justify-center min-h-screen gap-4 text-slate-400">
         <CalendarDays size={40} className="opacity-30" />
         <p className="text-sm">Evenement niet gevonden</p>
-        <button onClick={() => navigate(-1)} className="text-xs text-sky-500 underline">Terug</button>
+        <button onClick={goBack} className="text-xs text-sky-500 underline">Terug</button>
       </div>
     );
   }
@@ -251,7 +253,7 @@ export function EventDetailPage() {
         if (dx > 0 && prevDay) navigateToDay(prevDay.ev.id);
       }}
     >
-      <DetailTopbar title={event.event_name} onBack={() => navigate(-1)} />
+      <DetailTopbar title={event.event_name} onBack={goBack} />
 
       {groupDays && groupDays.length > 1 && (
         <DayStrip

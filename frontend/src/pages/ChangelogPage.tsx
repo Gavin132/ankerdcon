@@ -1,9 +1,10 @@
-import { useNavigate } from "react-router-dom";
 import { Check, Sparkles } from "lucide-react";
 import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { EmptyState } from "../components/common/EmptyState";
 import { useChangelog } from "../hooks/useChangelog";
+import { useSmartBack } from "../hooks/useSmartBack";
+import { routes } from "../config/routes";
 
 function formatReleaseDate(iso: string): string {
   const d = new Date(iso);
@@ -12,12 +13,12 @@ function formatReleaseDate(iso: string): string {
 }
 
 export function ChangelogPage() {
-  const navigate = useNavigate();
+  const goBack = useSmartBack(routes.more);
   const { data: entries, isLoading } = useChangelog();
 
   return (
     <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-950">
-      <DetailTopbar title="Wat is nieuw" onBack={() => navigate(-1)} />
+      <DetailTopbar title="Wat is nieuw" onBack={goBack} />
 
       <div
         className="mx-auto max-w-lg px-5 py-6 space-y-5"

@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCalendar } from "../hooks/useCalendar";
 import { useRides } from "../hooks/useRides";
@@ -15,6 +14,8 @@ import {
 } from "../utils/actionItems";
 import { firstUpcomingEvents } from "../utils/multiDay";
 import { DetailTopbar } from "../components/detail/DetailTopbar";
+import { useSmartBack } from "../hooks/useSmartBack";
+import { routes } from "../config/routes";
 import { PAGE_SIZE } from "./acties/constants";
 import { getActionId } from "./acties/helpers";
 import { ActiesHero } from "./acties/components/ActiesHero";
@@ -28,7 +29,7 @@ import { CheckCheck, Users, CalendarDays, CalendarClock, ChevronDown } from "luc
 import type { Expense, ExpenseShare } from "../types";
 
 export function ActiesPage() {
-  const navigate = useNavigate();
+  const goBack = useSmartBack(routes.hub);
   const [filter, setFilter]       = useState<ActionKind | "all">("all");
   const [page, setPage]           = useState(0);
   const [expandedIds, setExpanded] = useState<Set<string>>(new Set());
@@ -85,7 +86,7 @@ export function ActiesPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <DetailTopbar title="Openstaande acties" onBack={() => navigate(-1)} />
+      <DetailTopbar title="Openstaande acties" onBack={goBack} />
       <ActiesHero total={total} byKind={byKind} />
 
       <div className="max-w-4xl mx-auto px-4 py-7">

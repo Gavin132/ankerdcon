@@ -1,17 +1,18 @@
 import { useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Sparkles, Calendar, ImageOff, ExternalLink } from "lucide-react";
 import { useCosplays } from "../hooks/useCosplays";
 import { useCalendar } from "../hooks/useCalendar";
 import { useUsers } from "../hooks/useUsers";
 import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { UserAvatar } from "../components/common/UserAvatar";
+import { useSmartBack } from "../hooks/useSmartBack";
 import { formatDate } from "../utils/format";
 import { routes } from "../config/routes";
 
 export function CosplayDetailPage() {
   const { id }      = useParams<{ id: string }>();
-  const navigate    = useNavigate();
+  const goBack      = useSmartBack(routes.hub);
   const [lightbox, setLightbox] = useState<string | null>(null);
 
   const { data: cosplays = [], isLoading } = useCosplays();
@@ -33,7 +34,7 @@ export function CosplayDetailPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-        <DetailTopbar title="Laden…" onBack={() => navigate(-1)} />
+        <DetailTopbar title="Laden…" onBack={goBack} />
         <div className="flex items-center justify-center py-24">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
         </div>
@@ -46,7 +47,7 @@ export function CosplayDetailPage() {
       <div className="flex flex-col items-center justify-center min-h-screen gap-4 text-slate-400">
         <Sparkles size={40} className="opacity-30" />
         <p className="text-sm">Cosplay niet gevonden</p>
-        <button onClick={() => navigate(-1)} className="text-xs text-sky-500 underline">Terug</button>
+        <button onClick={goBack} className="text-xs text-sky-500 underline">Terug</button>
       </div>
     );
   }
@@ -55,7 +56,7 @@ export function CosplayDetailPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <DetailTopbar
         title={cosplay.character_name}
-        onBack={() => navigate(-1)}
+        onBack={goBack}
       />
 
       {/* ── Hero ── */}

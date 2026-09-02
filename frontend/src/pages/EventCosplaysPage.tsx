@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import {
   ArrowLeft, Sparkles, Plus, Users, Image, Upload, X,
   CheckCircle2, SlidersHorizontal, ChevronLeft, ChevronRight,
@@ -11,6 +11,8 @@ import { z } from "zod";
 import { useCalendar } from "../hooks/useCalendar";
 import { useCosplays, useCreateCosplay, useDeleteCosplay } from "../hooks/useCosplays";
 import { useUsers } from "../hooks/useUsers";
+import { useSmartBack } from "../hooks/useSmartBack";
+import { routes } from "../config/routes";
 import { CosplayCard } from "../components/cosplay/CosplayCard";
 import { CosplayDetailDrawer } from "../components/cosplay/CosplayDetailDrawer";
 import {
@@ -57,7 +59,7 @@ const SL = "block text-xs font-semibold uppercase tracking-widest text-slate-400
 
 export function EventCosplaysPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const goBack = useSmartBack(id ? routes.event.view(id) : routes.hub);
 
   const { data: events = [] }             = useCalendar();
   const { data: cosplays = [], isLoading } = useCosplays();
@@ -222,7 +224,7 @@ export function EventCosplaysPage() {
       <div className="flex flex-col items-center justify-center min-h-screen gap-4 text-slate-400">
         <Sparkles size={40} className="opacity-30" />
         <p className="text-sm">Evenement niet gevonden</p>
-        <button onClick={() => navigate(-1)} className="text-xs text-sky-500 underline">Terug</button>
+        <button onClick={goBack} className="text-xs text-sky-500 underline">Terug</button>
       </div>
     );
   }
@@ -251,7 +253,7 @@ export function EventCosplaysPage() {
                       bg-white/90 dark:bg-slate-950/90 backdrop-blur-md
                       border-b border-slate-200 dark:border-white/[0.06]">
         <button
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-500 dark:text-slate-400
                      hover:bg-slate-100 dark:hover:bg-white/[0.08] hover:text-slate-900 dark:hover:text-white transition-colors"
         >

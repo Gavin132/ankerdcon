@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { ArrowLeft, BedDouble, Plus, Users, Pencil, Trash2, X, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCalendar } from "../hooks/useCalendar";
@@ -11,6 +11,8 @@ import {
 } from "../hooks/useCalendar";
 import { useAdminUpdateHotelRoom, useAdminDeleteHotelRoom } from "../hooks/useAdmin";
 import { useUsers, useCurrentUser } from "../hooks/useUsers";
+import { useSmartBack } from "../hooks/useSmartBack";
+import { routes } from "../config/routes";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { NamePicker } from "../components/common/NamePicker";
 import { Modal } from "../components/common/Modal";
@@ -349,7 +351,7 @@ const container = {
 
 export function HotelRoomsPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const goBack = useSmartBack(id ? routes.event.view(id) : routes.hub);
 
   const { data: events = [] } = useCalendar();
   const { data: rooms = [], isLoading } = useHotelRooms(id ?? "");
@@ -377,7 +379,7 @@ export function HotelRoomsPage() {
       <div className="flex flex-col items-center justify-center min-h-screen gap-4 text-slate-400">
         <BedDouble size={40} className="opacity-30" />
         <p className="text-sm">Evenement niet gevonden</p>
-        <button onClick={() => navigate(-1)} className="text-xs text-sky-500 underline">Terug</button>
+        <button onClick={goBack} className="text-xs text-sky-500 underline">Terug</button>
       </div>
     );
   }
@@ -387,7 +389,7 @@ export function HotelRoomsPage() {
       <div className="flex flex-col items-center justify-center min-h-screen gap-4 text-slate-400">
         <BedDouble size={40} className="opacity-30" />
         <p className="text-sm">Dit evenement heeft geen hotel</p>
-        <button onClick={() => navigate(-1)} className="text-xs text-sky-500 underline">Terug</button>
+        <button onClick={goBack} className="text-xs text-sky-500 underline">Terug</button>
       </div>
     );
   }
@@ -414,7 +416,7 @@ export function HotelRoomsPage() {
                       bg-white/90 dark:bg-slate-950/90 backdrop-blur-md
                       border-b border-slate-200 dark:border-white/[0.06]">
         <button
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           className="flex h-8 w-8 items-center justify-center rounded-xl
                      text-slate-500 dark:text-slate-400
                      hover:bg-slate-100 dark:hover:bg-white/[0.08]

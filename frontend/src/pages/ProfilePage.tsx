@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { routes } from "../config/routes";
 import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
+import { useSmartBack } from "../hooks/useSmartBack";
 import { UnsavedChangesModal } from "../components/common/UnsavedChangesModal";
 import {
   ArrowLeft,
@@ -332,6 +333,7 @@ export function ProfilePage() {
   const { name } = useParams<{ name: string }>();
   const decodedName = name ? decodeURIComponent(name) : "";
   const navigate = useNavigate();
+  const goBack = useSmartBack(routes.more);
   const currentUser = useAuthStore((s) => s.currentUser);
 
   const { data: user, isLoading } = useUser(decodedName);
@@ -525,7 +527,7 @@ export function ProfilePage() {
       <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-3 bg-slate-50 dark:bg-slate-950">
         <p className="text-sm text-slate-400">Gebruiker niet gevonden</p>
         <button
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
         >
           <ArrowLeft size={13} /> Terug
@@ -547,7 +549,7 @@ export function ProfilePage() {
           }}
         >
           <button
-            onClick={() => navigate(-1)}
+            onClick={goBack}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-white transition-colors"
           >
             <ArrowLeft size={17} />
@@ -598,7 +600,7 @@ export function ProfilePage() {
           style={{ paddingTop: "max(1rem, env(safe-area-inset-top, 0px))" }}
         >
           <button
-            onClick={() => navigate(-1)}
+            onClick={goBack}
             className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/20 hover:bg-black/35 text-white backdrop-blur-sm transition-colors"
           >
             <ArrowLeft size={16} />

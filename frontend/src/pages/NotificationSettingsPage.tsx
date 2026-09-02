@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Bell, BellOff, Save } from "lucide-react";
 import { DetailTopbar } from "../components/detail/DetailTopbar";
@@ -8,11 +7,13 @@ import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { UnsavedChangesModal } from "../components/common/UnsavedChangesModal";
 import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 import { useCurrentUser, useUpdatePreferences } from "../hooks/useUsers";
+import { useSmartBack } from "../hooks/useSmartBack";
+import { routes } from "../config/routes";
 import { NOTIFICATION_CATEGORIES } from "../constants/notifications";
 import { toast } from "../store/toast.store";
 
 export function NotificationSettingsPage() {
-  const navigate = useNavigate();
+  const goBack = useSmartBack(routes.more);
   const { data: user, isLoading } = useCurrentUser();
   const updateMutation = useUpdatePreferences();
 
@@ -70,7 +71,7 @@ export function NotificationSettingsPage() {
 
   return (
     <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-950">
-      <DetailTopbar title="Notificaties" onBack={() => navigate(-1)} />
+      <DetailTopbar title="Notificaties" onBack={goBack} />
 
       <div
         className="mx-auto max-w-lg px-5 py-6 space-y-5"

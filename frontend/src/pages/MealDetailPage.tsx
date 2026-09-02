@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Car, UtensilsCrossed } from "lucide-react";
 import { useMeals } from "../hooks/useMeals";
 import { useCalendar } from "../hooks/useCalendar";
 import { useRides } from "../hooks/useRides";
 import { useUsers } from "../hooks/useUsers";
+import { useSmartBack } from "../hooks/useSmartBack";
+import { routes } from "../config/routes";
 import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { LinkedEventCard } from "../components/detail/LinkedEventCard";
 import { MealHero } from "../components/meal/MealHero";
@@ -16,7 +18,7 @@ import { RestaurantQuickDriverModal } from "../components/transport/RestaurantQu
 
 export function MealDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const goBack = useSmartBack(routes.food);
   const [quickRideOpen, setQuickRideOpen] = useState(false);
 
   const { data: meals = [], isLoading } = useMeals();
@@ -37,7 +39,7 @@ export function MealDetailPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-        <DetailTopbar title="Laden…" onBack={() => navigate(-1)} />
+        <DetailTopbar title="Laden…" onBack={goBack} />
         <div className="flex items-center justify-center py-24">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
         </div>
@@ -50,7 +52,7 @@ export function MealDetailPage() {
       <div className="flex flex-col items-center justify-center min-h-screen gap-4 text-slate-400">
         <UtensilsCrossed size={40} className="opacity-30" />
         <p className="text-sm">Maaltijd niet gevonden</p>
-        <button onClick={() => navigate(-1)} className="text-xs text-sky-500 underline">
+        <button onClick={goBack} className="text-xs text-sky-500 underline">
           Terug
         </button>
       </div>
@@ -59,7 +61,7 @@ export function MealDetailPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <DetailTopbar title={meal.meal_name} onBack={() => navigate(-1)} />
+      <DetailTopbar title={meal.meal_name} onBack={goBack} />
       <MealHero meal={meal} linkedEvent={linkedEvent} users={users} />
 
       {(() => {
