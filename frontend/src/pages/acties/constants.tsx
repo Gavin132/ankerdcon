@@ -1,4 +1,4 @@
-import { Bus, UtensilsCrossed, Wallet, CheckCircle2, ArrowUpRight } from "lucide-react";
+import { Bus, UtensilsCrossed, CheckCircle2, ArrowUpRight } from "lucide-react";
 import type { ActionKind } from "../../utils/actionItems";
 
 export const PAGE_SIZE = 8;

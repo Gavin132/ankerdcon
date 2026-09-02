@@ -58,7 +58,6 @@ export function FoodPage() {
     handleSubmit,
     reset,
     control,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateForm>({
     resolver: zodResolver(createSchema),
@@ -275,12 +274,7 @@ export function FoodPage() {
                     <EventPicker
                       events={events}
                       value={field.value || undefined}
-                      onChange={(id) => {
-                        field.onChange(id ?? "");
-                        if (id) {
-                          const event = events.find((e) => e.id === id);
-                        }
-                      }}
+                      onChange={(id) => field.onChange(id ?? "")}
                       placeholder="Zoek en koppel een event…"
                     />
                   )}

@@ -39,7 +39,6 @@ export function EventPractical({
   hotelRooms = [],
   participantCount = 0,
   users = [],
-  isAdmin = false,
   onHotelClick,
 }: EventPracticalProps) {
   const rows = buildRows(event);

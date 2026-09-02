@@ -145,7 +145,7 @@ export function CreateExpenseDrawer({ open, onClose, me }: Props) {
   const manualAvailable = userNames.filter((n) => !manualUsedNames.has(n));
 
   const footer = (
-    <Button type="submit" form="create-expense-form" loading={isSubmitting} className="w-full">
+    <Button type="submit" form="create-expense-form" loading={isSubmitting} disabled={!splitValid} className="w-full">
       Uitgave opslaan
     </Button>
   );

@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../../config/routes";
-import { BedDouble, Phone, MapPin, Pencil, CalendarDays } from "lucide-react";
+import { Phone, MapPin, Pencil, CalendarDays } from "lucide-react";
 import { avatarColor } from "../../utils/avatar";
 import { LocationPingDisplay } from "./LocationPingDisplay";
 import { BadgeIcon } from "./BadgeIcon";

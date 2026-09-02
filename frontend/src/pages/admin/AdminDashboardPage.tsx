@@ -13,7 +13,7 @@ import { useUser } from "../../hooks/useUsers";
 import { useCosplays } from "../../hooks/useCosplays";
 import { useExpenses } from "../../hooks/useExpenses";
 import {
-  useAdminStats, useAdminUsers, useAdminMeals, useAdminEvents,
+  useAdminStats, useAdminUsers, useAdminEvents,
   useAdminBulkRsvpEvent,
 } from "../../hooks/useAdmin";
 import { NamePicker } from "../../components/common/NamePicker";
@@ -187,7 +187,6 @@ export function AdminDashboardPage() {
   const navigate = useNavigate();
   const { data: stats, isLoading: statsLoading } = useAdminStats();
   const { data: allUsers = [], isLoading: usersLoading } = useAdminUsers();
-  const { data: meals = [] } = useAdminMeals();
   const { data: events = [], isLoading: eventsLoading } = useAdminEvents();
   const { data: cosplays = [] } = useCosplays();
   const { data: expenses = [] } = useExpenses();

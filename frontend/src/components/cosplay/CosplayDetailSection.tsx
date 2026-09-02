@@ -214,6 +214,7 @@ export function CosplayDetailSection({ event, siblingEvents, users }: CosplayDet
                 cosplay={cosplay}
                 events={allRelatedEvents}
                 users={users}
+                onClick={() => {}}
               />
               {/* Delete button — shown on hover */}
               <button
