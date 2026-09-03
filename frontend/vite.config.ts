@@ -18,6 +18,7 @@ export default defineConfig(({ mode }) => {
       __APP_VERSION__: JSON.stringify(pkg.version),
     },
     server: {
+      port: process.env.PORT ? Number(process.env.PORT) : 5173,
       allowedHosts: [allowedHost],
       proxy: {
         "/api": {

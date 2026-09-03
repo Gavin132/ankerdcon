@@ -128,7 +128,7 @@ export function WeatherCard({ weather }: { weather: EventWeather }) {
       {/* Weather advice */}
       <div className="relative flex items-center gap-3 px-4 py-3.5 overflow-hidden bg-amber-50/60 dark:bg-amber-500/[0.06]">
         <img
-          src="/assets/images/ankerdmascotteankerdlogountitlednerd.png"
+          src="/assets/images/ankerd-nerd-logo.png"
           alt=""
           aria-hidden
           className="absolute right-2 bottom-0 h-16 w-16 object-contain object-bottom pointer-events-none select-none"

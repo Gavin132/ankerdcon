@@ -3,7 +3,7 @@ import { LogIn } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "../common/Button";
 import { supabase } from "../../services/supabase";
-import { useAuthStore } from "../../store/auth.store";
+import { useAuthStore, PENDING_LOGIN_REDIRECT_KEY } from "../../store/auth.store";
 import { routes } from "../../config/routes";
 
 export function LoginForm() {
@@ -26,7 +26,13 @@ export function LoginForm() {
     try {
       setIsLoading(true);
       setError(null);
-      
+
+      try {
+        sessionStorage.setItem(PENDING_LOGIN_REDIRECT_KEY, from);
+      } catch {
+        // sessionStorage unavailable — user just lands on the Hub after login
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "discord",
         options: {

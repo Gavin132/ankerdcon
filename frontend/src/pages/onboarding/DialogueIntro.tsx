@@ -141,7 +141,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
       {/* Upper area — mascot */}
       <div className="relative flex-1 flex items-end pl-5 sm:pl-8 pb-0 overflow-hidden">
         <motion.img
-          src="/assets/images/ankerd-mascotte.svg"
+          src="/assets/images/ankerd-mascotte.png"
           alt=""
           draggable={false}
           className="select-none pointer-events-none w-auto"

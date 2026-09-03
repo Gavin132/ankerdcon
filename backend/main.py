@@ -67,6 +67,20 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def cache_hashed_assets(request: Request, call_next):
+    """Vite's build gives every JS/CSS/image under /assets a content hash in
+    its filename, so a build never reuses a URL for different content — the
+    browser can cache these forever instead of revalidating on every visit.
+    Without this, StaticFiles serves them with no explicit Cache-Control,
+    so a returning visitor (or the app resuming from background) re-fetches
+    the whole bundle instead of reading it straight from disk cache."""
+    response = await call_next(request)
+    if request.url.path.startswith("/assets/"):
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    return response
+
+
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     """Pass through HTTPExceptions as clean JSON — no tracebacks."""

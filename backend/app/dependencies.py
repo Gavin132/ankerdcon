@@ -110,7 +110,12 @@ def get_current_user(
         profile_name: str | None = None
 
         # ── 1 & 2. Profile lookup with one retry on transient DB failure ──────
-        _select = "name, is_active, is_first_login, allow_dm"
+        # discord_id/avatar_url/discord_username are selected here (not just
+        # name/is_active/...) so step 3 below can skip its UPDATE when they
+        # already match — this dependency runs on every authenticated
+        # request, so an unconditional write here was costing every single
+        # API call a second DB round-trip for values that rarely change.
+        _select = "name, is_active, is_first_login, allow_dm, discord_id, avatar_url, discord_username"
         profile_row: dict | None = None
         _db_error = False
 
@@ -241,13 +246,16 @@ def get_current_user(
                 logger.warning("Auth: first-login DM failed: %s", e)
 
         # ── 3. Best-effort: backfill discord_id + avatar_url ─────────────────
+        # Only write fields that actually changed from what's stored — the
+        # profile row was already fetched with these columns in step 1, so
+        # comparing here is free.
         try:
             sync: dict = {}
-            if discord_id:
+            if discord_id and profile_row.get("discord_id") != discord_id:
                 sync["discord_id"] = discord_id
-            if discord_avatar:
+            if discord_avatar and profile_row.get("avatar_url") != discord_avatar:
                 sync["avatar_url"] = discord_avatar
-            if discord_username:
+            if discord_username and profile_row.get("discord_username") != discord_username:
                 sync["discord_username"] = discord_username
             if sync:
                 supabase.table("profiles").update(sync).eq("name", profile_name).execute()

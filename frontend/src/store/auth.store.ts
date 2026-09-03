@@ -13,6 +13,15 @@ function parseJwtSub(token: string): string | null {
 
 const IMPERSONATION_KEY = "ankerd_impersonation";
 
+// Discord OAuth is a full-page redirect away from the app and back, so a
+// deep-linked path (e.g. /events/{id}) that a not-yet-logged-in user landed
+// on can't survive it via React Router state — that only lives in memory
+// and is gone once the browser navigates away. sessionStorage does survive
+// the round trip, so LoginForm stashes the intended destination here right
+// before starting the OAuth flow, and AuthSync in App.tsx consumes it once
+// the session comes back.
+export const PENDING_LOGIN_REDIRECT_KEY = "ankerd_pending_login_redirect";
+
 interface ImpersonationRecord {
   token: string;
   name: string;

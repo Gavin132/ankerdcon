@@ -1,40 +1,56 @@
+import { lazy, type ComponentType } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import { routes } from "./config/routes";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { AdminRoute } from "./components/auth/AdminRoute";
 import { AppShell } from "./components/layout/AppShell";
 import { LoginPage } from "./pages/LoginPage";
-import { HubPage } from "./pages/HubPage";
-import { TransportPage } from "./pages/TransportPage";
-import { FoodPage } from "./pages/FoodPage";
-import { FinancePage } from "./pages/FinancePage";
-import { MorePage } from "./pages/MorePage";
-import { ProfilePage } from "./pages/ProfilePage";
-import { EventDetailPage } from "./pages/EventDetailPage";
-import { MealDetailPage } from "./pages/MealDetailPage";
-import { RideDetailPage } from "./pages/RideDetailPage";
-import { EventCosplaysPage } from "./pages/EventCosplaysPage";
-import { MembersPage } from "./pages/MembersPage";
-import { ActiesPage } from "./pages/ActiesPage";
-import { NotificationSettingsPage } from "./pages/NotificationSettingsPage";
-import { ChangelogPage } from "./pages/ChangelogPage";
-import { HotelRoomsPage } from "./pages/HotelRoomsPage";
-import { OnboardingPage } from "./pages/OnboardingPage";
-import { NotFoundPage } from "./pages/NotFoundPage";
-import { AdminLayout } from "./pages/admin/AdminLayout";
-import { AdminOnboardingPreviewPage } from "./pages/admin/AdminOnboardingPreviewPage";
-import { AdminDashboardPage } from "./pages/admin/AdminDashboardPage";
-import { AdminUsersPage } from "./pages/admin/AdminUsersPage";
-import { AdminRidesPage } from "./pages/admin/AdminRidesPage";
-import { AdminMealsPage } from "./pages/admin/AdminMealsPage";
-import { AdminEventsPage } from "./pages/admin/AdminEventsPage";
-import { AdminBadgesPage } from "./pages/admin/AdminBadgesPage";
-import { AdminEventGroupsPage } from "./pages/admin/AdminEventGroupsPage";
-import { AdminBetalingenPage } from "./pages/admin/AdminBetalingenPage";
-import { AdminAnnouncementsPage } from "./pages/admin/AdminAnnouncementsPage";
-import { AdminChangelogPage } from "./pages/admin/AdminChangelogPage";
-import { AdminImpersonatePage } from "./pages/admin/AdminImpersonatePage";
-import { AdminTimeTravelPage } from "./pages/admin/AdminTimeTravelPage";
+
+// Every other page is fetched on demand instead of bundled into the initial
+// download — most of these (especially the whole admin portal) are visited
+// by a fraction of sessions, so shipping them upfront to everyone was pure
+// dead weight on first load. LoginPage stays eager since it's the one page
+// a logged-out visitor needs before there's any other network activity to
+// hide a chunk fetch behind.
+function lazyPage<T extends ComponentType<any>>(
+  factory: () => Promise<Record<string, T>>,
+  name: string,
+) {
+  return lazy(() => factory().then((m) => ({ default: m[name] })));
+}
+
+const HubPage = lazyPage(() => import("./pages/HubPage"), "HubPage");
+const TransportPage = lazyPage(() => import("./pages/TransportPage"), "TransportPage");
+const FoodPage = lazyPage(() => import("./pages/FoodPage"), "FoodPage");
+const FinancePage = lazyPage(() => import("./pages/FinancePage"), "FinancePage");
+const MorePage = lazyPage(() => import("./pages/MorePage"), "MorePage");
+const ProfilePage = lazyPage(() => import("./pages/ProfilePage"), "ProfilePage");
+const EventDetailPage = lazyPage(() => import("./pages/EventDetailPage"), "EventDetailPage");
+const MealDetailPage = lazyPage(() => import("./pages/MealDetailPage"), "MealDetailPage");
+const RideDetailPage = lazyPage(() => import("./pages/RideDetailPage"), "RideDetailPage");
+const EventCosplaysPage = lazyPage(() => import("./pages/EventCosplaysPage"), "EventCosplaysPage");
+const MembersPage = lazyPage(() => import("./pages/MembersPage"), "MembersPage");
+const ActiesPage = lazyPage(() => import("./pages/ActiesPage"), "ActiesPage");
+const NotificationSettingsPage = lazyPage(() => import("./pages/NotificationSettingsPage"), "NotificationSettingsPage");
+const ChangelogPage = lazyPage(() => import("./pages/ChangelogPage"), "ChangelogPage");
+const HotelRoomsPage = lazyPage(() => import("./pages/HotelRoomsPage"), "HotelRoomsPage");
+const OnboardingPage = lazyPage(() => import("./pages/OnboardingPage"), "OnboardingPage");
+const NotFoundPage = lazyPage(() => import("./pages/NotFoundPage"), "NotFoundPage");
+
+const AdminLayout = lazyPage(() => import("./pages/admin/AdminLayout"), "AdminLayout");
+const AdminOnboardingPreviewPage = lazyPage(() => import("./pages/admin/AdminOnboardingPreviewPage"), "AdminOnboardingPreviewPage");
+const AdminDashboardPage = lazyPage(() => import("./pages/admin/AdminDashboardPage"), "AdminDashboardPage");
+const AdminUsersPage = lazyPage(() => import("./pages/admin/AdminUsersPage"), "AdminUsersPage");
+const AdminRidesPage = lazyPage(() => import("./pages/admin/AdminRidesPage"), "AdminRidesPage");
+const AdminMealsPage = lazyPage(() => import("./pages/admin/AdminMealsPage"), "AdminMealsPage");
+const AdminEventsPage = lazyPage(() => import("./pages/admin/AdminEventsPage"), "AdminEventsPage");
+const AdminBadgesPage = lazyPage(() => import("./pages/admin/AdminBadgesPage"), "AdminBadgesPage");
+const AdminEventGroupsPage = lazyPage(() => import("./pages/admin/AdminEventGroupsPage"), "AdminEventGroupsPage");
+const AdminBetalingenPage = lazyPage(() => import("./pages/admin/AdminBetalingenPage"), "AdminBetalingenPage");
+const AdminAnnouncementsPage = lazyPage(() => import("./pages/admin/AdminAnnouncementsPage"), "AdminAnnouncementsPage");
+const AdminChangelogPage = lazyPage(() => import("./pages/admin/AdminChangelogPage"), "AdminChangelogPage");
+const AdminImpersonatePage = lazyPage(() => import("./pages/admin/AdminImpersonatePage"), "AdminImpersonatePage");
+const AdminTimeTravelPage = lazyPage(() => import("./pages/admin/AdminTimeTravelPage"), "AdminTimeTravelPage");
 
 export const router = createBrowserRouter([
   {
