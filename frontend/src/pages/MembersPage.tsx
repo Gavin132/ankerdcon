@@ -8,7 +8,8 @@ import { useBadges } from "../hooks/useBadges";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { UserProfilePopup, type AnchorRect } from "../components/common/UserProfilePopup";
 import { BadgeIcon } from "../components/common/BadgeIcon";
-import { useSmartBack } from "../hooks/useSmartBack";
+import { useSmartBack, isFreshEntry } from "../hooks/useSmartBack";
+import { HomeLinkButton } from "../components/common/HomeLinkButton";
 import { routes } from "../config/routes";
 import type { User } from "../types";
 
@@ -80,6 +81,15 @@ export function MembersPage() {
           <span className="text-xs font-semibold text-slate-400 shrink-0 tabular-nums">
             {users.length} leden
           </span>
+        )}
+        {isFreshEntry() && (
+          <HomeLinkButton
+            size={16}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl
+                       text-slate-500 dark:text-slate-400
+                       hover:bg-slate-100 dark:hover:bg-white/[0.08]
+                       hover:text-slate-900 dark:hover:text-white transition-colors"
+          />
         )}
       </div>
 

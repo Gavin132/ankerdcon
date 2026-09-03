@@ -11,9 +11,10 @@ import { z } from "zod";
 import { useCalendar } from "../hooks/useCalendar";
 import { useCosplays, useCreateCosplay, useDeleteCosplay } from "../hooks/useCosplays";
 import { useUsers } from "../hooks/useUsers";
-import { useSmartBack } from "../hooks/useSmartBack";
+import { useSmartBack, isFreshEntry } from "../hooks/useSmartBack";
 import { routes } from "../config/routes";
 import { CosplayCard } from "../components/cosplay/CosplayCard";
+import { HomeLinkButton } from "../components/common/HomeLinkButton";
 import { CosplayDetailDrawer } from "../components/cosplay/CosplayDetailDrawer";
 import {
   CosplayFilterDrawer,
@@ -263,6 +264,15 @@ export function EventCosplaysPage() {
           <p className="font-bold text-slate-900 dark:text-white text-sm leading-tight truncate">Cosplays</p>
           <p className="text-[10px] text-slate-400 leading-tight truncate">{event.event_name}</p>
         </div>
+        {isFreshEntry() && (
+          <HomeLinkButton
+            size={17}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl
+                       text-slate-500 dark:text-slate-400
+                       hover:bg-slate-100 dark:hover:bg-white/[0.08]
+                       hover:text-slate-900 dark:hover:text-white transition-colors"
+          />
+        )}
         <button
           onClick={openCreate}
           className="flex items-center gap-1.5 rounded-xl bg-violet-500 px-3 py-1.5 text-xs font-bold text-white

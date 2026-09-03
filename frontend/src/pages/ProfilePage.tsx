@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { routes } from "../config/routes";
 import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
-import { useSmartBack } from "../hooks/useSmartBack";
+import { useSmartBack, isFreshEntry } from "../hooks/useSmartBack";
+import { HomeLinkButton } from "../components/common/HomeLinkButton";
 import { UnsavedChangesModal } from "../components/common/UnsavedChangesModal";
 import {
   ArrowLeft,
@@ -554,9 +555,15 @@ export function ProfilePage() {
           >
             <ArrowLeft size={17} />
           </button>
-          <p className="text-sm font-bold text-slate-900 dark:text-white">
+          <p className="text-sm font-bold text-slate-900 dark:text-white flex-1 min-w-0 truncate">
             {user.name}
           </p>
+          {isFreshEntry() && (
+            <HomeLinkButton
+              size={16}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-white transition-colors"
+            />
+          )}
         </div>
         <div
           className="mx-auto max-w-sm px-4 py-6"
@@ -606,6 +613,18 @@ export function ProfilePage() {
             <ArrowLeft size={16} />
           </button>
         </div>
+
+        {isFreshEntry() && (
+          <div
+            className="absolute top-0 right-0 z-10 flex items-center gap-2 px-4"
+            style={{ paddingTop: "max(1rem, env(safe-area-inset-top, 0px))" }}
+          >
+            <HomeLinkButton
+              size={16}
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/20 hover:bg-black/35 text-white backdrop-blur-sm transition-colors"
+            />
+          </div>
+        )}
 
         {/* Banner */}
         <div

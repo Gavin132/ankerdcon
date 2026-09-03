@@ -11,9 +11,10 @@ import {
 } from "../hooks/useCalendar";
 import { useAdminUpdateHotelRoom, useAdminDeleteHotelRoom } from "../hooks/useAdmin";
 import { useUsers, useCurrentUser } from "../hooks/useUsers";
-import { useSmartBack } from "../hooks/useSmartBack";
+import { useSmartBack, isFreshEntry } from "../hooks/useSmartBack";
 import { routes } from "../config/routes";
 import { UserAvatar } from "../components/common/UserAvatar";
+import { HomeLinkButton } from "../components/common/HomeLinkButton";
 import { NamePicker } from "../components/common/NamePicker";
 import { Modal } from "../components/common/Modal";
 import { Button } from "../components/common/Button";
@@ -430,6 +431,15 @@ export function HotelRoomsPage() {
           </p>
           <p className="text-[10px] text-slate-400 leading-tight truncate">{event.event_name}</p>
         </div>
+        {isFreshEntry() && (
+          <HomeLinkButton
+            size={17}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl
+                       text-slate-500 dark:text-slate-400
+                       hover:bg-slate-100 dark:hover:bg-white/[0.08]
+                       hover:text-slate-900 dark:hover:text-white transition-colors"
+          />
+        )}
         {(isAdmin || true) && (
           <button
             onClick={() => setModalRoom("new")}
