@@ -196,8 +196,8 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                   {typing && (
                     <motion.span
                       className="inline-block w-[2px] h-[15px] bg-sky-400 ml-0.5 align-middle rounded-full"
-                      animate={{ opacity: [1, 0] }}
-                      transition={{ repeat: Infinity, duration: 0.5, ease: "steps(1)" }}
+                      animate={{ opacity: [1, 1, 0, 0] }}
+                      transition={{ repeat: Infinity, duration: 0.5, ease: "linear", times: [0, 0.5, 0.5, 1] }}
                     />
                   )}
                 </p>

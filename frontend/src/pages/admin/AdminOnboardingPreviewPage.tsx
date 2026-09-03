@@ -87,7 +87,7 @@ export function AdminOnboardingPreviewPage() {
     null,
     <StepFeatures key="features" />,
     <StepProfile key="profile" state={profile} onChange={(p) => setProfile((prev) => ({ ...prev, ...p }))} />,
-    <StepNotifications key="notifications" state={profile} onChange={(p) => setProfile((prev) => ({ ...prev, ...p }))} />,
+    <StepNotifications key="notifications" state={profile} onChange={(p) => setProfile((prev) => ({ ...prev, ...p }))} hasDiscord={!!me?.discord_id} />,
     <StepDone key="done" />,
   ];
 

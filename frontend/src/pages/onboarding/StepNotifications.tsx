@@ -1,13 +1,14 @@
-import { Bell, BellOff } from "lucide-react";
+import { Bell, BellOff, MessageSquareOff } from "lucide-react";
 import { NOTIFICATION_CATEGORIES } from "../../constants/notifications";
 import type { ProfileState } from "./types";
 
 interface StepNotificationsProps {
   state: ProfileState;
   onChange: (patch: Partial<ProfileState>) => void;
+  hasDiscord: boolean;
 }
 
-export function StepNotifications({ state, onChange }: StepNotificationsProps) {
+export function StepNotifications({ state, onChange, hasDiscord }: StepNotificationsProps) {
   function toggleCategory(id: string) {
     onChange({
       notificationCategories: state.notificationCategories.includes(id)
@@ -24,6 +25,23 @@ export function StepNotifications({ state, onChange }: StepNotificationsProps) {
           Alles staat standaard uit — zet aan waar je een DM van de bot voor wilt. Je kunt dit later altijd aanpassen.
         </p>
       </div>
+
+      {!hasDiscord && (
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/60 dark:bg-amber-500/[0.06] p-4">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-500/10">
+            <MessageSquareOff size={16} className="text-amber-500" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-slate-900 dark:text-white">
+              Je ontvangt nog geen Discord DM's
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Je bent ingelogd met Google, dus de bot heeft geen Discord-account om naartoe te sturen.
+              Je kunt dit hierna alsnog koppelen via je profiel — de keuzes hieronder blijven bewaard voor als je dat doet.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
         <div className="flex items-center justify-between gap-4">
