@@ -6,10 +6,21 @@ import { supabase } from "../../services/supabase";
 import { useAuthStore, PENDING_LOGIN_REDIRECT_KEY } from "../../store/auth.store";
 import { routes } from "../../config/routes";
 
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48" className="ml-2">
+      <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
+      <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z" />
+      <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" />
+      <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" />
+    </svg>
+  );
+}
+
 export function LoginForm() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState<"discord" | "google" | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Bring in your router and your auth state
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,9 +33,9 @@ export function LoginForm() {
     }
   }, [accessToken, navigate, from]);
 
-  async function handleDiscordLogin() {
+  async function handleOAuthLogin(provider: "discord" | "google") {
     try {
-      setIsLoading(true);
+      setLoading(provider);
       setError(null);
 
       try {
@@ -34,17 +45,17 @@ export function LoginForm() {
       }
 
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: "discord",
+        provider,
         options: {
-          redirectTo: window.location.origin, 
-        }
+          redirectTo: window.location.origin,
+        },
       });
 
       if (error) throw error;
-      
+
     } catch (err: any) {
-      setError(err.message || "Er is een fout opgetreden bij het inloggen via Discord.");
-      setIsLoading(false);
+      setError(err.message || "Er is een fout opgetreden bij het inloggen.");
+      setLoading(null);
     }
   }
 
@@ -55,15 +66,28 @@ export function LoginForm() {
         <p className="text-sm text-slate-400 mt-1">Koppel je account om verder te gaan</p>
       </div>
 
-      <Button 
-        type="button" 
-        size="lg" 
-        onClick={handleDiscordLogin} 
-        loading={isLoading} 
+      <Button
+        type="button"
+        size="lg"
+        onClick={() => handleOAuthLogin("discord")}
+        loading={loading === "discord"}
+        disabled={loading !== null}
         className="w-full bg-[#5865F2] hover:bg-[#4752C4] border-transparent text-white"
       >
         Inloggen met Discord
-        {!isLoading && <LogIn size={18} className="ml-2" />}
+        {loading !== "discord" && <LogIn size={18} className="ml-2" />}
+      </Button>
+
+      <Button
+        type="button"
+        size="lg"
+        onClick={() => handleOAuthLogin("google")}
+        loading={loading === "google"}
+        disabled={loading !== null}
+        className="w-full bg-white hover:bg-slate-100 border-transparent text-slate-700"
+      >
+        Inloggen met Google
+        {loading !== "google" && <GoogleIcon />}
       </Button>
 
       {error && (

@@ -54,6 +54,7 @@ export const routes = {
     events:            "/admin/events",
     eventGroups:       "/admin/event-groups",
     badges:            "/admin/badges",
+    whitelist:         "/admin/whitelist",
     betalingen:        "/admin/betalingen",
     announcements:     "/admin/announcements",
     changelog:         "/admin/changelog",

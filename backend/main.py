@@ -51,7 +51,7 @@ settings = get_settings()
 
 app = FastAPI(
     title="Ankerd Con API",
-    version="1.5.2",
+    version="1.5.3",
     docs_url=f"{API_PREFIX}/docs",
     redoc_url=f"{API_PREFIX}/redoc",
     openapi_url=f"{API_PREFIX}/openapi.json",

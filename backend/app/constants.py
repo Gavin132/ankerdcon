@@ -18,6 +18,7 @@ class Tables:
     EXPENSE_SHARES = "expense_shares"
     ANNOUNCEMENTS  = "announcements"
     CHANGELOG_ENTRIES = "changelog_entries"
+    WHITELIST      = "whitelist"
 
 
 # ── API ───────────────────────────────────────────────────────────

@@ -30,6 +30,7 @@ export const QUERY_KEYS = {
   adminEventGroups:  ["admin", "event-groups"] as const,
   adminAnnouncements: ["admin", "announcements"] as const,
   adminChangelog: ["admin", "changelog"] as const,
+  adminWhitelist: ["admin", "whitelist"] as const,
 
   cosplays: ["cosplays"] as const,
   expenses: ["expenses"] as const,

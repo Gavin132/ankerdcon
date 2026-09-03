@@ -33,6 +33,7 @@ from app.models.admin import (
     UpdateEventGroupRequest,
 )
 from app.models.announcement import Announcement, CreateAnnouncementRequest, UpdateAnnouncementRequest
+from app.models.whitelist import WhitelistEntry, CreateWhitelistEntryRequest
 from app.models.changelog import ChangelogEntry, CreateChangelogEntryRequest, UpdateChangelogEntryRequest
 from app.models.badge import Badge, BadgeOrderItem, CreateBadgeRequest, UpdateBadgeRequest
 from app.models.calendar import CalendarEvent, HotelRoom
@@ -137,7 +138,7 @@ def admin_impersonate_user(
     try:
         resp = (
             supabase.table(Tables.PROFILES)
-            .select("id, name, discord_id, discord_username, is_active")
+            .select("id, name, discord_id, discord_username, avatar_url, email, is_active")
             .eq("id", user_id)
             .execute()
         )
@@ -151,20 +152,35 @@ def admin_impersonate_user(
     if profile.get("is_active") is False:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Deze gebruiker is gedeactiveerd.")
 
+    # Mirror the real token shape for however this profile actually authenticates —
+    # get_current_user branches on app_metadata.provider to decide whether to
+    # resolve identity by discord_id or by email. A guest/dummy profile (neither
+    # discord_id nor email, e.g. for someone without a Discord account) still
+    # goes through the discord path, which already falls back to a name-based
+    # lookup when discord_id is empty — that's the path that's always found
+    # these profiles, since they were never given an email identity either.
+    is_discord = bool(profile.get("discord_id")) or not profile.get("email")
     now = int(datetime.now(timezone.utc).timestamp())
-    payload = {
+    payload: dict = {
         "sub": profile["id"],
         "aud": "authenticated",
         "role": "authenticated",
         "iat": now,
         "exp": now + 2 * 60 * 60,  # 2 hours
+        "app_metadata": {
+            "provider": "discord" if is_discord else "google",
+            "providers": ["discord" if is_discord else "google"],
+        },
         "user_metadata": {
             "full_name": profile["name"],
             "name": profile["name"],
             "preferred_username": profile.get("discord_username") or profile["name"],
             "provider_id": profile.get("discord_id"),
+            "avatar_url": profile.get("avatar_url"),
         },
     }
+    if profile.get("email"):
+        payload["email"] = profile["email"]
     token = jose_jwt.encode(payload, settings.supabase_jwt_secret, algorithm="HS256")
     return {"access_token": token, "name": profile["name"]}
 
@@ -295,6 +311,52 @@ def admin_bulk_deactivate_users(body: BulkDeactivateUsersRequest, _: str = Depen
             supabase.table(Tables.PROFILES).update({"is_active": False}).eq("id", user_id).execute()
         except Exception as e:
             logger.error("Failed to deactivate user %s: %s", user_id, e)
+
+
+# ── Whitelist ──────────────────────────────────────────────────────────────────
+# Who's allowed to create a profile on first login — by discord_id (Discord
+# login) or by email (Google login). Checked in get_current_user before a new
+# profile is auto-created; doesn't affect anyone who already has one.
+
+@router.get(AdminRoutes.WHITELIST, response_model=list[WhitelistEntry])
+def admin_list_whitelist(_: str = Depends(get_admin_user)) -> list[WhitelistEntry]:
+    try:
+        return (
+            supabase.table(Tables.WHITELIST)
+            .select("*")
+            .order("created_at", desc=True)
+            .execute()
+            .data
+        )
+    except Exception as e:
+        logger.error("Failed to list whitelist: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+
+@router.post(AdminRoutes.WHITELIST, response_model=WhitelistEntry, status_code=status.HTTP_201_CREATED)
+def admin_create_whitelist_entry(body: CreateWhitelistEntryRequest, _: str = Depends(get_admin_user)) -> WhitelistEntry:
+    try:
+        resp = (
+            supabase.table(Tables.WHITELIST)
+            .insert({"discord_id": body.discord_id, "email": body.email})
+            .execute()
+        )
+        return resp.data[0]
+    except Exception as e:
+        msg = str(e)
+        if "duplicate key" in msg or "already exists" in msg:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Deze persoon staat al op de lijst.")
+        logger.error("Failed to create whitelist entry: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+
+@router.delete(AdminRoutes.WHITELIST_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
+def admin_delete_whitelist_entry(entry_id: str, _: str = Depends(get_admin_user)) -> None:
+    try:
+        supabase.table(Tables.WHITELIST).delete().eq("id", entry_id).execute()
+    except Exception as e:
+        logger.error("Failed to delete whitelist entry %s: %s", entry_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
 # ── Rides ──────────────────────────────────────────────────────────────────────

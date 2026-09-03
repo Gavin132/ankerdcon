@@ -13,6 +13,7 @@ import {
   UserCog,
   Sparkles,
   Clock,
+  ListChecks,
 } from "lucide-react";
 import { routes } from "../../config/routes";
 
@@ -55,6 +56,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Entiteiten",
     items: [
       { label: "Gebruikers",  path: routes.admin.users,  icon: Users },
+      { label: "Whitelist",   path: routes.admin.whitelist, icon: ListChecks },
       { label: "Ritten",      path: routes.admin.rides,  icon: Car },
       { label: "Maaltijden",  path: routes.admin.meals,  icon: UtensilsCrossed },
       {
@@ -86,6 +88,7 @@ export const NAV_GROUPS: NavGroup[] = [
 export const PAGE_TITLES: Record<string, string> = {
   [routes.admin.base]:        "Dashboard",
   [routes.admin.users]:       "Gebruikers",
+  [routes.admin.whitelist]:   "Whitelist",
   [routes.admin.rides]:       "Ritten",
   [routes.admin.meals]:       "Maaltijden",
   [routes.admin.events]:      "Evenementen",

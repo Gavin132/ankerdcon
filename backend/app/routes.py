@@ -142,3 +142,7 @@ class AdminRoutes:
     # Expenses
     EXPENSE_DETAIL = "/expenses/{expense_id}"
     EXPENSE_SHARE_DETAIL = "/expense-shares/{share_id}"
+
+    # Whitelist
+    WHITELIST = "/whitelist"
+    WHITELIST_DETAIL = "/whitelist/{entry_id}"

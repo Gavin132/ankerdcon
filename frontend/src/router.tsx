@@ -41,6 +41,7 @@ const AdminLayout = lazyPage(() => import("./pages/admin/AdminLayout"), "AdminLa
 const AdminOnboardingPreviewPage = lazyPage(() => import("./pages/admin/AdminOnboardingPreviewPage"), "AdminOnboardingPreviewPage");
 const AdminDashboardPage = lazyPage(() => import("./pages/admin/AdminDashboardPage"), "AdminDashboardPage");
 const AdminUsersPage = lazyPage(() => import("./pages/admin/AdminUsersPage"), "AdminUsersPage");
+const AdminWhitelistPage = lazyPage(() => import("./pages/admin/AdminWhitelistPage"), "AdminWhitelistPage");
 const AdminRidesPage = lazyPage(() => import("./pages/admin/AdminRidesPage"), "AdminRidesPage");
 const AdminMealsPage = lazyPage(() => import("./pages/admin/AdminMealsPage"), "AdminMealsPage");
 const AdminEventsPage = lazyPage(() => import("./pages/admin/AdminEventsPage"), "AdminEventsPage");
@@ -140,6 +141,7 @@ export const router = createBrowserRouter([
             children: [
               { index: true,                   element: <AdminDashboardPage /> },
               { path: routes.admin.users,      element: <AdminUsersPage /> },
+              { path: routes.admin.whitelist,  element: <AdminWhitelistPage /> },
               { path: routes.admin.rides,      element: <AdminRidesPage /> },
               { path: routes.admin.meals,      element: <AdminMealsPage /> },
               { path: routes.admin.events,      element: <AdminEventsPage /> },

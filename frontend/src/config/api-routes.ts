@@ -138,6 +138,11 @@ export const apiRoutes = {
       byId: (id: string) => `/api/admin/announcements/${id}`,
     },
 
+    whitelist: {
+      base: "/api/admin/whitelist",
+      byId: (id: string) => `/api/admin/whitelist/${id}`,
+    },
+
     changelog: {
       base: "/api/admin/changelog",
       byId: (id: string) => `/api/admin/changelog/${id}`,

@@ -18,6 +18,13 @@ export interface Badge {
   display_order: number;
 }
 
+export interface WhitelistEntry {
+  id: string;
+  discord_id: string | null;
+  email: string | null;
+  created_at: string | null;
+}
+
 export type AnnouncementSeverity = "info" | "warning" | "urgent";
 
 export interface Announcement {
