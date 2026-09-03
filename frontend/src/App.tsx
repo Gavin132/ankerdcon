@@ -14,8 +14,11 @@ import { useSplash } from "./hooks/useSplash";
 
 // Add these two imports!
 import { supabase } from "./services/supabase";
-import { useAuthStore, PENDING_LOGIN_REDIRECT_KEY } from "./store/auth.store";
+import { useAuthStore, PENDING_LOGIN_REDIRECT_KEY, PENDING_DISCORD_LINK_KEY } from "./store/auth.store";
 import { ApiError } from "./lib/api/client";
+import { linkDiscordAccount } from "./services/users.service";
+import { QUERY_KEYS } from "./constants";
+import { toast } from "./store/toast.store";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -88,6 +91,28 @@ function AuthSync() {
           }
         } catch {
           // sessionStorage unavailable — nothing to restore
+        }
+
+        // Same round-trip problem, for linking a Discord identity onto an
+        // already-signed-in account (see startDiscordLink in auth.service.ts).
+        // Supabase's access token doesn't carry the newly-linked identity's
+        // data itself, so this just tells the backend "go sync it" — the
+        // backend independently re-fetches the real identity from Supabase.
+        try {
+          const pendingLink = sessionStorage.getItem(PENDING_DISCORD_LINK_KEY);
+          if (pendingLink) {
+            sessionStorage.removeItem(PENDING_DISCORD_LINK_KEY);
+            linkDiscordAccount()
+              .then(() => {
+                queryClient.invalidateQueries({ queryKey: QUERY_KEYS.currentUser });
+                toast("success", "Discord-account gekoppeld!");
+              })
+              .catch(() => {
+                toast("error", "Koppelen van Discord is niet gelukt. Probeer het opnieuw via je profiel.");
+              });
+          }
+        } catch {
+          // sessionStorage unavailable — nothing to sync
         }
       } else {
         setAccessToken(null);

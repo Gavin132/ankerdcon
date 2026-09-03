@@ -25,6 +25,7 @@ class User(BaseModel):
     is_first_login: bool = True
     onboarding_completed: bool = False
     allow_dm: bool = True
+    show_greeting: bool = True
     aliases: list[str] = []
     badge_ids: list[str] = []
     notification_categories: list[str] = []
@@ -59,6 +60,7 @@ class UpdatePreferencesRequest(BaseModel):
     phone_number: Optional[str] = None
     aliases: Optional[list[str]] = None
     allow_dm: Optional[bool] = None
+    show_greeting: Optional[bool] = None
     notification_categories: Optional[list[str]] = None
 
     @field_validator("notification_categories")

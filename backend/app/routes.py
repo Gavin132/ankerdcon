@@ -39,6 +39,7 @@ class UserRoutes:
     ME = "/me"
     DETAIL = "/{identifier}"
     BANNER = "/banner"
+    LINK_DISCORD = "/me/link-discord"
 
 
 class MealRoutes:

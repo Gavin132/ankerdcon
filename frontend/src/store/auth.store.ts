@@ -22,6 +22,13 @@ const IMPERSONATION_KEY = "ankerd_impersonation";
 // the session comes back.
 export const PENDING_LOGIN_REDIRECT_KEY = "ankerd_pending_login_redirect";
 
+// Same full-page-redirect problem as above, but for linking a Discord
+// identity onto an already-signed-in (Google) account — set right before
+// supabase.auth.linkIdentity() sends the browser to Discord and back, so
+// AuthSync knows to sync the newly-linked identity onto the profile once
+// the session settles again.
+export const PENDING_DISCORD_LINK_KEY = "ankerd_pending_discord_link";
+
 interface ImpersonationRecord {
   token: string;
   name: string;

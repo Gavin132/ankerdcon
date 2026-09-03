@@ -44,6 +44,11 @@ export async function deleteBanner(): Promise<void> {
   await apiClient.delete(apiRoutes.users.banner);
 }
 
+export async function linkDiscordAccount(): Promise<User> {
+  const { data } = await apiClient.post<User>(apiRoutes.users.linkDiscord);
+  return data;
+}
+
 export interface CompleteOnboardingPayload {
   pronouns?: string;
   bio?: string;

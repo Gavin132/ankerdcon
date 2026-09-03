@@ -61,6 +61,7 @@ export const apiRoutes = {
     preferences: "/api/users/preferences",
     name:        "/api/users/name",
     banner:      "/api/users/banner",
+    linkDiscord: "/api/users/me/link-discord",
     byId:        (identifier: string) => `/api/users/${identifier}`,
     location:    (identifier: string) => `/api/users/${identifier}/location`,
   },

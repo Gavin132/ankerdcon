@@ -69,6 +69,7 @@ export interface User {
   is_first_login?: boolean;
   onboarding_completed?: boolean;
   allow_dm?: boolean;
+  show_greeting?: boolean;
   aliases?: string[];
   badge_ids?: string[];
   notification_categories?: string[];
@@ -91,6 +92,7 @@ export interface UpdatePreferencesRequest {
   phone_number?: string;
   aliases?: string[];
   allow_dm?: boolean;
+  show_greeting?: boolean;
   notification_categories?: string[];
 }
 

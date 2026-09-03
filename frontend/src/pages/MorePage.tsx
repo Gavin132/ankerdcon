@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  MapPin,
   LogOut,
   ChevronRight,
-  Navigation,
   CalendarDays,
   QrCode,
   CalendarPlus,
@@ -12,17 +10,13 @@ import {
   Check,
   Bell,
   Sparkles,
+  MessageSquare,
+  Sun,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Button } from "../components/common/Button";
-import { Modal } from "../components/common/Modal";
-import { NamePicker } from "../components/common/NamePicker";
 import { CalendarGrid } from "../components/more/CalendarGrid";
 import { CalendarArchive } from "../components/more/CalendarArchive";
-import { useUsers, usePingLocation } from "../hooks/useUsers";
+import { useUsers, useCurrentUser, useUpdatePreferences } from "../hooks/useUsers";
 import { useMeals } from "../hooks/useMeals";
 import {
   useCalendar,
@@ -30,29 +24,31 @@ import {
   useLeaveCalendarEvent,
 } from "../hooks/useCalendar";
 import { useAuthStore } from "../store/auth.store";
-import { logout } from "../services/auth.service";
+import { logout, startDiscordLink } from "../services/auth.service";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../config/routes";
 import { UserAvatar } from "../components/common/UserAvatar";
-import { formatDate } from "../utils/format";
-import { parseEventDate } from "../utils/date";
 import { env } from "../config/env";
 import { listContainer, listItem } from "../utils/motion";
-
-const ZONES = ["Op locatie", "Hotel", "Onderweg", "Off-site", "Thuis"] as const;
-
-const pingSchema = z.object({
-  user_name: z.string().min(1, "Verplicht"),
-  zone: z.string().min(1, "Selecteer een zone"),
-  text: z.string().min(1, "Voer details in"),
-});
-type PingForm = z.infer<typeof pingSchema>;
+import { toast } from "../store/toast.store";
 
 export function MorePage() {
-  const [pingOpen, setPingOpen] = useState(false);
   const [calendarView, setCalendarView] = useState<"list" | "calendar">("list");
   const [subscribeOpen, setSubscribeOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [linkingDiscord, setLinkingDiscord] = useState(false);
+  const { data: me } = useCurrentUser();
+  const updatePreferences = useUpdatePreferences();
+
+  async function onLinkDiscord() {
+    try {
+      setLinkingDiscord(true);
+      await startDiscordLink();
+    } catch {
+      setLinkingDiscord(false);
+      toast("error", "Kon Discord-koppeling niet starten. Probeer het opnieuw.");
+    }
+  }
 
   const feedUrl = `${env.API_BASE_URL || window.location.origin}/api/calendar/feed.ics`;
   const googleCalUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(feedUrl.replace(/^https?:/, "webcal:"))}`;
@@ -68,26 +64,10 @@ export function MorePage() {
   const { data: users } = useUsers();
   const { data: calendarEvents } = useCalendar();
   const { data: meals } = useMeals();
-  const pingMutation = usePingLocation();
   const rsvpMutation = useRsvpCalendarEvent();
   const leaveMutation = useLeaveCalendarEvent();
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const navigate = useNavigate();
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    watch,
-    setValue,
-    formState: { errors, isSubmitting },
-  } = useForm<PingForm>({ resolver: zodResolver(pingSchema) });
-
-  async function onPing(values: PingForm) {
-    await pingMutation.mutateAsync(values);
-    reset({});
-    setPingOpen(false);
-  }
 
   async function onCalendarRsvp(id: string, userNames: string[]) {
     for (const userName of userNames) {
@@ -120,15 +100,6 @@ export function MorePage() {
 
   const allUsers = users ?? [];
 
-  // Find the next upcoming calendar event (include today)
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const nextEvent =
-    (calendarEvents ?? [])
-      .map((ev) => ({ ev, date: parseEventDate(ev.date) }))
-      .filter(({ date }) => date !== null && date >= todayStart)
-      .sort((a, b) => a.date!.getTime() - b.date!.getTime())[0]?.ev ?? null;
-
   return (
     <motion.div
       className="space-y-5"
@@ -136,51 +107,6 @@ export function MorePage() {
       initial="hidden"
       animate="show"
     >
-      {/* Upcoming event banner */}
-      {nextEvent && (
-        <motion.div variants={listItem}>
-          <div className="relative overflow-hidden rounded-2xl gradient-hero px-5 py-4 shadow-hero">
-            <div className="pointer-events-none absolute -top-8 -right-8 h-28 w-28 rounded-full bg-sky-400/10" />
-            <div className="relative">
-              <div className="mb-1 flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse" />
-                <span className="text-xs font-bold text-sky-400 uppercase tracking-widest">
-                  Aankomend evenement
-                </span>
-              </div>
-              <p className="font-black text-white text-base leading-tight">
-                {nextEvent.event_name}
-              </p>
-              <p className="mt-1 flex items-center gap-1.5 text-xs text-sky-300">
-                <CalendarDays size={12} className="text-sky-400" />
-                {formatDate(nextEvent.date)}
-                {nextEvent.is_hotel && " · Hotel inbegrepen"}
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Acties */}
-      <motion.div variants={listItem}>
-        <p className="section-label mb-3">Acties</p>
-        <div className="card-surface rounded-2xl overflow-hidden">
-          <button
-            onClick={() => setPingOpen(true)}
-            className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-50 dark:active:bg-slate-800/50 transition-colors"
-          >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-500/10">
-              <Navigation size={16} className="text-sky-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-slate-900 dark:text-white">Locatie pingen</p>
-              <p className="text-xs text-slate-400 mt-0.5">Stuur je locatie naar de groep</p>
-            </div>
-            <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0" />
-          </button>
-        </div>
-      </motion.div>
-
       {/* Con Calendar */}
       {(calendarEvents ?? []).length > 0 && (
         <motion.div variants={listItem}>
@@ -369,6 +295,59 @@ export function MorePage() {
             <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0" />
           </button>
 
+          {/* Greeting toggle */}
+          {me && (
+            <div className="flex w-full items-center gap-3.5 px-4 py-3.5">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-500/10">
+                <Sun size={16} className="text-amber-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-slate-900 dark:text-white">Begroeting tonen</p>
+                <p className="text-xs text-slate-400">"Goedemiddag, {me.name}" bovenaan de Hub</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={me.show_greeting !== false}
+                disabled={updatePreferences.isPending}
+                onClick={() =>
+                  updatePreferences.mutateAsync({ show_greeting: !(me.show_greeting !== false) }).catch(() =>
+                    toast("error", "Kon voorkeur niet opslaan.")
+                  )
+                }
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 disabled:opacity-60 ${
+                  me.show_greeting !== false ? "bg-sky-500" : "bg-slate-200 dark:bg-slate-700"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
+                    me.show_greeting !== false ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+          )}
+
+          {/* Link Discord row — only if not already linked */}
+          {me && !me.discord_id && (
+            <button
+              onClick={onLinkDiscord}
+              disabled={linkingDiscord}
+              className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-50 dark:active:bg-slate-800/50 transition-colors disabled:opacity-60"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#5865F2]/10">
+                <MessageSquare size={16} className="text-[#5865F2]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-slate-900 dark:text-white">
+                  {linkingDiscord ? "Bezig met koppelen…" : "Discord koppelen"}
+                </p>
+                <p className="text-xs text-slate-400">Nodig om Discord-DM's van de bot te kunnen ontvangen</p>
+              </div>
+              <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0" />
+            </button>
+          )}
+
           {/* Changelog row */}
           <button
             onClick={() => navigate(routes.changelog)}
@@ -396,70 +375,6 @@ export function MorePage() {
           </button>
         </div>
       </motion.div>
-
-      {/* Ping modal */}
-      <Modal
-        open={pingOpen}
-        onClose={() => setPingOpen(false)}
-        title="Locatie pingen"
-        description="Stuur een snelle update naar de groep"
-      >
-        <form onSubmit={handleSubmit(onPing)} className="space-y-4">
-          <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
-              Jouw naam
-            </label>
-            <NamePicker
-              options={allUsers.map((u) => u.name)}
-              value={watch("user_name") ?? ""}
-              onChange={(v) => setValue("user_name", v)}
-              color="sky"
-            />
-            {errors.user_name && (
-              <p className="mt-1.5 text-xs text-rose-500">
-                {errors.user_name.message}
-              </p>
-            )}
-          </div>
-          <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
-              Zone
-            </label>
-            <select className="input-field" {...register("zone")}>
-              <option value="">Selecteer zone…</option>
-              {ZONES.map((z) => (
-                <option key={z} value={z}>
-                  {z}
-                </option>
-              ))}
-            </select>
-            {errors.zone && (
-              <p className="mt-1.5 text-xs text-rose-500">
-                {errors.zone.message}
-              </p>
-            )}
-          </div>
-          <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
-              Details
-            </label>
-            <input
-              className="input-field"
-              placeholder="Bijv. Hal B, ingang links"
-              {...register("text")}
-            />
-            {errors.text && (
-              <p className="mt-1.5 text-xs text-rose-500">
-                {errors.text.message}
-              </p>
-            )}
-          </div>
-          <Button type="submit" loading={isSubmitting} className="w-full">
-            <MapPin size={16} />
-            Pingen
-          </Button>
-        </form>
-      </Modal>
     </motion.div>
   );
 }

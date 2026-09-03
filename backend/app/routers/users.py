@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 
 from app.constants import Tables
 from app.core.logging import get_logger
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, _strip_discriminator
 from app.models.user import CompleteOnboardingRequest, LocationPingRequest, UpdateNameRequest, UpdatePreferencesRequest, User
 from app.routes import UserRoutes
 from app.core.database import supabase
@@ -64,6 +64,7 @@ def update_preferences(
         "phone_number":            body.phone_number,
         "aliases":                 body.aliases,
         "allow_dm":                body.allow_dm,
+        "show_greeting":           body.show_greeting,
         "notification_categories": body.notification_categories,
     }.items() if v is not None}
 
@@ -194,6 +195,77 @@ def get_me(current_user: str = Depends(get_current_user)) -> User:
     user = response.data[0]
     user.pop("passcode", None)
     return user
+
+
+@router.post(UserRoutes.LINK_DISCORD, response_model=User)
+def link_discord(current_user: str = Depends(get_current_user)) -> User:
+    """Attach a Discord identity to the current (Google-signed-in) profile.
+
+    The frontend calls supabase.auth.linkIdentity({provider: "discord"}) first,
+    which sends the browser through Discord's OAuth flow and, on success,
+    attaches that identity to the *same* Supabase auth user — no new login,
+    no new profile. This endpoint then syncs it onto the profile row.
+
+    Deliberately doesn't trust anything about the Discord identity from the
+    client — it re-fetches the user's real identities from Supabase's admin
+    API (the backend already holds the service-role key for this) so there's
+    no way to claim a discord_id you don't actually control.
+    """
+    try:
+        resp = supabase.table(Tables.PROFILES).select("id, discord_id, avatar_url").eq("name", current_user).execute()
+    except Exception as e:
+        logger.error("Link Discord: failed to fetch profile for %s: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profiel niet gevonden.")
+    profile = resp.data[0]
+
+    if profile.get("discord_id"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Er is al een Discord-account gekoppeld.")
+
+    try:
+        auth_user = supabase.auth.admin.get_user_by_id(profile["id"]).user
+    except Exception as e:
+        logger.error("Link Discord: failed to fetch auth identities for %s: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+    discord_identity = next((i for i in (auth_user.identities or []) if i.provider == "discord"), None)
+    if not discord_identity:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Geen Discord-account gevonden. Probeer het opnieuw te koppelen.",
+        )
+
+    data = discord_identity.identity_data or {}
+    discord_id = data.get("provider_id") or discord_identity.id
+    discord_username = _strip_discriminator(data.get("preferred_username") or data.get("full_name") or data.get("name"))
+    discord_avatar = data.get("avatar_url") or data.get("picture")
+
+    try:
+        clash = supabase.table(Tables.PROFILES).select("name").eq("discord_id", discord_id).execute()
+    except Exception as e:
+        logger.error("Link Discord: uniqueness check failed for %s: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if clash.data and clash.data[0]["name"] != current_user:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Dit Discord-account is al aan een ander profiel gekoppeld.",
+        )
+
+    update: dict = {"discord_id": discord_id}
+    if discord_username:
+        update["discord_username"] = discord_username
+    if discord_avatar and not profile.get("avatar_url"):
+        update["avatar_url"] = discord_avatar  # don't override a custom avatar they already set
+
+    try:
+        updated = supabase.table(Tables.PROFILES).update(update).eq("name", current_user).execute()
+    except Exception as e:
+        logger.error("Link Discord: failed to update profile for %s: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+    logger.info("Auth: linked Discord account %s to profile %s", discord_id, current_user)
+    return updated.data[0]
 
 
 @router.get(UserRoutes.DETAIL, response_model=User)

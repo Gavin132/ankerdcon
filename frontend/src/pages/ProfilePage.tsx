@@ -18,8 +18,9 @@ import {
   Smartphone,
   Plus,
   X,
-  Bell,
   ChevronRight,
+  MessageSquare,
+  Sun,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "../components/common/Button";
@@ -33,6 +34,7 @@ import {
   useDeleteBanner,
 } from "../hooks/useUsers";
 import { BannerCropModal } from "../components/profile/BannerCropModal";
+import { startDiscordLink } from "../services/auth.service";
 import { useAuthStore } from "../store/auth.store";
 import { avatarColor } from "../utils/avatar";
 import { toast } from "../store/toast.store";
@@ -363,7 +365,19 @@ export function ProfilePage() {
   const [avatarImgErr, setAvatarImgErr] = useState(false);
   const [cropFile, setCropFile] = useState<File | null>(null);
   const [cropOpen, setCropOpen] = useState(false);
+  const [linkingDiscord, setLinkingDiscord] = useState(false);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+
+  async function onLinkDiscord() {
+    try {
+      setLinkingDiscord(true);
+      await startDiscordLink();
+      // Browser is about to navigate away to Discord — nothing more to do here.
+    } catch {
+      setLinkingDiscord(false);
+      toast("error", "Kon Discord-koppeling niet starten. Probeer het opnieuw.");
+    }
+  }
 
   const hasAvatar = !!user?.avatar_url && !avatarImgErr;
 
@@ -954,29 +968,73 @@ export function ProfilePage() {
               </Card>
             </motion.div>
 
-            {/* ── Notificaties ───────────────────────────────────────── */}
+            {/* ── Begroeting ─────────────────────────────────────────── */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.15 }}
+              transition={{ duration: 0.35, delay: 0.16 }}
             >
-              <button
-                type="button"
-                onClick={() => navigate(routes.notifications)}
-                className="w-full flex items-center gap-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm px-5 py-4 text-left hover:border-sky-200 dark:hover:border-sky-500/30 transition-colors"
-              >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-500/10">
-                  <Bell size={17} className="text-sky-500" />
+              <div className="w-full flex items-center gap-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm px-5 py-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-500/10">
+                  <Sun size={17} className="text-amber-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">Notificaties</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">Begroeting tonen</p>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    Kies welke Discord DM's je van de bot ontvangt
+                    "Goedemiddag, {user.name}" bovenaan de Hub-pagina
                   </p>
                 </div>
-                <ChevronRight size={15} className="text-slate-300 dark:text-slate-600 shrink-0" />
-              </button>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={user.show_greeting !== false}
+                  disabled={updateMutation.isPending}
+                  onClick={() =>
+                    updateMutation.mutateAsync({ show_greeting: !(user.show_greeting !== false) }).catch(() =>
+                      toast("error", "Kon voorkeur niet opslaan.")
+                    )
+                  }
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 disabled:opacity-60 ${
+                    user.show_greeting !== false ? "bg-sky-500" : "bg-slate-200 dark:bg-slate-700"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
+                      user.show_greeting !== false ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
             </motion.div>
+
+            {/* ── Discord koppelen ──────────────────────────────────── */}
+            {!user.discord_id && (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: 0.17 }}
+              >
+                <button
+                  type="button"
+                  onClick={onLinkDiscord}
+                  disabled={linkingDiscord}
+                  className="w-full flex items-center gap-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm px-5 py-4 text-left hover:border-sky-200 dark:hover:border-sky-500/30 transition-colors disabled:opacity-60"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#5865F2]/10">
+                    <MessageSquare size={17} className="text-[#5865F2]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">
+                      {linkingDiscord ? "Bezig met koppelen…" : "Discord koppelen"}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Nodig om Discord-DM's van de bot te kunnen ontvangen
+                    </p>
+                  </div>
+                  <ChevronRight size={15} className="text-slate-300 dark:text-slate-600 shrink-0" />
+                </button>
+              </motion.div>
+            )}
           </div>
 
           {/* RIGHT column */}
@@ -1116,8 +1174,8 @@ export function ProfilePage() {
                     </p>
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                       {hasAvatar
-                        ? "Gesynchroniseerd via Discord OAuth"
-                        : "Log in met Discord voor je eigen avatar"}
+                        ? "Gesynchroniseerd via Discord of Google"
+                        : "Koppel Discord of log in met Google voor je eigen avatar"}
                     </p>
                   </div>
                 </div>

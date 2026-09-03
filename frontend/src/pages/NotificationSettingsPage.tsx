@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Bell, BellOff, Save } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Bell, BellOff, Save, MessageSquareOff, ArrowRight } from "lucide-react";
 import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { Button } from "../components/common/Button";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
@@ -77,6 +78,32 @@ export function NotificationSettingsPage() {
         className="mx-auto max-w-lg px-5 py-6 space-y-5"
         style={{ paddingBottom: "max(3rem, env(safe-area-inset-bottom, 0px))" }}
       >
+        {!user.discord_id && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+            <div className="flex items-start gap-3 rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/60 dark:bg-amber-500/[0.06] p-4">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-500/10">
+                <MessageSquareOff size={16} className="text-amber-500" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-slate-900 dark:text-white">
+                  Je ontvangt nog geen Discord DM's
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Je bent ingelogd met Google, dus de bot heeft geen Discord-account om naartoe te sturen.
+                  Je kunt dit op elk moment alsnog koppelen via je profiel.
+                </p>
+                <Link
+                  to={routes.profile.view(user.id ?? user.name)}
+                  className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline"
+                >
+                  Discord koppelen
+                  <ArrowRight size={11} />
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6 space-y-5">
             <div>

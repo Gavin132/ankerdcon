@@ -22,6 +22,8 @@ import { UserAvatar } from "../components/common/UserAvatar";
 import { UpcomingEventsCarousel } from "../components/hub/UpcomingEventsCarousel";
 import { QuickRideTiles } from "../components/hub/QuickRideTiles";
 import { RestaurantRideTiles } from "../components/hub/RestaurantRideTiles";
+import { NextEventBanner } from "../components/hub/NextEventBanner";
+import { LocationPingModal } from "../components/hub/LocationPingModal";
 import { listItem, listContainer } from "../utils/motion";
 import { parseEventDate, toDateKey, todayKey } from "../utils/date";
 import { computeAllActions } from "../utils/actionItems";
@@ -80,6 +82,7 @@ export function HubPage() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const [popupUser, setPopupUser] = useState<User | null>(null);
   const [popupAnchorRect, setPopupAnchorRect] = useState<AnchorRect>({ top: 0, left: 0, right: 0, height: 0 });
+  const [pingOpen, setPingOpen] = useState(false);
 
   const { data: events, isLoading: evLoading } = useCalendar();
   const { data: rides } = useRides();
@@ -159,26 +162,32 @@ export function HubPage() {
       animate="show"
     >
 
-      {/* ── Greeting ──────────────────────────────────────────────────────── */}
-      <motion.div variants={listItem}>
-        <div className="flex items-center justify-between pt-1">
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
-              {greeting}
-            </p>
-            <h1 className="mt-0.5 text-[22px] font-black leading-tight tracking-tight text-slate-900 dark:text-white truncate">
-              {me?.name ?? "…"}
-            </h1>
-            <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500 font-medium">{todayFormatted}</p>
-          </div>
-          {me && (
-            <UserAvatar name={me.name} className="h-12 w-12 text-base shrink-0 ml-4" />
-          )}
-        </div>
-      </motion.div>
+      {/* ── Aankomend evenement ──────────────────────────────────────────── */}
+      {event && (
+        <motion.div variants={listItem}>
+          <NextEventBanner event={event} />
+        </motion.div>
+      )}
 
-      {/* ── Action banner ─────────────────────────────────────────────────── */}
-      <DailyActionCheck actions={allActions} />
+      {/* ── Greeting ──────────────────────────────────────────────────────── */}
+      {me?.show_greeting !== false && (
+        <motion.div variants={listItem}>
+          <div className="flex items-center justify-between pt-1">
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                {greeting}
+              </p>
+              <h1 className="mt-0.5 text-[22px] font-black leading-tight tracking-tight text-slate-900 dark:text-white truncate">
+                {me?.name ?? "…"}
+              </h1>
+              <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500 font-medium">{todayFormatted}</p>
+            </div>
+            {me && (
+              <UserAvatar name={me.name} className="h-12 w-12 text-base shrink-0 ml-4" />
+            )}
+          </div>
+        </motion.div>
+      )}
 
       {/* ── Upcoming events carousel ─────────────────────────────────────── */}
       {upcomingItems.length > 0 && (
@@ -197,6 +206,9 @@ export function HubPage() {
           />
         </motion.div>
       )}
+
+      {/* ── Action banner ─────────────────────────────────────────────────── */}
+      <DailyActionCheck actions={allActions} />
 
       {/* ── Quick ride shortcuts (only for events with a hotel component) ──── */}
       {event?.is_hotel && (
@@ -228,12 +240,12 @@ export function HubPage() {
           <StatTile
             icon={MapPin}
             label="Locatie pingen"
-            sublabel="Meer"
+            sublabel="Snel"
             metric={<ArrowRight size={20} className="text-emerald-500" />}
             iconBg="bg-emerald-100 dark:bg-emerald-500/10"
             iconColor="text-emerald-500"
             borderHover="hover:border-emerald-500/20 dark:hover:border-emerald-500/15"
-            onClick={() => navigate(routes.more)}
+            onClick={() => setPingOpen(true)}
           />
         </div>
       </motion.div>
@@ -288,6 +300,12 @@ export function HubPage() {
       anchorRect={popupAnchorRect}
       onClose={() => setPopupUser(null)}
       calendarEvents={events ?? []}
+    />
+
+    <LocationPingModal
+      open={pingOpen}
+      onClose={() => setPingOpen(false)}
+      userNames={(users ?? []).map((u) => u.name)}
     />
     </>
   );

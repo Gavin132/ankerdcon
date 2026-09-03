@@ -31,6 +31,7 @@ export function useCompleteOnboarding() {
     mutationFn: (payload: CompleteOnboardingPayload) => completeOnboarding(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.userBase });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.currentUser });
     },
   });
 }
@@ -77,6 +78,7 @@ export function useUpdatePreferences() {
     mutationFn: (payload: UpdatePreferencesRequest) => updatePreferences(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.userBase });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.currentUser });
     },
   });
 }
@@ -89,6 +91,7 @@ export function useUploadBanner() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.userBase });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.users });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.currentUser });
     },
   });
 }
@@ -100,6 +103,7 @@ export function useDeleteBanner() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.userBase });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.users });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.currentUser });
     },
   });
 }
@@ -112,6 +116,7 @@ export function useUpdateName() {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.userBase });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.users });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.userNames });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.currentUser });
     },
   });
 }
