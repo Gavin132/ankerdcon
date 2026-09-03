@@ -23,6 +23,17 @@ _JWT_AUDIENCE = "authenticated"
 
 _AUTH_FAILED = "Authenticatie mislukt."
 _ACCESS_DENIED = "Toegang geweigerd. Neem contact op met een beheerder."
+_DEACTIVATED = "Je account is gedeactiveerd. Neem contact op met een beheerder."
+_TRY_AGAIN = "Kon niet controleren of je toegang hebt. Probeer het opnieuw."
+
+# Supabase stamps the identity provider's own issuer into user_metadata.iss —
+# unlike app_metadata.provider (pinned to whichever provider created the
+# account, never updated after) this gets overwritten on every sign-in with
+# whichever linked provider actually authenticated that session, so it's the
+# only reliable way to tell which provider is "live" right now once an
+# account has more than one linked (Supabase auto-links accounts that share
+# a verified email across providers).
+_DISCORD_ISSUER = "https://discord.com/api"
 
 
 def _strip_discriminator(name: str | None) -> str | None:
@@ -115,7 +126,26 @@ def get_current_user(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        if app_meta.get("provider") == "discord":
+        # Stable identity: profiles.id is the Supabase auth user id, which
+        # stays the same no matter which linked provider authenticated this
+        # session. Try this first so a returning user with more than one
+        # linked provider is always found — otherwise, once Discord and
+        # Google get auto-linked to the same account, resolving by
+        # discord_id/name/email from (session-dependent) metadata can miss
+        # the existing profile entirely and either deny access or create a
+        # duplicate.
+        try:
+            existing = supabase.table("profiles").select(
+                "name, is_active, is_first_login, allow_dm, discord_id, avatar_url, discord_username, email"
+            ).eq("id", user_id).execute()
+        except Exception as e:
+            logger.warning("Auth: profile-by-id lookup failed, falling back: %s", e)
+            existing = None
+
+        if existing and existing.data:
+            return _finalize_returning_user(existing.data[0], meta, user_id, settings)
+
+        if meta.get("iss") == _DISCORD_ISSUER or app_meta.get("provider") == "discord":
             return _resolve_discord_user(meta, user_id, settings)
         return _resolve_email_user(meta, token_email, user_id, settings)
 
@@ -128,6 +158,61 @@ def get_current_user(
             detail=_AUTH_FAILED,
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+
+def _finalize_returning_user(profile_row: dict, meta: dict, user_id: str, settings: Settings) -> str:
+    """Runs the is_active check, first-login welcome DM, and a conservative
+    backfill for a profile already found by its stable id — used for every
+    returning user, regardless of which linked provider they signed in with
+    this time.
+
+    Backfill only ever fills a field that is currently empty; it never
+    overwrites one that already has a value. That matters because meta here
+    reflects whichever linked provider authenticated most recently, so on an
+    account with two linked providers it can just as easily be Google's data
+    as Discord's — blindly trusting it to overwrite discord_id/discord_username
+    would risk clobbering the real Discord identity with the other provider's
+    values the next time that person happens to sign in via Google.
+    """
+    profile_name = profile_row["name"]
+
+    if profile_row.get("is_active") is False:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_DEACTIVATED)
+
+    if profile_row.get("is_first_login"):
+        try:
+            supabase.table("profiles").update({"is_first_login": False}).eq("id", user_id).execute()
+            # Use the profile's own stored discord_id for the welcome DM, not
+            # meta's — meta may belong to whichever provider was used this
+            # session, which isn't necessarily Discord.
+            existing_discord_id = profile_row.get("discord_id")
+            if existing_discord_id and profile_row.get("allow_dm", True):
+                discord_bot.send_welcome_dm(settings.discord_bot_token, existing_discord_id, profile_name)
+        except Exception as e:
+            logger.warning("Auth: first-login handling failed: %s", e)
+
+    try:
+        sync: dict = {}
+        if meta.get("iss") == _DISCORD_ISSUER:
+            if not profile_row.get("discord_id") and meta.get("provider_id"):
+                sync["discord_id"] = meta["provider_id"]
+            if not profile_row.get("discord_username"):
+                discord_username = _strip_discriminator(meta.get("preferred_username") or meta.get("name"))
+                if discord_username:
+                    sync["discord_username"] = discord_username
+        else:
+            if not profile_row.get("email") and meta.get("email"):
+                sync["email"] = meta["email"].lower()
+        if not profile_row.get("avatar_url"):
+            avatar = meta.get("avatar_url") or meta.get("picture")
+            if avatar:
+                sync["avatar_url"] = avatar
+        if sync:
+            supabase.table("profiles").update(sync).eq("id", user_id).execute()
+    except Exception:
+        pass  # columns don't exist yet, or a transient DB error — non-fatal
+
+    return profile_name
 
 
 def _resolve_discord_user(meta: dict, user_id: str, settings: Settings) -> str:
@@ -223,7 +308,7 @@ def _resolve_discord_user(meta: dict, user_id: str, settings: Settings) -> str:
             wl = supabase.table("whitelist").select("discord_id").eq("discord_id", discord_id).execute()
         except Exception as e:
             logger.error("Auth: whitelist check failed: %s", e)
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_ACCESS_DENIED)
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_TRY_AGAIN)
         if not wl.data:
             logger.info("Auth: discord_id %s not in whitelist", discord_id)
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_ACCESS_DENIED)
@@ -262,7 +347,7 @@ def _resolve_discord_user(meta: dict, user_id: str, settings: Settings) -> str:
     if profile_row and profile_row.get("is_active") is False:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Je account is gedeactiveerd. Neem contact op met een beheerder.",
+            detail=_DEACTIVATED,
         )
 
     # ── 2c. First login — send welcome DM once ───────────────────────────
@@ -345,7 +430,7 @@ def _resolve_email_user(meta: dict, email: str | None, user_id: str, settings: S
             wl = supabase.table("whitelist").select("email").eq("email", email).execute()
         except Exception as e:
             logger.error("Auth: whitelist check failed: %s", e)
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_ACCESS_DENIED)
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_TRY_AGAIN)
         if not wl.data:
             logger.info("Auth: email %s not in whitelist", email)
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_ACCESS_DENIED)
@@ -378,7 +463,7 @@ def _resolve_email_user(meta: dict, email: str | None, user_id: str, settings: S
     if profile_row and profile_row.get("is_active") is False:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Je account is gedeactiveerd. Neem contact op met een beheerder.",
+            detail=_DEACTIVATED,
         )
 
     # No discord_id to send a welcome DM to — just clear the flag.

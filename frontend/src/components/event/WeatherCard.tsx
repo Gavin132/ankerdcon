@@ -1,6 +1,6 @@
-import { Wind, Droplets, Sun, Sunrise, Lightbulb } from "lucide-react";
-import type { EventWeather } from "../../hooks/useEventWeather";
-import { getWeatherAdvice } from "../../utils/weather";
+import { Wind, Droplets, Sun, Sunrise, Lightbulb, History } from "lucide-react";
+import type { EventWeather, ClimateAverage } from "../../hooks/useEventWeather";
+import { getWeatherAdvice, getClimateAdvice } from "../../utils/weather";
 
 export function WeatherCard({ weather }: { weather: EventWeather }) {
   const uvLabel =
@@ -126,6 +126,106 @@ export function WeatherCard({ weather }: { weather: EventWeather }) {
       )}
 
       {/* Weather advice */}
+      <div className="relative flex items-center gap-3 px-4 py-3.5 overflow-hidden bg-amber-50/60 dark:bg-amber-500/[0.06]">
+        <img
+          src="/assets/images/ankerd-nerd-logo.png"
+          alt=""
+          aria-hidden
+          className="absolute right-2 bottom-0 h-16 w-16 object-contain object-bottom pointer-events-none select-none"
+        />
+        <div className="h-7 w-7 shrink-0 rounded-lg bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center">
+          <Lightbulb size={14} className="text-amber-500" />
+        </div>
+        <div className="min-w-0 pr-14">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-amber-500/80 dark:text-amber-400/60 mb-0.5">
+            Advies
+          </p>
+          <p className="text-xs font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
+            {advice.tip}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Shown once the event is too far out for a real forecast (~16 days) — an
+// average built from actual weather on nearby dates over past years, rather
+// than a prediction for this specific date.
+export function ClimateAverageCard({ climate }: { climate: ClimateAverage }) {
+  const advice = getClimateAdvice(climate);
+
+  return (
+    <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden bg-white dark:bg-slate-900">
+      {/* Header */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-500 via-slate-600 to-indigo-700 p-5">
+        <div className="pointer-events-none absolute -top-6 -right-6 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
+        <div className="pointer-events-none absolute bottom-0 left-8 h-20 w-20 rounded-full bg-indigo-400/20 blur-xl" />
+
+        <div className="relative flex items-center gap-1.5 mb-3">
+          <History size={11} className="text-slate-300/70" />
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-300/70">
+            Historisch gemiddelde
+          </p>
+        </div>
+        <div className="relative flex items-start justify-between gap-3">
+          <div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-5xl font-black text-white leading-none tabular-nums">
+                {climate.temp_max_avg}°
+              </span>
+              <span className="text-xl font-light text-slate-200/80">
+                /{climate.temp_min_avg}°C
+              </span>
+            </div>
+            <p className="text-base font-semibold text-white mt-1.5">
+              {climate.description}
+            </p>
+          </div>
+          <span className="text-6xl leading-none shrink-0 drop-shadow-sm">
+            {climate.icon}
+          </span>
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div className="grid grid-cols-3 divide-x divide-slate-100 dark:divide-slate-800 border-b border-slate-100 dark:border-slate-800">
+        {[
+          {
+            icon: Droplets,
+            value: `${climate.precip_prob}%`,
+            sub: `${climate.precip_mm_avg} mm`,
+            cls: "text-sky-500",
+          },
+          {
+            icon: Wind,
+            value: `${climate.wind_avg_kmh}`,
+            sub: "km/h",
+            cls: "text-slate-400 dark:text-slate-500",
+          },
+          {
+            icon: Sun,
+            value: `${climate.temp_max_avg}°`,
+            sub: "hoogste gem.",
+            cls: "text-amber-500",
+          },
+        ].map(({ icon: Icon, value, sub, cls }) => (
+          <div
+            key={value}
+            className="flex flex-col items-center gap-0.5 py-3 px-2"
+          >
+            <Icon size={13} className={`${cls} mb-1`} />
+            <p className="text-xs font-bold text-slate-800 dark:text-white leading-none tabular-nums">
+              {value}
+            </p>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+              {sub}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* Advice */}
       <div className="relative flex items-center gap-3 px-4 py-3.5 overflow-hidden bg-amber-50/60 dark:bg-amber-500/[0.06]">
         <img
           src="/assets/images/ankerd-nerd-logo.png"

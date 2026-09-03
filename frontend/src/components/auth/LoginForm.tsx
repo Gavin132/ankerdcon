@@ -66,17 +66,22 @@ export function LoginForm() {
         <p className="text-sm text-slate-400 mt-1">Koppel je account om verder te gaan</p>
       </div>
 
-      <Button
-        type="button"
-        size="lg"
-        onClick={() => handleOAuthLogin("discord")}
-        loading={loading === "discord"}
-        disabled={loading !== null}
-        className="w-full bg-[#5865F2] hover:bg-[#4752C4] border-transparent text-white"
-      >
-        Inloggen met Discord
-        {loading !== "discord" && <LogIn size={18} className="ml-2" />}
-      </Button>
+      <div className="relative">
+        <Button
+          type="button"
+          size="lg"
+          onClick={() => handleOAuthLogin("discord")}
+          loading={loading === "discord"}
+          disabled={loading !== null}
+          className="w-full bg-[#5865F2] hover:bg-[#4752C4] border-transparent text-white"
+        >
+          Inloggen met Discord
+          {loading !== "discord" && <LogIn size={18} className="ml-2" />}
+        </Button>
+        <span className="pointer-events-none absolute -top-2 right-3 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+          Aanbevolen
+        </span>
+      </div>
 
       <Button
         type="button"
@@ -84,11 +89,15 @@ export function LoginForm() {
         onClick={() => handleOAuthLogin("google")}
         loading={loading === "google"}
         disabled={loading !== null}
-        className="w-full bg-white hover:bg-slate-100 border-transparent text-slate-700"
+        className="w-full bg-slate-700 hover:bg-slate-600 border-transparent text-white"
       >
         Inloggen met Google
         {loading !== "google" && <GoogleIcon />}
       </Button>
+
+      <p className="text-center text-xs text-slate-400 px-2">
+        Met Discord ontvang je automatisch herinneringen via DM. Log je liever in met Google? Dat kan, maar koppel dan ook je Discord om berichten te blijven ontvangen.
+      </p>
 
       {error && (
         <p className="mt-2 text-xs font-medium text-rose-500 text-center">

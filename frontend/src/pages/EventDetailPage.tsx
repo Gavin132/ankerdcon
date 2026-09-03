@@ -15,7 +15,7 @@ import { toast } from "../store/toast.store";
 import { routes } from "../config/routes";
 import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { EventHero } from "../components/event/EventHero";
-import { WeatherCard, WeatherSkeleton } from "../components/event/WeatherCard";
+import { WeatherCard, ClimateAverageCard, WeatherSkeleton } from "../components/event/WeatherCard";
 import { EventLinks } from "../components/event/EventLinks";
 import { EventPractical } from "../components/event/EventPractical";
 import { EventAttendees } from "../components/event/EventAttendees";
@@ -263,7 +263,7 @@ export function EventDetailPage() {
         />
       )}
 
-      <EventHero event={event} daysUntil={daysUntil} users={users} />
+      <EventHero event={event} daysUntil={daysUntil} users={users} meals={linkedMeals} />
 
       {/* ── Main content ── */}
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
@@ -272,8 +272,10 @@ export function EventDetailPage() {
         {showWeather && (
           weatherLoading ? (
             <WeatherSkeleton />
-          ) : weather ? (
-            <WeatherCard weather={weather} />
+          ) : weather?.kind === "forecast" ? (
+            <WeatherCard weather={weather.data} />
+          ) : weather?.kind === "climate" ? (
+            <ClimateAverageCard climate={weather.data} />
           ) : (
             <div className="card-surface rounded-2xl px-5 py-4 flex items-center gap-3 text-slate-400 dark:text-slate-500">
               <span className="text-2xl">🌐</span>
@@ -370,11 +372,13 @@ export function EventDetailPage() {
           onHotelClick={() => navigate(routes.eventHotel.view(event.id))}
         />
 
-        {/* 4 ── Tickets & links */}
+        {/* 4 ── Linked meals */}
+        <EventLinkedMeals meals={linkedMeals} />
+
+        {/* 5 ── Tickets & links */}
         {hasLinks && <EventLinks event={event} />}
 
-        {/* 5 ── Linked activities */}
-        <EventLinkedMeals meals={linkedMeals} />
+        {/* 6 ── Linked rides */}
         <EventLinkedRides rides={linkedRides} />
 
       </div>

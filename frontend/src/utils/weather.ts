@@ -1,4 +1,4 @@
-import type { EventWeather } from "../hooks/useEventWeather";
+import type { EventWeather, ClimateAverage } from "../hooks/useEventWeather";
 
 export interface WeatherAdvice {
   emoji: string;
@@ -54,5 +54,32 @@ export function getWeatherAdvice(w: EventWeather): WeatherAdvice {
   return {
     emoji: "🌤️",
     tip: "Neem voor de zekerheid een extra laagje mee voor de avond.",
+  };
+}
+
+export function getClimateAdvice(c: ClimateAverage): WeatherAdvice {
+  if (c.precip_prob >= 50)
+    return {
+      emoji: "🌧️",
+      tip: "Op deze datum regende het historisch gezien vaak — hou een regenjas achter de hand.",
+    };
+  if (c.temp_min_avg < 8)
+    return {
+      emoji: "🧥",
+      tip: `'s Avonds is het op deze datum gemiddeld maar ${c.temp_min_avg}°C — neem een warme jas mee.`,
+    };
+  if (c.temp_max_avg >= 25)
+    return {
+      emoji: "☀️",
+      tip: "Historisch gezien is het op deze datum lekker warm — denk aan zonnebrand.",
+    };
+  if (c.wind_avg_kmh >= 35)
+    return {
+      emoji: "💨",
+      tip: "Op deze datum staat er gemiddeld een stevige wind — een winddicht jasje is handig.",
+    };
+  return {
+    emoji: "🌤️",
+    tip: "Dit is een gemiddelde, geen voorspelling — check dichter bij de datum nog eens terug.",
   };
 }

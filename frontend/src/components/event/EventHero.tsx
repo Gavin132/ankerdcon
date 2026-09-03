@@ -1,15 +1,18 @@
-import { BedDouble, CalendarDays, MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
+import { BedDouble, CalendarDays, MapPin, UtensilsCrossed } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { formatEventDate } from "../../utils/format";
-import type { CalendarEvent, User } from "../../types";
+import { routes } from "../../config/routes";
+import type { CalendarEvent, Meal, User } from "../../types";
 
 interface EventHeroProps {
   event: CalendarEvent;
   daysUntil: number | null;
   users: User[];
+  meals?: Meal[];
 }
 
-export function EventHero({ event, daysUntil, users }: EventHeroProps) {
+export function EventHero({ event, daysUntil, users, meals = [] }: EventHeroProps) {
   function resolveUser(stored: string) {
     return users.find(
       (u) => u.name === stored || u.discord_username === stored || u.aliases?.includes(stored),
@@ -132,6 +135,25 @@ export function EventHero({ event, daysUntil, users }: EventHeroProps) {
               <MapPin size={12} className="text-violet-300/80" />
               {event.location}
             </a>
+          )}
+          {meals.length > 0 && (
+            <Link
+              to={routes.meal.view(meals[0].id)}
+              className="flex items-center gap-1.5 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 px-3 py-1.5 text-xs font-bold text-white/90 hover:bg-black/50 hover:border-white/20 active:scale-[0.97] transition-all max-w-[220px]"
+            >
+              <UtensilsCrossed size={12} className="text-amber-300/80 shrink-0" />
+              <span className="truncate">{meals[0].meal_name}</span>
+              {meals.length > 1 && <span className="shrink-0 text-white/50">+{meals.length - 1}</span>}
+            </Link>
+          )}
+          {event.is_hotel && (
+            <Link
+              to={routes.eventHotel.view(event.id)}
+              className="flex items-center gap-1.5 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 px-3 py-1.5 text-xs font-bold text-white/90 hover:bg-black/50 hover:border-white/20 active:scale-[0.97] transition-all"
+            >
+              <BedDouble size={12} className="text-violet-300/80" />
+              Hotel
+            </Link>
           )}
         </div>
 
