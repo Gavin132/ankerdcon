@@ -72,7 +72,21 @@ def _format_date(date_str: str | None) -> str | None:
 
 
 def _serve_spa() -> HTMLResponse:
-    return HTMLResponse((_DIST / "index.html").read_text(encoding="utf-8"))
+    try:
+        return HTMLResponse((_DIST / "index.html").read_text(encoding="utf-8"))
+    except OSError:
+        # A deploy briefly empties/rewrites dist/ (the build's emptyOutDir
+        # truncates it before the new files land). A real user hitting this
+        # exact window — e.g. an installed PWA force-reloading after sitting
+        # backgrounded — would otherwise get the app's raw JSON 500 handler
+        # instead of a page. A short auto-retry recovers once the build
+        # finishes, without ever showing that raw error.
+        logger.warning("Link preview: dist/index.html unreadable, likely mid-deploy")
+        return HTMLResponse(
+            '<!doctype html><html><head><meta charset="UTF-8">'
+            '<meta http-equiv="refresh" content="2" /></head><body></body></html>',
+            status_code=503,
+        )
 
 
 @router.get("/events/{event_id}")
@@ -105,7 +119,7 @@ def event_link_preview(event_id: str, request: Request) -> HTMLResponse:
     summary = " · ".join(p for p in (date_part, event.get("location")) if p)
     description = summary or event.get("description") or "Live Event Logistics"
 
-    image = event.get("image_url") or (f"{base}/assets/images/ankerd-banner.png" if base else None)
+    image = event.get("image_url") or (f"{base}/assets/images/ankerd-banner.jpg" if base else None)
 
     meta_tags = [
         '<meta property="og:type" content="website" />',
