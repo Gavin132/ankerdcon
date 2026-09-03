@@ -66,24 +66,18 @@ export const router = createBrowserRouter([
         element: <OnboardingPage />,
       },
       {
-        path: routes.hub,
-        element: <AppShell><HubPage /></AppShell>,
-      },
-      {
-        path: routes.transport,
-        element: <AppShell><TransportPage /></AppShell>,
-      },
-      {
-        path: routes.food,
-        element: <AppShell><FoodPage /></AppShell>,
-      },
-      {
-        path: routes.finance,
-        element: <AppShell><FinancePage /></AppShell>,
-      },
-      {
-        path: routes.more,
-        element: <AppShell><MorePage /></AppShell>,
+        // Shared layout for the bottom-nav tabs — one persistent AppShell
+        // instance (Header, BottomNav, etc.) instead of a fresh one per tab,
+        // so switching tabs doesn't tear the whole shell down while the
+        // next tab's chunk loads.
+        element: <AppShell />,
+        children: [
+          { path: routes.hub,       element: <HubPage /> },
+          { path: routes.transport, element: <TransportPage /> },
+          { path: routes.food,      element: <FoodPage /> },
+          { path: routes.finance,   element: <FinancePage /> },
+          { path: routes.more,      element: <MorePage /> },
+        ],
       },
       {
         path: routes.profile.pattern,

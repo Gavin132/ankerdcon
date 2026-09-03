@@ -1,7 +1,18 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { AdminSidebar } from "./components/AdminSidebar";
 import { AdminTopbar } from "./components/AdminTopbar";
+
+// Keeps the sidebar/topbar mounted while an admin page's chunk loads,
+// instead of the navigation bubbling to the app's top-level Suspense and
+// tearing down this whole layout — same fix as AppShell for the main tabs.
+function AdminTabFallback() {
+  return (
+    <div className="flex items-center justify-center py-24">
+      <div className="h-8 w-8 rounded-full border-2 border-sky-500 border-t-transparent animate-spin" />
+    </div>
+  );
+}
 
 export function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false);
@@ -42,7 +53,9 @@ export function AdminLayout() {
           onToggleMobile={() => setMobileOpen(true)}
         />
         <main className="flex-1 overflow-y-auto">
-          <Outlet />
+          <Suspense fallback={<AdminTabFallback />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>
