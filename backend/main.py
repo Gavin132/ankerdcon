@@ -8,7 +8,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -82,8 +82,23 @@ async def cache_hashed_assets(request: Request, call_next):
 
 
 @app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
-    """Pass through HTTPExceptions as clean JSON — no tracebacks."""
+async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> Response:
+    """Pass through HTTPExceptions as clean JSON — no tracebacks.
+
+    One exception: StaticFiles(html=True) only serves index.html for an
+    exact directory match, not for arbitrary client-routed paths — so a
+    404 for a path with no file extension (i.e. not a missing asset) is
+    someone reloading on a page other than the root, and should hand back
+    the SPA shell so React Router can handle it, not a raw JSON error.
+    """
+    path = request.url.path
+    if (
+        exc.status_code == 404
+        and _dist.exists()
+        and not path.startswith(API_PREFIX)
+        and "." not in path.rsplit("/", 1)[-1]
+    ):
+        return HTMLResponse((_dist / "index.html").read_text(encoding="utf-8"))
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.detail},
