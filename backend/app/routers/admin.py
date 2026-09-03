@@ -325,18 +325,14 @@ def admin_create_ride(
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
     background_tasks.add_task(
-        discord_service.notify_ride_created,
-        settings.discord_webhook_url,
-        settings.app_url,
-        direction=body.direction,
-        driver=body.driver,
-        vehicle_type=body.vehicle_type,
-        departure_time=body.departure_time,
-        start_location=body.start_location,
-        total_seats=body.total_seats,
-        is_public_transport=(body.vehicle_type == "Public Transport"),
-        parking_info=body.parking_info or None,
-        action_required=body.action_required,
+        notification_service.broadcast_category_dm,
+        settings.discord_bot_token,
+        notification_service.NotificationCategory.RIDE_CREATED,
+        M.DM_RIDE_CREATED.format(
+            driver=body.driver,
+            departure_time=body.departure_time,
+            start_location=body.start_location,
+        ),
     )
     return resp.data[0]
 
@@ -605,23 +601,6 @@ def admin_create_event(
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
     background_tasks.add_task(
-        discord_service.notify_event_created,
-        settings.discord_webhook_url,
-        settings.app_url,
-        event_name=body.event_name,
-        date=body.date,
-        description=body.description,
-        location=body.location,
-        website=body.website,
-        ticket_url=body.ticket_url,
-        ticket_sale_start=body.ticket_sale_start,
-        ticket_types=body.ticket_types,
-        locker_info=body.locker_info,
-        parking_info=body.parking_info,
-        what_to_bring=body.what_to_bring,
-        special_instructions=body.special_instructions,
-    )
-    background_tasks.add_task(
         notification_service.broadcast_category_dm,
         settings.discord_bot_token,
         notification_service.NotificationCategory.EVENT_CREATED,
@@ -631,17 +610,6 @@ def admin_create_event(
             location_line=f"\n📍 {body.location}" if body.location else "",
         ),
     )
-    if body.ticket_sale_start:
-        background_tasks.add_task(
-            discord_service.notify_ticket_sale_opening,
-            settings.discord_webhook_url,
-            settings.app_url,
-            event_name=body.event_name,
-            date=body.date,
-            ticket_sale_start=body.ticket_sale_start,
-            ticket_url=body.ticket_url,
-            ticket_types=body.ticket_types,
-        )
 
     return resp.data[0]
 

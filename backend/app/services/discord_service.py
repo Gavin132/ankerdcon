@@ -1,9 +1,16 @@
 """
-Ankerd Con — Discord webhook notifications.
+Ankerd Con — Discord webhook notifications for the public channel.
 
 Each public ``notify_*`` coroutine posts a branded embed to the configured
 Discord webhook. All functions are fire-and-forget (errors are silently
 swallowed) and are intended to run via FastAPI ``BackgroundTasks``.
+
+Only ``notify_announcement`` is actually called anywhere — it fires when an
+admin creates an announcement with "ook naar Discord sturen" checked, which
+is the only thing that's meant to reach the public channel. Everything else
+that used to post here unconditionally (new rides, meals, expenses, events,
+reminders) now only sends a DM via notification_service, to whoever opted
+into that category — the other notify_* functions below are unused for now.
 
 Usage::
 

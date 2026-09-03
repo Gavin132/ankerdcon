@@ -16,7 +16,6 @@ from app.models.rides import (
     Ride,
 )
 from app.routes import RideRoutes
-import app.services.discord_service as discord_service
 from app.services import notification_service
 from app import messages as M
 from app.core.database import supabase
@@ -73,21 +72,6 @@ def create_ride(
 
     ride = response.data[0]
 
-    background_tasks.add_task(
-        discord_service.notify_ride_created,
-        settings.discord_webhook_url,
-        settings.app_url,
-        direction=body.direction,
-        driver=body.driver,
-        vehicle_type=body.vehicle_type,
-        departure_time=body.departure_time,
-        start_location=body.start_location,
-        total_seats=body.total_seats,
-        is_public_transport=(body.vehicle_type == "Public Transport"),
-        parking_info=body.parking_info or None,
-        end_location=body.end_location or None,
-        action_required=body.action_required,
-    )
     background_tasks.add_task(
         notification_service.broadcast_category_dm,
         settings.discord_bot_token,

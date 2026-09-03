@@ -10,7 +10,6 @@ from app.dependencies import get_current_user
 from app.models.expense import CreateExpenseRequest, Expense
 from app.routes import ExpenseRoutes
 from app.core.database import supabase
-import app.services.discord_service as discord_service
 from app.services import notification_service
 from app import messages as M
 
@@ -107,17 +106,6 @@ def create_expense(
             logger.error("Failed to insert expense shares for expense %s: %s", expense_id, e)
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
-    background_tasks.add_task(
-        discord_service.notify_expense_created,
-        settings.discord_webhook_url,
-        settings.app_url,
-        paid_by=body.paid_by,
-        amount=body.amount,
-        currency=body.currency,
-        description=body.description,
-        date=body.date,
-        shares=[{"participant": s["participant"], "amount": s["amount"]} for s in inserted_shares],
-    )
     background_tasks.add_task(
         notification_service.broadcast_category_dm,
         settings.discord_bot_token,

@@ -6,7 +6,6 @@ from app.core.logging import get_logger
 from app.dependencies import get_current_user
 from app.models.meal import CreateMealRequest, Meal, RsvpRequest
 from app.routes import MealRoutes
-import app.services.discord_service as discord_service
 from app.services import notification_service
 from app import messages as M
 from app.core.database import supabase
@@ -54,16 +53,6 @@ def create_meal(
         logger.error("Failed to create meal: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
-    background_tasks.add_task(
-        discord_service.notify_meal_created,
-        settings.discord_webhook_url,
-        settings.app_url,
-        meal_name=body.meal_name,
-        time=body.time,
-        location=body.location or None,
-        cost=float(body.cost) if body.cost else None,
-        transport_needed=body.transport_needed,
-    )
     background_tasks.add_task(
         notification_service.broadcast_category_dm,
         settings.discord_bot_token,

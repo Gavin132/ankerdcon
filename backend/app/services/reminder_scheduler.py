@@ -8,8 +8,9 @@ upcoming calendar events at 7-day, 1-day, and same-day intervals.
 since ticket_sale_start carries an exact time, not just a date — it notifies
 24 hours before sale opens, and again the moment it opens.
 
-Both webhook posts (discord_service, unconditional, shared channel) and
-per-user opt-in DMs (notification_service, per-category) are sent for each.
+Only per-user opt-in DMs (notification_service, per-category) are sent —
+reminders never post to the public Discord channel, which is reserved for
+announcements an admin explicitly checks "ook naar Discord sturen" for.
 Sent reminders are recorded on the calendar row (`reminders_sent` /
 `ticket_reminders_sent`) so duplicates are never posted, even after a restart.
 """
@@ -23,7 +24,7 @@ from app.config import get_settings
 from app.constants import Tables
 from app.core.database import supabase
 from app.core.logging import get_logger
-from app.services import discord_service, notification_service
+from app.services import notification_service
 from app.services.notification_service import NotificationCategory
 
 logger = get_logger(__name__)
@@ -63,7 +64,7 @@ def _location_line(location: str | None) -> str:
 
 async def check_and_send_reminders() -> None:
     settings = get_settings()
-    if not settings.discord_webhook_url and not settings.discord_bot_token:
+    if not settings.discord_bot_token:
         return
 
     today = date.today()
@@ -92,19 +93,6 @@ async def check_and_send_reminders() -> None:
 
             # Due — send notification and mark as sent
             try:
-                await discord_service.notify_event_reminder(
-                    settings.discord_webhook_url,
-                    settings.app_url,
-                    event_name=event["event_name"],
-                    date=event["date"],
-                    interval=label,
-                    location=event.get("location"),
-                    ticket_url=event.get("ticket_url"),
-                    website=event.get("website"),
-                    what_to_bring=event.get("what_to_bring"),
-                    locker_info=event.get("locker_info"),
-                    parking_info=event.get("parking_info"),
-                )
                 notification_service.broadcast_category_dm(
                     settings.discord_bot_token,
                     _REMINDER_CATEGORY[label],
@@ -131,7 +119,7 @@ async def check_and_send_ticket_reminders() -> None:
     """24h-before and at-open ticket sale notifications — checked frequently
     since ticket_sale_start carries an exact time, not just a date."""
     settings = get_settings()
-    if not settings.discord_webhook_url and not settings.discord_bot_token:
+    if not settings.discord_bot_token:
         return
 
     now = datetime.now()
@@ -167,14 +155,6 @@ async def check_and_send_ticket_reminders() -> None:
         for phase in to_send:
             try:
                 if phase == "24h":
-                    await discord_service.notify_ticket_sale_opening(
-                        settings.discord_webhook_url,
-                        settings.app_url,
-                        event_name=event["event_name"],
-                        date=event.get("date") or "",
-                        ticket_sale_start=sale_at.strftime("%d-%m-%Y %H:%M"),
-                        ticket_url=event.get("ticket_url"),
-                    )
                     notification_service.broadcast_category_dm(
                         settings.discord_bot_token,
                         NotificationCategory.TICKET_SALE,
@@ -184,12 +164,6 @@ async def check_and_send_ticket_reminders() -> None:
                         ),
                     )
                 else:
-                    await discord_service.notify_ticket_sale_open(
-                        settings.discord_webhook_url,
-                        settings.app_url,
-                        event_name=event["event_name"],
-                        ticket_url=event.get("ticket_url"),
-                    )
                     notification_service.broadcast_category_dm(
                         settings.discord_bot_token,
                         NotificationCategory.TICKET_SALE,
