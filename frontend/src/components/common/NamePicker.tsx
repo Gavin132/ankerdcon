@@ -16,6 +16,7 @@ export function NamePicker(props: NamePickerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [menuRect, setMenuRect] = useState<{ top: number; left: number; width: number } | null>(null);
   const { data: users = [] } = useUsers();
 
@@ -99,16 +100,23 @@ export function NamePicker(props: NamePickerProps) {
       mp.onChange(selected.filter((n) => n !== name));
     } else if (!atMax) {
       mp.onChange([...selected, name]);
-      // Don't clear the query — let the user keep filtering for more names
     }
-    // Always keep the list open after a toggle
+    // Clear the query so the results list collapses (showMenu depends on a
+    // non-empty query) — otherwise it stays open covering whatever sits
+    // below the input (e.g. a modal's submit button) until the user taps
+    // elsewhere. Restore actual keyboard focus (not just the `open` state)
+    // since clicking the result button steals it away — otherwise typing a
+    // new name to add another person needs an extra click on the input.
+    setQuery("");
     setOpen(true);
+    inputRef.current?.focus();
   }
 
   function handleDeselect(name: string) {
     (props as MultiProps).onChange(selected.filter((n) => n !== name));
-    // Keep list open after deselecting a chip
+    // Keep list open and refocus after deselecting a chip, same reasoning as handleMultiToggle
     setOpen(true);
+    inputRef.current?.focus();
   }
 
   const singleValue = !isMulti ? (props as SingleProps).value : "";
@@ -181,6 +189,7 @@ export function NamePicker(props: NamePickerProps) {
           className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
         />
         <input
+          ref={inputRef}
           className="input-field pl-8"
           placeholder={placeholder}
           value={open ? query : !isMulti && singleValue ? singleValue : query}

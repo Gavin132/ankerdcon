@@ -203,6 +203,7 @@ export function CalendarArchive({
                 {ev.event_name}
               </p>
               {ev.is_hotel && <BedDouble size={11} className="shrink-0 text-violet-400" />}
+              {ev.has_con === false && <BedDouble size={11} className="shrink-0 text-teal-400" />}
               {hasMeal(ev.id) && <Utensils size={11} className="shrink-0 text-amber-400" />}
             </div>
             {ev.participants.length > 0 && (
@@ -279,6 +280,7 @@ export function CalendarArchive({
               <p className={`text-xs font-semibold truncate ${isPast ? "text-slate-400 dark:text-slate-600" : "text-slate-700 dark:text-slate-300"}`}>
                 {ev.event_name}
               </p>
+              {ev.has_con === false && <BedDouble size={10} className="shrink-0 text-teal-400" />}
               {hasMeal(ev.id) && <Utensils size={10} className="shrink-0 text-amber-400" />}
             </div>
             {ev.participants.length > 0 ? (

@@ -9,6 +9,8 @@ import { LocationPingDisplay } from "./LocationPingDisplay";
 import { BadgeIcon } from "./BadgeIcon";
 import { useUser } from "../../hooks/useUsers";
 import { useBadges } from "../../hooks/useBadges";
+import { parseEventDate } from "../../utils/date";
+import { groupCalendarEntries, getGroupTitle, formatDateRange } from "../../utils/multiDay";
 import type { User, CalendarEvent } from "../../types";
 
 const FONT_MAP: Record<string, string> = {
@@ -96,13 +98,18 @@ export function UserProfilePopup({
     u?.discord_username
   );
 
-  // Filter to events this user is attending (future or ongoing)
-  const userEvents =
+  // Events this user is attending (future or ongoing), collapsed so a
+  // multi-day trip shows once as its parent event rather than one row per day.
+  const userEventEntries =
     u && calendarEvents
-      ? calendarEvents.filter((ev) => ev.participants.includes(u.name))
+      ? calendarEvents
+          .filter((ev) => ev.participants.includes(u.name))
+          .map((ev) => ({ ev, date: parseEventDate(ev.date) }))
+          .filter((x): x is { ev: CalendarEvent; date: Date } => x.date !== null)
       : [];
-  const visibleEvents = userEvents.slice(0, 3);
-  const hiddenCount = userEvents.length - visibleEvents.length;
+  const userEventItems = groupCalendarEntries(userEventEntries);
+  const visibleEventItems = userEventItems.slice(0, 3);
+  const hiddenCount = userEventItems.length - visibleEventItems.length;
 
   // Position popup overlapping the list, starting just after the avatar column.
   // This creates a clear visual connection between the popup and the clicked row.
@@ -303,7 +310,7 @@ export function UserProfilePopup({
                   )}
 
                   {/* Events */}
-                  {visibleEvents.length > 0 && (
+                  {visibleEventItems.length > 0 && (
                     <div
                       className={`mt-3 pt-3 border-t border-slate-100 dark:border-slate-700`}
                     >
@@ -311,27 +318,32 @@ export function UserProfilePopup({
                         Gaat naar
                       </p>
                       <div className="space-y-1.5">
-                        {visibleEvents.map((ev) => (
-                          <div
-                            key={ev.id}
-                            className="flex items-center gap-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1.5"
-                          >
-                            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-sky-100 dark:bg-sky-900/30">
-                              <CalendarDays
-                                size={10}
-                                className="text-sky-500"
-                              />
+                        {visibleEventItems.map((item) => {
+                          const name = item.type === "single" ? item.ev.event_name : getGroupTitle(item.events);
+                          const dateLabel = item.type === "single" ? item.ev.date : formatDateRange(item.events.map((x) => x.date));
+                          const key = item.type === "single" ? item.ev.id : item.multiDayId;
+                          return (
+                            <div
+                              key={key}
+                              className="flex items-center gap-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1.5"
+                            >
+                              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-sky-100 dark:bg-sky-900/30">
+                                <CalendarDays
+                                  size={10}
+                                  className="text-sky-500"
+                                />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-[11px] font-semibold text-slate-700 dark:text-slate-200 leading-tight">
+                                  {name}
+                                </p>
+                                <p className="text-[10px] text-slate-400 leading-none mt-0.5">
+                                  {dateLabel}
+                                </p>
+                              </div>
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-[11px] font-semibold text-slate-700 dark:text-slate-200 leading-tight">
-                                {ev.event_name}
-                              </p>
-                              <p className="text-[10px] text-slate-400 leading-none mt-0.5">
-                                {ev.date}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                         {hiddenCount > 0 && (
                           <p className="text-center text-[10px] text-slate-400 pt-0.5">
                             +{hiddenCount} meer evenement

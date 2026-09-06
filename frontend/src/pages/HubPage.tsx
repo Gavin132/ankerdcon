@@ -17,7 +17,7 @@ import { useRides } from "../hooks/useRides";
 import { useMeals } from "../hooks/useMeals";
 import { useExpenses } from "../hooks/useExpenses";
 import { useCurrentUser, useUsers } from "../hooks/useUsers";
-import { buildGroupColorMap, groupCalendarEntries, firstUpcomingEvents } from "../utils/multiDay";
+import { groupCalendarEntries, firstUpcomingEvents } from "../utils/multiDay";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { UpcomingEventsCarousel } from "../components/hub/UpcomingEventsCarousel";
 import { QuickRideTiles } from "../components/hub/QuickRideTiles";
@@ -100,7 +100,6 @@ export function HubPage() {
   const todayFormatted = `${DAYS_NL[now.getDay()]} ${now.getDate()} ${MONTHS_NL[now.getMonth()]}`;
 
   const todayStr = todayKey();
-  const groupColorMap = buildGroupColorMap(events ?? []);
   const upcomingEntries = (events ?? [])
     .map((ev) => ({ ev, date: parseEventDate(ev.date) }))
     .filter((x): x is { ev: CalendarEvent; date: Date } => x.date !== null && toDateKey(x.date) >= todayStr)
@@ -196,7 +195,6 @@ export function HubPage() {
             items={upcomingItems}
             allEvents={events ?? []}
             meals={meals ?? []}
-            groupColorMap={groupColorMap}
             users={users ?? []}
             onNavigate={(id) => navigate(routes.event.view(id))}
             onParticipantClick={(user, rect) => {

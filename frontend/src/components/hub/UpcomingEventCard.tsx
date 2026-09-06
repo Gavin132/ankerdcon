@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  CalendarDays, BedDouble, Utensils, ChevronRight, Layers, ArrowRight,
+  CalendarDays, BedDouble, Utensils, ChevronRight, ArrowRight,
 } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { formatDate } from "../../utils/format";
@@ -45,7 +45,6 @@ interface UpcomingEventCardProps {
   urgency: EventUrgency;
   isGroupEvent: boolean;
   groupEvents: { ev: CalendarEvent; date: Date }[] | null;
-  groupColor: { accent: string } | null;
   groupTitle: string | null;
   groupDateRange: string | null;
   meals?: Meal[];
@@ -62,7 +61,6 @@ export function UpcomingEventCard({
   urgency,
   isGroupEvent,
   groupEvents,
-  groupColor,
   groupTitle,
   groupDateRange,
   meals = [],
@@ -119,19 +117,10 @@ export function UpcomingEventCard({
           {/* Header */}
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2 flex-wrap">
-              <div
-                className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1"
-                style={{ backgroundColor: groupColor!.accent + "18", borderColor: groupColor!.accent + "35" }}
-              >
-                <Layers size={10} style={{ color: groupColor!.accent }} />
-                <span className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: groupColor!.accent }}>
-                  Meerdaags evenement
-                </span>
-              </div>
               {groupEvents!.some(({ ev }) => ev.is_hotel) && (
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-sky-400/25 bg-sky-400/10 px-2.5 py-1">
-                  <BedDouble size={10} className="text-sky-300" />
-                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-sky-300">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-teal-400/25 bg-teal-400/10 px-2.5 py-1">
+                  <BedDouble size={10} className="text-teal-300" />
+                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-300">
                     Hotel
                   </span>
                 </div>
@@ -159,13 +148,19 @@ export function UpcomingEventCard({
             </p>
           )}
 
-          {/* Per-day rows */}
-          <div className="mt-4 space-y-1.5 pl-3" style={{ borderLeft: `2px solid ${groupColor!.accent}30` }}>
-            {groupEvents!.map(({ ev: dayEv, date }) => (
+          {/* Per-day rows — teal for a hotel-only travel day, violet for a con day */}
+          <div className="mt-4 space-y-1.5 pl-3 border-l-2 border-violet-400/20">
+            {groupEvents!.map(({ ev: dayEv, date }) => {
+              const isTravelDay = dayEv.has_con === false;
+              return (
               <button
                 key={dayEv.id}
                 onClick={(e) => { e.stopPropagation(); onNavigate(dayEv.id); }}
-                className="w-full flex items-center gap-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] transition-colors px-3 py-2.5 text-left"
+                className={`w-full flex items-center gap-3 rounded-xl transition-colors px-3 py-2.5 text-left ${
+                  isTravelDay
+                    ? "bg-teal-500/10 hover:bg-teal-500/15"
+                    : "bg-violet-500/10 hover:bg-violet-500/15"
+                }`}
               >
                 <div className="shrink-0 text-center w-7">
                   <p className="text-[9px] font-bold uppercase text-sky-300/50">{dayShort(date)}</p>
@@ -173,6 +168,7 @@ export function UpcomingEventCard({
                   <p className="text-[9px] text-sky-300/50 font-medium">{monthShort(date)}</p>
                 </div>
                 <p className="flex-1 text-xs font-semibold text-sky-100/80 truncate">{dayEv.event_name}</p>
+                {isTravelDay && <BedDouble size={11} className="shrink-0 text-teal-400" />}
                 {hasMeal(dayEv.id) && <Utensils size={11} className="shrink-0 text-amber-400" />}
                 {dayEv.participants.length > 0 && (
                   <div className="flex items-center gap-1.5 shrink-0">
@@ -187,7 +183,8 @@ export function UpcomingEventCard({
                 )}
                 <ChevronRight size={12} className="text-sky-300/40 shrink-0" />
               </button>
-            ))}
+              );
+            })}
           </div>
         </div>
       ) : (
@@ -202,7 +199,7 @@ export function UpcomingEventCard({
               <div className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse" />
                 <span className="text-xs font-bold text-sky-400 uppercase tracking-widest">
-                  Aankomend evenement
+                  {event.has_con === false ? "Reisdag" : "Aankomend evenement"}
                 </span>
                 {!hasCover && <UrgencyChip urgency={urgency} daysUntil={daysUntil} />}
               </div>
@@ -217,8 +214,8 @@ export function UpcomingEventCard({
                 <CalendarDays size={12} className="text-sky-400" /> {formatDate(event.date)}
               </span>
               {event.is_hotel && (
-                <span className="flex items-center gap-1.5 text-sm text-sky-300">
-                  <BedDouble size={12} className="text-sky-400" /> Hotel inbegrepen
+                <span className="flex items-center gap-1.5 text-sm text-teal-300">
+                  <BedDouble size={12} className="text-teal-400" /> Hotel inbegrepen
                 </span>
               )}
               {hasMeal(event.id) && (

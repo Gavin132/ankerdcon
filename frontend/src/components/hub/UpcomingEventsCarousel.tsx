@@ -2,13 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { UpcomingEventCard, type EventUrgency } from "./UpcomingEventCard";
 import { parseEventDate } from "../../utils/date";
-import {
-  getGroupTitle,
-  formatDateRange,
-  multiDayColor,
-  type CalendarItem,
-  type MultiDayColor,
-} from "../../utils/multiDay";
+import { formatDateRange, type CalendarItem } from "../../utils/multiDay";
 import type { CalendarEvent, Meal, User } from "../../types";
 import type { AnchorRect } from "../common/UserProfilePopup";
 
@@ -18,7 +12,6 @@ interface UpcomingEventsCarouselProps {
   /** Full (unfiltered) event list, used to resolve a multi-day group's full date range. */
   allEvents: CalendarEvent[];
   meals?: Meal[];
-  groupColorMap: Map<string, MultiDayColor>;
   users: User[];
   onNavigate: (id: string) => void;
   onParticipantClick: (user: User, rect: AnchorRect) => void;
@@ -33,7 +26,7 @@ function urgencyFor(days: number): EventUrgency {
 }
 
 /** Maps a grouped calendar item to the flat props UpcomingEventCard expects. */
-function cardPropsFor(item: CalendarItem, allEvents: CalendarEvent[], groupColorMap: Map<string, MultiDayColor>) {
+function cardPropsFor(item: CalendarItem, allEvents: CalendarEvent[]) {
   if (item.type === "single") {
     const days = daysUntil(item.date);
     return {
@@ -42,7 +35,6 @@ function cardPropsFor(item: CalendarItem, allEvents: CalendarEvent[], groupColor
       urgency: urgencyFor(days),
       isGroupEvent: false,
       groupEvents: null,
-      groupColor: null,
       groupTitle: null,
       groupDateRange: null,
     };
@@ -64,8 +56,11 @@ function cardPropsFor(item: CalendarItem, allEvents: CalendarEvent[], groupColor
     urgency: urgencyFor(days),
     isGroupEvent,
     groupEvents: isGroupEvent ? groupEvents : null,
-    groupColor: isGroupEvent ? (groupColorMap.get(item.multiDayId) ?? multiDayColor(item.multiDayId)) : null,
-    groupTitle: isGroupEvent ? getGroupTitle(groupEvents) : null,
+    // The Hub carousel shows the nearest day's actual event name (e.g. "HDCC
+    // Zomer") rather than getGroupTitle()'s shared event_group_id label
+    // ("HDCC") — that label is meant for the admin panel's series filtering,
+    // not for identifying which specific event a trip card is about.
+    groupTitle: isGroupEvent ? groupEvents[0].ev.event_name : null,
     groupDateRange: isGroupEvent ? formatDateRange(groupEvents.map((x) => x.date)) : null,
   };
 }
@@ -78,7 +73,6 @@ export function UpcomingEventsCarousel({
   items,
   allEvents,
   meals = [],
-  groupColorMap,
   users,
   onNavigate,
   onParticipantClick,
@@ -100,7 +94,7 @@ export function UpcomingEventsCarousel({
 
   if (items.length === 0) return null;
 
-  const cardProps = cardPropsFor(items[0], allEvents, groupColorMap);
+  const cardProps = cardPropsFor(items[0], allEvents);
 
   // Nothing to page through — render the plain card, no carousel chrome.
   if (items.length === 1) {
@@ -129,7 +123,7 @@ export function UpcomingEventsCarousel({
           {items.map((item) => (
             <div key={keyFor(item)} className="w-full shrink-0 snap-center">
               <UpcomingEventCard
-                {...cardPropsFor(item, allEvents, groupColorMap)}
+                {...cardPropsFor(item, allEvents)}
                 meals={meals}
                 users={users}
                 onNavigate={onNavigate}

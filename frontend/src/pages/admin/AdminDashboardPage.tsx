@@ -21,6 +21,7 @@ import { NamePicker } from "../../components/common/NamePicker";
 import { toast } from "../../store/toast.store";
 import { formatDate, formatAmount } from "../../utils/format";
 import { parseEventDate, todayKey, toDateKey } from "../../utils/date";
+import { groupCalendarEntries, getGroupTitle, formatDateRange, type CalendarItem } from "../../utils/multiDay";
 import type { CalendarEvent, User } from "../../types";
 
 const DAYS_NL = ["Zo","Ma","Di","Wo","Do","Vr","Za"];
@@ -107,19 +108,28 @@ function BulkRsvpPanel({ event, users, onDone }: {
 
 // ── Event row ─────────────────────────────────────────────────────────────────
 
-function EventRow({ event, users, cosplayCount }: {
-  event: CalendarEvent; users: User[]; cosplayCount: number;
+function EventRow({ item, users, cosplayCount }: {
+  item: CalendarItem; users: User[]; cosplayCount: number;
 }) {
   const navigate = useNavigate();
   const [showRsvp, setShowRsvp] = useState(false);
   const totalActive = users.filter((u) => u.is_active !== false).length;
 
+  const days = item.type === "single" ? [item] : item.events;
+  // The nearest actionable day of the trip — drives the quick RSVP panel
+  // and the row's navigate target.
+  const firstDay = days[0].ev;
+  const title = item.type === "single" ? item.ev.event_name : getGroupTitle(item.events);
+  const dateLabel = item.type === "single" ? formatDate(item.ev.date) : formatDateRange(item.events.map((d) => d.date));
+  const participants = [...new Set(days.flatMap((d) => d.ev.participants))];
+  const image = days.find((d) => d.ev.image_url)?.ev.image_url;
+
   return (
     <div className="border-b border-white/[0.05] last:border-0">
       <div className="flex items-center gap-3 py-3 px-1">
         {/* Cover thumbnail */}
-        {event.image_url ? (
-          <img src={event.image_url} alt="" className="h-9 w-14 rounded-lg object-cover shrink-0" />
+        {image ? (
+          <img src={image} alt="" className="h-9 w-14 rounded-lg object-cover shrink-0" />
         ) : (
           <div className="h-9 w-14 rounded-lg bg-white/[0.05] shrink-0 flex items-center justify-center">
             <CalendarDays size={14} className="text-slate-600" />
@@ -128,12 +138,12 @@ function EventRow({ event, users, cosplayCount }: {
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-white truncate">{event.event_name}</p>
+          <p className="text-sm font-semibold text-white truncate">{title}</p>
           <div className="flex items-center gap-3 mt-0.5 text-[11px] text-slate-500">
-            <span>{formatDate(event.date)}</span>
-            {event.location && (
+            <span>{dateLabel}</span>
+            {firstDay.location && (
               <span className="flex items-center gap-0.5 truncate max-w-[120px]">
-                <MapPin size={9} /> {event.location}
+                <MapPin size={9} /> {firstDay.location}
               </span>
             )}
           </div>
@@ -142,7 +152,7 @@ function EventRow({ event, users, cosplayCount }: {
         {/* Metrics */}
         <div className="flex items-center gap-3 shrink-0 text-xs">
           <span className="text-slate-400">
-            <span className="font-bold text-white">{event.participants.length}</span>
+            <span className="font-bold text-white">{participants.length}</span>
             <span className="text-slate-600">/{totalActive}</span>
           </span>
           {cosplayCount > 0 && (
@@ -165,7 +175,7 @@ function EventRow({ event, users, cosplayCount }: {
           </button>
           <button
             type="button"
-            onClick={() => navigate(routes.event.view(event.id))}
+            onClick={() => navigate(routes.event.view(firstDay.id))}
             className="text-slate-600 hover:text-slate-300 transition-colors"
           >
             <ChevronRight size={14} />
@@ -175,7 +185,12 @@ function EventRow({ event, users, cosplayCount }: {
 
       {showRsvp && (
         <div className="px-1 pb-3">
-          <BulkRsvpPanel event={event} users={users} onDone={() => setShowRsvp(false)} />
+          {days.length > 1 && (
+            <p className="mb-1.5 text-[11px] text-slate-500">
+              Aanmelden voor {formatDate(firstDay.date)} — de eerstvolgende dag van deze trip
+            </p>
+          )}
+          <BulkRsvpPanel event={firstDay} users={users} onDone={() => setShowRsvp(false)} />
         </div>
       )}
     </div>
@@ -200,15 +215,13 @@ export function AdminDashboardPage() {
   const dateLabel = `${DAYS_NL[now.getDay()]} ${now.getDate()} ${MONTHS_NL[now.getMonth()]}`;
   const todayStr = todayKey();
 
-  const upcomingEvents = useMemo(
-    () =>
-      [...events]
-        .map((ev) => ({ ev, date: parseEventDate(ev.date) }))
-        .filter(({ date }) => date !== null && toDateKey(date) >= todayStr)
-        .sort((a, b) => a.date!.getTime() - b.date!.getTime())
-        .map(({ ev }) => ev),
-    [events, todayStr],
-  );
+  const upcomingItems = useMemo(() => {
+    const entries = [...events]
+      .map((ev) => ({ ev, date: parseEventDate(ev.date) }))
+      .filter((x): x is { ev: CalendarEvent; date: Date } => x.date !== null && toDateKey(x.date) >= todayStr)
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+    return groupCalendarEntries(entries);
+  }, [events, todayStr]);
 
   const totalExpenses = useMemo(() => expenses.reduce((s, e) => s + e.amount, 0), [expenses]);
 
@@ -298,17 +311,20 @@ export function AdminDashboardPage() {
                 <div key={i} className="h-10 rounded-xl bg-white/[0.04] animate-pulse" />
               ))}
             </div>
-          ) : upcomingEvents.length === 0 ? (
+          ) : upcomingItems.length === 0 ? (
             <p className="text-sm text-slate-600 py-6 text-center">Geen aankomende evenementen</p>
           ) : (
-            upcomingEvents.map((ev) => (
-              <EventRow
-                key={ev.id}
-                event={ev}
-                users={allUsers}
-                cosplayCount={cosplays.filter((c) => c.linked_event_ids.includes(ev.id)).length}
-              />
-            ))
+            upcomingItems.map((item) => {
+              const ids = item.type === "single" ? [item.ev.id] : item.events.map((d) => d.ev.id);
+              return (
+                <EventRow
+                  key={item.type === "single" ? item.ev.id : item.multiDayId}
+                  item={item}
+                  users={allUsers}
+                  cosplayCount={cosplays.filter((c) => c.linked_event_ids.some((id) => ids.includes(id))).length}
+                />
+              );
+            })
           )}
         </div>
       </div>

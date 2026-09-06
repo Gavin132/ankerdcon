@@ -3,7 +3,7 @@ import { Payment, Split } from ".";
 
 export interface BadgeProps {
   children: ReactNode;
-  variant?: "blue" | "green" | "yellow" | "red" | "gray" | "violet" | "white";
+  variant?: "blue" | "green" | "yellow" | "red" | "gray" | "violet" | "teal" | "white";
   className?: string;
   dot?: boolean;
 }

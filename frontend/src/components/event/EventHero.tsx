@@ -21,12 +21,17 @@ export function EventHero({ event, daysUntil, users, meals = [] }: EventHeroProp
 
   const isPast = daysUntil !== null && daysUntil < 0;
   const isToday = daysUntil === 0;
+  const isTravelDay = event.has_con === false;
 
   const bgGradient = isPast
     ? { a: "#0a0f1e", b: "#111827", c: "#1e293b" }
     : isToday
       ? { a: "#14532d", b: "#166534", c: "#15803d" }
-      : { a: "#1e1b4b", b: "#312e81", c: "#4c1d95" };
+      : isTravelDay
+        // Distinct teal/slate tone for a hotel-only travel day — deliberately
+        // calmer than the con-day indigo/violet, and not amber (that's meals).
+        ? { a: "#0c2a2e", b: "#0f3d3e", c: "#115e59" }
+        : { a: "#1e1b4b", b: "#312e81", c: "#4c1d95" };
 
   return (
     <div className={`relative overflow-hidden ${isPast ? "opacity-75" : ""}`} style={{ minHeight: 280 }}>
@@ -86,8 +91,18 @@ export function EventHero({ event, daysUntil, users, meals = [] }: EventHeroProp
             </span>
           )}
           {event.is_hotel && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-500/25 border border-violet-400/40 backdrop-blur-sm px-3 py-1 text-[11px] font-bold text-violet-200">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-500/25 border border-teal-400/40 backdrop-blur-sm px-3 py-1 text-[11px] font-bold text-teal-200">
               <BedDouble size={10} /> Hotel
+            </span>
+          )}
+          {event.has_con === false && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-500/20 border border-teal-400/30 backdrop-blur-sm px-3 py-1 text-[11px] font-bold text-teal-200">
+              <BedDouble size={10} /> Reisdag — geen con vandaag
+            </span>
+          )}
+          {meals.length > 0 && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 border border-amber-400/30 backdrop-blur-sm px-3 py-1 text-[11px] font-bold text-amber-200">
+              <UtensilsCrossed size={10} /> Eten
             </span>
           )}
           {daysUntil !== null && daysUntil >= 0 && (

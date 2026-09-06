@@ -290,6 +290,7 @@ export interface CalendarEvent {
   multi_day_id?: string;
   event_name: string;
   date: string;
+  has_con: boolean;
   is_hotel: boolean;
   hotel_location?: string;
   participants: string[];

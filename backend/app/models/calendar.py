@@ -7,6 +7,7 @@ class CalendarEvent(BaseModel):
     multi_day_id: str | None = None
     event_name: str
     date: str
+    has_con: bool = True
     is_hotel: bool = False
     hotel_location: str | None = None
     participants: list[str] = []
@@ -28,6 +29,8 @@ class CalendarEvent(BaseModel):
     def clean_nulls(cls, data: Any) -> Any:
         if data.get('is_hotel') is None:
             data['is_hotel'] = False
+        if data.get('has_con') is None:
+            data['has_con'] = True
         if data.get('participants') is None:
             data['participants'] = []
         return data

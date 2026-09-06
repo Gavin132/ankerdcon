@@ -10,6 +10,8 @@ const variantClasses: Record<NonNullable<BadgeProps["variant"]>, string> = {
   gray: "bg-slate-100 text-slate-600 border border-slate-200/60 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600/60",
   violet:
     "bg-violet-100 text-violet-700 border border-violet-200/60 dark:bg-violet-900/50 dark:text-violet-300 dark:border-violet-800/60",
+  teal:
+    "bg-teal-100 text-teal-700 border border-teal-200/60 dark:bg-teal-900/50 dark:text-teal-300 dark:border-teal-800/60",
   white: "bg-white/20 text-white border border-white/30 backdrop-blur-sm",
 };
 
@@ -20,6 +22,7 @@ const dotColors: Record<NonNullable<BadgeProps["variant"]>, string> = {
   red: "bg-rose-500",
   gray: "bg-slate-400",
   violet: "bg-violet-500",
+  teal: "bg-teal-500",
   white: "bg-white",
 };
 

@@ -68,6 +68,7 @@ def _load_calendar_rows() -> list[dict]:
             "multi_day_id": event["id"] if days_per_event[event["id"]] > 1 else None,
             "event_name": event["event_name"],
             "date": day["date"],
+            "has_con": day.get("has_con", True),
             "is_hotel": event.get("is_hotel", False),
             "hotel_location": event.get("hotel_location"),
             "participants": day.get("participants") or [],

@@ -417,6 +417,19 @@ function EventDrawer({
           )}
         </div>
 
+        {/* ── Dagen — first thing after naming the event, so it's visible
+             right after creating without scrolling past everything else ── */}
+        {editEvent ? (
+          <DaysSection eventId={editEvent.id} days={days} />
+        ) : (
+          <div className={SECTION}>
+            <p className={SECTION_TITLE}>Dagen</p>
+            <p className="text-xs text-slate-500">
+              Sla het evenement eerst op — daarna kun je hier de dagen toevoegen.
+            </p>
+          </div>
+        )}
+
         {/* ── Beschrijving & Locatie ────────────────────────────────── */}
         <div className={SECTION}>
           <p className={SECTION_TITLE}>Details</p>
@@ -660,9 +673,6 @@ function EventDrawer({
             />
           </div>
         </div>
-
-        {/* ── Dagen (alleen bij bestaand evenement) ─────────────────── */}
-        {editEvent && <DaysSection eventId={editEvent.id} days={days} />}
       </form>
     </AdminDrawer>
   );
@@ -959,7 +969,7 @@ export function AdminEventsPage() {
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {ev.is_hotel && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 dark:bg-sky-500/10 px-2.5 py-1 text-xs font-semibold text-sky-700 dark:text-sky-400">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-100 dark:bg-teal-500/10 px-2.5 py-1 text-xs font-semibold text-teal-700 dark:text-teal-400">
                             <Hotel size={10} />
                             Hotel
                           </span>

@@ -345,9 +345,15 @@ export function CalendarGrid({
                               {ev.event_name}
                             </p>
                             {ev.is_hotel && (
-                              <Badge variant="violet">
+                              <Badge variant="teal">
                                 <BedDouble size={10} />
                                 Hotel
+                              </Badge>
+                            )}
+                            {ev.has_con === false && (
+                              <Badge variant="teal">
+                                <BedDouble size={10} />
+                                Reisdag
                               </Badge>
                             )}
                             {hasMeal(ev.id) && (
