@@ -2,7 +2,9 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { readFileSync } from "fs";
 
-const pkg = JSON.parse(readFileSync("./package.json", "utf-8"));
+// Single source of truth for the app version — backend/VERSION. Bump it
+// there only; the backend reads the same file at runtime (see backend/main.py).
+const appVersion = readFileSync("../backend/VERSION", "utf-8").trim();
 
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode`. The third parameter '' loads all env variables.
@@ -15,7 +17,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     define: {
-      __APP_VERSION__: JSON.stringify(pkg.version),
+      __APP_VERSION__: JSON.stringify(appVersion),
     },
     server: {
       port: process.env.PORT ? Number(process.env.PORT) : 5173,

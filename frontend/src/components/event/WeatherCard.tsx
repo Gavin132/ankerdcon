@@ -25,31 +25,31 @@ export function WeatherCard({ weather }: { weather: EventWeather }) {
   return (
     <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden bg-white dark:bg-slate-900">
       {/* Header */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-sky-400 via-sky-500 to-indigo-600 p-5">
+      <div className="relative overflow-hidden bg-gradient-to-br from-sky-400 via-sky-500 to-indigo-600 p-4">
         <div className="pointer-events-none absolute -top-6 -right-6 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
         <div className="pointer-events-none absolute bottom-0 left-8 h-20 w-20 rounded-full bg-indigo-400/20 blur-xl" />
 
-        <p className="relative text-[10px] font-bold uppercase tracking-widest text-sky-100/60 mb-3">
+        <p className="relative text-[10px] font-bold uppercase tracking-widest text-sky-100/60 mb-2">
           Weersvoorspelling
         </p>
         <div className="relative flex items-start justify-between gap-3">
           <div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-5xl font-black text-white leading-none tabular-nums">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-3xl font-black text-white leading-none tabular-nums">
                 {weather.temp_max}°
               </span>
-              <span className="text-xl font-light text-sky-100/80">
+              <span className="text-base font-light text-sky-100/80">
                 /{weather.temp_min}°C
               </span>
             </div>
-            <p className="text-base font-semibold text-white mt-1.5">
+            <p className="text-sm font-semibold text-white mt-1">
               {weather.description}
             </p>
-            <p className="text-sm text-sky-200/70 mt-0.5">
+            <p className="text-xs text-sky-200/70 mt-0.5">
               Voelt als {weather.feels_max}° – {weather.feels_min}°C
             </p>
           </div>
-          <span className="text-6xl leading-none shrink-0 drop-shadow-sm">
+          <span className="text-5xl leading-none shrink-0 drop-shadow-sm">
             {weather.icon}
           </span>
         </div>
@@ -61,7 +61,7 @@ export function WeatherCard({ weather }: { weather: EventWeather }) {
           {
             icon: Droplets,
             value: `${weather.precip_prob_max}%`,
-            sub: `${weather.precipitation_mm} mm`,
+            sub: `${weather.precipitation_mm}mm`,
             cls: "text-sky-500",
           },
           {
@@ -79,20 +79,18 @@ export function WeatherCard({ weather }: { weather: EventWeather }) {
           {
             icon: Sunrise,
             value: weather.sunrise,
-            sub: `↓ ${weather.sunset}`,
+            sub: `↓${weather.sunset}`,
             cls: "text-amber-500",
           },
         ].map(({ icon: Icon, value, sub, cls }) => (
           <div
             key={value}
-            className="flex flex-col items-center gap-0.5 py-3 px-2"
+            className="flex items-center justify-center gap-1 py-2 px-1.5"
           >
-            <Icon size={13} className={`${cls} mb-1`} />
-            <p className="text-xs font-bold text-slate-800 dark:text-white leading-none tabular-nums">
-              {value}
-            </p>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-              {sub}
+            <Icon size={12} className={`${cls} shrink-0`} />
+            <p className="text-[11px] leading-none tabular-nums truncate">
+              <span className="font-bold text-slate-800 dark:text-white">{value}</span>
+              <span className="text-slate-400 dark:text-slate-500 font-medium"> {sub}</span>
             </p>
           </div>
         ))}
@@ -158,11 +156,11 @@ export function ClimateAverageCard({ climate }: { climate: ClimateAverage }) {
   return (
     <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden bg-white dark:bg-slate-900">
       {/* Header */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-500 via-slate-600 to-indigo-700 p-5">
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-500 via-slate-600 to-indigo-700 p-4">
         <div className="pointer-events-none absolute -top-6 -right-6 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
         <div className="pointer-events-none absolute bottom-0 left-8 h-20 w-20 rounded-full bg-indigo-400/20 blur-xl" />
 
-        <div className="relative flex items-center gap-1.5 mb-3">
+        <div className="relative flex items-center gap-1.5 mb-2">
           <History size={11} className="text-slate-300/70" />
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-300/70">
             Historisch gemiddelde
@@ -170,19 +168,19 @@ export function ClimateAverageCard({ climate }: { climate: ClimateAverage }) {
         </div>
         <div className="relative flex items-start justify-between gap-3">
           <div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-5xl font-black text-white leading-none tabular-nums">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-3xl font-black text-white leading-none tabular-nums">
                 {climate.temp_max_avg}°
               </span>
-              <span className="text-xl font-light text-slate-200/80">
+              <span className="text-base font-light text-slate-200/80">
                 /{climate.temp_min_avg}°C
               </span>
             </div>
-            <p className="text-base font-semibold text-white mt-1.5">
+            <p className="text-sm font-semibold text-white mt-1">
               {climate.description}
             </p>
           </div>
-          <span className="text-6xl leading-none shrink-0 drop-shadow-sm">
+          <span className="text-5xl leading-none shrink-0 drop-shadow-sm">
             {climate.icon}
           </span>
         </div>
@@ -194,7 +192,7 @@ export function ClimateAverageCard({ climate }: { climate: ClimateAverage }) {
           {
             icon: Droplets,
             value: `${climate.precip_prob}%`,
-            sub: `${climate.precip_mm_avg} mm`,
+            sub: `${climate.precip_mm_avg}mm`,
             cls: "text-sky-500",
           },
           {
@@ -212,14 +210,12 @@ export function ClimateAverageCard({ climate }: { climate: ClimateAverage }) {
         ].map(({ icon: Icon, value, sub, cls }) => (
           <div
             key={value}
-            className="flex flex-col items-center gap-0.5 py-3 px-2"
+            className="flex items-center justify-center gap-1 py-2 px-1.5"
           >
-            <Icon size={13} className={`${cls} mb-1`} />
-            <p className="text-xs font-bold text-slate-800 dark:text-white leading-none tabular-nums">
-              {value}
-            </p>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-              {sub}
+            <Icon size={12} className={`${cls} shrink-0`} />
+            <p className="text-[11px] leading-none tabular-nums truncate">
+              <span className="font-bold text-slate-800 dark:text-white">{value}</span>
+              <span className="text-slate-400 dark:text-slate-500 font-medium"> {sub}</span>
             </p>
           </div>
         ))}
@@ -252,10 +248,10 @@ export function ClimateAverageCard({ climate }: { climate: ClimateAverage }) {
 export function WeatherSkeleton() {
   return (
     <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden animate-pulse">
-      <div className="h-32 bg-gradient-to-br from-sky-500/30 to-indigo-600/30" />
+      <div className="h-24 bg-gradient-to-br from-sky-500/30 to-indigo-600/30" />
       <div className="grid grid-cols-4 divide-x divide-slate-100 dark:divide-slate-800 border-b border-slate-100 dark:border-slate-800">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-14 bg-slate-50 dark:bg-slate-800/40" />
+          <div key={i} className="h-9 bg-slate-50 dark:bg-slate-800/40" />
         ))}
       </div>
       <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 grid grid-cols-6 gap-2">

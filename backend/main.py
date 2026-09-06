@@ -22,6 +22,13 @@ from app.services.reminder_scheduler import check_and_send_reminders, check_and_
 configure_logging()
 logger = get_logger(__name__)
 
+# Single source of truth for the app version — backend/VERSION (kept inside
+# backend/ rather than the repo root so it's always included in the Docker
+# build context, whether that context is the repo root or backend/ itself).
+# Bump it there only; the frontend reads the same file at build time (see
+# frontend/vite.config.ts).
+APP_VERSION = (Path(__file__).parent / "VERSION").read_text().strip()
+
 _scheduler = AsyncIOScheduler(timezone="Europe/Amsterdam")
 
 
@@ -51,7 +58,7 @@ settings = get_settings()
 
 app = FastAPI(
     title="Ankerd Con API",
-    version="1.5.4",
+    version=APP_VERSION,
     docs_url=f"{API_PREFIX}/docs",
     redoc_url=f"{API_PREFIX}/redoc",
     openapi_url=f"{API_PREFIX}/openapi.json",

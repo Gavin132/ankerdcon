@@ -16,11 +16,13 @@ import { routes } from "../config/routes";
 import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { EventHero } from "../components/event/EventHero";
 import { WeatherCard, ClimateAverageCard, WeatherSkeleton } from "../components/event/WeatherCard";
+import { HotelInfoCard } from "../components/event/HotelInfoCard";
 import { EventLinks } from "../components/event/EventLinks";
 import { EventPractical } from "../components/event/EventPractical";
 import { EventAttendees } from "../components/event/EventAttendees";
 import { EventLinkedMeals } from "../components/event/EventLinkedMeals";
 import { EventLinkedRides } from "../components/event/EventLinkedRides";
+import { AttendanceSummary } from "../components/event/AttendanceSummary";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { DayStrip } from "../components/event/DayStrip";
 import { Button } from "../components/common/Button";
@@ -180,6 +182,8 @@ export function EventDetailPage() {
   }
 
   const showWeather = !!(event.location && weatherDate);
+  const isTravelDay = event.has_con === false;
+  const showHotelInfoCard = isTravelDay && event.is_hotel;
   const hasLinks = !!(
     event.website || event.ticket_url || event.ticket_sale_start ||
     (event.ticket_types?.length ?? 0) > 0
@@ -268,7 +272,14 @@ export function EventDetailPage() {
       {/* ── Main content ── */}
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
 
-        {/* 1 ── Weather */}
+        {/* 1 ── Hotel info (travel days) + Weather — same two slots always,
+              just reordered, so switching days via DayStrip doesn't reflow
+              the rest of the page: hotel info leads on a travel day with
+              weather demoted below it, weather leads on a con day. */}
+        {showHotelInfoCard && (
+          <HotelInfoCard event={event} onHotelClick={() => navigate(routes.eventHotel.view(event.id))} />
+        )}
+
         {showWeather && (
           weatherLoading ? (
             <WeatherSkeleton />
@@ -284,7 +295,10 @@ export function EventDetailPage() {
           )
         )}
 
-        {/* 2 ── People & Cosplays */}
+        {/* 2 ── Attendance summary (multi-day trips only) */}
+        {isMultiDay && groupDays && <AttendanceSummary groupDays={groupDays} />}
+
+        {/* 3 ── People & Cosplays */}
         <div className="card-surface rounded-2xl overflow-hidden">
           {/* Split gradient bar */}
           <div className="flex h-[3px]">
@@ -325,43 +339,45 @@ export function EventDetailPage() {
             </div>
           )}
 
-          {/* Divider */}
-          <div className="mx-5 border-t border-slate-100 dark:border-slate-800" />
-
-          {/* Cosplays */}
-          <button
-            type="button"
-            onClick={() => navigate(routes.eventCosplays.view(event.id))}
-            className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-slate-50 dark:hover:bg-white/[0.02] active:bg-slate-100 dark:active:bg-white/[0.04] transition-colors group"
-          >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-500/10">
-              <Sparkles size={16} className="text-violet-500 dark:text-violet-400" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-0.5">
-                Cosplays
-              </p>
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                {eventCosplays.length === 0
-                  ? "Nog geen cosplays — voeg toe"
-                  : `${eventCosplays.length} cosplay${eventCosplays.length !== 1 ? "s" : ""} · ${cosplayerNames.length} ${cosplayerNames.length === 1 ? "persoon" : "personen"}`}
-              </p>
-              {cosplayerNames.length > 0 && (
-                <div className="mt-1.5 flex -space-x-1.5">
-                  {cosplayerNames.slice(0, 7).map((name) => {
-                    const u = users.find((x) => x.name === name || x.discord_username === name || x.aliases?.includes(name));
-                    return (
-                      <UserAvatar key={name} name={u?.name ?? name} user={u} className="h-5 w-5 text-[7px] ring-[1.5px] ring-white dark:ring-slate-900" />
-                    );
-                  })}
+          {/* Cosplays — no con on this day means nothing to cosplay for */}
+          {event.has_con && (
+            <>
+              <div className="mx-5 border-t border-slate-100 dark:border-slate-800" />
+              <button
+                type="button"
+                onClick={() => navigate(routes.eventCosplays.view(event.id))}
+                className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-slate-50 dark:hover:bg-white/[0.02] active:bg-slate-100 dark:active:bg-white/[0.04] transition-colors group"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-500/10">
+                  <Sparkles size={16} className="text-violet-500 dark:text-violet-400" />
                 </div>
-              )}
-            </div>
-            <ChevronRight size={15} className="shrink-0 text-slate-300 dark:text-slate-600 group-hover:text-slate-400 dark:group-hover:text-slate-500 transition-colors" />
-          </button>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-0.5">
+                    Cosplays
+                  </p>
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    {eventCosplays.length === 0
+                      ? "Nog geen cosplays — voeg toe"
+                      : `${eventCosplays.length} cosplay${eventCosplays.length !== 1 ? "s" : ""} · ${cosplayerNames.length} ${cosplayerNames.length === 1 ? "persoon" : "personen"}`}
+                  </p>
+                  {cosplayerNames.length > 0 && (
+                    <div className="mt-1.5 flex -space-x-1.5">
+                      {cosplayerNames.slice(0, 7).map((name) => {
+                        const u = users.find((x) => x.name === name || x.discord_username === name || x.aliases?.includes(name));
+                        return (
+                          <UserAvatar key={name} name={u?.name ?? name} user={u} className="h-5 w-5 text-[7px] ring-[1.5px] ring-white dark:ring-slate-900" />
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                <ChevronRight size={15} className="shrink-0 text-slate-300 dark:text-slate-600 group-hover:text-slate-400 dark:group-hover:text-slate-500 transition-colors" />
+              </button>
+            </>
+          )}
         </div>
 
-        {/* 3 ── Practical info + hotel */}
+        {/* 4 ── Practical info + hotel */}
         <EventPractical
           event={event}
           showHotel={showHotel}
@@ -372,13 +388,13 @@ export function EventDetailPage() {
           onHotelClick={() => navigate(routes.eventHotel.view(event.id))}
         />
 
-        {/* 4 ── Linked meals */}
+        {/* 5 ── Linked meals */}
         <EventLinkedMeals meals={linkedMeals} />
 
-        {/* 5 ── Tickets & links */}
+        {/* 6 ── Tickets & links */}
         {hasLinks && <EventLinks event={event} />}
 
-        {/* 6 ── Linked rides */}
+        {/* 7 ── Linked rides */}
         <EventLinkedRides rides={linkedRides} />
 
       </div>
