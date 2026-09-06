@@ -3,26 +3,31 @@ import { useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, CalendarDays, Hotel, X as XIcon, Link2, Unlink2, Tag, Check, Layers, History, Copy, Upload } from "lucide-react";
-import type { TicketType, CalendarEvent } from "../../types";
+import {
+  Plus, CalendarDays, Hotel, X as XIcon, Tag, Check, History, Upload, Link2,
+  ChevronDown, ChevronUp, UserPlus, Trash2,
+} from "lucide-react";
+import type { TicketType, Event, EventDay } from "../../types";
 import {
   useAdminEvents,
+  useAdminEventDays,
   useAdminUsers,
   useAdminCreateEvent,
   useAdminUpdateEvent,
   useAdminDeleteEvent,
+  useAdminCreateEventDay,
+  useAdminUpdateEventDay,
+  useAdminDeleteEventDay,
   useAdminRemoveEventParticipant,
   useAdminEventGroups,
   useAdminBulkDeleteEvents,
-  useAdminBulkGroupEvents,
   useAdminBulkSetEventGroup,
-  useAdminSyncEventGroup,
 } from "../../hooks/useAdmin";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { AdminDrawer } from "./AdminDrawer";
 import { toast } from "../../store/toast.store";
 import { routes } from "../../config/routes";
-import { F, FS, SECTION, SECTION_TITLE } from "./styles";
+import { F, SECTION, SECTION_TITLE } from "./styles";
 import { LocationSearchInput } from "../../components/common/LocationSearchInput";
 import { uploadEventCoverImage } from "../../services/storage.service";
 import { AdminPageHeader } from "./components/AdminPageHeader";
@@ -31,10 +36,8 @@ import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 import { AdminPagination } from "./components/AdminPagination";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 import { DrawerFooter } from "./components/DrawerFooter";
-import { ParticipantList } from "./components/ParticipantList";
 import { AdminBulkBar } from "./components/AdminBulkBar";
 import { useTableSelection } from "../../hooks/useTableSelection";
-import { buildGroupColorMap } from "../../utils/multiDay";
 import { formatDate } from "../../utils/format";
 import { parseEventDate } from "../../utils/date";
 
@@ -46,7 +49,6 @@ const optUrl = z.preprocess(
 
 const eventSchema = z.object({
   event_name: z.string().min(1, "Naam is verplicht"),
-  date: z.string().min(1, "Datum is verplicht"),
   event_group_id: optStr,
   is_hotel: z.boolean().optional(),
   hotel_location: optStr,
@@ -65,32 +67,196 @@ type EventForm = z.infer<typeof eventSchema>;
 
 const PAGE_SIZE = 15;
 
+function dateRange(days: EventDay[]): { first: Date | null; last: Date | null } {
+  const parsed = days.map((d) => parseEventDate(d.date)).filter((d): d is Date => d !== null);
+  if (!parsed.length) return { first: null, last: null };
+  return {
+    first: new Date(Math.min(...parsed.map((d) => d.getTime()))),
+    last: new Date(Math.max(...parsed.map((d) => d.getTime()))),
+  };
+}
+
+function uniqueParticipants(days: EventDay[]): string[] {
+  return [...new Set(days.flatMap((d) => d.participants))];
+}
+
+// ── Days section (inside the drawer, existing events only) ────────────────────
+
+function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
+  const createDay = useAdminCreateEventDay();
+  const updateDay = useAdminUpdateEventDay();
+  const deleteDay = useAdminDeleteEventDay();
+  const removeParticipant = useAdminRemoveEventParticipant();
+  const [expandedDay, setExpandedDay] = useState<string | null>(null);
+  const [newDate, setNewDate] = useState("");
+  const [newHasCon, setNewHasCon] = useState(true);
+
+  const sorted = [...days].sort(
+    (a, b) => (parseEventDate(a.date)?.getTime() ?? 0) - (parseEventDate(b.date)?.getTime() ?? 0),
+  );
+
+  async function handleAddDay() {
+    if (!newDate) return;
+    try {
+      await createDay.mutateAsync({ eventId, payload: { date: newDate, has_con: newHasCon } });
+      toast("success", "Dag toegevoegd.");
+      setNewDate("");
+      setNewHasCon(true);
+    } catch {
+      toast("error", "Kon dag niet toevoegen.");
+    }
+  }
+
+  async function handleToggleCon(day: EventDay) {
+    try {
+      await updateDay.mutateAsync({ dayId: day.id, payload: { has_con: !day.has_con } });
+    } catch {
+      toast("error", "Kon dag niet bijwerken.");
+    }
+  }
+
+  async function handleDeleteDay(day: EventDay) {
+    try {
+      await deleteDay.mutateAsync(day.id);
+      toast("success", "Dag verwijderd.");
+    } catch {
+      toast("error", "Kon dag niet verwijderen.");
+    }
+  }
+
+  async function handleRemoveParticipant(dayId: string, name: string) {
+    try {
+      await removeParticipant.mutateAsync({ dayId, participant: name });
+    } catch {
+      toast("error", "Kon deelnemer niet verwijderen.");
+    }
+  }
+
+  return (
+    <div className={SECTION}>
+      <p className={SECTION_TITLE}>Dagen ({days.length})</p>
+      <p className="text-xs text-slate-500 -mt-1">
+        Vink "Con" uit voor een dag die alleen reizen/hotel is, zonder convention die dag.
+      </p>
+
+      <div className="space-y-2">
+        {sorted.map((day) => {
+          const isExpanded = expandedDay === day.id;
+          return (
+            <div key={day.id} className="rounded-xl border border-white/[0.08] bg-white/[0.03] overflow-hidden">
+              <div className="flex items-center gap-3 px-3 py-2.5">
+                <CalendarDays size={14} className="text-slate-500 shrink-0" />
+                <span className="text-sm font-semibold text-white flex-1">
+                  {formatDate(day.date)}
+                </span>
+                <label className="flex items-center gap-1.5 text-[11px] text-slate-400 cursor-pointer whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    checked={day.has_con}
+                    onChange={() => handleToggleCon(day)}
+                    className="cb"
+                  />
+                  Con
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setExpandedDay(isExpanded ? null : day.id)}
+                  className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-white transition-colors whitespace-nowrap"
+                >
+                  <UserPlus size={12} />
+                  {day.participants.length}
+                  {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteDay(day)}
+                  disabled={deleteDay.isPending}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-rose-500/10 hover:text-rose-400 transition-colors disabled:opacity-40"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+              {isExpanded && (
+                <div className="border-t border-white/[0.06] px-3 py-2.5 space-y-1.5">
+                  {day.participants.length === 0 ? (
+                    <p className="text-xs text-slate-500">Nog geen aanmeldingen.</p>
+                  ) : (
+                    day.participants.map((p) => (
+                      <div key={p} className="flex items-center gap-2 rounded-lg bg-white/[0.03] px-2.5 py-1.5">
+                        <UserAvatar name={p} className="h-5 w-5 text-[7px]" />
+                        <span className="flex-1 text-xs text-slate-300">{p}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveParticipant(day.id, p)}
+                          disabled={removeParticipant.isPending}
+                          className="text-slate-500 hover:text-rose-400 transition-colors disabled:opacity-40"
+                        >
+                          <XIcon size={12} />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="flex items-end gap-2 pt-1">
+        <div className="flex-1">
+          <label className="block text-xs text-slate-400 mb-1">Nieuwe dag</label>
+          <input
+            type="date"
+            value={newDate}
+            onChange={(e) => setNewDate(e.target.value)}
+            className={`${F} [color-scheme:dark]`}
+          />
+        </div>
+        <label className="flex items-center gap-1.5 text-xs text-slate-400 pb-2.5 cursor-pointer whitespace-nowrap">
+          <input type="checkbox" checked={newHasCon} onChange={(e) => setNewHasCon(e.target.checked)} className="cb" />
+          Con
+        </label>
+        <button
+          type="button"
+          onClick={handleAddDay}
+          disabled={!newDate || createDay.isPending}
+          className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-sky-600 px-3 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-40 transition-colors"
+        >
+          <Plus size={14} />
+          Toevoegen
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Event drawer ──────────────────────────────────────────────────────────────
 
 function EventDrawer({
   event,
+  days,
   onClose,
+  onCreated,
 }: {
-  event: CalendarEvent | "new" | null;
+  event: Event | "new" | null;
+  days: EventDay[];
   onClose: () => void;
+  onCreated: (event: Event) => void;
 }) {
   const createMutation = useAdminCreateEvent();
   const updateMutation = useAdminUpdateEvent();
-  const removeParticipant = useAdminRemoveEventParticipant();
-  const syncGroupMutation = useAdminSyncEventGroup();
   const { data: eventGroups = [] } = useAdminEventGroups();
   const isEdit = event !== null && event !== "new";
   const editEvent = event !== null && event !== "new" ? event : null;
   const open = event !== null;
 
-  // Ticket types list state
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>(
     isEdit ? (event.ticket_types ?? []) : []
   );
   const [ttTitle, setTtTitle] = useState("");
   const [ttPrice, setTtPrice] = useState("");
 
-  // Cover image upload state
   const [imageUploading, setImageUploading] = useState(false);
   const [imageUrlMode, setImageUrlMode] = useState(false);
   const [imageDragOver, setImageDragOver] = useState(false);
@@ -115,7 +281,6 @@ function EventDrawer({
     resolver: zodResolver(eventSchema),
     defaultValues: {
       event_name: isEdit ? event.event_name : "",
-      date: isEdit ? event.date : "",
       event_group_id: isEdit ? (event.event_group_id ?? "") : "",
       is_hotel: isEdit ? event.is_hotel : false,
       hotel_location: isEdit ? (event.hotel_location ?? "") : "",
@@ -136,7 +301,6 @@ function EventDrawer({
     const strip = (v: string | undefined) => v || undefined;
     const cleaned = {
       event_name: values.event_name,
-      date: values.date,
       is_hotel: values.is_hotel,
       hotel_location: strip(values.hotel_location),
       event_group_id: strip(values.event_group_id),
@@ -157,8 +321,10 @@ function EventDrawer({
         await updateMutation.mutateAsync({ id: event.id, ...cleaned });
         toast("success", "Evenement bijgewerkt.");
       } else {
-        await createMutation.mutateAsync(cleaned);
-        toast("success", `${values.event_name} aangemaakt.`);
+        const created = await createMutation.mutateAsync(cleaned);
+        toast("success", `${values.event_name} aangemaakt. Voeg nu de dagen toe.`);
+        onCreated(created);
+        return;
       }
       onClose();
     } catch {
@@ -166,21 +332,7 @@ function EventDrawer({
     }
   }
 
-  async function handleRemove(p: string) {
-    if (!isEdit) return;
-    try {
-      await removeParticipant.mutateAsync({
-        eventId: event.id,
-        participant: p,
-      });
-      toast("success", `${p} verwijderd.`);
-    } catch {
-      toast("error", "Kon deelnemer niet verwijderen.");
-    }
-  }
-
   const isPending = createMutation.isPending || updateMutation.isPending || imageUploading;
-
   const currentImageUrl = watch("image_url");
 
   async function handleImageFile(file: File) {
@@ -205,11 +357,7 @@ function EventDrawer({
       open={open}
       onClose={onClose}
       title={isEdit ? "Evenement bewerken" : "Nieuw evenement"}
-      subtitle={
-        isEdit
-          ? `${event.event_name} · ${event.date}`
-          : "Voeg een kalender item toe"
-      }
+      subtitle={isEdit ? event.event_name : "Maak eerst het evenement aan, voeg daarna de dagen toe"}
       footer={
         <DrawerFooter
           onCancel={onClose}
@@ -229,28 +377,19 @@ function EventDrawer({
           <p className={SECTION_TITLE}>Basisgegevens</p>
           <div>
             <label className="block text-xs text-slate-400 mb-1">Naam *</label>
-            <input {...register("event_name")} className={F} placeholder="Comic Con — dag 1" />
+            <input {...register("event_name")} className={F} placeholder="DoKomi 2027" />
             {errors.event_name && (
               <p className="text-xs text-rose-400 mt-1">{errors.event_name.message}</p>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">Datum *</label>
-              <input {...register("date")} type="date" className={F} />
-              {errors.date && (
-                <p className="text-xs text-rose-400 mt-1">{errors.date.message}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">Groep</label>
-              <select {...register("event_group_id")} className={FS}>
-                <option value="">— Geen groep —</option>
-                {eventGroups.map((g) => (
-                  <option key={g.id} value={g.name}>{g.name}</option>
-                ))}
-              </select>
-            </div>
+          <div>
+            <label className="block text-xs text-slate-400 mb-1">Groep</label>
+            <select {...register("event_group_id")} className={`${F} [color-scheme:dark]`}>
+              <option value="">— Geen groep —</option>
+              {eventGroups.map((g) => (
+                <option key={g.id} value={g.name}>{g.name}</option>
+              ))}
+            </select>
           </div>
           <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 hover:bg-white/[0.06] transition-colors">
             <input type="checkbox" {...register("is_hotel")} className="cb" />
@@ -295,7 +434,6 @@ function EventDrawer({
               </button>
             </div>
 
-            {/* Always registered so setValue persists through form submission */}
             <input type="hidden" {...register("image_url")} />
 
             {imageUrlMode ? (
@@ -416,11 +554,10 @@ function EventDrawer({
             <input
               {...register("ticket_sale_start")}
               type="datetime-local"
-              className={F}
+              className={`${F} [color-scheme:dark]`}
             />
           </div>
 
-          {/* Ticket types list builder */}
           <div>
             <label className="block text-xs text-slate-400 mb-2">Ticket soorten</label>
             {ticketTypes.length > 0 && (
@@ -524,39 +661,8 @@ function EventDrawer({
           </div>
         </div>
 
-        {editEvent?.multi_day_id && (
-          <div className={SECTION}>
-            <p className={SECTION_TITLE}>Meerdaagse synchronisatie</p>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Kopieer de huidige beschrijving, locatie, links, tickets en praktische info naar alle andere
-              dagen in dit meerdaagse evenement.
-            </p>
-            <button
-              type="button"
-              disabled={syncGroupMutation.isPending}
-              onClick={async () => {
-                try {
-                  await syncGroupMutation.mutateAsync(editEvent.id);
-                  toast("success", "Info gekopieerd naar alle andere dagen in de groep.");
-                } catch {
-                  toast("error", "Synchronisatie mislukt.");
-                }
-              }}
-              className="flex items-center gap-2 rounded-xl bg-violet-600/20 border border-violet-500/30 px-4 py-2.5 text-sm font-semibold text-violet-400 hover:bg-violet-600/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Copy size={14} />
-              {syncGroupMutation.isPending ? "Bezig…" : "Kopieer naar alle dagen"}
-            </button>
-          </div>
-        )}
-
-        {isEdit && (
-          <ParticipantList
-            participants={event.participants}
-            onRemove={handleRemove}
-            isPending={removeParticipant.isPending}
-          />
-        )}
+        {/* ── Dagen (alleen bij bestaand evenement) ─────────────────── */}
+        {editEvent && <DaysSection eventId={editEvent.id} days={days} />}
       </form>
     </AdminDrawer>
   );
@@ -566,48 +672,75 @@ function EventDrawer({
 
 export function AdminEventsPage() {
   const navigate = useNavigate();
-  const { data: events = [], isLoading } = useAdminEvents();
+  const { data: events = [], isLoading: eventsLoading } = useAdminEvents();
+  const { data: days = [], isLoading: daysLoading } = useAdminEventDays();
   const { data: allUsers = [] } = useAdminUsers();
   const { data: eventGroups = [] } = useAdminEventGroups();
-  const groupColorMap = useMemo(() => buildGroupColorMap(events), [events]);
+  const isLoading = eventsLoading || daysLoading;
   const deleteMutation = useAdminDeleteEvent();
   const bulkDeleteMutation = useAdminBulkDeleteEvents();
-  const bulkGroupMutation = useAdminBulkGroupEvents();
   const bulkSetGroupMutation = useAdminBulkSetEventGroup();
-  const syncGroupMutation = useAdminSyncEventGroup();
   const [search, setSearch] = useState("");
   const [groupFilter, setGroupFilter] = useState("All");
   const [page, setPage] = useState(0);
   const [drawerId, setDrawerId] = useState<string | "new" | null>(null);
-  const drawerEvent: CalendarEvent | "new" | null =
-    drawerId === "new" ? "new" : drawerId ? (events.find((e) => e.id === drawerId) ?? null) : null;
+  // Holds the record just returned by the create mutation so the drawer can
+  // switch straight into edit mode without waiting on the list query's
+  // refetch — mutateAsync resolves before that refetch necessarily
+  // completes, so relying on `events.find(...)` here left the form fields
+  // empty for a moment (a real bug caught while testing this flow).
+  const [justCreated, setJustCreated] = useState<Event | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+
+  const daysByEvent = useMemo(() => {
+    const map = new Map<string, EventDay[]>();
+    for (const d of days) {
+      const arr = map.get(d.event_id) ?? [];
+      arr.push(d);
+      map.set(d.event_id, arr);
+    }
+    return map;
+  }, [days]);
+
+  const drawerEvent: Event | "new" | null =
+    drawerId === "new"
+      ? "new"
+      : drawerId
+        ? (justCreated?.id === drawerId ? justCreated : events.find((e) => e.id === drawerId)) ?? null
+        : null;
+  const drawerDays = drawerId && drawerId !== "new" ? (daysByEvent.get(drawerId) ?? []) : [];
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const filtered = events
-    .filter((ev) => {
-      const d = parseEventDate(ev.date);
-      const isPast = d ? d < today : false;
+  const enriched = useMemo(
+    () =>
+      events.map((ev) => {
+        const evDays = daysByEvent.get(ev.id) ?? [];
+        const { first, last } = dateRange(evDays);
+        return { ev, days: evDays, first, last, participants: uniqueParticipants(evDays) };
+      }),
+    [events, daysByEvent],
+  );
+
+  const filtered = enriched
+    .filter(({ ev, last }) => {
+      const isPast = last ? last < today : false;
       if (isPast !== showHistory) return false;
       if (groupFilter !== "All" && (ev.event_group_id ?? "") !== groupFilter) return false;
       if (!search) return true;
       const q = search.toLowerCase();
       return (
         ev.event_name.toLowerCase().includes(q) ||
-        (ev.event_group_id ?? "").toLowerCase().includes(q) ||
-        ev.date.includes(q)
+        (ev.event_group_id ?? "").toLowerCase().includes(q)
       );
     })
     .sort((a, b) => {
-      const da = parseEventDate(a.date);
-      const db = parseEventDate(b.date);
-      if (!da && !db) return 0;
-      if (!da) return 1;
-      if (!db) return -1;
-      return showHistory ? db.getTime() - da.getTime() : da.getTime() - db.getTime();
+      if (!a.first && !b.first) return 0;
+      if (!a.first) return 1;
+      if (!b.first) return -1;
+      return showHistory ? b.first.getTime() - a.first.getTime() : a.first.getTime() - b.first.getTime();
     });
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
@@ -618,67 +751,21 @@ export function AdminEventsPage() {
   );
 
   const { selectedIds, toggleSelect, selectAll, clearSelection, allSelected, indeterminate } =
-    useTableSelection(paginated.map((ev) => ev.id));
-  const [bulkMode, setBulkMode] = useState<"idle" | "set-group" | "sync">("idle");
+    useTableSelection(paginated.map(({ ev }) => ev.id));
+  const [bulkMode, setBulkMode] = useState<"idle" | "set-group">("idle");
   const [pickedGroup, setPickedGroup] = useState("");
-  const [syncSourceId, setSyncSourceId] = useState("");
 
-  const selectedEvents = events.filter((ev) => selectedIds.has(ev.id));
-  const anyMultiDay = selectedEvents.some((ev) => ev.multi_day_id);
-  // Sync is available when all selected events share the same multi_day_id
-  const sharedMultiDayId = selectedEvents.length > 1 &&
-    selectedEvents[0]?.multi_day_id &&
-    selectedEvents.every((ev) => ev.multi_day_id === selectedEvents[0].multi_day_id)
-      ? selectedEvents[0].multi_day_id
-      : null;
-  const bulkIsPending =
-    bulkDeleteMutation.isPending || bulkGroupMutation.isPending ||
-    bulkSetGroupMutation.isPending || syncGroupMutation.isPending;
+  const bulkIsPending = bulkDeleteMutation.isPending || bulkSetGroupMutation.isPending;
 
   function handleClearSelection() {
     clearSelection();
     setBulkMode("idle");
     setPickedGroup("");
-    setSyncSourceId("");
-  }
-
-  async function handleBulkSync(sourceId: string) {
-    try {
-      await syncGroupMutation.mutateAsync(sourceId);
-      toast("success", "Info gesynchroniseerd naar alle andere dagen.");
-      setBulkMode("idle");
-      setSyncSourceId("");
-      clearSelection();
-    } catch {
-      toast("error", "Synchronisatie mislukt.");
-    }
   }
 
   function handleSearch(v: string) {
     setSearch(v);
     setPage(0);
-  }
-
-  async function handleBulkGroup() {
-    const ids = [...selectedIds];
-    try {
-      await bulkGroupMutation.mutateAsync({ eventIds: ids, multiDayId: null });
-      toast("success", `${ids.length} evenementen gekoppeld.`);
-      clearSelection();
-    } catch {
-      toast("error", "Kon evenementen niet koppelen.");
-    }
-  }
-
-  async function handleBulkUngroup() {
-    const ids = [...selectedIds];
-    try {
-      await bulkGroupMutation.mutateAsync({ eventIds: ids, multiDayId: "" });
-      toast("success", `${ids.length} evenementen ontkoppeld.`);
-      clearSelection();
-    } catch {
-      toast("error", "Kon evenementen niet ontkoppelen.");
-    }
   }
 
   async function handleBulkDelete() {
@@ -745,7 +832,6 @@ export function AdminEventsPage() {
       <div className="flex flex-col sm:flex-row gap-3">
         {eventGroups.length > 0 && (
           <div className="flex gap-1.5 overflow-x-auto pb-1">
-            {/* "All" chip */}
             <button
               onClick={() => { setGroupFilter("All"); setPage(0); }}
               className={`shrink-0 rounded-xl px-3.5 py-1.5 text-sm font-semibold transition-colors ${
@@ -777,7 +863,7 @@ export function AdminEventsPage() {
         <AdminSearch
           value={search}
           onChange={handleSearch}
-          placeholder="Zoek op naam, groep of datum..."
+          placeholder="Zoek op naam of groep..."
         />
       </div>
 
@@ -799,10 +885,10 @@ export function AdminEventsPage() {
                   Evenement
                 </th>
                 <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Datum
+                  Data
                 </th>
                 <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Type
+                  Info
                 </th>
                 <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Deelnemers
@@ -825,57 +911,38 @@ export function AdminEventsPage() {
                   </td>
                 </tr>
               ) : (
-                paginated.map((event) => {
-                  const mdColor = event.multi_day_id ? groupColorMap.get(event.multi_day_id) : null;
-                  const isSelected = selectedIds.has(event.id);
+                paginated.map(({ ev, days: evDays, first, last, participants }) => {
+                  const isSelected = selectedIds.has(ev.id);
                   return (
                   <tr
-                    key={event.id}
-                    onClick={() => navigate(routes.event.view(event.id))}
+                    key={ev.id}
+                    onClick={() => evDays[0] && navigate(routes.event.view(evDays[0].id))}
                     className={`cursor-pointer transition-colors ${isSelected ? "bg-sky-500/[0.06] hover:bg-sky-500/[0.08]" : "hover:bg-slate-50 dark:hover:bg-white/[0.03]"}`}
-                    style={mdColor && !isSelected ? { backgroundColor: mdColor.accent + "0d" } : undefined}
                   >
                     <td
                       className="w-10 pl-4 pr-2 py-3.5"
-                      onClick={(e) => { e.stopPropagation(); toggleSelect(event.id); }}
+                      onClick={(e) => { e.stopPropagation(); toggleSelect(ev.id); }}
                     >
                       <input
                         type="checkbox"
                         checked={isSelected}
-                        onChange={() => toggleSelect(event.id)}
+                        onChange={() => toggleSelect(ev.id)}
                         onClick={(e) => e.stopPropagation()}
                         className="cb"
                       />
                     </td>
-                    <td
-                      className="px-5 py-3.5"
-                      style={mdColor
-                        ? { borderLeft: `3px solid ${mdColor.accent}` }
-                        : { borderLeft: "3px solid transparent" }}
-                    >
+                    <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2.5">
-                        <div
-                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${mdColor ? "" : "bg-emerald-100 dark:bg-emerald-500/10"}`}
-                          style={mdColor ? { backgroundColor: mdColor.accent + "22" } : undefined}
-                        >
-                          {mdColor
-                            ? <Layers size={13} style={{ color: mdColor.accent }} />
-                            : <CalendarDays size={13} className="text-emerald-500" />
-                          }
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-500/10">
+                          <CalendarDays size={13} className="text-emerald-500" />
                         </div>
                         <div>
                           <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                            {event.event_name}
+                            {ev.event_name}
                           </p>
-                          {event.event_group_id && (
-                            <span
-                              className="mt-0.5 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
-                              style={mdColor
-                                ? { backgroundColor: mdColor.accent + "20", color: mdColor.accent }
-                                : { backgroundColor: "rgba(255,255,255,0.06)", color: "rgb(148,163,184)" }}
-                            >
-                              {mdColor && <Layers size={8} />}
-                              {event.event_group_id}
+                          {ev.event_group_id && (
+                            <span className="mt-0.5 inline-flex items-center rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-semibold text-slate-400">
+                              {ev.event_group_id}
                             </span>
                           )}
                         </div>
@@ -883,28 +950,32 @@ export function AdminEventsPage() {
                     </td>
                     <td className="px-5 py-3.5">
                       <span className="text-sm text-slate-700 dark:text-slate-300">
-                        {formatDate(event.date)}
+                        {!first ? "—" : !last || first.getTime() === last.getTime()
+                          ? formatDate(evDays[0]?.date ?? "")
+                          : `${formatDate(evDays.find((d) => parseEventDate(d.date)?.getTime() === first.getTime())?.date ?? "")} – ${formatDate(evDays.find((d) => parseEventDate(d.date)?.getTime() === last.getTime())?.date ?? "")}`
+                        }
                       </span>
                     </td>
                     <td className="px-5 py-3.5">
-                      {event.is_hotel ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 dark:bg-sky-500/10 px-2.5 py-1 text-xs font-semibold text-sky-700 dark:text-sky-400">
-                          <Hotel size={10} />
-                          Hotel
-                        </span>
-                      ) : (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {ev.is_hotel && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 dark:bg-sky-500/10 px-2.5 py-1 text-xs font-semibold text-sky-700 dark:text-sky-400">
+                            <Hotel size={10} />
+                            Hotel
+                          </span>
+                        )}
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] px-2.5 py-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                          Dag
+                          {evDays.length} {evDays.length === 1 ? "dag" : "dagen"}
                         </span>
-                      )}
+                      </div>
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex -space-x-1.5">
-                        {event.participants.length === 0 ? (
+                        {participants.length === 0 ? (
                           <span className="text-xs text-slate-400">—</span>
                         ) : (
                           <>
-                            {event.participants.slice(0, 4).map((p) => {
+                            {participants.slice(0, 4).map((p) => {
                               const resolved = allUsers.find(
                                 (u) =>
                                   u.name === p ||
@@ -920,9 +991,9 @@ export function AdminEventsPage() {
                                 />
                               );
                             })}
-                            {event.participants.length > 4 && (
+                            {participants.length > 4 && (
                               <span className="flex h-6 w-6 items-center justify-center rounded-full ring-2 ring-slate-800 bg-slate-700 text-[9px] font-bold text-slate-300">
-                                +{event.participants.length - 4}
+                                +{participants.length - 4}
                               </span>
                             )}
                           </>
@@ -931,13 +1002,13 @@ export function AdminEventsPage() {
                     </td>
                     <td className="px-5 py-3.5" onClick={(e) => e.stopPropagation()}>
                       <DeleteConfirmActions
-                        id={event.id}
+                        id={ev.id}
                         confirmId={confirmDeleteId}
                         isPending={deleteMutation.isPending}
-                        onEdit={() => setDrawerId(event.id)}
-                        onRequestDelete={() => setConfirmDeleteId(event.id)}
+                        onEdit={() => setDrawerId(ev.id)}
+                        onRequestDelete={() => setConfirmDeleteId(ev.id)}
                         onConfirmDelete={() =>
-                          handleDelete(event.id, event.event_name)
+                          handleDelete(ev.id, ev.event_name)
                         }
                         onCancelDelete={() => setConfirmDeleteId(null)}
                       />
@@ -959,11 +1030,11 @@ export function AdminEventsPage() {
       </div>
 
       <EventDrawer
-        key={
-          drawerId ?? "none"
-        }
+        key={drawerId ?? "none"}
         event={drawerEvent}
-        onClose={() => setDrawerId(null)}
+        days={drawerDays}
+        onClose={() => { setDrawerId(null); setJustCreated(null); }}
+        onCreated={(ev) => { setJustCreated(ev); setDrawerId(ev.id); }}
       />
 
       <AdminBulkBar
@@ -972,44 +1043,14 @@ export function AdminEventsPage() {
         onDelete={handleBulkDelete}
         onClear={handleClearSelection}
         extraActions={
-          <>
-            <button
-              onClick={handleBulkGroup}
-              disabled={bulkIsPending}
-              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors disabled:opacity-40"
-            >
-              <Link2 size={14} />
-              Groepeer
-            </button>
-            {anyMultiDay && (
-              <button
-                onClick={handleBulkUngroup}
-                disabled={bulkIsPending}
-                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors disabled:opacity-40"
-              >
-                <Unlink2 size={14} />
-                Ontkoppelen
-              </button>
-            )}
-            <button
-              onClick={() => setBulkMode("set-group")}
-              disabled={bulkIsPending}
-              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors disabled:opacity-40"
-            >
-              <Tag size={14} />
-              Label
-            </button>
-            {sharedMultiDayId && (
-              <button
-                onClick={() => { setBulkMode("sync"); setSyncSourceId(selectedEvents[0]?.id ?? ""); }}
-                disabled={bulkIsPending}
-                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium text-violet-400 hover:bg-violet-500/10 hover:text-violet-300 transition-colors disabled:opacity-40"
-              >
-                <Copy size={14} />
-                Synchroniseer
-              </button>
-            )}
-          </>
+          <button
+            onClick={() => setBulkMode("set-group")}
+            disabled={bulkIsPending}
+            className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors disabled:opacity-40"
+          >
+            <Tag size={14} />
+            Label
+          </button>
         }
         overrideContent={
           bulkMode === "set-group" ? (
@@ -1034,34 +1075,6 @@ export function AdminEventsPage() {
               </button>
               <button
                 onClick={() => { setBulkMode("idle"); setPickedGroup(""); }}
-                disabled={bulkIsPending}
-                className="rounded-xl px-3 py-1.5 text-sm font-medium text-slate-400 hover:bg-white/[0.08] transition-colors"
-              >
-                Annuleer
-              </button>
-            </>
-          ) : bulkMode === "sync" ? (
-            <>
-              <span className="px-1 text-sm text-slate-400 whitespace-nowrap">Sync van:</span>
-              <select
-                value={syncSourceId}
-                onChange={(e) => setSyncSourceId(e.target.value)}
-                className="[color-scheme:dark] rounded-xl border border-white/[0.12] bg-slate-800 px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-              >
-                {selectedEvents.map((ev) => (
-                  <option key={ev.id} value={ev.id} className="bg-slate-800 text-white">{ev.event_name}</option>
-                ))}
-              </select>
-              <button
-                onClick={() => handleBulkSync(syncSourceId)}
-                disabled={bulkIsPending || !syncSourceId}
-                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold bg-violet-600 text-white hover:bg-violet-700 transition-colors disabled:opacity-40"
-              >
-                <Check size={14} />
-                {bulkIsPending ? "Bezig…" : "Synchroniseer"}
-              </button>
-              <button
-                onClick={() => { setBulkMode("idle"); setSyncSourceId(""); }}
                 disabled={bulkIsPending}
                 className="rounded-xl px-3 py-1.5 text-sm font-medium text-slate-400 hover:bg-white/[0.08] transition-colors"
               >

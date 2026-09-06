@@ -24,6 +24,7 @@ class CalendarRoutes:
     RSVP = "/{event_id}/rsvp"
     LEAVE = "/{event_id}/leave"
     HOTEL_ROOMS = "/{event_id}/hotel-rooms"
+    HOTEL_ROOMS_BULK = "/{event_id}/hotel-rooms/bulk"
     HOTEL_ROOM_ASSIGN = "/{event_id}/hotel-rooms/{room_id}/assign"
     HOTEL_ROOM_LEAVE = "/{event_id}/hotel-rooms/{room_id}/leave"
 
@@ -109,18 +110,18 @@ class AdminRoutes:
     MEALS_BULK_DELETE = "/meals/bulk-delete"
     MEAL_PARTICIPANT = "/meals/{meal_id}/participants/{participant}"
 
-    # Calendar
-    CALENDAR = "/calendar"
-    CALENDAR_BULK_DELETE = "/calendar/bulk-delete"
-    CALENDAR_BULK_GROUP = "/calendar/bulk-group"
-    CALENDAR_BULK_SET_GROUP = "/calendar/bulk-set-group"
-    CALENDAR_EVENT = "/calendar/{event_id}"
-    CALENDAR_EVENT_GROUP = "/calendar/{event_id}/group"
-    CALENDAR_EVENT_PARTICIPANT = "/calendar/{event_id}/participants/{participant}"
-    CALENDAR_EVENT_BULK_RSVP = "/calendar/{event_id}/bulk-rsvp"
-    CALENDAR_EVENT_SYNC_GROUP = "/calendar/{event_id}/sync-group"
-    CALENDAR_EVENT_HOTEL_ROOMS = "/calendar/{event_id}/hotel-rooms"
-    CALENDAR_EVENT_HOTEL_ROOM = "/calendar/{event_id}/hotel-rooms/{room_id}"
+    # Events (a trip/convention) and its Days
+    EVENTS = "/events"
+    EVENTS_BULK_DELETE = "/events/bulk-delete"
+    EVENTS_BULK_SET_GROUP = "/events/bulk-set-group"
+    EVENT_DETAIL = "/events/{event_id}"
+    EVENT_DAYS_ALL = "/event-days"
+    EVENT_DAYS = "/events/{event_id}/days"  # POST (create) only — needs the parent for context
+    EVENT_DAY_DETAIL = "/event-days/{day_id}"
+    EVENT_DAY_PARTICIPANT = "/event-days/{day_id}/participants/{participant}"
+    EVENT_DAY_BULK_RSVP = "/event-days/{day_id}/bulk-rsvp"
+    EVENT_HOTEL_ROOMS = "/calendar/{event_id}/hotel-rooms"
+    EVENT_HOTEL_ROOM = "/calendar/{event_id}/hotel-rooms/{room_id}"
 
     # Event groups
     EVENT_GROUPS = "/event-groups"

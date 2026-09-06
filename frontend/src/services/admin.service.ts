@@ -2,7 +2,8 @@ import { apiClient } from "../lib/api/client";
 import { apiRoutes } from "../config/api-routes";
 import type {
   AdminStats,
-  CalendarEvent,
+  Event,
+  EventDay,
   CreateRideRequest,
   ExpenseShare,
   Meal,
@@ -160,16 +161,23 @@ export async function removeAdminMealParticipant(mealId: string, participant: st
   await apiClient.delete(apiRoutes.admin.meals.participant(mealId, participant));
 }
 
-// ── Calendar Events ───────────────────────────────────────────────────────────
+// ── Events ────────────────────────────────────────────────────────────────────
+// One `Event` row per trip/convention owning every shared field; one
+// `EventDay` per day of that trip owning only the date, whether there's a
+// con happening, and RSVP.
 
-export async function getAdminEvents(): Promise<CalendarEvent[]> {
-  const { data } = await apiClient.get<CalendarEvent[]>(apiRoutes.admin.calendar.base);
+export async function getAdminEvents(): Promise<Event[]> {
+  const { data } = await apiClient.get<Event[]>(apiRoutes.admin.events.base);
+  return data;
+}
+
+export async function getAdminEventDays(): Promise<EventDay[]> {
+  const { data } = await apiClient.get<EventDay[]>(apiRoutes.admin.events.allDays);
   return data;
 }
 
 export interface AdminCreateEventPayload {
   event_name: string;
-  date: string;
   event_group_id?: string;
   is_hotel?: boolean;
   hotel_location?: string;
@@ -186,85 +194,73 @@ export interface AdminCreateEventPayload {
   what_to_bring?: string;
 }
 
-export async function createAdminEvent(payload: AdminCreateEventPayload): Promise<CalendarEvent> {
-  const { data } = await apiClient.post<CalendarEvent>(apiRoutes.admin.calendar.base, payload);
+export async function createAdminEvent(payload: AdminCreateEventPayload): Promise<Event> {
+  const { data } = await apiClient.post<Event>(apiRoutes.admin.events.base, payload);
   return data;
 }
 
-export interface AdminUpdateEventPayload {
+export interface AdminUpdateEventPayload extends Partial<AdminCreateEventPayload> {
   id: string;
-  event_name?: string;
-  date?: string;
-  is_hotel?: boolean;
-  hotel_location?: string;
-  image_url?: string;
-  description?: string;
-  location?: string;
-  website?: string;
-  ticket_url?: string;
-  ticket_sale_start?: string;
-  ticket_types?: { title: string; price: number }[];
-  locker_info?: string;
-  parking_info?: string;
-  special_instructions?: string;
-  what_to_bring?: string;
 }
 
 export async function updateAdminEvent({ id, ...payload }: AdminUpdateEventPayload): Promise<void> {
-  await apiClient.put(apiRoutes.admin.calendar.byId(id), payload);
+  await apiClient.put(apiRoutes.admin.events.byId(id), payload);
 }
 
 export async function deleteAdminEvent(id: string): Promise<void> {
-  await apiClient.delete(apiRoutes.admin.calendar.byId(id));
-}
-
-export async function removeAdminEventParticipant(
-  eventId: string,
-  participant: string,
-): Promise<void> {
-  await apiClient.delete(apiRoutes.admin.calendar.participant(eventId, participant));
-}
-
-export async function bulkRsvpAdminEvent(
-  eventId: string,
-  userNames: string[],
-): Promise<void> {
-  await apiClient.post(apiRoutes.admin.calendar.bulkRsvp(eventId), { user_names: userNames });
-}
-
-export async function setAdminEventGroup(
-  eventId: string,
-  groupId: string | null,
-): Promise<void> {
-  await apiClient.patch(apiRoutes.admin.calendar.group(eventId), { group_id: groupId });
+  await apiClient.delete(apiRoutes.admin.events.byId(id));
 }
 
 export async function bulkDeleteAdminEvents(eventIds: string[]): Promise<void> {
-  await apiClient.post(apiRoutes.admin.calendar.bulkDelete, { event_ids: eventIds });
-}
-
-export async function syncAdminEventGroup(eventId: string): Promise<void> {
-  await apiClient.post(apiRoutes.admin.calendar.syncGroup(eventId));
-}
-
-export async function bulkGroupAdminEvents(
-  eventIds: string[],
-  multiDayId: string | null,
-): Promise<void> {
-  await apiClient.post(apiRoutes.admin.calendar.bulkGroup, {
-    event_ids: eventIds,
-    multi_day_id: multiDayId,
-  });
+  await apiClient.post(apiRoutes.admin.events.bulkDelete, { event_ids: eventIds });
 }
 
 export async function bulkSetAdminEventGroup(
   eventIds: string[],
   groupId: string | null,
 ): Promise<void> {
-  await apiClient.post(apiRoutes.admin.calendar.bulkSetGroup, {
+  await apiClient.post(apiRoutes.admin.events.bulkSetGroup, {
     event_ids: eventIds,
     group_id: groupId,
   });
+}
+
+export interface AdminCreateEventDayPayload {
+  date: string;
+  has_con?: boolean;
+}
+
+export async function createAdminEventDay(
+  eventId: string,
+  payload: AdminCreateEventDayPayload,
+): Promise<EventDay> {
+  const { data } = await apiClient.post<EventDay>(apiRoutes.admin.events.days(eventId), payload);
+  return data;
+}
+
+export async function updateAdminEventDay(
+  dayId: string,
+  payload: { date?: string; has_con?: boolean },
+): Promise<void> {
+  await apiClient.put(apiRoutes.admin.events.dayById(dayId), payload);
+}
+
+export async function deleteAdminEventDay(dayId: string): Promise<void> {
+  await apiClient.delete(apiRoutes.admin.events.dayById(dayId));
+}
+
+export async function removeAdminEventParticipant(
+  dayId: string,
+  participant: string,
+): Promise<void> {
+  await apiClient.delete(apiRoutes.admin.events.dayParticipant(dayId, participant));
+}
+
+export async function bulkRsvpAdminEvent(
+  dayId: string,
+  userNames: string[],
+): Promise<void> {
+  await apiClient.post(apiRoutes.admin.events.dayBulkRsvp(dayId), { user_names: userNames });
 }
 
 // ── Hotel Rooms (admin) ───────────────────────────────────────────────────────
@@ -273,6 +269,7 @@ export interface AdminUpdateHotelRoomPayload {
   room_number?: string;
   floor?: string;
   instructions?: string;
+  capacity?: number;
   occupants?: string[];
 }
 
@@ -281,11 +278,11 @@ export async function adminUpdateHotelRoom(
   roomId: string,
   payload: AdminUpdateHotelRoomPayload,
 ): Promise<void> {
-  await apiClient.put(apiRoutes.admin.calendar.hotelRoomById(eventId, roomId), payload);
+  await apiClient.put(apiRoutes.admin.events.hotelRoomById(eventId, roomId), payload);
 }
 
 export async function adminDeleteHotelRoom(eventId: string, roomId: string): Promise<void> {
-  await apiClient.delete(apiRoutes.admin.calendar.hotelRoomById(eventId, roomId));
+  await apiClient.delete(apiRoutes.admin.events.hotelRoomById(eventId, roomId));
 }
 
 // ── Event groups ──────────────────────────────────────────────────────────────

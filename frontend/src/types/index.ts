@@ -259,18 +259,29 @@ export interface TicketType {
 export interface HotelRoom {
   id: string;
   event_id: string;
-  room_number: string;
+  room_number: string | null;
   floor?: string;
   instructions?: string;
+  capacity: number | null;
   occupants: string[];
   created_at?: string;
 }
 
 export interface CreateHotelRoomRequest {
-  room_number: string;
+  room_number?: string;
   floor?: string;
   instructions?: string;
+  capacity?: number;
   occupants?: string[];
+}
+
+export interface HotelRoomBatch {
+  count: number;
+  capacity?: number;
+}
+
+export interface BulkCreateHotelRoomsRequest {
+  batches: HotelRoomBatch[];
 }
 
 export interface CalendarEvent {
@@ -293,6 +304,37 @@ export interface CalendarEvent {
   parking_info?: string;
   special_instructions?: string;
   what_to_bring?: string;
+}
+
+// The real parent/child shape admin manages directly (CalendarEvent above
+// is the read-only per-day adapter shape everything user-facing consumes).
+export interface Event {
+  id: string;
+  event_group_id?: string;
+  event_name: string;
+  is_hotel: boolean;
+  hotel_location?: string;
+  image_url?: string;
+  description?: string;
+  location?: string;
+  website?: string;
+  ticket_url?: string;
+  ticket_sale_start?: string;
+  ticket_types?: TicketType[];
+  locker_info?: string;
+  parking_info?: string;
+  special_instructions?: string;
+  what_to_bring?: string;
+  created_at?: string;
+}
+
+export interface EventDay {
+  id: string;
+  event_id: string;
+  date: string;
+  has_con: boolean;
+  participants: string[];
+  created_at?: string;
 }
 
 export interface AdminStats {

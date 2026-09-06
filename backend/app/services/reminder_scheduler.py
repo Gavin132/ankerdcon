@@ -2,7 +2,10 @@
 Scheduled Discord notifications — event reminders and ticket-sale timing.
 
 `check_and_send_reminders` runs daily at 08:00 and sends notifications for
-upcoming calendar events at 7-day, 1-day, and same-day intervals.
+upcoming events at 7-day, 1-day, and same-day intervals, anchored to the
+*first con day* of the trip (not counting hotel-only travel days) — one
+reminder cycle per event, not one per day, now that a multi-day trip is a
+single `events` row rather than N separate calendar rows.
 
 `check_and_send_ticket_reminders` runs on a tighter interval (every 15 min)
 since ticket_sale_start carries an exact time, not just a date — it notifies
@@ -11,7 +14,7 @@ since ticket_sale_start carries an exact time, not just a date — it notifies
 Only per-user opt-in DMs (notification_service, per-category) are sent —
 reminders never post to the public Discord channel, which is reserved for
 announcements an admin explicitly checks "ook naar Discord sturen" for.
-Sent reminders are recorded on the calendar row (`reminders_sent` /
+Sent reminders are recorded on the events row (`reminders_sent` /
 `ticket_reminders_sent`) so duplicates are never posted, even after a restart.
 """
 
@@ -70,18 +73,32 @@ async def check_and_send_reminders() -> None:
     today = date.today()
 
     try:
-        resp = supabase.table(Tables.CALENDAR).select(
-            "id, event_name, date, location, ticket_url, website, "
-            "what_to_bring, locker_info, parking_info, reminders_sent"
-        ).execute()
+        events = supabase.table(Tables.EVENTS).select(
+            "id, event_name, location, reminders_sent"
+        ).execute().data
+        days = supabase.table(Tables.EVENT_DAYS).select(
+            "event_id, date, has_con"
+        ).execute().data
     except Exception as e:
         logger.error("Reminders: DB fetch failed: %s", e)
         return
 
-    for event in resp.data:
-        event_date = _parse_date(event.get("date") or "")
-        if not event_date:
+    days_by_event: dict[str, list[dict]] = {}
+    for d in days:
+        days_by_event.setdefault(d["event_id"], []).append(d)
+
+    for event in events:
+        event_days = days_by_event.get(event["id"], [])
+        # Anchor to the first actual con day so a hotel-only travel day
+        # doesn't shift "X days until the event"; fall back to the
+        # earliest day overall for the (currently impossible) case of a
+        # trip with no con days at all.
+        con_days = [d for d in event_days if d.get("has_con", True)]
+        candidates = con_days or event_days
+        parsed = [dt for d in candidates if (dt := _parse_date(d["date"]))]
+        if not parsed:
             continue
+        event_date = min(parsed).date()
 
         already_sent: list[str] = event.get("reminders_sent") or []
 
@@ -98,11 +115,11 @@ async def check_and_send_reminders() -> None:
                     _REMINDER_CATEGORY[label],
                     _REMINDER_DM_TEMPLATE[label].format(
                         event_name=event["event_name"],
-                        date=event["date"],
+                        date=event_date.strftime("%d-%m-%Y"),
                         location_line=_location_line(event.get("location")),
                     ),
                 )
-                supabase.table(Tables.CALENDAR).update(
+                supabase.table(Tables.EVENTS).update(
                     {"reminders_sent": already_sent + [label]}
                 ).eq("id", event["id"]).execute()
                 logger.info("Reminders: sent '%s' reminder for '%s'", label, event["event_name"])
@@ -125,8 +142,8 @@ async def check_and_send_ticket_reminders() -> None:
     now = datetime.now()
 
     try:
-        resp = supabase.table(Tables.CALENDAR).select(
-            "id, event_name, date, ticket_sale_start, ticket_url, ticket_reminders_sent"
+        resp = supabase.table(Tables.EVENTS).select(
+            "id, event_name, ticket_sale_start, ticket_url, ticket_reminders_sent"
         ).execute()
     except Exception as e:
         logger.error("Ticket reminders: DB fetch failed: %s", e)
@@ -176,7 +193,7 @@ async def check_and_send_ticket_reminders() -> None:
                 )
 
         try:
-            supabase.table(Tables.CALENDAR).update(
+            supabase.table(Tables.EVENTS).update(
                 {"ticket_reminders_sent": already_sent + to_send}
             ).eq("id", event["id"]).execute()
         except Exception as e:

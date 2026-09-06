@@ -12,8 +12,8 @@ import {
   useAdminDeleteMeal,
   useAdminRemoveMealParticipant,
   useAdminBulkDeleteMeals,
-  useAdminEvents,
 } from "../../hooks/useAdmin";
+import { useCalendar } from "../../hooks/useCalendar";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { AdminDrawer } from "./AdminDrawer";
 import { toast } from "../../store/toast.store";
@@ -61,7 +61,7 @@ function MealDrawer({
   const createMutation = useAdminCreateMeal();
   const updateMutation = useAdminUpdateMeal();
   const removeParticipant = useAdminRemoveMealParticipant();
-  const { data: allEvents = [] } = useAdminEvents();
+  const { data: allEvents = [] } = useCalendar();
   const isEdit = meal !== null && meal !== "new";
   const open = meal !== null;
 

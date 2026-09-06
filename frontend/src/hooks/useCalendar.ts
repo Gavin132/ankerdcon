@@ -5,11 +5,12 @@ import {
   leaveCalendarEvent,
   getHotelRooms,
   createHotelRoom,
+  bulkCreateHotelRooms,
   assignHotelRoom,
   leaveHotelRoom,
 } from "../services/calendar.service";
 import { QUERY_KEYS, STALE_TIME } from "../constants";
-import type { CalendarEvent, CreateHotelRoomRequest, HotelRoom } from "../types";
+import type { BulkCreateHotelRoomsRequest, CalendarEvent, CreateHotelRoomRequest, HotelRoom } from "../types";
 
 export function useCalendar() {
   return useQuery({
@@ -57,6 +58,17 @@ export function useCreateHotelRoom() {
   return useMutation({
     mutationFn: ({ eventId, payload }: { eventId: string; payload: CreateHotelRoomRequest }) =>
       createHotelRoom(eventId, payload),
+    onSuccess: (_data, { eventId }) => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.hotelRooms(eventId) });
+    },
+  });
+}
+
+export function useBulkCreateHotelRooms() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ eventId, payload }: { eventId: string; payload: BulkCreateHotelRoomsRequest }) =>
+      bulkCreateHotelRooms(eventId, payload),
     onSuccess: (_data, { eventId }) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.hotelRooms(eventId) });
     },

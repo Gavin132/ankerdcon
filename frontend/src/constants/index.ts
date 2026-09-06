@@ -26,6 +26,7 @@ export const QUERY_KEYS = {
   adminRides:  ["admin", "rides"]  as const,
   adminMeals:  ["admin", "meals"]  as const,
   adminEvents: ["admin", "events"] as const,
+  adminEventDays: ["admin", "event-days"] as const,
   adminBadges:       ["admin", "badges"]       as const,
   adminEventGroups:  ["admin", "event-groups"] as const,
   adminAnnouncements: ["admin", "announcements"] as const,

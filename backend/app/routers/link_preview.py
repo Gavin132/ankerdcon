@@ -99,20 +99,24 @@ def event_link_preview(event_id: str, request: Request) -> HTMLResponse:
     page_url = f"{base}/events/{event_id}" if base else f"/events/{event_id}"
 
     try:
-        resp = (
-            supabase.table(Tables.CALENDAR)
-            .select("event_name, description, date, location, image_url")
-            .eq("id", event_id)
+        day_resp = supabase.table(Tables.EVENT_DAYS).select("date, event_id").eq("id", event_id).execute()
+        if not day_resp.data:
+            return _serve_spa()
+        day = day_resp.data[0]
+        event_resp = (
+            supabase.table(Tables.EVENTS)
+            .select("event_name, description, location, image_url")
+            .eq("id", day["event_id"])
             .execute()
         )
     except Exception as e:
         logger.warning("Link preview: failed to fetch event %s: %s", event_id, e)
         return _serve_spa()
 
-    if not resp.data:
+    if not event_resp.data:
         return _serve_spa()
 
-    event = resp.data[0]
+    event = {**event_resp.data[0], "date": day["date"]}
     title = event.get("event_name") or "Ankerd Con"
 
     date_part = _format_date(event.get("date"))

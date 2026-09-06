@@ -8,11 +8,11 @@ from app.constants import Tables
 from app.core.logging import get_logger
 from app.dependencies import get_admin_user
 from app.models.admin import (
-    AdminCreateCalendarEventRequest,
+    AdminCreateEventRequest,
     AdminCreateMealRequest,
     AdminCreateUserRequest,
     AdminSetShareStatusRequest,
-    AdminUpdateCalendarEventRequest,
+    AdminUpdateEventRequest,
     AdminUpdateExpenseRequest,
     AdminUpdateHotelRoomRequest,
     AdminUpdateMealRequest,
@@ -24,19 +24,19 @@ from app.models.admin import (
     BulkDeleteRidesRequest,
     BulkDeleteMealsRequest,
     BulkDeleteEventGroupsRequest,
-    BulkGroupEventsRequest,
     BulkRsvpRequest,
     BulkSetEventGroupRequest,
+    CreateEventDayRequest,
+    UpdateEventDayRequest,
     EventGroup,
     CreateEventGroupRequest,
-    SetEventGroupRequest,
     UpdateEventGroupRequest,
 )
 from app.models.announcement import Announcement, CreateAnnouncementRequest, UpdateAnnouncementRequest
 from app.models.whitelist import WhitelistEntry, CreateWhitelistEntryRequest
 from app.models.changelog import ChangelogEntry, CreateChangelogEntryRequest, UpdateChangelogEntryRequest
 from app.models.badge import Badge, BadgeOrderItem, CreateBadgeRequest, UpdateBadgeRequest
-from app.models.calendar import CalendarEvent, HotelRoom
+from app.models.calendar import Event, EventDay, HotelRoom
 from app.routers.calendar import _hotel_group_key
 from app.models.meal import Meal
 from app.models.rides import CreateRideRequest, Ride
@@ -76,7 +76,7 @@ def get_stats(_: str = Depends(get_admin_user)) -> dict:
         users  = supabase.table(Tables.PROFILES).select("id").execute()
         rides  = supabase.table(Tables.RIDES).select("id").execute()
         meals  = supabase.table(Tables.MEALS).select("id").execute()
-        events = supabase.table(Tables.CALENDAR).select("id").execute()
+        events = supabase.table(Tables.EVENTS).select("id").execute()
     except Exception as e:
         logger.error("Failed to fetch admin stats: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
@@ -190,7 +190,7 @@ def _remove_user_from_all_events(name: str) -> None:
     for table, field in [
         (Tables.RIDES, "passengers"),
         (Tables.MEALS, "participants"),
-        (Tables.CALENDAR, "participants"),
+        (Tables.EVENT_DAYS, "participants"),
     ]:
         try:
             rows = supabase.table(table).select(f"id, {field}").execute().data or []
@@ -598,96 +598,73 @@ def admin_set_share_status(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Aandeel niet gevonden.")
 
 
-# ── Calendar Events ────────────────────────────────────────────────────────────
+# ── Events ─────────────────────────────────────────────────────────────────────
+# One `events` row per trip/convention (e.g. "DoKomi 2027") owning every
+# shared field; one `event_days` row per day of that trip owning only the
+# date, whether there's a con happening that day, and RSVP.
 
-@router.get(AdminRoutes.CALENDAR, response_model=list[CalendarEvent])
-def admin_list_events(_: str = Depends(get_admin_user)) -> list[CalendarEvent]:
+@router.get(AdminRoutes.EVENTS, response_model=list[Event])
+def admin_list_events(_: str = Depends(get_admin_user)) -> list[Event]:
     try:
-        return supabase.table(Tables.CALENDAR).select("*").order("date").execute().data
+        return supabase.table(Tables.EVENTS).select("*").order("event_name").execute().data
     except Exception as e:
-        logger.error("Failed to list calendar events: %s", e)
+        logger.error("Failed to list events: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
-@router.post(AdminRoutes.CALENDAR_BULK_DELETE, status_code=status.HTTP_204_NO_CONTENT)
+@router.get(AdminRoutes.EVENT_DAYS_ALL, response_model=list[EventDay])
+def admin_list_event_days(_: str = Depends(get_admin_user)) -> list[EventDay]:
+    """Every day across every event — the admin page joins this with
+    admin_list_events client-side to render each event's days."""
+    try:
+        return supabase.table(Tables.EVENT_DAYS).select("*").order("date").execute().data
+    except Exception as e:
+        logger.error("Failed to list event days: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+
+@router.post(AdminRoutes.EVENTS_BULK_DELETE, status_code=status.HTTP_204_NO_CONTENT)
 def admin_bulk_delete_events(body: BulkDeleteEventsRequest, _: str = Depends(get_admin_user)) -> None:
+    """Deletes each event and, via ON DELETE CASCADE, every one of its days."""
     for event_id in body.event_ids:
         try:
-            supabase.table(Tables.CALENDAR).delete().eq("id", event_id).execute()
+            supabase.table(Tables.EVENTS).delete().eq("id", event_id).execute()
         except Exception as e:
             logger.error("Failed to delete event %s during bulk delete: %s", event_id, e)
 
 
-@router.post(AdminRoutes.CALENDAR_BULK_GROUP, status_code=status.HTTP_204_NO_CONTENT)
-def admin_bulk_group_events(body: BulkGroupEventsRequest, _: str = Depends(get_admin_user)) -> None:
-    """Link events as a multi-day group (or ungroup by passing multi_day_id=null).
-    When multi_day_id is omitted from the request, a new ID is auto-generated."""
-    import uuid as _uuid
-    if body.multi_day_id == "":
-        mid = None  # empty string = ungroup (clear multi_day_id)
-    elif body.multi_day_id is not None:
-        mid = body.multi_day_id  # use provided ID
-    else:
-        mid = f"mdg_{_uuid.uuid4().hex[:8]}"  # auto-generate new group ID
-    for event_id in body.event_ids:
-        try:
-            supabase.table(Tables.CALENDAR).update({"multi_day_id": mid}).eq("id", event_id).execute()
-        except Exception as e:
-            logger.error("Failed to set multi_day_id for event %s: %s", event_id, e)
-
-
-@router.post(AdminRoutes.CALENDAR_BULK_SET_GROUP, status_code=status.HTTP_204_NO_CONTENT)
+@router.post(AdminRoutes.EVENTS_BULK_SET_GROUP, status_code=status.HTTP_204_NO_CONTENT)
 def admin_bulk_set_event_group(body: BulkSetEventGroupRequest, _: str = Depends(get_admin_user)) -> None:
-    """Assign or clear the event_group_id label on multiple events."""
+    """Assign or clear the event_group_id filter label on multiple events."""
     for event_id in body.event_ids:
         try:
-            supabase.table(Tables.CALENDAR).update({"event_group_id": body.group_id}).eq("id", event_id).execute()
+            supabase.table(Tables.EVENTS).update({"event_group_id": body.group_id}).eq("id", event_id).execute()
         except Exception as e:
             logger.error("Failed to set event_group_id for event %s: %s", event_id, e)
 
 
-@router.post(AdminRoutes.CALENDAR, response_model=CalendarEvent, status_code=status.HTTP_201_CREATED)
-def admin_create_event(
-    body: AdminCreateCalendarEventRequest,
-    background_tasks: BackgroundTasks,
-    _: str = Depends(get_admin_user),
-    settings: Settings = Depends(get_settings),
-) -> CalendarEvent:
+@router.post(AdminRoutes.EVENTS, response_model=Event, status_code=status.HTTP_201_CREATED)
+def admin_create_event(body: AdminCreateEventRequest, _: str = Depends(get_admin_user)) -> Event:
+    """Creates the parent event only — add its days separately via
+    admin_create_event_day, which fires the "event created" Discord DM once
+    the first day is added (there's no date to announce before that)."""
     event_data = {k: v for k, v in body.model_dump().items() if v is not None and v != ""}
     event_data.setdefault("is_hotel", False)
-    event_data["participants"] = []
     try:
-        resp = supabase.table(Tables.CALENDAR).insert(event_data).execute()
+        resp = supabase.table(Tables.EVENTS).insert(event_data).execute()
     except Exception as e:
-        logger.error("Failed to create calendar event: %s", e)
+        logger.error("Failed to create event: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-
-    background_tasks.add_task(
-        notification_service.broadcast_category_dm,
-        settings.discord_bot_token,
-        notification_service.NotificationCategory.EVENT_CREATED,
-        M.DM_EVENT_CREATED.format(
-            event_name=body.event_name,
-            date=body.date,
-            location_line=f"\n📍 {body.location}" if body.location else "",
-        ),
-    )
-
     return resp.data[0]
 
 
-@router.put(AdminRoutes.CALENDAR_EVENT, status_code=status.HTTP_204_NO_CONTENT)
-def admin_update_event(
-    event_id: str,
-    body: AdminUpdateCalendarEventRequest,
-    _: str = Depends(get_admin_user),
-) -> None:
-    updates = {k: v for k, v in body.model_dump().items() if v is not None or k == "ticket_types"}
-    updates = {k: v for k, v in updates.items() if v is not None}
+@router.put(AdminRoutes.EVENT_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
+def admin_update_event(event_id: str, body: AdminUpdateEventRequest, _: str = Depends(get_admin_user)) -> None:
+    updates = _build_updates(body, nullable_fields={"event_group_id", "hotel_location"})
     if not updates:
         return
     try:
-        resp = supabase.table(Tables.CALENDAR).update(updates).eq("id", event_id).execute()
+        resp = supabase.table(Tables.EVENTS).update(updates).eq("id", event_id).execute()
     except Exception as e:
         logger.error("Failed to update event %s: %s", event_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
@@ -695,32 +672,135 @@ def admin_update_event(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenement niet gevonden.")
 
 
-@router.patch(AdminRoutes.CALENDAR_EVENT_GROUP, status_code=status.HTTP_204_NO_CONTENT)
-def admin_set_event_group(
-    event_id: str,
-    body: SetEventGroupRequest,
-    _: str = Depends(get_admin_user),
-) -> None:
-    """Assign or remove a group from a calendar event without touching other fields."""
-    try:
-        supabase.table(Tables.CALENDAR).update(
-            {"event_group_id": body.group_id}
-        ).eq("id", event_id).execute()
-    except Exception as e:
-        logger.error("Failed to set event group for event %s: %s", event_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-
-
-@router.delete(AdminRoutes.CALENDAR_EVENT, status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(AdminRoutes.EVENT_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
 def admin_delete_event(event_id: str, _: str = Depends(get_admin_user)) -> None:
     try:
-        supabase.table(Tables.CALENDAR).delete().eq("id", event_id).execute()
+        supabase.table(Tables.EVENTS).delete().eq("id", event_id).execute()
     except Exception as e:
         logger.error("Failed to delete event %s: %s", event_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
-@router.get(AdminRoutes.CALENDAR_EVENT_HOTEL_ROOMS, response_model=list[HotelRoom])
+# ── Event Days ─────────────────────────────────────────────────────────────────
+
+@router.post(AdminRoutes.EVENT_DAYS, response_model=EventDay, status_code=status.HTTP_201_CREATED)
+def admin_create_event_day(
+    event_id: str,
+    body: CreateEventDayRequest,
+    background_tasks: BackgroundTasks,
+    _: str = Depends(get_admin_user),
+    settings: Settings = Depends(get_settings),
+) -> EventDay:
+    try:
+        event_resp = supabase.table(Tables.EVENTS).select("event_name, location").eq("id", event_id).execute()
+    except Exception as e:
+        logger.error("Failed to fetch event %s for new day: %s", event_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if not event_resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenement niet gevonden.")
+
+    try:
+        existing_days = supabase.table(Tables.EVENT_DAYS).select("id").eq("event_id", event_id).execute().data
+        resp = supabase.table(Tables.EVENT_DAYS).insert({
+            "event_id": event_id,
+            "date": body.date,
+            "has_con": body.has_con,
+        }).execute()
+    except Exception as e:
+        logger.error("Failed to create day for event %s: %s", event_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+    if not existing_days:
+        # First day added to a brand-new event — this is the moment there's
+        # actually a date to announce, so the "event created" DM fires here
+        # instead of at admin_create_event.
+        event = event_resp.data[0]
+        background_tasks.add_task(
+            notification_service.broadcast_category_dm,
+            settings.discord_bot_token,
+            notification_service.NotificationCategory.EVENT_CREATED,
+            M.DM_EVENT_CREATED.format(
+                event_name=event["event_name"],
+                date=body.date,
+                location_line=f"\n📍 {event['location']}" if event.get("location") else "",
+            ),
+        )
+
+    return resp.data[0]
+
+
+@router.put(AdminRoutes.EVENT_DAY_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
+def admin_update_event_day(
+    day_id: str,
+    body: UpdateEventDayRequest,
+    _: str = Depends(get_admin_user),
+) -> None:
+    updates = _build_updates(body)
+    if not updates:
+        return
+    try:
+        resp = supabase.table(Tables.EVENT_DAYS).update(updates).eq("id", day_id).execute()
+    except Exception as e:
+        logger.error("Failed to update day %s: %s", day_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dag niet gevonden.")
+
+
+@router.delete(AdminRoutes.EVENT_DAY_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
+def admin_delete_event_day(day_id: str, _: str = Depends(get_admin_user)) -> None:
+    try:
+        supabase.table(Tables.EVENT_DAYS).delete().eq("id", day_id).execute()
+    except Exception as e:
+        logger.error("Failed to delete day %s: %s", day_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+
+@router.delete(AdminRoutes.EVENT_DAY_PARTICIPANT, status_code=status.HTTP_204_NO_CONTENT)
+def admin_remove_event_participant(
+    day_id: str, participant: str, _: str = Depends(get_admin_user)
+) -> None:
+    try:
+        resp = supabase.table(Tables.EVENT_DAYS).select("participants").eq("id", day_id).execute()
+    except Exception as e:
+        logger.error("Failed to fetch day %s for participant removal: %s", day_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dag niet gevonden.")
+    participants = [p for p in (resp.data[0].get("participants") or []) if p != participant]
+    try:
+        supabase.table(Tables.EVENT_DAYS).update({"participants": participants}).eq("id", day_id).execute()
+    except Exception as e:
+        logger.error("Failed to update participants for day %s: %s", day_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+
+@router.post(AdminRoutes.EVENT_DAY_BULK_RSVP, status_code=status.HTTP_204_NO_CONTENT)
+def admin_bulk_rsvp_event(day_id: str, body: BulkRsvpRequest, _: str = Depends(get_admin_user)) -> None:
+    try:
+        resp = supabase.table(Tables.EVENT_DAYS).select("participants").eq("id", day_id).execute()
+    except Exception as e:
+        logger.error("Failed to fetch day %s for bulk RSVP: %s", day_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dag niet gevonden.")
+
+    participants = list(resp.data[0].get("participants") or [])
+    new_names = [n for n in body.user_names if n not in participants]
+    if new_names:
+        participants.extend(new_names)
+        try:
+            supabase.table(Tables.EVENT_DAYS).update({"participants": participants}).eq("id", day_id).execute()
+        except Exception as e:
+            logger.error("Failed to update participants for day %s during bulk RSVP: %s", day_id, e)
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+
+# ── Hotel Rooms (admin) ──────────────────────────────────────────────────────────
+# event_id here is an event_days id, same as the user-facing hotel-rooms
+# page already sends — _hotel_group_key resolves it to the real parent.
+
+@router.get(AdminRoutes.EVENT_HOTEL_ROOMS, response_model=list[HotelRoom])
 def admin_list_hotel_rooms(event_id: str, _: str = Depends(get_admin_user)) -> list[HotelRoom]:
     group_key, _ = _hotel_group_key(event_id)
     try:
@@ -730,7 +810,7 @@ def admin_list_hotel_rooms(event_id: str, _: str = Depends(get_admin_user)) -> l
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
-@router.put(AdminRoutes.CALENDAR_EVENT_HOTEL_ROOM, status_code=status.HTTP_204_NO_CONTENT)
+@router.put(AdminRoutes.EVENT_HOTEL_ROOM, status_code=status.HTTP_204_NO_CONTENT)
 def admin_update_hotel_room(
     event_id: str,
     room_id: str,
@@ -754,7 +834,7 @@ def admin_update_hotel_room(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kamer niet gevonden.")
 
 
-@router.delete(AdminRoutes.CALENDAR_EVENT_HOTEL_ROOM, status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(AdminRoutes.EVENT_HOTEL_ROOM, status_code=status.HTTP_204_NO_CONTENT)
 def admin_delete_hotel_room(
     event_id: str,
     room_id: str,
@@ -764,85 +844,6 @@ def admin_delete_hotel_room(
         supabase.table(Tables.HOTEL_ROOMS).delete().eq("id", room_id).execute()
     except Exception as e:
         logger.error("Failed to delete hotel room %s: %s", room_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-
-
-@router.delete(AdminRoutes.CALENDAR_EVENT_PARTICIPANT, status_code=status.HTTP_204_NO_CONTENT)
-def admin_remove_event_participant(
-    event_id: str, participant: str, _: str = Depends(get_admin_user)
-) -> None:
-    try:
-        resp = supabase.table(Tables.CALENDAR).select("participants").eq("id", event_id).execute()
-    except Exception as e:
-        logger.error("Failed to fetch event %s for participant removal: %s", event_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-    if not resp.data:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenement niet gevonden.")
-    participants = [p for p in (resp.data[0].get("participants") or []) if p != participant]
-    try:
-        supabase.table(Tables.CALENDAR).update({"participants": participants}).eq("id", event_id).execute()
-    except Exception as e:
-        logger.error("Failed to update participants for event %s: %s", event_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-
-
-@router.post(AdminRoutes.CALENDAR_EVENT_BULK_RSVP, status_code=status.HTTP_204_NO_CONTENT)
-def admin_bulk_rsvp_event(event_id: str, body: BulkRsvpRequest, _: str = Depends(get_admin_user)) -> None:
-    try:
-        resp = supabase.table(Tables.CALENDAR).select("participants").eq("id", event_id).execute()
-    except Exception as e:
-        logger.error("Failed to fetch event %s for bulk RSVP: %s", event_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-    if not resp.data:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenement niet gevonden.")
-
-    participants = list(resp.data[0].get("participants") or [])
-    new_names = [n for n in body.user_names if n not in participants]
-    if new_names:
-        participants.extend(new_names)
-        try:
-            supabase.table(Tables.CALENDAR).update({"participants": participants}).eq("id", event_id).execute()
-        except Exception as e:
-            logger.error("Failed to update participants for event %s during bulk RSVP: %s", event_id, e)
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-
-
-@router.post(AdminRoutes.CALENDAR_EVENT_SYNC_GROUP, status_code=status.HTTP_204_NO_CONTENT)
-def admin_sync_event_group(event_id: str, _: str = Depends(get_admin_user)) -> None:
-    """Copy all shared detail fields from one event to every other day with the same multi_day_id."""
-    try:
-        resp = supabase.table(Tables.CALENDAR).select("*").eq("id", event_id).execute()
-    except Exception as e:
-        logger.error("Failed to fetch event %s for sync: %s", event_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-
-    if not resp.data:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenement niet gevonden.")
-
-    event = resp.data[0]
-    multi_day_id = event.get("multi_day_id")
-    if not multi_day_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Evenement heeft geen meerdaagse koppeling.")
-
-    shared = {k: v for k, v in {
-        "image_url":            event.get("image_url"),
-        "description":          event.get("description"),
-        "location":             event.get("location"),
-        "website":              event.get("website"),
-        "ticket_url":           event.get("ticket_url"),
-        "ticket_sale_start":    event.get("ticket_sale_start"),
-        "ticket_types":         event.get("ticket_types"),
-        "locker_info":          event.get("locker_info"),
-        "parking_info":         event.get("parking_info"),
-        "special_instructions": event.get("special_instructions"),
-        "what_to_bring":        event.get("what_to_bring"),
-        "is_hotel":             event.get("is_hotel"),
-    }.items() if v is not None}
-
-    try:
-        supabase.table(Tables.CALENDAR).update(shared).eq("multi_day_id", multi_day_id).neq("id", event_id).execute()
-    except Exception as e:
-        logger.error("Failed to sync event group for event %s: %s", event_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 

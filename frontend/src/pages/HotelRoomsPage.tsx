@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowLeft, BedDouble, Plus, Users, Pencil, Trash2, X, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
+import { ArrowLeft, BedDouble, Plus, Layers, Users, Pencil, Trash2, X, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCalendar } from "../hooks/useCalendar";
 import {
   useHotelRooms,
   useCreateHotelRoom,
+  useBulkCreateHotelRooms,
   useAssignHotelRoom,
   useLeaveHotelRoom,
 } from "../hooks/useCalendar";
@@ -27,6 +28,7 @@ interface RoomFormValues {
   room_number: string;
   floor: string;
   instructions: string;
+  capacity: string;
   occupants: string[];
 }
 
@@ -53,6 +55,7 @@ function RoomModal({
     room_number: room?.room_number ?? "",
     floor: room?.floor ?? "",
     instructions: room?.instructions ?? "",
+    capacity: room?.capacity != null ? String(room.capacity) : "",
     occupants: room?.occupants ?? [],
   });
 
@@ -60,31 +63,34 @@ function RoomModal({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!values.room_number.trim()) return;
+    const roomLabel = values.room_number.trim() || "Kamer";
+    const capacity = values.capacity.trim() ? Number(values.capacity) : undefined;
     try {
       if (isEdit) {
         await updateRoom.mutateAsync({
           eventId,
           roomId: room.id,
           payload: {
-            room_number: values.room_number.trim(),
+            room_number: values.room_number.trim() || undefined,
             floor: values.floor.trim() || undefined,
             instructions: values.instructions.trim() || undefined,
+            capacity,
             occupants: values.occupants,
           },
         });
-        toast("success", `Kamer ${values.room_number} bijgewerkt.`);
+        toast("success", `${roomLabel} bijgewerkt.`);
       } else {
         await createRoom.mutateAsync({
           eventId,
           payload: {
-            room_number: values.room_number.trim(),
+            room_number: values.room_number.trim() || undefined,
             floor: values.floor.trim() || undefined,
             instructions: values.instructions.trim() || undefined,
+            capacity,
             occupants: values.occupants,
           },
         });
-        toast("success", `Kamer ${values.room_number} aangemaakt.`);
+        toast("success", `${roomLabel} aangemaakt.`);
       }
       onClose();
     } catch {
@@ -96,37 +102,51 @@ function RoomModal({
     <Modal
       open={open}
       onClose={onClose}
-      title={isEdit ? `Kamer ${room?.room_number} bewerken` : "Nieuwe kamer"}
+      title={isEdit ? `${room?.room_number || "Kamer"} bewerken` : "Nieuwe kamer"}
       description={isEdit ? "Pas de kamerdetails aan" : "Voeg een hotelkamer toe aan dit evenement"}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-400">
-              Kamernummer *
+              Kamernummer
             </label>
             <input
               className="input-field"
-              placeholder="101"
+              placeholder="101 (later invullen mag ook)"
               value={values.room_number}
               onChange={(e) => setValues((v) => ({ ...v, room_number: e.target.value }))}
               autoFocus
             />
           </div>
-          {isAdmin && (
-            <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-400">
-                Verdieping
-              </label>
-              <input
-                className="input-field"
-                placeholder="2e verdieping"
-                value={values.floor}
-                onChange={(e) => setValues((v) => ({ ...v, floor: e.target.value }))}
-              />
-            </div>
-          )}
+          <div>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-400">
+              Capaciteit
+            </label>
+            <input
+              type="number"
+              min={1}
+              className="input-field"
+              placeholder="bijv. 2"
+              value={values.capacity}
+              onChange={(e) => setValues((v) => ({ ...v, capacity: e.target.value }))}
+            />
+          </div>
         </div>
+
+        {isAdmin && (
+          <div>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-400">
+              Verdieping
+            </label>
+            <input
+              className="input-field"
+              placeholder="2e verdieping"
+              value={values.floor}
+              onChange={(e) => setValues((v) => ({ ...v, floor: e.target.value }))}
+            />
+          </div>
+        )}
 
         {isAdmin && (
           <div>
@@ -156,9 +176,126 @@ function RoomModal({
           />
         </div>
 
-        <Button type="submit" loading={isPending} className="w-full" disabled={!values.room_number.trim()}>
+        <Button type="submit" loading={isPending} className="w-full">
           <BedDouble size={16} />
           {isEdit ? "Opslaan" : "Kamer aanmaken"}
+        </Button>
+      </form>
+    </Modal>
+  );
+}
+
+// ── Bulk room creation modal ─────────────────────────────────────────────────
+
+interface RoomBatchDraft {
+  count: string;
+  capacity: string;
+}
+
+function BulkRoomModal({
+  open,
+  onClose,
+  eventId,
+}: {
+  open: boolean;
+  onClose: () => void;
+  eventId: string;
+}) {
+  const bulkCreate = useBulkCreateHotelRooms();
+  const [batches, setBatches] = useState<RoomBatchDraft[]>([{ count: "", capacity: "" }]);
+
+  function updateBatch(index: number, field: keyof RoomBatchDraft, value: string) {
+    setBatches((rows) => rows.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
+  }
+
+  function addBatch() {
+    setBatches((rows) => [...rows, { count: "", capacity: "" }]);
+  }
+
+  function removeBatch(index: number) {
+    setBatches((rows) => rows.filter((_, i) => i !== index));
+  }
+
+  const payloadBatches = batches
+    .map((b) => ({ count: Number(b.count), capacity: b.capacity.trim() ? Number(b.capacity) : undefined }))
+    .filter((b) => b.count > 0);
+  const totalRooms = payloadBatches.reduce((sum, b) => sum + b.count, 0);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (payloadBatches.length === 0) return;
+    try {
+      await bulkCreate.mutateAsync({ eventId, payload: { batches: payloadBatches } });
+      toast("success", `${totalRooms} ${totalRooms === 1 ? "kamer" : "kamers"} aangemaakt.`);
+      setBatches([{ count: "", capacity: "" }]);
+      onClose();
+    } catch {
+      toast("error", "Kon kamers niet aanmaken.");
+    }
+  }
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Kamers in bulk toevoegen"
+      description="Bijv. 10 kamers voor 2 personen, 2 kamers voor 3 personen. Kamernummers vul je later in, als je inchecked."
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2.5">
+          {batches.map((batch, i) => (
+            <div key={i} className="flex items-end gap-2">
+              <div className="flex-1">
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-400">
+                  Aantal kamers
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  className="input-field"
+                  placeholder="10"
+                  value={batch.count}
+                  onChange={(e) => updateBatch(i, "count", e.target.value)}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-400">
+                  Personen per kamer
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  className="input-field"
+                  placeholder="2"
+                  value={batch.capacity}
+                  onChange={(e) => updateBatch(i, "capacity", e.target.value)}
+                />
+              </div>
+              {batches.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeBatch(i)}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-rose-500 transition-colors"
+                >
+                  <X size={15} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={addBatch}
+          className="flex items-center gap-1.5 text-xs font-semibold text-sky-500 hover:text-sky-600 transition-colors"
+        >
+          <Plus size={13} />
+          Nog een groep
+        </button>
+
+        <Button type="submit" loading={bulkCreate.isPending} className="w-full" disabled={totalRooms === 0}>
+          <BedDouble size={16} />
+          {totalRooms === 0 ? "Vul minstens één groep in" : `${totalRooms} ${totalRooms === 1 ? "kamer" : "kamers"} aanmaken`}
         </Button>
       </form>
     </Modal>
@@ -189,6 +326,7 @@ function RoomCard({
   const leaveRoom = useLeaveHotelRoom();
 
   const isMine = !!currentUserName && room.occupants.includes(currentUserName);
+  const isFull = room.capacity != null && room.occupants.length >= room.capacity;
   const resolveUser = (name: string) =>
     (users ?? []).find((u) => u.name === name || u.discord_username === name || u.aliases?.includes(name));
 
@@ -197,7 +335,7 @@ function RoomCard({
     try {
       await assignRoom.mutateAsync({ eventId, roomId: room.id, userNames: [currentUserName] });
     } catch {
-      toast("error", "Kon je niet aanmelden voor deze kamer.");
+      toast("error", "Kon je niet aanmelden voor deze kamer — mogelijk zit hij al vol.");
     }
   }
 
@@ -228,8 +366,8 @@ function RoomCard({
         <div className="flex items-start justify-between gap-2 mb-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-2xl font-black text-slate-900 dark:text-white leading-none">
-                {room.room_number}
+              <span className={`text-2xl font-black leading-none ${room.room_number ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}>
+                {room.room_number || "Nog geen nummer"}
               </span>
               {room.floor && (
                 <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-700/60 px-2 py-0.5 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
@@ -241,11 +379,18 @@ function RoomCard({
                   Jij
                 </span>
               )}
+              {isFull && (
+                <span className="inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                  Vol
+                </span>
+              )}
             </div>
             <p className="mt-0.5 text-xs text-slate-400">
-              {room.occupants.length === 0
-                ? "Leeg"
-                : `${room.occupants.length} ${room.occupants.length === 1 ? "persoon" : "personen"}`}
+              {room.capacity != null
+                ? `${room.occupants.length}/${room.capacity} bezet`
+                : room.occupants.length === 0
+                  ? "Leeg"
+                  : `${room.occupants.length} ${room.occupants.length === 1 ? "persoon" : "personen"}`}
             </p>
           </div>
 
@@ -327,6 +472,10 @@ function RoomCard({
             >
               {isPending ? "Bezig…" : "Verlaat kamer"}
             </button>
+          ) : isFull ? (
+            <div className="w-full rounded-xl border border-slate-200 dark:border-slate-700 py-2 text-center text-xs font-semibold text-slate-400">
+              Kamer is vol
+            </div>
           ) : (
             <button
               onClick={handleSelfAssign}
@@ -366,6 +515,7 @@ export function HotelRoomsPage() {
   const deleteRoom = useAdminDeleteHotelRoom();
 
   const [modalRoom, setModalRoom] = useState<HotelRoom | null | "new">(null);
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const userNames = users.map((u) => u.name);
@@ -402,7 +552,7 @@ export function HotelRoomsPage() {
     }
     try {
       await deleteRoom.mutateAsync({ eventId: id!, roomId: room.id });
-      toast("success", `Kamer ${room.room_number} verwijderd.`);
+      toast("success", `${room.room_number || "Kamer"} verwijderd.`);
       setConfirmDeleteId(null);
     } catch {
       toast("error", "Kon kamer niet verwijderen.");
@@ -440,16 +590,22 @@ export function HotelRoomsPage() {
                        hover:text-slate-900 dark:hover:text-white transition-colors"
           />
         )}
-        {(isAdmin || true) && (
-          <button
-            onClick={() => setModalRoom("new")}
-            className="flex items-center gap-1.5 rounded-xl bg-sky-500 px-3 py-1.5 text-xs font-bold text-white
-                       hover:bg-sky-600 active:bg-sky-700 transition-colors shrink-0"
-          >
-            <Plus size={14} />
-            Kamer
-          </button>
-        )}
+        <button
+          onClick={() => setBulkModalOpen(true)}
+          className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300
+                     hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+        >
+          <Layers size={14} />
+          Bulk
+        </button>
+        <button
+          onClick={() => setModalRoom("new")}
+          className="flex items-center gap-1.5 rounded-xl bg-sky-500 px-3 py-1.5 text-xs font-bold text-white
+                     hover:bg-sky-600 active:bg-sky-700 transition-colors shrink-0"
+        >
+          <Plus size={14} />
+          Kamer
+        </button>
       </div>
 
       {/* ── Hero ────────────────────────────────────────────────────── */}
@@ -552,14 +708,24 @@ export function HotelRoomsPage() {
               <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Nog geen kamers aangemaakt</p>
               <p className="text-xs text-slate-400 mt-1">Maak de eerste kamer aan en wijs leden toe.</p>
             </div>
-            <button
-              onClick={() => setModalRoom("new")}
-              className="flex items-center gap-2 rounded-2xl bg-sky-500 px-5 py-3 text-sm font-bold text-white
-                         hover:bg-sky-600 active:bg-sky-700 transition-colors shadow-lg shadow-sky-500/20"
-            >
-              <Plus size={16} />
-              Eerste kamer toevoegen
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setBulkModalOpen(true)}
+                className="flex items-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-700 px-5 py-3 text-sm font-bold text-slate-600 dark:text-slate-300
+                           hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <Layers size={16} />
+                Kamers in bulk
+              </button>
+              <button
+                onClick={() => setModalRoom("new")}
+                className="flex items-center gap-2 rounded-2xl bg-sky-500 px-5 py-3 text-sm font-bold text-white
+                           hover:bg-sky-600 active:bg-sky-700 transition-colors shadow-lg shadow-sky-500/20"
+              >
+                <Plus size={16} />
+                Eerste kamer toevoegen
+              </button>
+            </div>
           </div>
         ) : (
           <motion.div
@@ -650,6 +816,13 @@ export function HotelRoomsPage() {
         eventId={id!}
         userNames={userNames}
         isAdmin={isAdmin}
+      />
+
+      {/* ── Bulk create modal ────────────────────────────────────────── */}
+      <BulkRoomModal
+        open={bulkModalOpen}
+        onClose={() => setBulkModalOpen(false)}
+        eventId={id!}
       />
     </div>
   );

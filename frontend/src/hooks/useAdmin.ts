@@ -3,26 +3,27 @@ import { QUERY_KEYS } from "../constants";
 import {
   bulkDeleteAdminEvents,
   bulkRsvpAdminEvent,
-  syncAdminEventGroup,
   bulkDeleteAdminUsers,
   bulkDeactivateAdminUsers,
   bulkDeleteAdminRides,
   bulkDeleteAdminMeals,
   bulkDeleteAdminEventGroups,
-  bulkGroupAdminEvents,
   bulkSetAdminEventGroup,
   createAdminEvent,
+  createAdminEventDay,
   createAdminEventGroup,
   createAdminMeal,
   createAdminRide,
   createAdminUser,
   deleteAdminEvent,
+  deleteAdminEventDay,
   deleteAdminEventGroup,
   deleteAdminMeal,
   deleteAdminRide,
   deleteAdminUser,
   getAdminEventGroups,
   getAdminEvents,
+  getAdminEventDays,
   getAdminMeals,
   getAdminRides,
   getAdminStats,
@@ -30,8 +31,8 @@ import {
   removeAdminEventParticipant,
   removeAdminMealParticipant,
   removeAdminPassenger,
-  setAdminEventGroup,
   updateAdminEvent,
+  updateAdminEventDay,
   updateAdminEventGroup,
   updateAdminMeal,
   updateAdminRide,
@@ -43,6 +44,7 @@ import {
   setAdminShareStatus,
   impersonateAdminUser,
   type AdminCreateEventPayload,
+  type AdminCreateEventDayPayload,
   type AdminCreateMealPayload,
   type AdminCreateUserPayload,
   type AdminUpdateEventPayload,
@@ -51,7 +53,7 @@ import {
   type AdminUpdateRidePayload,
   type AdminUpdateUserPayload,
 } from "../services/admin.service";
-import type { CalendarEvent, CreateRideRequest, ExpenseShare } from "../types";
+import type { CreateRideRequest, ExpenseShare } from "../types";
 
 // ── Queries ───────────────────────────────────────────────────────────────────
 
@@ -73,6 +75,10 @@ export function useAdminMeals() {
 
 export function useAdminEvents() {
   return useQuery({ queryKey: QUERY_KEYS.adminEvents, queryFn: getAdminEvents });
+}
+
+export function useAdminEventDays() {
+  return useQuery({ queryKey: QUERY_KEYS.adminEventDays, queryFn: getAdminEventDays });
 }
 
 // ── User mutations ────────────────────────────────────────────────────────────
@@ -254,15 +260,20 @@ export function useAdminRemoveMealParticipant() {
 }
 
 // ── Event mutations ───────────────────────────────────────────────────────────
+// Every mutation invalidates both the admin views and the regular
+// user-facing calendar list, since both are backed by the same tables.
+
+function invalidateEventQueries(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEvents });
+  qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEventDays });
+  qc.invalidateQueries({ queryKey: QUERY_KEYS.calendar });
+}
 
 export function useAdminCreateEvent() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: AdminCreateEventPayload) => createAdminEvent(payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEvents });
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.calendar });
-    },
+    onSuccess: () => invalidateEventQueries(qc),
   });
 }
 
@@ -270,10 +281,7 @@ export function useAdminUpdateEvent() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: AdminUpdateEventPayload) => updateAdminEvent(payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEvents });
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.calendar });
-    },
+    onSuccess: () => invalidateEventQueries(qc),
   });
 }
 
@@ -281,33 +289,7 @@ export function useAdminDeleteEvent() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteAdminEvent(id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEvents });
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.calendar });
-    },
-  });
-}
-
-export function useAdminRemoveEventParticipant() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ eventId, participant }: { eventId: string; participant: string }) =>
-      removeAdminEventParticipant(eventId, participant),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEvents });
-    },
-  });
-}
-
-export function useAdminBulkRsvpEvent() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ eventId, userNames }: { eventId: string; userNames: string[] }) =>
-      bulkRsvpAdminEvent(eventId, userNames),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEvents });
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.calendar });
-    },
+    onSuccess: () => invalidateEventQueries(qc),
   });
 }
 
@@ -315,33 +297,7 @@ export function useAdminBulkDeleteEvents() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (eventIds: string[]) => bulkDeleteAdminEvents(eventIds),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEvents });
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.calendar });
-    },
-  });
-}
-
-export function useAdminSyncEventGroup() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (eventId: string) => syncAdminEventGroup(eventId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEvents });
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.calendar });
-    },
-  });
-}
-
-export function useAdminBulkGroupEvents() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ eventIds, multiDayId }: { eventIds: string[]; multiDayId: string | null }) =>
-      bulkGroupAdminEvents(eventIds, multiDayId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEvents });
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.calendar });
-    },
+    onSuccess: () => invalidateEventQueries(qc),
   });
 }
 
@@ -350,33 +306,51 @@ export function useAdminBulkSetEventGroup() {
   return useMutation({
     mutationFn: ({ eventIds, groupId }: { eventIds: string[]; groupId: string | null }) =>
       bulkSetAdminEventGroup(eventIds, groupId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEvents });
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.calendar });
-    },
+    onSuccess: () => invalidateEventQueries(qc),
   });
 }
 
-export function useAdminSetEventGroup() {
+export function useAdminCreateEventDay() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ eventId, groupId }: { eventId: string; groupId: string | null }) =>
-      setAdminEventGroup(eventId, groupId),
-    onMutate: async ({ eventId, groupId }) => {
-      await qc.cancelQueries({ queryKey: QUERY_KEYS.adminEvents });
-      const previous = qc.getQueryData<CalendarEvent[]>(QUERY_KEYS.adminEvents);
-      qc.setQueryData<CalendarEvent[]>(QUERY_KEYS.adminEvents, (old = []) =>
-        old.map((ev) => ev.id === eventId ? { ...ev, event_group_id: groupId ?? undefined } : ev),
-      );
-      return { previous };
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.previous) qc.setQueryData(QUERY_KEYS.adminEvents, context.previous);
-    },
-    onSettled: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.adminEvents });
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.calendar });
-    },
+    mutationFn: ({ eventId, payload }: { eventId: string; payload: AdminCreateEventDayPayload }) =>
+      createAdminEventDay(eventId, payload),
+    onSuccess: () => invalidateEventQueries(qc),
+  });
+}
+
+export function useAdminUpdateEventDay() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ dayId, payload }: { dayId: string; payload: { date?: string; has_con?: boolean } }) =>
+      updateAdminEventDay(dayId, payload),
+    onSuccess: () => invalidateEventQueries(qc),
+  });
+}
+
+export function useAdminDeleteEventDay() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (dayId: string) => deleteAdminEventDay(dayId),
+    onSuccess: () => invalidateEventQueries(qc),
+  });
+}
+
+export function useAdminRemoveEventParticipant() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ dayId, participant }: { dayId: string; participant: string }) =>
+      removeAdminEventParticipant(dayId, participant),
+    onSuccess: () => invalidateEventQueries(qc),
+  });
+}
+
+export function useAdminBulkRsvpEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ dayId, userNames }: { dayId: string; userNames: string[] }) =>
+      bulkRsvpAdminEvent(dayId, userNames),
+    onSuccess: () => invalidateEventQueries(qc),
   });
 }
 

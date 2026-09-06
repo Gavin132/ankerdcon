@@ -66,9 +66,8 @@ class AdminUpdateMealRequest(BaseModel):
     extra_notes: Optional[str] = None
 
 
-class AdminCreateCalendarEventRequest(BaseModel):
+class AdminCreateEventRequest(BaseModel):
     event_name: str
-    date: str
     event_group_id: Optional[str] = None
     is_hotel: bool = False
     hotel_location: Optional[str] = None
@@ -85,9 +84,8 @@ class AdminCreateCalendarEventRequest(BaseModel):
     what_to_bring: Optional[str] = None
 
 
-class AdminUpdateCalendarEventRequest(BaseModel):
+class AdminUpdateEventRequest(BaseModel):
     event_name: Optional[str] = None
-    date: Optional[str] = None
     event_group_id: Optional[str] = None
     is_hotel: Optional[bool] = None
     hotel_location: Optional[str] = None
@@ -104,6 +102,16 @@ class AdminUpdateCalendarEventRequest(BaseModel):
     what_to_bring: Optional[str] = None
 
 
+class CreateEventDayRequest(BaseModel):
+    date: str
+    has_con: bool = True
+
+
+class UpdateEventDayRequest(BaseModel):
+    date: Optional[str] = None
+    has_con: Optional[bool] = None
+
+
 class EventGroup(BaseModel):
     id: str
     name: str
@@ -116,10 +124,6 @@ class CreateEventGroupRequest(BaseModel):
 
 class UpdateEventGroupRequest(BaseModel):
     name: str
-
-
-class SetEventGroupRequest(BaseModel):
-    group_id: str | None = None
 
 
 class BulkDeleteEventsRequest(BaseModel):
@@ -150,16 +154,12 @@ class AdminUpdateHotelRoomRequest(BaseModel):
     room_number: Optional[str] = None
     floor: Optional[str] = None
     instructions: Optional[str] = None
+    capacity: Optional[int] = None
     occupants: Optional[list[str]] = None
 
 
 class BulkRsvpRequest(BaseModel):
     user_names: list[str]
-
-
-class BulkGroupEventsRequest(BaseModel):
-    event_ids: list[str]
-    multi_day_id: str | None = None  # None = ungroup; omit to auto-generate
 
 
 class BulkSetEventGroupRequest(BaseModel):

@@ -13,8 +13,8 @@ import {
   useAdminDeleteRide,
   useAdminRemovePassenger,
   useAdminBulkDeleteRides,
-  useAdminEvents,
 } from "../../hooks/useAdmin";
+import { useCalendar } from "../../hooks/useCalendar";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { AdminDrawer } from "./AdminDrawer";
 import { NamePicker } from "../../components/common/NamePicker";
@@ -64,7 +64,7 @@ function RideDrawer({
   const updateMutation = useAdminUpdateRide();
   const removePassenger = useAdminRemovePassenger();
   const { data: allUsers = [] } = useAdminUsers();
-  const { data: allEvents = [] } = useAdminEvents();
+  const { data: allEvents = [] } = useCalendar();
   const userNames = allUsers.map((u) => u.name);
   const isEdit = ride !== null && ride !== "new";
   const open = ride !== null;

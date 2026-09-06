@@ -7,6 +7,10 @@
       "runtimeArgs": ["run", "dev", "--prefix", "frontend"],
       "port": 5173,
       "autoPort": true
+    },
+    {
+      "name": "backend",
+      "url": "http://localhost:8000"
     }
   ]
 }

@@ -12,8 +12,9 @@ import { useAuthStore } from "../../store/auth.store";
 import { useUser } from "../../hooks/useUsers";
 import { useCosplays } from "../../hooks/useCosplays";
 import { useExpenses } from "../../hooks/useExpenses";
+import { useCalendar } from "../../hooks/useCalendar";
 import {
-  useAdminStats, useAdminUsers, useAdminEvents,
+  useAdminStats, useAdminUsers,
   useAdminBulkRsvpEvent,
 } from "../../hooks/useAdmin";
 import { NamePicker } from "../../components/common/NamePicker";
@@ -60,7 +61,7 @@ function BulkRsvpPanel({ event, users, onDone }: {
   async function submit() {
     if (!selected.length) return;
     try {
-      await bulkRsvp.mutateAsync({ eventId: event.id, userNames: selected });
+      await bulkRsvp.mutateAsync({ dayId: event.id, userNames: selected });
       toast("success", `${selected.length} ${selected.length === 1 ? "persoon" : "personen"} aangemeld.`);
       setSelected([]);
       onDone();
@@ -187,7 +188,7 @@ export function AdminDashboardPage() {
   const navigate = useNavigate();
   const { data: stats, isLoading: statsLoading } = useAdminStats();
   const { data: allUsers = [], isLoading: usersLoading } = useAdminUsers();
-  const { data: events = [], isLoading: eventsLoading } = useAdminEvents();
+  const { data: events = [], isLoading: eventsLoading } = useCalendar();
   const { data: cosplays = [] } = useCosplays();
   const { data: expenses = [] } = useExpenses();
   const currentUser = useAuthStore((s) => s.currentUser);
