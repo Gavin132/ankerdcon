@@ -9,7 +9,6 @@ class Tables:
     RIDES        = "rides"
     MEALS        = "meals"
     PAYMENTS     = "payments"
-    CALENDAR     = "calendar"  # legacy — being replaced by EVENTS/EVENT_DAYS, see refactor/eventsystem
     EVENTS       = "events"
     EVENT_DAYS   = "event_days"
     BADGES       = "badges"
