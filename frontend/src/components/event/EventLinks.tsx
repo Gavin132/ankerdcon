@@ -2,25 +2,26 @@ import { Clock, ExternalLink, Globe, Ticket } from "lucide-react";
 import { formatCurrency, formatTicketSaleStart } from "../../utils/format";
 import type { CalendarEvent } from "../../types";
 
-export function EventLinks({ event }: { event: CalendarEvent }) {
+interface EventLinksProps {
+  event: CalendarEvent;
+  /** When true, renders only the row content — no card surface, gradient bar
+   * or "Tickets & Links" label — for embedding inside a parent card. */
+  bare?: boolean;
+}
+
+export function EventLinks({ event, bare = false }: EventLinksProps) {
   const hasTickets  = (event.ticket_types?.length ?? 0) > 0;
   const hasCTAs     = !!(event.ticket_url || event.website);
   const hasSaleInfo = !!event.ticket_sale_start;
 
-  return (
-    <div className="card-surface rounded-2xl overflow-hidden">
-      <div className="h-[3px] bg-gradient-to-r from-indigo-400 via-violet-500 to-purple-500" />
-
-      <div className="px-5 pt-4 pb-1">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-          Tickets & Links
-        </p>
-      </div>
-
+  const content = (
       <div className="divide-y divide-slate-100 dark:divide-slate-800/70">
         {/* Ticket prices */}
         {hasTickets && (
           <div className="px-5 py-4">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2.5">
+              Tickets
+            </p>
             <div className="space-y-2.5">
               {event.ticket_types!.map((t, i) => (
                 <div key={i} className="flex items-center justify-between gap-4">
@@ -81,6 +82,21 @@ export function EventLinks({ event }: { event: CalendarEvent }) {
           </div>
         )}
       </div>
+  );
+
+  if (bare) return content;
+
+  return (
+    <div className="card-surface rounded-2xl overflow-hidden">
+      <div className="h-[3px] bg-gradient-to-r from-sky-400 via-blue-500 to-teal-500" />
+
+      <div className="px-5 pt-4 pb-1">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+          Tickets & Links
+        </p>
+      </div>
+
+      {content}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { BedDouble, ChevronRight, MapPin } from "lucide-react";
+import { BedDouble, ChevronRight, MapPin, StickyNote } from "lucide-react";
 import type { CalendarEvent } from "../../types";
 
 interface HotelInfoCardProps {
@@ -32,6 +32,22 @@ export function HotelInfoCard({ event, onHotelClick }: HotelInfoCardProps) {
             </p>
             <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
               {location}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {event.hotel_info && (
+        <div className="flex items-start gap-4 px-5 py-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-50 dark:bg-teal-500/10 mt-0.5">
+            <StickyNote size={14} className="text-teal-600 dark:text-teal-400" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">
+              Info
+            </p>
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+              {event.hotel_info}
             </p>
           </div>
         </div>

@@ -45,7 +45,9 @@ export function RestaurantGapBlock({ gap }: { gap: RestaurantGap }) {
         })}
         <button
           onClick={() =>
-            navigate(routes.transport, { state: { tab: "Restaurant" } })
+            gap.linkedMealId
+              ? navigate(routes.meal.view(gap.linkedMealId))
+              : navigate(routes.transport, { state: { tab: "Restaurant" } })
           }
           className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-amber-600 hover:text-amber-700 transition-colors dark:text-amber-400"
         >

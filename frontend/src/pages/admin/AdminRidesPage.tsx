@@ -28,9 +28,11 @@ import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 import { AdminPagination } from "./components/AdminPagination";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 import { DrawerFooter } from "./components/DrawerFooter";
+import { DiscardChangesConfirm } from "./components/DiscardChangesConfirm";
 import { ParticipantList } from "./components/ParticipantList";
 import { AdminBulkBar } from "./components/AdminBulkBar";
 import { useTableSelection } from "../../hooks/useTableSelection";
+import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
 
 const PAGE_SIZE = 15;
 const DIRECTIONS = ["Inbound", "Outbound", "Restaurant"] as const;
@@ -74,7 +76,7 @@ function RideDrawer({
     handleSubmit,
     watch,
     control,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<RideForm>({
     resolver: zodResolver(rideSchema),
     defaultValues: {
@@ -123,18 +125,20 @@ function RideDrawer({
   }
 
   const isPending = createMutation.isPending || updateMutation.isPending;
+  const { requestClose, confirming, confirmDiscard, cancelDiscard } = useConfirmDiscard(isDirty, onClose);
 
   return (
+    <>
     <AdminDrawer
       open={open}
-      onClose={onClose}
+      onClose={requestClose}
       title={isEdit ? "Rit bewerken" : "Nieuwe rit"}
       subtitle={
         isEdit ? `${ride.direction} · ${ride.driver}` : "Voeg een nieuwe rit toe"
       }
       footer={
         <DrawerFooter
-          onCancel={onClose}
+          onCancel={requestClose}
           formId="ride-form"
           isPending={isPending}
           isEdit={isEdit}
@@ -289,6 +293,8 @@ function RideDrawer({
         )}
       </form>
     </AdminDrawer>
+    <DiscardChangesConfirm open={confirming} onCancel={cancelDiscard} onConfirm={confirmDiscard} />
+    </>
   );
 }
 
@@ -402,7 +408,7 @@ export function AdminRidesPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
-                <th className="w-10 pl-4 pr-2 py-3">
+                <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
                   <input
                     type="checkbox"
                     checked={allSelected}
@@ -411,19 +417,19 @@ export function AdminRidesPage() {
                     className="cb"
                   />
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Rit
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Vertrek
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="hidden sm:table-cell px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Zitplaatsen
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Passagiers
                 </th>
-                <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Acties
                 </th>
               </tr>
@@ -447,7 +453,7 @@ export function AdminRidesPage() {
                     className={`transition-colors ${selectedIds.has(ride.id) ? "bg-sky-500/[0.06] hover:bg-sky-500/[0.08]" : "hover:bg-slate-50 dark:hover:bg-white/[0.03]"}`}
                   >
                     <td
-                      className="w-10 pl-4 pr-2 py-3.5"
+                      className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3.5"
                       onClick={(e) => { e.stopPropagation(); toggleSelect(ride.id); }}
                     >
                       <input
@@ -458,10 +464,10 @@ export function AdminRidesPage() {
                         className="cb"
                       />
                     </td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-2.5">
+                    <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                      <div className="flex items-center gap-2 sm:gap-2.5">
                         <div
-                          className={`flex h-7 w-7 items-center justify-center rounded-lg ${
+                          className={`flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-lg ${
                             ride.is_public_transport
                               ? "bg-violet-100 dark:bg-violet-500/10"
                               : "bg-sky-100 dark:bg-sky-500/10"
@@ -473,8 +479,8 @@ export function AdminRidesPage() {
                             <Car size={13} className="text-sky-500" />
                           )}
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                             {ride.driver}
                           </p>
                           <span
@@ -485,15 +491,15 @@ export function AdminRidesPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-3.5">
-                      <p className="text-sm text-slate-700 dark:text-slate-300 font-mono">
+                    <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                      <p className="text-sm text-slate-700 dark:text-slate-300 font-mono whitespace-nowrap">
                         {formatDateTime(ride.departure_time)}
                       </p>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-slate-400 truncate max-w-[140px] sm:max-w-none">
                         {ride.start_location}
                       </p>
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="hidden sm:table-cell px-5 py-3.5">
                       {ride.is_public_transport ? (
                         <span className="text-xs text-slate-400">N/A</span>
                       ) : (
@@ -502,7 +508,7 @@ export function AdminRidesPage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
                       <div className="flex -space-x-1.5">
                         {ride.passengers.length === 0 ? (
                           <span className="text-xs text-slate-400">—</span>
@@ -517,12 +523,12 @@ export function AdminRidesPage() {
                                   key={p}
                                   name={resolved?.name ?? p}
                                   user={resolved}
-                                  className="h-6 w-6 text-[8px] ring-2 ring-slate-800"
+                                  className="h-5 w-5 sm:h-6 sm:w-6 text-[7px] sm:text-[8px] ring-2 ring-slate-800"
                                 />
                               );
                             })}
                             {ride.passengers.length > 4 && (
-                              <span className="flex h-6 w-6 items-center justify-center rounded-full ring-2 ring-slate-800 bg-slate-700 text-[9px] font-bold text-slate-300">
+                              <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full ring-2 ring-slate-800 bg-slate-700 text-[8px] sm:text-[9px] font-bold text-slate-300">
                                 +{ride.passengers.length - 4}
                               </span>
                             )}
@@ -530,7 +536,7 @@ export function AdminRidesPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
                       <DeleteConfirmActions
                         id={ride.id}
                         confirmId={confirmDeleteId}

@@ -747,21 +747,6 @@ export function HotelRoomsPage() {
                   onDelete={handleDelete}
                 />
               ))}
-              {/* Add room card */}
-              <motion.button
-                key="add-room"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                onClick={() => setModalRoom("new")}
-                className="rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700
-                           flex flex-col items-center justify-center gap-2 py-8
-                           text-slate-400 hover:border-sky-400 hover:text-sky-500
-                           dark:hover:border-sky-500 dark:hover:text-sky-400
-                           transition-colors cursor-pointer min-h-[120px]"
-              >
-                <Plus size={20} />
-                <span className="text-xs font-semibold">Kamer toevoegen</span>
-              </motion.button>
             </AnimatePresence>
           </motion.div>
         )}

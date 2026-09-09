@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useCallback, useRef, useState } from "react";
 import { useSmartBack } from "../hooks/useSmartBack";
 import { motion } from "framer-motion";
-import { CalendarDays, ChevronRight, Sparkles, Users, UserCheck, UserMinus, Layers } from "lucide-react";
+import { CalendarDays, ChevronRight, Sparkles, UserCheck, UserMinus, Layers } from "lucide-react";
 import { useCalendar, useHotelRooms, useRsvpCalendarEvent, useLeaveCalendarEvent } from "../hooks/useCalendar";
 import { useUsers, useCurrentUser } from "../hooks/useUsers";
 import { useMeals } from "../hooks/useMeals";
@@ -19,10 +19,8 @@ import { WeatherCard, ClimateAverageCard, WeatherSkeleton } from "../components/
 import { HotelInfoCard } from "../components/event/HotelInfoCard";
 import { EventLinks } from "../components/event/EventLinks";
 import { EventPractical } from "../components/event/EventPractical";
-import { EventAttendees } from "../components/event/EventAttendees";
 import { EventLinkedMeals } from "../components/event/EventLinkedMeals";
 import { EventLinkedRides } from "../components/event/EventLinkedRides";
-import { AttendanceSummary } from "../components/event/AttendanceSummary";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { DayStrip } from "../components/event/DayStrip";
 import { Button } from "../components/common/Button";
@@ -183,11 +181,17 @@ export function EventDetailPage() {
 
   const showWeather = !!(event.location && weatherDate);
   const isTravelDay = event.has_con === false;
-  const showHotelInfoCard = isTravelDay && event.is_hotel;
+  const isFirstDay = !groupDays || currentDayIndex <= 0;
+  // Hotel info leads on any travel day, and also on day one of a multi-day
+  // trip regardless of has_con — that's arrival/check-in day either way.
+  const showHotelInfoCard = event.is_hotel && (isTravelDay || isFirstDay);
   const hasLinks = !!(
     event.website || event.ticket_url || event.ticket_sale_start ||
     (event.ticket_types?.length ?? 0) > 0
   );
+  const hasPracticalInfo = !!(
+    event.special_instructions || event.parking_info || event.what_to_bring || event.locker_info
+  ) || (showHotel && event.is_hotel);
 
   async function onRsvp() {
     if (rsvpNames.length === 0) return;
@@ -210,6 +214,24 @@ export function EventDetailPage() {
       );
     } catch {
       toast("error", "Kon je niet aanmelden. Probeer opnieuw.");
+    }
+  }
+
+  async function onShare() {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: event!.event_name, url });
+      } catch {
+        // user cancelled the share sheet — not an error
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast("success", "Link gekopieerd!");
+    } catch {
+      toast("error", "Kon de link niet kopiëren.");
     }
   }
 
@@ -257,7 +279,7 @@ export function EventDetailPage() {
         if (dx > 0 && prevDay) navigateToDay(prevDay.ev.id);
       }}
     >
-      <DetailTopbar title={event.event_name} onBack={goBack} />
+      <DetailTopbar title={event.event_name} onBack={goBack} onShare={onShare} />
 
       {groupDays && groupDays.length > 1 && (
         <DayStrip
@@ -267,15 +289,28 @@ export function EventDetailPage() {
         />
       )}
 
-      <EventHero event={event} daysUntil={daysUntil} users={users} meals={linkedMeals} />
+      <EventHero
+        event={event}
+        daysUntil={daysUntil}
+        users={users}
+        meals={linkedMeals}
+        onRsvpClick={() => setRsvpOpen(true)}
+        onCancelClick={() => setCancelOpen(true)}
+        groupDays={groupDays ?? undefined}
+      />
 
       {/* ── Main content ── */}
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
 
-        {/* 1 ── Hotel info (travel days) + Weather — same two slots always,
-              just reordered, so switching days via DayStrip doesn't reflow
-              the rest of the page: hotel info leads on a travel day with
-              weather demoted below it, weather leads on a con day. */}
+        {/* 1 ── Linked meal(s) — leads the page when there's a meal plan,
+              since that's often the thing people actually need to check. */}
+        <EventLinkedMeals meals={linkedMeals} />
+
+        {/* 2 ── Hotel info + Weather — same two slots always, just reordered,
+              so switching days via DayStrip doesn't reflow the rest of the
+              page: hotel info leads (weather demoted below it) on a travel
+              day or on day one of the trip — arrival/check-in day either
+              way — weather leads on every other con day. */}
         {showHotelInfoCard && (
           <HotelInfoCard event={event} onHotelClick={() => navigate(routes.eventHotel.view(event.id))} />
         )}
@@ -295,106 +330,70 @@ export function EventDetailPage() {
           )
         )}
 
-        {/* 2 ── Attendance summary (multi-day trips only) */}
-        {isMultiDay && groupDays && <AttendanceSummary groupDays={groupDays} />}
-
-        {/* 3 ── People & Cosplays */}
-        <div className="card-surface rounded-2xl overflow-hidden">
-          {/* Split gradient bar */}
-          <div className="flex h-[3px]">
-            <div className="flex-1 bg-gradient-to-r from-indigo-400 to-violet-500" />
-            <div className="flex-1 bg-gradient-to-r from-violet-500 to-purple-500" />
-          </div>
-
-          {/* Aanmeldingen */}
-          <div className="px-5 pt-4 pb-0 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <div className="flex h-5 w-5 items-center justify-center rounded-md bg-indigo-100 dark:bg-indigo-500/10">
-                <Users size={11} className="text-indigo-500" />
+        {/* 3 ── Cosplays (con days only — nothing to cosplay for on a travel day) */}
+        {event.has_con && (
+          <div className="card-surface rounded-2xl overflow-hidden">
+            <div className="h-[3px] bg-gradient-to-r from-blue-400 to-sky-500" />
+            <button
+              type="button"
+              onClick={() => navigate(routes.eventCosplays.view(event.id))}
+              className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-slate-50 dark:hover:bg-white/[0.02] active:bg-slate-100 dark:active:bg-white/[0.04] transition-colors group"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-500/10">
+                <Sparkles size={16} className="text-blue-500 dark:text-blue-400" />
               </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-0.5">
+                  Cosplays
+                </p>
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  {eventCosplays.length === 0
+                    ? "Nog geen cosplays — voeg toe"
+                    : `${eventCosplays.length} cosplay${eventCosplays.length !== 1 ? "s" : ""} · ${cosplayerNames.length} ${cosplayerNames.length === 1 ? "persoon" : "personen"}`}
+                </p>
+                {cosplayerNames.length > 0 && (
+                  <div className="mt-1.5 flex -space-x-1.5">
+                    {cosplayerNames.slice(0, 7).map((name) => {
+                      const u = users.find((x) => x.name === name || x.discord_username === name || x.aliases?.includes(name));
+                      return (
+                        <UserAvatar key={name} name={u?.name ?? name} user={u} className="h-5 w-5 text-[7px] ring-[1.5px] ring-white dark:ring-slate-900" />
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              <ChevronRight size={15} className="shrink-0 text-slate-300 dark:text-slate-600 group-hover:text-slate-400 dark:group-hover:text-slate-500 transition-colors" />
+            </button>
+          </div>
+        )}
+
+        {/* 4 ── Practical info + hotel + tickets, one combined card */}
+        {(hasPracticalInfo || hasLinks) && (
+          <div className="card-surface rounded-2xl overflow-hidden">
+            <div className="h-[3px] bg-gradient-to-r from-sky-400 via-blue-400 to-teal-500" />
+            <div className="px-5 pt-4 pb-1">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                Aanmeldingen
+                Praktische info
               </p>
             </div>
-            <div className="flex items-center gap-1.5">
-              {event.participants.length > 0 && (
-                <Button size="sm" variant="ghost" onClick={() => setCancelOpen(true)}>
-                  <UserMinus size={13} />
-                  Afmelden
-                </Button>
-              )}
-              <Button size="sm" variant="secondary" onClick={() => setRsvpOpen(true)}>
-                <UserCheck size={13} />
-                Aanmelden
-              </Button>
-            </div>
+            <EventPractical
+              event={event}
+              showHotel={showHotel}
+              hotelRooms={hotelRooms}
+              participantCount={event.participants.length}
+              users={users}
+              isAdmin={isAdmin}
+              onHotelClick={() => navigate(routes.eventHotel.view(event.id))}
+              bare
+            />
+            {hasPracticalInfo && hasLinks && (
+              <div className="border-t border-slate-100 dark:border-slate-800" />
+            )}
+            {hasLinks && <EventLinks event={event} bare />}
           </div>
+        )}
 
-          {event.participants.length > 0 ? (
-            <EventAttendees participants={event.participants} users={users} bare />
-          ) : (
-            <div className="px-5 py-4 flex items-center gap-3 text-slate-400 dark:text-slate-500">
-              <Users size={15} className="shrink-0" />
-              <p className="text-sm">Nog geen aanmeldingen</p>
-            </div>
-          )}
-
-          {/* Cosplays — no con on this day means nothing to cosplay for */}
-          {event.has_con && (
-            <>
-              <div className="mx-5 border-t border-slate-100 dark:border-slate-800" />
-              <button
-                type="button"
-                onClick={() => navigate(routes.eventCosplays.view(event.id))}
-                className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-slate-50 dark:hover:bg-white/[0.02] active:bg-slate-100 dark:active:bg-white/[0.04] transition-colors group"
-              >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-500/10">
-                  <Sparkles size={16} className="text-violet-500 dark:text-violet-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-0.5">
-                    Cosplays
-                  </p>
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    {eventCosplays.length === 0
-                      ? "Nog geen cosplays — voeg toe"
-                      : `${eventCosplays.length} cosplay${eventCosplays.length !== 1 ? "s" : ""} · ${cosplayerNames.length} ${cosplayerNames.length === 1 ? "persoon" : "personen"}`}
-                  </p>
-                  {cosplayerNames.length > 0 && (
-                    <div className="mt-1.5 flex -space-x-1.5">
-                      {cosplayerNames.slice(0, 7).map((name) => {
-                        const u = users.find((x) => x.name === name || x.discord_username === name || x.aliases?.includes(name));
-                        return (
-                          <UserAvatar key={name} name={u?.name ?? name} user={u} className="h-5 w-5 text-[7px] ring-[1.5px] ring-white dark:ring-slate-900" />
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-                <ChevronRight size={15} className="shrink-0 text-slate-300 dark:text-slate-600 group-hover:text-slate-400 dark:group-hover:text-slate-500 transition-colors" />
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* 4 ── Practical info + hotel */}
-        <EventPractical
-          event={event}
-          showHotel={showHotel}
-          hotelRooms={hotelRooms}
-          participantCount={event.participants.length}
-          users={users}
-          isAdmin={isAdmin}
-          onHotelClick={() => navigate(routes.eventHotel.view(event.id))}
-        />
-
-        {/* 5 ── Linked meals */}
-        <EventLinkedMeals meals={linkedMeals} />
-
-        {/* 6 ── Tickets & links */}
-        {hasLinks && <EventLinks event={event} />}
-
-        {/* 7 ── Linked rides */}
+        {/* 5 ── Linked rides */}
         <EventLinkedRides rides={linkedRides} />
 
       </div>
@@ -405,6 +404,7 @@ export function EventDetailPage() {
         onClose={() => { setRsvpOpen(false); setRsvpNames([]); setRsvpAllDays(false); }}
         title={`Aanmelden — ${event.event_name}`}
         description={event.location || undefined}
+        accent="from-emerald-400 to-green-500"
       >
         <div className="space-y-3">
           <NamePicker
@@ -457,6 +457,7 @@ export function EventDetailPage() {
         onClose={() => { setCancelOpen(false); setCancelNames([]); setCancelAllDays(false); }}
         title="Aanmelding annuleren"
         description={event.event_name}
+        accent="from-rose-400 to-red-500"
       >
         <div className="space-y-3">
           <NamePicker

@@ -45,23 +45,29 @@ export function ChangelogBanner() {
         transition={{ duration: 0.25 }}
         className="overflow-hidden text-white bg-violet-600"
       >
-        <div className="mx-auto flex max-w-2xl items-center gap-2.5 px-5 py-2.5">
+        {/* The whole row is the tap target (not just an inline "bekijk alles"
+            link) — a long title otherwise pushes that link off past the edge
+            of the screen on mobile, making it uncloseable/unclickable. */}
+        <Link
+          to={routes.changelog}
+          onClick={dismiss}
+          className="mx-auto flex max-w-2xl items-center gap-2.5 px-5 py-2.5 hover:bg-white/10 transition-colors"
+        >
           <Sparkles size={15} className="shrink-0" />
           <p className="min-w-0 flex-1 text-xs font-semibold leading-snug truncate">
-            Nieuw: {latest.title}{" "}
-            <Link to={routes.changelog} onClick={dismiss} className="underline underline-offset-2 hover:no-underline">
-              bekijk alles
-            </Link>
+            Nieuw: {latest.title}
           </p>
-          <button
-            type="button"
-            onClick={dismiss}
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); dismiss(); }}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); dismiss(); } }}
             aria-label="Sluiten"
             className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg hover:bg-white/20 transition-colors"
           >
             <X size={14} />
-          </button>
-        </div>
+          </span>
+        </Link>
       </motion.div>
     </AnimatePresence>
   );

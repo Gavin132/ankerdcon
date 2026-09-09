@@ -156,7 +156,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
         whileHover={{ y: -2 }}
         whileTap={{ scale: 0.985 }}
         transition={{ duration: 0.12 }}
-        className={isRecent || isPast ? "opacity-60" : ""}
+        className={isRecent || isPast ? "opacity-80 grayscale-[50%]" : ""}
       >
         <div
           onClick={() => navigate(routes.ride.view(ride.id))}
@@ -175,11 +175,11 @@ export function RideCard({ ride, userNames }: RideCardProps) {
           )}
 
           {/* ── Top row: icon + direction + status + date/time ── */}
-          <div className="px-4 pt-3.5 pb-3 border-b border-slate-200 dark:border-slate-700 space-y-2">
+          <div className="px-3.5 py-2.5 border-b border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${iconBg}`}>
-                  <TransportIcon size={13} className={iconColor} strokeWidth={2.5} />
+              <div className="flex items-center gap-2">
+                <div className={`flex h-6 w-6 items-center justify-center rounded-lg ${iconBg}`}>
+                  <TransportIcon size={12} className={iconColor} strokeWidth={2.5} />
                 </div>
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
                   {ride.direction === "Inbound" ? "Heen" : ride.direction === "Outbound" ? "Terug" : "Restaurant"}
@@ -201,14 +201,14 @@ export function RideCard({ ride, userNames }: RideCardProps) {
           </div>
 
           {/* ── Route section ─────────────────────────────────── */}
-          <div className="px-4 pt-4 pb-3">
-            <div className="flex items-stretch gap-4">
+          <div className="px-3.5 pt-3 pb-2.5">
+            <div className="flex items-stretch gap-3">
 
               {/* Dot → line → dot track */}
               <div className="flex flex-col items-center pt-1 pb-1">
-                <div className="h-2.5 w-2.5 rounded-full border-2 border-slate-300 dark:border-slate-500 bg-white dark:bg-[#1e293b] shrink-0" />
-                <div className={`w-0.5 flex-1 my-1.5 rounded-full bg-gradient-to-b ${accentGradient}`} style={{ minHeight: "1.5rem" }} />
-                <div className={`h-2.5 w-2.5 rounded-full shrink-0 bg-gradient-to-br ${accentGradient}`} />
+                <div className="h-2 w-2 rounded-full border-2 border-slate-300 dark:border-slate-500 bg-white dark:bg-[#1e293b] shrink-0" />
+                <div className={`w-0.5 flex-1 my-1 rounded-full bg-gradient-to-b ${accentGradient}`} style={{ minHeight: "1rem" }} />
+                <div className={`h-2 w-2 rounded-full shrink-0 bg-gradient-to-br ${accentGradient}`} />
               </div>
 
               {/* From / To */}
@@ -217,7 +217,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Van</p>
                   <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{fromLabel}</p>
                 </div>
-                <div className="mt-3.5">
+                <div className="mt-2.5">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Naar</p>
                   <p className={`text-sm truncate ${toIsPlaceholder ? "italic font-medium text-slate-400 dark:text-slate-500" : "font-bold text-slate-900 dark:text-white"}`}>
                     {toLabel}
@@ -228,7 +228,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
               {/* Driver + availability (right column) */}
               <div className="shrink-0 flex flex-col items-end justify-between">
                 <div className="flex items-center gap-2">
-                  {!isPT && <UserAvatar name={ride.driver} className="h-7 w-7 text-[11px]" />}
+                  {!isPT && <UserAvatar name={ride.driver} className="h-6 w-6 text-[10px]" />}
                   <div className="text-right">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">
                       {isPT ? "Vervoerder" : "Chauffeur"}
@@ -253,7 +253,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
 
             {/* Capacity bar */}
             {!isPT && ride.total_seats < 99 && (
-              <div className="mt-3.5 space-y-1.5">
+              <div className="mt-2.5 space-y-1">
                 <div className="h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
                   <motion.div
                     className={`h-full rounded-full bg-gradient-to-r ${ride.is_full ? "from-rose-400 to-rose-500" : accentGradient}`}
@@ -271,7 +271,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
           </div>
 
           {/* ── Passengers toggle row ────────────────────────── */}
-          <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-t border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-between gap-3 px-3.5 py-2 border-t border-slate-200 dark:border-slate-700">
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); if (ride.passengers.length > 0) setPassengersOpen((v) => !v); }}

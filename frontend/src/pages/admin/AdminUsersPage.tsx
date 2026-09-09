@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,8 +22,10 @@ import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 import { AdminPagination } from "./components/AdminPagination";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 import { DrawerFooter } from "./components/DrawerFooter";
+import { DiscardChangesConfirm } from "./components/DiscardChangesConfirm";
 import { AdminBulkBar } from "./components/AdminBulkBar";
 import { useTableSelection } from "../../hooks/useTableSelection";
+import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
 
 const PAGE_SIZE = 15;
 
@@ -42,7 +44,7 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isDirty },
     watch,
     setValue,
   } = useForm<CreateForm>({
@@ -50,6 +52,7 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
     defaultValues: { name: "", discord_id: "", is_admin: false },
   });
   const isAdmin = watch("is_admin");
+  const { requestClose, confirming, confirmDiscard, cancelDiscard } = useConfirmDiscard(isDirty, onClose);
 
   async function onSubmit(values: CreateForm) {
     try {
@@ -67,14 +70,15 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
   }
 
   return (
+    <>
     <AdminDrawer
       open={open}
-      onClose={onClose}
+      onClose={requestClose}
       title="Nieuwe gebruiker"
       subtitle="Voeg een gebruiker toe, met of zonder eigen account"
       footer={
         <DrawerFooter
-          onCancel={onClose}
+          onCancel={requestClose}
           formId="user-create-form"
           isPending={createMutation.isPending}
           isEdit={false}
@@ -131,6 +135,8 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
         </div>
       </form>
     </AdminDrawer>
+    <DiscardChangesConfirm open={confirming} onCancel={cancelDiscard} onConfirm={confirmDiscard} />
+    </>
   );
 }
 
@@ -157,13 +163,14 @@ function UserEditDrawer({
   onClose: () => void;
 }) {
   const updateMutation = useAdminUpdateUser();
-  const [aliases, setAliases] = useState<string[]>(user?.aliases ?? []);
+  const initialAliases = useRef<string[]>(user?.aliases ?? []);
+  const [aliases, setAliases] = useState<string[]>(initialAliases.current);
   const [aliasInput, setAliasInput] = useState("");
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
     watch,
     setValue,
   } = useForm<EditForm>({
@@ -197,10 +204,15 @@ function UserEditDrawer({
     }
   }
 
+  const aliasesDirty = JSON.stringify(aliases) !== JSON.stringify(initialAliases.current);
+  const { requestClose, confirming, confirmDiscard, cancelDiscard } =
+    useConfirmDiscard(isDirty || aliasesDirty, onClose);
+
   return (
+    <>
     <AdminDrawer
       open={!!user}
-      onClose={onClose}
+      onClose={requestClose}
       title={user?.name ?? ""}
       subtitle={
         user?.discord_username
@@ -209,7 +221,7 @@ function UserEditDrawer({
       }
       footer={
         <DrawerFooter
-          onCancel={onClose}
+          onCancel={requestClose}
           formId="user-edit-form"
           isPending={updateMutation.isPending}
           isEdit
@@ -376,6 +388,8 @@ function UserEditDrawer({
         </form>
       )}
     </AdminDrawer>
+    <DiscardChangesConfirm open={confirming} onCancel={cancelDiscard} onConfirm={confirmDiscard} />
+    </>
   );
 }
 
@@ -508,7 +522,7 @@ export function AdminUsersPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
-                <th className="w-10 pl-4 pr-2 py-3">
+                <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
                   <input
                     type="checkbox"
                     checked={allSelected}
@@ -517,19 +531,19 @@ export function AdminUsersPage() {
                     className="cb"
                   />
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Gebruiker
                 </th>
                 <th className="hidden sm:table-cell px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Discord ID
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Status
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Rol
                 </th>
-                <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Acties
                 </th>
               </tr>
@@ -555,7 +569,7 @@ export function AdminUsersPage() {
                       className={`group transition-colors ${selectedIds.has(user.id!) ? "bg-sky-500/[0.06] hover:bg-sky-500/[0.08]" : "hover:bg-slate-50 dark:hover:bg-white/[0.03]"} ${!isActive ? "opacity-50" : ""}`}
                     >
                       <td
-                        className="w-10 pl-4 pr-2 py-3.5"
+                        className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3.5"
                         onClick={(e) => { e.stopPropagation(); toggleSelect(user.id!); }}
                       >
                         <input
@@ -566,18 +580,18 @@ export function AdminUsersPage() {
                           className="cb"
                         />
                       </td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-3">
+                      <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                        <div className="flex items-center gap-2 sm:gap-3">
                           <UserAvatar
                             name={user.name}
-                            className="h-8 w-8 text-[10px] shrink-0"
+                            className="h-7 w-7 sm:h-8 sm:w-8 text-[9px] sm:text-[10px] shrink-0"
                           />
-                          <div>
-                            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                               {user.name}
                             </p>
                             {user.discord_username && (
-                              <p className="text-xs text-slate-400">
+                              <p className="text-xs text-slate-400 truncate">
                                 @{user.discord_username}
                               </p>
                             )}
@@ -606,34 +620,46 @@ export function AdminUsersPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
                         {isActive ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                          <span
+                            title="Actief"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-500/10 p-1.5 sm:px-2.5 sm:py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400"
+                          >
                             <CheckCircle size={10} />
-                            Actief
+                            <span className="hidden sm:inline">Actief</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] px-2.5 py-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          <span
+                            title="Inactief"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] p-1.5 sm:px-2.5 sm:py-1 text-xs font-semibold text-slate-500 dark:text-slate-400"
+                          >
                             <Ban size={10} />
-                            Inactief
+                            <span className="hidden sm:inline">Inactief</span>
                           </span>
                         )}
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
                         {user.is_admin ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 dark:bg-sky-500/10 px-2.5 py-1 text-xs font-semibold text-sky-700 dark:text-sky-400">
+                          <span
+                            title="Admin"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 dark:bg-sky-500/10 p-1.5 sm:px-2.5 sm:py-1 text-xs font-semibold text-sky-700 dark:text-sky-400"
+                          >
                             <Shield size={10} />
-                            Admin
+                            <span className="hidden sm:inline">Admin</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] px-2.5 py-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          <span
+                            title="Gebruiker"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] p-1.5 sm:px-2.5 sm:py-1 text-xs font-semibold text-slate-500 dark:text-slate-400"
+                          >
                             <ShieldOff size={10} />
-                            Gebruiker
+                            <span className="hidden sm:inline">Gebruiker</span>
                           </span>
                         )}
                       </td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center justify-end gap-1.5">
+                      <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
+                        <div className="flex items-center justify-end gap-1 sm:gap-1.5">
                           {/* Deactivate confirmation inline */}
                           {confirmDeactivateId === user.id ? (
                             <div className="flex items-center gap-2">
@@ -661,7 +687,7 @@ export function AdminUsersPage() {
                               }
                               disabled={updateMutation.isPending}
                               title={isActive ? "Deactiveren" : "Activeren"}
-                              className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors disabled:opacity-40 ${
+                              className={`flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg transition-colors disabled:opacity-40 ${
                                 isActive
                                   ? "text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10"
                                   : "text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"

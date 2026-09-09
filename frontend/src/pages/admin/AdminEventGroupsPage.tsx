@@ -119,7 +119,7 @@ export function AdminEventGroupsPage() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
-              <th className="w-10 pl-4 pr-2 py-3">
+              <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
                 <input
                   type="checkbox"
                   checked={allSelected}
@@ -128,10 +128,10 @@ export function AdminEventGroupsPage() {
                   className="cb"
                 />
               </th>
-              <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                 Groepsnaam
               </th>
-              <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
                 Acties
               </th>
             </tr>
@@ -152,7 +152,7 @@ export function AdminEventGroupsPage() {
                   className={`transition-colors ${selectedIds.has(group.id) ? "bg-sky-500/[0.06] hover:bg-sky-500/[0.08]" : "hover:bg-slate-50 dark:hover:bg-white/[0.03]"}`}
                 >
                   <td
-                    className="w-10 pl-4 pr-2 py-3.5"
+                    className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3.5"
                     onClick={(e) => { e.stopPropagation(); toggleSelect(group.id); }}
                   >
                     <input
@@ -163,7 +163,7 @@ export function AdminEventGroupsPage() {
                       className="cb"
                     />
                   </td>
-                  <td className="px-5 py-3.5">
+                  <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                     {editingId === group.id ? (
                       <input
                         autoFocus
@@ -176,17 +176,17 @@ export function AdminEventGroupsPage() {
                         className={`${F} max-w-xs`}
                       />
                     ) : (
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-500/10">
+                      <div className="flex items-center gap-2 sm:gap-2.5">
+                        <div className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-500/10">
                           <Layers size={13} className="text-emerald-500" />
                         </div>
-                        <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                        <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                           {group.name}
                         </span>
                       </div>
                     )}
                   </td>
-                  <td className="px-5 py-3.5">
+                  <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
                     {editingId === group.id ? (
                       <div className="flex items-center justify-end gap-1.5">
                         <button

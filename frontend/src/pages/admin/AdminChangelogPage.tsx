@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Plus, Sparkles } from "lucide-react";
 import {
   useAdminChangelog,
@@ -10,6 +10,8 @@ import { AdminDrawer } from "./AdminDrawer";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
+import { DiscardChangesConfirm } from "./components/DiscardChangesConfirm";
+import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
 import { F, L, SECTION, SECTION_TITLE } from "./styles";
 import { toast } from "../../store/toast.store";
 import type { ChangelogEntry } from "../../types";
@@ -43,11 +45,12 @@ function ChangelogDrawer({
   const createEntry = useCreateChangelogEntry();
   const updateEntry = useUpdateChangelogEntry();
 
-  const [form, setForm] = useState<FormState>(
+  const initialForm = useRef<FormState>(
     isEdit
       ? { title: entry.title, released_at: entry.released_at, itemsText: entry.items.join("\n") }
       : toEmpty(),
   );
+  const [form, setForm] = useState<FormState>(initialForm.current);
 
   const items = form.itemsText.split("\n").map((s) => s.trim()).filter(Boolean);
   const isValid = !!form.title.trim() && items.length > 0;
@@ -69,11 +72,14 @@ function ChangelogDrawer({
   }
 
   const isSaving = createEntry.isPending || updateEntry.isPending;
+  const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm.current);
+  const { requestClose, confirming, confirmDiscard, cancelDiscard } = useConfirmDiscard(isDirty, onClose);
 
   return (
+    <>
     <AdminDrawer
       open={open}
-      onClose={onClose}
+      onClose={requestClose}
       title={isEdit ? "Item bewerken" : "Nieuw wijzigingslog-item"}
       subtitle="Zichtbaar voor alle gebruikers via 'Wat is nieuw'"
       footer={
@@ -86,7 +92,7 @@ function ChangelogDrawer({
             {isSaving ? "Opslaan..." : isEdit ? "Bijwerken" : "Plaatsen"}
           </button>
           <button
-            onClick={onClose}
+            onClick={requestClose}
             className="rounded-xl border border-white/[0.08] px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/[0.05] transition-colors"
           >
             Annuleren
@@ -127,6 +133,8 @@ function ChangelogDrawer({
         </div>
       </div>
     </AdminDrawer>
+    <DiscardChangesConfirm open={confirming} onCancel={cancelDiscard} onConfirm={confirmDiscard} />
+    </>
   );
 }
 
@@ -170,16 +178,16 @@ export function AdminChangelogPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Datum
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Titel
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="hidden sm:table-cell px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Punten
                 </th>
-                <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Acties
                 </th>
               </tr>
@@ -199,18 +207,18 @@ export function AdminChangelogPage() {
               ) : (
                 entries.map((entry) => (
                   <tr key={entry.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors">
-                    <td className="px-5 py-3.5">
-                      <p className="text-sm text-slate-500 dark:text-slate-400">{entry.released_at}</p>
+                    <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                      <p className="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">{entry.released_at}</p>
                     </td>
-                    <td className="px-5 py-3.5">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white max-w-md truncate">
+                    <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white max-w-[160px] sm:max-w-md truncate">
                         {entry.title}
                       </p>
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="hidden sm:table-cell px-5 py-3.5">
                       <p className="text-sm text-slate-500 dark:text-slate-400">{entry.items.length}</p>
                     </td>
-                    <td className="px-5 py-3.5" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-2 sm:px-5 py-2.5 sm:py-3.5" onClick={(e) => e.stopPropagation()}>
                       <DeleteConfirmActions
                         id={entry.id}
                         confirmId={confirmDeleteId}

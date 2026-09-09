@@ -82,7 +82,7 @@ export function MealPractical({ meal }: MealPracticalProps) {
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wide text-slate-400 mb-0.5">Vervoer</p>
                   <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                    Vervoer vanuit het hotel is nodig voor dit evenement.
+                    Vervoer is nodig voor dit evenement.
                   </p>
                 </div>
               </div>

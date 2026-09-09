@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Plus, Megaphone, Info, AlertTriangle } from "lucide-react";
 import {
   useAdminAnnouncements,
@@ -10,6 +10,8 @@ import { AdminDrawer } from "./AdminDrawer";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
+import { DiscardChangesConfirm } from "./components/DiscardChangesConfirm";
+import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
 import { F, FS, L, SECTION, SECTION_TITLE } from "./styles";
 import { toast } from "../../store/toast.store";
 import type { Announcement, AnnouncementSeverity } from "../../types";
@@ -57,7 +59,7 @@ function AnnouncementDrawer({
   const createAnnouncement = useCreateAnnouncement();
   const updateAnnouncement = useUpdateAnnouncement();
 
-  const [form, setForm] = useState<FormState>(
+  const initialForm = useRef<FormState>(
     isEdit
       ? {
           message: announcement.message,
@@ -68,6 +70,7 @@ function AnnouncementDrawer({
         }
       : EMPTY,
   );
+  const [form, setForm] = useState<FormState>(initialForm.current);
 
   async function handleSave() {
     if (!form.message.trim()) return;
@@ -92,11 +95,14 @@ function AnnouncementDrawer({
 
   const isSaving = createAnnouncement.isPending || updateAnnouncement.isPending;
   const isValid = !!form.message.trim();
+  const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm.current);
+  const { requestClose, confirming, confirmDiscard, cancelDiscard } = useConfirmDiscard(isDirty, onClose);
 
   return (
+    <>
     <AdminDrawer
       open={open}
-      onClose={onClose}
+      onClose={requestClose}
       title={isEdit ? "Aankondiging bewerken" : "Nieuwe aankondiging"}
       subtitle="Zichtbaar boven de navigatiebalk op elke pagina"
       footer={
@@ -109,7 +115,7 @@ function AnnouncementDrawer({
             {isSaving ? "Opslaan..." : isEdit ? "Bijwerken" : "Plaatsen"}
           </button>
           <button
-            onClick={onClose}
+            onClick={requestClose}
             className="rounded-xl border border-white/[0.08] px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/[0.05] transition-colors"
           >
             Annuleren
@@ -172,6 +178,8 @@ function AnnouncementDrawer({
         )}
       </div>
     </AdminDrawer>
+    <DiscardChangesConfirm open={confirming} onCancel={cancelDiscard} onConfirm={confirmDiscard} />
+    </>
   );
 }
 
@@ -225,19 +233,19 @@ export function AdminAnnouncementsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Status
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Bericht
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Type
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="hidden sm:table-cell px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Geplaatst door
                 </th>
-                <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Acties
                 </th>
               </tr>
@@ -259,36 +267,40 @@ export function AdminAnnouncementsPage() {
                   const Icon = SEVERITY_ICON[a.severity];
                   return (
                     <tr key={a.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors">
-                      <td className="px-5 py-3.5">
+                      <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
                         <button
                           onClick={() => toggleActive(a)}
-                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${
+                          title={a.active ? "Actief" : "Inactief"}
+                          className={`inline-flex items-center gap-1.5 rounded-full p-1.5 sm:px-2.5 sm:py-1 text-xs font-semibold transition-colors ${
                             a.active
                               ? "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-500/20"
                               : "bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
                           }`}
                         >
                           <span className={`h-1.5 w-1.5 rounded-full ${a.active ? "bg-emerald-500" : "bg-slate-400"}`} />
-                          {a.active ? "Actief" : "Inactief"}
+                          <span className="hidden sm:inline">{a.active ? "Actief" : "Inactief"}</span>
                         </button>
                       </td>
-                      <td className="px-5 py-3.5">
-                        <p className="text-sm text-slate-900 dark:text-white max-w-md truncate">
+                      <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                        <p className="text-sm text-slate-900 dark:text-white max-w-[160px] sm:max-w-md truncate">
                           {a.message}
                         </p>
                       </td>
-                      <td className="px-5 py-3.5">
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${SEVERITY_CHIP[a.severity]}`}>
+                      <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
+                        <span
+                          title={SEVERITY_LABEL[a.severity]}
+                          className={`inline-flex items-center gap-1.5 rounded-full p-1.5 sm:px-2.5 sm:py-1 text-xs font-semibold ${SEVERITY_CHIP[a.severity]}`}
+                        >
                           <Icon size={11} />
-                          {SEVERITY_LABEL[a.severity]}
+                          <span className="hidden sm:inline">{SEVERITY_LABEL[a.severity]}</span>
                         </span>
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td className="hidden sm:table-cell px-5 py-3.5">
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                           {a.created_by ?? "—"}
                         </p>
                       </td>
-                      <td className="px-5 py-3.5" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-2 sm:px-5 py-2.5 sm:py-3.5" onClick={(e) => e.stopPropagation()}>
                         <DeleteConfirmActions
                           id={a.id}
                           confirmId={confirmDeleteId}

@@ -48,6 +48,14 @@ export function WeatherCard({ weather }: { weather: EventWeather }) {
             <p className="text-xs text-sky-200/70 mt-0.5">
               Voelt als {weather.feels_max}° – {weather.feels_min}°C
             </p>
+            <div className="flex items-center gap-3 mt-2">
+              <span className="flex items-center gap-1 text-xs text-sky-100/80">
+                <Droplets size={12} className="text-sky-200" /> {weather.precip_prob_max}%
+              </span>
+              <span className="flex items-center gap-1 text-xs text-sky-100/80">
+                <Wind size={12} className="text-sky-200" /> {weather.wind_max_kmh} km/h
+              </span>
+            </div>
           </div>
           <span className="text-5xl leading-none shrink-0 drop-shadow-sm">
             {weather.icon}
@@ -56,20 +64,8 @@ export function WeatherCard({ weather }: { weather: EventWeather }) {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-4 divide-x divide-slate-100 dark:divide-slate-800 border-b border-slate-100 dark:border-slate-800">
+      <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-slate-800 border-b border-slate-100 dark:border-slate-800">
         {[
-          {
-            icon: Droplets,
-            value: `${weather.precip_prob_max}%`,
-            sub: `${weather.precipitation_mm}mm`,
-            cls: "text-sky-500",
-          },
-          {
-            icon: Wind,
-            value: `${weather.wind_max_kmh}`,
-            sub: "km/h",
-            cls: "text-slate-400 dark:text-slate-500",
-          },
           {
             icon: Sun,
             value: `UV ${weather.uv_index}`,
@@ -179,46 +175,19 @@ export function ClimateAverageCard({ climate }: { climate: ClimateAverage }) {
             <p className="text-sm font-semibold text-white mt-1">
               {climate.description}
             </p>
+            <div className="flex items-center gap-3 mt-2">
+              <span className="flex items-center gap-1 text-xs text-slate-200/80">
+                <Droplets size={12} className="text-slate-300" /> {climate.precip_prob}%
+              </span>
+              <span className="flex items-center gap-1 text-xs text-slate-200/80">
+                <Wind size={12} className="text-slate-300" /> {climate.wind_avg_kmh} km/h
+              </span>
+            </div>
           </div>
           <span className="text-5xl leading-none shrink-0 drop-shadow-sm">
             {climate.icon}
           </span>
         </div>
-      </div>
-
-      {/* Stats row */}
-      <div className="grid grid-cols-3 divide-x divide-slate-100 dark:divide-slate-800 border-b border-slate-100 dark:border-slate-800">
-        {[
-          {
-            icon: Droplets,
-            value: `${climate.precip_prob}%`,
-            sub: `${climate.precip_mm_avg}mm`,
-            cls: "text-sky-500",
-          },
-          {
-            icon: Wind,
-            value: `${climate.wind_avg_kmh}`,
-            sub: "km/h",
-            cls: "text-slate-400 dark:text-slate-500",
-          },
-          {
-            icon: Sun,
-            value: `${climate.temp_max_avg}°`,
-            sub: "hoogste gem.",
-            cls: "text-amber-500",
-          },
-        ].map(({ icon: Icon, value, sub, cls }) => (
-          <div
-            key={value}
-            className="flex items-center justify-center gap-1 py-2 px-1.5"
-          >
-            <Icon size={12} className={`${cls} shrink-0`} />
-            <p className="text-[11px] leading-none tabular-nums truncate">
-              <span className="font-bold text-slate-800 dark:text-white">{value}</span>
-              <span className="text-slate-400 dark:text-slate-500 font-medium"> {sub}</span>
-            </p>
-          </div>
-        ))}
       </div>
 
       {/* Advice */}
@@ -248,9 +217,9 @@ export function ClimateAverageCard({ climate }: { climate: ClimateAverage }) {
 export function WeatherSkeleton() {
   return (
     <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden animate-pulse">
-      <div className="h-24 bg-gradient-to-br from-sky-500/30 to-indigo-600/30" />
-      <div className="grid grid-cols-4 divide-x divide-slate-100 dark:divide-slate-800 border-b border-slate-100 dark:border-slate-800">
-        {[...Array(4)].map((_, i) => (
+      <div className="h-28 bg-gradient-to-br from-sky-500/30 to-indigo-600/30" />
+      <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-slate-800 border-b border-slate-100 dark:border-slate-800">
+        {[...Array(2)].map((_, i) => (
           <div key={i} className="h-9 bg-slate-50 dark:bg-slate-800/40" />
         ))}
       </div>

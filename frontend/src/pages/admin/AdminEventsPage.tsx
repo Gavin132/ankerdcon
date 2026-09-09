@@ -5,7 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Plus, CalendarDays, Hotel, X as XIcon, Tag, Check, History, Upload, Link2,
-  ChevronDown, ChevronUp, UserPlus, Trash2,
+  ChevronDown, ChevronUp, UserPlus, Trash2, PartyPopper,
 } from "lucide-react";
 import type { TicketType, Event, EventDay } from "../../types";
 import {
@@ -36,8 +36,10 @@ import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 import { AdminPagination } from "./components/AdminPagination";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 import { DrawerFooter } from "./components/DrawerFooter";
+import { DiscardChangesConfirm } from "./components/DiscardChangesConfirm";
 import { AdminBulkBar } from "./components/AdminBulkBar";
 import { useTableSelection } from "../../hooks/useTableSelection";
+import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
 import { formatDate } from "../../utils/format";
 import { parseEventDate } from "../../utils/date";
 
@@ -51,7 +53,9 @@ const eventSchema = z.object({
   event_name: z.string().min(1, "Naam is verplicht"),
   event_group_id: optStr,
   is_hotel: z.boolean().optional(),
+  is_party: z.boolean().optional(),
   hotel_location: optStr,
+  hotel_info: optStr,
   image_url: optUrl,
   description: optStr,
   location: optStr,
@@ -251,9 +255,8 @@ function EventDrawer({
   const editEvent = event !== null && event !== "new" ? event : null;
   const open = event !== null;
 
-  const [ticketTypes, setTicketTypes] = useState<TicketType[]>(
-    isEdit ? (event.ticket_types ?? []) : []
-  );
+  const initialTicketTypes = useRef<TicketType[]>(isEdit ? (event.ticket_types ?? []) : []);
+  const [ticketTypes, setTicketTypes] = useState<TicketType[]>(initialTicketTypes.current);
   const [ttTitle, setTtTitle] = useState("");
   const [ttPrice, setTtPrice] = useState("");
 
@@ -276,14 +279,16 @@ function EventDrawer({
     handleSubmit,
     setValue,
     watch,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<EventForm>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
       event_name: isEdit ? event.event_name : "",
       event_group_id: isEdit ? (event.event_group_id ?? "") : "",
       is_hotel: isEdit ? event.is_hotel : false,
+      is_party: isEdit ? event.is_party : false,
       hotel_location: isEdit ? (event.hotel_location ?? "") : "",
+      hotel_info: isEdit ? (event.hotel_info ?? "") : "",
       image_url: isEdit ? (event.image_url ?? "") : "",
       description: isEdit ? (event.description ?? "") : "",
       location: isEdit ? (event.location ?? "") : "",
@@ -298,11 +303,16 @@ function EventDrawer({
   });
 
   async function onSubmit(values: EventForm) {
-    const strip = (v: string | undefined) => v || undefined;
+    // Explicit `null` (not `undefined`) for a cleared field: `undefined` gets
+    // dropped entirely by JSON.stringify, so the backend never even sees the
+    // key and leaves the existing value untouched on update.
+    const strip = (v: string | undefined) => v || null;
     const cleaned = {
       event_name: values.event_name,
       is_hotel: values.is_hotel,
+      is_party: values.is_party,
       hotel_location: strip(values.hotel_location),
+      hotel_info: strip(values.hotel_info),
       event_group_id: strip(values.event_group_id),
       image_url: strip(values.image_url),
       description: strip(values.description),
@@ -334,6 +344,9 @@ function EventDrawer({
 
   const isPending = createMutation.isPending || updateMutation.isPending || imageUploading;
   const currentImageUrl = watch("image_url");
+  const ticketTypesDirty = JSON.stringify(ticketTypes) !== JSON.stringify(initialTicketTypes.current);
+  const { requestClose, confirming, confirmDiscard, cancelDiscard } =
+    useConfirmDiscard(isDirty || ticketTypesDirty, onClose);
 
   async function handleImageFile(file: File) {
     if (!file.type.startsWith("image/")) {
@@ -353,14 +366,15 @@ function EventDrawer({
   }
 
   return (
+    <>
     <AdminDrawer
       open={open}
-      onClose={onClose}
+      onClose={requestClose}
       title={isEdit ? "Evenement bewerken" : "Nieuw evenement"}
       subtitle={isEdit ? event.event_name : "Maak eerst het evenement aan, voeg daarna de dagen toe"}
       footer={
         <DrawerFooter
-          onCancel={onClose}
+          onCancel={requestClose}
           formId="event-form"
           isPending={isPending}
           isEdit={isEdit}
@@ -395,6 +409,10 @@ function EventDrawer({
             <input type="checkbox" {...register("is_hotel")} className="cb" />
             <span className="text-sm text-slate-300">Hotel beschikbaar</span>
           </label>
+          <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 hover:bg-white/[0.06] transition-colors">
+            <input type="checkbox" {...register("is_party")} className="cb" />
+            <span className="text-sm text-slate-300">Feestje / gezellig samenzijn</span>
+          </label>
           {watch("is_hotel") && (
             <div>
               <label className="block text-xs text-slate-400 mb-1">Hotellocatie</label>
@@ -412,6 +430,20 @@ function EventDrawer({
               />
               <p className="mt-1 text-xs text-slate-500">
                 Gebruikt voor de snelle "rit naar hotel"-knop op het hoofdscherm.
+              </p>
+            </div>
+          )}
+          {watch("is_hotel") && (
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Hotel info</label>
+              <textarea
+                {...register("hotel_info")}
+                rows={3}
+                className={`${F} resize-none`}
+                placeholder="Bijv. inchecktijd vanaf 15:00, code voor de kluisjes, ontbijt inbegrepen..."
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                Verschijnt op de hoofdpagina van het evenement, bij "Hotel &amp; overnachting".
               </p>
             </div>
           )}
@@ -675,6 +707,8 @@ function EventDrawer({
         </div>
       </form>
     </AdminDrawer>
+    <DiscardChangesConfirm open={confirming} onCancel={cancelDiscard} onConfirm={confirmDiscard} />
+    </>
   );
 }
 
@@ -882,7 +916,7 @@ export function AdminEventsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
-                <th className="w-10 pl-4 pr-2 py-3">
+                <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
                   <input
                     type="checkbox"
                     checked={allSelected}
@@ -891,19 +925,19 @@ export function AdminEventsPage() {
                     className="cb"
                   />
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Evenement
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="hidden sm:table-cell px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Data
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Info
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Deelnemers
                 </th>
-                <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Acties
                 </th>
               </tr>
@@ -930,7 +964,7 @@ export function AdminEventsPage() {
                     className={`cursor-pointer transition-colors ${isSelected ? "bg-sky-500/[0.06] hover:bg-sky-500/[0.08]" : "hover:bg-slate-50 dark:hover:bg-white/[0.03]"}`}
                   >
                     <td
-                      className="w-10 pl-4 pr-2 py-3.5"
+                      className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3.5"
                       onClick={(e) => { e.stopPropagation(); toggleSelect(ev.id); }}
                     >
                       <input
@@ -941,13 +975,13 @@ export function AdminEventsPage() {
                         className="cb"
                       />
                     </td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-500/10">
+                    <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                      <div className="flex items-center gap-2 sm:gap-2.5">
+                        <div className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-500/10">
                           <CalendarDays size={13} className="text-emerald-500" />
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                             {ev.event_name}
                           </p>
                           {ev.event_group_id && (
@@ -955,10 +989,17 @@ export function AdminEventsPage() {
                               {ev.event_group_id}
                             </span>
                           )}
+                          {/* Dates — visible on mobile only, where the Data column is hidden */}
+                          <p className="sm:hidden mt-0.5 text-xs text-slate-400 whitespace-nowrap">
+                            {!first ? "—" : !last || first.getTime() === last.getTime()
+                              ? formatDate(evDays[0]?.date ?? "")
+                              : `${formatDate(evDays.find((d) => parseEventDate(d.date)?.getTime() === first.getTime())?.date ?? "")} – ${formatDate(evDays.find((d) => parseEventDate(d.date)?.getTime() === last.getTime())?.date ?? "")}`
+                            }
+                          </p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="hidden sm:table-cell px-5 py-3.5">
                       <span className="text-sm text-slate-700 dark:text-slate-300">
                         {!first ? "—" : !last || first.getTime() === last.getTime()
                           ? formatDate(evDays[0]?.date ?? "")
@@ -966,20 +1007,32 @@ export function AdminEventsPage() {
                         }
                       </span>
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {ev.is_hotel && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-100 dark:bg-teal-500/10 px-2.5 py-1 text-xs font-semibold text-teal-700 dark:text-teal-400">
+                          <span
+                            title="Hotel"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-teal-100 dark:bg-teal-500/10 p-1.5 sm:px-2.5 sm:py-1 text-xs font-semibold text-teal-700 dark:text-teal-400"
+                          >
                             <Hotel size={10} />
-                            Hotel
+                            <span className="hidden sm:inline">Hotel</span>
                           </span>
                         )}
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] px-2.5 py-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        {ev.is_party && (
+                          <span
+                            title="Feestje"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-pink-100 dark:bg-pink-500/10 p-1.5 sm:px-2.5 sm:py-1 text-xs font-semibold text-pink-700 dark:text-pink-400"
+                          >
+                            <PartyPopper size={10} />
+                            <span className="hidden sm:inline">Feestje</span>
+                          </span>
+                        )}
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] px-2 sm:px-2.5 py-1 text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
                           {evDays.length} {evDays.length === 1 ? "dag" : "dagen"}
                         </span>
                       </div>
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
                       <div className="flex -space-x-1.5">
                         {participants.length === 0 ? (
                           <span className="text-xs text-slate-400">—</span>
@@ -997,12 +1050,12 @@ export function AdminEventsPage() {
                                   key={p}
                                   name={resolved?.name ?? p}
                                   user={resolved}
-                                  className="h-6 w-6 text-[8px] ring-2 ring-slate-800"
+                                  className="h-5 w-5 sm:h-6 sm:w-6 text-[7px] sm:text-[8px] ring-2 ring-slate-800"
                                 />
                               );
                             })}
                             {participants.length > 4 && (
-                              <span className="flex h-6 w-6 items-center justify-center rounded-full ring-2 ring-slate-800 bg-slate-700 text-[9px] font-bold text-slate-300">
+                              <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full ring-2 ring-slate-800 bg-slate-700 text-[8px] sm:text-[9px] font-bold text-slate-300">
                                 +{participants.length - 4}
                               </span>
                             )}
@@ -1010,7 +1063,7 @@ export function AdminEventsPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-5 py-3.5" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-2 sm:px-5 py-2.5 sm:py-3.5" onClick={(e) => e.stopPropagation()}>
                       <DeleteConfirmActions
                         id={ev.id}
                         confirmId={confirmDeleteId}

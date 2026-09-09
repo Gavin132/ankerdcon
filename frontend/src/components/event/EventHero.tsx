@@ -1,22 +1,44 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { BedDouble, CalendarDays, MapPin, UtensilsCrossed } from "lucide-react";
+import { BedDouble, CalendarDays, MapPin, UserCheck, UserMinus, UtensilsCrossed } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
-import { formatEventDate } from "../../utils/format";
+import { UserProfilePopup, type AnchorRect } from "../common/UserProfilePopup";
+import { AttendanceSummary } from "./AttendanceSummary";
+import { useAuthStore } from "../../store/auth.store";
+import { useCalendar } from "../../hooks/useCalendar";
 import { routes } from "../../config/routes";
 import type { CalendarEvent, Meal, User } from "../../types";
+
+const CLOSED_RECT: AnchorRect = { top: 0, left: 0, right: 0, height: 0 };
 
 interface EventHeroProps {
   event: CalendarEvent;
   daysUntil: number | null;
   users: User[];
   meals?: Meal[];
+  onRsvpClick: () => void;
+  onCancelClick: () => void;
+  /** Every day of the trip, for the "most people attend X–Y" summary —
+   * omit for a single-day event (nothing to summarize). */
+  groupDays?: { ev: CalendarEvent; date: Date }[];
 }
 
-export function EventHero({ event, daysUntil, users, meals = [] }: EventHeroProps) {
+export function EventHero({ event, daysUntil, users, meals = [], onRsvpClick, onCancelClick, groupDays }: EventHeroProps) {
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const { data: calendarEvents } = useCalendar();
+  const [popupUser, setPopupUser] = useState<User | null>(null);
+  const [popupAnchorRect, setPopupAnchorRect] = useState<AnchorRect>(CLOSED_RECT);
+
   function resolveUser(stored: string) {
     return users.find(
       (u) => u.name === stored || u.discord_username === stored || u.aliases?.includes(stored),
     );
+  }
+
+  function openPopup(user: User, e: React.MouseEvent<HTMLElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setPopupAnchorRect({ top: rect.top, left: rect.left, right: rect.right, height: rect.height });
+    setPopupUser(user);
   }
 
   const isPast = daysUntil !== null && daysUntil < 0;
@@ -29,9 +51,9 @@ export function EventHero({ event, daysUntil, users, meals = [] }: EventHeroProp
       ? { a: "#14532d", b: "#166534", c: "#15803d" }
       : isTravelDay
         // Distinct teal/slate tone for a hotel-only travel day — deliberately
-        // calmer than the con-day indigo/violet, and not amber (that's meals).
+        // calmer than the con-day blue, and not amber (that's meals).
         ? { a: "#0c2a2e", b: "#0f3d3e", c: "#115e59" }
-        : { a: "#1e1b4b", b: "#312e81", c: "#4c1d95" };
+        : { a: "#172554", b: "#1e3a8a", c: "#075985" };
 
   return (
     <div className={`relative overflow-hidden ${isPast ? "opacity-75" : ""}`} style={{ minHeight: 280 }}>
@@ -85,35 +107,43 @@ export function EventHero({ event, daysUntil, users, meals = [] }: EventHeroProp
 
         {/* Top badges row */}
         <div className="flex flex-wrap items-center gap-2 mb-5">
-          {event.event_group_id && (
-            <span className="inline-flex items-center rounded-full bg-white/10 border border-white/15 backdrop-blur-sm px-3 py-1 text-[11px] font-bold text-white/80 tracking-wide">
-              {event.event_group_id}
-            </span>
-          )}
           {event.is_hotel && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-500/25 border border-teal-400/40 backdrop-blur-sm px-3 py-1 text-[11px] font-bold text-teal-200">
               <BedDouble size={10} /> Hotel
             </span>
           )}
-          {event.has_con === false && (
+          {event.has_con === false && !event.is_party && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-500/20 border border-teal-400/30 backdrop-blur-sm px-3 py-1 text-[11px] font-bold text-teal-200">
-              <BedDouble size={10} /> Reisdag — geen con vandaag
+              <BedDouble size={10} /> Reisdag
             </span>
+          )}
+          {event.location && (
+            <a
+              href={`https://maps.google.com/?q=${encodeURIComponent(event.location)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-sm px-3 py-1 text-[11px] font-bold text-white/80 hover:bg-white/15 hover:text-white transition-colors"
+            >
+              <MapPin size={10} /> {event.location}
+            </a>
           )}
           {meals.length > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 border border-amber-400/30 backdrop-blur-sm px-3 py-1 text-[11px] font-bold text-amber-200">
-              <UtensilsCrossed size={10} /> Eten
-            </span>
+            <Link
+              to={routes.meal.view(meals[0].id)}
+              className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 border border-amber-400/30 backdrop-blur-sm px-3 py-1 text-[11px] font-bold text-amber-200 hover:bg-amber-500/30 transition-colors max-w-[220px]"
+            >
+              <UtensilsCrossed size={10} className="shrink-0" />
+              <span className="truncate">{meals[0].meal_name}</span>
+              {meals.length > 1 && <span className="shrink-0 text-amber-200/60">+{meals.length - 1}</span>}
+            </Link>
           )}
-          {daysUntil !== null && daysUntil >= 0 && (
+          {(isToday || daysUntil === 1) && (
             <span className={`inline-flex items-center rounded-full border backdrop-blur-sm px-3 py-1 text-[11px] font-black ${
               isToday
                 ? "bg-emerald-500/25 border-emerald-400/40 text-emerald-200"
-                : daysUntil === 1
-                  ? "bg-sky-500/20 border-sky-400/30 text-sky-200"
-                  : "bg-white/15 border-white/20 text-white"
+                : "bg-sky-500/20 border-sky-400/30 text-sky-200"
             }`}>
-              {isToday ? "Vandaag 🎉" : daysUntil === 1 ? "Morgen!" : `Over ${daysUntil} dagen`}
+              {isToday ? "Vandaag 🎉" : "Morgen!"}
             </span>
           )}
           {isPast && (
@@ -134,67 +164,67 @@ export function EventHero({ event, daysUntil, users, meals = [] }: EventHeroProp
           </p>
         )}
 
-        {/* Meta chips */}
-        <div className="flex flex-wrap gap-2 mt-4">
-          <span className="flex items-center gap-1.5 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 px-3 py-1.5 text-xs font-bold text-white/90">
-            <CalendarDays size={12} className="text-violet-300/80" />
-            <span className="capitalize">{formatEventDate(event.date)}</span>
-          </span>
-          {event.location && (
-            <a
-              href={`https://maps.google.com/?q=${encodeURIComponent(event.location)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 px-3 py-1.5 text-xs font-bold text-white/90 hover:bg-black/50 hover:border-white/20 active:scale-[0.97] transition-all"
-            >
-              <MapPin size={12} className="text-violet-300/80" />
-              {event.location}
-            </a>
+        {/* Attendees + sign-up */}
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          {event.participants.length > 0 && (
+            <div className="flex items-center gap-3">
+              <div className="flex -space-x-2.5">
+                {event.participants.slice(0, 8).map((p) => {
+                  const u = resolveUser(p);
+                  return u ? (
+                    <button key={p} type="button" onClick={(e) => openPopup(u, e)}>
+                      <UserAvatar
+                        name={u.name}
+                        user={u}
+                        className="h-8 w-8 text-[10px] ring-2 ring-black/30 hover:ring-white/40 transition-all"
+                      />
+                    </button>
+                  ) : (
+                    <UserAvatar
+                      key={p}
+                      name={p}
+                      className="h-8 w-8 text-[10px] ring-2 ring-black/30"
+                    />
+                  );
+                })}
+              </div>
+              <p className="text-sm text-white/60">
+                <span className="font-black text-white">{event.participants.length}</span>{" "}
+                {event.participants.length === 1 ? "aanmelding" : "aanmeldingen"}
+              </p>
+            </div>
           )}
-          {meals.length > 0 && (
-            <Link
-              to={routes.meal.view(meals[0].id)}
-              className="flex items-center gap-1.5 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 px-3 py-1.5 text-xs font-bold text-white/90 hover:bg-black/50 hover:border-white/20 active:scale-[0.97] transition-all max-w-[220px]"
+          <div className="flex items-center gap-2 ml-auto">
+            {event.participants.length > 0 && (
+              <button
+                type="button"
+                onClick={onCancelClick}
+                className="flex items-center gap-1.5 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 px-3 py-2 text-xs font-bold text-white/80 hover:bg-black/50 hover:border-white/20 active:scale-[0.97] transition-all"
+              >
+                <UserMinus size={13} /> Afmelden
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onRsvpClick}
+              className="flex items-center gap-1.5 rounded-xl gradient-brand px-3.5 py-2 text-xs font-bold text-white hover:opacity-90 active:scale-[0.97] transition-all"
             >
-              <UtensilsCrossed size={12} className="text-amber-300/80 shrink-0" />
-              <span className="truncate">{meals[0].meal_name}</span>
-              {meals.length > 1 && <span className="shrink-0 text-white/50">+{meals.length - 1}</span>}
-            </Link>
-          )}
-          {event.is_hotel && (
-            <Link
-              to={routes.eventHotel.view(event.id)}
-              className="flex items-center gap-1.5 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 px-3 py-1.5 text-xs font-bold text-white/90 hover:bg-black/50 hover:border-white/20 active:scale-[0.97] transition-all"
-            >
-              <BedDouble size={12} className="text-violet-300/80" />
-              Hotel
-            </Link>
-          )}
+              <UserCheck size={13} /> Aanmelden
+            </button>
+          </div>
         </div>
 
-        {/* Attendee strip */}
-        {event.participants.length > 0 && (
-          <div className="mt-5 flex items-center gap-3">
-            <div className="flex -space-x-2.5">
-              {event.participants.slice(0, 8).map((p) => {
-                const u = resolveUser(p);
-                return (
-                  <UserAvatar
-                    key={p}
-                    name={u?.name ?? p}
-                    user={u}
-                    className="h-8 w-8 text-[10px] ring-2 ring-black/30"
-                  />
-                );
-              })}
-            </div>
-            <p className="text-sm text-white/60">
-              <span className="font-black text-white">{event.participants.length}</span>{" "}
-              {event.participants.length === 1 ? "aanmelding" : "aanmeldingen"}
-            </p>
-          </div>
-        )}
+        <AttendanceSummary groupDays={groupDays ?? []} />
       </div>
+
+      <UserProfilePopup
+        user={popupUser}
+        open={popupUser !== null}
+        isOwn={currentUser === popupUser?.id}
+        anchorRect={popupAnchorRect}
+        onClose={() => setPopupUser(null)}
+        calendarEvents={calendarEvents}
+      />
     </div>
   );
 }

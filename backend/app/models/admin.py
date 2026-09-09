@@ -70,7 +70,9 @@ class AdminCreateEventRequest(BaseModel):
     event_name: str
     event_group_id: Optional[str] = None
     is_hotel: bool = False
+    is_party: bool = False
     hotel_location: Optional[str] = None
+    hotel_info: Optional[str] = None
     image_url: Optional[str] = None
     description: Optional[str] = None
     location: Optional[str] = None
@@ -88,7 +90,9 @@ class AdminUpdateEventRequest(BaseModel):
     event_name: Optional[str] = None
     event_group_id: Optional[str] = None
     is_hotel: Optional[bool] = None
+    is_party: Optional[bool] = None
     hotel_location: Optional[str] = None
+    hotel_info: Optional[str] = None
     image_url: Optional[str] = None
     description: Optional[str] = None
     location: Optional[str] = None

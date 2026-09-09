@@ -1,19 +1,32 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Car, Train, Truck, Clock, Timer, AlertCircle, CalendarDays, Users, ArrowRight, Utensils } from "lucide-react";
+import { Car, Train, Truck, Clock, Timer, AlertCircle, CalendarDays, Users, ArrowRight, Utensils, Plus, UserMinus } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
-import { formatDateTime } from "../../utils/format";
+import { UserProfilePopup, type AnchorRect } from "../common/UserProfilePopup";
+import { useCalendar } from "../../hooks/useCalendar";
+import { useAuthStore } from "../../store/auth.store";
 import { getRideStatus, formatCountdown, rideLocationLabel } from "../../utils/rides";
 import { routes } from "../../config/routes";
 import type { CalendarEvent, Meal, Ride, User } from "../../types";
+
+const CLOSED_RECT: AnchorRect = { top: 0, left: 0, right: 0, height: 0 };
 
 interface RideHeroProps {
   ride: Ride;
   linkedEvent?: CalendarEvent;
   linkedMeal?: Meal;
   users: User[];
+  /** Omit both on a Restaurant-direction ride — that one has its own
+   * multi-driver sign-up flow instead of a simple claim/leave. */
+  onClaimClick?: () => void;
+  onLeaveClick?: () => void;
 }
 
-export function RideHero({ ride, linkedEvent, linkedMeal, users }: RideHeroProps) {
+export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, onLeaveClick }: RideHeroProps) {
+  const { data: calendarEvents } = useCalendar();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const [popupUser, setPopupUser] = useState<User | null>(null);
+  const [popupAnchorRect, setPopupAnchorRect] = useState<AnchorRect>(CLOSED_RECT);
   const { status, minutesUntil } = getRideStatus(ride.departure_time);
   const isPT = ride.is_public_transport;
   const isTimo = ride.driver.trim().toLowerCase().startsWith("timo");
@@ -52,6 +65,15 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users }: RideHeroProps
         u.aliases?.includes(stored),
     );
   }
+
+  function openPopup(user: User, e: React.MouseEvent<HTMLElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setPopupAnchorRect({ top: rect.top, left: rect.left, right: rect.right, height: rect.height });
+    setPopupUser(user);
+  }
+
+  const canAct = status !== "recent" && status !== "past";
+  const showSignup = !isRestaurant && (onClaimClick || onLeaveClick);
 
   return (
     <div
@@ -129,6 +151,18 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users }: RideHeroProps
             <TransportIcon size={10} />
             {isPT ? "Openbaar vervoer" : ride.direction === "Inbound" ? "Heen" : ride.direction === "Outbound" ? "Terug" : "Restaurant"}
           </div>
+          {!isPT && !isRecent && !isPast && ride.direction !== "Restaurant" && (
+            <div className={`inline-flex items-center gap-1.5 rounded-full backdrop-blur-sm border px-3 py-1 text-[11px] font-bold ${
+              ride.is_full
+                ? "bg-rose-900/50 border-rose-500/20 text-rose-200"
+                : "bg-white/10 border-white/15 text-white/80"
+            }`}>
+              <Users size={10} />
+              {ride.is_full
+                ? "Vol"
+                : `${ride.seats_left} ${ride.seats_left === 1 ? "plek" : "plekken"} vrij`}
+            </div>
+          )}
         </div>
 
         {/* Route: FROM → TO */}
@@ -147,26 +181,8 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users }: RideHeroProps
         </div>
 
         {/* Stat chips */}
-        <div className="flex flex-wrap gap-2">
-          <span className="flex items-center gap-1.5 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 px-3 py-1.5 text-xs font-bold text-white">
-            <Clock size={12} />
-            {formatDateTime(ride.departure_time)}
-          </span>
-
-          {!isPT && !isRecent && !isPast && ride.direction !== "Restaurant" && (
-            <span className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold backdrop-blur-sm border ${
-              ride.is_full
-                ? "bg-rose-900/50 border-rose-500/20 text-rose-200"
-                : "bg-black/30 border-white/10 text-white"
-            }`}>
-              <Users size={12} />
-              {ride.is_full
-                ? "Vol"
-                : `${ride.seats_left} ${ride.seats_left === 1 ? "plek" : "plekken"} vrij`}
-            </span>
-          )}
-
-          {(status === "urgent" || status === "soon" || status === "recent") && (
+        {(status === "urgent" || status === "soon" || status === "recent") && (
+          <div className="flex flex-wrap gap-2">
             <span className={`flex items-center gap-1.5 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 px-3 py-1.5 text-xs font-bold text-white ${
               status === "urgent" ? "animate-pulse" : ""
             }`}>
@@ -175,8 +191,8 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users }: RideHeroProps
               {status === "soon" && `Vertrekt over ${formatCountdown(minutesUntil)}`}
               {status === "recent" && "Vertrokken"}
             </span>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Driver / Organizer */}
         {!isPT && (
@@ -194,10 +210,75 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users }: RideHeroProps
             </div>
           </div>
         )}
+
+        {/* Passengers + sign-up */}
+        {showSignup && (
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            {ride.passengers.length > 0 && (
+              <div className="flex items-center gap-3">
+                <div className="flex -space-x-2.5">
+                  {ride.passengers.slice(0, 8).map((p) => {
+                    const u = resolveUser(p);
+                    return u ? (
+                      <button key={p} type="button" onClick={(e) => openPopup(u, e)}>
+                        <UserAvatar
+                          name={u.name}
+                          user={u}
+                          className="h-8 w-8 text-[10px] ring-2 ring-black/30 hover:ring-white/40 transition-all"
+                        />
+                      </button>
+                    ) : (
+                      <UserAvatar
+                        key={p}
+                        name={p}
+                        className="h-8 w-8 text-[10px] ring-2 ring-black/30"
+                      />
+                    );
+                  })}
+                </div>
+                <p className="text-sm text-white/60">
+                  <span className="font-black text-white">{ride.passengers.length}</span>{" "}
+                  {ride.passengers.length === 1 ? "meerijder" : "meerijders"}
+                </p>
+              </div>
+            )}
+            {canAct && (
+              <div className="flex items-center gap-2 ml-auto">
+                {onLeaveClick && ride.passengers.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={onLeaveClick}
+                    className="flex items-center gap-1.5 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 px-3 py-2 text-xs font-bold text-white/80 hover:bg-black/50 hover:border-white/20 active:scale-[0.97] transition-all"
+                  >
+                    <UserMinus size={13} /> Uitstappen
+                  </button>
+                )}
+                {onClaimClick && !ride.is_full && (
+                  <button
+                    type="button"
+                    onClick={onClaimClick}
+                    className="flex items-center gap-1.5 rounded-xl gradient-brand px-3.5 py-2 text-xs font-bold text-white hover:opacity-90 active:scale-[0.97] transition-all"
+                  >
+                    <Plus size={13} /> Stap in
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Bottom fade */}
       <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-slate-50 dark:from-slate-950 to-transparent pointer-events-none" />
+
+      <UserProfilePopup
+        user={popupUser}
+        open={popupUser !== null}
+        isOwn={currentUser === popupUser?.id}
+        anchorRect={popupAnchorRect}
+        onClose={() => setPopupUser(null)}
+        calendarEvents={calendarEvents}
+      />
     </div>
   );
 }

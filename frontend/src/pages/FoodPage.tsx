@@ -18,14 +18,15 @@ import { useUsers } from "../hooks/useUsers";
 import { toast } from "../store/toast.store";
 import { listContainer } from "../utils/motion";
 import { useTimeStore, getNow } from "../store/time.store";
+import { parseEventDate, toDateKey, todayKey } from "../utils/date";
 
 const createSchema = z.object({
   meal_name: z.string().min(1, "Verplicht"),
-  time: z.string().min(1, "Verplicht"),
+  linked_event_id: z.string().min(1, "Verplicht"),
+  meal_time: z.string().min(1, "Verplicht"),
   location: z.string().optional(),
   cost: z.string().optional(),
   transport_needed: z.boolean().optional(),
-  linked_event_id: z.string().optional(),
   description: z.string().optional(),
   website: z.string().optional(),
   menu_url: z.string().optional(),
@@ -53,6 +54,14 @@ export function FoodPage() {
   const userNames = (users ?? []).map((u) => u.name);
   const createMutation = useCreateMeal();
 
+  // Linking a meal to an event only makes sense for something still coming
+  // up — a past event's date isn't a useful default for a new meal plan.
+  const todayStr = todayKey();
+  const upcomingEvents = events.filter((e) => {
+    const d = parseEventDate(e.date);
+    return d && toDateKey(d) >= todayStr;
+  });
+
   const {
     register,
     handleSubmit,
@@ -71,9 +80,16 @@ export function FoodPage() {
   }
 
   async function onCreate(values: CreateForm) {
+    const linkedEvent = events.find((e) => e.id === values.linked_event_id);
+    const eventDate = linkedEvent ? parseEventDate(linkedEvent.date) : null;
+    const dateKey = eventDate ? toDateKey(eventDate) : "";
     const payload = {
-      ...values,
-      linked_event_id: values.linked_event_id || undefined,
+      meal_name: values.meal_name,
+      time: `${dateKey}T${values.meal_time}`,
+      location: values.location,
+      cost: values.cost,
+      transport_needed: values.transport_needed,
+      linked_event_id: values.linked_event_id,
       description: values.description || undefined,
       website: values.website || undefined,
       menu_url: values.menu_url || undefined,
@@ -207,14 +223,34 @@ export function FoodPage() {
               </div>
 
               <div>
-                <label className={SL}>Datum & tijd</label>
-                <input
-                  type="datetime-local"
-                  className="input-field"
-                  {...register("time")}
+                <label className={SL}>Event</label>
+                <Controller
+                  name="linked_event_id"
+                  control={control}
+                  render={({ field }) => (
+                    <EventPicker
+                      events={upcomingEvents}
+                      value={field.value || undefined}
+                      onChange={(id) => field.onChange(id ?? "")}
+                      placeholder="Zoek en koppel een event…"
+                    />
+                  )}
                 />
-                {errors.time && (
-                  <p className="mt-1.5 text-xs text-rose-500">{errors.time.message}</p>
+                <p className="mt-1.5 text-xs text-slate-400">De datum van het etentje volgt uit het event.</p>
+                {errors.linked_event_id && (
+                  <p className="mt-1.5 text-xs text-rose-500">{errors.linked_event_id.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className={SL}>Tijd</label>
+                <input
+                  type="time"
+                  className="input-field"
+                  {...register("meal_time")}
+                />
+                {errors.meal_time && (
+                  <p className="mt-1.5 text-xs text-rose-500">{errors.meal_time.message}</p>
                 )}
               </div>
 
@@ -242,45 +278,23 @@ export function FoodPage() {
                   {...register("cost")}
                 />
               </div>
-            </div>
-          </div>
 
-          {/* Opties */}
-          <div className={SF}>
-            <p className={ST}>Opties</p>
-            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.03] px-4 py-3 hover:border-sky-300 dark:hover:border-sky-500/40 hover:bg-sky-50 dark:hover:bg-sky-500/5 transition-colors">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded accent-sky-500 shrink-0"
-                {...register("transport_needed")}
-              />
-              <div>
-                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  Vervoer vanuit hotel nodig
-                </span>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Zichtbaar op de kaart als blauwe badge
-                </p>
-              </div>
-            </label>
-
-            {events.length > 0 && (
-              <div>
-                <label className={SL}>Koppel aan event</label>
-                <Controller
-                  name="linked_event_id"
-                  control={control}
-                  render={({ field }) => (
-                    <EventPicker
-                      events={events}
-                      value={field.value || undefined}
-                      onChange={(id) => field.onChange(id ?? "")}
-                      placeholder="Zoek en koppel een event…"
-                    />
-                  )}
+              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.03] px-4 py-3 hover:border-sky-300 dark:hover:border-sky-500/40 hover:bg-sky-50 dark:hover:bg-sky-500/5 transition-colors">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded accent-sky-500 shrink-0"
+                  {...register("transport_needed")}
                 />
-              </div>
-            )}
+                <div>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    Autovervoer nodig
+                  </span>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Zichtbaar op de kaart als blauwe badge
+                  </p>
+                </div>
+              </label>
+            </div>
           </div>
 
           {/* Details — collapsible */}

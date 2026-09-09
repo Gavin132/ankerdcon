@@ -1,5 +1,6 @@
 import { getNow } from "../store/time.store";
-import type { CalendarEvent, RestaurantDriver } from "../types";
+import { toDateKey, todayKey } from "./date";
+import type { CalendarEvent, RestaurantDriver, Ride } from "../types";
 
 export type RideStatus = "upcoming" | "soon" | "urgent" | "recent" | "past";
 
@@ -42,6 +43,29 @@ export function rideLocationLabel(
     if (linkedEvent.hotel_location && location === linkedEvent.hotel_location) return "Hotel";
   }
   return location;
+}
+
+/** "Vandaag" / "Morgen" / a Dutch weekday+date, for grouping rides by day. */
+export function rideDayLabel(date: Date): string {
+  const key = toDateKey(date);
+  if (key === todayKey()) return "Vandaag";
+  const tomorrow = new Date(getNow());
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  if (key === toDateKey(tomorrow)) return "Morgen";
+  return date.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" });
+}
+
+/** Buckets an already time-sorted ride list into consecutive same-day groups. */
+export function groupRidesByDay(rides: Ride[]): { label: string; rides: Ride[] }[] {
+  const groups: { label: string; rides: Ride[] }[] = [];
+  for (const ride of rides) {
+    const parsed = new Date(ride.departure_time.replace(" ", "T"));
+    const label = isNaN(parsed.getTime()) ? "Onbekende datum" : rideDayLabel(parsed);
+    const last = groups[groups.length - 1];
+    if (last && last.label === label) last.rides.push(ride);
+    else groups.push({ label, rides: [ride] });
+  }
+  return groups;
 }
 
 export function parseRestaurantDrivers(

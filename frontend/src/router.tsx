@@ -5,6 +5,7 @@ import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { AdminRoute } from "./components/auth/AdminRoute";
 import { AppShell } from "./components/layout/AppShell";
 import { LoginPage } from "./pages/LoginPage";
+import { RouteErrorFallback } from "./components/common/RouteErrorFallback";
 
 // Every other page is fetched on demand instead of bundled into the initial
 // download — most of these (especially the whole admin portal) are visited
@@ -36,6 +37,7 @@ const ChangelogPage = lazyPage(() => import("./pages/ChangelogPage"), "Changelog
 const HotelRoomsPage = lazyPage(() => import("./pages/HotelRoomsPage"), "HotelRoomsPage");
 const OnboardingPage = lazyPage(() => import("./pages/OnboardingPage"), "OnboardingPage");
 const NotFoundPage = lazyPage(() => import("./pages/NotFoundPage"), "NotFoundPage");
+const CrashTestPage = lazyPage(() => import("./pages/CrashTestPage"), "CrashTestPage");
 
 const AdminLayout = lazyPage(() => import("./pages/admin/AdminLayout"), "AdminLayout");
 const AdminOnboardingPreviewPage = lazyPage(() => import("./pages/admin/AdminOnboardingPreviewPage"), "AdminOnboardingPreviewPage");
@@ -55,105 +57,120 @@ const AdminTimeTravelPage = lazyPage(() => import("./pages/admin/AdminTimeTravel
 
 export const router = createBrowserRouter([
   {
-    path: routes.login,
-    element: <LoginPage />,
-  },
-  {
-    element: <ProtectedRoute />,
+    // A pathless root wrapping every route below — `errorElement` here
+    // catches a render error from ANY of them. React Router's data router
+    // handles route errors itself before they'd ever reach a class
+    // component wrapping RouterProvider (e.g. `<ErrorBoundary>` in App.tsx),
+    // so this is the one that actually needs to exist for a crashing page
+    // to show something other than the router's own bare default screen.
+    errorElement: <RouteErrorFallback />,
     children: [
       {
-        path: routes.onboarding,
-        element: <OnboardingPage />,
+        path: routes.login,
+        element: <LoginPage />,
       },
       {
-        // Shared layout for the bottom-nav tabs — one persistent AppShell
-        // instance (Header, BottomNav, etc.) instead of a fresh one per tab,
-        // so switching tabs doesn't tear the whole shell down while the
-        // next tab's chunk loads.
-        element: <AppShell />,
-        children: [
-          { path: routes.hub,       element: <HubPage /> },
-          { path: routes.transport, element: <TransportPage /> },
-          { path: routes.food,      element: <FoodPage /> },
-          { path: routes.finance,   element: <FinancePage /> },
-          { path: routes.more,      element: <MorePage /> },
-        ],
+        path: routes.testError,
+        element: <CrashTestPage />,
       },
       {
-        path: routes.profile.pattern,
-        element: <ProfilePage />,
-      },
-      {
-        path: routes.event.pattern,
-        element: <EventDetailPage />,
-      },
-      {
-        path: routes.meal.pattern,
-        element: <MealDetailPage />,
-      },
-      {
-        path: routes.ride.pattern,
-        element: <RideDetailPage />,
-      },
-      {
-        path: routes.eventCosplays.pattern,
-        element: <EventCosplaysPage />,
-      },
-      {
-        path: routes.members,
-        element: <MembersPage />,
-      },
-      {
-        path: routes.acties,
-        element: <ActiesPage />,
-      },
-      {
-        path: routes.notifications,
-        element: <NotificationSettingsPage />,
-      },
-      {
-        path: routes.changelog,
-        element: <ChangelogPage />,
-      },
-      {
-        path: routes.eventHotel.pattern,
-        element: <HotelRoomsPage />,
-      },
-      // ── Admin portal ──────────────────────────────────────────────
-      {
-        element: <AdminRoute />,
+        element: <ProtectedRoute />,
         children: [
           {
-            // Rendered outside AdminLayout so it's a true full-screen replica of
-            // the real onboarding flow, without the admin sidebar/topbar chrome.
-            path: routes.admin.previewOnboarding,
-            element: <AdminOnboardingPreviewPage />,
+            path: routes.onboarding,
+            element: <OnboardingPage />,
           },
           {
-            path: routes.admin.base,
-            element: <AdminLayout />,
+            // Shared layout for the bottom-nav tabs — one persistent AppShell
+            // instance (Header, BottomNav, etc.) instead of a fresh one per tab,
+            // so switching tabs doesn't tear the whole shell down while the
+            // next tab's chunk loads.
+            element: <AppShell />,
             children: [
-              { index: true,                   element: <AdminDashboardPage /> },
-              { path: routes.admin.users,      element: <AdminUsersPage /> },
-              { path: routes.admin.whitelist,  element: <AdminWhitelistPage /> },
-              { path: routes.admin.rides,      element: <AdminRidesPage /> },
-              { path: routes.admin.meals,      element: <AdminMealsPage /> },
-              { path: routes.admin.events,      element: <AdminEventsPage /> },
-              { path: routes.admin.eventGroups, element: <AdminEventGroupsPage /> },
-              { path: routes.admin.badges,      element: <AdminBadgesPage /> },
-              { path: routes.admin.betalingen,  element: <AdminBetalingenPage /> },
-              { path: routes.admin.announcements, element: <AdminAnnouncementsPage /> },
-              { path: routes.admin.changelog, element: <AdminChangelogPage /> },
-              { path: routes.admin.impersonate, element: <AdminImpersonatePage /> },
-              { path: routes.admin.timeTravel, element: <AdminTimeTravelPage /> },
+              { path: routes.hub,       element: <HubPage /> },
+              { path: routes.transport, element: <TransportPage /> },
+              { path: routes.food,      element: <FoodPage /> },
+              { path: routes.finance,   element: <FinancePage /> },
+              { path: routes.more,      element: <MorePage /> },
+            ],
+          },
+          {
+            path: routes.profile.pattern,
+            element: <ProfilePage />,
+          },
+          {
+            path: routes.event.pattern,
+            element: <EventDetailPage />,
+          },
+          {
+            path: routes.meal.pattern,
+            element: <MealDetailPage />,
+          },
+          {
+            path: routes.ride.pattern,
+            element: <RideDetailPage />,
+          },
+          {
+            path: routes.eventCosplays.pattern,
+            element: <EventCosplaysPage />,
+          },
+          {
+            path: routes.members,
+            element: <MembersPage />,
+          },
+          {
+            path: routes.acties,
+            element: <ActiesPage />,
+          },
+          {
+            path: routes.notifications,
+            element: <NotificationSettingsPage />,
+          },
+          {
+            path: routes.changelog,
+            element: <ChangelogPage />,
+          },
+          {
+            path: routes.eventHotel.pattern,
+            element: <HotelRoomsPage />,
+          },
+          // ── Admin portal ──────────────────────────────────────────────
+          {
+            element: <AdminRoute />,
+            children: [
+              {
+                // Rendered outside AdminLayout so it's a true full-screen replica of
+                // the real onboarding flow, without the admin sidebar/topbar chrome.
+                path: routes.admin.previewOnboarding,
+                element: <AdminOnboardingPreviewPage />,
+              },
+              {
+                path: routes.admin.base,
+                element: <AdminLayout />,
+                children: [
+                  { index: true,                   element: <AdminDashboardPage /> },
+                  { path: routes.admin.users,      element: <AdminUsersPage /> },
+                  { path: routes.admin.whitelist,  element: <AdminWhitelistPage /> },
+                  { path: routes.admin.rides,      element: <AdminRidesPage /> },
+                  { path: routes.admin.meals,      element: <AdminMealsPage /> },
+                  { path: routes.admin.events,      element: <AdminEventsPage /> },
+                  { path: routes.admin.eventGroups, element: <AdminEventGroupsPage /> },
+                  { path: routes.admin.badges,      element: <AdminBadgesPage /> },
+                  { path: routes.admin.betalingen,  element: <AdminBetalingenPage /> },
+                  { path: routes.admin.announcements, element: <AdminAnnouncementsPage /> },
+                  { path: routes.admin.changelog, element: <AdminChangelogPage /> },
+                  { path: routes.admin.impersonate, element: <AdminImpersonatePage /> },
+                  { path: routes.admin.timeTravel, element: <AdminTimeTravelPage /> },
+                ],
+              },
             ],
           },
         ],
       },
+      {
+        path: "*",
+        element: <NotFoundPage />,
+      },
     ],
-  },
-  {
-    path: "*",
-    element: <NotFoundPage />,
   },
 ]);

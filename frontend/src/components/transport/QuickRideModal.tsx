@@ -23,12 +23,25 @@ function defaultDepartureTime(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+/** Best-guess start/end for a direction — event.location on the con side,
+ * event.hotel_location on the hotel side (blank when there isn't one, e.g. a
+ * non-hotel event's "home" end — the user can just type it in directly). */
+function defaultLocationsFor(direction: Direction, event: CalendarEvent): { start: string; end: string } {
+  const toHotel = direction === "Outbound";
+  return {
+    start: (toHotel ? event.location : event.hotel_location) || "",
+    end: (toHotel ? event.hotel_location : event.location) || "",
+  };
+}
+
 export function QuickRideModal({ open, onClose, event, initialDirection }: QuickRideModalProps) {
   const { data: me } = useCurrentUser();
   const driver = me?.name ?? "";
   const createMutation = useCreateRide();
 
   const [direction, setDirection] = useState<Direction>(initialDirection);
+  const [startLocation, setStartLocation] = useState("");
+  const [endLocation, setEndLocation] = useState("");
   const [departureTime, setDepartureTime] = useState(defaultDepartureTime);
   const [seats, setSeats] = useState(5);
   const [vehicleType, setVehicleType] = useState<VehicleType>("Car");
@@ -39,17 +52,25 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
   useEffect(() => {
     if (open) {
       setDirection(initialDirection);
+      const defaults = defaultLocationsFor(initialDirection, event);
+      setStartLocation(defaults.start);
+      setEndLocation(defaults.end);
       setDepartureTime(defaultDepartureTime());
       setSeats(5);
       setVehicleType("Car");
       setParkingInfo("");
       setAdvancedOpen(false);
     }
-  }, [open, initialDirection]);
+  }, [open, initialDirection, event]);
+
+  function switchDirection(d: Direction) {
+    setDirection(d);
+    const defaults = defaultLocationsFor(d, event);
+    setStartLocation(defaults.start);
+    setEndLocation(defaults.end);
+  }
 
   const toHotel = direction === "Outbound";
-  const startLocation = (toHotel ? event.location : event.hotel_location) || "";
-  const endLocation = (toHotel ? event.hotel_location : event.location) || "";
   const missingLocation = !startLocation || !endLocation;
 
   async function onSubmit() {
@@ -77,7 +98,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
     <Modal
       open={open}
       onClose={onClose}
-      title={toHotel ? "Rit naar hotel aanbieden" : "Rit naar congres aanbieden"}
+      title={event.is_hotel ? (toHotel ? "Rit naar hotel aanbieden" : "Rit naar congres aanbieden") : "Rit aanbieden"}
       description="Alleen de vertrektijd en het aantal plekken zijn nodig."
     >
       <div className="space-y-5">
@@ -87,33 +108,40 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
             <button
               key={d}
               type="button"
-              onClick={() => setDirection(d)}
+              onClick={() => switchDirection(d)}
               className={`flex-1 rounded-xl py-2.5 text-xs font-semibold transition-all ${
                 direction === d
                   ? "bg-white text-slate-900 shadow-card dark:bg-slate-700 dark:text-slate-100"
                   : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
               }`}
             >
-              {d === "Inbound" ? "Naar congres" : "Naar hotel"}
+              {event.is_hotel ? (d === "Inbound" ? "Naar congres" : "Naar hotel") : (d === "Inbound" ? "Heen" : "Terug")}
             </button>
           ))}
         </div>
 
-        {/* Route summary */}
+        {/* Route summary — editable, so a missing location (e.g. a non-hotel
+            event's "home" end) can just be typed in right here. */}
         <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-4 py-3">
-          <p className="flex-1 min-w-0 truncate text-sm font-semibold text-slate-700 dark:text-slate-200">
-            {startLocation || "Onbekende locatie"}
-          </p>
+          <input
+            type="text"
+            value={startLocation}
+            onChange={(e) => setStartLocation(e.target.value)}
+            placeholder="Onbekende locatie"
+            className="flex-1 min-w-0 bg-transparent text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder:font-normal placeholder:text-slate-400 outline-none"
+          />
           <ArrowRight size={14} className="shrink-0 text-slate-400" />
-          <p className="flex-1 min-w-0 truncate text-sm font-semibold text-slate-700 dark:text-slate-200 text-right">
-            {endLocation || "Onbekende locatie"}
-          </p>
+          <input
+            type="text"
+            value={endLocation}
+            onChange={(e) => setEndLocation(e.target.value)}
+            placeholder="Onbekende locatie"
+            className="flex-1 min-w-0 bg-transparent text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder:font-normal placeholder:text-slate-400 outline-none text-right"
+          />
         </div>
         {missingLocation && (
           <p className="-mt-3 text-xs text-amber-500">
-            {toHotel && !event.hotel_location
-              ? "Geen hotellocatie ingesteld voor dit evenement — vraag een beheerder dit toe te voegen."
-              : "Locatie ontbreekt — je kunt de rit nog aanmaken, maar vul de locatie later handmatig aan."}
+            Vul de ontbrekende locatie hierboven in.
           </p>
         )}
 

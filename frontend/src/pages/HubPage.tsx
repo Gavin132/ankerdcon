@@ -21,8 +21,6 @@ import { groupCalendarEntries, firstUpcomingEvents } from "../utils/multiDay";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { UpcomingEventsCarousel } from "../components/hub/UpcomingEventsCarousel";
 import { QuickRideTiles } from "../components/hub/QuickRideTiles";
-import { RestaurantRideTiles } from "../components/hub/RestaurantRideTiles";
-import { NextEventBanner } from "../components/hub/NextEventBanner";
 import { LocationPingModal } from "../components/hub/LocationPingModal";
 import { listItem, listContainer } from "../utils/motion";
 import { parseEventDate, toDateKey, todayKey } from "../utils/date";
@@ -161,13 +159,6 @@ export function HubPage() {
       animate="show"
     >
 
-      {/* ── Aankomend evenement ──────────────────────────────────────────── */}
-      {event && (
-        <motion.div variants={listItem}>
-          <NextEventBanner event={event} />
-        </motion.div>
-      )}
-
       {/* ── Greeting ──────────────────────────────────────────────────────── */}
       {me?.show_greeting !== false && (
         <motion.div variants={listItem}>
@@ -205,20 +196,11 @@ export function HubPage() {
         </motion.div>
       )}
 
-      {/* ── Action banner ─────────────────────────────────────────────────── */}
-      <DailyActionCheck actions={allActions} />
-
-      {/* ── Quick ride shortcuts (only for events with a hotel component) ──── */}
-      {event?.is_hotel && (
+      {/* ── Quick ride shortcuts — switches to the shared restaurant ride
+            itself in the evening when a meal still needs transport. ──── */}
+      {event && (
         <motion.div variants={listItem}>
-          <QuickRideTiles event={event} />
-        </motion.div>
-      )}
-
-      {/* ── Restaurant ride shortcuts (events without a hotel, but with a meal that needs transport) ──── */}
-      {event && restaurantMeal && (
-        <motion.div variants={listItem}>
-          <RestaurantRideTiles event={event} meal={restaurantMeal} rides={rides ?? []} />
+          <QuickRideTiles event={event} restaurantMeal={restaurantMeal} rides={rides ?? []} />
         </motion.div>
       )}
 
@@ -247,6 +229,9 @@ export function HubPage() {
           />
         </div>
       </motion.div>
+
+      {/* ── Action banner ─────────────────────────────────────────────────── */}
+      <DailyActionCheck actions={allActions} />
 
       {/* ── Hotel rooms ───────────────────────────────────────────────────── */}
       {hotelRooms.length > 0 && (

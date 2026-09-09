@@ -292,7 +292,9 @@ export interface CalendarEvent {
   date: string;
   has_con: boolean;
   is_hotel: boolean;
+  is_party: boolean;
   hotel_location?: string;
+  hotel_info?: string;
   participants: string[];
   image_url?: string;
   description?: string;
@@ -314,7 +316,9 @@ export interface Event {
   event_group_id?: string;
   event_name: string;
   is_hotel: boolean;
+  is_party: boolean;
   hotel_location?: string;
+  hotel_info?: string;
   image_url?: string;
   description?: string;
   location?: string;
@@ -428,4 +432,5 @@ export interface RestaurantGap {
   location: string;
   departureTime: string;
   unassigned: string[];
+  linkedMealId?: string;
 }

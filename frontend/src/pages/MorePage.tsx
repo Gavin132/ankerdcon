@@ -12,6 +12,8 @@ import {
   Sparkles,
   MessageSquare,
   Sun,
+  Github,
+  Youtube,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { CalendarGrid } from "../components/more/CalendarGrid";
@@ -222,21 +224,10 @@ export function MorePage() {
         </div>
       </motion.div>
 
-      {/* App */}
+      {/* Delen */}
       <motion.div variants={listItem}>
-        <p className="section-label mb-3">App</p>
+        <p className="section-label mb-3">Delen</p>
         <div className="card-surface rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
-
-          {/* App identity */}
-          <div className="flex items-center gap-3.5 px-4 py-3.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-              <img src="/assets/images/ankerd-logo.png" alt="Ankerd" className="h-7 w-7 object-contain" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-slate-900 dark:text-white">Ankerd Con</p>
-              <p className="text-xs text-slate-400">Event portal · v{__APP_VERSION__}</p>
-            </div>
-          </div>
 
           {/* QR code row */}
           <button
@@ -279,6 +270,58 @@ export function MorePage() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Repository row */}
+          <a
+            href="https://github.com/Gavin132/ankerdcon"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-50 dark:active:bg-slate-800/50 transition-colors"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
+              <Github size={16} className="text-slate-600 dark:text-slate-300" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-slate-900 dark:text-white">Broncode</p>
+              <p className="text-xs text-slate-400">Bekijk de repository op GitHub</p>
+            </div>
+            <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0" />
+          </a>
+
+          {/* YouTube row */}
+          <a
+            href="https://www.youtube.com/@ankerd"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-50 dark:active:bg-slate-800/50 transition-colors"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-100 dark:bg-red-500/10">
+              <Youtube size={16} className="text-red-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-slate-900 dark:text-white">YouTube</p>
+              <p className="text-xs text-slate-400">Bekijk het YouTube-kanaal</p>
+            </div>
+            <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0" />
+          </a>
+        </div>
+      </motion.div>
+
+      {/* App */}
+      <motion.div variants={listItem}>
+        <p className="section-label mb-3">App</p>
+        <div className="card-surface rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+
+          {/* App identity */}
+          <div className="flex items-center gap-3.5 px-4 py-3.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+              <img src="/icons/icon-192.png" alt="Ankerd" className="h-7 w-7 object-contain" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-slate-900 dark:text-white">Ankerd Con</p>
+              <p className="text-xs text-slate-400">Event portal · v{__APP_VERSION__}</p>
+            </div>
+          </div>
 
           {/* Notifications row */}
           <button

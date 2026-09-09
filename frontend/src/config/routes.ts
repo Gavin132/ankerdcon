@@ -14,6 +14,8 @@ export const routes = {
   acties:    "/acties",
   notifications: "/notifications",
   changelog: "/changelog",
+  /** Deliberately throws on render, to test `ErrorBoundary`'s fallback screen. */
+  testError: "/test-error",
 
   profile: {
     /** Build the URL for a user profile page. Name is URI-encoded automatically. */

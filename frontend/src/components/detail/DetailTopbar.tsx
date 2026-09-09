@@ -1,13 +1,14 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Share2 } from "lucide-react";
 import { HomeLinkButton } from "../common/HomeLinkButton";
 import { isFreshEntry } from "../../hooks/useSmartBack";
 
 interface DetailTopbarProps {
   title: string;
   onBack: () => void;
+  onShare?: () => void;
 }
 
-export function DetailTopbar({ title, onBack }: DetailTopbarProps) {
+export function DetailTopbar({ title, onBack, onShare }: DetailTopbarProps) {
   return (
     <div
       className="sticky top-0 z-10 flex items-center gap-3 h-14 px-4
@@ -26,6 +27,17 @@ export function DetailTopbar({ title, onBack }: DetailTopbarProps) {
       <span className="font-bold text-slate-900 dark:text-white text-sm truncate flex-1 min-w-0">
         {title}
       </span>
+      {onShare && (
+        <button
+          onClick={onShare}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl
+                     text-slate-500 dark:text-slate-400
+                     hover:bg-slate-100 dark:hover:bg-white/[0.08]
+                     hover:text-slate-900 dark:hover:text-white transition-colors"
+        >
+          <Share2 size={17} />
+        </button>
+      )}
       {isFreshEntry() && (
         <HomeLinkButton
           size={17}

@@ -164,7 +164,13 @@ export function ActionCard({
           </div>
           <button
             type="button"
-            onClick={() => navigate(routes.transport)}
+            onClick={() =>
+              navigate(
+                action.gap.linkedMealId
+                  ? routes.meal.view(action.gap.linkedMealId)
+                  : routes.transport,
+              )
+            }
             className="flex items-center gap-1.5 text-xs font-semibold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition-colors"
           >
             <ArrowRight size={12} />

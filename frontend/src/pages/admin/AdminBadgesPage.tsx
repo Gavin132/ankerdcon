@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Plus, ShieldCheck, Users, Upload, Link, GripVertical } from "lucide-react";
+import { Plus, ShieldCheck, Users, Upload, Link, GripVertical, UserX } from "lucide-react";
+import { UserAvatar } from "../../components/common/UserAvatar";
 import {
   useAdminBadges,
   useCreateBadge,
@@ -17,6 +18,8 @@ import { AdminSearch } from "./components/AdminSearch";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 import { AdminPagination } from "./components/AdminPagination";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
+import { DiscardChangesConfirm } from "./components/DiscardChangesConfirm";
+import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
 import { F, L, SECTION, SECTION_TITLE } from "./styles";
 import { toast } from "../../store/toast.store";
 import type { Badge, User } from "../../types";
@@ -47,11 +50,12 @@ function BadgeDrawer({
   const createBadge = useCreateBadge();
   const updateBadge = useUpdateBadge();
 
-  const [form, setForm] = useState<BadgeFormState>(
+  const initialForm = useRef<BadgeFormState>(
     isEdit
       ? { name: badge.name, description: badge.description, image_url: badge.image_url, display_order: badge.display_order }
       : EMPTY,
   );
+  const [form, setForm] = useState<BadgeFormState>(initialForm.current);
   const [uploading, setUploading] = useState(false);
   const [urlMode, setUrlMode] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -96,11 +100,14 @@ function BadgeDrawer({
   const isSaving = createBadge.isPending || updateBadge.isPending;
   const isPending = isSaving || uploading;
   const isValid = !!form.name && !!form.description && !!form.image_url;
+  const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm.current);
+  const { requestClose, confirming, confirmDiscard, cancelDiscard } = useConfirmDiscard(isDirty, onClose);
 
   return (
+    <>
     <AdminDrawer
       open={open}
-      onClose={onClose}
+      onClose={requestClose}
       title={isEdit ? "Badge bewerken" : "Nieuwe badge"}
       subtitle={isEdit ? badge.name : "Voeg een nieuwe badge toe"}
       footer={
@@ -113,7 +120,7 @@ function BadgeDrawer({
             {isSaving ? "Opslaan..." : isEdit ? "Bijwerken" : "Aanmaken"}
           </button>
           <button
-            onClick={onClose}
+            onClick={requestClose}
             className="rounded-xl border border-white/[0.08] px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/[0.05] transition-colors"
           >
             Annuleren
@@ -215,6 +222,8 @@ function BadgeDrawer({
         </div>
       </div>
     </AdminDrawer>
+    <DiscardChangesConfirm open={confirming} onCancel={cancelDiscard} onConfirm={confirmDiscard} />
+    </>
   );
 }
 
@@ -352,6 +361,58 @@ function AssignDrawer({
   );
 }
 
+// ── Badge members drawer ────────────────────────────────────────────────────────
+
+function BadgeMembersDrawer({
+  badge,
+  users,
+  onClose,
+}: {
+  badge: Badge | null;
+  users: User[];
+  onClose: () => void;
+}) {
+  const unassign = useUnassignBadge();
+
+  const members = badge
+    ? users.filter((u) => (u.badge_ids ?? []).includes(badge.id))
+    : [];
+
+  return (
+    <AdminDrawer
+      open={badge !== null}
+      onClose={onClose}
+      title={badge?.name ?? ""}
+      subtitle={`${members.length} ${members.length === 1 ? "gebruiker" : "gebruikers"} toegewezen`}
+    >
+      {members.length === 0 ? (
+        <p className="py-6 text-center text-sm text-slate-500">Nog niemand heeft deze badge.</p>
+      ) : (
+        <div className="space-y-1.5">
+          {members.map((u) => (
+            <div
+              key={u.id}
+              className="flex items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2"
+            >
+              <UserAvatar name={u.name} user={u} className="h-7 w-7 text-[9px]" />
+              <span className="flex-1 text-sm text-slate-200">{u.name}</span>
+              <button
+                type="button"
+                onClick={() => u.id && badge && unassign.mutate({ userId: u.id, badgeId: badge.id })}
+                disabled={unassign.isPending}
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-40 transition-colors"
+                title="Badge verwijderen"
+              >
+                <UserX size={13} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </AdminDrawer>
+  );
+}
+
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export function AdminBadgesPage() {
@@ -364,6 +425,7 @@ export function AdminBadgesPage() {
   const [page, setPage] = useState(0);
   const [drawer, setDrawer] = useState<Badge | "new" | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
+  const [viewingBadge, setViewingBadge] = useState<Badge | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   // Local sorted list — drives the table; synced from server when not dragging
@@ -471,17 +533,17 @@ export function AdminBadgesPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
-                <th className="w-8 px-3 py-3" />
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="w-6 sm:w-8 px-1.5 sm:px-3 py-2.5 sm:py-3" />
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Badge
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="hidden sm:table-cell px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Omschrijving
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Toegewezen aan
                 </th>
-                <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Acties
                 </th>
               </tr>
@@ -516,38 +578,45 @@ export function AdminBadgesPage() {
                       onDragEnd={() => { dragId.current = null; }}
                       className="hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
                     >
-                      <td className="pl-3 pr-1 py-3.5 cursor-grab active:cursor-grabbing">
+                      <td className="pl-1.5 sm:pl-3 pr-0.5 sm:pr-1 py-2.5 sm:py-3.5 cursor-grab active:cursor-grabbing">
                         <GripVertical size={16} className="text-slate-300 dark:text-slate-600" />
                       </td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-3">
+                      <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                        <div className="flex items-center gap-2 sm:gap-3">
                           <img
                             src={badge.image_url}
                             alt={badge.name}
-                            className="h-9 w-9 rounded-full object-cover border border-slate-200 dark:border-white/10 shrink-0"
+                            className="h-7 w-7 sm:h-9 sm:w-9 rounded-full object-cover border border-slate-200 dark:border-white/10 shrink-0"
                           />
-                          <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                             {badge.name}
                           </p>
                         </div>
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td className="hidden sm:table-cell px-5 py-3.5">
                         <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs truncate">
                           {badge.description}
                         </p>
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td
+                        className="px-2 sm:px-5 py-2.5 sm:py-3.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         {assignedCount > 0 ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 dark:bg-sky-500/10 px-2.5 py-1 text-xs font-semibold text-sky-700 dark:text-sky-400">
+                          <button
+                            type="button"
+                            onClick={() => setViewingBadge(badge)}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 dark:bg-sky-500/10 px-2.5 py-1 text-xs font-semibold text-sky-700 dark:text-sky-400 hover:bg-sky-200 dark:hover:bg-sky-500/20 transition-colors"
+                          >
                             <Users size={10} />
                             {assignedCount}
-                          </span>
+                          </button>
                         ) : (
                           <span className="text-xs text-slate-400">—</span>
                         )}
                       </td>
                       <td
-                        className="px-5 py-3.5"
+                        className="px-2 sm:px-5 py-2.5 sm:py-3.5"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <DeleteConfirmActions
@@ -589,6 +658,13 @@ export function AdminBadgesPage() {
         onClose={() => setAssignOpen(false)}
         users={users}
         badges={badges}
+      />
+
+      {/* Badge members drawer */}
+      <BadgeMembersDrawer
+        badge={viewingBadge}
+        users={users}
+        onClose={() => setViewingBadge(null)}
       />
     </div>
   );

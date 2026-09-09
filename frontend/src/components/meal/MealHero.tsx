@@ -1,17 +1,29 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Clock, MapPin, Banknote, Bus, CalendarDays, UtensilsCrossed } from "lucide-react";
+import { Clock, MapPin, Banknote, Bus, CalendarDays, UtensilsCrossed, UserCheck, UserMinus } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
+import { UserProfilePopup, type AnchorRect } from "../common/UserProfilePopup";
+import { useCalendar } from "../../hooks/useCalendar";
+import { useAuthStore } from "../../store/auth.store";
 import { formatDateTime } from "../../utils/format";
 import { routes } from "../../config/routes";
 import type { CalendarEvent, Meal, User } from "../../types";
+
+const CLOSED_RECT: AnchorRect = { top: 0, left: 0, right: 0, height: 0 };
 
 interface MealHeroProps {
   meal: Meal;
   linkedEvent?: CalendarEvent;
   users: User[];
+  onRsvpClick: () => void;
+  onCancelClick: () => void;
 }
 
-export function MealHero({ meal, linkedEvent, users }: MealHeroProps) {
+export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick }: MealHeroProps) {
+  const { data: calendarEvents } = useCalendar();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const [popupUser, setPopupUser] = useState<User | null>(null);
+  const [popupAnchorRect, setPopupAnchorRect] = useState<AnchorRect>(CLOSED_RECT);
   const participants = meal.participants ?? [];
 
   function resolveUser(stored: string) {
@@ -21,6 +33,12 @@ export function MealHero({ meal, linkedEvent, users }: MealHeroProps) {
         u.discord_username === stored ||
         u.aliases?.includes(stored),
     );
+  }
+
+  function openPopup(user: User, e: React.MouseEvent<HTMLElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setPopupAnchorRect({ top: rect.top, left: rect.left, right: rect.right, height: rect.height });
+    setPopupUser(user);
   }
 
   return (
@@ -103,32 +121,68 @@ export function MealHero({ meal, linkedEvent, users }: MealHeroProps) {
           )}
         </div>
 
-        {/* Attendees strip */}
-        {participants.length > 0 && (
-          <div className="mt-5 flex items-center gap-3">
-            <div className="flex -space-x-2">
-              {participants.slice(0, 6).map((p) => {
-                const u = resolveUser(p);
-                return (
-                  <UserAvatar
-                    key={p}
-                    name={u?.name ?? p}
-                    user={u}
-                    className="h-7 w-7 text-[10px] ring-2 ring-black/30"
-                  />
-                );
-              })}
+        {/* Attendees + sign-up */}
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          {participants.length > 0 && (
+            <div className="flex items-center gap-3">
+              <div className="flex -space-x-2">
+                {participants.slice(0, 6).map((p) => {
+                  const u = resolveUser(p);
+                  return u ? (
+                    <button key={p} type="button" onClick={(e) => openPopup(u, e)}>
+                      <UserAvatar
+                        name={u.name}
+                        user={u}
+                        className="h-7 w-7 text-[10px] ring-2 ring-black/30 hover:ring-white/40 transition-all"
+                      />
+                    </button>
+                  ) : (
+                    <UserAvatar
+                      key={p}
+                      name={p}
+                      className="h-7 w-7 text-[10px] ring-2 ring-black/30"
+                    />
+                  );
+                })}
+              </div>
+              <span className="text-xs font-semibold text-white/70">
+                <span className="font-black text-white">{participants.length}</span>{" "}
+                {participants.length === 1 ? "aanmelding" : "aanmeldingen"}
+              </span>
             </div>
-            <span className="text-xs font-semibold text-white/70">
-              <span className="font-black text-white">{participants.length}</span>{" "}
-              {participants.length === 1 ? "aanmelding" : "aanmeldingen"}
-            </span>
+          )}
+          <div className="flex items-center gap-2 ml-auto">
+            {participants.length > 0 && (
+              <button
+                type="button"
+                onClick={onCancelClick}
+                className="flex items-center gap-1.5 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 px-3 py-2 text-xs font-bold text-white/80 hover:bg-black/50 hover:border-white/20 active:scale-[0.97] transition-all"
+              >
+                <UserMinus size={13} /> Afmelden
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onRsvpClick}
+              className="flex items-center gap-1.5 rounded-xl gradient-brand px-3.5 py-2 text-xs font-bold text-white hover:opacity-90 active:scale-[0.97] transition-all"
+            >
+              <UserCheck size={13} /> Aanmelden
+            </button>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Bottom fade into page bg */}
       <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-slate-50 dark:from-slate-950 to-transparent pointer-events-none" />
+
+      <UserProfilePopup
+        user={popupUser}
+        open={popupUser !== null}
+        isOwn={currentUser === popupUser?.id}
+        anchorRect={popupAnchorRect}
+        onClose={() => setPopupUser(null)}
+        calendarEvents={calendarEvents}
+      />
     </div>
   );
 }

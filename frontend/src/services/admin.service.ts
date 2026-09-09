@@ -178,20 +178,22 @@ export async function getAdminEventDays(): Promise<EventDay[]> {
 
 export interface AdminCreateEventPayload {
   event_name: string;
-  event_group_id?: string;
+  event_group_id?: string | null;
   is_hotel?: boolean;
-  hotel_location?: string;
-  image_url?: string;
-  description?: string;
-  location?: string;
-  website?: string;
-  ticket_url?: string;
-  ticket_sale_start?: string;
+  is_party?: boolean;
+  hotel_location?: string | null;
+  hotel_info?: string | null;
+  image_url?: string | null;
+  description?: string | null;
+  location?: string | null;
+  website?: string | null;
+  ticket_url?: string | null;
+  ticket_sale_start?: string | null;
   ticket_types?: { title: string; price: number }[];
-  locker_info?: string;
-  parking_info?: string;
-  special_instructions?: string;
-  what_to_bring?: string;
+  locker_info?: string | null;
+  parking_info?: string | null;
+  special_instructions?: string | null;
+  what_to_bring?: string | null;
 }
 
 export async function createAdminEvent(payload: AdminCreateEventPayload): Promise<Event> {

@@ -9,7 +9,9 @@ class CalendarEvent(BaseModel):
     date: str
     has_con: bool = True
     is_hotel: bool = False
+    is_party: bool = False
     hotel_location: str | None = None
+    hotel_info: str | None = None
     participants: list[str] = []
     # Info fields
     image_url: str | None = None
@@ -29,6 +31,8 @@ class CalendarEvent(BaseModel):
     def clean_nulls(cls, data: Any) -> Any:
         if data.get('is_hotel') is None:
             data['is_hotel'] = False
+        if data.get('is_party') is None:
+            data['is_party'] = False
         if data.get('has_con') is None:
             data['has_con'] = True
         if data.get('participants') is None:
@@ -47,7 +51,9 @@ class Event(BaseModel):
     event_group_id: str | None = None
     event_name: str
     is_hotel: bool = False
+    is_party: bool = False
     hotel_location: str | None = None
+    hotel_info: str | None = None
     image_url: str | None = None
     description: str | None = None
     location: str | None = None

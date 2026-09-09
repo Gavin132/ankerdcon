@@ -87,10 +87,10 @@ export function AdminWhitelistPage() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
-              <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                 Identificatie
               </th>
-              <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
                 Acties
               </th>
             </tr>
@@ -107,32 +107,32 @@ export function AdminWhitelistPage() {
             ) : (
               entries.map((entry) => (
                 <tr key={entry.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors">
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-100 dark:bg-sky-500/10">
+                  <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                    <div className="flex items-center gap-2 sm:gap-2.5">
+                      <div className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-lg bg-sky-100 dark:bg-sky-500/10">
                         {entry.discord_id
                           ? <MessageSquare size={13} className="text-sky-500" />
                           : <Mail size={13} className="text-sky-500" />}
                       </div>
-                      <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                      <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                         {entry.discord_id || entry.email}
                       </span>
                     </div>
                   </td>
-                  <td className="px-5 py-3.5">
+                  <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
                     {confirmDeleteId === entry.id ? (
-                      <div className="flex items-center justify-end gap-2">
-                        <span className="text-xs text-slate-500">Verwijderen?</span>
+                      <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+                        <span className="hidden sm:inline text-xs text-slate-500">Verwijderen?</span>
                         <button
                           onClick={() => handleDelete(entry.id)}
                           disabled={deleteMutation.isPending}
-                          className="rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 disabled:opacity-50 transition-colors"
+                          className="rounded-lg px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs font-semibold bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 disabled:opacity-50 transition-colors"
                         >
                           {deleteMutation.isPending ? "..." : "Ja"}
                         </button>
                         <button
                           onClick={() => setConfirmDeleteId(null)}
-                          className="rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-white/[0.06] text-slate-400 hover:bg-white/[0.1] transition-colors"
+                          className="rounded-lg px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs font-semibold bg-white/[0.06] text-slate-400 hover:bg-white/[0.1] transition-colors"
                         >
                           Nee
                         </button>
@@ -141,7 +141,7 @@ export function AdminWhitelistPage() {
                       <div className="flex items-center justify-end">
                         <button
                           onClick={() => setConfirmDeleteId(entry.id)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors"
+                          className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors"
                           title="Verwijderen"
                         >
                           <Trash2 size={14} />

@@ -14,6 +14,7 @@ import {
   Sparkles,
   Clock,
   ListChecks,
+  AlertTriangle,
 } from "lucide-react";
 import { routes } from "../../config/routes";
 
@@ -81,6 +82,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Preview: Onboarding", path: routes.admin.previewOnboarding, icon: FlaskConical },
       { label: "Inloggen als gebruiker", path: routes.admin.impersonate, icon: UserCog },
       { label: "Tijdreis-widget", path: routes.admin.timeTravel, icon: Clock },
+      { label: "Foutpagina testen", path: routes.testError, icon: AlertTriangle },
     ],
   },
 ];

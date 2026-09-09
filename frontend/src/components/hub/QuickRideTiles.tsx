@@ -5,27 +5,61 @@ import { Car, Users } from "lucide-react";
 import { routes } from "../../config/routes";
 import { guessQuickRideDirection } from "../../utils/quickRide";
 import { QuickRideModal } from "../transport/QuickRideModal";
-import type { CalendarEvent } from "../../types";
+import { JoinRideModal } from "../transport/JoinRideModal";
+import { RestaurantQuickDriverModal } from "../transport/RestaurantQuickDriverModal";
+import type { CalendarEvent, Meal, Ride } from "../../types";
 
 interface QuickRideTilesProps {
-  /** The nearest upcoming event — caller is responsible for only rendering
-   * this when that event has `is_hotel` set. */
+  /** The nearest upcoming event. */
   event: CalendarEvent;
+  /** A meal later that day still needing transport — only ever set for a
+   * non-hotel event (see HubPage). When present, the evening tile switches
+   * over to the shared Restaurant-direction ride for it instead of the
+   * regular hotel/home leg, since that's the more immediately relevant ride. */
+  restaurantMeal?: Meal;
+  rides?: Ride[];
 }
 
-/** Two hub shortcuts for the hotel↔venue shuttle, relabeled by time of day. */
-export function QuickRideTiles({ event }: QuickRideTilesProps) {
+/** Two hub shortcuts for getting to/from the event, relabeled by time of day
+ * — "naar hotel"/"naar congres" when the trip has a hotel leg, "naar
+ * evenement"/"naar huis" when it doesn't, or "naar restaurant" in the
+ * evening when there's a meal still needing a ride. */
+export function QuickRideTiles({ event, restaurantMeal, rides = [] }: QuickRideTilesProps) {
   const navigate = useNavigate();
-  const [modalOpen, setModalOpen] = useState(false);
+  const [offerOpen, setOfferOpen] = useState(false);
+  const [joinOpen, setJoinOpen] = useState(false);
+  const [restaurantOfferOpen, setRestaurantOfferOpen] = useState(false);
+
   const direction = guessQuickRideDirection();
   const toHotel = direction === "Outbound";
-  const label = toHotel ? "naar hotel" : "naar congres";
+  const isRestaurantLeg = toHotel && !!restaurantMeal;
+
+  const label = isRestaurantLeg
+    ? "naar restaurant"
+    : event.is_hotel
+      ? (toHotel ? "naar hotel" : "naar congres")
+      : (toHotel ? "naar huis" : "naar evenement");
+
+  const existingRestaurantRide = isRestaurantLeg
+    ? rides.find((r) => r.direction === "Restaurant" && r.linked_meal_id === restaurantMeal!.id)
+    : undefined;
+
+  function handleOfferClick() {
+    if (isRestaurantLeg) setRestaurantOfferOpen(true);
+    else setOfferOpen(true);
+  }
+
+  function handleJoinClick() {
+    if (!isRestaurantLeg) { setJoinOpen(true); return; }
+    if (existingRestaurantRide) navigate(routes.ride.view(existingRestaurantRide.id));
+    else navigate(routes.transport, { state: { tab: "Restaurant" } });
+  }
 
   return (
     <>
       <div className="grid grid-cols-2 gap-3">
         <motion.button
-          onClick={() => setModalOpen(true)}
+          onClick={handleOfferClick}
           className="relative gradient-hero shadow-hero rounded-2xl overflow-hidden p-4 text-left flex flex-col gap-4 transition-colors duration-150 hover:bg-white/[0.04]"
           whileHover={{ y: -1 }}
           whileTap={{ scale: 0.98 }}
@@ -42,7 +76,7 @@ export function QuickRideTiles({ event }: QuickRideTilesProps) {
         </motion.button>
 
         <motion.button
-          onClick={() => navigate(routes.transport, { state: { tab: direction } })}
+          onClick={handleJoinClick}
           className="relative gradient-hero shadow-hero rounded-2xl overflow-hidden p-4 text-left flex flex-col gap-4 transition-colors duration-150 hover:bg-white/[0.04]"
           whileHover={{ y: -1 }}
           whileTap={{ scale: 0.98 }}
@@ -59,12 +93,32 @@ export function QuickRideTiles({ event }: QuickRideTilesProps) {
         </motion.button>
       </div>
 
-      <QuickRideModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        event={event}
-        initialDirection={direction}
-      />
+      {isRestaurantLeg ? (
+        <RestaurantQuickDriverModal
+          open={restaurantOfferOpen}
+          onClose={() => setRestaurantOfferOpen(false)}
+          event={event}
+          meal={restaurantMeal!}
+          existingRide={existingRestaurantRide}
+        />
+      ) : (
+        <>
+          <QuickRideModal
+            open={offerOpen}
+            onClose={() => setOfferOpen(false)}
+            event={event}
+            initialDirection={direction}
+          />
+
+          <JoinRideModal
+            open={joinOpen}
+            onClose={() => setJoinOpen(false)}
+            event={event}
+            initialDirection={direction}
+            onOfferInstead={() => { setJoinOpen(false); setOfferOpen(true); }}
+          />
+        </>
+      )}
     </>
   );
 }

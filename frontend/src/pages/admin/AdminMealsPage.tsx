@@ -25,9 +25,11 @@ import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 import { AdminPagination } from "./components/AdminPagination";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 import { DrawerFooter } from "./components/DrawerFooter";
+import { DiscardChangesConfirm } from "./components/DiscardChangesConfirm";
 import { ParticipantList } from "./components/ParticipantList";
 import { AdminBulkBar } from "./components/AdminBulkBar";
 import { useTableSelection } from "../../hooks/useTableSelection";
+import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
 
 const PAGE_SIZE = 15;
 
@@ -69,7 +71,7 @@ function MealDrawer({
     register,
     control,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<MealForm>({
     resolver: zodResolver(mealSchema),
     defaultValues: {
@@ -124,16 +126,18 @@ function MealDrawer({
   }
 
   const isPending = createMutation.isPending || updateMutation.isPending;
+  const { requestClose, confirming, confirmDiscard, cancelDiscard } = useConfirmDiscard(isDirty, onClose);
 
   return (
+    <>
     <AdminDrawer
       open={open}
-      onClose={onClose}
+      onClose={requestClose}
       title={isEdit ? "Maaltijd bewerken" : "Nieuwe maaltijd"}
       subtitle={isEdit ? meal.meal_name : "Voeg een food event toe"}
       footer={
         <DrawerFooter
-          onCancel={onClose}
+          onCancel={requestClose}
           formId="meal-form"
           isPending={isPending}
           isEdit={isEdit}
@@ -301,6 +305,8 @@ function MealDrawer({
         )}
       </form>
     </AdminDrawer>
+    <DiscardChangesConfirm open={confirming} onCancel={cancelDiscard} onConfirm={confirmDiscard} />
+    </>
   );
 }
 
@@ -393,7 +399,7 @@ export function AdminMealsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
-                <th className="w-10 pl-4 pr-2 py-3">
+                <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
                   <input
                     type="checkbox"
                     checked={allSelected}
@@ -404,19 +410,19 @@ export function AdminMealsPage() {
                     className="cb"
                   />
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Maaltijd
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Tijd
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="hidden sm:table-cell px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Kosten
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Deelnemers
                 </th>
-                <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Acties
                 </th>
               </tr>
@@ -440,7 +446,7 @@ export function AdminMealsPage() {
                     className={`transition-colors ${selectedIds.has(meal.id) ? "bg-sky-500/[0.06] hover:bg-sky-500/[0.08]" : "hover:bg-slate-50 dark:hover:bg-white/[0.03]"}`}
                   >
                     <td
-                      className="w-10 pl-4 pr-2 py-3.5"
+                      className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3.5"
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleSelect(meal.id);
@@ -454,28 +460,28 @@ export function AdminMealsPage() {
                         className="cb"
                       />
                     </td>
-                    <td className="px-5 py-3.5">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                    <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate max-w-[160px] sm:max-w-none">
                         {meal.meal_name}
                       </p>
                       {meal.location && (
                         <div className="flex items-center gap-1 mt-0.5">
-                          <MapPin size={10} className="text-slate-400" />
-                          <span className="text-xs text-slate-400">
+                          <MapPin size={10} className="text-slate-400 shrink-0" />
+                          <span className="text-xs text-slate-400 truncate max-w-[140px] sm:max-w-none">
                             {meal.location}
                           </span>
                         </div>
                       )}
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                       <div className="flex items-center gap-1.5">
-                        <Clock size={12} className="text-slate-400" />
-                        <span className="text-sm font-mono text-slate-700 dark:text-slate-300">
+                        <Clock size={12} className="text-slate-400 shrink-0" />
+                        <span className="text-sm font-mono text-slate-700 dark:text-slate-300 whitespace-nowrap">
                           {formatDateTime(meal.time)}
                         </span>
                       </div>
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="hidden sm:table-cell px-5 py-3.5">
                       <div className="flex items-center gap-1">
                         <Euro size={12} className="text-slate-400" />
                         <span className="text-sm text-slate-700 dark:text-slate-300">
@@ -491,7 +497,7 @@ export function AdminMealsPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
                       <div className="flex -space-x-1.5">
                         {meal.participants.length === 0 ? (
                           <span className="text-xs text-slate-400">—</span>
@@ -501,11 +507,11 @@ export function AdminMealsPage() {
                               <UserAvatar
                                 key={p}
                                 name={p}
-                                className="h-6 w-6 text-[8px] ring-2 ring-slate-800"
+                                className="h-5 w-5 sm:h-6 sm:w-6 text-[7px] sm:text-[8px] ring-2 ring-slate-800"
                               />
                             ))}
                             {meal.participants.length > 4 && (
-                              <span className="flex h-6 w-6 items-center justify-center rounded-full ring-2 ring-slate-800 bg-slate-700 text-[9px] font-bold text-slate-300">
+                              <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full ring-2 ring-slate-800 bg-slate-700 text-[8px] sm:text-[9px] font-bold text-slate-300">
                                 +{meal.participants.length - 4}
                               </span>
                             )}
@@ -513,7 +519,7 @@ export function AdminMealsPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
                       <DeleteConfirmActions
                         id={meal.id}
                         confirmId={confirmDeleteId}

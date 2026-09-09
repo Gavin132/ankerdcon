@@ -2,7 +2,8 @@ import { useState, type ElementType } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, Info, Megaphone, X } from "lucide-react";
 import { useActiveAnnouncements } from "../../hooks/useAnnouncements";
-import type { AnnouncementSeverity } from "../../types";
+import { Modal } from "../common/Modal";
+import type { Announcement, AnnouncementSeverity } from "../../types";
 
 const DISMISSED_KEY = "ankerd-dismissed-announcements";
 
@@ -31,6 +32,7 @@ const SEVERITY_STYLE: Record<AnnouncementSeverity, { bg: string; icon: ElementTy
 export function AnnouncementBanner() {
   const { data: announcements } = useActiveAnnouncements();
   const [dismissed, setDismissed] = useState<Set<string>>(getDismissedIds);
+  const [expanded, setExpanded] = useState<Announcement | null>(null);
 
   const visible = (announcements ?? []).filter((a) => !dismissed.has(a.id));
   if (visible.length === 0) return null;
@@ -57,26 +59,44 @@ export function AnnouncementBanner() {
               transition={{ duration: 0.25 }}
               className={`overflow-hidden text-white ${bg}`}
             >
-              <div className="mx-auto flex max-w-2xl items-center gap-2.5 px-5 py-2.5">
+              {/* Whole row opens the full message — a long one otherwise just
+                  wraps the banner taller and taller with nothing to tap. */}
+              <button
+                type="button"
+                onClick={() => setExpanded(announcement)}
+                className="mx-auto flex w-full max-w-2xl items-center gap-2.5 px-5 py-2.5 text-left hover:bg-black/5 transition-colors"
+              >
                 <Icon size={15} className="shrink-0" />
-                <p className="min-w-0 flex-1 text-xs font-semibold leading-snug">
+                <p className="min-w-0 flex-1 text-xs font-semibold leading-snug truncate">
                   {announcement.message}
                 </p>
                 {announcement.dismissible && (
-                  <button
-                    type="button"
-                    onClick={() => dismiss(announcement.id)}
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => { e.stopPropagation(); dismiss(announcement.id); }}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); dismiss(announcement.id); } }}
                     aria-label="Sluiten"
                     className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg hover:bg-white/20 transition-colors"
                   >
                     <X size={14} />
-                  </button>
+                  </span>
                 )}
-              </div>
+              </button>
             </motion.div>
           );
         })}
       </AnimatePresence>
+
+      <Modal
+        open={expanded !== null}
+        onClose={() => setExpanded(null)}
+        title="Aankondiging"
+      >
+        <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-line">
+          {expanded?.message}
+        </p>
+      </Modal>
     </div>
   );
 }

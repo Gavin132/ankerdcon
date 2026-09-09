@@ -41,7 +41,7 @@ export function DayStrip({ days, currentId, onNavigate }: DayStripProps) {
                 isActive
                   ? isTravelDay
                     ? "bg-teal-600 dark:bg-teal-500 shadow-sm"
-                    : "bg-slate-900 dark:bg-white shadow-sm"
+                    : "bg-blue-600 dark:bg-blue-500 shadow-sm"
                   : isTravelDay
                     ? "bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 hover:border-teal-300 dark:hover:border-teal-700"
                     : "bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
@@ -56,7 +56,7 @@ export function DayStrip({ days, currentId, onNavigate }: DayStripProps) {
                 <span
                   className={`text-[9px] font-black uppercase tracking-widest ${
                     isActive
-                      ? "text-white/50 dark:text-slate-900/50"
+                      ? "text-white/50"
                       : "text-slate-400 dark:text-slate-500"
                   }`}
                 >
@@ -66,7 +66,7 @@ export function DayStrip({ days, currentId, onNavigate }: DayStripProps) {
               <span
                 className={`text-[13px] font-bold leading-none ${
                   isActive
-                    ? isTravelDay ? "text-white" : "text-white dark:text-slate-900"
+                    ? "text-white"
                     : isTravelDay ? "text-teal-700 dark:text-teal-300" : "text-slate-700 dark:text-slate-300"
                 }`}
               >

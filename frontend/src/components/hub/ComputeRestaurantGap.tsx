@@ -20,6 +20,7 @@ export function computeRestaurantGaps(rides: Ride[]): RestaurantGap[] {
           location: ride.start_location,
           departureTime: ride.departure_time,
           unassigned,
+          linkedMealId: ride.linked_meal_id,
         },
       ];
     });

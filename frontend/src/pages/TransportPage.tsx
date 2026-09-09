@@ -9,6 +9,7 @@ import {
   History,
   Utensils,
   CalendarClock,
+  X as XIcon,
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
@@ -27,29 +28,47 @@ import { RestaurantCard } from "../components/transport/RestaurantCard";
 import { RideTimeline } from "../components/transport/RideTimeline";
 import { MealPicker } from "../components/common/MealPicker";
 import { useRides, useCreateRide } from "../hooks/useRides";
-import { useUsers } from "../hooks/useUsers";
+import { useUsers, useCurrentUser } from "../hooks/useUsers";
 import { useCalendar } from "../hooks/useCalendar";
 import { useMeals } from "../hooks/useMeals";
 import { toast } from "../store/toast.store";
-import { getRideStatus } from "../utils/rides";
-import { toDateKey, todayKey } from "../utils/date";
-import { useTimeStore, getNow } from "../store/time.store";
-import type { Direction, VehicleType, Ride } from "../types";
+import { getRideStatus, groupRidesByDay } from "../utils/rides";
+import { toDateKey, todayKey, parseEventDate } from "../utils/date";
+import { useTimeStore } from "../store/time.store";
+import type { Direction } from "../types";
 
-const createSchema = z.object({
-  direction: z.enum(["Inbound", "Outbound", "Restaurant"]),
-  vehicle_type: z.enum(["Car", "Public Transport"]),
-  driver: z.string().min(1, "Verplicht"),
-  departure_time: z.string().min(1, "Verplicht"),
-  start_location: z.string().min(1, "Verplicht"),
-  end_location: z.string().optional(),
-  total_seats: z.coerce.number().min(1).max(99),
-  parking_info: z.string().optional(),
-  car_available: z.boolean().optional(),
-  action_required: z.boolean().optional(),
-  linked_event_id: z.string().optional(),
-  linked_meal_id: z.string().optional(),
-});
+const createSchema = z
+  .object({
+    direction: z.enum(["Inbound", "Outbound", "Restaurant"]),
+    driver: z.string().optional(),
+    linked_event_id: z.string().optional(),
+    linked_meal_id: z.string().optional(),
+    ride_time: z.string().optional(),
+    departure_time: z.string().optional(),
+    start_location: z.string().min(1, "Verplicht"),
+    end_location: z.string().optional(),
+    total_seats: z.coerce.number().min(1).max(99),
+    parking_info: z.string().optional(),
+    car_available: z.boolean().optional(),
+    action_required: z.boolean().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.driver?.trim()) {
+      ctx.addIssue({ path: ["driver"], code: z.ZodIssueCode.custom, message: "Verplicht" });
+    }
+    if (data.direction === "Restaurant") {
+      if (!data.departure_time) {
+        ctx.addIssue({ path: ["departure_time"], code: z.ZodIssueCode.custom, message: "Verplicht" });
+      }
+    } else {
+      if (!data.linked_event_id) {
+        ctx.addIssue({ path: ["linked_event_id"], code: z.ZodIssueCode.custom, message: "Verplicht" });
+      }
+      if (!data.ride_time) {
+        ctx.addIssue({ path: ["ride_time"], code: z.ZodIssueCode.custom, message: "Verplicht" });
+      }
+    }
+  });
 
 type CreateForm = z.infer<typeof createSchema>;
 
@@ -64,29 +83,6 @@ const container = {
 
 const TAB_ORDER: Direction[] = ["Inbound", "Outbound", "Restaurant"];
 
-/** "Vandaag" / "Morgen" / a Dutch weekday+date, for grouping the ride list by day. */
-function rideDayLabel(date: Date): string {
-  const key = toDateKey(date);
-  if (key === todayKey()) return "Vandaag";
-  const tomorrow = new Date(getNow());
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  if (key === toDateKey(tomorrow)) return "Morgen";
-  return date.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" });
-}
-
-/** Buckets an already time-sorted ride list into consecutive same-day groups. */
-function groupRidesByDay(rides: Ride[]): { label: string; rides: Ride[] }[] {
-  const groups: { label: string; rides: Ride[] }[] = [];
-  for (const ride of rides) {
-    const parsed = new Date(ride.departure_time.replace(" ", "T"));
-    const label = isNaN(parsed.getTime()) ? "Onbekende datum" : rideDayLabel(parsed);
-    const last = groups[groups.length - 1];
-    if (last && last.label === label) last.rides.push(ride);
-    else groups.push({ label, rides: [ride] });
-  }
-  return groups;
-}
-
 export function TransportPage() {
   const location = useLocation();
   useTimeStore((s) => s.override); // re-render when the time-travel override changes
@@ -100,10 +96,19 @@ export function TransportPage() {
   const touchStartY = useRef<number | null>(null);
   const { data: rides, isLoading } = useRides();
   const { data: users } = useUsers();
+  const { data: currentUser } = useCurrentUser();
   const { data: events = [] } = useCalendar();
   const { data: meals = [] } = useMeals();
   const userNames = (users ?? []).map((u) => u.name);
   const createMutation = useCreateRide();
+
+  // Linking a ride to an event only makes sense for something still coming
+  // up — a past event's date isn't a useful default for a new ride.
+  const todayStr = todayKey();
+  const upcomingEvents = events.filter((e) => {
+    const d = parseEventDate(e.date);
+    return d && toDateKey(d) >= todayStr;
+  });
 
   const {
     register,
@@ -117,22 +122,18 @@ export function TransportPage() {
     resolver: zodResolver(createSchema),
     defaultValues: {
       direction: "Inbound",
-      vehicle_type: "Car",
       total_seats: 5,
     },
   });
 
-  const vehicleType = watch("vehicle_type");
   const formDirection = watch("direction");
 
   useEffect(() => {
-    if (vehicleType === "Public Transport" || formDirection === "Restaurant") {
-      setValue("total_seats", 99);
-    }
     if (formDirection === "Restaurant") {
+      setValue("total_seats", 99);
       setValue("action_required", true);
     }
-  }, [vehicleType, formDirection, setValue]);
+  }, [formDirection, setValue]);
 
   const allFiltered = (rides ?? []).filter((r) => r.direction === tab);
   const activeRides = allFiltered.filter(
@@ -147,7 +148,7 @@ export function TransportPage() {
     );
 
   function openCreate() {
-    reset({ direction: tab, vehicle_type: "Car", total_seats: 5 });
+    reset({ direction: tab, total_seats: 5, driver: currentUser?.name ?? "" });
     setCreateOpen(true);
   }
 
@@ -157,12 +158,19 @@ export function TransportPage() {
   }
 
   async function onCreate(values: CreateForm) {
+    const departureTime = (() => {
+      if (values.direction === "Restaurant") return values.departure_time!;
+      const linkedEvent = events.find((e) => e.id === values.linked_event_id);
+      const eventDate = linkedEvent ? parseEventDate(linkedEvent.date) : null;
+      const dateKey = eventDate ? toDateKey(eventDate) : "";
+      return `${dateKey}T${values.ride_time}`;
+    })();
     try {
       await createMutation.mutateAsync({
         direction: values.direction as Direction,
-        vehicle_type: values.vehicle_type as VehicleType,
-        driver: values.driver,
-        departure_time: values.departure_time,
+        vehicle_type: "Car",
+        driver: values.driver ?? "",
+        departure_time: departureTime,
         start_location: values.start_location,
         end_location: values.end_location || undefined,
         total_seats: values.total_seats,
@@ -363,73 +371,112 @@ export function TransportPage() {
       >
         <form id="create-ride-form" onSubmit={handleSubmit(onCreate)} className="space-y-5">
 
-          {/* Type & richting */}
+          {/* Richting */}
           <div className={SF}>
-            <p className={ST}>Type & richting</p>
-            <div className={`grid gap-3 ${formDirection === "Restaurant" ? "grid-cols-1" : "grid-cols-2"}`}>
-              <div>
-                <label className={SL}>Richting</label>
-                <select className="input-field dark:[color-scheme:dark]" {...register("direction")}>
-                  <option value="Inbound">Heen</option>
-                  <option value="Outbound">Terug</option>
-                  <option value="Restaurant">Restaurant</option>
-                </select>
-              </div>
-              {formDirection !== "Restaurant" && (
-                <div>
-                  <label className={SL}>Type</label>
-                  <select className="input-field dark:[color-scheme:dark]" {...register("vehicle_type")}>
-                    <option value="Car">Auto</option>
-                    <option value="Public Transport">Openbaar Vervoer</option>
-                  </select>
-                </div>
-              )}
-            </div>
+            <p className={ST}>Richting</p>
+            <select className="input-field dark:[color-scheme:dark]" {...register("direction")}>
+              <option value="Inbound">Heen</option>
+              <option value="Outbound">Terug</option>
+              <option value="Restaurant">Restaurant</option>
+            </select>
           </div>
 
-          {/* Chauffeur */}
+          {/* Chauffeur — defaults to jezelf, maar kan verwijderd worden als je de rit voor iemand anders aanmaakt */}
           <div className={SF}>
-            <p className={ST}>
-              {formDirection === "Restaurant" ? "Organisator" : vehicleType === "Car" ? "Chauffeur" : "Vervoerder"}
-            </p>
-            {vehicleType === "Car" || formDirection === "Restaurant" ? (
+            <p className={ST}>{formDirection === "Restaurant" ? "Organisator" : "Chauffeur"}</p>
+            <div className="relative">
               <NamePicker
                 options={userNames}
                 value={watch("driver") ?? ""}
-                onChange={(v) => setValue("driver", v)}
+                onChange={(v) => setValue("driver", v, { shouldValidate: true })}
                 placeholder="Zoek naam…"
               />
-            ) : (
-              <input
-                className="input-field"
-                placeholder="Bijv. NS Intercity"
-                autoComplete="off"
-                {...register("driver")}
-              />
-            )}
+              {watch("driver") && (
+                <button
+                  type="button"
+                  onClick={() => setValue("driver", "", { shouldValidate: true })}
+                  className="absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition-colors"
+                  title="Chauffeur verwijderen"
+                >
+                  <XIcon size={14} />
+                </button>
+              )}
+            </div>
             {errors.driver && (
               <p className="mt-1.5 text-xs text-rose-500">{errors.driver.message}</p>
             )}
           </div>
 
+          {/* Event / etentje koppeling — de datum (en voor Heen/Terug ook de locatie) volgt hieruit */}
+          {formDirection === "Restaurant" ? (
+            meals.length > 0 && (
+              <div className={SF}>
+                <p className={ST}>Koppel aan etentje</p>
+                <Controller
+                  name="linked_meal_id"
+                  control={control}
+                  render={({ field }) => (
+                    <MealPicker
+                      meals={meals}
+                      value={field.value || undefined}
+                      onChange={(id) => field.onChange(id ?? "")}
+                    />
+                  )}
+                />
+              </div>
+            )
+          ) : (
+            <div className={SF}>
+              <p className={ST}>Event</p>
+              <Controller
+                name="linked_event_id"
+                control={control}
+                render={({ field }) => (
+                  <EventPicker
+                    events={upcomingEvents}
+                    value={field.value || undefined}
+                    onChange={(id) => {
+                      field.onChange(id ?? "");
+                      if (id) {
+                        const event = events.find((e) => e.id === id);
+                        const locationField = formDirection === "Outbound" ? "start_location" : "end_location";
+                        if (event?.location) setValue(locationField, event.location, { shouldValidate: true });
+                        if (event?.parking_info) setValue("parking_info", event.parking_info, { shouldValidate: true });
+                      }
+                    }}
+                    placeholder="Zoek en koppel een event…"
+                  />
+                )}
+              />
+              <p className="mt-1.5 text-xs text-slate-400">
+                De datum en {formDirection === "Outbound" ? "het vertrekpunt" : "de bestemming"} volgen uit het event.
+              </p>
+              {errors.linked_event_id && (
+                <p className="mt-1.5 text-xs text-rose-500">{errors.linked_event_id.message}</p>
+              )}
+            </div>
+          )}
+
           {/* Vertrektijd & zitplaatsen */}
           <div className={SF}>
             <p className={ST}>Timing</p>
-            <div className={`grid gap-3 ${vehicleType === "Public Transport" || formDirection === "Restaurant" ? "grid-cols-1" : "grid-cols-2"}`}>
+            <div className={`grid gap-3 ${formDirection === "Restaurant" ? "grid-cols-1" : "grid-cols-2"}`}>
               <div>
-                <label className={SL}>Vertrektijd</label>
+                <label className={SL}>{formDirection === "Restaurant" ? "Vertrektijd" : "Tijd"}</label>
                 <input
-                  type="datetime-local"
+                  type={formDirection === "Restaurant" ? "datetime-local" : "time"}
                   className="input-field"
-                  {...register("departure_time")}
+                  {...register(formDirection === "Restaurant" ? "departure_time" : "ride_time")}
                 />
-                {errors.departure_time && (
-                  <p className="mt-1.5 text-xs text-rose-500">{errors.departure_time.message}</p>
+                {(errors.departure_time || errors.ride_time) && (
+                  <p className="mt-1.5 text-xs text-rose-500">
+                    {(errors.departure_time ?? errors.ride_time)?.message}
+                  </p>
                 )}
               </div>
-              {vehicleType !== "Public Transport" && formDirection !== "Restaurant" && (
+              {formDirection !== "Restaurant" && (
                 <div>
-                  <label className={SL}>Totaal aantal plekken in je auto</label>
+                  <label className={SL}>Plekken in de auto</label>
                   <input
                     type="number"
                     min={1}
@@ -465,8 +512,11 @@ export function TransportPage() {
               )}
               {formDirection === "Restaurant" && (
                 <p className="mt-1.5 text-xs text-slate-400">
-                  Waar vertrekt deze rit vandaan? De bestemming (het restaurant) komt automatisch uit het gekoppelde etentje hieronder.
+                  Waar vertrekt deze rit vandaan? De bestemming (het restaurant) komt automatisch uit het gekoppelde etentje hierboven.
                 </p>
+              )}
+              {formDirection === "Outbound" && (
+                <p className="mt-1.5 text-xs text-slate-400">Komt automatisch uit het gekoppelde event.</p>
               )}
             </div>
             {formDirection !== "Restaurant" && (
@@ -484,54 +534,12 @@ export function TransportPage() {
                     />
                   )}
                 />
+                {formDirection === "Inbound" && (
+                  <p className="mt-1.5 text-xs text-slate-400">Komt automatisch uit het gekoppelde event.</p>
+                )}
               </div>
             )}
           </div>
-
-          {/* Event / etentje koppeling */}
-          {formDirection === "Restaurant" ? (
-            meals.length > 0 && (
-              <div className={SF}>
-                <p className={ST}>Koppel aan etentje</p>
-                <Controller
-                  name="linked_meal_id"
-                  control={control}
-                  render={({ field }) => (
-                    <MealPicker
-                      meals={meals}
-                      value={field.value || undefined}
-                      onChange={(id) => field.onChange(id ?? "")}
-                    />
-                  )}
-                />
-              </div>
-            )
-          ) : (
-            events.length > 0 && (
-              <div className={SF}>
-                <p className={ST}>Koppel aan event</p>
-                <Controller
-                  name="linked_event_id"
-                  control={control}
-                  render={({ field }) => (
-                    <EventPicker
-                      events={events}
-                      value={field.value || undefined}
-                      onChange={(id) => {
-                        field.onChange(id ?? "");
-                        if (id) {
-                          const event = events.find((e) => e.id === id);
-                          if (event?.location) setValue("end_location", event.location, { shouldValidate: true });
-                          if (event?.parking_info) setValue("parking_info", event.parking_info, { shouldValidate: true });
-                        }
-                      }}
-                      placeholder="Zoek en koppel een event…"
-                    />
-                  )}
-                />
-              </div>
-            )
-          )}
 
           {/* Restaurant opties */}
           {formDirection === "Restaurant" && (
@@ -554,7 +562,7 @@ export function TransportPage() {
           )}
 
           {/* Parkeerinfo */}
-          {vehicleType === "Car" && formDirection !== "Restaurant" && (
+          {formDirection !== "Restaurant" && (
             <div className={SF}>
               <p className={ST}>Parkeren (optioneel)</p>
               <textarea

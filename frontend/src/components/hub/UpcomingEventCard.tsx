@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  CalendarDays, BedDouble, Utensils, ChevronRight, ArrowRight,
+  CalendarDays, BedDouble, Utensils, ChevronRight, ArrowRight, PartyPopper,
 } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { formatDate } from "../../utils/format";
@@ -31,8 +31,8 @@ function UrgencyChip({ urgency, daysUntil }: { urgency: EventUrgency; daysUntil:
     );
   }
   return (
-    <span className="text-xs text-sky-300/60 tabular-nums">
-      {daysUntil === 1 ? "1 dag" : `${daysUntil} dagen`}
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/15 px-2.5 py-1 text-[10px] font-bold text-sky-200 uppercase tracking-[0.1em] tabular-nums">
+      {daysUntil === 1 ? "Nog 1 dag" : `Nog ${daysUntil} dagen`}
     </span>
   );
 }
@@ -87,9 +87,11 @@ export function UpcomingEventCard({
 
   return (
 
-    <div className="relative gradient-hero shadow-hero rounded-2xl overflow-hidden">
+    <div className="relative gradient-hero shadow-hero rounded-2xl overflow-hidden h-full flex flex-col">
       {/* Decorative glow — matches the /more upcoming-event tile */}
       <div className="pointer-events-none absolute -top-8 -right-8 h-28 w-28 rounded-full bg-sky-400/10" />
+      {/* Decorative glow — matches the quick-ride tiles on this same page */}
+      <div className="pointer-events-none absolute -bottom-10 -right-10 h-36 w-36 rounded-full bg-sky-400/10" />
 
       {/* ── Cover image (when available, full-bleed top section) ── */}
       {hasCover && (
@@ -101,10 +103,6 @@ export function UpcomingEventCard({
           />
           {/* Gradient: transparent top → hero navy bottom — seamless blend */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-[#0C2A3E]" />
-          {/* Urgency chip over image */}
-          <div className="absolute bottom-3 left-4 flex items-center gap-2">
-            <UrgencyChip urgency={urgency} daysUntil={daysUntil} />
-          </div>
         </div>
       )}
 
@@ -112,20 +110,28 @@ export function UpcomingEventCard({
       {isGroupEvent ? (
         <div
           onClick={() => onNavigate(groupEvents![0].ev.id)}
-          className="relative p-5 cursor-pointer group transition-colors hover:bg-white/[0.04]"
+          className="relative p-5 flex-1 flex flex-col cursor-pointer group transition-colors hover:bg-white/[0.04]"
         >
           {/* Header */}
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2 flex-wrap">
+              <UrgencyChip urgency={urgency} daysUntil={daysUntil} />
               {groupEvents!.some(({ ev }) => ev.is_hotel) && (
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-teal-400/25 bg-teal-400/10 px-2.5 py-1">
-                  <BedDouble size={10} className="text-teal-300" />
-                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-300">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-teal-400/50 bg-teal-400/20 px-2.5 py-1">
+                  <BedDouble size={10} className="text-teal-200" />
+                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-200">
                     Hotel
                   </span>
                 </div>
               )}
-              {!hasCover && <UrgencyChip urgency={urgency} daysUntil={daysUntil} />}
+              {groupEvents!.some(({ ev }) => ev.is_party) && (
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-pink-400/50 bg-pink-400/20 px-2.5 py-1">
+                  <PartyPopper size={10} className="text-pink-200" />
+                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-pink-200">
+                    Feestje
+                  </span>
+                </div>
+              )}
             </div>
             <ArrowRight size={14} className="text-sky-300/40 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:text-sky-300" />
           </div>
@@ -148,18 +154,18 @@ export function UpcomingEventCard({
             </p>
           )}
 
-          {/* Per-day rows — teal for a hotel-only travel day, violet for a con day */}
-          <div className="mt-4 space-y-1.5 pl-3 border-l-2 border-violet-400/20">
+          {/* Per-day rows — teal for a hotel-only travel day, blue for a con day */}
+          <div className="mt-4 space-y-1.5 pl-3 border-l-2 border-blue-400/20">
             {groupEvents!.map(({ ev: dayEv, date }) => {
               const isTravelDay = dayEv.has_con === false;
               return (
               <button
                 key={dayEv.id}
                 onClick={(e) => { e.stopPropagation(); onNavigate(dayEv.id); }}
-                className={`w-full flex items-center gap-3 rounded-xl transition-colors px-3 py-2.5 text-left ${
+                className={`w-full flex items-center gap-3 rounded-xl border transition-colors px-3 py-2.5 text-left ${
                   isTravelDay
-                    ? "bg-teal-500/10 hover:bg-teal-500/15"
-                    : "bg-violet-500/10 hover:bg-violet-500/15"
+                    ? "bg-teal-500/20 border-teal-400/25 hover:bg-teal-500/25"
+                    : "bg-blue-500/20 border-blue-400/25 hover:bg-blue-500/25"
                 }`}
               >
                 <div className="shrink-0 text-center w-7">
@@ -191,17 +197,17 @@ export function UpcomingEventCard({
         /* ── Single event ── */
         <div
           onClick={() => onNavigate(event.id)}
-          className="relative cursor-pointer group transition-colors hover:bg-white/[0.04]"
+          className="relative flex-1 flex flex-col cursor-pointer group transition-colors hover:bg-white/[0.04]"
         >
           <div className="px-5 pt-5 pb-4">
-            {/* Label row — only show urgency chip here when no cover image */}
+            {/* Label row */}
             <div className="flex items-center justify-between gap-3 mb-3">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <UrgencyChip urgency={urgency} daysUntil={daysUntil} />
                 <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse" />
                 <span className="text-xs font-bold text-sky-400 uppercase tracking-widest">
-                  {event.has_con === false ? "Reisdag" : "Aankomend evenement"}
+                  {event.has_con === false && !event.is_party ? "Reisdag" : "Aankomend evenement"}
                 </span>
-                {!hasCover && <UrgencyChip urgency={urgency} daysUntil={daysUntil} />}
               </div>
               <ArrowRight size={14} className="text-sky-300/40 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:text-sky-300" />
             </div>
@@ -221,6 +227,11 @@ export function UpcomingEventCard({
               {hasMeal(event.id) && (
                 <span className="flex items-center gap-1.5 text-sm text-sky-300">
                   <Utensils size={12} className="text-amber-400" /> Etentje gepland
+                </span>
+              )}
+              {event.is_party && (
+                <span className="flex items-center gap-1.5 text-sm text-pink-300">
+                  <PartyPopper size={12} className="text-pink-400" /> Feestje
                 </span>
               )}
             </div>

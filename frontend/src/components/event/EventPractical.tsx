@@ -15,6 +15,9 @@ interface EventPracticalProps {
   users?: User[];
   isAdmin?: boolean;
   onHotelClick?: () => void;
+  /** When true, renders only the row content — no card surface, gradient bar
+   * or "Praktische info" label — for embedding inside a parent card. */
+  bare?: boolean;
 }
 
 interface PracticalRow {
@@ -40,6 +43,7 @@ export function EventPractical({
   participantCount = 0,
   users = [],
   onHotelClick,
+  bare = false,
 }: EventPracticalProps) {
   const rows = buildRows(event);
   const showHotelRow = showHotel && !!event.is_hotel;
@@ -48,16 +52,7 @@ export function EventPractical({
 
   const hotelOccupantCount = new Set(hotelRooms.flatMap((r) => r.occupants)).size;
 
-  return (
-    <div className="card-surface rounded-2xl overflow-hidden">
-      <div className="h-[3px] bg-gradient-to-r from-sky-400 via-violet-400 to-emerald-400" />
-
-      <div className="px-5 pt-4 pb-1">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-          Praktische info
-        </p>
-      </div>
-
+  const content = (
       <div className="divide-y divide-slate-100 dark:divide-slate-800/70">
         {rows.map((row, i) =>
           row.accent ? (
@@ -149,6 +144,21 @@ export function EventPractical({
           </button>
         )}
       </div>
+  );
+
+  if (bare) return content;
+
+  return (
+    <div className="card-surface rounded-2xl overflow-hidden">
+      <div className="h-[3px] bg-gradient-to-r from-sky-400 via-violet-400 to-emerald-400" />
+
+      <div className="px-5 pt-4 pb-1">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+          Praktische info
+        </p>
+      </div>
+
+      {content}
     </div>
   );
 }

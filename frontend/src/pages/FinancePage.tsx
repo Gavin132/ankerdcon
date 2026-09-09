@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Wallet, Plus, TrendingUp, ArrowDownLeft, ArrowUpRight, CheckCircle2 } from "lucide-react";
+import { Wallet, Plus, TrendingUp, ArrowDownLeft, ArrowUpRight, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Button } from "../components/common/Button";
 import { EmptyState } from "../components/common/EmptyState";
 import { StickyActionBar } from "../components/common/StickyActionBar";
@@ -74,6 +74,18 @@ export function FinancePage() {
 
   return (
     <div className="space-y-5 pb-20">
+
+      {/* ── Work-in-progress warning ─────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-start gap-3 rounded-2xl border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-4 py-3.5"
+      >
+        <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-500" />
+        <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+          <span className="font-bold">Nog in ontwikkeling.</span> Deze pagina werkt nog niet helemaal zoals bedoeld — vertrouw bedragen hier niet 100%.
+        </p>
+      </motion.div>
 
       {/* ── Personal balance card ────────────────────────────── */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>

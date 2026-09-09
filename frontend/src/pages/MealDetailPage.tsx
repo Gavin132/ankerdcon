@@ -1,20 +1,23 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Car, UtensilsCrossed } from "lucide-react";
-import { useMeals } from "../hooks/useMeals";
+import { Car, UserCheck, UserMinus, UtensilsCrossed } from "lucide-react";
+import { useMeals, useRsvpMeal, useCancelRsvp } from "../hooks/useMeals";
 import { useCalendar } from "../hooks/useCalendar";
 import { useRides } from "../hooks/useRides";
 import { useUsers } from "../hooks/useUsers";
 import { useSmartBack } from "../hooks/useSmartBack";
+import { toast } from "../store/toast.store";
 import { routes } from "../config/routes";
 import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { LinkedEventCard } from "../components/detail/LinkedEventCard";
 import { MealHero } from "../components/meal/MealHero";
 import { MealLinks } from "../components/meal/MealLinks";
 import { MealPractical } from "../components/meal/MealPractical";
-import { MealRsvpSection } from "../components/meal/MealRsvpSection";
 import { RestaurantDetailActions } from "../components/ride/RestaurantDetailActions";
 import { RestaurantQuickDriverModal } from "../components/transport/RestaurantQuickDriverModal";
+import { Button } from "../components/common/Button";
+import { Modal } from "../components/common/Modal";
+import { NamePicker } from "../components/common/NamePicker";
 
 export function MealDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +29,13 @@ export function MealDetailPage() {
   const { data: rides = [] } = useRides();
   const { data: users = [] } = useUsers();
 
+  const [rsvpOpen, setRsvpOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [rsvpNames, setRsvpNames] = useState<string[]>([]);
+  const [cancelNames, setCancelNames] = useState<string[]>([]);
+  const rsvpMutation = useRsvpMeal();
+  const cancelMutation = useCancelRsvp();
+
   const meal = meals.find((m) => m.id === id);
   const linkedEvent = meal?.linked_event_id
     ? events.find((e) => e.id === meal.linked_event_id)
@@ -35,6 +45,63 @@ export function MealDetailPage() {
     : undefined;
 
   const userNames = users.map((u) => u.name);
+  const participants = meal?.participants ?? [];
+
+  async function onShare() {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: meal?.meal_name, url });
+      } catch {
+        // user cancelled the share sheet — not an error
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast("success", "Link gekopieerd!");
+    } catch {
+      toast("error", "Kon de link niet kopiëren.");
+    }
+  }
+
+  async function onRsvp() {
+    if (!meal || rsvpNames.length === 0) return;
+    try {
+      for (const name of rsvpNames) {
+        await rsvpMutation.mutateAsync({ id: meal.id, payload: { user_name: name } });
+      }
+      setRsvpNames([]);
+      setRsvpOpen(false);
+      toast(
+        "success",
+        rsvpNames.length === 1
+          ? `${rsvpNames[0]} is aangemeld!`
+          : `${rsvpNames.length} personen aangemeld!`,
+      );
+    } catch {
+      toast("error", "Kon je niet aanmelden. Probeer opnieuw.");
+    }
+  }
+
+  async function onCancel() {
+    if (!meal || cancelNames.length === 0) return;
+    try {
+      for (const name of cancelNames) {
+        await cancelMutation.mutateAsync({ id: meal.id, payload: { user_name: name } });
+      }
+      setCancelNames([]);
+      setCancelOpen(false);
+      toast(
+        "success",
+        cancelNames.length === 1
+          ? `${cancelNames[0]} afgemeld.`
+          : `${cancelNames.length} personen afgemeld.`,
+      );
+    } catch {
+      toast("error", "Kon aanmelding niet annuleren.");
+    }
+  }
 
   if (isLoading) {
     return (
@@ -61,27 +128,21 @@ export function MealDetailPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <DetailTopbar title={meal.meal_name} onBack={goBack} />
-      <MealHero meal={meal} linkedEvent={linkedEvent} users={users} />
+      <DetailTopbar title={meal.meal_name} onBack={goBack} onShare={onShare} />
+      <MealHero
+        meal={meal}
+        linkedEvent={linkedEvent}
+        users={users}
+        onRsvpClick={() => setRsvpOpen(true)}
+        onCancelClick={() => setCancelOpen(true)}
+      />
 
       {(() => {
-        const hasSidePanel = !!(meal.website || meal.menu_url || meal.location?.trim() || meal.transport_needed || meal.parking_info || meal.dietary_options || meal.extra_notes);
+        const hasSidePanel = !!linkedEvent;
         return (
           <div className="max-w-4xl mx-auto px-4 py-7 space-y-5">
-            <div className={`grid gap-5 items-start ${hasSidePanel ? "grid-cols-1 lg:grid-cols-3" : ""}`}>
-              <div className={`${hasSidePanel ? "lg:col-span-2" : ""} space-y-5`}>
-                <MealRsvpSection meal={meal} userNames={userNames} users={users} />
-                {linkedEvent && <LinkedEventCard event={linkedEvent} />}
-              </div>
-              {hasSidePanel && (
-                <div className="space-y-4">
-                  <MealLinks website={meal.website} menuUrl={meal.menu_url} />
-                  <MealPractical meal={meal} />
-                </div>
-              )}
-            </div>
-
-            {/* ── Transport for this meal ─────────────────────────────────── */}
+            {/* ── Transport for this meal — leads the page, same as the ride
+                  detail page's own car list. ─────────────────────────────── */}
             {restaurantRide ? (
               <RestaurantDetailActions ride={restaurantRide} userNames={userNames} users={users} linkedMeal={meal} />
             ) : (
@@ -96,6 +157,18 @@ export function MealDetailPage() {
                 </button>
               )
             )}
+
+            <div className={`grid gap-5 items-start ${hasSidePanel ? "grid-cols-1 lg:grid-cols-3" : ""}`}>
+              <div className={`${hasSidePanel ? "lg:col-span-2" : ""} space-y-4`}>
+                <MealPractical meal={meal} />
+                <MealLinks website={meal.website} menuUrl={meal.menu_url} />
+              </div>
+              {hasSidePanel && (
+                <div>
+                  <LinkedEventCard event={linkedEvent!} />
+                </div>
+              )}
+            </div>
           </div>
         );
       })()}
@@ -109,6 +182,71 @@ export function MealDetailPage() {
           existingRide={restaurantRide}
         />
       )}
+
+      {/* Aanmelden modal */}
+      <Modal
+        open={rsvpOpen}
+        onClose={() => { setRsvpOpen(false); setRsvpNames([]); }}
+        title={`Aanmelden — ${meal.meal_name}`}
+        description={meal.location || undefined}
+        accent="from-emerald-400 to-green-500"
+      >
+        <div className="space-y-3">
+          <NamePicker
+            multiple
+            options={userNames.filter((n) => !participants.includes(n))}
+            value={rsvpNames}
+            onChange={setRsvpNames}
+            color="green"
+          />
+          <Button
+            onClick={onRsvp}
+            loading={rsvpMutation.isPending}
+            className="w-full"
+            disabled={rsvpNames.length === 0}
+          >
+            <UserCheck size={15} />
+            {rsvpNames.length === 0
+              ? "Selecteer een naam"
+              : rsvpNames.length === 1
+                ? `${rsvpNames[0]} aanmelden`
+                : `${rsvpNames.length} personen aanmelden`}
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Afmelden modal */}
+      <Modal
+        open={cancelOpen}
+        onClose={() => { setCancelOpen(false); setCancelNames([]); }}
+        title="Aanmelding annuleren"
+        description={meal.meal_name}
+        accent="from-rose-400 to-red-500"
+      >
+        <div className="space-y-3">
+          <NamePicker
+            multiple
+            options={participants}
+            value={cancelNames}
+            onChange={setCancelNames}
+            color="rose"
+          />
+          <Button
+            variant="danger"
+            onClick={onCancel}
+            loading={cancelMutation.isPending}
+            className="w-full"
+            disabled={cancelNames.length === 0}
+          >
+            <UserMinus size={15} />
+            {cancelNames.length === 0
+              ? "Selecteer een naam"
+              : cancelNames.length === 1
+                ? `${cancelNames[0]} afmelden`
+                : `${cancelNames.length} personen afmelden`}
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
