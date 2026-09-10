@@ -20,6 +20,8 @@ class Tables:
     ANNOUNCEMENTS  = "announcements"
     CHANGELOG_ENTRIES = "changelog_entries"
     WHITELIST      = "whitelist"
+    STORY_PHOTOS   = "story_photos"
+    STORY_SEEN     = "story_seen"
 
 
 # ── API ───────────────────────────────────────────────────────────

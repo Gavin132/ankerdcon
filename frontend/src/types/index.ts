@@ -188,6 +188,28 @@ export interface Meal {
   extra_notes?: string;
 }
 
+// Event-day photo stories
+export interface StoryPhoto {
+  id: string;
+  event_day_id: string;
+  seq: number;
+  uploaded_by: string;
+  image_url: string;
+  created_at: string;
+}
+
+export interface StorySeenState {
+  event_day_id: string;
+  last_seen_seq: number;
+}
+
+export interface StoryDaySummary {
+  photo_count: number;
+  latest_seq: number;
+  has_unseen: boolean;
+  preview_url: string;
+}
+
 // Cosplays
 export interface Cosplay {
   id: string;

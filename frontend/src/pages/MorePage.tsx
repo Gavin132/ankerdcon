@@ -14,6 +14,7 @@ import {
   Sun,
   Github,
   Youtube,
+  Camera,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { CalendarGrid } from "../components/more/CalendarGrid";
@@ -198,7 +199,7 @@ export function MorePage() {
       {/* Community */}
       <motion.div variants={listItem}>
         <p className="section-label mb-3">Community</p>
-        <div className="card-surface rounded-2xl overflow-hidden">
+        <div className="card-surface rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
           <button
             onClick={() => navigate(routes.members)}
             className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-50 dark:active:bg-slate-800/50 transition-colors"
@@ -218,6 +219,20 @@ export function MorePage() {
               <p className="text-xs text-slate-400 mt-0.5">
                 {allUsers.length} {allUsers.length === 1 ? "lid" : "leden"} aanwezig
               </p>
+            </div>
+            <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0" />
+          </button>
+
+          <button
+            onClick={() => navigate(routes.stories)}
+            className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-50 dark:active:bg-slate-800/50 transition-colors"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-500/10">
+              <Camera size={16} className="text-rose-500 dark:text-rose-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-slate-900 dark:text-white">Story archief</p>
+              <p className="text-xs text-slate-400 mt-0.5">Alle foto's van eerdere en aankomende dagen</p>
             </div>
             <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0" />
           </button>

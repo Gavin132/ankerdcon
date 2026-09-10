@@ -1,6 +1,7 @@
 import { create } from "zustand";
 // IMPORTANT: Import your Supabase client here! Adjust the path as needed.
 import { supabase } from "../services/supabase";
+import { routes } from "../config/routes";
 
 function parseJwtSub(token: string): string | null {
   try {
@@ -86,8 +87,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   clearAuth: () => {
     set({ accessToken: null, currentUser: null, isAuthenticated: false, forbidden: false });
-    // Optional: Force a redirect to login here if you want
-    window.location.href = '/login';
+    // Hard redirect (not an in-app navigate) so every query/component
+    // remounts fresh with the cleared session — but only when we're not
+    // already there. Without this guard, a session that keeps failing to
+    // refresh (e.g. a genuinely dead refresh token) reloads this same page,
+    // which re-runs the same failing refresh on mount, which calls
+    // clearAuth() again — an infinite reload loop instead of just landing
+    // on a stable "you're logged out" screen.
+    if (window.location.pathname !== routes.login) {
+      window.location.href = routes.login;
+    }
   },
 
   // The Supabase-powered refresh function

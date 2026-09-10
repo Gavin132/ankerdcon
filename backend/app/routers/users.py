@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 
 from app.constants import Tables
 from app.core.logging import get_logger
+from app.core.uploads import read_capped
 from app.dependencies import get_current_user, _strip_discriminator
 from app.models.user import CompleteOnboardingRequest, LocationPingRequest, UpdateNameRequest, UpdatePreferencesRequest, User
 from app.routes import UserRoutes
@@ -307,12 +308,7 @@ async def upload_banner(
             detail="Bestandstype niet toegestaan. Gebruik JPG, PNG, GIF of WebP.",
         )
 
-    content = await file.read()
-    if len(content) > BANNER_MAX_BYTES:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail="Bestand te groot. Maximum is 8 MB.",
-        )
+    content = await read_capped(file, BANNER_MAX_BYTES)
 
     try:
         user_row = supabase.table(Tables.PROFILES).select("id, banner_url").eq("name", current_user).execute()

@@ -24,6 +24,13 @@ class Settings(BaseSettings):
     discord_bot_token: str = ""
     app_url: str = ""
 
+    # MinIO (self-hosted, S3-compatible) — event-day photo stories
+    minio_endpoint: str = ""
+    minio_access_key: str = ""
+    minio_secret_key: str = ""
+    minio_bucket: str = "story-photos"
+    minio_secure: bool = True
+
     # CORS — comma-separated string in .env, or a list when set programmatically
     cors_origins: list[str] = ["http://localhost:5173"]
 

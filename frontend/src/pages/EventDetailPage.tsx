@@ -2,14 +2,15 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useCallback, useRef, useState } from "react";
 import { useSmartBack } from "../hooks/useSmartBack";
 import { motion } from "framer-motion";
-import { CalendarDays, ChevronRight, Sparkles, UserCheck, UserMinus, Layers } from "lucide-react";
+import { CalendarDays, ChevronRight, Sparkles, Camera, UserCheck, UserMinus, Layers } from "lucide-react";
 import { useCalendar, useHotelRooms, useRsvpCalendarEvent, useLeaveCalendarEvent } from "../hooks/useCalendar";
 import { useUsers, useCurrentUser } from "../hooks/useUsers";
 import { useMeals } from "../hooks/useMeals";
 import { useRides } from "../hooks/useRides";
 import { useCosplays } from "../hooks/useCosplays";
+import { useStoryPhotos } from "../hooks/useStories";
 import { useEventWeather } from "../hooks/useEventWeather";
-import { parseEventDate } from "../utils/date";
+import { parseEventDate, toDateKey } from "../utils/date";
 import { useTimeStore, getNow } from "../store/time.store";
 import { toast } from "../store/toast.store";
 import { routes } from "../config/routes";
@@ -26,6 +27,8 @@ import { DayStrip } from "../components/event/DayStrip";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { NamePicker } from "../components/common/NamePicker";
+import { StoryViewer } from "../components/story/StoryViewer";
+import { StoryUploadButton } from "../components/story/StoryUploadButton";
 
 export function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -41,6 +44,8 @@ export function EventDetailPage() {
 
   const [rsvpOpen, setRsvpOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [storyOpen, setStoryOpen] = useState(false);
+  const { data: storyPhotos = [] } = useStoryPhotos(id ?? "", { enabled: !!id });
   const [rsvpNames, setRsvpNames] = useState<string[]>([]);
   const [cancelNames, setCancelNames] = useState<string[]>([]);
   const [rsvpAllDays, setRsvpAllDays] = useState(false);
@@ -139,10 +144,14 @@ export function EventDetailPage() {
   const cosplayerNames = [...new Set(eventCosplays.map((c) => c.user_name))];
 
   // ── Weather ──────────────────────────────────────────────────────────────
+  // toDateKey (not toISOString) — toISOString converts to UTC, which shifts
+  // the date back a day for anyone in a UTC+ timezone (Netherlands included)
+  // whenever a Date built from local midnight crosses back over the UTC day
+  // boundary. That silently requested the wrong calendar day's forecast.
   const weatherDate = (() => {
     if (!event?.date) return undefined;
     const d = parseEventDate(event.date);
-    return d ? d.toISOString().split("T")[0] : undefined;
+    return d ? toDateKey(d) : undefined;
   })();
 
   const daysUntil = (() => {
@@ -279,7 +288,29 @@ export function EventDetailPage() {
         if (dx > 0 && prevDay) navigateToDay(prevDay.ev.id);
       }}
     >
-      <DetailTopbar title={event.event_name} onBack={goBack} onShare={onShare} />
+      <DetailTopbar
+        title={event.event_name}
+        onBack={goBack}
+        onShare={onShare}
+        actions={
+          <>
+            <StoryUploadButton eventDayId={event.id} />
+            <button
+              type="button"
+              disabled={storyPhotos.length === 0}
+              onClick={() => setStoryOpen(true)}
+              title="Story bekijken"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl
+                         text-slate-500 dark:text-slate-400
+                         hover:bg-slate-100 dark:hover:bg-white/[0.08]
+                         hover:text-slate-900 dark:hover:text-white transition-colors
+                         disabled:opacity-30 disabled:hover:bg-transparent"
+            >
+              <Camera size={17} />
+            </button>
+          </>
+        }
+      />
 
       {groupDays && groupDays.length > 1 && (
         <DayStrip
@@ -294,7 +325,15 @@ export function EventDetailPage() {
         daysUntil={daysUntil}
         users={users}
         meals={linkedMeals}
-        onRsvpClick={() => setRsvpOpen(true)}
+        onRsvpClick={() => {
+          setRsvpOpen(true);
+          // Pre-fill with your own name — the common case is signing
+          // yourself up, and it's still a multi-select so anyone else can
+          // be added or your own name removed before confirming.
+          if (me?.name && !event.participants.includes(me.name)) {
+            setRsvpNames([me.name]);
+          }
+        }}
         onCancelClick={() => setCancelOpen(true)}
         groupDays={groupDays ?? undefined}
       />
@@ -397,6 +436,8 @@ export function EventDetailPage() {
         <EventLinkedRides rides={linkedRides} />
 
       </div>
+
+      <StoryViewer eventDayId={event.id} open={storyOpen} onClose={() => setStoryOpen(false)} />
 
       {/* RSVP modal */}
       <Modal

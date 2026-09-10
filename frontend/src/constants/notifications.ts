@@ -21,5 +21,5 @@ export const NOTIFICATION_CATEGORIES: NotificationCategoryDef[] = [
   { id: "event_reminder_day_of", label: "Herinnering — op de dag zelf", description: "Op de dag van het evenement zelf." },
   { id: "ride_created", label: "Nieuwe rit", description: "Wanneer iemand een rit aanmaakt." },
   { id: "expense_created", label: "Nieuwe uitgave", description: "Wanneer iemand een groepsuitgave toevoegt." },
-  { id: "meal_created", label: "Nieuwe maaltijd", description: "Wanneer iemand een maaltijd plant." },
+  { id: "meal_created", label: "Nieuw etentje", description: "Wanneer iemand een etentje plant." },
 ];
