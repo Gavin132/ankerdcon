@@ -10,7 +10,7 @@ import { useRides } from "../hooks/useRides";
 import { useCosplays } from "../hooks/useCosplays";
 import { useStoryPhotos } from "../hooks/useStories";
 import { useEventWeather } from "../hooks/useEventWeather";
-import { parseEventDate } from "../utils/date";
+import { parseEventDate, toDateKey } from "../utils/date";
 import { useTimeStore, getNow } from "../store/time.store";
 import { toast } from "../store/toast.store";
 import { routes } from "../config/routes";
@@ -144,10 +144,14 @@ export function EventDetailPage() {
   const cosplayerNames = [...new Set(eventCosplays.map((c) => c.user_name))];
 
   // ── Weather ──────────────────────────────────────────────────────────────
+  // toDateKey (not toISOString) — toISOString converts to UTC, which shifts
+  // the date back a day for anyone in a UTC+ timezone (Netherlands included)
+  // whenever a Date built from local midnight crosses back over the UTC day
+  // boundary. That silently requested the wrong calendar day's forecast.
   const weatherDate = (() => {
     if (!event?.date) return undefined;
     const d = parseEventDate(event.date);
-    return d ? d.toISOString().split("T")[0] : undefined;
+    return d ? toDateKey(d) : undefined;
   })();
 
   const daysUntil = (() => {
@@ -284,7 +288,29 @@ export function EventDetailPage() {
         if (dx > 0 && prevDay) navigateToDay(prevDay.ev.id);
       }}
     >
-      <DetailTopbar title={event.event_name} onBack={goBack} onShare={onShare} />
+      <DetailTopbar
+        title={event.event_name}
+        onBack={goBack}
+        onShare={onShare}
+        actions={
+          <>
+            <StoryUploadButton eventDayId={event.id} />
+            <button
+              type="button"
+              disabled={storyPhotos.length === 0}
+              onClick={() => setStoryOpen(true)}
+              title="Story bekijken"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl
+                         text-slate-500 dark:text-slate-400
+                         hover:bg-slate-100 dark:hover:bg-white/[0.08]
+                         hover:text-slate-900 dark:hover:text-white transition-colors
+                         disabled:opacity-30 disabled:hover:bg-transparent"
+            >
+              <Camera size={17} />
+            </button>
+          </>
+        }
+      />
 
       {groupDays && groupDays.length > 1 && (
         <DayStrip
@@ -299,7 +325,15 @@ export function EventDetailPage() {
         daysUntil={daysUntil}
         users={users}
         meals={linkedMeals}
-        onRsvpClick={() => setRsvpOpen(true)}
+        onRsvpClick={() => {
+          setRsvpOpen(true);
+          // Pre-fill with your own name — the common case is signing
+          // yourself up, and it's still a multi-select so anyone else can
+          // be added or your own name removed before confirming.
+          if (me?.name && !event.participants.includes(me.name)) {
+            setRsvpNames([me.name]);
+          }
+        }}
         onCancelClick={() => setCancelOpen(true)}
         groupDays={groupDays ?? undefined}
       />
@@ -372,38 +406,7 @@ export function EventDetailPage() {
           </div>
         )}
 
-        {/* 4 ── Story — photos the group uploaded for this specific day */}
-        <div className="card-surface rounded-2xl overflow-hidden">
-          <div className="h-[3px] bg-gradient-to-r from-amber-400 to-rose-500" />
-          <div className="flex items-center gap-3 px-5 py-4">
-            <button
-              type="button"
-              onClick={() => storyPhotos.length > 0 && setStoryOpen(true)}
-              disabled={storyPhotos.length === 0}
-              className="flex flex-1 min-w-0 items-center gap-4 text-left disabled:cursor-default"
-            >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-500/10">
-                <Camera size={16} className="text-rose-500 dark:text-rose-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-0.5">
-                  Story
-                </p>
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  {storyPhotos.length === 0
-                    ? "Nog geen foto's"
-                    : `${storyPhotos.length} foto${storyPhotos.length !== 1 ? "'s" : ""}`}
-                </p>
-              </div>
-              {storyPhotos.length > 0 && (
-                <ChevronRight size={15} className="shrink-0 text-slate-300 dark:text-slate-600" />
-              )}
-            </button>
-            <StoryUploadButton eventDayId={event.id} />
-          </div>
-        </div>
-
-        {/* 5 ── Practical info + hotel + tickets, one combined card */}
+        {/* 4 ── Practical info + hotel + tickets, one combined card */}
         {(hasPracticalInfo || hasLinks) && (
           <div className="card-surface rounded-2xl overflow-hidden">
             <div className="h-[3px] bg-gradient-to-r from-sky-400 via-blue-400 to-teal-500" />
@@ -429,7 +432,7 @@ export function EventDetailPage() {
           </div>
         )}
 
-        {/* 6 ── Linked rides */}
+        {/* 5 ── Linked rides */}
         <EventLinkedRides rides={linkedRides} />
 
       </div>

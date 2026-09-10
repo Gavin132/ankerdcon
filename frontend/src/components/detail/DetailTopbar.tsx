@@ -6,9 +6,13 @@ interface DetailTopbarProps {
   title: string;
   onBack: () => void;
   onShare?: () => void;
+  /** Extra icon buttons rendered between share and the home-link button —
+   * e.g. the event page's story add/view actions. Compose with the same
+   * h-8 w-8 rounded-xl icon-button styling used by the buttons here. */
+  actions?: React.ReactNode;
 }
 
-export function DetailTopbar({ title, onBack, onShare }: DetailTopbarProps) {
+export function DetailTopbar({ title, onBack, onShare, actions }: DetailTopbarProps) {
   return (
     <div
       className="sticky top-0 z-10 flex items-center gap-3 h-14 px-4
@@ -38,6 +42,7 @@ export function DetailTopbar({ title, onBack, onShare }: DetailTopbarProps) {
           <Share2 size={17} />
         </button>
       )}
+      {actions}
       {isFreshEntry() && (
         <HomeLinkButton
           size={17}

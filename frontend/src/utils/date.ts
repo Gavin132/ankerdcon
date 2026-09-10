@@ -25,3 +25,11 @@ export function toDateKey(d: Date): string {
 export function todayKey(): string {
   return toDateKey(getNow());
 }
+
+/** Whole days from `fromKey` to `toKey` (both YYYY-MM-DD), positive when
+ * `toKey` is later. */
+export function daysBetween(fromKey: string, toKey: string): number {
+  const from = new Date(fromKey + "T00:00:00").getTime();
+  const to = new Date(toKey + "T00:00:00").getTime();
+  return Math.round((to - from) / 86400000);
+}

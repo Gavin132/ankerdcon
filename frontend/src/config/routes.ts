@@ -14,6 +14,7 @@ export const routes = {
   acties:    "/acties",
   notifications: "/notifications",
   changelog: "/changelog",
+  stories:   "/stories",
   /** Deliberately throws on render, to test `ErrorBoundary`'s fallback screen. */
   testError: "/test-error",
 

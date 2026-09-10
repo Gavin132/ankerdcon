@@ -75,6 +75,7 @@ class StoryRoutes:
     PREFIX = "/stories"
     LIST = "/{event_day_id}"          # GET list / POST upload
     DETAIL = "/photos/{photo_id}"     # DELETE (owner-only)
+    DOWNLOAD = "/photos/{photo_id}/download"  # GET — original bytes, forced download
     SEEN = "/{event_day_id}/seen"     # GET / PUT
     SUMMARY = "/summary"              # GET ?event_day_ids=a,b,c
 

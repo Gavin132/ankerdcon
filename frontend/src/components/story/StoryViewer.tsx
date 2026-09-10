@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Trash2 } from "lucide-react";
+import { X, Trash2, Share2, Download, Loader2 } from "lucide-react";
 import { useStoryPhotos, useMarkStorySeen, useDeleteStoryPhoto } from "../../hooks/useStories";
 import { useCurrentUser } from "../../hooks/useUsers";
+import { downloadStoryPhoto } from "../../services/stories.service";
 import { toast } from "../../store/toast.store";
+import { UserAvatar } from "../common/UserAvatar";
+import type { StoryPhoto } from "../../types";
 
 const SLIDE_DURATION_MS = 5000;
 
@@ -27,12 +30,19 @@ export function StoryViewer({ eventDayId, open, onClose }: StoryViewerProps) {
     if (eventDayId) setActiveEventDayId(eventDayId);
   }, [eventDayId]);
 
-  const { data: photos = [] } = useStoryPhotos(activeEventDayId, { enabled: open });
+  // `open` alone isn't enough to gate the fetch: on the render where a story
+  // first opens, `open` flips true one render before the latching effect
+  // above has a chance to run, so `activeEventDayId` can still be the
+  // initial empty string for that one render — firing a request against
+  // "" (a 404, since the backend route needs a real id segment). Requiring
+  // a non-empty id too keeps the query disabled until the effect catches up.
+  const { data: photos = [] } = useStoryPhotos(activeEventDayId, { enabled: open && !!activeEventDayId });
   const { data: me } = useCurrentUser();
   const markSeen = useMarkStorySeen(activeEventDayId);
   const deletePhoto = useDeleteStoryPhoto(activeEventDayId);
 
   const [index, setIndex] = useState(0);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const highestSeqRef = useRef(0);
 
   useEffect(() => {
@@ -72,6 +82,44 @@ export function StoryViewer({ eventDayId, open, onClose }: StoryViewerProps) {
   const prev = useCallback(() => {
     setIndex((i) => Math.max(0, i - 1));
   }, []);
+
+  async function handleShare(imageUrl: string) {
+    if (navigator.share) {
+      try {
+        await navigator.share({ url: imageUrl });
+        return;
+      } catch (err) {
+        // AbortError just means the user dismissed the native share sheet —
+        // leave it at that instead of surprising them with a clipboard copy.
+        if ((err as Error)?.name === "AbortError") return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(imageUrl);
+      toast("success", "Link gekopieerd!");
+    } catch {
+      toast("error", "Kon niet delen.");
+    }
+  }
+
+  async function handleDownload(photo: StoryPhoto) {
+    setDownloadingId(photo.id);
+    try {
+      const blob = await downloadStoryPhoto(photo.id);
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `ankerd-story-${photo.created_at.slice(0, 10)}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      toast("error", "Kon foto niet downloaden.");
+    } finally {
+      setDownloadingId(null);
+    }
+  }
 
   async function handleDelete(photoId: string) {
     try {
@@ -118,8 +166,30 @@ export function StoryViewer({ eventDayId, open, onClose }: StoryViewerProps) {
 
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 shrink-0">
-            <p className="text-xs font-bold text-white/90">{current.uploaded_by}</p>
+            <div className="flex items-center gap-2 min-w-0">
+              <UserAvatar name={current.uploaded_by} className="h-6 w-6 text-[9px]" />
+              <p className="text-xs font-bold text-white/90 truncate">{current.uploaded_by}</p>
+            </div>
             <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => handleShare(current.image_url)}
+                className="flex h-9 w-9 items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <Share2 size={16} />
+              </button>
+              <button
+                type="button"
+                disabled={downloadingId === current.id}
+                onClick={() => handleDownload(current)}
+                className="flex h-9 w-9 items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-50"
+              >
+                {downloadingId === current.id ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Download size={16} />
+                )}
+              </button>
               {me?.name === current.uploaded_by && (
                 <button
                   type="button"

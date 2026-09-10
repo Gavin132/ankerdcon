@@ -47,3 +47,18 @@ def upload_bytes(key: str, content: bytes, content_type: str) -> str:
 def delete_object(key: str) -> None:
     settings = get_settings()
     _client().remove_object(settings.minio_bucket, key)
+
+
+def get_object_bytes(key: str) -> tuple[bytes, str]:
+    """Fetch an object's raw bytes + content type — used for the forced
+    "download" endpoint, which streams through the backend so it works
+    regardless of the bucket's CORS configuration."""
+    settings = get_settings()
+    response = _client().get_object(settings.minio_bucket, key)
+    try:
+        content = response.read()
+        content_type = response.headers.get("content-type", "application/octet-stream")
+        return content, content_type
+    finally:
+        response.close()
+        response.release_conn()

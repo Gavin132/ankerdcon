@@ -24,9 +24,10 @@ import { QuickRideTiles } from "../components/hub/QuickRideTiles";
 import { LocationPingModal } from "../components/hub/LocationPingModal";
 import { StoryRing } from "../components/story/StoryRing";
 import { StoryViewer } from "../components/story/StoryViewer";
+import { AddStoryTile } from "../components/story/AddStoryTile";
 import { useStorySummary } from "../hooks/useStories";
 import { listItem, listContainer } from "../utils/motion";
-import { parseEventDate, toDateKey, todayKey } from "../utils/date";
+import { parseEventDate, toDateKey, todayKey, daysBetween } from "../utils/date";
 import { computeAllActions } from "../utils/actionItems";
 import { useTimeStore } from "../store/time.store";
 import type { CalendarEvent, Meal, User } from "../types";
@@ -109,7 +110,7 @@ export function HubPage() {
   // Story rings — one per day of the nearest upcoming trip (a single day for
   // a one-off event, every day for a multi-day group), same "nearest trip"
   // scope the rest of the hub already focuses on.
-  const storyDays: { id: string; label: string }[] = (() => {
+  const storyDays: { id: string; label: string; dateKey: string }[] = (() => {
     const nearest = upcomingItems[0];
     if (!nearest) return [];
     const dayEntries = nearest.type === "single"
@@ -117,9 +118,19 @@ export function HubPage() {
       : nearest.events;
     return dayEntries
       .filter((d): d is { ev: CalendarEvent; date: Date } => d.date !== null)
-      .map(({ ev, date }) => ({ id: ev.id, label: `${dayShort(date)} ${date.getDate()}` }));
+      .map(({ ev, date }) => ({ id: ev.id, label: `${dayShort(date)} ${date.getDate()}`, dateKey: toDateKey(date) }));
   })();
   const { data: storySummary } = useStorySummary(storyDays.map((d) => d.id));
+  // The quick "add to story" tile targets whichever trip day a photo added
+  // right now would land in, by upload time — never whatever day the photo
+  // itself depicts. It opens a day early (e.g. an event on the 20th starts
+  // accepting photos on the 19th) so people can get a head start once
+  // they've arrived; storyDays is already date-ascending and filtered to
+  // today-or-later, so the first entry within that 1-day window is it.
+  const uploadTargetDay = storyDays.find((d) => {
+    const diff = daysBetween(todayStr, d.dateKey);
+    return diff <= 1;
+  }) ?? null;
 
   if (evLoading) return <HubSkeleton />;
 
@@ -207,6 +218,8 @@ export function HubPage() {
       {storyDays.length > 0 && (
         <motion.div variants={listItem}>
           <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <AddStoryTile eventDayId={uploadTargetDay?.id ?? null} />
+            <div className="w-px h-16 shrink-0 self-start bg-slate-200 dark:bg-slate-700" />
             {storyDays.map((day) => {
               const summary = storySummary?.[day.id];
               return (

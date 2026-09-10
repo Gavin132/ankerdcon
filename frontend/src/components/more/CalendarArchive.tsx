@@ -20,7 +20,6 @@ import { NamePicker } from "../common/NamePicker";
 import { parseEventDate, toDateKey, todayKey } from "../../utils/date";
 import {
   groupCalendarEntries,
-  getGroupTitle,
   formatDateRange,
   buildGroupColorMap,
   dayShort,
@@ -335,7 +334,9 @@ export function CalendarArchive({
   function renderGroupBlock(item: GroupItem, isPast: boolean) {
     const color = groupColorMap.get(item.multiDayId) ?? { accent: "#38bdf8", bg: "bg-sky-500/10", text: "text-sky-400" } as MultiDayColor;
     const isExpanded = expandedGroups.has(item.multiDayId);
-    const title = getGroupTitle(item.events);
+    // The event's own name, not the shared series label (e.g. "HDCC") —
+    // a group of days is still one specific event.
+    const title = item.events[0].ev.event_name;
     const dateRange = formatDateRange(item.events.map((e) => e.date));
     const firstDate = item.events[0].date;
     const lastDate = item.events[item.events.length - 1].date;

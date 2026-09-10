@@ -34,6 +34,7 @@ const MembersPage = lazyPage(() => import("./pages/MembersPage"), "MembersPage")
 const ActiesPage = lazyPage(() => import("./pages/ActiesPage"), "ActiesPage");
 const NotificationSettingsPage = lazyPage(() => import("./pages/NotificationSettingsPage"), "NotificationSettingsPage");
 const ChangelogPage = lazyPage(() => import("./pages/ChangelogPage"), "ChangelogPage");
+const StoryArchivePage = lazyPage(() => import("./pages/StoryArchivePage"), "StoryArchivePage");
 const HotelRoomsPage = lazyPage(() => import("./pages/HotelRoomsPage"), "HotelRoomsPage");
 const OnboardingPage = lazyPage(() => import("./pages/OnboardingPage"), "OnboardingPage");
 const NotFoundPage = lazyPage(() => import("./pages/NotFoundPage"), "NotFoundPage");
@@ -129,6 +130,10 @@ export const router = createBrowserRouter([
           {
             path: routes.changelog,
             element: <ChangelogPage />,
+          },
+          {
+            path: routes.stories,
+            element: <StoryArchivePage />,
           },
           {
             path: routes.eventHotel.pattern,

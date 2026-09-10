@@ -20,6 +20,13 @@ export async function deleteStoryPhoto(photoId: string): Promise<void> {
   await apiClient.delete(apiRoutes.stories.photo(photoId));
 }
 
+export async function downloadStoryPhoto(photoId: string): Promise<Blob> {
+  const { data } = await apiClient.get<Blob>(apiRoutes.stories.download(photoId), {
+    responseType: "blob",
+  });
+  return data;
+}
+
 export async function getStorySeen(eventDayId: string): Promise<StorySeenState> {
   const { data } = await apiClient.get<StorySeenState>(apiRoutes.stories.seen(eventDayId));
   return data;

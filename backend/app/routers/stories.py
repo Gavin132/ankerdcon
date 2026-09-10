@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from collections import defaultdict
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
 
 from app.config import get_settings
 from app.constants import Tables
@@ -126,8 +126,25 @@ async def upload_story_photo(
 
     content = await read_capped(file, _MAX_BYTES)
 
+    # Nest under the parent event too (not just the day) so MinIO's own
+    # browser groups a multi-day con's photos together instead of scattering
+    # them across same-looking sibling "folders".
+    try:
+        day_row = (
+            supabase.table(Tables.EVENT_DAYS)
+            .select("event_id")
+            .eq("id", event_day_id)
+            .execute()
+        )
+    except Exception as e:
+        logger.error("Failed to look up event for day %s: %s", event_day_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if not day_row.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenementdag niet gevonden.")
+    event_id = day_row.data[0]["event_id"]
+
     ext = _EXT.get(file.content_type, "jpg")
-    key = f"{event_day_id}/{uuid.uuid4().hex}.{ext}"
+    key = f"{event_id}/{event_day_id}/{uuid.uuid4().hex}.{ext}"
 
     try:
         image_url = minio_client.upload_bytes(key, content, file.content_type)
@@ -195,6 +212,41 @@ def delete_story_photo(photo_id: str, current_user: str = Depends(get_current_us
         minio_client.delete_object(key)
     except Exception:
         pass
+
+
+@router.get(StoryRoutes.DOWNLOAD)
+def download_story_photo(photo_id: str, _: str = Depends(get_current_user)):
+    """Streams the original photo bytes through the backend with a
+    Content-Disposition header, so the browser is forced to download it
+    rather than open it — a direct link to the bucket can't guarantee that,
+    and would also need the bucket's CORS configured just to read the bytes
+    client-side."""
+    try:
+        row = supabase.table(Tables.STORY_PHOTOS).select("*").eq("id", photo_id).execute()
+    except Exception as e:
+        logger.error("Failed to fetch story photo %s: %s", photo_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+    if not row.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Foto niet gevonden.")
+
+    photo = row.data[0]
+    settings = get_settings()
+    key = photo["image_url"].split(f"/{settings.minio_bucket}/", 1)[-1]
+
+    try:
+        content, content_type = minio_client.get_object_bytes(key)
+    except Exception as e:
+        logger.error("Failed to fetch story photo bytes for %s: %s", photo_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Downloaden mislukt. Probeer het opnieuw.")
+
+    ext = _EXT.get(content_type, "jpg")
+    filename = f"story-{photo['created_at'][:10]}-{photo_id[:8]}.{ext}"
+    return Response(
+        content=content,
+        media_type=content_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.get(StoryRoutes.SEEN, response_model=StorySeenState)

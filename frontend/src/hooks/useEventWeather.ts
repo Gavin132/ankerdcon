@@ -210,7 +210,13 @@ async function fetchWeather(
   const weatherData = await weatherRes.json();
 
   const daily = weatherData.daily;
-  if (!daily?.time?.length) {
+  // Right at the edge of the forecast horizon, Open-Meteo can return a
+  // `daily` object with a populated `time` array but `null` for every
+  // actual weather field — the day exists but hasn't been fully computed
+  // yet. `Math.round(null)` evaluates to 0 in JS, so without this check
+  // that silently rendered as a fake "0°, 0%, 0 km/h" reading instead of
+  // falling back like the fully-missing case below already does.
+  if (!daily?.time?.length || daily.temperature_2m_max[0] == null) {
     // Event is outside the ~16-day forecast window — fall back to a
     // historical average for this calendar date at this location.
     const climate = await fetchClimateAverage(latitude, longitude, date);
