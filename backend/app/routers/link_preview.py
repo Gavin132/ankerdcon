@@ -71,6 +71,13 @@ def _format_date(date_str: str | None) -> str | None:
         return None
 
 
+def _truncate(text: str, max_len: int = 220) -> str:
+    text = text.strip()
+    if len(text) <= max_len:
+        return text
+    return f"{text[:max_len].rsplit(' ', 1)[0]}…"
+
+
 def _serve_spa() -> HTMLResponse:
     try:
         return HTMLResponse((_DIST / "index.html").read_text(encoding="utf-8"))
@@ -121,7 +128,12 @@ def event_link_preview(event_id: str, request: Request) -> HTMLResponse:
 
     date_part = _format_date(event.get("date"))
     summary = " · ".join(p for p in (date_part, event.get("location")) if p)
-    description = summary or event.get("description") or "Live Event Logistics"
+    # Discord/Slack/etc. preserve literal newlines inside an og:description
+    # value, so the date/location line and the description snippet render
+    # as separate paragraphs in the embed rather than running together.
+    blurb = event.get("description")
+    parts = [p for p in (summary, _truncate(blurb) if blurb else None) if p]
+    description = "\n\n".join(parts) or "Live Event Logistics"
 
     image = event.get("image_url") or (f"{base}/assets/images/ankerd-banner.jpg" if base else None)
 

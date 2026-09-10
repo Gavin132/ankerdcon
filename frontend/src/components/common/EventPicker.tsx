@@ -3,6 +3,18 @@ import { Search, X, CalendarDays, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { CalendarEvent } from "../../types";
 import { formatDate } from "../../utils/format";
+import { parseEventDate } from "../../utils/date";
+import { dayShort } from "../../utils/multiDay";
+
+/** "Vr 12 september 2026" — the two-letter day makes it much faster to
+ * scan a list of dates for the specific day you're planning around. */
+function formatDateWithDay(dateStr: string): string {
+  const date = parseEventDate(dateStr);
+  const formatted = formatDate(dateStr);
+  if (!date) return formatted;
+  const short = dayShort(date);
+  return `${short.charAt(0).toUpperCase()}${short.slice(1)} ${formatted}`;
+}
 
 interface EventPickerProps {
   events: CalendarEvent[];
@@ -69,7 +81,7 @@ export function EventPicker({
                   {selectedEvent.event_name}
                 </p>
                 <p className="text-[11px] text-sky-600/70 dark:text-sky-400/70">
-                  {formatDate(selectedEvent.date)}
+                  {formatDateWithDay(selectedEvent.date)}
                 </p>
               </div>
               <button
@@ -140,7 +152,7 @@ export function EventPicker({
                         {event.event_name}
                       </span>
                       <span className="block text-[11px] text-slate-400 truncate">
-                        {formatDate(event.date)}
+                        {formatDateWithDay(event.date)}
                         {event.location ? ` · ${event.location}` : ""}
                       </span>
                     </span>
