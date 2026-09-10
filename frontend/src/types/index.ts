@@ -207,6 +207,7 @@ export interface StoryDaySummary {
   photo_count: number;
   latest_seq: number;
   has_unseen: boolean;
+  preview_url: string;
 }
 
 // Cosplays

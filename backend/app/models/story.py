@@ -25,3 +25,4 @@ class StoryDaySummary(BaseModel):
     photo_count: int
     latest_seq: int
     has_unseen: bool
+    preview_url: str

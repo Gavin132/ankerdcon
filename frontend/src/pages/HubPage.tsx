@@ -215,6 +215,7 @@ export function HubPage() {
                   label={day.label}
                   hasPhotos={!!summary && summary.photo_count > 0}
                   hasUnseen={!!summary?.has_unseen}
+                  previewUrl={summary?.preview_url}
                   onClick={() =>
                     summary && summary.photo_count > 0
                       ? setStoryViewerDayId(day.id)

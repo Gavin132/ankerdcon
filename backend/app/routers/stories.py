@@ -37,6 +37,63 @@ def _require_day_id(event_day_id: str) -> None:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="event_day_id ontbreekt.")
 
 
+# Registered before the LIST/{event_day_id} route below — FastAPI matches
+# routes in registration order, not by specificity, so this literal
+# `/summary` path has to come first or `/{event_day_id}` (a single-segment
+# wildcard) shadows it, binding event_day_id to the literal string
+# "summary" and failing with "invalid input syntax for type uuid: summary".
+@router.get(StoryRoutes.SUMMARY, response_model=dict[str, StoryDaySummary])
+def get_story_summary(
+    event_day_ids: str = Query(..., description="Comma-separated event_day ids"),
+    current_user: str = Depends(get_current_user),
+):
+    day_ids = [d for d in event_day_ids.split(",") if d]
+    if not day_ids:
+        return {}
+
+    try:
+        photos = (
+            supabase.table(Tables.STORY_PHOTOS)
+            .select("event_day_id, seq, image_url")
+            .in_("event_day_id", day_ids)
+            .execute()
+            .data
+        )
+        seen_rows = (
+            supabase.table(Tables.STORY_SEEN)
+            .select("event_day_id, last_seen_seq")
+            .eq("user_name", current_user)
+            .in_("event_day_id", day_ids)
+            .execute()
+            .data
+        )
+    except Exception as e:
+        logger.error("Failed to build story summary for %s: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+    # PostgREST has no server-side GROUP BY through the table query builder,
+    # so counts/max(seq)/the newest photo's url are aggregated here — fine
+    # at this app's scale (a handful of days, at most a few hundred photos
+    # total).
+    by_day: dict[str, list[dict]] = defaultdict(list)
+    for p in photos:
+        by_day[p["event_day_id"]].append(p)
+
+    seen_by_day = {r["event_day_id"]: r["last_seen_seq"] for r in seen_rows}
+
+    result: dict[str, StoryDaySummary] = {}
+    for day_id, day_photos in by_day.items():
+        newest = max(day_photos, key=lambda p: p["seq"])
+        last_seen = seen_by_day.get(day_id, 0)
+        result[day_id] = StoryDaySummary(
+            photo_count=len(day_photos),
+            latest_seq=newest["seq"],
+            has_unseen=newest["seq"] > last_seen,
+            preview_url=newest["image_url"],
+        )
+    return result
+
+
 @router.get(StoryRoutes.LIST, response_model=list[StoryPhoto])
 def list_story_photos(event_day_id: str, _: str = Depends(get_current_user)):
     _require_day_id(event_day_id)
@@ -189,51 +246,3 @@ def mark_story_seen(
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
-@router.get(StoryRoutes.SUMMARY, response_model=dict[str, StoryDaySummary])
-def get_story_summary(
-    event_day_ids: str = Query(..., description="Comma-separated event_day ids"),
-    current_user: str = Depends(get_current_user),
-):
-    day_ids = [d for d in event_day_ids.split(",") if d]
-    if not day_ids:
-        return {}
-
-    try:
-        photos = (
-            supabase.table(Tables.STORY_PHOTOS)
-            .select("event_day_id, seq")
-            .in_("event_day_id", day_ids)
-            .execute()
-            .data
-        )
-        seen_rows = (
-            supabase.table(Tables.STORY_SEEN)
-            .select("event_day_id, last_seen_seq")
-            .eq("user_name", current_user)
-            .in_("event_day_id", day_ids)
-            .execute()
-            .data
-        )
-    except Exception as e:
-        logger.error("Failed to build story summary for %s: %s", current_user, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-
-    # PostgREST has no server-side GROUP BY through the table query builder,
-    # so counts/max(seq) are aggregated here — fine at this app's scale
-    # (a handful of days, at most a few hundred photos total).
-    by_day: dict[str, list[int]] = defaultdict(list)
-    for p in photos:
-        by_day[p["event_day_id"]].append(p["seq"])
-
-    seen_by_day = {r["event_day_id"]: r["last_seen_seq"] for r in seen_rows}
-
-    result: dict[str, StoryDaySummary] = {}
-    for day_id, seqs in by_day.items():
-        latest_seq = max(seqs)
-        last_seen = seen_by_day.get(day_id, 0)
-        result[day_id] = StoryDaySummary(
-            photo_count=len(seqs),
-            latest_seq=latest_seq,
-            has_unseen=latest_seq > last_seen,
-        )
-    return result
