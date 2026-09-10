@@ -2,12 +2,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useCallback, useRef, useState } from "react";
 import { useSmartBack } from "../hooks/useSmartBack";
 import { motion } from "framer-motion";
-import { CalendarDays, ChevronRight, Sparkles, UserCheck, UserMinus, Layers } from "lucide-react";
+import { CalendarDays, ChevronRight, Sparkles, Camera, UserCheck, UserMinus, Layers } from "lucide-react";
 import { useCalendar, useHotelRooms, useRsvpCalendarEvent, useLeaveCalendarEvent } from "../hooks/useCalendar";
 import { useUsers, useCurrentUser } from "../hooks/useUsers";
 import { useMeals } from "../hooks/useMeals";
 import { useRides } from "../hooks/useRides";
 import { useCosplays } from "../hooks/useCosplays";
+import { useStoryPhotos } from "../hooks/useStories";
 import { useEventWeather } from "../hooks/useEventWeather";
 import { parseEventDate } from "../utils/date";
 import { useTimeStore, getNow } from "../store/time.store";
@@ -26,6 +27,8 @@ import { DayStrip } from "../components/event/DayStrip";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { NamePicker } from "../components/common/NamePicker";
+import { StoryViewer } from "../components/story/StoryViewer";
+import { StoryUploadButton } from "../components/story/StoryUploadButton";
 
 export function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -41,6 +44,8 @@ export function EventDetailPage() {
 
   const [rsvpOpen, setRsvpOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [storyOpen, setStoryOpen] = useState(false);
+  const { data: storyPhotos = [] } = useStoryPhotos(id ?? "", { enabled: !!id });
   const [rsvpNames, setRsvpNames] = useState<string[]>([]);
   const [cancelNames, setCancelNames] = useState<string[]>([]);
   const [rsvpAllDays, setRsvpAllDays] = useState(false);
@@ -367,7 +372,38 @@ export function EventDetailPage() {
           </div>
         )}
 
-        {/* 4 ── Practical info + hotel + tickets, one combined card */}
+        {/* 4 ── Story — photos the group uploaded for this specific day */}
+        <div className="card-surface rounded-2xl overflow-hidden">
+          <div className="h-[3px] bg-gradient-to-r from-amber-400 to-rose-500" />
+          <div className="flex items-center gap-3 px-5 py-4">
+            <button
+              type="button"
+              onClick={() => storyPhotos.length > 0 && setStoryOpen(true)}
+              disabled={storyPhotos.length === 0}
+              className="flex flex-1 min-w-0 items-center gap-4 text-left disabled:cursor-default"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-500/10">
+                <Camera size={16} className="text-rose-500 dark:text-rose-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-0.5">
+                  Story
+                </p>
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  {storyPhotos.length === 0
+                    ? "Nog geen foto's"
+                    : `${storyPhotos.length} foto${storyPhotos.length !== 1 ? "'s" : ""}`}
+                </p>
+              </div>
+              {storyPhotos.length > 0 && (
+                <ChevronRight size={15} className="shrink-0 text-slate-300 dark:text-slate-600" />
+              )}
+            </button>
+            <StoryUploadButton eventDayId={event.id} />
+          </div>
+        </div>
+
+        {/* 5 ── Practical info + hotel + tickets, one combined card */}
         {(hasPracticalInfo || hasLinks) && (
           <div className="card-surface rounded-2xl overflow-hidden">
             <div className="h-[3px] bg-gradient-to-r from-sky-400 via-blue-400 to-teal-500" />
@@ -393,10 +429,12 @@ export function EventDetailPage() {
           </div>
         )}
 
-        {/* 5 ── Linked rides */}
+        {/* 6 ── Linked rides */}
         <EventLinkedRides rides={linkedRides} />
 
       </div>
+
+      <StoryViewer eventDayId={event.id} open={storyOpen} onClose={() => setStoryOpen(false)} />
 
       {/* RSVP modal */}
       <Modal

@@ -20,6 +20,14 @@ export const apiRoutes = {
     byId:  (id: string) => `/api/cosplays/${id}`,
   },
 
+  // ── Event-day photo stories ─────────────────────────────────────
+  stories: {
+    byDay:   (eventDayId: string) => `/api/stories/${eventDayId}`,
+    photo:   (photoId: string) => `/api/stories/photos/${photoId}`,
+    seen:    (eventDayId: string) => `/api/stories/${eventDayId}/seen`,
+    summary: (eventDayIds: string[]) => `/api/stories/summary?event_day_ids=${eventDayIds.map(encodeURIComponent).join(",")}`,
+  },
+
   // ── Meals ────────────────────────────────────────────────────────
   meals: {
     base:       "/api/meals/",

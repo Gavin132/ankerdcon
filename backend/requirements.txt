@@ -9,3 +9,4 @@ python-dotenv==1.0.1
 python-multipart==0.0.9
 supabase
 apscheduler>=3.10,<4
+minio>=7.2,<8

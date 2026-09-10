@@ -71,6 +71,14 @@ class CosplayRoutes:
     DETAIL = "/{cosplay_id}"
 
 
+class StoryRoutes:
+    PREFIX = "/stories"
+    LIST = "/{event_day_id}"          # GET list / POST upload
+    DETAIL = "/photos/{photo_id}"     # DELETE (owner-only)
+    SEEN = "/{event_day_id}/seen"     # GET / PUT
+    SUMMARY = "/summary"              # GET ?event_day_ids=a,b,c
+
+
 class BadgeRoutes:
     PREFIX = "/badges"
     LIST = "/"
