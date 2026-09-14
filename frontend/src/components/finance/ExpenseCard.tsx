@@ -10,6 +10,8 @@ interface Props {
   users: User[];
   me: string | undefined;
   onClick: () => void;
+  /** Name of the trip the expense is linked to, if any. */
+  tripTitle?: string;
 }
 
 function resolveUser(name: string, users: User[]) {
@@ -22,7 +24,7 @@ const STATUS_ICON = {
   pending:   <Circle       size={11} className="text-slate-300 dark:text-slate-600" />,
 } as const;
 
-export function ExpenseCard({ expense, users, me, onClick }: Props) {
+export function ExpenseCard({ expense, users, me, onClick, tripTitle }: Props) {
   const confirmedCount = expense.shares.filter((s) => s.status === "confirmed").length;
   const totalShares    = expense.shares.length;
   const allConfirmed   = totalShares > 0 && confirmedCount === totalShares;
@@ -60,6 +62,12 @@ export function ExpenseCard({ expense, users, me, onClick }: Props) {
               </span>
               <span className="text-slate-200 dark:text-slate-700">·</span>
               <span className="text-[11px] text-slate-400 truncate">{expense.paid_by}</span>
+              {tripTitle && (
+                <>
+                  <span className="text-slate-200 dark:text-slate-700">·</span>
+                  <span className="text-[11px] text-slate-400 truncate">{tripTitle}</span>
+                </>
+              )}
             </div>
           </div>
 

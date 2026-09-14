@@ -143,7 +143,6 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
 // ── Edit drawer ───────────────────────────────────────────────────────────────
 
 const editSchema = z.object({
-  hotel_room: z.string().optional(),
   phone_number: z.string().optional(),
   pronouns: z.string().max(40, "Max 40 tekens").optional(),
   bio: z.string().max(200, "Max 200 tekens").optional(),
@@ -176,7 +175,6 @@ function UserEditDrawer({
   } = useForm<EditForm>({
     resolver: zodResolver(editSchema),
     defaultValues: {
-      hotel_room: user?.hotel_room ?? "",
       phone_number: user?.phone_number ?? "",
       pronouns: user?.pronouns ?? "",
       bio: user?.bio ?? "",
@@ -248,23 +246,13 @@ function UserEditDrawer({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={L}>Hotelkamer</label>
-              <input
-                {...register("hotel_room")}
-                className={F}
-                placeholder="101"
-              />
-            </div>
-            <div>
-              <label className={L}>Telefoonnummer</label>
-              <input
-                {...register("phone_number")}
-                className={F}
-                placeholder="+31 6..."
-              />
-            </div>
+          <div>
+            <label className={L}>Telefoonnummer</label>
+            <input
+              {...register("phone_number")}
+              className={F}
+              placeholder="+31 6..."
+            />
           </div>
 
           <div>

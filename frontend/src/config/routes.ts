@@ -22,6 +22,11 @@ export const routes = {
     view: (id: string) => `/finance?expense=${encodeURIComponent(id)}`,
   },
 
+  /** Financiën showing only one trip's expenses. */
+  tripExpenses: {
+    view: (tripId: string) => `/finance?trip=${encodeURIComponent(tripId)}`,
+  },
+
   /**
    * The Event tab. Resolves to whichever trip is current and reopens the
    * sub-tab used last, unless a specific `tab` is asked for.

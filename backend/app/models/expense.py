@@ -36,4 +36,6 @@ class CreateExpenseRequest(BaseModel):
     currency: str = "EUR"
     description: str
     date: str
+    # Any day of the trip the expense belongs to; the app groups by trip.
+    linked_event_id: Optional[str] = None
     shares: list[CreateExpenseShareInput] = []

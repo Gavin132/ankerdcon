@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -6,6 +6,8 @@ import { Equal, Tag, SlidersHorizontal, X, Plus } from "lucide-react";
 import { Drawer } from "../common/Drawer";
 import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
+import { EventPicker } from "../common/EventPicker";
+import { useCalendar } from "../../hooks/useCalendar";
 import { UserAvatar } from "../common/UserAvatar";
 import { useCreateExpense } from "../../hooks/useExpenses";
 import { useUsers } from "../../hooks/useUsers";
@@ -20,6 +22,7 @@ const schema = z.object({
   currency:    z.string().min(1),
   description: z.string().min(1, "Verplicht"),
   date:        z.string().min(1, "Verplicht"),
+  linked_event_id: z.string().optional(),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -42,10 +45,13 @@ interface Props {
   open: boolean;
   onClose: () => void;
   me: string | undefined;
+  /** Preselected event day — e.g. the first day of the trip Financiën is filtered to. */
+  defaultEventId?: string;
 }
 
-export function CreateExpenseDrawer({ open, onClose, me }: Props) {
+export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props) {
   const { data: users = [] } = useUsers();
+  const { data: events = [] } = useCalendar();
   const userNames = users.map((u: User) => u.name);
 
   const createMutation = useCreateExpense();
@@ -73,8 +79,14 @@ export function CreateExpenseDrawer({ open, onClose, me }: Props) {
       date:     new Date().toISOString().split("T")[0],
       currency: "EUR",
       paid_by:  me ?? "",
+      linked_event_id: defaultEventId ?? "",
     },
   });
+
+  // The drawer stays mounted, so pick up the current trip filter each time it opens.
+  useEffect(() => {
+    if (open) setValue("linked_event_id", defaultEventId ?? "");
+  }, [open, defaultEventId, setValue]);
 
   const totalAmount = Number(watch("amount")) || 0;
   const currency    = watch("currency") || "EUR";
@@ -114,7 +126,7 @@ export function CreateExpenseDrawer({ open, onClose, me }: Props) {
 
   function handleClose() {
     onClose();
-    reset({ date: new Date().toISOString().split("T")[0], currency: "EUR", paid_by: me ?? "" });
+    reset({ date: new Date().toISOString().split("T")[0], currency: "EUR", paid_by: me ?? "", linked_event_id: "" });
     setSplitMode("gelijk");
     setSplitParticipants([]);
     setFixedAmountStr("");
@@ -127,6 +139,7 @@ export function CreateExpenseDrawer({ open, onClose, me }: Props) {
     try {
       await createMutation.mutateAsync({
         ...values,
+        linked_event_id: values.linked_event_id || undefined,
         shares: buildShares(),
       });
       toast("success", `"${values.description}" toegevoegd!`);
@@ -202,6 +215,22 @@ export function CreateExpenseDrawer({ open, onClose, me }: Props) {
               <label className={SL}>Datum</label>
               <input type="date" className="input-field dark:[color-scheme:dark]" {...register("date")} />
             </div>
+          </div>
+        </div>
+
+        {/* ── Event ───────────────────────────────────────── */}
+        <div className={SF}>
+          <p className={ST}>Event (optioneel)</p>
+          <div>
+            <EventPicker
+              events={events}
+              value={watch("linked_event_id") || undefined}
+              onChange={(id) => setValue("linked_event_id", id ?? "", { shouldDirty: true })}
+              placeholder="Hoort bij een event? Zoek en koppel…"
+            />
+            <p className="mt-1.5 text-xs text-slate-400">
+              Dan staat de uitgave ook bij de uitgaven van die trip.
+            </p>
           </div>
         </div>
 

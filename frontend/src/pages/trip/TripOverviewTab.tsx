@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { CalendarDays, ChevronRight, Sparkles, Camera, UserCheck, UserMinus, Layers, Share2 } from "lucide-react";
+import { CalendarDays, ChevronRight, Sparkles, Camera, UserCheck, UserMinus, Layers, Share2, Wallet } from "lucide-react";
 import { useCalendar, useHotelRooms, useRsvpCalendarEvent, useLeaveCalendarEvent } from "../../hooks/useCalendar";
 import { useUsers, useCurrentUser } from "../../hooks/useUsers";
 import { useMeals } from "../../hooks/useMeals";
@@ -274,6 +274,10 @@ export function TripOverviewTab() {
         >
           <Camera size={14} />
           Story bekijken
+        </button>
+        <button type="button" onClick={() => navigate(routes.tripExpenses.view(trip.id))} className={iconButton}>
+          <Wallet size={14} />
+          Uitgaven
         </button>
         <button type="button" onClick={onShare} className={iconButton}>
           <Share2 size={14} />

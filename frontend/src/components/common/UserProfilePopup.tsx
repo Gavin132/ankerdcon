@@ -3,9 +3,10 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../../config/routes";
-import { Phone, MapPin, Pencil, CalendarDays, User as UserIcon } from "lucide-react";
+import { Phone, MapPin, Pencil, CalendarDays, User as UserIcon, BedDouble } from "lucide-react";
 import { avatarColor } from "../../utils/avatar";
 import { LocationPingDisplay } from "./LocationPingDisplay";
+import { useCurrentTripRoomNumbers } from "../../hooks/useTripRooms";
 import { BadgeIcon } from "./BadgeIcon";
 import { useUser } from "../../hooks/useUsers";
 import { useBadges } from "../../hooks/useBadges";
@@ -78,6 +79,7 @@ export function UserProfilePopup({
     .filter(Boolean)
     .sort((a, b) => a!.display_order - b!.display_order) as typeof allBadges;
 
+  const roomNumbers = useCurrentTripRoomNumbers();
   const hasAvatar = !!u?.avatar_url && !imgErr;
   const bannerStyle = getBannerStyle(
     u?.banner_color ?? "",
@@ -91,8 +93,9 @@ export function UserProfilePopup({
       }
     : {};
 
+  const room = u ? roomNumbers.get(u.name.toLowerCase()) : undefined;
   const hasDetails = !!(
-    u?.hotel_room ||
+    room ||
     u?.phone_number ||
     u?.live_location_ping ||
     u?.discord_username
@@ -278,6 +281,14 @@ export function UserProfilePopup({
                             <span className="text-[12px] text-slate-500 dark:text-slate-400 font-medium">
                               @{u.discord_username}
                             </span>
+                          </div>
+                        )}
+                        {room && (
+                          <div className="flex items-center gap-2.5">
+                            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-100 dark:bg-slate-800">
+                              <BedDouble size={11} className="text-slate-400" />
+                            </div>
+                            <span className="text-[12px] text-slate-600 dark:text-slate-300">Kamer {room}</span>
                           </div>
                         )}
                         {u?.phone_number && (

@@ -5,6 +5,7 @@ import { useUsers } from "../hooks/useUsers";
 import { useCalendar } from "../hooks/useCalendar";
 import { useAuthStore } from "../store/auth.store";
 import { useBadges } from "../hooks/useBadges";
+import { useCurrentTripRoomNumbers } from "../hooks/useTripRooms";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { UserProfilePopup, type AnchorRect } from "../components/common/UserProfilePopup";
 import { BadgeIcon } from "../components/common/BadgeIcon";
@@ -34,6 +35,7 @@ export function CrewPage() {
   const { data: calendarEvents } = useCalendar();
   const { data: allBadges = [] } = useBadges();
   const currentUser = useAuthStore((s) => s.currentUser);
+  const roomNumbers = useCurrentTripRoomNumbers();
 
   const sorted = [...users].sort((a, b) => a.name.localeCompare(b.name, "nl"));
   const pinged = sorted.filter((u) => u.live_location_ping);
@@ -168,6 +170,7 @@ export function CrewPage() {
           >
             {filtered.map((u) => {
               const badges = getUserBadges(u);
+              const room = roomNumbers.get(u.name.toLowerCase());
               return (
                 <motion.button
                   key={u.name}
@@ -194,10 +197,10 @@ export function CrewPage() {
                       {u.discord_username && (
                         <span className="text-[10px] text-slate-400 truncate">{u.discord_username}</span>
                       )}
-                      {u.hotel_room && (
+                      {room && (
                         <span className="flex items-center gap-0.5 text-[10px] text-slate-400">
                           <BedDouble size={9} />
-                          {u.hotel_room}
+                          {room}
                         </span>
                       )}
                     </div>

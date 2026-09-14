@@ -4,6 +4,36 @@ All notable changes to Ankerd Con are documented here.
 
 ---
 
+## [Unreleased]
+
+### Changed
+- New navigation built around trips. The tabs are now **Hub · Event ·
+  Agenda · Financiën · Crew**.
+  - **Event** opens the current trip, with Overzicht, Vervoer, Eten,
+    Kamers, Cosplay and Foto's in one place for that trip.
+  - Transport and Eten no longer mix every event together.
+  - Multi-day trips get day buttons to filter by day.
+- **Agenda** replaces the calendar under Meer, and past trips there show
+  their story photos (replacing the separate story archive).
+- **Crew** combines the member lists with "Waar is iedereen" location pings.
+- Personal settings (notifications, Discord, theme, greeting) now live in
+  one place: **Instellingen** in the avatar menu. The Meer tab is gone.
+- "Kamer X" labels now come from the room assignments on Event › Kamers
+  instead of a separate free-text field.
+
+### Added
+- **Voor jou** on the Hub lists everything you still need to arrange, and
+  each item opens the place where you fix it. It replaces the Acties page.
+- Vervoer and Eten show who on the trip still has no ride or meal.
+- Expenses can be linked to an event, and Financiën can be filtered per trip.
+- Anyone's full profile can be opened from their profile popup.
+
+### Removed
+- The Acties page, the Meer tab, the separate story archive and the admin
+  "Hotelkamer" field on users. Old links redirect to the new pages.
+
+---
+
 ## [1.5.0] - 2026-09-02
 
 ### Added

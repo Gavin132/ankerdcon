@@ -12,6 +12,8 @@ import { ExpenseDetailDrawer } from "../components/finance/ExpenseDetailDrawer";
 import { useExpenses } from "../hooks/useExpenses";
 import { useUsers } from "../hooks/useUsers";
 import { useCurrentUser } from "../hooks/useUsers";
+import { useCalendar } from "../hooks/useCalendar";
+import { buildTrip, tripIdOf, type Trip } from "../utils/trips";
 import { formatAmount, formatCurrency } from "../utils/format";
 import { listContainer } from "../utils/motion";
 import type { Expense, User } from "../types";
@@ -26,10 +28,45 @@ export function FinancePage() {
   // Hub › Voor jou links here with `?expense=<id>` to open that expense directly.
   const [searchParams, setSearchParams] = useSearchParams();
   const linkedExpenseId = searchParams.get("expense");
+  // `?trip=<tripId>` limits everything below to one trip; `?trip=none` to unlinked expenses.
+  const tripFilter = searchParams.get("trip");
 
-  const { data: expenses = [], isLoading } = useExpenses();
+  const { data: allExpenses = [], isLoading } = useExpenses();
+  const { data: events = [] } = useCalendar();
+
+  // Trips that have at least one expense, newest trip first.
+  const { tripOptions, tripOfExpense } = useMemo(() => {
+    const tripOfExpense = new Map<string, Trip>();
+    const trips = new Map<string, Trip>();
+    for (const exp of allExpenses) {
+      const ev = exp.linked_event_id ? events.find((e) => e.id === exp.linked_event_id) : undefined;
+      if (!ev) continue;
+      const id = tripIdOf(ev);
+      const trip = trips.get(id) ?? buildTrip(events, id);
+      if (!trip) continue;
+      trips.set(id, trip);
+      tripOfExpense.set(exp.id, trip);
+    }
+    const tripOptions = [...trips.values()].sort((a, b) => b.days[0].date.getTime() - a.days[0].date.getTime());
+    return { tripOptions, tripOfExpense };
+  }, [allExpenses, events]);
+
+  const hasUnlinked = allExpenses.some((e) => !tripOfExpense.has(e.id));
+  const selectedTrip = tripOptions.find((t) => t.id === tripFilter) ?? (tripFilter ? buildTrip(events, tripFilter) : null);
+  const expenses = tripFilter === "none"
+    ? allExpenses.filter((e) => !tripOfExpense.has(e.id))
+    : selectedTrip
+      ? allExpenses.filter((e) => tripOfExpense.get(e.id)?.id === selectedTrip.id)
+      : allExpenses;
+
+  function setTripFilter(next: string | null) {
+    const params = new URLSearchParams(searchParams);
+    if (next) params.set("trip", next);
+    else params.delete("trip");
+    setSearchParams(params, { replace: true });
+  }
   const openExpenseId = detailExpenseId ?? linkedExpenseId;
-  const detailExpense: Expense | null = expenses.find((e) => e.id === openExpenseId) ?? null;
+  const detailExpense: Expense | null = allExpenses.find((e) => e.id === openExpenseId) ?? null;
 
   function openExpense(id: string) {
     setDetailExpenseId(id);
@@ -106,6 +143,41 @@ export function FinancePage() {
         </p>
       </motion.div>
 
+      {/* ── Trip filter ──────────────────────────────────────── */}
+      {(tripOptions.length > 0 || selectedTrip) && (
+        <div
+          role="group"
+          aria-label="Filter op trip"
+          className="-mx-4 flex gap-1.5 overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {[
+            { id: null, label: "Alles" },
+            ...(selectedTrip && !tripOptions.some((t) => t.id === selectedTrip.id) ? [selectedTrip] : []),
+            ...tripOptions,
+            ...(hasUnlinked ? [{ id: "none", label: "Zonder event" }] : []),
+          ].map((opt) => {
+            const id = opt.id;
+            const label = "title" in opt ? opt.title : opt.label;
+            const active = (tripFilter ?? null) === id || (!!selectedTrip && selectedTrip.id === id);
+            return (
+              <button
+                key={id ?? "all"}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setTripFilter(id)}
+                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors ${
+                  active
+                    ? "border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-900"
+                    : "border-slate-200 bg-white text-slate-500 hover:text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* ── Personal balance card ────────────────────────────── */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
         <div className="relative overflow-hidden rounded-3xl gradient-hero shadow-hero p-5">
@@ -119,7 +191,8 @@ export function FinancePage() {
                 <Wallet size={16} className="text-sky-300" />
               </div>
               <span className="text-xs font-bold uppercase tracking-widest text-sky-300">
-                {myName ? `Jouw saldo` : "Groepssaldo"}
+                {myName ? "Jouw saldo" : "Groepssaldo"}
+                {selectedTrip ? ` · ${selectedTrip.title}` : tripFilter === "none" ? " · zonder event" : ""}
               </span>
             </div>
 
@@ -213,7 +286,7 @@ export function FinancePage() {
         <EmptyState
           icon={<Wallet size={36} />}
           title="Geen uitgaven"
-          description="Voeg de eerste groepsuitgave toe."
+          description={selectedTrip ? `Nog geen uitgaven voor ${selectedTrip.title}.` : "Voeg de eerste groepsuitgave toe."}
         />
       ) : (
         <motion.div className="space-y-3" variants={listContainer} initial="hidden" animate="show">
@@ -224,6 +297,7 @@ export function FinancePage() {
               users={users}
               me={myName}
               onClick={() => openExpense(expense.id)}
+              tripTitle={selectedTrip ? undefined : tripOfExpense.get(expense.id)?.title}
             />
           ))}
         </motion.div>
@@ -242,6 +316,7 @@ export function FinancePage() {
         open={createOpen}
         onClose={() => setCreateOpen(false)}
         me={myName}
+        defaultEventId={selectedTrip?.days[0].ev.id}
       />
       <ExpenseDetailDrawer
         expense={detailExpense}

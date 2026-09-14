@@ -446,6 +446,8 @@ export interface CreateExpenseRequest {
   currency?: string;
   description: string;
   date: string;
+  /** Any day of the trip this expense belongs to. */
+  linked_event_id?: string;
   shares: CreateExpenseShareInput[];
 }
 

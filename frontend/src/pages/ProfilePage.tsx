@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { routes } from "../config/routes";
 import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 import { useSmartBack, isFreshEntry } from "../hooks/useSmartBack";
+import { useCurrentTripRoomNumbers } from "../hooks/useTripRooms";
 import { HomeLinkButton } from "../components/common/HomeLinkButton";
 import { UnsavedChangesModal } from "../components/common/UnsavedChangesModal";
 import {
@@ -225,6 +226,7 @@ function Card({
 
 function ViewProfile({
   user,
+  room,
   displayColor,
   displayBio,
   displayPronouns,
@@ -232,6 +234,8 @@ function ViewProfile({
   nameStyle,
 }: {
   user: User;
+  /** Room number on the current trip, from the room assignments. */
+  room?: string;
   displayColor: string;
   displayBio: string;
   displayPronouns: string;
@@ -294,12 +298,12 @@ function ViewProfile({
           </p>
         )}
 
-        {(user.hotel_room || user.phone_number || user.live_location_ping) && (
+        {(room || user.phone_number || user.live_location_ping) && (
           <div className="mt-4 space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
-            {user.hotel_room && (
+            {room && (
               <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                 <BedDouble size={14} className="text-slate-400 shrink-0" />
-                Kamer {user.hotel_room}
+                Kamer {room}
               </div>
             )}
             {user.phone_number && (
@@ -345,6 +349,7 @@ export function ProfilePage() {
   const deleteBannerMutation = useDeleteBanner();
 
   const isOwn = currentUser === decodedName && !preview;
+  const roomNumbers = useCurrentTripRoomNumbers();
 
   const [draftName, setDraftName] = useState("");
   const [draftBio, setDraftBio] = useState("");
@@ -579,6 +584,7 @@ export function ProfilePage() {
           >
             <ViewProfile
               user={user}
+              room={roomNumbers.get(user.name.toLowerCase())}
               bannerStyle={bannerStyle}
               displayColor={displayColor}
               displayBio={displayBio}

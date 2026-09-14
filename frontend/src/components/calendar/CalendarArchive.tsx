@@ -28,6 +28,7 @@ import {
   type MultiDayColor,
 } from "../../utils/multiDay";
 import { routes } from "../../config/routes";
+import { PastTripPhotos } from "./PastTripPhotos";
 import type { CalendarEvent, Meal, User } from "../../types";
 
 interface CalendarArchiveProps {
@@ -562,12 +563,15 @@ export function CalendarArchive({
                 transition={{ duration: 0.22 }}
                 className="overflow-hidden"
               >
+                <div className="space-y-3">
+                <PastTripPhotos items={pastItems} />
                 <div className="card-surface rounded-2xl overflow-hidden">
                   {pastItems.map((item) =>
                     item.type === "single"
                       ? renderRow(item.ev, item.date, true)
                       : renderGroupBlock(item, true),
                   )}
+                </div>
                 </div>
               </motion.div>
             )}
