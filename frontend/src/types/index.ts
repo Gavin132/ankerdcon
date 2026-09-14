@@ -376,7 +376,7 @@ export interface CalendarRsvpRequest {
 }
 
 // UI helpers
-export type TabId = "hub" | "transport" | "food" | "finance" | "more";
+export type TabId = "hub" | "trip" | "calendar" | "finance" | "crew";
 
 export type BaseProps = {
   options: string[];

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Car, Users } from "lucide-react";
 import { routes } from "../../config/routes";
 import { guessQuickRideDirection } from "../../utils/quickRide";
+import { tripIdOf } from "../../utils/trips";
 import { QuickRideModal } from "../transport/QuickRideModal";
 import { JoinRideModal } from "../transport/JoinRideModal";
 import { RestaurantQuickDriverModal } from "../transport/RestaurantQuickDriverModal";
@@ -52,7 +53,7 @@ export function QuickRideTiles({ event, restaurantMeal, rides = [] }: QuickRideT
   function handleJoinClick() {
     if (!isRestaurantLeg) { setJoinOpen(true); return; }
     if (existingRestaurantRide) navigate(routes.ride.view(existingRestaurantRide.id));
-    else navigate(routes.transport, { state: { tab: "Restaurant" } });
+    else navigate(routes.trip.view(tripIdOf(event), "transport"), { state: { tab: "Restaurant" } });
   }
 
   return (

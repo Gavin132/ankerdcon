@@ -13,7 +13,7 @@ function formatReleaseDate(iso: string): string {
 }
 
 export function ChangelogPage() {
-  const goBack = useSmartBack(routes.more);
+  const goBack = useSmartBack(routes.hub);
   const { data: entries, isLoading } = useChangelog();
 
   return (

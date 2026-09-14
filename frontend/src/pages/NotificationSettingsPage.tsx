@@ -14,7 +14,7 @@ import { NOTIFICATION_CATEGORIES } from "../constants/notifications";
 import { toast } from "../store/toast.store";
 
 export function NotificationSettingsPage() {
-  const goBack = useSmartBack(routes.more);
+  const goBack = useSmartBack(routes.settings);
   const { data: user, isLoading } = useCurrentUser();
   const updateMutation = useUpdatePreferences();
 
@@ -90,10 +90,10 @@ export function NotificationSettingsPage() {
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Je bent ingelogd met Google, dus de bot heeft geen Discord-account om naartoe te sturen.
-                  Je kunt dit op elk moment alsnog koppelen via je profiel.
+                  Je kunt dit op elk moment alsnog koppelen via Instellingen.
                 </p>
                 <Link
-                  to={routes.profile.view(user.id ?? user.name)}
+                  to={routes.settings}
                   className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline"
                 >
                   Discord koppelen

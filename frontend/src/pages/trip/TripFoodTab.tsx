@@ -2,23 +2,27 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { UtensilsCrossed, Plus, History, ChevronDown } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
-import { LocationSearchInput } from "../components/common/LocationSearchInput";
+import { LocationSearchInput } from "../../components/common/LocationSearchInput";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Button } from "../components/common/Button";
-import { StickyActionBar } from "../components/common/StickyActionBar";
-import { Drawer } from "../components/common/Drawer";
-import { EventPicker } from "../components/common/EventPicker";
-import { MealCardSkeleton } from "../components/common/Skeleton";
-import { EmptyState } from "../components/common/EmptyState";
-import { MealCard } from "../components/food/MealCard";
-import { useMeals, useCreateMeal } from "../hooks/useMeals";
-import { useCalendar } from "../hooks/useCalendar";
-import { useUsers } from "../hooks/useUsers";
-import { toast } from "../store/toast.store";
-import { listContainer } from "../utils/motion";
-import { useTimeStore, getNow } from "../store/time.store";
-import { parseEventDate, toDateKey, todayKey } from "../utils/date";
+import { Button } from "../../components/common/Button";
+import { StickyActionBar } from "../../components/common/StickyActionBar";
+import { Drawer } from "../../components/common/Drawer";
+import { EventPicker } from "../../components/common/EventPicker";
+import { MealCardSkeleton } from "../../components/common/Skeleton";
+import { EmptyState } from "../../components/common/EmptyState";
+import { MealCard } from "../../components/food/MealCard";
+import { useMeals, useCreateMeal } from "../../hooks/useMeals";
+import { useCalendar } from "../../hooks/useCalendar";
+import { useUsers } from "../../hooks/useUsers";
+import { toast } from "../../store/toast.store";
+import { listContainer } from "../../utils/motion";
+import { useTimeStore, getNow } from "../../store/time.store";
+import { parseEventDate, toDateKey, todayKey } from "../../utils/date";
+import { isTripOver, tripGaps, tripMeals } from "../../utils/trips";
+import { useRides } from "../../hooks/useRides";
+import { TripMissingList } from "../../components/trip/TripMissingList";
+import { useTrip } from "./tripContext";
 
 const createSchema = z.object({
   meal_name: z.string().min(1, "Verplicht"),
@@ -43,24 +47,39 @@ const SL = "block text-xs font-semibold uppercase tracking-widest text-slate-400
 const SF = "space-y-4 rounded-2xl border border-slate-100 dark:border-white/[0.07] bg-slate-50 dark:bg-white/[0.03] p-4";
 const ST = "text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3";
 
-export function FoodPage() {
+/** Event › Eten: this trip's meals, plus who on the trip isn't eating along yet. */
+export function TripFoodTab() {
+  const { trip, dayId } = useTrip();
   useTimeStore((s) => s.override); // re-render when the time-travel override changes
   const [createOpen, setCreateOpen] = useState(false);
   const [showPastMeals, setShowPastMeals] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const { data: meals, isLoading } = useMeals();
+  const { data: allMeals = [], isLoading } = useMeals();
+  const { data: rides = [] } = useRides();
+  const meals = tripMeals(allMeals, trip, dayId);
+  const missingFood = isTripOver(trip) ? [] : tripGaps(trip, rides, allMeals).food;
   const { data: users } = useUsers();
   const { data: events = [] } = useCalendar();
   const userNames = (users ?? []).map((u) => u.name);
   const createMutation = useCreateMeal();
 
   // Linking a meal to an event only makes sense for something still coming
-  // up — a past event's date isn't a useful default for a new meal plan.
+  // up — a past event's date isn't a useful default for a new meal plan. New
+  // meals go to a day of this trip; only a trip that's already over falls
+  // back to every upcoming event.
   const todayStr = todayKey();
-  const upcomingEvents = events.filter((e) => {
-    const d = parseEventDate(e.date);
-    return d && toDateKey(d) >= todayStr;
-  });
+  const isUpcoming = (date: string) => {
+    const d = parseEventDate(date);
+    return !!d && toDateKey(d) >= todayStr;
+  };
+  const upcomingTripDays = trip.days.filter((d) => isUpcoming(d.ev.date)).map((d) => d.ev);
+  const upcomingEvents = upcomingTripDays.length > 0 ? upcomingTripDays : events.filter((e) => isUpcoming(e.date));
+
+  function openCreate() {
+    const defaultDay = upcomingTripDays.find((d) => d.id === dayId) ?? upcomingTripDays[0];
+    reset({ transport_needed: false, linked_event_id: defaultDay?.id ?? "" });
+    setCreateOpen(true);
+  }
 
   const {
     register,
@@ -116,19 +135,25 @@ export function FoodPage() {
 
   return (
     <div className="space-y-5 pb-20">
+      <TripMissingList
+        title="Eet nog niet mee"
+        people={missingFood.map((name) => ({ name }))}
+      />
+
       {isLoading ? (
         <div className="space-y-3">
           {[0, 1, 2].map((i) => <MealCardSkeleton key={i} />)}
         </div>
-      ) : (meals ?? []).length === 0 ? (
+      ) : meals.length === 0 ? (
         <EmptyState
           icon={<UtensilsCrossed size={36} />}
           title="Geen maaltijden"
-          description="Voeg de eerste maaltijd of restaurantafspraak toe."
+          description="Er is nog geen maaltijd of restaurant gepland voor dit event."
         />
       ) : (() => {
-        const upcomingMeals = (meals ?? []).filter((m) => !isMealPast(m.time));
-        const pastMeals = (meals ?? []).filter((m) => isMealPast(m.time));
+        const byTime = (a: { time: string }, b: { time: string }) => a.time.localeCompare(b.time);
+        const upcomingMeals = meals.filter((m) => !isMealPast(m.time)).sort(byTime);
+        const pastMeals = meals.filter((m) => isMealPast(m.time)).sort((a, b) => byTime(b, a));
         return (
           <>
             {upcomingMeals.length === 0 ? (
@@ -192,7 +217,7 @@ export function FoodPage() {
       })()}
 
       <StickyActionBar>
-        <Button className="w-full shadow-lg" onClick={() => setCreateOpen(true)}>
+        <Button className="w-full shadow-lg" onClick={openCreate}>
           <Plus size={16} />
           Maaltijd toevoegen
         </Button>

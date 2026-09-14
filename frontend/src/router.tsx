@@ -1,5 +1,5 @@
 import { lazy, type ComponentType } from "react";
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate, useLocation } from "react-router-dom";
 import { routes } from "./config/routes";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { AdminRoute } from "./components/auth/AdminRoute";
@@ -21,21 +21,27 @@ function lazyPage<T extends ComponentType<any>>(
 }
 
 const HubPage = lazyPage(() => import("./pages/HubPage"), "HubPage");
-const TransportPage = lazyPage(() => import("./pages/TransportPage"), "TransportPage");
-const FoodPage = lazyPage(() => import("./pages/FoodPage"), "FoodPage");
+const CalendarPage = lazyPage(() => import("./pages/CalendarPage"), "CalendarPage");
 const FinancePage = lazyPage(() => import("./pages/FinancePage"), "FinancePage");
-const MorePage = lazyPage(() => import("./pages/MorePage"), "MorePage");
+const CrewPage = lazyPage(() => import("./pages/CrewPage"), "CrewPage");
+const SettingsPage = lazyPage(() => import("./pages/SettingsPage"), "SettingsPage");
 const ProfilePage = lazyPage(() => import("./pages/ProfilePage"), "ProfilePage");
-const EventDetailPage = lazyPage(() => import("./pages/EventDetailPage"), "EventDetailPage");
 const MealDetailPage = lazyPage(() => import("./pages/MealDetailPage"), "MealDetailPage");
 const RideDetailPage = lazyPage(() => import("./pages/RideDetailPage"), "RideDetailPage");
-const EventCosplaysPage = lazyPage(() => import("./pages/EventCosplaysPage"), "EventCosplaysPage");
-const MembersPage = lazyPage(() => import("./pages/MembersPage"), "MembersPage");
-const ActiesPage = lazyPage(() => import("./pages/ActiesPage"), "ActiesPage");
 const NotificationSettingsPage = lazyPage(() => import("./pages/NotificationSettingsPage"), "NotificationSettingsPage");
 const ChangelogPage = lazyPage(() => import("./pages/ChangelogPage"), "ChangelogPage");
-const StoryArchivePage = lazyPage(() => import("./pages/StoryArchivePage"), "StoryArchivePage");
-const HotelRoomsPage = lazyPage(() => import("./pages/HotelRoomsPage"), "HotelRoomsPage");
+
+const TripLayout = lazyPage(() => import("./pages/trip/TripLayout"), "TripLayout");
+const TripOverviewTab = lazyPage(() => import("./pages/trip/TripOverviewTab"), "TripOverviewTab");
+const TripTransportTab = lazyPage(() => import("./pages/trip/TripTransportTab"), "TripTransportTab");
+const TripFoodTab = lazyPage(() => import("./pages/trip/TripFoodTab"), "TripFoodTab");
+const TripRoomsTab = lazyPage(() => import("./pages/trip/TripRoomsTab"), "TripRoomsTab");
+const TripCosplayTab = lazyPage(() => import("./pages/trip/TripCosplayTab"), "TripCosplayTab");
+const TripPhotosTab = lazyPage(() => import("./pages/trip/TripPhotosTab"), "TripPhotosTab");
+const CurrentTripRedirect = lazyPage(() => import("./pages/trip/TripRedirects"), "CurrentTripRedirect");
+const EventDayRedirect = lazyPage(() => import("./pages/trip/TripRedirects"), "EventDayRedirect");
+const EventRoomsRedirect = lazyPage(() => import("./pages/trip/TripRedirects"), "EventRoomsRedirect");
+const EventCosplayRedirect = lazyPage(() => import("./pages/trip/TripRedirects"), "EventCosplayRedirect");
 const OnboardingPage = lazyPage(() => import("./pages/OnboardingPage"), "OnboardingPage");
 const NotFoundPage = lazyPage(() => import("./pages/NotFoundPage"), "NotFoundPage");
 const CrashTestPage = lazyPage(() => import("./pages/CrashTestPage"), "CrashTestPage");
@@ -56,6 +62,12 @@ const AdminChangelogPage = lazyPage(() => import("./pages/admin/AdminChangelogPa
 const AdminImpersonatePage = lazyPage(() => import("./pages/admin/AdminImpersonatePage"), "AdminImpersonatePage");
 const AdminTimeTravelPage = lazyPage(() => import("./pages/admin/AdminTimeTravelPage"), "AdminTimeTravelPage");
 
+/** Redirect for a pre-rework path, carrying the query string and navigation state along. */
+function LegacyRedirect({ to }: { to: string }) {
+  const location = useLocation();
+  return <Navigate to={{ pathname: to, search: location.search }} state={location.state} replace />;
+}
+
 export const router = createBrowserRouter([
   {
     // A pathless root wrapping every route below — `errorElement` here
@@ -69,10 +81,6 @@ export const router = createBrowserRouter([
       {
         path: routes.login,
         element: <LoginPage />,
-      },
-      {
-        path: routes.testError,
-        element: <CrashTestPage />,
       },
       {
         element: <ProtectedRoute />,
@@ -89,19 +97,47 @@ export const router = createBrowserRouter([
             element: <AppShell />,
             children: [
               { path: routes.hub,       element: <HubPage /> },
-              { path: routes.transport, element: <TransportPage /> },
-              { path: routes.food,      element: <FoodPage /> },
+              { path: routes.calendar,  element: <CalendarPage /> },
               { path: routes.finance,   element: <FinancePage /> },
-              { path: routes.more,      element: <MorePage /> },
+              { path: routes.crew,      element: <CrewPage /> },
+
+              // ── Event tab ──────────────────────────────────────────────
+              { path: routes.currentTrip.pattern, element: <CurrentTripRedirect /> },
+              {
+                path: routes.trip.pattern,
+                element: <TripLayout />,
+                children: [
+                  { index: true,        element: <TripOverviewTab /> },
+                  { path: "transport",  element: <TripTransportTab /> },
+                  { path: "food",       element: <TripFoodTab /> },
+                  { path: "rooms",      element: <TripRoomsTab /> },
+                  { path: "cosplay",    element: <TripCosplayTab /> },
+                  { path: "photos",     element: <TripPhotosTab /> },
+                ],
+              },
+              { path: routes.event.pattern,         element: <EventDayRedirect /> },
+              { path: routes.legacy.eventHotel,     element: <EventRoomsRedirect /> },
+              { path: routes.legacy.eventCosplays,  element: <EventCosplayRedirect /> },
             ],
+          },
+
+          // ── Old paths ──────────────────────────────────────────────────
+          { path: routes.legacy.transport,     element: <LegacyRedirect to={routes.currentTrip.tab("transport")} /> },
+          { path: routes.legacy.food,          element: <LegacyRedirect to={routes.currentTrip.tab("food")} /> },
+          { path: routes.legacy.stories,       element: <LegacyRedirect to={routes.currentTrip.tab("photos")} /> },
+          { path: routes.legacy.more,          element: <LegacyRedirect to={routes.calendar} /> },
+          { path: routes.legacy.members,       element: <LegacyRedirect to={routes.crew} /> },
+          { path: routes.legacy.acties,        element: <LegacyRedirect to={routes.hub} /> },
+          { path: routes.legacy.notifications, element: <LegacyRedirect to={routes.notifications} /> },
+          { path: routes.legacy.changelog,     element: <LegacyRedirect to={routes.changelog} /> },
+
+          {
+            path: routes.settings,
+            element: <SettingsPage />,
           },
           {
             path: routes.profile.pattern,
             element: <ProfilePage />,
-          },
-          {
-            path: routes.event.pattern,
-            element: <EventDetailPage />,
           },
           {
             path: routes.meal.pattern,
@@ -112,18 +148,6 @@ export const router = createBrowserRouter([
             element: <RideDetailPage />,
           },
           {
-            path: routes.eventCosplays.pattern,
-            element: <EventCosplaysPage />,
-          },
-          {
-            path: routes.members,
-            element: <MembersPage />,
-          },
-          {
-            path: routes.acties,
-            element: <ActiesPage />,
-          },
-          {
             path: routes.notifications,
             element: <NotificationSettingsPage />,
           },
@@ -131,18 +155,14 @@ export const router = createBrowserRouter([
             path: routes.changelog,
             element: <ChangelogPage />,
           },
-          {
-            path: routes.stories,
-            element: <StoryArchivePage />,
-          },
-          {
-            path: routes.eventHotel.pattern,
-            element: <HotelRoomsPage />,
-          },
           // ── Admin portal ──────────────────────────────────────────────
           {
             element: <AdminRoute />,
             children: [
+              {
+                path: routes.testError,
+                element: <CrashTestPage />,
+              },
               {
                 // Rendered outside AdminLayout so it's a true full-screen replica of
                 // the real onboarding flow, without the admin sidebar/topbar chrome.

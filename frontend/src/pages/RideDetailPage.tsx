@@ -20,7 +20,7 @@ import { NamePicker } from "../components/common/NamePicker";
 
 export function RideDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const goBack = useSmartBack(routes.transport);
+  const goBack = useSmartBack(routes.currentTrip.tab("transport"));
 
   const { data: rides = [], isLoading } = useRides();
   const { data: events = [] } = useCalendar();
@@ -131,7 +131,7 @@ export function RideDetailPage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <DetailTopbar
-        title={isRestaurant ? `Restaurant · ${ride.start_location}` : `${ride.direction} · ${ride.driver}`}
+        title={isRestaurant ? `Restaurant · ${ride.start_location}` : `${ride.direction === "Inbound" ? "Heen" : "Terug"} · ${ride.driver}`}
         onBack={goBack}
         onShare={onShare}
       />

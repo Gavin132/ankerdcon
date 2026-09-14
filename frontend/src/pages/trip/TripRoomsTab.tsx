@@ -1,26 +1,22 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
-import { ArrowLeft, BedDouble, Plus, Layers, Users, Pencil, Trash2, X, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
+import { BedDouble, Plus, Layers, Users, Pencil, Trash2, X, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useCalendar } from "../hooks/useCalendar";
 import {
   useHotelRooms,
   useCreateHotelRoom,
   useBulkCreateHotelRooms,
   useAssignHotelRoom,
   useLeaveHotelRoom,
-} from "../hooks/useCalendar";
-import { useAdminUpdateHotelRoom, useAdminDeleteHotelRoom } from "../hooks/useAdmin";
-import { useUsers, useCurrentUser } from "../hooks/useUsers";
-import { useSmartBack, isFreshEntry } from "../hooks/useSmartBack";
-import { routes } from "../config/routes";
-import { UserAvatar } from "../components/common/UserAvatar";
-import { HomeLinkButton } from "../components/common/HomeLinkButton";
-import { NamePicker } from "../components/common/NamePicker";
-import { Modal } from "../components/common/Modal";
-import { Button } from "../components/common/Button";
-import { toast } from "../store/toast.store";
-import type { HotelRoom } from "../types";
+} from "../../hooks/useCalendar";
+import { useAdminUpdateHotelRoom, useAdminDeleteHotelRoom } from "../../hooks/useAdmin";
+import { useUsers, useCurrentUser } from "../../hooks/useUsers";
+import { UserAvatar } from "../../components/common/UserAvatar";
+import { NamePicker } from "../../components/common/NamePicker";
+import { Modal } from "../../components/common/Modal";
+import { Button } from "../../components/common/Button";
+import { toast } from "../../store/toast.store";
+import { useTrip } from "./tripContext";
+import type { HotelRoom } from "../../types";
 
 // ── Room form modal ────────────────────────────────────────────────────────────
 
@@ -499,18 +495,21 @@ const container = {
   show: { opacity: 1, transition: { staggerChildren: 0.05 } },
 };
 
-export function HotelRoomsPage() {
-  const { id } = useParams<{ id: string }>();
-  const goBack = useSmartBack(id ? routes.event.view(id) : routes.hub);
+/**
+ * Event › Kamers. Rooms belong to the whole trip — the backend keys them by
+ * the trip's multi-day group — so any hotel day's id reaches the same set.
+ */
+export function TripRoomsTab() {
+  const { trip } = useTrip();
+  const event = trip.days.find((d) => d.ev.is_hotel)?.ev;
+  const id = event?.id;
 
-  const { data: events = [] } = useCalendar();
-  const { data: rooms = [], isLoading } = useHotelRooms(id ?? "");
+  const { data: rooms = [], isLoading } = useHotelRooms(id ?? "", { enabled: !!id });
   const { data: users = [] } = useUsers();
   const { data: currentUser } = useCurrentUser();
 
   const isAdmin = currentUser?.is_admin ?? false;
   const currentUserName = currentUser?.name;
-  const event = events.find((e) => e.id === id);
 
   const deleteRoom = useAdminDeleteHotelRoom();
 
@@ -522,25 +521,14 @@ export function HotelRoomsPage() {
 
   // Stats
   const assignedNames = new Set(rooms.flatMap((r) => r.occupants));
-  const eventAttendees = event?.participants ?? [];
+  const eventAttendees = trip.participants;
   const unassigned = eventAttendees.filter((p) => !assignedNames.has(p));
 
   if (!event) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4 text-slate-400">
+      <div className="flex flex-col items-center justify-center gap-4 py-20 text-slate-400">
         <BedDouble size={40} className="opacity-30" />
-        <p className="text-sm">Evenement niet gevonden</p>
-        <button onClick={goBack} className="text-xs text-sky-500 underline">Terug</button>
-      </div>
-    );
-  }
-
-  if (!event.is_hotel) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4 text-slate-400">
-        <BedDouble size={40} className="opacity-30" />
-        <p className="text-sm">Dit evenement heeft geen hotel</p>
-        <button onClick={goBack} className="text-xs text-sky-500 underline">Terug</button>
+        <p className="text-sm">Dit event heeft geen hotel</p>
       </div>
     );
   }
@@ -560,36 +548,19 @@ export function HotelRoomsPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-950">
+    <div className="pb-10">
 
-      {/* ── Topbar ──────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-10 flex items-center gap-3 h-14 px-4
-                      bg-white/90 dark:bg-slate-950/90 backdrop-blur-md
-                      border-b border-slate-200 dark:border-white/[0.06]">
-        <button
-          onClick={goBack}
-          className="flex h-8 w-8 items-center justify-center rounded-xl
-                     text-slate-500 dark:text-slate-400
-                     hover:bg-slate-100 dark:hover:bg-white/[0.08]
-                     hover:text-slate-900 dark:hover:text-white transition-colors"
-        >
-          <ArrowLeft size={18} />
-        </button>
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-slate-900 dark:text-white text-sm leading-tight truncate">
-            Hotelkamers
-          </p>
-          <p className="text-[10px] text-slate-400 leading-tight truncate">{event.event_name}</p>
-        </div>
-        {isFreshEntry() && (
-          <HomeLinkButton
-            size={17}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl
-                       text-slate-500 dark:text-slate-400
-                       hover:bg-slate-100 dark:hover:bg-white/[0.08]
-                       hover:text-slate-900 dark:hover:text-white transition-colors"
-          />
-        )}
+      {/* ── Summary + actions ──────────────────────────────────────── */}
+      <div className="mb-5 flex flex-wrap items-center gap-2">
+        <span className="flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          <BedDouble size={12} />
+          {rooms.length} {rooms.length === 1 ? "kamer" : "kamers"}
+        </span>
+        <span className="flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          <Users size={12} />
+          {assignedNames.size} van {eventAttendees.length} ingedeeld
+        </span>
+        <span className="flex-1" />
         <button
           onClick={() => setBulkModalOpen(true)}
           className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300
@@ -608,54 +579,7 @@ export function HotelRoomsPage() {
         </button>
       </div>
 
-      {/* ── Hero ────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden" style={{ minHeight: 140 }}>
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(ellipse at 15% 50%, #0c4a6edd 0%, transparent 60%),
-              radial-gradient(ellipse at 85% 25%, #0f172a 0%, transparent 55%),
-              linear-gradient(150deg, #0f172a 0%, #0c4a6e 55%, #075985 100%)
-            `,
-          }}
-        />
-        <svg className="absolute inset-0 h-full w-full opacity-[0.12] pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-          <filter id="hotel-noise">
-            <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="4" stitchTiles="stitch" />
-            <feColorMatrix type="saturate" values="0" />
-          </filter>
-          <rect width="100%" height="100%" filter="url(#hotel-noise)" />
-        </svg>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/10 pointer-events-none" />
-        <div className="absolute -right-4 top-1/2 -translate-y-1/2 opacity-[0.07] pointer-events-none">
-          <BedDouble size={140} strokeWidth={1} className="text-white" />
-        </div>
-
-        <div className="relative max-w-4xl mx-auto px-4 pt-6 pb-8">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-sky-300/60 mb-1">
-            {event.event_name}
-          </p>
-          <h1 className="text-2xl font-black text-white drop-shadow-md mb-3">Hotelkamers</h1>
-          <div className="flex flex-wrap gap-3">
-            <div className="flex items-center gap-1.5 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 px-3 py-1.5">
-              <BedDouble size={12} className="text-white/60" />
-              <span className="text-xs font-bold text-white">
-                {rooms.length} {rooms.length === 1 ? "kamer" : "kamers"}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 px-3 py-1.5">
-              <Users size={12} className="text-white/60" />
-              <span className="text-xs font-bold text-white">
-                {assignedNames.size} van {eventAttendees.length} ingedeeld
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-slate-50 dark:from-slate-950 to-transparent pointer-events-none" />
-      </div>
-
-      <div className="max-w-4xl mx-auto px-4 pb-10 pt-5 space-y-5">
+      <div className="space-y-5">
 
         {/* ── Unassigned strip ──────────────────────────────────────── */}
         {unassigned.length > 0 && (
@@ -689,7 +613,7 @@ export function HotelRoomsPage() {
 
         {/* ── Room grid ─────────────────────────────────────────────── */}
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="card-surface rounded-2xl p-4 animate-pulse">
                 <div className="h-1 bg-slate-200 dark:bg-slate-700 rounded mb-3" />
@@ -729,7 +653,7 @@ export function HotelRoomsPage() {
           </div>
         ) : (
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
             variants={container}
             initial="hidden"
             animate="show"
@@ -758,7 +682,7 @@ export function HotelRoomsPage() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 8 }}
-              className="fixed bottom-6 left-4 right-4 z-20 mx-auto max-w-lg flex items-center gap-3 rounded-2xl
+              className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-4 right-4 z-40 mx-auto max-w-lg flex items-center gap-3 rounded-2xl
                          border border-rose-200 dark:border-rose-500/20 bg-white dark:bg-slate-900 px-4 py-3.5 shadow-xl"
             >
               <AlertCircle size={16} className="text-rose-500 shrink-0" />

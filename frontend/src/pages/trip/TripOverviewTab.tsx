@@ -1,39 +1,41 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useCallback, useRef, useState } from "react";
-import { useSmartBack } from "../hooks/useSmartBack";
-import { motion } from "framer-motion";
-import { CalendarDays, ChevronRight, Sparkles, Camera, UserCheck, UserMinus, Layers } from "lucide-react";
-import { useCalendar, useHotelRooms, useRsvpCalendarEvent, useLeaveCalendarEvent } from "../hooks/useCalendar";
-import { useUsers, useCurrentUser } from "../hooks/useUsers";
-import { useMeals } from "../hooks/useMeals";
-import { useRides } from "../hooks/useRides";
-import { useCosplays } from "../hooks/useCosplays";
-import { useStoryPhotos } from "../hooks/useStories";
-import { useEventWeather } from "../hooks/useEventWeather";
-import { parseEventDate, toDateKey } from "../utils/date";
-import { useTimeStore, getNow } from "../store/time.store";
-import { toast } from "../store/toast.store";
-import { routes } from "../config/routes";
-import { DetailTopbar } from "../components/detail/DetailTopbar";
-import { EventHero } from "../components/event/EventHero";
-import { WeatherCard, ClimateAverageCard, WeatherSkeleton } from "../components/event/WeatherCard";
-import { HotelInfoCard } from "../components/event/HotelInfoCard";
-import { EventLinks } from "../components/event/EventLinks";
-import { EventPractical } from "../components/event/EventPractical";
-import { EventLinkedMeals } from "../components/event/EventLinkedMeals";
-import { EventLinkedRides } from "../components/event/EventLinkedRides";
-import { UserAvatar } from "../components/common/UserAvatar";
-import { DayStrip } from "../components/event/DayStrip";
-import { Button } from "../components/common/Button";
-import { Modal } from "../components/common/Modal";
-import { NamePicker } from "../components/common/NamePicker";
-import { StoryViewer } from "../components/story/StoryViewer";
-import { StoryUploadButton } from "../components/story/StoryUploadButton";
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { CalendarDays, ChevronRight, Sparkles, Camera, UserCheck, UserMinus, Layers, Share2 } from "lucide-react";
+import { useCalendar, useHotelRooms, useRsvpCalendarEvent, useLeaveCalendarEvent } from "../../hooks/useCalendar";
+import { useUsers, useCurrentUser } from "../../hooks/useUsers";
+import { useMeals } from "../../hooks/useMeals";
+import { useRides } from "../../hooks/useRides";
+import { useCosplays } from "../../hooks/useCosplays";
+import { useStoryPhotos } from "../../hooks/useStories";
+import { useEventWeather } from "../../hooks/useEventWeather";
+import { parseEventDate, toDateKey } from "../../utils/date";
+import { useTimeStore, getNow } from "../../store/time.store";
+import { toast } from "../../store/toast.store";
+import { routes } from "../../config/routes";
+import { EventHero } from "../../components/event/EventHero";
+import { WeatherCard, ClimateAverageCard, WeatherSkeleton } from "../../components/event/WeatherCard";
+import { HotelInfoCard } from "../../components/event/HotelInfoCard";
+import { EventLinks } from "../../components/event/EventLinks";
+import { EventPractical } from "../../components/event/EventPractical";
+import { EventLinkedMeals } from "../../components/event/EventLinkedMeals";
+import { EventLinkedRides } from "../../components/event/EventLinkedRides";
+import { UserAvatar } from "../../components/common/UserAvatar";
+import { Button } from "../../components/common/Button";
+import { Modal } from "../../components/common/Modal";
+import { NamePicker } from "../../components/common/NamePicker";
+import { StoryViewer } from "../../components/story/StoryViewer";
+import { StoryUploadButton } from "../../components/story/StoryUploadButton";
+import { defaultTripDayId } from "../../utils/trips";
+import { useTrip } from "./tripContext";
 
-export function EventDetailPage() {
-  const { id } = useParams<{ id: string }>();
+/**
+ * Event › Overzicht: everything about one day of the trip — the day picked
+ * with the day chips, or by default today / the next day still ahead.
+ */
+export function TripOverviewTab() {
+  const { trip, dayId, setDayId } = useTrip();
+  const id = dayId ?? defaultTripDayId(trip);
   const navigate = useNavigate();
-  const goBack = useSmartBack(routes.hub);
   useTimeStore((s) => s.override); // re-render when the time-travel override changes
   const { data: events = [], isLoading: eventsLoading } = useCalendar();
   const { data: users    = [] } = useUsers();
@@ -115,10 +117,7 @@ export function EventDetailPage() {
     ? [...new Set(groupDays.flatMap((d) => d.ev.participants))]
     : [];
 
-  const navigateToDay = useCallback(
-    (dayId: string) => navigate(routes.event.view(dayId), { replace: true }),
-    [navigate],
-  );
+  const navigateToDay = setDayId;
 
   // Keyboard arrow navigation
   useEffect(() => {
@@ -131,10 +130,6 @@ export function EventDetailPage() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [groupDays, prevDay, nextDay, navigateToDay]);
-
-  // Touch swipe
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
 
   // ── Cosplays ─────────────────────────────────────────────────────────────
   const allRelatedIds = new Set([id, ...siblingEvents.map((e) => e.id)]);
@@ -167,23 +162,18 @@ export function EventDetailPage() {
 
   if (eventsLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-        <div className="h-14 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800" />
-        <div className="animate-pulse space-y-4 p-4 max-w-4xl mx-auto pt-6">
-          <div className="h-[280px] rounded-2xl bg-slate-200 dark:bg-slate-800" />
-          <div className="h-32 rounded-2xl bg-slate-200 dark:bg-slate-800" />
-          <div className="h-24 rounded-2xl bg-slate-200 dark:bg-slate-800" />
-        </div>
+      <div className="animate-pulse space-y-4">
+        <div className="h-[280px] rounded-2xl bg-slate-200 dark:bg-slate-800" />
+        <div className="h-32 rounded-2xl bg-slate-200 dark:bg-slate-800" />
       </div>
     );
   }
 
   if (!rawEvent || !event) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4 text-slate-400">
+      <div className="flex flex-col items-center justify-center gap-4 py-20 text-slate-400">
         <CalendarDays size={40} className="opacity-30" />
-        <p className="text-sm">Evenement niet gevonden</p>
-        <button onClick={goBack} className="text-xs text-sky-500 underline">Terug</button>
+        <p className="text-sm">Deze dag bestaat niet meer</p>
       </div>
     );
   }
@@ -267,79 +257,52 @@ export function EventDetailPage() {
     }
   }
 
+  const iconButton =
+    "flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 " +
+    "hover:text-slate-900 transition-colors disabled:opacity-40 disabled:hover:text-slate-600 " +
+    "dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:text-white";
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 22 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-      className="min-h-screen bg-slate-50 dark:bg-slate-950"
-      onTouchStart={(e) => {
-        touchStartX.current = e.touches[0].clientX;
-        touchStartY.current = e.touches[0].clientY;
-      }}
-      onTouchEnd={(e) => {
-        if (touchStartX.current === null || touchStartY.current === null) return;
-        const dx = e.changedTouches[0].clientX - touchStartX.current;
-        const dy = e.changedTouches[0].clientY - touchStartY.current;
-        touchStartX.current = null;
-        touchStartY.current = null;
-        if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-        if (dx < 0 && nextDay) navigateToDay(nextDay.ev.id);
-        if (dx > 0 && prevDay) navigateToDay(prevDay.ev.id);
-      }}
-    >
-      <DetailTopbar
-        title={event.event_name}
-        onBack={goBack}
-        onShare={onShare}
-        actions={
-          <>
-            <StoryUploadButton eventDayId={event.id} />
-            <button
-              type="button"
-              disabled={storyPhotos.length === 0}
-              onClick={() => setStoryOpen(true)}
-              title="Story bekijken"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl
-                         text-slate-500 dark:text-slate-400
-                         hover:bg-slate-100 dark:hover:bg-white/[0.08]
-                         hover:text-slate-900 dark:hover:text-white transition-colors
-                         disabled:opacity-30 disabled:hover:bg-transparent"
-            >
-              <Camera size={17} />
-            </button>
-          </>
-        }
-      />
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <StoryUploadButton eventDayId={event.id} />
+        <button
+          type="button"
+          disabled={storyPhotos.length === 0}
+          onClick={() => setStoryOpen(true)}
+          className={iconButton}
+        >
+          <Camera size={14} />
+          Story bekijken
+        </button>
+        <button type="button" onClick={onShare} className={iconButton}>
+          <Share2 size={14} />
+          Delen
+        </button>
+      </div>
 
-      {groupDays && groupDays.length > 1 && (
-        <DayStrip
-          days={groupDays}
-          currentId={id!}
-          onNavigate={navigateToDay}
+      <div className="overflow-hidden rounded-2xl">
+        <EventHero
+          event={event}
+          daysUntil={daysUntil}
+          users={users}
+          meals={linkedMeals}
+          onRsvpClick={() => {
+            setRsvpOpen(true);
+            // Pre-fill with your own name — the common case is signing
+            // yourself up, and it's still a multi-select so anyone else can
+            // be added or your own name removed before confirming.
+            if (me?.name && !event.participants.includes(me.name)) {
+              setRsvpNames([me.name]);
+            }
+          }}
+          onCancelClick={() => setCancelOpen(true)}
+          groupDays={groupDays ?? undefined}
         />
-      )}
-
-      <EventHero
-        event={event}
-        daysUntil={daysUntil}
-        users={users}
-        meals={linkedMeals}
-        onRsvpClick={() => {
-          setRsvpOpen(true);
-          // Pre-fill with your own name — the common case is signing
-          // yourself up, and it's still a multi-select so anyone else can
-          // be added or your own name removed before confirming.
-          if (me?.name && !event.participants.includes(me.name)) {
-            setRsvpNames([me.name]);
-          }
-        }}
-        onCancelClick={() => setCancelOpen(true)}
-        groupDays={groupDays ?? undefined}
-      />
+      </div>
 
       {/* ── Main content ── */}
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+      <div className="space-y-4">
 
         {/* 1 ── Linked meal(s) — leads the page when there's a meal plan,
               since that's often the thing people actually need to check. */}
@@ -351,7 +314,7 @@ export function EventDetailPage() {
               day or on day one of the trip — arrival/check-in day either
               way — weather leads on every other con day. */}
         {showHotelInfoCard && (
-          <HotelInfoCard event={event} onHotelClick={() => navigate(routes.eventHotel.view(event.id))} />
+          <HotelInfoCard event={event} onHotelClick={() => navigate(routes.trip.view(trip.id, "rooms"))} />
         )}
 
         {showWeather && (
@@ -375,7 +338,7 @@ export function EventDetailPage() {
             <div className="h-[3px] bg-gradient-to-r from-blue-400 to-sky-500" />
             <button
               type="button"
-              onClick={() => navigate(routes.eventCosplays.view(event.id))}
+              onClick={() => navigate(routes.trip.view(trip.id, "cosplay"))}
               className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-slate-50 dark:hover:bg-white/[0.02] active:bg-slate-100 dark:active:bg-white/[0.04] transition-colors group"
             >
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-500/10">
@@ -422,7 +385,7 @@ export function EventDetailPage() {
               participantCount={event.participants.length}
               users={users}
               isAdmin={isAdmin}
-              onHotelClick={() => navigate(routes.eventHotel.view(event.id))}
+              onHotelClick={() => navigate(routes.trip.view(trip.id, "rooms"))}
               bare
             />
             {hasPracticalInfo && hasLinks && (
@@ -544,6 +507,6 @@ export function EventDetailPage() {
           </Button>
         </div>
       </Modal>
-    </motion.div>
+    </div>
   );
 }

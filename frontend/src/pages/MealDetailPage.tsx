@@ -21,7 +21,7 @@ import { NamePicker } from "../components/common/NamePicker";
 
 export function MealDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const goBack = useSmartBack(routes.food);
+  const goBack = useSmartBack(routes.currentTrip.tab("food"));
   const [quickRideOpen, setQuickRideOpen] = useState(false);
 
   const { data: meals = [], isLoading } = useMeals();

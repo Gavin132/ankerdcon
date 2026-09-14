@@ -1,9 +1,9 @@
 import {
   LayoutDashboard,
-  Car,
-  UtensilsCrossed,
-  Wallet,
+  Ticket,
   CalendarDays,
+  Wallet,
+  Users,
 } from "lucide-react";
 
 export const TOTAL_STEPS = 4; // features(1) + profile(2) + notifications(3) + done(4); dialogue is step 0
@@ -25,31 +25,31 @@ export const FEATURES = [
     icon: LayoutDashboard,
     color: "bg-sky-500/10 text-sky-500",
     title: "Hub",
-    desc: "Overzicht van alle activiteiten, het aankomende evenement en wie er aanwezig is.",
+    desc: "Je volgende trip en alles wat jij nog moet regelen, op één plek.",
   },
   {
-    icon: Car,
+    icon: Ticket,
     color: "bg-violet-500/10 text-violet-500",
-    title: "Transport",
-    desc: "Plan je rit naar het evenement, meld je aan als passagier of bied een lift aan.",
-  },
-  {
-    icon: UtensilsCrossed,
-    color: "bg-amber-500/10 text-amber-500",
-    title: "Eten",
-    desc: "Bekijk geplande maaltijden en meld je eenvoudig aan.",
-  },
-  {
-    icon: Wallet,
-    color: "bg-emerald-500/10 text-emerald-500",
-    title: "Financien",
-    desc: "Houd gedeelde kosten bij en verdeel uitgaven eerlijk met de groep.",
+    title: "Event",
+    desc: "Alles voor één trip: vervoer, eten, hotelkamers, cosplays en foto's.",
   },
   {
     icon: CalendarDays,
     color: "bg-rose-500/10 text-rose-500",
-    title: "Agenda & Meer",
-    desc: "Bekijk alle aankomende evenementen, geef je op en beheer je profiel.",
+    title: "Agenda",
+    desc: "Bekijk alle evenementen en geef je op voor de dagen dat je meegaat.",
+  },
+  {
+    icon: Wallet,
+    color: "bg-emerald-500/10 text-emerald-500",
+    title: "Financiën",
+    desc: "Houd gedeelde kosten bij en verdeel uitgaven eerlijk met de groep.",
+  },
+  {
+    icon: Users,
+    color: "bg-amber-500/10 text-amber-500",
+    title: "Crew",
+    desc: "Iedereen in de groep, hun profielen en waar ze nu zijn.",
   },
 ];
 

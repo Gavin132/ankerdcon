@@ -1,37 +1,32 @@
 import { useState, useEffect, useMemo } from "react";
-import { useParams } from "react-router-dom";
 import {
-  ArrowLeft, Sparkles, Plus, Users, Image, Upload, X,
+  Sparkles, Plus, Image, Upload, X,
   CheckCircle2, SlidersHorizontal, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useCalendar } from "../hooks/useCalendar";
-import { useCosplays, useCreateCosplay, useDeleteCosplay } from "../hooks/useCosplays";
-import { useUsers } from "../hooks/useUsers";
-import { useSmartBack, isFreshEntry } from "../hooks/useSmartBack";
-import { routes } from "../config/routes";
-import { CosplayCard } from "../components/cosplay/CosplayCard";
-import { HomeLinkButton } from "../components/common/HomeLinkButton";
-import { CosplayDetailDrawer } from "../components/cosplay/CosplayDetailDrawer";
+import { useCosplays, useCreateCosplay, useDeleteCosplay } from "../../hooks/useCosplays";
+import { useUsers } from "../../hooks/useUsers";
+import { CosplayCard } from "../../components/cosplay/CosplayCard";
+import { CosplayDetailDrawer } from "../../components/cosplay/CosplayDetailDrawer";
 import {
   CosplayFilterDrawer,
   DEFAULT_COSPLAY_FILTERS,
   cosplayActiveFilterCount,
   SORT_LABELS,
   type CosplayFilterState,
-} from "../components/cosplay/CosplayFilterDrawer";
-import { Drawer } from "../components/common/Drawer";
-import { Button } from "../components/common/Button";
-import { NamePicker } from "../components/common/NamePicker";
-import { UserAvatar } from "../components/common/UserAvatar";
-import { uploadCosplayImage } from "../services/storage.service";
-import { toast } from "../store/toast.store";
-import { formatDate } from "../utils/format";
-import { listContainer, listItem } from "../utils/motion";
-import type { Cosplay } from "../types";
+} from "../../components/cosplay/CosplayFilterDrawer";
+import { Drawer } from "../../components/common/Drawer";
+import { Button } from "../../components/common/Button";
+import { NamePicker } from "../../components/common/NamePicker";
+import { uploadCosplayImage } from "../../services/storage.service";
+import { toast } from "../../store/toast.store";
+import { formatDate } from "../../utils/format";
+import { listContainer, listItem } from "../../utils/motion";
+import { useTrip } from "./tripContext";
+import type { Cosplay } from "../../types";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -58,26 +53,21 @@ const SL = "block text-xs font-semibold uppercase tracking-widest text-slate-400
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export function EventCosplaysPage() {
-  const { id } = useParams<{ id: string }>();
-  const goBack = useSmartBack(id ? routes.event.view(id) : routes.hub);
+/** Event › Cosplay: every cosplay planned for any day of the trip. */
+export function TripCosplayTab() {
+  const { trip, dayId } = useTrip();
+  const firstConDay = trip.days.find((d) => d.ev.has_con !== false) ?? trip.days[0];
+  const id = dayId ?? firstConDay.ev.id;
 
-  const { data: events = [] }             = useCalendar();
   const { data: cosplays = [], isLoading } = useCosplays();
   const { data: users = [] }              = useUsers();
 
   const createMutation = useCreateCosplay();
   const deleteMutation = useDeleteCosplay();
 
-  const event = events.find((e) => e.id === id);
-
-  const siblingEvents = event?.multi_day_id
-    ? events.filter((e) => e.multi_day_id === event.multi_day_id && e.id !== event.id)
-    : [];
-  const allRelatedEvents = event
-    ? [event, ...siblingEvents].sort((a, b) => a.date.localeCompare(b.date))
-    : [];
-  const isMultiDay = siblingEvents.length > 0;
+  const event = trip.days.find((d) => d.ev.id === id)?.ev;
+  const allRelatedEvents = trip.days.map((d) => d.ev);
+  const isMultiDay = trip.days.length > 1;
 
   const relatedIds = new Set(allRelatedEvents.map((e) => e.id));
   const eventCosplays = cosplays.filter((c) =>
@@ -222,10 +212,9 @@ export function EventCosplaysPage() {
 
   if (!event) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4 text-slate-400">
+      <div className="flex flex-col items-center justify-center gap-4 py-20 text-slate-400">
         <Sparkles size={40} className="opacity-30" />
-        <p className="text-sm">Evenement niet gevonden</p>
-        <button onClick={goBack} className="text-xs text-sky-500 underline">Terug</button>
+        <p className="text-sm">Deze dag bestaat niet meer</p>
       </div>
     );
   }
@@ -247,101 +236,9 @@ export function EventCosplaysPage() {
   const isFiltered = activeFilterCount > 0;
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-950">
-
-      {/* ── Topbar ─────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-10 flex items-center gap-3 h-14 px-4
-                      bg-white/90 dark:bg-slate-950/90 backdrop-blur-md
-                      border-b border-slate-200 dark:border-white/[0.06]">
-        <button
-          onClick={goBack}
-          className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-500 dark:text-slate-400
-                     hover:bg-slate-100 dark:hover:bg-white/[0.08] hover:text-slate-900 dark:hover:text-white transition-colors"
-        >
-          <ArrowLeft size={18} />
-        </button>
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-slate-900 dark:text-white text-sm leading-tight truncate">Cosplays</p>
-          <p className="text-[10px] text-slate-400 leading-tight truncate">{event.event_name}</p>
-        </div>
-        {isFreshEntry() && (
-          <HomeLinkButton
-            size={17}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl
-                       text-slate-500 dark:text-slate-400
-                       hover:bg-slate-100 dark:hover:bg-white/[0.08]
-                       hover:text-slate-900 dark:hover:text-white transition-colors"
-          />
-        )}
-        <button
-          onClick={openCreate}
-          className="flex items-center gap-1.5 rounded-xl bg-violet-500 px-3 py-1.5 text-xs font-bold text-white
-                     hover:bg-violet-600 active:bg-violet-700 transition-colors shrink-0"
-        >
-          <Plus size={14} />
-          Toevoegen
-        </button>
-      </div>
-
-      {/* ── Hero ───────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden" style={{ minHeight: 140 }}>
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(ellipse at 15% 50%, #4c1d9580 0%, transparent 60%),
-              radial-gradient(ellipse at 85% 25%, #0f172a 0%, transparent 55%),
-              linear-gradient(150deg, #0f172a 0%, #3b0764 55%, #4c1d95 100%)
-            `,
-          }}
-        />
-        <svg className="absolute inset-0 h-full w-full opacity-[0.12] pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-          <filter id="cosplay-noise">
-            <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="4" stitchTiles="stitch" />
-            <feColorMatrix type="saturate" values="0" />
-          </filter>
-          <rect width="100%" height="100%" filter="url(#cosplay-noise)" />
-        </svg>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/10 pointer-events-none" />
-        <div className="absolute -right-4 top-1/2 -translate-y-1/2 opacity-[0.07] pointer-events-none">
-          <Sparkles size={140} strokeWidth={1} className="text-white" />
-        </div>
-
-        <div className="relative max-w-4xl mx-auto px-4 pt-6 pb-8">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-violet-300/60 mb-1">
-            {event.event_name}
-          </p>
-          <h1 className="text-2xl font-black text-white drop-shadow-md mb-3">Cosplays</h1>
-          <div className="flex flex-wrap gap-3">
-            <div className="flex items-center gap-1.5 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 px-3 py-1.5">
-              <Sparkles size={12} className="text-white/60" />
-              <span className="text-xs font-bold text-white">
-                {eventCosplays.length} {eventCosplays.length === 1 ? "cosplay" : "cosplays"}
-              </span>
-            </div>
-            {cosplayerNames.length > 0 && (
-              <div className="flex items-center gap-2 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 px-3 py-1.5">
-                <Users size={12} className="text-white/60" />
-                <div className="flex -space-x-1.5">
-                  {cosplayerNames.slice(0, 6).map((name) => {
-                    const u = users.find((x) => x.name === name || x.discord_username === name);
-                    return (
-                      <UserAvatar key={name} name={u?.name ?? name} user={u} className="h-5 w-5 text-[7px] ring-1 ring-black/30" />
-                    );
-                  })}
-                </div>
-                <span className="text-xs font-bold text-white">
-                  {cosplayerNames.length} {cosplayerNames.length === 1 ? "persoon" : "personen"}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-slate-50 dark:from-slate-950 to-transparent pointer-events-none" />
-      </div>
-
+    <div className="pb-10">
       {/* ── Content ────────────────────────────────────────────────── */}
-      <div className="max-w-4xl mx-auto px-4 pb-10 pt-5">
+      <div>
 
         {/* Filter toolbar */}
         {!isLoading && eventCosplays.length > 0 && (
@@ -371,6 +268,15 @@ export function EventCosplaysPage() {
                   ? `${filtered.length} van ${eventCosplays.length} cosplays`
                   : `${eventCosplays.length} ${eventCosplays.length === 1 ? "cosplay" : "cosplays"}`}
               </span>
+
+              <button
+                onClick={openCreate}
+                className="flex items-center gap-1.5 rounded-xl bg-violet-500 px-3 py-2 text-xs font-bold text-white
+                           hover:bg-violet-600 active:bg-violet-700 transition-colors shrink-0"
+              >
+                <Plus size={14} />
+                Toevoegen
+              </button>
             </div>
 
             {/* Active filter chips */}

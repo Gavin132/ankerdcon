@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Wallet, Plus, TrendingUp, ArrowDownLeft, ArrowUpRight, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Button } from "../components/common/Button";
@@ -21,9 +22,27 @@ function resolveUser(name: string, users: User[]) {
 
 export function FinancePage() {
   const [createOpen, setCreateOpen]           = useState(false);
-  const [detailExpense, setDetailExpense]     = useState<Expense | null>(null);
+  const [detailExpenseId, setDetailExpenseId] = useState<string | null>(null);
+  // Hub › Voor jou links here with `?expense=<id>` to open that expense directly.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const linkedExpenseId = searchParams.get("expense");
 
   const { data: expenses = [], isLoading } = useExpenses();
+  const openExpenseId = detailExpenseId ?? linkedExpenseId;
+  const detailExpense: Expense | null = expenses.find((e) => e.id === openExpenseId) ?? null;
+
+  function openExpense(id: string) {
+    setDetailExpenseId(id);
+  }
+
+  function closeExpense() {
+    setDetailExpenseId(null);
+    if (linkedExpenseId) {
+      const params = new URLSearchParams(searchParams);
+      params.delete("expense");
+      setSearchParams(params, { replace: true });
+    }
+  }
   const { data: users    = [] }            = useUsers();
   const { data: me }                       = useCurrentUser();
 
@@ -204,7 +223,7 @@ export function FinancePage() {
               expense={expense}
               users={users}
               me={myName}
-              onClick={() => setDetailExpense(expense)}
+              onClick={() => openExpense(expense.id)}
             />
           ))}
         </motion.div>
@@ -226,7 +245,7 @@ export function FinancePage() {
       />
       <ExpenseDetailDrawer
         expense={detailExpense}
-        onClose={() => setDetailExpense(null)}
+        onClose={closeExpense}
         users={users}
         me={myName}
       />

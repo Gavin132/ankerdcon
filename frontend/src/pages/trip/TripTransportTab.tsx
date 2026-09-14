@@ -13,29 +13,32 @@ import {
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
-import { LocationSearchInput } from "../components/common/LocationSearchInput";
+import { LocationSearchInput } from "../../components/common/LocationSearchInput";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Button } from "../components/common/Button";
-import { Drawer } from "../components/common/Drawer";
-import { EventPicker } from "../components/common/EventPicker";
-import { RideCardSkeleton } from "../components/common/Skeleton";
-import { EmptyState } from "../components/common/EmptyState";
-import { StickyActionBar } from "../components/common/StickyActionBar";
-import { NamePicker } from "../components/common/NamePicker";
-import { RideCard } from "../components/transport/RideCard";
-import { RestaurantCard } from "../components/transport/RestaurantCard";
-import { RideTimeline } from "../components/transport/RideTimeline";
-import { MealPicker } from "../components/common/MealPicker";
-import { useRides, useCreateRide } from "../hooks/useRides";
-import { useUsers, useCurrentUser } from "../hooks/useUsers";
-import { useCalendar } from "../hooks/useCalendar";
-import { useMeals } from "../hooks/useMeals";
-import { toast } from "../store/toast.store";
-import { getRideStatus, groupRidesByDay } from "../utils/rides";
-import { toDateKey, todayKey, parseEventDate } from "../utils/date";
-import { useTimeStore } from "../store/time.store";
-import type { Direction } from "../types";
+import { Button } from "../../components/common/Button";
+import { Drawer } from "../../components/common/Drawer";
+import { EventPicker } from "../../components/common/EventPicker";
+import { RideCardSkeleton } from "../../components/common/Skeleton";
+import { EmptyState } from "../../components/common/EmptyState";
+import { StickyActionBar } from "../../components/common/StickyActionBar";
+import { NamePicker } from "../../components/common/NamePicker";
+import { RideCard } from "../../components/transport/RideCard";
+import { RestaurantCard } from "../../components/transport/RestaurantCard";
+import { RideTimeline } from "../../components/transport/RideTimeline";
+import { MealPicker } from "../../components/common/MealPicker";
+import { useRides, useCreateRide } from "../../hooks/useRides";
+import { useUsers, useCurrentUser } from "../../hooks/useUsers";
+import { useCalendar } from "../../hooks/useCalendar";
+import { useMeals } from "../../hooks/useMeals";
+import { toast } from "../../store/toast.store";
+import { getRideStatus, groupRidesByDay } from "../../utils/rides";
+import { toDateKey, todayKey, parseEventDate } from "../../utils/date";
+import { useTimeStore } from "../../store/time.store";
+import { isTripOver, tripGaps, tripRides } from "../../utils/trips";
+import { TripMissingList } from "../../components/trip/TripMissingList";
+import { useTrip } from "./tripContext";
+import type { Direction } from "../../types";
 
 const createSchema = z
   .object({
@@ -83,7 +86,9 @@ const container = {
 
 const TAB_ORDER: Direction[] = ["Inbound", "Outbound", "Restaurant"];
 
-export function TransportPage() {
+/** Event › Vervoer: this trip's Heen / Terug / Restaurant rides, plus who has none yet. */
+export function TripTransportTab() {
+  const { trip, dayId } = useTrip();
   const location = useLocation();
   useTimeStore((s) => s.override); // re-render when the time-travel override changes
   const [tab, setTab] = useState<Direction>(
@@ -94,7 +99,7 @@ export function TransportPage() {
   const [showTimeline, setShowTimeline] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
-  const { data: rides, isLoading } = useRides();
+  const { data: allRides, isLoading } = useRides();
   const { data: users } = useUsers();
   const { data: currentUser } = useCurrentUser();
   const { data: events = [] } = useCalendar();
@@ -102,13 +107,22 @@ export function TransportPage() {
   const userNames = (users ?? []).map((u) => u.name);
   const createMutation = useCreateRide();
 
+  const rides = tripRides(allRides ?? [], meals, trip, dayId);
+  const gaps = tripGaps(trip, allRides ?? [], meals);
+  const tripMealIds = new Set(meals.filter((m) => m.linked_event_id && trip.eventIds.includes(m.linked_event_id)).map((m) => m.id));
+  const tripMealOptions = meals.filter((m) => tripMealIds.has(m.id));
+
   // Linking a ride to an event only makes sense for something still coming
-  // up — a past event's date isn't a useful default for a new ride.
+  // up — a past event's date isn't a useful default for a new ride. New rides
+  // go to a day of this trip; only a trip that's already over falls back to
+  // every upcoming event.
   const todayStr = todayKey();
-  const upcomingEvents = events.filter((e) => {
-    const d = parseEventDate(e.date);
-    return d && toDateKey(d) >= todayStr;
-  });
+  const isUpcoming = (date: string) => {
+    const d = parseEventDate(date);
+    return !!d && toDateKey(d) >= todayStr;
+  };
+  const upcomingTripDays = trip.days.filter((d) => isUpcoming(d.ev.date)).map((d) => d.ev);
+  const upcomingEvents = upcomingTripDays.length > 0 ? upcomingTripDays : events.filter((e) => isUpcoming(e.date));
 
   const {
     register,
@@ -135,7 +149,7 @@ export function TransportPage() {
     }
   }, [formDirection, setValue]);
 
-  const allFiltered = (rides ?? []).filter((r) => r.direction === tab);
+  const allFiltered = rides.filter((r) => r.direction === tab);
   const activeRides = allFiltered.filter(
     (r) => getRideStatus(r.departure_time).status !== "past",
   );
@@ -148,7 +162,16 @@ export function TransportPage() {
     );
 
   function openCreate() {
-    reset({ direction: tab, total_seats: 5, driver: currentUser?.name ?? "" });
+    const defaultDay = upcomingTripDays.find((d) => d.id === dayId) ?? upcomingTripDays[0];
+    reset({
+      direction: tab,
+      total_seats: 5,
+      driver: currentUser?.name ?? "",
+      linked_event_id: tab === "Restaurant" ? undefined : defaultDay?.id,
+      start_location: tab === "Outbound" ? defaultDay?.location ?? "" : "",
+      end_location: tab === "Inbound" ? defaultDay?.location ?? "" : "",
+      parking_info: defaultDay?.parking_info ?? "",
+    });
     setCreateOpen(true);
   }
 
@@ -218,9 +241,18 @@ export function TransportPage() {
         if (dx > 0 && currentIndex > 0) setTab(TAB_ORDER[currentIndex - 1]);
       }}
     >
+      {tab !== "Restaurant" && !showTimeline && !isTripOver(trip) && (
+        <TripMissingList
+          title="Nog geen vervoer"
+          people={gaps.transport
+            .filter((g) => g.items.includes(tab === "Inbound" ? "Heen" : "Terug"))
+            .map((g) => ({ name: g.name, detail: g.items.join(" & ") }))}
+        />
+      )}
+
       {/* Timeline view */}
       {showTimeline && (
-        <RideTimeline rides={rides ?? []} />
+        <RideTimeline rides={rides} />
       )}
 
       {/* Tab content */}
@@ -409,7 +441,7 @@ export function TransportPage() {
 
           {/* Event / etentje koppeling — de datum (en voor Heen/Terug ook de locatie) volgt hieruit */}
           {formDirection === "Restaurant" ? (
-            meals.length > 0 && (
+            (tripMealOptions.length > 0 || meals.length > 0) && (
               <div className={SF}>
                 <p className={ST}>Koppel aan etentje</p>
                 <Controller
@@ -417,7 +449,7 @@ export function TransportPage() {
                   control={control}
                   render={({ field }) => (
                     <MealPicker
-                      meals={meals}
+                      meals={tripMealOptions.length > 0 ? tripMealOptions : meals}
                       value={field.value || undefined}
                       onChange={(id) => field.onChange(id ?? "")}
                     />

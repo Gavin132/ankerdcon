@@ -1,3 +1,4 @@
+import { Home, Ticket, CalendarDays, Wallet, Users, type LucideIcon } from "lucide-react";
 import type { TabId } from "../types";
 
 export const APP_NAME = "Ankerd Con";
@@ -50,15 +51,25 @@ export interface NavItem {
   id: TabId;
   label: string;
   path: string;
+  icon: LucideIcon;
+  /** Other path prefixes that belong to this tab (e.g. every `/trips/…` page is the Event tab). */
+  activeFor?: string[];
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { id: "hub", label: "Hub", path: "/" },
-  { id: "transport", label: "Transport", path: "/transport" },
-  { id: "food", label: "Eten", path: "/food" },
-  { id: "finance", label: "Financiën", path: "/finance" },
-  { id: "more", label: "Meer", path: "/more" },
+  { id: "hub",      label: "Hub",       path: "/",         icon: Home },
+  { id: "trip",     label: "Event",     path: "/trip",     icon: Ticket, activeFor: ["/trips/"] },
+  { id: "calendar", label: "Agenda",    path: "/calendar", icon: CalendarDays },
+  { id: "finance",  label: "Financiën", path: "/finance",  icon: Wallet },
+  { id: "crew",     label: "Crew",      path: "/crew",     icon: Users },
 ];
+
+/** Whether `pathname` belongs to a bottom-nav / sidebar tab. */
+export function isNavItemActive(item: NavItem, pathname: string): boolean {
+  if (item.path === "/") return pathname === "/";
+  if (pathname === item.path || pathname.startsWith(`${item.path}/`)) return true;
+  return (item.activeFor ?? []).some((prefix) => pathname.startsWith(prefix));
+}
 
 export const DIRECTIONS = ["Inbound", "Outbound", "Restaurant"] as const;
 export const VEHICLE_TYPES = ["Car", "Public Transport"] as const;

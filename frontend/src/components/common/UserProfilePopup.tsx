@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../../config/routes";
-import { Phone, MapPin, Pencil, CalendarDays } from "lucide-react";
+import { Phone, MapPin, Pencil, CalendarDays, User as UserIcon } from "lucide-react";
 import { avatarColor } from "../../utils/avatar";
 import { LocationPingDisplay } from "./LocationPingDisplay";
 import { BadgeIcon } from "./BadgeIcon";
@@ -355,21 +355,23 @@ export function UserProfilePopup({
                   )}
                 </div>
 
-                {/* Edit Profile button */}
-                {isOwn && (
-                  <div className="px-3 pb-3">
-                    <button
-                      onClick={() => {
-                        onClose();
-                        navigate(routes.profile.view(u?.id ?? u?.name ?? ""));
-                      }}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl gradient-brand py-2.5 text-[13px] font-bold text-white transition-opacity hover:opacity-90 active:opacity-80"
-                    >
-                      <Pencil size={13} />
-                      Profiel bewerken
-                    </button>
-                  </div>
-                )}
+                {/* Full profile — edit your own, view anyone else's */}
+                <div className="px-3 pb-3">
+                  <button
+                    onClick={() => {
+                      onClose();
+                      navigate(routes.profile.view(u?.id ?? u?.name ?? ""));
+                    }}
+                    className={
+                      isOwn
+                        ? "flex w-full items-center justify-center gap-2 rounded-xl gradient-brand py-2.5 text-[13px] font-bold text-white transition-opacity hover:opacity-90 active:opacity-80"
+                        : "flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-white/[0.08] py-2.5 text-[13px] font-bold text-slate-700 dark:text-white/80 hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-colors"
+                    }
+                  >
+                    {isOwn ? <Pencil size={13} /> : <UserIcon size={13} />}
+                    {isOwn ? "Profiel bewerken" : "Bekijk profiel"}
+                  </button>
+                </div>
               </div>
             </div>
           </motion.div>

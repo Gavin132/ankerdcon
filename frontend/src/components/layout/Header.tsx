@@ -2,9 +2,8 @@ import { useRef, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { routes } from "../../config/routes";
 import { motion, AnimatePresence } from "framer-motion";
-import { Moon, Sun, User, LogOut, Shield, Bell } from "lucide-react";
+import { User, LogOut, Shield, Settings, Sparkles } from "lucide-react";
 import { APP_NAME } from "../../constants";
-import { useThemeStore } from "../../store/theme.store";
 import { useAuthStore } from "../../store/auth.store";
 import { useUser } from "../../hooks/useUsers";
 import { useBadges } from "../../hooks/useBadges";
@@ -14,17 +13,21 @@ import { logout } from "../../services/auth.service";
 
 const PAGE_META: Record<string, { title: string; subtitle: string }> = {
   "/": { title: APP_NAME, subtitle: "Live Event Logistics" },
-  "/transport": { title: "Transport", subtitle: "Plan je reis" },
-  "/food": { title: "Eten", subtitle: "Eten & drinken" },
+  "/calendar": { title: "Agenda", subtitle: "Alle events" },
   "/finance": { title: "Financiën", subtitle: "Groepskas" },
-  "/more": { title: "Meer", subtitle: "Instellingen" },
+  "/crew": { title: "Crew", subtitle: "Leden & locaties" },
 };
+
+function pageMeta(pathname: string) {
+  if (pathname === "/trip" || pathname.startsWith("/trip/") || pathname.startsWith("/trips/")) {
+    return { title: "Event", subtitle: "Alles voor deze trip" };
+  }
+  return PAGE_META[pathname] ?? { title: APP_NAME, subtitle: "" };
+}
 
 export function Header() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const isDark = useThemeStore((s) => s.isDark);
-  const toggleTheme = useThemeStore((s) => s.toggle);
   const currentUser = useAuthStore((s) => s.currentUser);
   const clearAuth = useAuthStore((s) => s.clearAuth);
   
@@ -36,7 +39,7 @@ export function Header() {
     .filter(Boolean)
     .sort((a, b) => a!.display_order - b!.display_order) as typeof allBadges;
 
-  const meta = PAGE_META[pathname] ?? { title: APP_NAME, subtitle: "" };
+  const meta = pageMeta(pathname);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -85,7 +88,7 @@ export function Header() {
         <div className="flex-1 min-w-0 overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div
-              key={pathname}
+              key={meta.title}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
@@ -102,25 +105,6 @@ export function Header() {
             </motion.div>
           </AnimatePresence>
         </div>
-
-        {/* Theme toggle */}
-        <button
-          onClick={toggleTheme}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:hover:bg-slate-800 dark:hover:text-slate-300"
-          aria-label="Thema wisselen"
-        >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={isDark ? "dark" : "light"}
-              initial={{ opacity: 0, rotate: -30, scale: 0.7 }}
-              animate={{ opacity: 1, rotate: 0, scale: 1 }}
-              exit={{ opacity: 0, rotate: 30, scale: 0.7 }}
-              transition={{ duration: 0.18 }}
-            >
-              {isDark ? <Moon size={16} /> : <Sun size={16} />}
-            </motion.div>
-          </AnimatePresence>
-        </button>
 
         {/* Profile avatar + dropdown */}
         {currentUser && (
@@ -204,12 +188,23 @@ export function Header() {
                     <button
                       onClick={() => {
                         setMenuOpen(false);
-                        navigate(routes.notifications);
+                        navigate(routes.settings);
                       }}
                       className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] font-medium text-slate-700 dark:text-white/70 hover:bg-slate-50 dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white transition-colors"
                     >
-                      <Bell size={14} className="shrink-0 text-slate-400 dark:text-white/35" />
-                      Notificaties
+                      <Settings size={14} className="shrink-0 text-slate-400 dark:text-white/35" />
+                      Instellingen
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        navigate(routes.changelog);
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] font-medium text-slate-700 dark:text-white/70 hover:bg-slate-50 dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white transition-colors"
+                    >
+                      <Sparkles size={14} className="shrink-0 text-slate-400 dark:text-white/35" />
+                      Wat is nieuw
                     </button>
 
                     {me?.is_admin && (
@@ -221,7 +216,7 @@ export function Header() {
                         className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] font-medium text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-500/10 transition-colors"
                       >
                         <Shield size={14} className="shrink-0" />
-                        Admin Portal
+                        Admin portal
                       </button>
                     )}
 
