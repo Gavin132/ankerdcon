@@ -115,13 +115,13 @@ function BadgeDrawer({
           <button
             onClick={handleSave}
             disabled={!isValid || isPending}
-            className="flex-1 rounded-xl bg-sky-600 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="btn-primary flex-1 py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? "Opslaan..." : isEdit ? "Bijwerken" : "Aanmaken"}
           </button>
           <button
             onClick={requestClose}
-            className="rounded-xl border border-white/[0.08] px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/[0.05] transition-colors"
+            className="rounded-xl border-1.5 border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-3"
           >
             Annuleren
           </button>
@@ -150,7 +150,7 @@ function BadgeDrawer({
             <button
               type="button"
               onClick={() => setUrlMode((v) => !v)}
-              className="flex items-center gap-1 text-[10px] text-slate-500 hover:text-sky-400 transition-colors"
+              className="flex items-center gap-1 text-[10px] text-ink-3 hover:text-brand-text transition-colors"
             >
               {urlMode ? <><Upload size={10} /> Upload</> : <><Link size={10} /> URL invoeren</>}
             </button>
@@ -190,19 +190,19 @@ function BadgeDrawer({
                 disabled={uploading}
                 className={`w-full rounded-xl border-2 border-dashed px-4 py-5 text-center transition-colors ${
                   dragOver
-                    ? "border-sky-500 bg-sky-500/10"
-                    : "border-white/[0.12] bg-white/[0.03] hover:border-white/25 hover:bg-white/[0.05]"
+                    ? "border-brand-text bg-brand-soft"
+                    : "border-line bg-paper hover:border-ink-3 hover:bg-sunken"
                 } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {uploading ? (
-                  <p className="text-xs text-slate-400">Uploaden...</p>
+                  <p className="text-xs text-ink-3">Uploaden...</p>
                 ) : (
                   <>
-                    <Upload size={18} className="mx-auto mb-1.5 text-slate-500" />
-                    <p className="text-xs font-medium text-slate-400">
+                    <Upload size={18} className="mx-auto mb-1.5 text-ink-3" />
+                    <p className="text-xs font-medium text-ink-3">
                       Klik of sleep een afbeelding hierheen
                     </p>
-                    <p className="text-[10px] text-slate-600 mt-0.5">PNG, JPG, GIF, WebP</p>
+                    <p className="text-[10px] text-ink-3 mt-0.5">PNG, JPG, GIF, WebP</p>
                   </>
                 )}
               </button>
@@ -214,9 +214,9 @@ function BadgeDrawer({
               <img
                 src={form.image_url}
                 alt="preview"
-                className="h-9 w-9 rounded-full object-cover border border-white/10"
+                className="h-9 w-9 rounded-full object-cover border border-line"
               />
-              <span className="text-xs text-slate-500">Preview</span>
+              <span className="text-xs text-ink-3">Preview</span>
             </div>
           )}
         </div>
@@ -287,7 +287,7 @@ function AssignDrawer({
 
           <div className="space-y-1 max-h-56 overflow-y-auto -mx-1 px-1">
             {filtered.length === 0 && (
-              <p className="py-4 text-center text-xs text-slate-500">Geen gebruikers gevonden.</p>
+              <p className="py-4 text-center text-xs text-ink-3">Geen gebruikers gevonden.</p>
             )}
             {filtered.map((user) => (
               <button
@@ -297,15 +297,15 @@ function AssignDrawer({
                 }
                 className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
                   selectedUserId === user.id
-                    ? "bg-sky-500/10 border border-sky-500/30"
-                    : "hover:bg-white/[0.04] border border-transparent"
+                    ? "border-1.5 border-outline bg-brand-soft"
+                    : "border-1.5 border-transparent hover:bg-sunken"
                 }`}
               >
-                <span className="text-sm font-medium text-white flex-1 truncate">
+                <span className="flex-1 truncate text-sm font-medium text-ink">
                   {user.name}
                 </span>
                 {(user.badge_ids ?? []).length > 0 && (
-                  <span className="text-[10px] font-bold text-sky-400 bg-sky-500/10 rounded-full px-2 py-0.5">
+                  <span className="rounded-full bg-sunken px-2 py-0.5 font-mono text-[10.5px] font-semibold tabular-nums text-ink-2">
                     {(user.badge_ids ?? []).length}
                   </span>
                 )}
@@ -319,11 +319,11 @@ function AssignDrawer({
           <div className={SECTION}>
             <p className={SECTION_TITLE}>
               Badges van{" "}
-              <span className="text-slate-300 normal-case">{selectedUser.name}</span>
+              <span className="text-ink-2 normal-case">{selectedUser.name}</span>
             </p>
 
             {badges.length === 0 && (
-              <p className="py-2 text-xs text-slate-500">Nog geen badges beschikbaar.</p>
+              <p className="py-2 text-xs text-ink-3">Nog geen badges beschikbaar.</p>
             )}
 
             <div className="grid grid-cols-2 gap-2">
@@ -333,10 +333,10 @@ function AssignDrawer({
                   <button
                     key={badge.id}
                     onClick={() => toggle(selectedUser, badge)}
-                    className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left border transition-all ${
+                    className={`flex items-center gap-2.5 rounded-xl border-1.5 px-3 py-2.5 text-left transition-colors ${
                       has
-                        ? "bg-sky-500/10 border-sky-500/30"
-                        : "bg-white/[0.03] border-white/[0.08] hover:border-white/20"
+                        ? "border-outline bg-brand-soft"
+                        : "border-line bg-paper hover:border-ink-3"
                     }`}
                   >
                     <img
@@ -345,9 +345,9 @@ function AssignDrawer({
                       className="h-7 w-7 rounded-full object-cover shrink-0"
                     />
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold text-white truncate">{badge.name}</p>
+                      <p className="truncate text-xs font-semibold text-ink">{badge.name}</p>
                       {has && (
-                        <p className="text-[10px] text-sky-400 font-medium">Toegewezen</p>
+                        <p className="text-[10px] font-medium text-ink-2">Toegewezen</p>
                       )}
                     </div>
                   </button>
@@ -386,21 +386,21 @@ function BadgeMembersDrawer({
       subtitle={`${members.length} ${members.length === 1 ? "gebruiker" : "gebruikers"} toegewezen`}
     >
       {members.length === 0 ? (
-        <p className="py-6 text-center text-sm text-slate-500">Nog niemand heeft deze badge.</p>
+        <p className="py-6 text-center text-sm text-ink-3">Nog niemand heeft deze badge.</p>
       ) : (
         <div className="space-y-1.5">
           {members.map((u) => (
             <div
               key={u.id}
-              className="flex items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2"
+              className="flex items-center gap-2.5 rounded-xl border border-line bg-paper px-3 py-2"
             >
               <UserAvatar name={u.name} user={u} className="h-7 w-7 text-[9px]" />
-              <span className="flex-1 text-sm text-slate-200">{u.name}</span>
+              <span className="flex-1 text-sm text-ink">{u.name}</span>
               <button
                 type="button"
                 onClick={() => u.id && badge && unassign.mutate({ userId: u.id, badgeId: badge.id })}
                 disabled={unassign.isPending}
-                className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-40 transition-colors"
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 disabled:opacity-40 transition-colors"
                 title="Badge verwijderen"
               >
                 <UserX size={13} />
@@ -498,7 +498,7 @@ export function AdminBadgesPage() {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="p-5 lg:p-8 max-w-6xl mx-auto space-y-5">
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
       <AdminPageHeader
         title="Badges"
         subtitle={`${badges.length} badge${badges.length !== 1 ? "s" : ""}`}
@@ -506,14 +506,14 @@ export function AdminBadgesPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setAssignOpen(true)}
-              className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-slate-800/60 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-colors shadow-sm"
+              className="flex items-center gap-2 rounded-xl border-1.5 border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-3"
             >
               <Users size={15} />
               Toewijzen
             </button>
             <button
               onClick={() => setDrawer("new")}
-              className="flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 transition-colors shadow-sm"
+              className="btn-primary gap-2 px-4 py-2.5 text-sm"
             >
               <Plus size={16} />
               Nieuwe badge
@@ -528,34 +528,34 @@ export function AdminBadgesPage() {
         placeholder="Zoek op naam of omschrijving..."
       />
 
-      <div className="rounded-2xl border border-slate-200/80 dark:border-white/[0.06] bg-white dark:bg-slate-800/60 overflow-hidden shadow-sm">
+      <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
+              <tr className="border-b-1.5 border-line">
                 <th className="w-6 sm:w-8 px-1.5 sm:px-3 py-2.5 sm:py-3" />
-                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Badge
                 </th>
-                <th className="hidden sm:table-cell px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="hidden sm:table-cell px-5 py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Omschrijving
                 </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Toegewezen aan
                 </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Acties
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+            <tbody className="divide-y divide-line">
               {isLoading ? (
                 <AdminTableSkeleton cols={5} />
               ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-5 py-12 text-center">
-                    <div className="flex flex-col items-center gap-2 text-slate-400">
-                      <ShieldCheck size={28} className="opacity-30" />
+                    <div className="flex flex-col items-center gap-2 text-ink-3">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3"><ShieldCheck size={22} /></span>
                       <p className="text-sm">
                         {search ? "Geen badges gevonden." : "Nog geen badges aangemaakt."}
                       </p>
@@ -576,25 +576,25 @@ export function AdminBadgesPage() {
                       onDragOver={(e) => onDragOver(e, badge.id)}
                       onDrop={onDrop}
                       onDragEnd={() => { dragId.current = null; }}
-                      className="hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+                      className="hover:bg-sunken transition-colors"
                     >
                       <td className="pl-1.5 sm:pl-3 pr-0.5 sm:pr-1 py-2.5 sm:py-3.5 cursor-grab active:cursor-grabbing">
-                        <GripVertical size={16} className="text-slate-300 dark:text-slate-600" />
+                        <GripVertical size={16} className="text-ink-3" />
                       </td>
                       <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                         <div className="flex items-center gap-2 sm:gap-3">
                           <img
                             src={badge.image_url}
                             alt={badge.name}
-                            className="h-7 w-7 sm:h-9 sm:w-9 rounded-full object-cover border border-slate-200 dark:border-white/10 shrink-0"
+                            className="h-7 w-7 shrink-0 rounded-full border border-line object-cover sm:h-9 sm:w-9"
                           />
-                          <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                          <p className="text-sm font-semibold text-ink truncate">
                             {badge.name}
                           </p>
                         </div>
                       </td>
                       <td className="hidden sm:table-cell px-5 py-3.5">
-                        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs truncate">
+                        <p className="text-sm text-ink-3 max-w-xs truncate">
                           {badge.description}
                         </p>
                       </td>
@@ -606,13 +606,13 @@ export function AdminBadgesPage() {
                           <button
                             type="button"
                             onClick={() => setViewingBadge(badge)}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 dark:bg-sky-500/10 px-2.5 py-1 text-xs font-semibold text-sky-700 dark:text-sky-400 hover:bg-sky-200 dark:hover:bg-sky-500/20 transition-colors"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-sunken px-2 py-0.5 font-mono text-[11.5px] font-semibold tabular-nums text-ink-2 transition-colors hover:bg-line hover:text-ink"
                           >
                             <Users size={10} />
                             {assignedCount}
                           </button>
                         ) : (
-                          <span className="text-xs text-slate-400">—</span>
+                          <span className="text-xs text-ink-3">—</span>
                         )}
                       </td>
                       <td

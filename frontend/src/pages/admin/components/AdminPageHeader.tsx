@@ -6,21 +6,19 @@ interface Props {
 
 export function AdminPageHeader({ title, subtitle, action }: Props) {
   return (
-    <div>
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">
-        Entiteiten
-      </p>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white">
-            {title}
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            {subtitle}
-          </p>
-        </div>
-        {action && <div className="flex items-center gap-2 shrink-0">{action}</div>}
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0">
+        <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3">
+          Entiteiten
+        </p>
+        <h1 className="mt-1 font-display text-[34px] font-extrabold uppercase leading-[0.95] text-ink md:text-[42px]">
+          {title}
+        </h1>
+        <p className="mt-1.5 text-sm text-ink-2">
+          {subtitle}
+        </p>
       </div>
+      {action && <div className="flex shrink-0 flex-wrap items-center gap-2">{action}</div>}
     </div>
   );
 }

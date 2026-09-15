@@ -89,14 +89,14 @@ export function RestaurantQuickDriverModal({ open, onClose, event, meal, existin
     >
       <div className="space-y-5">
         {alreadyDriving ? (
-          <p className="rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm font-semibold text-amber-700 dark:text-amber-300">
+          <p className="rounded-xl bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
             Je staat al als chauffeur geregistreerd voor deze rit. Pas je aantal plaatsen aan via de ritdetails.
           </p>
         ) : (
           <>
             {!existingRide && (
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
+                <label className="section-label mb-1.5 block">
                   Vertrektijd
                 </label>
                 <input
@@ -109,7 +109,7 @@ export function RestaurantQuickDriverModal({ open, onClose, event, meal, existin
             )}
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
+              <label className="section-label mb-1.5 block">
                 Totaal aantal plekken in je auto
               </label>
               <div className="flex gap-2">
@@ -118,17 +118,18 @@ export function RestaurantQuickDriverModal({ open, onClose, event, meal, existin
                     key={n}
                     type="button"
                     onClick={() => setSeats(n)}
-                    className={`flex h-10 flex-1 items-center justify-center rounded-xl text-sm font-bold transition-all ${
+                    aria-pressed={seats === n}
+                    className={`flex h-10 flex-1 items-center justify-center rounded-xl font-mono text-sm font-semibold tabular-nums transition-colors ${
                       seats === n
-                        ? "gradient-brand text-white shadow-sm"
-                        : "border border-slate-200 text-slate-600 hover:border-sky-300 dark:border-slate-700 dark:text-slate-300"
+                        ? "border-2 border-outline bg-brand text-brand-on"
+                        : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"
                     }`}
                   >
                     {n}
                   </button>
                 ))}
               </div>
-              <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">Incl. jezelf</p>
+              <p className="mt-1.5 text-xs text-ink-3">Incl. jezelf</p>
             </div>
 
             <Button onClick={onSubmit} loading={isPending} className="w-full">

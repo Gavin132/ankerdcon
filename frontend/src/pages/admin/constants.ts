@@ -103,8 +103,10 @@ export const PAGE_TITLES: Record<string, string> = {
   [routes.admin.timeTravel]: "Tijdreis-widget",
 };
 
+// Ride direction tags are told apart by their label, not by colour (flat design:
+// no decorative colours).
 export const DIRECTION_COLORS: Record<string, string> = {
-  Inbound:    "bg-sky-100 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400",
-  Outbound:   "bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400",
-  Restaurant: "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
+  Inbound:    "text-ink-2",
+  Outbound:   "text-ink-2",
+  Restaurant: "text-ink-2",
 };

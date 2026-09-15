@@ -34,13 +34,13 @@ function DarkTooltip({ active, payload, label }: {
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl bg-[#0d1117] border border-white/[0.1] px-3 py-2.5 shadow-xl text-xs">
-      {label && <p className="text-slate-400 mb-1.5 font-semibold">{label}</p>}
+    <div className="rounded-lg border-1.5 border-line bg-surface px-3 py-2.5 text-xs shadow-xl">
+      {label && <p className="mb-1.5 font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink-3">{label}</p>}
       {payload.map((p, i) => (
         <div key={i} className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
-          <span className="text-white font-bold">{p.value}</span>
-          {p.name && p.name !== "value" && <span className="text-slate-500">{p.name}</span>}
+          <span className="font-mono font-semibold tabular-nums text-ink">{p.value}</span>
+          {p.name && p.name !== "value" && <span className="text-ink-3">{p.name}</span>}
         </div>
       ))}
     </div>
@@ -72,7 +72,7 @@ function BulkRsvpPanel({ event, users, onDone }: {
   }
 
   if (!options.length) {
-    return <p className="text-xs text-slate-500 py-2">Iedereen is al aangemeld.</p>;
+    return <p className="py-2 text-xs text-ink-3">Iedereen is al aangemeld.</p>;
   }
 
   return (
@@ -90,14 +90,14 @@ function BulkRsvpPanel({ event, users, onDone }: {
           type="button"
           onClick={submit}
           disabled={!selected.length || bulkRsvp.isPending}
-          className="flex-1 rounded-xl bg-sky-600 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="btn-primary flex-1 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
         >
           {bulkRsvp.isPending ? "Aanmelden…" : `${selected.length || 0} aanmelden`}
         </button>
         <button
           type="button"
           onClick={onDone}
-          className="rounded-xl border border-white/[0.08] px-4 py-2 text-sm text-slate-400 hover:bg-white/[0.05] transition-colors"
+          className="rounded-xl border-1.5 border-line bg-surface px-4 py-2 text-sm font-semibold text-ink transition-colors hover:border-ink-3"
         >
           Sluiten
         </button>
@@ -125,22 +125,22 @@ function EventRow({ item, users, cosplayCount }: {
   const image = days.find((d) => d.ev.image_url)?.ev.image_url;
 
   return (
-    <div className="border-b border-white/[0.05] last:border-0">
-      <div className="flex items-center gap-3 py-3 px-1">
+    <div className="border-b border-line last:border-0">
+      <div className="flex items-center gap-3 px-4 py-3">
         {/* Cover thumbnail */}
         {image ? (
           <img src={image} alt="" className="h-9 w-14 rounded-lg object-cover shrink-0" />
         ) : (
-          <div className="h-9 w-14 rounded-lg bg-white/[0.05] shrink-0 flex items-center justify-center">
-            <CalendarDays size={14} className="text-slate-600" />
+          <div className="flex h-9 w-14 shrink-0 items-center justify-center rounded-lg bg-sunken">
+            <CalendarDays size={14} className="text-ink-3" />
           </div>
         )}
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-white truncate">{title}</p>
-          <div className="flex items-center gap-3 mt-0.5 text-[11px] text-slate-500">
-            <span>{dateLabel}</span>
+          <p className="truncate text-sm font-semibold text-ink">{title}</p>
+          <div className="mt-0.5 flex items-center gap-3 text-[11px] text-ink-3">
+            <span className="whitespace-nowrap font-mono">{dateLabel}</span>
             {firstDay.location && (
               <span className="flex items-center gap-0.5 truncate max-w-[120px]">
                 <MapPin size={9} /> {firstDay.location}
@@ -151,14 +151,14 @@ function EventRow({ item, users, cosplayCount }: {
 
         {/* Metrics */}
         <div className="flex items-center gap-3 shrink-0 text-xs">
-          <span className="text-slate-400">
-            <span className="font-bold text-white">{participants.length}</span>
-            <span className="text-slate-600">/{totalActive}</span>
+          <span className="font-mono tabular-nums text-ink-3">
+            <span className="font-semibold text-ink">{participants.length}</span>
+            <span>/{totalActive}</span>
           </span>
           {cosplayCount > 0 && (
-            <span className="flex items-center gap-1 text-violet-400">
-              <Sparkles size={10} />
-              <span className="font-bold">{cosplayCount}</span>
+            <span className="flex items-center gap-1 text-ink-2">
+              <Sparkles size={11} />
+              <span className="font-mono font-semibold tabular-nums">{cosplayCount}</span>
             </span>
           )}
           <button
@@ -166,8 +166,8 @@ function EventRow({ item, users, cosplayCount }: {
             onClick={() => setShowRsvp((v) => !v)}
             className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
               showRsvp
-                ? "bg-sky-500/20 text-sky-400"
-                : "bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-white"
+                ? "border-1.5 border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
+                : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
             }`}
           >
             <UserPlus size={11} />
@@ -176,7 +176,7 @@ function EventRow({ item, users, cosplayCount }: {
           <button
             type="button"
             onClick={() => navigate(routes.event.view(firstDay.id))}
-            className="text-slate-600 hover:text-slate-300 transition-colors"
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
           >
             <ChevronRight size={14} />
           </button>
@@ -184,9 +184,9 @@ function EventRow({ item, users, cosplayCount }: {
       </div>
 
       {showRsvp && (
-        <div className="px-1 pb-3">
+        <div className="px-4 pb-3">
           {days.length > 1 && (
-            <p className="mb-1.5 text-[11px] text-slate-500">
+            <p className="mb-1.5 text-[11px] text-ink-3">
               Aanmelden voor {formatDate(firstDay.date)} — de eerstvolgende dag van deze trip
             </p>
           )}
@@ -242,77 +242,79 @@ export function AdminDashboardPage() {
     });
   }, [allUsers]);
 
-  const AXIS = { fill: "#475569", fontSize: 11, fontFamily: "inherit" };
+  const AXIS = { fill: "#74838A", fontSize: 11, fontFamily: "Spline Sans Mono, ui-monospace, monospace" };
 
   const METRICS = [
-    { label: "Gebruikers",  value: stats?.users,  icon: Users,           color: "#38bdf8", path: routes.admin.users  },
-    { label: "Evenementen", value: stats?.events,  icon: CalendarDays,    color: "#34d399", path: routes.admin.events },
-    { label: "Ritten",      value: stats?.rides,   icon: Car,             color: "#a78bfa", path: routes.admin.rides  },
-    { label: "Maaltijden",  value: stats?.meals,   icon: UtensilsCrossed, color: "#fbbf24", path: routes.admin.meals  },
-    { label: "Cosplays",    value: cosplays.length, icon: Sparkles,       color: "#c084fc", path: null                },
-    { label: "Uitgaven",    value: formatAmount(totalExpenses), icon: Wallet, color: "#4ade80", path: null           },
+    { label: "Gebruikers",  value: stats?.users,  icon: Users,           path: routes.admin.users  },
+    { label: "Evenementen", value: stats?.events,  icon: CalendarDays,    path: routes.admin.events },
+    { label: "Ritten",      value: stats?.rides,   icon: Car,             path: routes.admin.rides  },
+    { label: "Maaltijden",  value: stats?.meals,   icon: UtensilsCrossed, path: routes.admin.meals  },
+    { label: "Cosplays",    value: cosplays.length, icon: Sparkles,       path: null                },
+    { label: "Uitgaven",    value: formatAmount(totalExpenses), icon: Wallet, path: null           },
   ];
 
   return (
-    <div className="p-5 lg:p-8 space-y-6 max-w-6xl mx-auto">
+    <div className="mx-auto max-w-6xl space-y-8 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs text-slate-500 font-medium">{greeting},</p>
-          <h1 className="text-xl font-black text-white mt-0.5">{me?.name ?? "Admin"}</h1>
-          <p className="text-xs text-slate-600 mt-0.5">{dateLabel} · Admin Portal</p>
+      <div className="flex items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3">{greeting},</p>
+          <h1 className="mt-1 font-display text-[34px] font-extrabold uppercase leading-[0.95] text-ink md:text-[42px]">{me?.name ?? "Admin"}</h1>
+          <p className="mt-1.5 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3">{dateLabel} · Admin Portal</p>
         </div>
-        <div className="h-10 w-10 rounded-xl bg-sky-600/20 border border-sky-500/20 flex items-center justify-center">
-          <Shield size={16} className="text-sky-400" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+          <Shield size={17} />
         </div>
       </div>
 
       {/* ── Metrics strip ───────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 lg:grid-cols-6 gap-2">
-        {METRICS.map(({ label, value, icon: Icon, color, path }) => (
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+        {METRICS.map(({ label, value, icon: Icon, path }) => (
           <button
             key={label}
             type="button"
             onClick={() => path && navigate(path)}
             disabled={!path}
-            className={`flex flex-col gap-1.5 rounded-xl bg-white/[0.03] border border-white/[0.06] p-3 text-left ${path ? "hover:bg-white/[0.06] transition-colors" : "cursor-default"}`}
+            className={`card-surface flex min-w-0 flex-col gap-2.5 p-3.5 text-left ${path ? "transition-colors hover:border-ink-3" : "cursor-default"}`}
           >
-            <Icon size={12} style={{ color }} />
+            <span className="flex w-full items-center justify-between gap-2">
+              <span className="truncate font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">{label}</span>
+              <Icon size={14} className="shrink-0 text-ink-3" />
+            </span>
             {statsLoading && typeof value === "number" ? (
-              <div className="h-5 w-8 rounded bg-white/[0.06] animate-pulse" />
+              <div className="h-7 w-10 animate-pulse rounded bg-sunken" />
             ) : (
-              <span className="text-lg font-black text-white leading-none tabular-nums">{value ?? 0}</span>
+              <span className="max-w-full truncate font-display text-[28px] font-extrabold leading-[0.95] tabular-nums text-ink">{value ?? 0}</span>
             )}
-            <span className="text-[10px] text-slate-500 font-medium leading-tight">{label}</span>
           </button>
         ))}
       </div>
 
       {/* ── Upcoming events ─────────────────────────────────────────────────── */}
-      <div className="rounded-2xl bg-white/[0.03] border border-white/[0.06] overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.05]">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
-            <CalendarDays size={10} /> Aankomende evenementen
+      <div className="card-surface overflow-hidden">
+        <div className="flex items-center justify-between gap-3 border-b-1.5 border-line px-4 py-3">
+          <p className="section-label flex items-center gap-1.5">
+            <CalendarDays size={12} /> Aankomende evenementen
           </p>
           <button
             type="button"
             onClick={() => navigate(routes.admin.events)}
-            className="text-[10px] text-slate-500 hover:text-sky-400 transition-colors"
+            className="text-[12.5px] font-semibold text-brand-text hover:underline"
           >
             Alle evenementen →
           </button>
         </div>
 
-        <div className="px-4">
+        <div>
           {eventsLoading ? (
-            <div className="space-y-3 py-4">
+            <div className="space-y-3 p-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-10 rounded-xl bg-white/[0.04] animate-pulse" />
+                <div key={i} className="h-10 animate-pulse rounded-lg bg-sunken" />
               ))}
             </div>
           ) : upcomingItems.length === 0 ? (
-            <p className="text-sm text-slate-600 py-6 text-center">Geen aankomende evenementen</p>
+            <p className="py-6 text-center text-sm text-ink-3">Geen aankomende evenementen</p>
           ) : (
             upcomingItems.map((item) => {
               const ids = item.type === "single" ? [item.ev.id] : item.events.map((d) => d.ev.id);
@@ -330,39 +332,33 @@ export function AdminDashboardPage() {
       </div>
 
       {/* ── User growth chart ────────────────────────────────────────────────── */}
-      <div className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-5">
+      <div className="card-surface p-4 sm:p-5">
         <div className="flex items-center gap-2 mb-4">
-          <TrendingUp size={13} className="text-slate-500" />
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Gebruikersgroei</p>
+          <TrendingUp size={13} className="text-ink-3" />
+          <p className="section-label">Gebruikersgroei</p>
         </div>
         {usersLoading ? (
-          <div className="h-40 rounded-xl bg-white/[0.04] animate-pulse" />
+          <div className="h-40 animate-pulse rounded-lg bg-sunken" />
         ) : userGrowthData.length === 0 ? (
-          <p className="text-sm text-slate-600 py-6 text-center">Geen data beschikbaar</p>
+          <p className="py-6 text-center text-sm text-ink-3">Geen data beschikbaar</p>
         ) : (
           <>
             <ResponsiveContainer width="100%" height={160}>
               <ComposedChart data={userGrowthData} margin={{ top: 4, right: 16, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="barG" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.8} />
-                    <stop offset="100%" stopColor="#38bdf8" stopOpacity={0.2} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(116,131,138,0.22)" />
                 <XAxis dataKey="label" tick={AXIS} tickLine={false} axisLine={false} />
                 <YAxis tick={AXIS} tickLine={false} axisLine={false} allowDecimals={false} />
-                <Tooltip content={<DarkTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
-                <Bar dataKey="newUsers" name="Nieuw" fill="url(#barG)" radius={[3, 3, 0, 0]} maxBarSize={32} />
-                <Line dataKey="cumulative" name="Totaal" type="monotone" stroke="#a78bfa" strokeWidth={1.5} dot={false} />
+                <Tooltip content={<DarkTooltip />} cursor={{ fill: "rgba(116,131,138,0.10)" }} />
+                <Bar dataKey="newUsers" name="Nieuw" fill="#3FD8EE" radius={[3, 3, 0, 0]} maxBarSize={32} />
+                <Line dataKey="cumulative" name="Totaal" type="monotone" stroke="#74838A" strokeWidth={2} dot={false} />
               </ComposedChart>
             </ResponsiveContainer>
             <div className="flex items-center gap-4 mt-2 justify-end">
-              <span className="flex items-center gap-1.5 text-[10px] text-slate-600">
-                <span className="h-2 w-2 rounded-sm bg-sky-400/60" /> Nieuw
+              <span className="flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink-3">
+                <span className="h-2.5 w-2.5 rounded-sm bg-brand" /> Nieuw
               </span>
-              <span className="flex items-center gap-1.5 text-[10px] text-slate-600">
-                <span className="h-px w-4 bg-violet-400" /> Cumulatief
+              <span className="flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink-3">
+                <span className="h-0.5 w-4 bg-ink-3" /> Cumulatief
               </span>
             </div>
           </>

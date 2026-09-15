@@ -1,5 +1,6 @@
+import { forwardRef } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, ArrowRight } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { formatDate } from "../../utils/format";
 import { listItem } from "../../utils/motion";
@@ -12,7 +13,13 @@ interface CosplayCardProps {
   onClick: () => void;
 }
 
-export function CosplayCard({ cosplay, events, users, onClick }: CosplayCardProps) {
+/** A cosplay as a flat tile: inspiration image (or an empty well), character, series, who and which days. */
+// forwardRef: TripCosplayTab's <AnimatePresence mode="popLayout"> measures each
+// card through a ref to animate it out when a cosplay is removed.
+export const CosplayCard = forwardRef<HTMLDivElement, CosplayCardProps>(function CosplayCard(
+  { cosplay, events, users, onClick },
+  ref,
+) {
   const user = users.find(
     (u) => u.name === cosplay.user_name || u.discord_username === cosplay.user_name,
   );
@@ -25,91 +32,72 @@ export function CosplayCard({ cosplay, events, users, onClick }: CosplayCardProp
   const thumbnail = cosplay.inspo_images[0];
 
   return (
-    <motion.div variants={listItem}>
-      <button type="button" onClick={onClick} className="block w-full text-left group">
-        <div className="card-surface rounded-2xl overflow-hidden hover:shadow-md active:scale-[0.99] transition-all duration-150">
-          {/* Violet accent line */}
-          <div className="h-[3px] bg-gradient-to-r from-violet-400 to-purple-500" />
+    <motion.div ref={ref} variants={listItem} className="h-full">
+      <button
+        type="button"
+        onClick={onClick}
+        className="card-surface-hover flex h-full w-full flex-col overflow-hidden text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text"
+      >
+        {/* Image or empty well */}
+        <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden border-b-1.5 border-line bg-sunken">
+          {thumbnail ? (
+            <img
+              src={thumbnail}
+              alt={cosplay.character_name}
+              className="h-full w-full object-cover"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = "none";
+                (e.currentTarget.nextSibling as HTMLElement | null)?.classList.remove("hidden");
+              }}
+            />
+          ) : null}
+          <div className={`absolute inset-0 flex items-center justify-center text-ink-3 ${thumbnail ? "hidden" : ""}`}>
+            <Sparkles size={20} />
+          </div>
+        </div>
 
-          <div className="flex items-stretch gap-0">
-            {/* Main content */}
-            <div className="flex-1 min-w-0 px-4 pt-3.5 pb-3">
-              {/* User row */}
-              <div className="flex items-center gap-2 mb-2.5">
-                <UserAvatar
-                  name={user?.name ?? cosplay.user_name}
-                  user={user}
-                  className="h-5 w-5 text-[8px] shrink-0"
-                />
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate">
-                  {user?.name ?? cosplay.user_name}
-                </span>
-              </div>
-
-              {/* Character name */}
-              <p className="text-sm font-black text-slate-900 dark:text-white leading-tight truncate">
-                {cosplay.character_name}
+        <div className="flex min-w-0 flex-1 flex-col gap-2.5 p-3">
+          <div className="min-w-0">
+            <p className="truncate text-[14px] font-semibold leading-tight text-ink">
+              {cosplay.character_name}
+            </p>
+            {cosplay.series && (
+              <p className="mt-0.5 truncate text-xs text-ink-3">
+                {cosplay.series}
               </p>
-
-              {/* Series */}
-              {cosplay.series && (
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate">
-                  {cosplay.series}
-                </p>
-              )}
-
-              {/* Day chips */}
-              {linkedEvents.length > 0 && (
-                <div className="mt-2.5 flex flex-wrap gap-1.5">
-                  {linkedEvents.map((e) => (
-                    <span
-                      key={e.id}
-                      className="inline-flex items-center rounded-full bg-violet-100 dark:bg-violet-900/30 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:text-violet-300"
-                    >
-                      {formatDate(e.date)}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Thumbnail or icon */}
-            <div className="w-20 shrink-0 relative overflow-hidden bg-slate-100 dark:bg-slate-800/60 border-l border-slate-200 dark:border-slate-700">
-              {thumbnail ? (
-                <img
-                  src={thumbnail}
-                  alt={cosplay.character_name}
-                  className="h-full w-full object-cover"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = "none";
-                    (e.currentTarget.nextSibling as HTMLElement | null)?.classList.remove("hidden");
-                  }}
-                />
-              ) : null}
-              <div className={`absolute inset-0 flex items-center justify-center ${thumbnail ? "hidden" : ""}`}>
-                <Sparkles size={22} className="text-violet-300 dark:text-violet-600" />
-              </div>
-              {thumbnail && (
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
-                  <ArrowRight size={16} className="text-white" />
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
-          {/* Footer */}
-          <div className="flex items-center justify-between px-4 py-2 border-t border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-black/10">
-            <span className="text-[10px] font-semibold text-slate-400">
+          {/* Who */}
+          <div className="flex min-w-0 items-center gap-1.5">
+            <UserAvatar
+              name={user?.name ?? cosplay.user_name}
+              user={user}
+              className="h-5 w-5 shrink-0 text-[8px]"
+            />
+            <span className="truncate text-[12px] font-medium text-ink-2">
+              {user?.name ?? cosplay.user_name}
+            </span>
+          </div>
+
+          {/* Days + photo count */}
+          <div className="mt-auto flex flex-wrap items-center gap-1.5">
+            {linkedEvents.map((e) => (
+              <span
+                key={e.id}
+                className="rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2"
+              >
+                {formatDate(e.date)}
+              </span>
+            ))}
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-3">
               {cosplay.inspo_images.length > 0
                 ? `${cosplay.inspo_images.length} foto${cosplay.inspo_images.length !== 1 ? "'s" : ""}`
                 : "Geen foto's"}
-            </span>
-            <span className="flex items-center gap-1 text-[11px] font-semibold text-violet-500 dark:text-violet-400">
-              Bekijk <ArrowRight size={11} />
             </span>
           </div>
         </div>
       </button>
     </motion.div>
   );
-}
+});

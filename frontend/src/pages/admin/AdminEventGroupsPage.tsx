@@ -90,7 +90,7 @@ export function AdminEventGroupsPage() {
   }
 
   return (
-    <div className="p-5 lg:p-8 max-w-6xl mx-auto space-y-5">
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
       <AdminPageHeader
         title="Evenementgroepen"
         subtitle={`${groups.length} groepen`}
@@ -107,7 +107,7 @@ export function AdminEventGroupsPage() {
         <button
           type="submit"
           disabled={!newName.trim() || createMutation.isPending}
-          className="flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-40 transition-colors shadow-sm"
+          className="btn-primary gap-2 px-4 py-2.5 text-sm disabled:opacity-50"
         >
           <Plus size={15} />
           Aanmaken
@@ -115,10 +115,10 @@ export function AdminEventGroupsPage() {
       </form>
 
       {/* Groups table */}
-      <div className="rounded-2xl border border-slate-200/80 dark:border-white/[0.06] bg-white dark:bg-slate-800/60 overflow-hidden shadow-sm">
+      <div className="card-surface overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
+            <tr className="border-b-1.5 border-line">
               <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
                 <input
                   type="checkbox"
@@ -128,20 +128,20 @@ export function AdminEventGroupsPage() {
                   className="cb"
                 />
               </th>
-              <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                 Groepsnaam
               </th>
-              <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                 Acties
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+          <tbody className="divide-y divide-line">
             {isLoading ? (
               <AdminTableSkeleton cols={3} />
             ) : groups.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-5 py-10 text-center text-sm text-slate-400">
+                <td colSpan={3} className="px-5 py-10 text-center text-sm text-ink-3">
                   Nog geen groepen aangemaakt.
                 </td>
               </tr>
@@ -149,7 +149,7 @@ export function AdminEventGroupsPage() {
               paginated.map((group) => (
                 <tr
                   key={group.id}
-                  className={`transition-colors ${selectedIds.has(group.id) ? "bg-sky-500/[0.06] hover:bg-sky-500/[0.08]" : "hover:bg-slate-50 dark:hover:bg-white/[0.03]"}`}
+                  className={`transition-colors ${selectedIds.has(group.id) ? "bg-brand-soft/50 hover:bg-brand-soft/70" : "hover:bg-sunken"}`}
                 >
                   <td
                     className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3.5"
@@ -177,10 +177,10 @@ export function AdminEventGroupsPage() {
                       />
                     ) : (
                       <div className="flex items-center gap-2 sm:gap-2.5">
-                        <div className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-500/10">
-                          <Layers size={13} className="text-emerald-500" />
+                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink sm:h-7 sm:w-7">
+                          <Layers size={13} />
                         </div>
-                        <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                        <span className="text-sm font-semibold text-ink truncate">
                           {group.name}
                         </span>
                       </div>
@@ -192,13 +192,13 @@ export function AdminEventGroupsPage() {
                         <button
                           onClick={() => saveEdit(group.id)}
                           disabled={updateMutation.isPending}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                          className="flex h-7 w-7 items-center justify-center rounded-lg bg-ink text-paper transition-colors disabled:opacity-50 dark:bg-brand dark:text-brand-on"
                         >
                           <Check size={13} />
                         </button>
                         <button
                           onClick={() => setEditingId(null)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-white/[0.06] hover:text-slate-200 transition-colors"
+                          className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink transition-colors"
                         >
                           <X size={13} />
                         </button>

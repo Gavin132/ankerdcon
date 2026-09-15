@@ -187,7 +187,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm"
+            className="fixed inset-0 z-[200] bg-slate-950/50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -197,25 +197,25 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
 
           {/* Panel — slides up from bottom */}
           <motion.div
-            className="fixed z-[201] rounded-2xl bg-white dark:bg-slate-900 shadow-2xl overflow-hidden"
+            className="fixed z-[201] overflow-hidden rounded-2xl border-1.5 border-line bg-surface shadow-xl"
             style={{
               bottom: "max(1rem, env(safe-area-inset-bottom, 1rem))",
               left: "50%",
               width: "min(calc(100vw - 2rem), 560px)",
               x: "-50%",
             }}
-            initial={{ y: 56, opacity: 0 }}
+            initial={{ y: 24, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 56, opacity: 0 }}
-            transition={{ type: "spring", damping: 28, stiffness: 360 }}
+            exit={{ y: 24, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between border-b-1.5 border-line px-5 py-4">
               <div>
-                <p className="text-sm font-black text-slate-900 dark:text-white">
+                <p className="font-display text-[22px] font-extrabold uppercase leading-none tracking-[0.01em] text-ink">
                   Banner bijsnijden
                 </p>
-                <p className="mt-0.5 text-[11px] text-slate-400">
+                <p className="mt-1 text-[12px] text-ink-3">
                   {isGif
                     ? "GIF wordt geüpload zoals-is — sleep om de positie te bekijken"
                     : "Sleep · scroll of schuif om in te zoomen"}
@@ -223,7 +223,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
               </div>
               <button
                 onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
               >
                 <X size={15} />
               </button>
@@ -233,7 +233,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
             <div className="p-4 pb-3">
               <div
                 ref={containerRef}
-                className="relative overflow-hidden rounded-xl bg-slate-800 select-none touch-none"
+                className="relative overflow-hidden rounded-xl bg-[#0F1519] select-none touch-none"
                 style={{
                   aspectRatio: `${ASPECT} / 1`,
                   cursor: dragging.current ? "grabbing" : "grab",
@@ -285,7 +285,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
                   <button
                     type="button"
                     onClick={() => applyZoom(Math.max(1, zoom - 0.1))}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
                   >
                     <ZoomOut size={14} />
                   </button>
@@ -296,16 +296,16 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
                     step={1}
                     value={Math.round(zoom * 100)}
                     onChange={e => applyZoom(Number(e.target.value) / 100)}
-                    className="flex-1 accent-sky-500"
+                    className="flex-1 accent-brand-text"
                   />
                   <button
                     type="button"
                     onClick={() => applyZoom(Math.min(MAX_ZOOM, zoom + 0.1))}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
                   >
                     <ZoomIn size={14} />
                   </button>
-                  <span className="w-10 shrink-0 text-right text-xs font-bold tabular-nums text-slate-400">
+                  <span className="w-10 shrink-0 text-right font-mono text-xs tabular-nums text-ink-3">
                     {Math.round(zoom * 100)}%
                   </span>
                 </div>
@@ -314,7 +314,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
 
             {/* Footer actions */}
             <div className="flex gap-2.5 px-4 pb-4">
-              <Button variant="ghost" size="sm" onClick={onClose} className="flex-1">
+              <Button variant="secondary" size="sm" onClick={onClose} className="flex-1">
                 Annuleren
               </Button>
               <Button

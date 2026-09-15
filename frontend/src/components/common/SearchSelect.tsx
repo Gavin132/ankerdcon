@@ -118,7 +118,7 @@ export function SearchSelect({
       {open && filtered.length > 0 && createPortal(
         <div
           ref={dropdownRef}
-          className="overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-elevated dark:border-slate-700 dark:bg-slate-900"
+          className="overflow-y-auto rounded-xl border-1.5 border-line bg-surface shadow-xl"
           style={dropdownStyle}
         >
           {filtered.map((option) => (
@@ -133,7 +133,7 @@ export function SearchSelect({
                 e.preventDefault();
                 handleSelect(option);
               }}
-              className="flex w-full items-center px-3.5 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-sky-50 hover:text-sky-700 dark:text-slate-300 dark:hover:bg-sky-900/30 dark:hover:text-sky-300"
+              className="flex w-full items-center px-3.5 py-3 text-sm font-medium text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
             >
               {option}
             </button>

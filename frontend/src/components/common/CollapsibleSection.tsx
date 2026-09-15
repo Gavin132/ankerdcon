@@ -21,9 +21,9 @@ export function CollapsibleSection({
       >
         <span className="flex-1 text-left">{title}</span>
         {open ? (
-          <ChevronUp size={14} className="shrink-0 text-slate-400" />
+          <ChevronUp size={14} className="shrink-0 text-ink-3" />
         ) : (
-          <ChevronDown size={14} className="shrink-0 text-slate-400" />
+          <ChevronDown size={14} className="shrink-0 text-ink-3" />
         )}
       </button>
 

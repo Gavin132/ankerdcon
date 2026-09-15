@@ -26,12 +26,12 @@ export function LocationPingDisplay({ raw, align = "end" }: Props) {
 
   return (
     <div className={`flex flex-col gap-0.5 min-w-0 ${align === "start" ? "items-start" : "items-end"}`}>
-      <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 whitespace-nowrap">
+      <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 whitespace-nowrap">
         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400 animate-pulse" />
         {label}
       </span>
       {meta && (
-        <span className="text-xs text-slate-400 whitespace-nowrap">{meta}</span>
+        <span className="font-mono text-[11px] text-ink-3 whitespace-nowrap">{meta}</span>
       )}
     </div>
   );

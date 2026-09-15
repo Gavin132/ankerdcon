@@ -56,7 +56,7 @@ export function CosplayDetailDrawer({
     <div className="space-y-2">
       {confirmDelete ? (
         <div className="flex items-center gap-2">
-          <p className="flex-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
+          <p className="flex-1 text-xs font-semibold text-ink">
             Zeker verwijderen?
           </p>
           <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)}>
@@ -67,7 +67,7 @@ export function CosplayDetailDrawer({
           </Button>
         </div>
       ) : (
-        <Button variant="ghost" className="w-full text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10" onClick={handleDelete}>
+        <Button variant="ghost" className="w-full text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10" onClick={handleDelete}>
           <Trash2 size={14} />
           Cosplay verwijderen
         </Button>
@@ -88,13 +88,13 @@ export function CosplayDetailDrawer({
 
           {/* ── User + day chips ── */}
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-2 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5">
+            <div className="flex items-center gap-2 rounded-full border-1.5 border-line bg-surface py-1 pl-1.5 pr-3">
               <UserAvatar
                 name={user?.name ?? cosplay.user_name}
                 user={user}
                 className="h-5 w-5 text-[8px]"
               />
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+              <span className="text-xs font-semibold text-ink">
                 {user?.name ?? cosplay.user_name}
               </span>
             </div>
@@ -104,7 +104,7 @@ export function CosplayDetailDrawer({
                 key={e.id}
                 to={routes.event.view(e.id)}
                 onClick={onClose}
-                className="flex items-center gap-1.5 rounded-full border border-violet-200 dark:border-violet-700/50 bg-violet-50 dark:bg-violet-900/20 px-3 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-900/40 transition-colors"
+                className="flex items-center gap-1.5 rounded-full border-1.5 border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
               >
                 <Calendar size={11} />
                 {formatDate(e.date)}
@@ -115,7 +115,7 @@ export function CosplayDetailDrawer({
           {/* ── Inspiratie afbeeldingen ── */}
           {cosplay.inspo_images.length > 0 && (
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
+              <p className="section-label mb-3">
                 Inspiratie
               </p>
               <div className={`grid gap-2 ${
@@ -130,27 +130,27 @@ export function CosplayDetailDrawer({
                     key={i}
                     type="button"
                     onClick={() => setLightbox(url)}
-                    className="relative aspect-square overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800 hover:opacity-90 active:scale-95 transition-all group"
+                    className="group relative aspect-square overflow-hidden rounded-xl border-1.5 border-line bg-sunken transition-colors hover:border-ink-3"
                   >
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-ink-3">
+                      <ImageOff size={18} />
+                      <span className="text-[10px]">Niet beschikbaar</span>
+                    </div>
                     <img
                       src={url}
                       alt={`Inspiratie ${i + 1}`}
-                      className="h-full w-full object-cover"
+                      className="relative h-full w-full object-cover"
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
                       }}
                     />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-600">
-                      <ImageOff size={18} />
-                      <span className="text-[10px]">Niet beschikbaar</span>
-                    </div>
                     <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <a
                         href={url}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="flex h-6 w-6 items-center justify-center rounded-lg bg-black/50 text-white hover:bg-black/70"
+                        className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#0F1519]/70 text-[#E6F0F3] hover:bg-[#0F1519]/90"
                       >
                         <ExternalLink size={11} />
                       </a>
@@ -162,19 +162,21 @@ export function CosplayDetailDrawer({
           )}
 
           {cosplay.inspo_images.length === 0 && (
-            <div className="flex flex-col items-center gap-2 py-8 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-400">
-              <Sparkles size={22} className="opacity-40" />
-              <p className="text-xs">Geen inspiratieafbeeldingen</p>
+            <div className="flex flex-col items-center gap-2.5 rounded-xl border-1.5 border-dashed border-line py-8 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
+                <Sparkles size={22} />
+              </div>
+              <p className="text-xs text-ink-3">Geen inspiratieafbeeldingen</p>
             </div>
           )}
 
           {/* ── Notes ── */}
           {cosplay.notes && (
-            <div className="rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.07] px-4 py-4">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
+            <div className="rounded-xl border-1.5 border-line bg-sunken px-4 py-4">
+              <p className="section-label mb-2">
                 Notities
               </p>
-              <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink">
                 {cosplay.notes}
               </p>
             </div>
@@ -190,7 +192,7 @@ export function CosplayDetailDrawer({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[500] flex items-center justify-center bg-black/90 p-4"
+            className="fixed inset-0 z-[500] flex items-center justify-center bg-slate-950/90 p-4"
             onClick={() => setLightbox(null)}
           >
             <button

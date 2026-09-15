@@ -21,14 +21,14 @@ function formatDate(iso: string) {
 // ── Status config ─────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG = {
-  pending:   { label: "Openstaand", pill: "bg-amber-500/10 text-amber-400 border border-amber-500/20",   dot: "bg-amber-400" },
-  claimed:   { label: "Geclaimd",   pill: "bg-sky-500/10 text-sky-400 border border-sky-500/20",         dot: "bg-sky-400"   },
-  confirmed: { label: "Bevestigd",  pill: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20", dot: "bg-emerald-400" },
+  pending:   { label: "Openstaand", pill: "border border-transparent bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",       dot: "bg-amber-500" },
+  claimed:   { label: "Geclaimd",   pill: "border border-transparent bg-sunken text-ink-2",                                                   dot: "bg-ink-3"     },
+  confirmed: { label: "Bevestigd",  pill: "border border-transparent bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300", dot: "bg-emerald-500" },
 } as const;
 
 function StatusBadge({ status }: { status: ExpenseShare["status"] }) {
   const { label, pill } = STATUS_CONFIG[status];
-  return <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${pill}`}>{label}</span>;
+  return <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${pill}`}>{label}</span>;
 }
 
 // ── Admin status picker — lets an admin set a share to any status directly ────
@@ -65,10 +65,10 @@ function AdminStatusPicker({
             disabled={pending}
             onClick={() => handleClick(s)}
             title={STATUS_CONFIG[s].label}
-            className={`h-6 w-6 rounded-full border flex items-center justify-center text-[9px] font-bold transition-colors disabled:opacity-50 ${
+            className={`flex h-6 w-6 items-center justify-center rounded-full border font-mono text-[9.5px] font-semibold transition-colors disabled:opacity-50 ${
               active
                 ? STATUS_CONFIG[s].pill
-                : "border-white/[0.1] text-slate-500 hover:text-slate-300 hover:border-white/[0.2]"
+                : "border-line text-ink-3 hover:text-ink hover:border-ink-3"
             }`}
           >
             {s === "pending" ? "O" : s === "claimed" ? "G" : "B"}
@@ -95,11 +95,11 @@ function PersonShareRow({
   onSetStatus: (id: string, status: ExpenseShare["status"]) => void;
 }) {
   return (
-    <div className="flex items-center gap-3 py-2.5 px-4 border-t border-white/[0.05]">
+    <div className="flex items-center gap-3 py-2.5 px-4 border-t border-line">
       <div className="flex-1 min-w-0">
-        <span className="text-sm text-slate-300 truncate">{share.expenseDescription}</span>
+        <span className="text-sm text-ink-2 truncate">{share.expenseDescription}</span>
       </div>
-      <span className="text-sm font-medium text-white shrink-0">{fmt(share.amount, share.currency)}</span>
+      <span className="shrink-0 font-mono text-sm font-medium tabular-nums text-ink">{fmt(share.amount, share.currency)}</span>
       <StatusBadge status={share.status} />
       <AdminStatusPicker status={share.status} onSetStatus={(s) => onSetStatus(share.id, s)} />
     </div>
@@ -141,43 +141,43 @@ function PersonCard({
   const outstanding = person.pending + person.claimed;
 
   return (
-    <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] overflow-hidden">
+    <div className="card-surface overflow-hidden">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.03] transition-colors"
+        className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-sunken"
       >
         <UserAvatar name={person.name} className="h-8 w-8 text-[11px] shrink-0" />
 
-        <span className="flex-1 text-sm font-medium text-white">{person.name}</span>
+        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">{person.name}</span>
 
         {/* Status breakdown */}
-        <div className="flex items-center gap-2 text-xs shrink-0">
+        <div className="flex shrink-0 items-center gap-2 font-mono text-xs tabular-nums">
           {person.pending > 0 && (
-            <span className="flex items-center gap-1 text-amber-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+            <span className="flex items-center gap-1 text-amber-800 dark:text-amber-300">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
               {fmt(person.pending)}
             </span>
           )}
           {person.claimed > 0 && (
-            <span className="flex items-center gap-1 text-sky-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+            <span className="flex items-center gap-1 text-ink-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-ink-3" />
               {fmt(person.claimed)}
             </span>
           )}
           {outstanding === 0 && person.confirmed > 0 && (
-            <span className="flex items-center gap-1 text-emerald-400">
+            <span className="flex items-center gap-1 font-sans text-emerald-700 dark:text-emerald-300">
               <CheckCircle2 size={11} />
               Vereffend
             </span>
           )}
         </div>
 
-        <span className="w-20 text-right text-sm font-semibold text-white">{fmt(total)}</span>
-        {open ? <ChevronUp size={14} className="text-slate-500 shrink-0" /> : <ChevronDown size={14} className="text-slate-500 shrink-0" />}
+        <span className="w-20 text-right font-mono text-sm font-semibold tabular-nums text-ink">{fmt(total)}</span>
+        {open ? <ChevronUp size={14} className="text-ink-3 shrink-0" /> : <ChevronDown size={14} className="text-ink-3 shrink-0" />}
       </button>
 
       {open && (
-        <div className="bg-white/[0.02]">
+        <div className="bg-sunken/40">
           {visibleShares.map((share) => (
             <PersonShareRow key={share.id} share={share} onSetStatus={onSetStatus} />
           ))}
@@ -226,63 +226,63 @@ function ExpenseCard({
   const linkedEvent = expense.linked_event_id ? events.find((e) => e.id === expense.linked_event_id) : undefined;
 
   return (
-    <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] overflow-hidden">
+    <div className="card-surface overflow-hidden">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 p-4 text-left hover:bg-white/[0.03] transition-colors"
+        className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-sunken"
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-white truncate">{expense.description}</span>
-            <span className="text-xs text-slate-500">{formatDate(expense.date)}</span>
+            <span className="truncate text-sm font-semibold text-ink">{expense.description}</span>
+            <span className="whitespace-nowrap font-mono text-xs text-ink-3">{formatDate(expense.date)}</span>
             {linkedEvent && (
-              <span className="rounded-full bg-violet-500/15 border border-violet-500/25 px-2 py-0.5 text-[10px] font-semibold text-violet-300 truncate max-w-[160px]">
+              <span className="max-w-[160px] truncate rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2">
                 {linkedEvent.event_name}
               </span>
             )}
           </div>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-xs text-slate-400">
-              Betaald door <span className="text-slate-300">{expense.paid_by}</span>
+            <span className="text-xs text-ink-3">
+              Betaald door <span className="text-ink-2">{expense.paid_by}</span>
             </span>
-            <span className="text-xs text-slate-600">·</span>
-            <span className="text-xs font-semibold text-white">{fmt(expense.amount, expense.currency)}</span>
+            <span className="text-xs text-ink-3">·</span>
+            <span className="font-mono text-xs font-semibold tabular-nums text-ink">{fmt(expense.amount, expense.currency)}</span>
           </div>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           {pendingCount > 0 && (
-            <span className="flex items-center gap-1 text-xs text-amber-400">
+            <span className="flex items-center gap-1 font-mono text-xs tabular-nums text-amber-800 dark:text-amber-300">
               <AlertCircle size={12} />{pendingCount}
             </span>
           )}
           {claimedCount > 0 && (
-            <span className="flex items-center gap-1 text-xs text-sky-400">
+            <span className="flex items-center gap-1 font-mono text-xs tabular-nums text-ink-2">
               <Clock size={12} />{claimedCount}
             </span>
           )}
           {confirmedCount > 0 && (
-            <span className="flex items-center gap-1 text-xs text-emerald-400">
+            <span className="flex items-center gap-1 font-mono text-xs tabular-nums text-emerald-700 dark:text-emerald-300">
               <CheckCircle2 size={12} />{confirmedCount}
             </span>
           )}
-          {open ? <ChevronUp size={14} className="text-slate-500" /> : <ChevronDown size={14} className="text-slate-500" />}
+          {open ? <ChevronUp size={14} className="text-ink-3" /> : <ChevronDown size={14} className="text-ink-3" />}
         </div>
       </button>
 
       {open && (
-        <div className="border-t border-white/[0.07] bg-white/[0.02]">
+        <div className="border-t border-line bg-sunken/40">
           {/* Admin controls: event link + delete */}
           <div
-            className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-white/[0.05]"
+            className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-line"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 shrink-0">Evenement</span>
+              <span className="shrink-0 font-mono text-[10.5px] uppercase tracking-[0.09em] text-ink-3">Evenement</span>
               <select
                 value={expense.linked_event_id ?? ""}
                 onChange={(e) => onSetEvent(expense.id, e.target.value || null)}
-                className="rounded-lg border border-white/[0.1] bg-white/[0.04] px-2 py-1.5 text-xs text-slate-200 max-w-[220px]"
+                className="input-field max-w-[220px] rounded-lg px-2 py-1.5 text-xs"
               >
                 <option value="">Geen evenement</option>
                 {events.map((ev) => (
@@ -293,17 +293,17 @@ function ExpenseCard({
 
             {confirmDeleteId === expense.id ? (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500">Verwijderen?</span>
+                <span className="text-xs text-ink-3">Verwijderen?</span>
                 <button
                   onClick={() => onConfirmDelete(expense.id)}
                   disabled={isDeleting}
-                  className="rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 disabled:opacity-50 transition-colors"
+                  className="rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-rose-100 text-rose-700 hover:bg-rose-200 dark:bg-rose-500/15 dark:text-rose-300 dark:hover:bg-rose-500/25 disabled:opacity-50 transition-colors"
                 >
                   {isDeleting ? "…" : "Ja"}
                 </button>
                 <button
                   onClick={onCancelDelete}
-                  className="rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-white/[0.06] text-slate-400 hover:bg-white/[0.1] transition-colors"
+                  className="rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-sunken text-ink-2 hover:text-ink transition-colors"
                 >
                   Nee
                 </button>
@@ -311,7 +311,7 @@ function ExpenseCard({
             ) : (
               <button
                 onClick={() => onRequestDelete(expense.id)}
-                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors"
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 transition-colors"
               >
                 <Trash2 size={12} />
                 Verwijderen
@@ -320,13 +320,13 @@ function ExpenseCard({
           </div>
 
           {filteredShares.length === 0 ? (
-            <p className="px-4 py-3 text-sm text-slate-500">Geen aandelen voor dit filter.</p>
+            <p className="px-4 py-3 text-sm text-ink-3">Geen aandelen voor dit filter.</p>
           ) : (
             <>
               <div className="flex items-center gap-3 px-4 py-2">
-                <span className="flex-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Deelnemer</span>
-                <span className="w-24 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Bedrag</span>
-                <span className="w-28 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Status</span>
+                <span className="flex-1 font-mono text-[10.5px] uppercase tracking-[0.09em] text-ink-3">Deelnemer</span>
+                <span className="w-24 shrink-0 font-mono text-[10.5px] uppercase tracking-[0.09em] text-ink-3">Bedrag</span>
+                <span className="w-28 shrink-0 font-mono text-[10.5px] uppercase tracking-[0.09em] text-ink-3">Status</span>
                 <span className="w-24 shrink-0" />
               </div>
               {filteredShares.map((share) => (
@@ -344,12 +344,12 @@ function ExpenseCard({
 
 function ShareRow({ share, onSetStatus }: { share: ExpenseShare; onSetStatus: (id: string, status: ExpenseShare["status"]) => void }) {
   return (
-    <div className="flex items-center gap-3 py-2 px-4 border-t border-white/[0.05] first:border-t-0">
+    <div className="flex items-center gap-3 py-2 px-4 border-t border-line first:border-t-0">
       <div className="flex flex-1 items-center gap-2 min-w-0">
         <UserAvatar name={share.participant} className="h-5 w-5 text-[8px] shrink-0" />
-        <span className="text-sm text-slate-300 truncate">{share.participant}</span>
+        <span className="text-sm text-ink-2 truncate">{share.participant}</span>
       </div>
-      <span className="w-24 shrink-0 text-sm font-medium text-white">{fmt(share.amount)}</span>
+      <span className="w-24 shrink-0 font-mono text-sm font-medium tabular-nums text-ink">{fmt(share.amount)}</span>
       <div className="w-28 shrink-0">
         <StatusBadge status={share.status} />
       </div>
@@ -395,10 +395,10 @@ function buildPersonData(expenses: Expense[]): PersonBalance[] {
 type StatusFilter = "all" | ExpenseShare["status"];
 
 const STATUS_CHIPS: { key: StatusFilter; label: string; activeClass: string }[] = [
-  { key: "all",       label: "Alles",       activeClass: "bg-slate-600 text-white border-slate-500" },
-  { key: "pending",   label: "Openstaand",  activeClass: "bg-amber-500/20 text-amber-300 border-amber-500/40" },
-  { key: "claimed",   label: "Geclaimd",    activeClass: "bg-sky-500/20 text-sky-300 border-sky-500/40" },
-  { key: "confirmed", label: "Bevestigd",   activeClass: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" },
+  { key: "all",       label: "Alles",       activeClass: "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on" },
+  { key: "pending",   label: "Openstaand",  activeClass: "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on" },
+  { key: "claimed",   label: "Geclaimd",    activeClass: "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on" },
+  { key: "confirmed", label: "Bevestigd",   activeClass: "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on" },
 ];
 
 // ── Main page ─────────────────────────────────────────────────────────────────
@@ -476,31 +476,31 @@ export function AdminBetalingenPage() {
   })();
 
   return (
-    <div className="p-5 lg:p-8 max-w-6xl mx-auto space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
       <AdminPageHeader title="Betalingen" subtitle="Uitgaven & aandelen" />
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.05] p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <AlertCircle size={14} className="text-amber-400" />
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-400/70">Openstaand</span>
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+        <div className="card-surface p-4">
+          <div className="mb-2 flex items-center gap-2">
+            <AlertCircle size={14} className="text-amber-600 dark:text-amber-400" />
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">Openstaand</span>
           </div>
-          <p className="text-xl font-bold text-white">{fmt(totals.pending)}</p>
+          <p className="font-mono text-2xl font-semibold tabular-nums text-ink">{fmt(totals.pending)}</p>
         </div>
-        <div className="rounded-xl border border-sky-500/20 bg-sky-500/[0.05] p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Clock size={14} className="text-sky-400" />
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-sky-400/70">Geclaimd</span>
+        <div className="card-surface p-4">
+          <div className="mb-2 flex items-center gap-2">
+            <Clock size={14} className="text-ink-3" />
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">Geclaimd</span>
           </div>
-          <p className="text-xl font-bold text-white">{fmt(totals.claimed)}</p>
+          <p className="font-mono text-2xl font-semibold tabular-nums text-ink">{fmt(totals.claimed)}</p>
         </div>
-        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <CheckCircle2 size={14} className="text-emerald-400" />
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400/70">Bevestigd</span>
+        <div className="card-surface p-4">
+          <div className="mb-2 flex items-center gap-2">
+            <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400" />
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">Bevestigd</span>
           </div>
-          <p className="text-xl font-bold text-white">{fmt(totals.confirmed)}</p>
+          <p className="font-mono text-2xl font-semibold tabular-nums text-ink">{fmt(totals.confirmed)}</p>
         </div>
       </div>
 
@@ -511,10 +511,10 @@ export function AdminBetalingenPage() {
           <button
             key={key}
             onClick={() => setStatusFilter(key)}
-            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+            className={`rounded-full border-1.5 px-3 py-1 text-xs font-semibold transition-colors ${
               statusFilter === key
                 ? activeClass
-                : "border-white/[0.1] text-slate-400 hover:text-slate-300 hover:border-white/[0.2]"
+                : "border-line bg-surface text-ink-2 hover:border-ink-3"
             }`}
           >
             {label}
@@ -523,7 +523,7 @@ export function AdminBetalingenPage() {
 
         {/* Divider */}
         {expenses.length > 0 && (
-          <span className="h-4 w-px bg-white/[0.1] mx-1" />
+          <span className="mx-1 h-4 w-px bg-line" />
         )}
 
         {/* Expense filter chips */}
@@ -531,10 +531,10 @@ export function AdminBetalingenPage() {
           <button
             key={e.id}
             onClick={() => setExpenseFilter(expenseFilter === e.id ? null : e.id)}
-            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+            className={`rounded-full border-1.5 px-3 py-1 text-xs font-semibold transition-colors ${
               expenseFilter === e.id
-                ? "bg-violet-500/20 text-violet-300 border-violet-500/40"
-                : "border-white/[0.1] text-slate-400 hover:text-slate-300 hover:border-white/[0.2]"
+                ? "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
+                : "border-line bg-surface text-ink-2 hover:border-ink-3"
             }`}
           >
             {e.description}
@@ -545,7 +545,7 @@ export function AdminBetalingenPage() {
         {expenseFilter && (
           <button
             onClick={() => setExpenseFilter(null)}
-            className="flex items-center gap-1 rounded-full border border-white/[0.1] px-2.5 py-1 text-xs text-slate-400 hover:text-slate-300 transition-colors"
+            className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
           >
             <X size={10} />
             Wis filter
@@ -555,21 +555,21 @@ export function AdminBetalingenPage() {
 
       {/* Active expense context banner */}
       {selectedExpense && (
-        <div className="flex items-center gap-2 rounded-xl border border-violet-500/20 bg-violet-500/[0.05] px-4 py-2.5 text-sm">
-          <span className="text-violet-300 font-medium">{selectedExpense.description}</span>
-          <span className="text-slate-500">·</span>
-          <span className="text-slate-400">{fmt(selectedExpense.amount, selectedExpense.currency)}</span>
-          <span className="text-slate-500">·</span>
-          <span className="text-slate-400">Betaald door {selectedExpense.paid_by}</span>
-          <span className="text-slate-500">·</span>
-          <span className="text-slate-500">{formatDate(selectedExpense.date)}</span>
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border-1.5 border-line bg-sunken px-4 py-2.5 text-sm">
+          <span className="font-semibold text-ink">{selectedExpense.description}</span>
+          <span className="text-ink-3">·</span>
+          <span className="text-ink-3">{fmt(selectedExpense.amount, selectedExpense.currency)}</span>
+          <span className="text-ink-3">·</span>
+          <span className="text-ink-3">Betaald door {selectedExpense.paid_by}</span>
+          <span className="text-ink-3">·</span>
+          <span className="text-ink-3">{formatDate(selectedExpense.date)}</span>
         </div>
       )}
 
       {/* Per-person section */}
       {personData.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          <p className="section-label">
             Per persoon
           </p>
           {personData.map((person) => (
@@ -586,26 +586,26 @@ export function AdminBetalingenPage() {
 
       {/* Open expense list */}
       <div className="space-y-2">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        <p className="section-label">
           Openstaande uitgaven ({openExpenses.length})
         </p>
 
         {isLoading && (
           <div className="space-y-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-16 rounded-xl bg-white/[0.03] border border-white/[0.07] animate-pulse" />
+              <div key={i} className="h-16 animate-pulse rounded-xl bg-sunken" />
             ))}
           </div>
         )}
 
         {!isLoading && expenses.length === 0 && (
-          <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-8 text-center text-sm text-slate-500">
+          <div className="card-surface px-4 py-8 text-center text-sm text-ink-3">
             Geen uitgaven gevonden.
           </div>
         )}
 
         {!isLoading && expenses.length > 0 && openExpenses.length === 0 && (
-          <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-8 text-center text-sm text-slate-500">
+          <div className="card-surface px-4 py-8 text-center text-sm text-ink-3">
             Alles is vereffend — check de geschiedenis hieronder.
           </div>
         )}
@@ -633,20 +633,20 @@ export function AdminBetalingenPage() {
         <div className="space-y-2">
           <button
             onClick={() => setHistoryOpen((v) => !v)}
-            className="flex w-full items-center justify-between rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-3 text-left hover:bg-white/[0.04] transition-colors"
+            className="card-surface-hover flex w-full items-center justify-between px-4 py-3 text-left"
           >
-            <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <span className="section-label flex items-center gap-2">
               <History size={13} />
               Geschiedenis ({historyExpenses.length})
             </span>
-            {historyOpen ? <ChevronUp size={14} className="text-slate-500" /> : <ChevronDown size={14} className="text-slate-500" />}
+            {historyOpen ? <ChevronUp size={14} className="text-ink-3" /> : <ChevronDown size={14} className="text-ink-3" />}
           </button>
 
           {historyOpen && (
             <div className="space-y-4">
               {historyGroups.map((group) => (
                 <div key={group.label} className="space-y-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-400/70">
+                  <p className="font-mono text-[10.5px] uppercase tracking-[0.09em] text-ink-2">
                     {group.label}
                   </p>
                   {group.expenses.map((expense) => (

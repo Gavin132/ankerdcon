@@ -87,13 +87,13 @@ function ChangelogDrawer({
           <button
             onClick={handleSave}
             disabled={!isValid || isSaving}
-            className="flex-1 rounded-xl bg-sky-600 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="btn-primary flex-1 py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? "Opslaan..." : isEdit ? "Bijwerken" : "Plaatsen"}
           </button>
           <button
             onClick={requestClose}
-            className="rounded-xl border border-white/[0.08] px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/[0.05] transition-colors"
+            className="rounded-xl border-1.5 border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-3"
           >
             Annuleren
           </button>
@@ -129,7 +129,7 @@ function ChangelogDrawer({
             onChange={(e) => setForm((f) => ({ ...f, itemsText: e.target.value }))}
             placeholder={"Eén punt per regel, bijv.:\nSnel een rit aanbieden vanaf het hoofdscherm\nStandaard aantal plekken staat nu op 5"}
           />
-          <p className="mt-1.5 text-[11px] text-slate-500">Eén punt per regel.</p>
+          <p className="mt-1.5 text-[11px] text-ink-3">Eén punt per regel.</p>
         </div>
       </div>
     </AdminDrawer>
@@ -158,14 +158,14 @@ export function AdminChangelogPage() {
   }
 
   return (
-    <div className="p-5 lg:p-8 max-w-6xl mx-auto space-y-5">
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
       <AdminPageHeader
         title="Wijzigingslog"
         subtitle={`${entries.length} item${entries.length !== 1 ? "s" : ""}`}
         action={
           <button
             onClick={() => setDrawer("new")}
-            className="flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 transition-colors shadow-sm"
+            className="btn-primary gap-2 px-4 py-2.5 text-sm"
           >
             <Plus size={16} />
             Nieuw item
@@ -173,50 +173,50 @@ export function AdminChangelogPage() {
         }
       />
 
-      <div className="rounded-2xl border border-slate-200/80 dark:border-white/[0.06] bg-white dark:bg-slate-800/60 overflow-hidden shadow-sm">
+      <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
-                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <tr className="border-b-1.5 border-line">
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Datum
                 </th>
-                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Titel
                 </th>
-                <th className="hidden sm:table-cell px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="hidden sm:table-cell px-5 py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Punten
                 </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Acties
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+            <tbody className="divide-y divide-line">
               {isLoading ? (
                 <AdminTableSkeleton cols={4} />
               ) : entries.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-5 py-12 text-center">
-                    <div className="flex flex-col items-center gap-2 text-slate-400">
-                      <Sparkles size={28} className="opacity-30" />
+                    <div className="flex flex-col items-center gap-2 text-ink-3">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3"><Sparkles size={22} /></span>
                       <p className="text-sm">Nog geen wijzigingslog-items.</p>
                     </div>
                   </td>
                 </tr>
               ) : (
                 entries.map((entry) => (
-                  <tr key={entry.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors">
+                  <tr key={entry.id} className="hover:bg-sunken transition-colors">
                     <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
-                      <p className="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">{entry.released_at}</p>
+                      <p className="whitespace-nowrap font-mono text-[12.5px] text-ink-2">{entry.released_at}</p>
                     </td>
                     <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white max-w-[160px] sm:max-w-md truncate">
+                      <p className="text-sm font-semibold text-ink max-w-[160px] sm:max-w-md truncate">
                         {entry.title}
                       </p>
                     </td>
                     <td className="hidden sm:table-cell px-5 py-3.5">
-                      <p className="text-sm text-slate-500 dark:text-slate-400">{entry.items.length}</p>
+                      <p className="text-sm text-ink-3">{entry.items.length}</p>
                     </td>
                     <td className="px-2 sm:px-5 py-2.5 sm:py-3.5" onClick={(e) => e.stopPropagation()}>
                       <DeleteConfirmActions

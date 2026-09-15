@@ -42,7 +42,7 @@ export function Drawer({
         <div className="fixed inset-0 z-[200]">
           {/* Backdrop */}
           <motion.div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-950/50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -52,16 +52,16 @@ export function Drawer({
 
           {/* Panel */}
           <motion.div
-            className="absolute inset-y-0 right-0 flex flex-col w-full sm:max-w-[480px] bg-white dark:bg-[#0c1220] border-l border-slate-200 dark:border-white/[0.08] shadow-2xl overflow-hidden"
+            className="absolute inset-y-0 right-0 flex flex-col w-full sm:max-w-[480px] bg-surface border-l-1.5 border-line overflow-hidden"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-white/[0.06] shrink-0">
+            <div className="flex items-center justify-between px-6 py-5 border-b-1.5 border-line shrink-0">
               <div>
-                <h2 className="text-base font-black text-slate-900 dark:text-white">
+                <h2 className="font-display text-2xl font-extrabold uppercase leading-none tracking-[0.01em] text-ink">
                   {title}
                 </h2>
                 {subtitle && (
@@ -72,7 +72,7 @@ export function Drawer({
               </div>
               <button
                 onClick={onClose}
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-3 hover:text-ink hover:bg-sunken transition-colors"
               >
                 <X size={16} />
               </button>
@@ -85,7 +85,7 @@ export function Drawer({
 
             {/* Sticky footer */}
             {footer && (
-              <div className="shrink-0 border-t border-slate-100 dark:border-white/[0.06] px-6 py-4 bg-slate-50 dark:bg-[#080d17]">
+              <div className="shrink-0 border-t-1.5 border-line px-6 py-4 bg-paper">
                 {footer}
               </div>
             )}

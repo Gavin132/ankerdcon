@@ -1,7 +1,6 @@
 import { Component, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
-import { NightSkyBackdrop } from "./NightSkyBackdrop";
 import { routes } from "../../config/routes";
 import { attemptAutoReload } from "../../utils/errorRecovery";
 
@@ -19,44 +18,39 @@ interface State {
  * before they'd ever reach this component. */
 export function ErrorFallback() {
   return (
-    <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden select-none"
-      style={{ background: "linear-gradient(170deg, #050c1e 0%, #081c3a 40%, #0c2d58 80%, #0e3460 100%)" }}
-    >
-      <NightSkyBackdrop />
-
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-y-auto bg-paper px-6 py-12 select-none">
       <motion.div
-        className="relative z-10 flex flex-col items-center gap-5 px-8 text-center"
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="flex max-w-sm flex-col items-center text-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
       >
-        <div
-          className="flex h-20 w-20 items-center justify-center rounded-3xl"
-          style={{ background: "rgba(239,68,68,0.18)", border: "1.5px solid rgba(239,68,68,0.35)" }}
-        >
-          <AlertTriangle size={38} className="text-rose-400" />
+        <img
+          src="/assets/images/ankerd-logo.png"
+          alt=""
+          className="mb-5 h-16 w-16 object-contain"
+          draggable={false}
+        />
+
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300">
+          <AlertTriangle size={24} />
         </div>
 
-        <div>
-          <p className="text-[28px] font-black text-white leading-tight">Er ging iets mis</p>
-          <p className="mt-2 text-sm text-white/50 max-w-[280px] leading-relaxed">
-            De app is onverwacht vastgelopen. Probeer het opnieuw, of ga terug naar het startscherm.
-          </p>
-        </div>
+        <h1 className="mt-4 font-display text-[42px] font-extrabold uppercase leading-[0.95] text-ink">
+          Er ging iets mis
+        </h1>
+        <p className="mt-3 max-w-[300px] text-sm leading-relaxed text-ink-2">
+          De app is onverwacht vastgelopen. Probeer het opnieuw, of ga terug naar het startscherm.
+        </p>
 
-        <div className="mt-2 flex items-center gap-2">
+        <div className="mt-7 flex flex-wrap items-center justify-center gap-2.5">
           <button
             onClick={() => window.location.reload()}
-            className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white/60 hover:text-white transition-colors"
-            style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}
+            className="rounded-xl border-1.5 border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-3"
           >
             Probeer opnieuw
           </button>
-          <a
-            href={routes.hub}
-            className="rounded-xl gradient-brand px-5 py-2.5 text-sm font-bold text-white hover:opacity-90 transition-opacity"
-          >
+          <a href={routes.hub} className="btn-primary px-4 py-2.5 text-sm">
             Terug naar start
           </a>
         </div>
@@ -98,8 +92,8 @@ export class ErrorBoundary extends Component<Props, State> {
     }
     if (this.state.hasError) {
       return (
-        <div className="flex min-h-[100dvh] items-center justify-center bg-slate-50 dark:bg-slate-950">
-          <div className="h-8 w-8 rounded-full border-2 border-sky-500 border-t-transparent animate-spin" />
+        <div className="flex min-h-[100dvh] items-center justify-center bg-paper">
+          <div className="h-8 w-8 rounded-full border-2 border-brand-text border-t-transparent animate-spin" />
         </div>
       );
     }

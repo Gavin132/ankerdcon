@@ -139,7 +139,7 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
   return (
     <div className={SECTION}>
       <p className={SECTION_TITLE}>Dagen ({days.length})</p>
-      <p className="text-xs text-slate-500 -mt-1">
+      <p className="text-xs text-ink-3 -mt-1">
         Vink "Con" uit voor een dag die alleen reizen/hotel is, zonder convention die dag.
       </p>
 
@@ -147,13 +147,13 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
         {sorted.map((day) => {
           const isExpanded = expandedDay === day.id;
           return (
-            <div key={day.id} className="rounded-xl border border-white/[0.08] bg-white/[0.03] overflow-hidden">
+            <div key={day.id} className="overflow-hidden rounded-xl border border-line bg-paper">
               <div className="flex items-center gap-3 px-3 py-2.5">
-                <CalendarDays size={14} className="text-slate-500 shrink-0" />
-                <span className="text-sm font-semibold text-white flex-1">
+                <CalendarDays size={14} className="text-ink-3 shrink-0" />
+                <span className="flex-1 font-mono text-[13px] font-semibold text-ink">
                   {formatDate(day.date)}
                 </span>
-                <label className="flex items-center gap-1.5 text-[11px] text-slate-400 cursor-pointer whitespace-nowrap">
+                <label className="flex items-center gap-1.5 text-[11px] text-ink-3 cursor-pointer whitespace-nowrap">
                   <input
                     type="checkbox"
                     checked={day.has_con}
@@ -165,7 +165,7 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
                 <button
                   type="button"
                   onClick={() => setExpandedDay(isExpanded ? null : day.id)}
-                  className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-white transition-colors whitespace-nowrap"
+                  className="flex items-center gap-1 text-[11px] text-ink-3 hover:text-ink transition-colors whitespace-nowrap"
                 >
                   <UserPlus size={12} />
                   {day.participants.length}
@@ -175,25 +175,25 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
                   type="button"
                   onClick={() => handleDeleteDay(day)}
                   disabled={deleteDay.isPending}
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-rose-500/10 hover:text-rose-400 transition-colors disabled:opacity-40"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 transition-colors disabled:opacity-40"
                 >
                   <Trash2 size={13} />
                 </button>
               </div>
               {isExpanded && (
-                <div className="border-t border-white/[0.06] px-3 py-2.5 space-y-1.5">
+                <div className="border-t border-line px-3 py-2.5 space-y-1.5">
                   {day.participants.length === 0 ? (
-                    <p className="text-xs text-slate-500">Nog geen aanmeldingen.</p>
+                    <p className="text-xs text-ink-3">Nog geen aanmeldingen.</p>
                   ) : (
                     day.participants.map((p) => (
-                      <div key={p} className="flex items-center gap-2 rounded-lg bg-white/[0.03] px-2.5 py-1.5">
+                      <div key={p} className="flex items-center gap-2 rounded-lg bg-sunken px-2.5 py-1.5">
                         <UserAvatar name={p} className="h-5 w-5 text-[7px]" />
-                        <span className="flex-1 text-xs text-slate-300">{p}</span>
+                        <span className="flex-1 text-xs text-ink-2">{p}</span>
                         <button
                           type="button"
                           onClick={() => handleRemoveParticipant(day.id, p)}
                           disabled={removeParticipant.isPending}
-                          className="text-slate-500 hover:text-rose-400 transition-colors disabled:opacity-40"
+                          className="text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 transition-colors disabled:opacity-40"
                         >
                           <XIcon size={12} />
                         </button>
@@ -209,15 +209,15 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
 
       <div className="flex items-end gap-2 pt-1">
         <div className="flex-1">
-          <label className="block text-xs text-slate-400 mb-1">Nieuwe dag</label>
+          <label className="mb-1 block text-xs font-medium text-ink-2">Nieuwe dag</label>
           <input
             type="date"
             value={newDate}
             onChange={(e) => setNewDate(e.target.value)}
-            className={`${F} [color-scheme:dark]`}
+            className={F}
           />
         </div>
-        <label className="flex items-center gap-1.5 text-xs text-slate-400 pb-2.5 cursor-pointer whitespace-nowrap">
+        <label className="flex items-center gap-1.5 text-xs text-ink-3 pb-2.5 cursor-pointer whitespace-nowrap">
           <input type="checkbox" checked={newHasCon} onChange={(e) => setNewHasCon(e.target.checked)} className="cb" />
           Con
         </label>
@@ -225,7 +225,7 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
           type="button"
           onClick={handleAddDay}
           disabled={!newDate || createDay.isPending}
-          className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-sky-600 px-3 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-40 transition-colors"
+          className="btn-primary h-10 shrink-0 gap-1.5 px-3 text-sm disabled:opacity-50"
         >
           <Plus size={14} />
           Toevoegen
@@ -390,32 +390,32 @@ function EventDrawer({
         <div className={SECTION}>
           <p className={SECTION_TITLE}>Basisgegevens</p>
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Naam *</label>
+            <label className="mb-1 block text-xs font-medium text-ink-2">Naam *</label>
             <input {...register("event_name")} className={F} placeholder="DoKomi 2027" />
             {errors.event_name && (
-              <p className="text-xs text-rose-400 mt-1">{errors.event_name.message}</p>
+              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.event_name.message}</p>
             )}
           </div>
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Groep</label>
-            <select {...register("event_group_id")} className={`${F} [color-scheme:dark]`}>
+            <label className="mb-1 block text-xs font-medium text-ink-2">Groep</label>
+            <select {...register("event_group_id")} className={F}>
               <option value="">— Geen groep —</option>
               {eventGroups.map((g) => (
                 <option key={g.id} value={g.name}>{g.name}</option>
               ))}
             </select>
           </div>
-          <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 hover:bg-white/[0.06] transition-colors">
+          <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-line bg-paper px-3 py-2.5 hover:bg-sunken transition-colors">
             <input type="checkbox" {...register("is_hotel")} className="cb" />
-            <span className="text-sm text-slate-300">Hotel beschikbaar</span>
+            <span className="text-sm text-ink-2">Hotel beschikbaar</span>
           </label>
-          <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 hover:bg-white/[0.06] transition-colors">
+          <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-line bg-paper px-3 py-2.5 hover:bg-sunken transition-colors">
             <input type="checkbox" {...register("is_party")} className="cb" />
-            <span className="text-sm text-slate-300">Feestje / gezellig samenzijn</span>
+            <span className="text-sm text-ink-2">Feestje / gezellig samenzijn</span>
           </label>
           {watch("is_hotel") && (
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Hotellocatie</label>
+              <label className="mb-1 block text-xs font-medium text-ink-2">Hotellocatie</label>
               <Controller
                 name="hotel_location"
                 control={control}
@@ -428,21 +428,21 @@ function EventDrawer({
                   />
                 )}
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-ink-3">
                 Gebruikt voor de snelle "rit naar hotel"-knop op het hoofdscherm.
               </p>
             </div>
           )}
           {watch("is_hotel") && (
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Hotel info</label>
+              <label className="mb-1 block text-xs font-medium text-ink-2">Hotel info</label>
               <textarea
                 {...register("hotel_info")}
                 rows={3}
                 className={`${F} resize-none`}
                 placeholder="Bijv. inchecktijd vanaf 15:00, code voor de kluisjes, ontbijt inbegrepen..."
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-ink-3">
                 Verschijnt op de hoofdpagina van het evenement, bij "Hotel &amp; overnachting".
               </p>
             </div>
@@ -456,7 +456,7 @@ function EventDrawer({
         ) : (
           <div className={SECTION}>
             <p className={SECTION_TITLE}>Dagen</p>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-ink-3">
               Sla het evenement eerst op — daarna kun je hier de dagen toevoegen.
             </p>
           </div>
@@ -467,11 +467,11 @@ function EventDrawer({
           <p className={SECTION_TITLE}>Details</p>
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs text-slate-400">Cover afbeelding</label>
+              <label className="block text-xs font-medium text-ink-2">Cover afbeelding</label>
               <button
                 type="button"
                 onClick={() => setImageUrlMode((v) => !v)}
-                className="flex items-center gap-1 text-[10px] text-slate-500 hover:text-sky-400 transition-colors"
+                className="flex items-center gap-1 text-[10px] text-ink-3 hover:text-brand-text transition-colors"
               >
                 {imageUrlMode
                   ? <><Upload size={10} /> Upload</>
@@ -515,17 +515,17 @@ function EventDrawer({
                   disabled={imageUploading}
                   className={`w-full rounded-xl border-2 border-dashed px-4 py-5 text-center transition-colors ${
                     imageDragOver
-                      ? "border-sky-500 bg-sky-500/10"
-                      : "border-white/[0.12] bg-white/[0.03] hover:border-white/25 hover:bg-white/[0.05]"
+                      ? "border-brand-text bg-brand-soft"
+                      : "border-line bg-paper hover:border-ink-3 hover:bg-sunken"
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {imageUploading ? (
-                    <p className="text-xs text-slate-400">Uploaden...</p>
+                    <p className="text-xs text-ink-3">Uploaden...</p>
                   ) : (
                     <>
-                      <Upload size={18} className="mx-auto mb-1.5 text-slate-500" />
-                      <p className="text-xs font-medium text-slate-400">Klik of sleep een afbeelding hierheen</p>
-                      <p className="text-[10px] text-slate-600 mt-0.5">PNG, JPG, WebP · liggend formaat aanbevolen</p>
+                      <Upload size={18} className="mx-auto mb-1.5 text-ink-3" />
+                      <p className="text-xs font-medium text-ink-3">Klik of sleep een afbeelding hierheen</p>
+                      <p className="text-[10px] text-ink-3 mt-0.5">PNG, JPG, WebP · liggend formaat aanbevolen</p>
                     </>
                   )}
                 </button>
@@ -533,16 +533,16 @@ function EventDrawer({
             )}
 
             {errors.image_url && (
-              <p className="text-xs text-rose-400 mt-1">{errors.image_url.message}</p>
+              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.image_url.message}</p>
             )}
 
             {currentImageUrl && (
-              <div className="mt-2 relative rounded-xl overflow-hidden border border-white/10">
+              <div className="mt-2 relative rounded-xl overflow-hidden border border-line">
                 <img src={currentImageUrl} alt="preview" className="w-full h-28 object-cover" />
                 <button
                   type="button"
                   onClick={() => setValue("image_url", "", { shouldValidate: true })}
-                  className="absolute top-1.5 right-1.5 rounded-lg bg-black/60 p-1 text-white hover:bg-black/80 transition-colors"
+                  className="absolute right-1.5 top-1.5 rounded-lg bg-[#0F1519]/70 p-1 text-white transition-colors hover:bg-[#0F1519]"
                 >
                   <XIcon size={12} />
                 </button>
@@ -550,7 +550,7 @@ function EventDrawer({
             )}
           </div>
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Beschrijving</label>
+            <label className="mb-1 block text-xs font-medium text-ink-2">Beschrijving</label>
             <textarea
               {...register("description")}
               rows={3}
@@ -559,7 +559,7 @@ function EventDrawer({
             />
           </div>
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Locatie</label>
+            <label className="mb-1 block text-xs font-medium text-ink-2">Locatie</label>
             <Controller
               name="location"
               control={control}
@@ -580,46 +580,46 @@ function EventDrawer({
           <p className={SECTION_TITLE}>Tickets & Links</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Website</label>
+              <label className="mb-1 block text-xs font-medium text-ink-2">Website</label>
               <input {...register("website")} className={F} placeholder="https://..." />
               {errors.website && (
-                <p className="text-xs text-rose-400 mt-1">{errors.website.message}</p>
+                <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.website.message}</p>
               )}
             </div>
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Tickets URL</label>
+              <label className="mb-1 block text-xs font-medium text-ink-2">Tickets URL</label>
               <input {...register("ticket_url")} className={F} placeholder="https://..." />
               {errors.ticket_url && (
-                <p className="text-xs text-rose-400 mt-1">{errors.ticket_url.message}</p>
+                <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.ticket_url.message}</p>
               )}
             </div>
           </div>
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Ticketverkoop start</label>
+            <label className="mb-1 block text-xs font-medium text-ink-2">Ticketverkoop start</label>
             <input
               {...register("ticket_sale_start")}
               type="datetime-local"
-              className={`${F} [color-scheme:dark]`}
+              className={F}
             />
           </div>
 
           <div>
-            <label className="block text-xs text-slate-400 mb-2">Ticket soorten</label>
+            <label className="mb-2 block text-xs font-medium text-ink-2">Ticket soorten</label>
             {ticketTypes.length > 0 && (
               <div className="space-y-1.5 mb-3">
                 {ticketTypes.map((tt, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.05] px-3 py-2.5"
+                    className="flex items-center gap-3 rounded-xl border border-line bg-sunken px-3 py-2.5"
                   >
-                    <span className="flex-1 text-sm font-medium text-slate-200">{tt.title}</span>
-                    <span className="text-sm font-bold text-emerald-400 tabular-nums">
+                    <span className="flex-1 text-sm font-medium text-ink">{tt.title}</span>
+                    <span className="font-mono text-sm font-semibold tabular-nums text-ink">
                       € {tt.price.toFixed(2)}
                     </span>
                     <button
                       type="button"
                       onClick={() => setTicketTypes((p) => p.filter((_, idx) => idx !== i))}
-                      className="flex h-6 w-6 items-center justify-center rounded-lg text-slate-500 hover:bg-rose-500/10 hover:text-rose-400 transition-colors"
+                      className="flex h-6 w-6 items-center justify-center rounded-lg text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 transition-colors"
                     >
                       <XIcon size={12} />
                     </button>
@@ -632,11 +632,11 @@ function EventDrawer({
                 value={ttTitle}
                 onChange={(e) => setTtTitle(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTicketType())}
-                className="min-w-0 flex-1 rounded-xl border border-white/[0.12] bg-white/[0.06] px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/50 transition-colors"
+                className="input-field min-w-0 flex-1 rounded-[9px] px-3 py-2.5 text-base sm:text-sm"
                 placeholder="Dagticket"
               />
               <div className="relative w-28 shrink-0">
-                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-3">
                   €
                 </span>
                 <input
@@ -646,7 +646,7 @@ function EventDrawer({
                   value={ttPrice}
                   onChange={(e) => setTtPrice(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTicketType())}
-                  className="w-full rounded-xl border border-white/[0.12] bg-white/[0.06] pl-7 pr-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/50 transition-colors"
+                  className="input-field rounded-[9px] py-2.5 pl-7 pr-3 text-base sm:text-sm"
                   placeholder="89.50"
                 />
               </div>
@@ -654,13 +654,13 @@ function EventDrawer({
                 type="button"
                 onClick={addTicketType}
                 disabled={!ttTitle.trim() || !ttPrice}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-600 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-sky-700 transition-colors"
+                className="btn-primary h-10 w-10 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus size={15} />
               </button>
             </div>
             {ticketTypes.length === 0 && (
-              <p className="mt-1.5 text-xs text-slate-600">Nog geen ticket soorten toegevoegd.</p>
+              <p className="mt-1.5 text-xs text-ink-3">Nog geen ticket soorten toegevoegd.</p>
             )}
           </div>
         </div>
@@ -669,7 +669,7 @@ function EventDrawer({
         <div className={SECTION}>
           <p className={SECTION_TITLE}>Praktische info</p>
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Parkeerinformatie</label>
+            <label className="mb-1 block text-xs font-medium text-ink-2">Parkeerinformatie</label>
             <textarea
               {...register("parking_info")}
               rows={2}
@@ -678,7 +678,7 @@ function EventDrawer({
             />
           </div>
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Speciale instructies</label>
+            <label className="mb-1 block text-xs font-medium text-ink-2">Speciale instructies</label>
             <textarea
               {...register("special_instructions")}
               rows={2}
@@ -687,7 +687,7 @@ function EventDrawer({
             />
           </div>
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Wat meenemen</label>
+            <label className="mb-1 block text-xs font-medium text-ink-2">Wat meenemen</label>
             <textarea
               {...register("what_to_bring")}
               rows={2}
@@ -696,7 +696,7 @@ function EventDrawer({
             />
           </div>
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Locker info</label>
+            <label className="mb-1 block text-xs font-medium text-ink-2">Locker info</label>
             <textarea
               {...register("locker_info")}
               rows={2}
@@ -845,7 +845,7 @@ export function AdminEventsPage() {
   }
 
   return (
-    <div className="p-5 lg:p-8 max-w-6xl mx-auto space-y-5">
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
       <AdminPageHeader
         title="Evenementen"
         subtitle={`${filtered.length} ${showHistory ? "historische" : "aankomende"} items`}
@@ -853,10 +853,10 @@ export function AdminEventsPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => { setShowHistory((v) => !v); setPage(0); clearSelection(); }}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors shadow-sm ${
+              className={`flex items-center gap-2 rounded-xl border-1.5 px-4 py-2.5 text-sm font-semibold transition-colors ${
                 showHistory
-                  ? "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
-                  : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600"
+                  ? "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
+                  : "border-line bg-surface text-ink hover:border-ink-3"
               }`}
             >
               <History size={16} />
@@ -864,7 +864,7 @@ export function AdminEventsPage() {
             </button>
             <button
               onClick={() => setDrawerId("new")}
-              className="flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 transition-colors shadow-sm"
+              className="btn-primary gap-2 px-4 py-2.5 text-sm"
             >
               <Plus size={16} />
               Nieuw evenement
@@ -878,10 +878,10 @@ export function AdminEventsPage() {
           <div className="flex gap-1.5 overflow-x-auto pb-1">
             <button
               onClick={() => { setGroupFilter("All"); setPage(0); }}
-              className={`shrink-0 rounded-xl px-3.5 py-1.5 text-sm font-semibold transition-colors ${
+              className={`shrink-0 rounded-full border-1.5 px-3.5 py-1.5 text-sm font-semibold transition-colors ${
                 groupFilter === "All"
-                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
-                  : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                  ? "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
+                  : "border-line bg-surface text-ink-2 hover:border-ink-3"
               }`}
             >
               Alle
@@ -892,10 +892,10 @@ export function AdminEventsPage() {
                 <button
                   key={g.id}
                   onClick={() => { setGroupFilter(g.name); setPage(0); }}
-                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-sm font-semibold transition-colors border ${
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full border-1.5 px-3.5 py-1.5 text-sm font-semibold transition-colors ${
                     isActive
-                      ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent"
-                      : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                      ? "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
+                      : "border-line bg-surface text-ink-2 hover:border-ink-3"
                   }`}
                 >
                   {g.name}
@@ -911,11 +911,11 @@ export function AdminEventsPage() {
         />
       </div>
 
-      <div className="rounded-2xl border border-slate-200/80 dark:border-white/[0.06] bg-white dark:bg-slate-800/60 overflow-hidden shadow-sm">
+      <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
+              <tr className="border-b-1.5 border-line">
                 <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
                   <input
                     type="checkbox"
@@ -925,31 +925,31 @@ export function AdminEventsPage() {
                     className="cb"
                   />
                 </th>
-                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Evenement
                 </th>
-                <th className="hidden sm:table-cell px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="hidden sm:table-cell px-5 py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Data
                 </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Info
                 </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Deelnemers
                 </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Acties
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+            <tbody className="divide-y divide-line">
               {isLoading ? (
                 <AdminTableSkeleton cols={5} />
               ) : filtered.length === 0 ? (
                 <tr>
                   <td
                     colSpan={6}
-                    className="px-5 py-10 text-center text-sm text-slate-400"
+                    className="px-5 py-10 text-center text-sm text-ink-3"
                   >
                     {showHistory ? "Geen historische evenementen gevonden." : "Geen aankomende evenementen gevonden."}
                   </td>
@@ -961,7 +961,7 @@ export function AdminEventsPage() {
                   <tr
                     key={ev.id}
                     onClick={() => evDays[0] && navigate(routes.event.view(evDays[0].id))}
-                    className={`cursor-pointer transition-colors ${isSelected ? "bg-sky-500/[0.06] hover:bg-sky-500/[0.08]" : "hover:bg-slate-50 dark:hover:bg-white/[0.03]"}`}
+                    className={`cursor-pointer transition-colors ${isSelected ? "bg-brand-soft/50 hover:bg-brand-soft/70" : "hover:bg-sunken"}`}
                   >
                     <td
                       className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3.5"
@@ -977,20 +977,20 @@ export function AdminEventsPage() {
                     </td>
                     <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                       <div className="flex items-center gap-2 sm:gap-2.5">
-                        <div className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-500/10">
-                          <CalendarDays size={13} className="text-emerald-500" />
+                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink sm:h-7 sm:w-7">
+                          <CalendarDays size={13} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                          <p className="text-sm font-semibold text-ink truncate">
                             {ev.event_name}
                           </p>
                           {ev.event_group_id && (
-                            <span className="mt-0.5 inline-flex items-center rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-semibold text-slate-400">
+                            <span className="mt-0.5 inline-flex items-center rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2">
                               {ev.event_group_id}
                             </span>
                           )}
                           {/* Dates — visible on mobile only, where the Data column is hidden */}
-                          <p className="sm:hidden mt-0.5 text-xs text-slate-400 whitespace-nowrap">
+                          <p className="mt-0.5 whitespace-nowrap font-mono text-xs text-ink-3 sm:hidden">
                             {!first ? "—" : !last || first.getTime() === last.getTime()
                               ? formatDate(evDays[0]?.date ?? "")
                               : `${formatDate(evDays.find((d) => parseEventDate(d.date)?.getTime() === first.getTime())?.date ?? "")} – ${formatDate(evDays.find((d) => parseEventDate(d.date)?.getTime() === last.getTime())?.date ?? "")}`
@@ -1000,7 +1000,7 @@ export function AdminEventsPage() {
                       </div>
                     </td>
                     <td className="hidden sm:table-cell px-5 py-3.5">
-                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                      <span className="whitespace-nowrap font-mono text-[12.5px] text-ink-2">
                         {!first ? "—" : !last || first.getTime() === last.getTime()
                           ? formatDate(evDays[0]?.date ?? "")
                           : `${formatDate(evDays.find((d) => parseEventDate(d.date)?.getTime() === first.getTime())?.date ?? "")} – ${formatDate(evDays.find((d) => parseEventDate(d.date)?.getTime() === last.getTime())?.date ?? "")}`
@@ -1012,7 +1012,7 @@ export function AdminEventsPage() {
                         {ev.is_hotel && (
                           <span
                             title="Hotel"
-                            className="inline-flex items-center gap-1.5 rounded-full bg-teal-100 dark:bg-teal-500/10 p-1.5 sm:px-2.5 sm:py-1 text-xs font-semibold text-teal-700 dark:text-teal-400"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-sunken p-1.5 text-[11.5px] font-semibold text-ink-2 sm:px-2 sm:py-0.5"
                           >
                             <Hotel size={10} />
                             <span className="hidden sm:inline">Hotel</span>
@@ -1021,13 +1021,13 @@ export function AdminEventsPage() {
                         {ev.is_party && (
                           <span
                             title="Feestje"
-                            className="inline-flex items-center gap-1.5 rounded-full bg-pink-100 dark:bg-pink-500/10 p-1.5 sm:px-2.5 sm:py-1 text-xs font-semibold text-pink-700 dark:text-pink-400"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-sunken p-1.5 text-[11.5px] font-semibold text-ink-2 sm:px-2 sm:py-0.5"
                           >
                             <PartyPopper size={10} />
                             <span className="hidden sm:inline">Feestje</span>
                           </span>
                         )}
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] px-2 sm:px-2.5 py-1 text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2">
                           {evDays.length} {evDays.length === 1 ? "dag" : "dagen"}
                         </span>
                       </div>
@@ -1035,7 +1035,7 @@ export function AdminEventsPage() {
                     <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
                       <div className="flex -space-x-1.5">
                         {participants.length === 0 ? (
-                          <span className="text-xs text-slate-400">—</span>
+                          <span className="text-xs text-ink-3">—</span>
                         ) : (
                           <>
                             {participants.slice(0, 4).map((p) => {
@@ -1050,12 +1050,12 @@ export function AdminEventsPage() {
                                   key={p}
                                   name={resolved?.name ?? p}
                                   user={resolved}
-                                  className="h-5 w-5 sm:h-6 sm:w-6 text-[7px] sm:text-[8px] ring-2 ring-slate-800"
+                                  className="h-5 w-5 sm:h-6 sm:w-6 text-[7px] sm:text-[8px] ring-2 ring-surface"
                                 />
                               );
                             })}
                             {participants.length > 4 && (
-                              <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full ring-2 ring-slate-800 bg-slate-700 text-[8px] sm:text-[9px] font-bold text-slate-300">
+                              <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full ring-2 ring-surface bg-sunken text-[8px] sm:text-[9px] font-bold text-ink-2">
                                 +{participants.length - 4}
                               </span>
                             )}
@@ -1109,7 +1109,7 @@ export function AdminEventsPage() {
           <button
             onClick={() => setBulkMode("set-group")}
             disabled={bulkIsPending}
-            className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-ink-2 transition-colors hover:bg-sunken hover:text-ink disabled:opacity-40"
           >
             <Tag size={14} />
             Label
@@ -1121,17 +1121,17 @@ export function AdminEventsPage() {
               <select
                 value={pickedGroup}
                 onChange={(e) => setPickedGroup(e.target.value)}
-                className="[color-scheme:dark] rounded-xl border border-white/[0.12] bg-slate-800 px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                className="input-field w-auto rounded-lg px-3 py-1.5 text-sm"
               >
-                <option value="" className="bg-slate-800 text-white">— Geen groep —</option>
+                <option value="">— Geen groep —</option>
                 {eventGroups.map((g) => (
-                  <option key={g.id} value={g.name} className="bg-slate-800 text-white">{g.name}</option>
+                  <option key={g.id} value={g.name}>{g.name}</option>
                 ))}
               </select>
               <button
                 onClick={() => { handleBulkSetGroup(pickedGroup || null); setPickedGroup(""); setBulkMode("idle"); }}
                 disabled={bulkIsPending}
-                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold bg-sky-600 text-white hover:bg-sky-700 transition-colors disabled:opacity-40"
+                className="btn-primary gap-1.5 px-3 py-1.5 text-sm disabled:opacity-50"
               >
                 <Check size={14} />
                 {bulkIsPending ? "Bezig…" : "Toepassen"}
@@ -1139,7 +1139,7 @@ export function AdminEventsPage() {
               <button
                 onClick={() => { setBulkMode("idle"); setPickedGroup(""); }}
                 disabled={bulkIsPending}
-                className="rounded-xl px-3 py-1.5 text-sm font-medium text-slate-400 hover:bg-white/[0.08] transition-colors"
+                className="rounded-lg px-3 py-1.5 text-sm font-medium text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
               >
                 Annuleer
               </button>

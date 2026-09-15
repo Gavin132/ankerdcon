@@ -1,0 +1,153 @@
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { CalendarDays, CalendarPlus, Copy, Check } from "lucide-react";
+import { CalendarGrid } from "../components/calendar/CalendarGrid";
+import { CalendarArchive } from "../components/calendar/CalendarArchive";
+import { EmptyState } from "../components/common/EmptyState";
+import { useUsers } from "../hooks/useUsers";
+import { useMeals } from "../hooks/useMeals";
+import { useCalendar, useRsvpCalendarEvent, useLeaveCalendarEvent } from "../hooks/useCalendar";
+import { env } from "../config/env";
+
+/** Agenda tab: every event, as a list or a month grid, with sign-up and the .ics feed. */
+export function CalendarPage() {
+  const [calendarView, setCalendarView] = useState<"list" | "calendar">("list");
+  const [subscribeOpen, setSubscribeOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const { data: users = [] } = useUsers();
+  const { data: calendarEvents = [], isLoading } = useCalendar();
+  const { data: meals = [] } = useMeals();
+  const rsvpMutation = useRsvpCalendarEvent();
+  const leaveMutation = useLeaveCalendarEvent();
+
+  const feedUrl = `${env.API_BASE_URL || window.location.origin}/api/calendar/feed.ics`;
+  const googleCalUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(feedUrl.replace(/^https?:/, "webcal:"))}`;
+
+  function copyFeedUrl() {
+    navigator.clipboard.writeText(feedUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  async function onCalendarRsvp(id: string, userNames: string[]) {
+    for (const userName of userNames) {
+      try {
+        await rsvpMutation.mutateAsync({ id, userName });
+      } catch {
+        // silently ignore duplicate sign-ups
+      }
+    }
+  }
+
+  async function onCalendarLeave(id: string, userNames: string[]) {
+    for (const userName of userNames) {
+      try {
+        await leaveMutation.mutateAsync({ id, userName });
+      } catch {
+        // silently ignore if not found
+      }
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="animate-pulse space-y-3">
+        <div className="h-10 rounded-xl bg-sunken" />
+        <div className="h-24 rounded-2xl bg-sunken" />
+        <div className="h-24 rounded-2xl bg-sunken" />
+      </div>
+    );
+  }
+
+  if (calendarEvents.length === 0) {
+    return (
+      <EmptyState
+        icon={<CalendarDays size={36} />}
+        title="Nog geen events"
+        description="Zodra er een event gepland is, verschijnt het hier."
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <button
+          onClick={() => setSubscribeOpen((v) => !v)}
+          aria-expanded={subscribeOpen}
+          className={`flex items-center gap-1.5 rounded-[10px] border-1.5 px-3 py-1.5 text-[13px] font-semibold transition-colors ${
+            subscribeOpen
+              ? "border-outline bg-ink text-paper dark:bg-brand dark:text-brand-on"
+              : "border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
+          }`}
+        >
+          <CalendarPlus size={14} />
+          Abonneren
+        </button>
+        <div className="flex gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]" role="group" aria-label="Weergave">
+          {(["list", "calendar"] as const).map((view) => (
+            <button
+              key={view}
+              onClick={() => setCalendarView(view)}
+              aria-pressed={calendarView === view}
+              className={`rounded-[7px] px-3 py-1.5 text-[13px] font-semibold transition-colors ${
+                calendarView === view
+                  ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]"
+                  : "text-ink-2 hover:text-ink"
+              }`}
+            >
+              {view === "list" ? "Lijst" : "Maand"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {subscribeOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="card-surface flex items-center gap-2 px-3.5 py-2.5">
+              <p className="flex-1 truncate font-mono text-[11.5px] text-ink-2">
+                {feedUrl}
+              </p>
+              <button
+                onClick={copyFeedUrl}
+                title="Kopieer link"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+              >
+                {copied ? <Check size={14} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={14} />}
+              </button>
+              <a
+                href={googleCalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 whitespace-nowrap rounded-lg border-1.5 border-line bg-surface px-2.5 py-1.5 text-[12px] font-semibold text-ink transition-colors hover:border-ink-3"
+              >
+                Google Calendar
+              </a>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence mode="wait">
+        {calendarView === "list" ? (
+          <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+            <CalendarArchive events={calendarEvents} meals={meals} allUsers={users} onRsvp={onCalendarRsvp} onLeave={onCalendarLeave} />
+          </motion.div>
+        ) : (
+          <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+            <CalendarGrid events={calendarEvents} meals={meals} allUsers={users} onRsvp={onCalendarRsvp} onLeave={onCalendarLeave} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

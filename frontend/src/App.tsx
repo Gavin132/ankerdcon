@@ -6,10 +6,8 @@ import { router } from "./router";
 import { ToastContainer } from "./components/common/Toast";
 import { SplashScreen } from "./components/splash/SplashScreen";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
-import { TimeTravelWidget } from "./components/common/TimeTravelWidget";
 import { ImpersonationBanner } from "./components/common/ImpersonationBanner";
 import { useThemeStore } from "./store/theme.store";
-import { useTimeStore } from "./store/time.store";
 import { useSplash } from "./hooks/useSplash";
 
 // Add these two imports!
@@ -38,9 +36,9 @@ const queryClient = new QueryClient({
   },
 });
 
-// Matches Header.tsx's actual background: bg-white in light, slate-900 in dark.
-const THEME_COLOR_LIGHT = "#ffffff";
-const THEME_COLOR_DARK = "#0f172a";
+// Matches the top bar's background: --surface in light and dark (index.css).
+const THEME_COLOR_LIGHT = "#FFFFFF";
+const THEME_COLOR_DARK = "#141B20";
 
 function ThemeSync() {
   const isDark = useThemeStore((s) => s.isDark);
@@ -197,17 +195,10 @@ function AppBackdrop() {
 
 function RouteFallback() {
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-slate-50 dark:bg-slate-950">
-      <div className="h-8 w-8 rounded-full border-2 border-sky-500 border-t-transparent animate-spin" />
+    <div className="flex min-h-[100dvh] items-center justify-center bg-paper">
+      <div className="h-8 w-8 rounded-full border-2 border-ink-3 border-t-transparent animate-spin" />
     </div>
   );
-}
-
-function TimeTravelGate() {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const widgetEnabled = useTimeStore((s) => s.widgetEnabled);
-  if (!isAuthenticated || !widgetEnabled) return null;
-  return <TimeTravelWidget />;
 }
 
 export function App() {
@@ -224,7 +215,6 @@ export function App() {
         </Suspense>
         <ToastContainer />
         <SplashController />
-        <TimeTravelGate />
       </QueryClientProvider>
     </ErrorBoundary>
   );

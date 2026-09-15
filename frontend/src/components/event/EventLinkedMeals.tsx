@@ -12,53 +12,47 @@ export function EventLinkedMeals({ meals }: EventLinkedMealsProps) {
   if (meals.length === 0) return null;
 
   return (
-    <div className="card-surface rounded-2xl overflow-hidden">
-      <div className="h-[3px] bg-gradient-to-r from-amber-400 to-orange-400" />
-      <div className="px-5 py-4">
-      <h2 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">
+    <div className="card-surface overflow-hidden">
+      <h2 className="section-label px-5 pb-2.5 pt-4">
         Gerelateerde etentje(s) ({meals.length})
       </h2>
-      <div className="space-y-2">
+      <div className="divide-y divide-line border-t border-line">
         {meals.map((meal) => (
           <Link
             key={meal.id}
             to={routes.meal.view(meal.id)}
-            className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700
-                       bg-slate-50 dark:bg-slate-800 px-4 py-3
-                       hover:border-amber-300 dark:hover:border-amber-500/40
-                       hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
+            className="group flex items-center gap-3 px-5 py-3 transition-colors hover:bg-sunken"
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/10">
-              <UtensilsCrossed size={15} className="text-amber-500" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink group-hover:bg-surface">
+              <UtensilsCrossed size={14} />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-ink">
                 {meal.meal_name}
               </p>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
-                <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                <span className="flex items-center gap-1 font-mono text-[11.5px] tabular-nums text-ink-2">
                   <Clock size={10} />
                   {formatDateTime(meal.time)}
                 </span>
                 {meal.location && (
-                  <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                    <MapPin size={10} />
-                    {meal.location}
+                  <span className="flex min-w-0 items-center gap-1 text-xs text-ink-3">
+                    <MapPin size={10} className="shrink-0" />
+                    <span className="truncate">{meal.location}</span>
                   </span>
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex shrink-0 items-center gap-2">
               {meal.participants.length > 0 && (
-                <span className="text-xs font-semibold text-slate-400">
+                <span className="text-xs font-semibold text-ink-3">
                   {meal.participants.length} aangemeld
                 </span>
               )}
-              <ChevronRight size={14} className="text-slate-400" />
+              <ChevronRight size={14} className="text-ink-3 transition-colors group-hover:text-ink" />
             </div>
           </Link>
         ))}
-      </div>
       </div>
     </div>
   );

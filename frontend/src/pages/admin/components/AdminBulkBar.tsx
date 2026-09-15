@@ -9,7 +9,7 @@ interface AdminBulkBarProps {
   onClear: () => void;
   /**
    * Extra action buttons shown in idle mode (before the delete button).
-   * Pass a separator `<div className="h-4 w-px bg-white/[0.12]" />` between groups if needed.
+   * Pass a separator `<div className="h-4 w-px bg-line" />` between groups if needed.
    */
   extraActions?: React.ReactNode;
   /**
@@ -37,31 +37,31 @@ export function AdminBulkBar({
   if (count === 0) return null;
 
   return (
-    <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 pointer-events-none">
-      <div className="pointer-events-auto flex flex-wrap items-center gap-1 rounded-2xl border border-white/[0.12] bg-slate-900/95 backdrop-blur-sm shadow-2xl px-3 py-2">
+    <div className="pointer-events-none fixed bottom-4 left-1/2 z-50 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 sm:bottom-6">
+      <div className="pointer-events-auto flex flex-wrap items-center gap-1 rounded-xl border-2 border-outline bg-surface px-3 py-2 text-ink shadow-xl">
         {/* Count badge */}
-        <span className="px-2 text-sm font-semibold text-slate-300 select-none whitespace-nowrap">
+        <span className="select-none whitespace-nowrap px-2 font-mono text-[12.5px] font-semibold tabular-nums text-ink">
           {count} geselecteerd
         </span>
-        <div className="h-4 w-px bg-white/[0.12] mx-1" />
+        <div className="mx-1 h-4 w-px bg-line" />
 
         {/* Content */}
         {overrideContent ? (
           overrideContent
         ) : confirmDelete ? (
           <>
-            <span className="px-2 text-sm text-rose-400 whitespace-nowrap">Zeker weten?</span>
+            <span className="whitespace-nowrap px-2 text-sm font-medium text-rose-700 dark:text-rose-300">Zeker weten?</span>
             <button
               onClick={onDelete}
               disabled={isPending}
-              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 transition-colors disabled:opacity-40"
+              className="flex items-center gap-1.5 rounded-lg border-2 border-rose-800 bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-rose-700 disabled:opacity-40 dark:border-rose-400"
             >
               {isPending ? "Bezig…" : "Ja, verwijder"}
             </button>
             <button
               onClick={() => setConfirmDelete(false)}
               disabled={isPending}
-              className="rounded-xl px-3 py-1.5 text-sm font-medium text-slate-400 hover:bg-white/[0.08] transition-colors"
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
             >
               Annuleer
             </button>
@@ -69,11 +69,11 @@ export function AdminBulkBar({
         ) : (
           <>
             {extraActions}
-            {extraActions && <div className="h-4 w-px bg-white/[0.12] mx-1" />}
+            {extraActions && <div className="mx-1 h-4 w-px bg-line" />}
             <button
               onClick={() => setConfirmDelete(true)}
               disabled={isPending}
-              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors disabled:opacity-40"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-rose-700 transition-colors hover:bg-rose-100 disabled:opacity-40 dark:text-rose-300 dark:hover:bg-rose-500/15"
             >
               <Trash2 size={14} />
               Verwijder
@@ -82,10 +82,10 @@ export function AdminBulkBar({
         )}
 
         {/* Clear */}
-        <div className="h-4 w-px bg-white/[0.12] mx-1" />
+        <div className="mx-1 h-4 w-px bg-line" />
         <button
           onClick={() => { setConfirmDelete(false); onClear(); }}
-          className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-white/[0.08] hover:text-slate-300 transition-colors"
+          className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
         >
           <X size={14} />
         </button>

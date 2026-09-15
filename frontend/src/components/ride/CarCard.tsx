@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Car, Truck, X, ArrowRight } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
+import { SeatDots } from "../transport/SeatDots";
 import type { RestaurantDriver } from "../../types";
 
 interface CarCardProps {
@@ -20,81 +21,73 @@ export function CarCard({ driver, canAct, onJoin, onUnassign, isPending }: CarCa
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.97 }}
-      className="card-surface rounded-2xl overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="card-surface flex flex-col gap-3 p-3.5"
     >
-      {/* Accent bar */}
-      <div className={`h-1 ${isFull ? "bg-gradient-to-r from-slate-300 to-slate-400 dark:from-slate-700 dark:to-slate-600" : "bg-gradient-to-r from-amber-400 to-orange-400"}`} />
-
-      <div className="px-4 py-4 space-y-3">
-        {/* Driver row */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <UserAvatar name={driver.name} className="h-9 w-9 text-xs shrink-0" />
-            <div className="min-w-0">
-              <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{driver.name}</p>
-              <div className="flex items-center gap-1 mt-0.5">
-                <CarIcon size={10} className="text-amber-500 shrink-0" />
-                <span className="text-[11px] text-slate-400">Chauffeur</span>
-              </div>
+      {/* Driver row */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <UserAvatar name={driver.name} className="h-8 w-8 shrink-0 text-[11px]" />
+          <div className="min-w-0 leading-tight">
+            <p className="truncate text-sm font-semibold text-ink">{driver.name}</p>
+            <div className="mt-0.5 flex items-center gap-1 text-[11.5px] text-ink-3">
+              <CarIcon size={12} className="shrink-0" />
+              <span>Chauffeur</span>
             </div>
           </div>
-          <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
-            isFull
-              ? "bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400"
-              : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-          }`}>
-            {isFull ? "Vol" : `${spotsLeft} vrij`}
-          </span>
         </div>
+        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${
+          isFull
+            ? "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300"
+            : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+        }`}>
+          {isFull ? "Vol" : `${spotsLeft} vrij`}
+        </span>
+      </div>
 
-        {/* Capacity */}
-        <div className="flex items-center gap-1.5">
-          <div className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all ${isFull ? "bg-rose-400" : "bg-amber-400"}`}
-              style={{ width: `${(driver.passengers.length / driver.seats) * 100}%` }}
-            />
-          </div>
-          <span className="text-[10px] font-semibold text-slate-400 shrink-0">
-            {driver.passengers.length}/{driver.seats}
-          </span>
+      {/* Capacity: seat squares */}
+      <div className="flex items-center gap-2">
+        <SeatDots total={driver.seats} left={Math.max(0, spotsLeft)} />
+        <span className="font-mono text-[11px] font-semibold tabular-nums text-ink-3">
+          {driver.passengers.length}/{driver.seats}
+        </span>
+      </div>
+
+      {/* Passengers */}
+      {driver.passengers.length > 0 ? (
+        <div className="flex flex-wrap gap-1.5">
+          {driver.passengers.map((pax) => (
+            <button
+              key={pax}
+              onClick={() => canAct && onUnassign(pax)}
+              disabled={!canAct || isPending}
+              title={canAct ? "Klik om te verwijderen" : undefined}
+              className="group inline-flex items-center gap-1 rounded-full border-1.5 border-line px-2 py-1 text-xs font-medium text-ink-2 transition-colors hover:border-rose-300 hover:text-rose-700 disabled:cursor-default disabled:opacity-60 dark:hover:border-rose-400/40 dark:hover:text-rose-300"
+            >
+              <UserAvatar name={pax} className="h-4 w-4 shrink-0 text-[8px] !border-0" />
+              {pax}
+              {canAct && <X size={10} className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />}
+            </button>
+          ))}
         </div>
+      ) : (
+        <p className="text-xs text-ink-3">Nog niemand ingestapt</p>
+      )}
 
-        {/* Passengers */}
-        {driver.passengers.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5">
-            {driver.passengers.map((pax) => (
-              <button
-                key={pax}
-                onClick={() => canAct && onUnassign(pax)}
-                disabled={!canAct || isPending}
-                title={canAct ? "Klik om te verwijderen" : undefined}
-                className="group inline-flex items-center gap-1 rounded-full bg-sky-100 dark:bg-sky-900/30 px-2.5 py-1 text-xs font-semibold text-sky-700 dark:text-sky-300 hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-900/30 dark:hover:text-rose-400 transition-colors disabled:cursor-default disabled:opacity-60"
-              >
-                <UserAvatar name={pax} className="h-4 w-4 text-[8px] !border-0 shrink-0" />
-                {pax}
-                {canAct && <X size={9} className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <p className="text-xs text-slate-400 italic">Nog niemand ingestapt</p>
-        )}
-
-        {/* Stap in — full width at bottom */}
-        {canAct && !isFull && (
+      {/* Stap in — full width at bottom */}
+      {canAct && !isFull && (
+        <div className="border-t border-dashed border-line pt-3">
           <button
             onClick={() => onJoin(driver.name)}
             disabled={isPending}
-            className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 py-2.5 text-xs font-bold text-white transition-colors disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl border-1.5 border-line bg-surface py-2.5 text-xs font-semibold text-ink transition-colors hover:border-ink-3 disabled:opacity-50"
           >
             Stap in <ArrowRight size={12} />
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </motion.div>
   );
 }

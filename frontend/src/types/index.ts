@@ -376,7 +376,7 @@ export interface CalendarRsvpRequest {
 }
 
 // UI helpers
-export type TabId = "hub" | "transport" | "food" | "finance" | "more";
+export type TabId = "hub" | "trip" | "calendar" | "finance" | "crew";
 
 export type BaseProps = {
   options: string[];
@@ -446,6 +446,8 @@ export interface CreateExpenseRequest {
   currency?: string;
   description: string;
   date: string;
+  /** Any day of the trip this expense belongs to. */
+  linked_event_id?: string;
   shares: CreateExpenseShareInput[];
 }
 

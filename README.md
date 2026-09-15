@@ -95,38 +95,37 @@ ankerdcon/
 
 ## 🚀 Getting Started
 
+Full guide, covering fresh setup, existing installs, env variables and troubleshooting: **[docs/local-development.md](docs/local-development.md)**
+
 ### Prerequisites
 
-- Node.js 18+ · Python 3.11+ · A [Supabase](https://supabase.com) project with Discord OAuth enabled
+- Node.js 18+ · **Python 3.12** (3.11 works; 3.13+ can't install the pinned dependencies) · A [Supabase](https://supabase.com) project with Discord OAuth enabled
 
-### 1 · Install
+### Quick start
 
 ```bash
-git clone https://github.com/your-org/ankerdcon.git && cd ankerdcon
+git clone https://github.com/Gavin132/ankerdcon.git && cd ankerdcon
 
-# Frontend
-cd frontend && npm install
-
-# Backend
-cd ../backend && python -m venv ../.venv
-source ../.venv/Scripts/activate      # Windows
-# source ../.venv/bin/activate        # macOS / Linux
-pip install -r requirements.txt
+# Env files — copy, then fill in (names must start with a dot)
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
 ```
 
-### 2 · Database
+```powershell
+# Windows: create .venv, install everything, start backend + frontend
+.\dev.ps1 -Install
+```
+
+```bash
+# macOS / Linux
+./dev.sh --install
+```
+
+After that, `.\dev.ps1` (or `./dev.sh`) starts the backend on `http://localhost:8000` and the frontend on `http://localhost:5173`. Ctrl+C stops both.
+
+### Database
 
 Run `db/schema.sql` in the Supabase SQL editor for a fresh project. For an existing database, apply `db/migrations/` in version order.
-
-### 3 · Run
-
-```bash
-# Frontend  →  http://localhost:5173
-cd frontend && npm run dev
-
-# Backend   →  http://localhost:8000  (docs at /docs)
-cd backend && uvicorn main:app --reload
-```
 
 ---
 

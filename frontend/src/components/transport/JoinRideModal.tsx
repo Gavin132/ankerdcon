@@ -100,16 +100,17 @@ export function JoinRideModal({ open, onClose, event, initialDirection, onOfferI
     >
       <div className="space-y-3">
         {/* Direction toggle */}
-        <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-800 p-1">
+        <div className="flex gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]">
           {(["Inbound", "Outbound"] as const).map((d) => (
             <button
               key={d}
               type="button"
               onClick={() => { setDirection(d); setSelectedRideId(null); }}
-              className={`flex-1 rounded-xl py-2.5 text-xs font-semibold transition-all ${
+              aria-pressed={direction === d}
+              className={`flex-1 rounded-[7px] px-3 py-2 text-[13px] font-semibold transition-colors ${
                 direction === d
-                  ? "bg-white text-slate-900 shadow-card dark:bg-slate-700 dark:text-slate-100"
-                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                  ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]"
+                  : "text-ink-2 hover:text-ink"
               }`}
             >
               {event.is_hotel ? (d === "Inbound" ? "Naar congres" : "Naar hotel") : (d === "Inbound" ? "Heen" : "Terug")}
@@ -118,12 +119,12 @@ export function JoinRideModal({ open, onClose, event, initialDirection, onOfferI
         </div>
 
         {matchingRides.length === 0 ? (
-          <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-4 py-6 text-center">
-            <p className="text-sm text-slate-500 dark:text-slate-400">Geen ritten gevonden voor deze richting.</p>
+          <div className="rounded-xl border-1.5 border-line bg-sunken px-4 py-6 text-center">
+            <p className="text-sm text-ink-2">Geen ritten gevonden voor deze richting.</p>
             <button
               type="button"
               onClick={onOfferInstead}
-              className="mt-2 text-xs font-semibold text-sky-500 hover:text-sky-600 transition-colors"
+              className="mt-2 text-xs font-semibold text-brand-text hover:underline"
             >
               Zelf een rit aanbieden?
             </button>
@@ -139,11 +140,11 @@ export function JoinRideModal({ open, onClose, event, initialDirection, onOfferI
                     onClick={() => toggleDay(group.label)}
                     className="flex w-full items-center justify-between gap-2 py-1 text-left"
                   >
-                    <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                    <span className="section-label">
                       {group.label}
                     </span>
                     <motion.div animate={{ rotate: isCollapsed ? -90 : 0 }} transition={{ duration: 0.15 }}>
-                      <ChevronDown size={14} className="text-slate-400" />
+                      <ChevronDown size={14} className="text-ink-3" />
                     </motion.div>
                   </button>
 
@@ -170,7 +171,7 @@ export function JoinRideModal({ open, onClose, event, initialDirection, onOfferI
                             return (
                               <div
                                 key={ride.id}
-                                className={`rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden ${isDeparted ? "opacity-80 grayscale-[50%]" : ""}`}
+                                className={`overflow-hidden rounded-xl border-1.5 bg-surface ${isSelected ? "border-ink-3" : "border-line"} ${isDeparted ? "opacity-70" : ""}`}
                               >
                                 <button
                                   type="button"
@@ -180,15 +181,15 @@ export function JoinRideModal({ open, onClose, event, initialDirection, onOfferI
                                     ride.is_full || isDeparted
                                       ? "opacity-50 cursor-not-allowed"
                                       : isSelected
-                                        ? "bg-sky-50 dark:bg-sky-500/10"
-                                        : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                                        ? "bg-sunken"
+                                        : "hover:bg-sunken"
                                   }`}
                                 >
                                   <UserAvatar name={ride.driver} className="h-8 w-8 text-xs shrink-0" />
                                   <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{ride.driver}</p>
-                                    <p className="flex items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400 truncate">
-                                      <span className="flex items-center gap-1 shrink-0">
+                                    <p className="truncate text-sm font-semibold text-ink">{ride.driver}</p>
+                                    <p className="flex items-center gap-2.5 truncate text-xs text-ink-2">
+                                      <span className="flex shrink-0 items-center gap-1 font-mono font-semibold tabular-nums text-ink">
                                         <Clock size={10} /> {formatTime(ride.departure_time)}
                                       </span>
                                       <span className="flex items-center gap-1 min-w-0 truncate">
@@ -196,12 +197,12 @@ export function JoinRideModal({ open, onClose, event, initialDirection, onOfferI
                                       </span>
                                     </p>
                                   </div>
-                                  <span className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                                  <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${
                                     isDeparted
-                                      ? "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                                      ? "bg-sunken text-ink-2"
                                       : ride.is_full
-                                        ? "bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300"
-                                        : "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
+                                        ? "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300"
+                                        : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
                                   }`}>
                                     <Users size={10} />
                                     {isDeparted ? "Vertrokken" : ride.is_full ? "Vol" : `${ride.seats_left} vrij`}
@@ -209,7 +210,7 @@ export function JoinRideModal({ open, onClose, event, initialDirection, onOfferI
                                 </button>
 
                                 {isSelected && (
-                                  <div className="px-3.5 pb-3.5 pt-1 space-y-2.5 border-t border-slate-100 dark:border-slate-800">
+                                  <div className="space-y-2.5 border-t border-line px-3.5 pb-3.5 pt-3">
                                     <NamePicker
                                       multiple
                                       options={availableToJoin}

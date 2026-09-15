@@ -74,11 +74,12 @@ def create_expense(
 ):
     try:
         result = supabase.table(Tables.EXPENSES).insert({
-            "paid_by":      body.paid_by,
-            "amount":       body.amount,
-            "currency":     body.currency,
-            "description":  body.description,
-            "date":         body.date,
+            "paid_by":         body.paid_by,
+            "amount":          body.amount,
+            "currency":        body.currency,
+            "description":     body.description,
+            "date":            body.date,
+            "linked_event_id": body.linked_event_id or None,
         }).execute()
     except Exception as e:
         logger.error("Failed to create expense: %s", e)

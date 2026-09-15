@@ -46,13 +46,11 @@ export function StoryUploadButton({ eventDayId }: StoryUploadButtonProps) {
         disabled={busy}
         onClick={() => inputRef.current?.click()}
         title="Foto toevoegen aan story"
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl
-                   text-slate-500 dark:text-slate-400
-                   hover:bg-slate-100 dark:hover:bg-white/[0.08]
-                   hover:text-slate-900 dark:hover:text-white transition-colors
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-1.5 border-line bg-surface
+                   text-ink-2 transition-colors hover:border-ink-3 hover:text-ink
                    disabled:opacity-50"
       >
-        {busy ? <Loader2 size={17} className="animate-spin" /> : <ImagePlus size={17} />}
+        {busy ? <Loader2 size={16} className="animate-spin" /> : <ImagePlus size={16} />}
       </button>
     </>
   );

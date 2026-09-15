@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Wallet, Plus, TrendingUp, ArrowDownLeft, ArrowUpRight, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Button } from "../components/common/Button";
@@ -11,6 +12,8 @@ import { ExpenseDetailDrawer } from "../components/finance/ExpenseDetailDrawer";
 import { useExpenses } from "../hooks/useExpenses";
 import { useUsers } from "../hooks/useUsers";
 import { useCurrentUser } from "../hooks/useUsers";
+import { useCalendar } from "../hooks/useCalendar";
+import { buildTrip, tripIdOf, type Trip } from "../utils/trips";
 import { formatAmount, formatCurrency } from "../utils/format";
 import { listContainer } from "../utils/motion";
 import type { Expense, User } from "../types";
@@ -21,9 +24,62 @@ function resolveUser(name: string, users: User[]) {
 
 export function FinancePage() {
   const [createOpen, setCreateOpen]           = useState(false);
-  const [detailExpense, setDetailExpense]     = useState<Expense | null>(null);
+  const [detailExpenseId, setDetailExpenseId] = useState<string | null>(null);
+  // Hub › Voor jou links here with `?expense=<id>` to open that expense directly.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const linkedExpenseId = searchParams.get("expense");
+  // `?trip=<tripId>` limits everything below to one trip; `?trip=none` to unlinked expenses.
+  const tripFilter = searchParams.get("trip");
 
-  const { data: expenses = [], isLoading } = useExpenses();
+  const { data: allExpenses = [], isLoading } = useExpenses();
+  const { data: events = [] } = useCalendar();
+
+  // Trips that have at least one expense, newest trip first.
+  const { tripOptions, tripOfExpense } = useMemo(() => {
+    const tripOfExpense = new Map<string, Trip>();
+    const trips = new Map<string, Trip>();
+    for (const exp of allExpenses) {
+      const ev = exp.linked_event_id ? events.find((e) => e.id === exp.linked_event_id) : undefined;
+      if (!ev) continue;
+      const id = tripIdOf(ev);
+      const trip = trips.get(id) ?? buildTrip(events, id);
+      if (!trip) continue;
+      trips.set(id, trip);
+      tripOfExpense.set(exp.id, trip);
+    }
+    const tripOptions = [...trips.values()].sort((a, b) => b.days[0].date.getTime() - a.days[0].date.getTime());
+    return { tripOptions, tripOfExpense };
+  }, [allExpenses, events]);
+
+  const hasUnlinked = allExpenses.some((e) => !tripOfExpense.has(e.id));
+  const selectedTrip = tripOptions.find((t) => t.id === tripFilter) ?? (tripFilter ? buildTrip(events, tripFilter) : null);
+  const expenses = tripFilter === "none"
+    ? allExpenses.filter((e) => !tripOfExpense.has(e.id))
+    : selectedTrip
+      ? allExpenses.filter((e) => tripOfExpense.get(e.id)?.id === selectedTrip.id)
+      : allExpenses;
+
+  function setTripFilter(next: string | null) {
+    const params = new URLSearchParams(searchParams);
+    if (next) params.set("trip", next);
+    else params.delete("trip");
+    setSearchParams(params, { replace: true });
+  }
+  const openExpenseId = detailExpenseId ?? linkedExpenseId;
+  const detailExpense: Expense | null = allExpenses.find((e) => e.id === openExpenseId) ?? null;
+
+  function openExpense(id: string) {
+    setDetailExpenseId(id);
+  }
+
+  function closeExpense() {
+    setDetailExpenseId(null);
+    if (linkedExpenseId) {
+      const params = new URLSearchParams(searchParams);
+      params.delete("expense");
+      setSearchParams(params, { replace: true });
+    }
+  }
   const { data: users    = [] }            = useUsers();
   const { data: me }                       = useCurrentUser();
 
@@ -66,167 +122,224 @@ export function FinancePage() {
     return (
       <div className="space-y-3">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="card-surface rounded-2xl h-24 animate-pulse" />
+          <div key={i} className="h-24 animate-pulse rounded-2xl bg-sunken" />
         ))}
       </div>
     );
   }
 
+  const net = othersOweMe - iOwe;
+  const openTotal = iOwe + othersOweMe;
+  const netTone = Math.abs(net) < 0.01
+    ? "text-ink"
+    : net > 0
+      ? "text-emerald-700 dark:text-emerald-400"
+      : "text-rose-700 dark:text-rose-400";
+
   return (
-    <div className="space-y-5 pb-20">
+    <div className="space-y-5 pb-20 md:pb-0">
 
       {/* ── Work-in-progress warning ─────────────────────────── */}
       <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-start gap-3 rounded-2xl border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-4 py-3.5"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex items-start gap-3 rounded-xl border-1.5 border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-500/25 dark:bg-amber-500/10"
       >
-        <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-500" />
-        <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
-          <span className="font-bold">Nog in ontwikkeling.</span> Deze pagina werkt nog niet helemaal zoals bedoeld — vertrouw bedragen hier niet 100%.
+        <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-700 dark:text-amber-300" />
+        <p className="text-[12.5px] leading-relaxed text-amber-900 dark:text-amber-200">
+          <span className="font-semibold">Nog in ontwikkeling.</span> Deze pagina werkt nog niet helemaal zoals bedoeld — vertrouw bedragen hier niet 100%.
         </p>
       </motion.div>
 
-      {/* ── Personal balance card ────────────────────────────── */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="relative overflow-hidden rounded-3xl gradient-hero shadow-hero p-5">
-          {/* Background blobs */}
-          <div className="pointer-events-none absolute -top-10 -right-10 h-36 w-36 rounded-full bg-sky-400/10" />
-          <div className="pointer-events-none absolute -bottom-6 -left-6 h-28 w-28 rounded-full bg-white/5" />
+      {/* ── Trip filter + add action (from md) ───────────────── */}
+      <div className={`items-center gap-3 ${tripOptions.length > 0 || selectedTrip ? "flex" : "hidden md:flex"}`}>
+        {(tripOptions.length > 0 || selectedTrip) && (
+          <div
+            role="group"
+            aria-label="Filter op trip"
+            className="-mx-4 flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-4 md:mx-0 md:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {[
+              { id: null, label: "Alles" },
+              ...(selectedTrip && !tripOptions.some((t) => t.id === selectedTrip.id) ? [selectedTrip] : []),
+              ...tripOptions,
+              ...(hasUnlinked ? [{ id: "none", label: "Zonder event" }] : []),
+            ].map((opt) => {
+              const id = opt.id;
+              const label = "title" in opt ? opt.title : opt.label;
+              const active = (tripFilter ?? null) === id || (!!selectedTrip && selectedTrip.id === id);
+              return (
+                <button
+                  key={id ?? "all"}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setTripFilter(id)}
+                  className={`shrink-0 whitespace-nowrap rounded-full border-1.5 px-3 py-1.5 text-[13px] font-semibold transition-colors ${
+                    active
+                      ? "border-ink bg-ink text-paper dark:border-brand dark:bg-brand dark:text-brand-on"
+                      : "border-line bg-surface text-ink-2 hover:border-ink-3"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        <Button className="ml-auto hidden shrink-0 md:inline-flex" onClick={() => setCreateOpen(true)}>
+          <Plus size={16} />
+          Uitgave toevoegen
+        </Button>
+      </div>
 
-          <div className="relative">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-400/20">
-                <Wallet size={16} className="text-sky-300" />
-              </div>
-              <span className="text-xs font-bold uppercase tracking-widest text-sky-300">
-                {myName ? `Jouw saldo` : "Groepssaldo"}
-              </span>
+      <div className="space-y-5 xl:grid xl:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] xl:items-start xl:gap-[22px] xl:space-y-0">
+        <div className="space-y-5">
+          {/* ── Personal balance ─────────────────────────────── */}
+          <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card-surface overflow-hidden">
+            <div className="flex items-center gap-2 px-4 pb-2 pt-4">
+              <Wallet size={13} className="shrink-0 text-ink-3" />
+              <p className="section-label truncate">
+                {myName ? "Jouw saldo" : "Groepssaldo"}
+                {selectedTrip ? ` · ${selectedTrip.title}` : tripFilter === "none" ? " · zonder event" : ""}
+              </p>
             </div>
 
             {allSettled ? (
-              <div className="flex items-center gap-3">
-                <CheckCircle2 size={28} className="text-emerald-400" />
+              <div className="flex items-center gap-3 px-4 pb-[18px] pt-1">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                  <CheckCircle2 size={20} />
+                </span>
                 <div>
-                  <p className="text-2xl font-black text-white">Alles verrekend</p>
-                  <p className="text-xs text-sky-300 mt-0.5">Geen openstaande bedragen</p>
+                  <p className="font-display text-[24px] font-extrabold uppercase leading-none text-ink">Alles verrekend</p>
+                  <p className="mt-1 text-[13px] text-ink-2">Geen openstaande bedragen</p>
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4">
-                {/* I owe */}
-                <div>
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <ArrowUpRight size={13} className="text-rose-400" />
-                    <span className="text-[11px] font-semibold text-sky-300/80">Te betalen</span>
-                  </div>
-                  <p className={`text-2xl font-black ${iOwe > 0.01 ? "text-white" : "text-white/40"}`}>
-                    {formatAmount(iOwe)}
-                  </p>
+              <div className="flex flex-col gap-1.5 px-4 pb-[18px]">
+                <p className={`font-mono text-[32px] font-semibold leading-none tracking-[-0.02em] tabular-nums ${netTone}`}>
+                  {formatAmount(Math.abs(net))}
+                </p>
+                <p className="text-[13px] text-ink-2">{net >= 0 ? "Te ontvangen" : "Te betalen"}</p>
+
+                <div className="mt-2 flex h-2.5 gap-[3px] overflow-hidden rounded-full bg-sunken" aria-hidden>
+                  {othersOweMe > 0.01 && (
+                    <div className="h-full bg-emerald-500" style={{ width: `${(othersOweMe / openTotal) * 100}%` }} />
+                  )}
+                  {iOwe > 0.01 && (
+                    <div className="h-full bg-rose-500" style={{ width: `${(iOwe / openTotal) * 100}%` }} />
+                  )}
                 </div>
-                {/* Others owe me */}
-                <div>
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <ArrowDownLeft size={13} className="text-emerald-400" />
-                    <span className="text-[11px] font-semibold text-sky-300/80">Te ontvangen</span>
-                  </div>
-                  <p className={`text-2xl font-black ${othersOweMe > 0.01 ? "text-white" : "text-white/40"}`}>
-                    {formatAmount(othersOweMe)}
-                  </p>
+                <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 text-[12px] tabular-nums text-ink-2">
+                  <span className="inline-flex items-center gap-1.5">
+                    <ArrowDownLeft size={13} className="text-emerald-600 dark:text-emerald-400" />
+                    Te ontvangen <b className="font-mono font-semibold text-ink">{formatAmount(othersOweMe)}</b>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <ArrowUpRight size={13} className="text-rose-600 dark:text-rose-400" />
+                    Te betalen <b className="font-mono font-semibold text-ink">{formatAmount(iOwe)}</b>
+                  </span>
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      </motion.div>
+          </motion.section>
 
-      {/* ── Group overview card ──────────────────────────────── */}
-      {expenses.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.08 } }}>
-          <div className="card-surface rounded-2xl overflow-hidden">
-            <div className="h-[3px] bg-gradient-to-r from-violet-400 to-sky-400" />
-            <div className="px-4 pt-4 pb-3">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-1.5">
-                  <TrendingUp size={13} className="text-slate-400" />
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                    Groep totaal
-                  </p>
-                </div>
-                <span className="text-base font-black text-slate-900 dark:text-white">
+          {/* ── Group overview ───────────────────────────────── */}
+          {expenses.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, transition: { delay: 0.08 } }}
+              className="card-surface overflow-hidden"
+            >
+              <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-4">
+                <p className="section-label flex items-center gap-1.5">
+                  <TrendingUp size={13} />
+                  Groep totaal
+                </p>
+                <span className="font-mono text-[15px] font-semibold tabular-nums text-ink">
                   {formatCurrency(totalGroup)}
                 </span>
               </div>
 
               {/* Top spenders */}
               {topSpenders.length > 0 && (
-                <div className="space-y-1.5">
+                <ul className="px-2 pb-2">
                   {topSpenders.map(([name, amount]) => {
                     const pct = totalGroup > 0 ? (amount / totalGroup) * 100 : 0;
                     const u   = resolveUser(name, users);
                     return (
-                      <div key={name} className="flex items-center gap-2.5">
-                        <UserAvatar name={name} user={u} className="h-5 w-5 text-[8px] shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-0.5">
-                            <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 truncate">{name}</span>
-                            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 shrink-0 ml-2">{formatCurrency(amount)}</span>
+                      <li key={name} className="flex items-center gap-2.5 border-t border-line px-2 py-2">
+                        <UserAvatar name={name} user={u} className="h-7 w-7 shrink-0 text-[10px]" />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="truncate text-[13.5px] font-semibold text-ink">{name}</span>
+                            <span className="shrink-0 font-mono text-[13px] font-semibold tabular-nums text-ink">{formatCurrency(amount)}</span>
                           </div>
-                          <div className="h-1 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-sunken shadow-[inset_0_0_0_1px_rgb(var(--line))]">
                             <div
-                              className="h-full rounded-full bg-gradient-to-r from-violet-400 to-sky-400 transition-all duration-500"
+                              className="h-full rounded-full bg-ink-2 transition-all duration-500"
                               style={{ width: `${pct}%` }}
                             />
                           </div>
                         </div>
-                      </div>
+                      </li>
                     );
                   })}
-                </div>
+                </ul>
               )}
-            </div>
-          </div>
-        </motion.div>
-      )}
+            </motion.section>
+          )}
+        </div>
 
-      {/* ── Expense list ─────────────────────────────────────── */}
-      {expenses.length === 0 ? (
-        <EmptyState
-          icon={<Wallet size={36} />}
-          title="Geen uitgaven"
-          description="Voeg de eerste groepsuitgave toe."
-        />
-      ) : (
-        <motion.div className="space-y-3" variants={listContainer} initial="hidden" animate="show">
-          {expenses.map((expense) => (
-            <ExpenseCard
-              key={expense.id}
-              expense={expense}
-              users={users}
-              me={myName}
-              onClick={() => setDetailExpense(expense)}
+        {/* ── Expense list ─────────────────────────────────────── */}
+        {expenses.length === 0 ? (
+          <div className="card-surface">
+            <EmptyState
+              icon={<Wallet size={22} />}
+              title="Geen uitgaven"
+              description={selectedTrip ? `Nog geen uitgaven voor ${selectedTrip.title}.` : "Voeg de eerste groepsuitgave toe."}
             />
-          ))}
-        </motion.div>
-      )}
+          </div>
+        ) : (
+          <motion.div
+            className="card-surface divide-y divide-line overflow-hidden"
+            variants={listContainer}
+            initial="hidden"
+            animate="show"
+          >
+            {expenses.map((expense) => (
+              <ExpenseCard
+                key={expense.id}
+                expense={expense}
+                users={users}
+                me={myName}
+                onClick={() => openExpense(expense.id)}
+                tripTitle={selectedTrip ? undefined : tripOfExpense.get(expense.id)?.title}
+              />
+            ))}
+          </motion.div>
+        )}
+      </div>
 
-      {/* ── Add expense button ───────────────────────────────── */}
-      <StickyActionBar>
-        <Button className="w-full shadow-lg" onClick={() => setCreateOpen(true)}>
-          <Plus size={16} />
-          Uitgave toevoegen
-        </Button>
-      </StickyActionBar>
+      {/* ── Add expense button (phones; from md it sits in the top row) ── */}
+      <div className="md:hidden">
+        <StickyActionBar>
+          <Button className="w-full" onClick={() => setCreateOpen(true)}>
+            <Plus size={16} />
+            Uitgave toevoegen
+          </Button>
+        </StickyActionBar>
+      </div>
 
       {/* ── Drawers ───────────────────────────────────────────── */}
       <CreateExpenseDrawer
         open={createOpen}
         onClose={() => setCreateOpen(false)}
         me={myName}
+        defaultEventId={selectedTrip?.days[0].ev.id}
       />
       <ExpenseDetailDrawer
         expense={detailExpense}
-        onClose={() => setDetailExpense(null)}
+        onClose={closeExpense}
         users={users}
         me={myName}
       />

@@ -22,17 +22,17 @@ export function DeleteConfirmActions({
   if (confirmId === id) {
     return (
       <div className="flex items-center justify-end gap-1.5 sm:gap-2">
-        <span className="hidden sm:inline text-xs text-slate-500">Verwijderen?</span>
+        <span className="hidden text-xs text-ink-3 sm:inline">Verwijderen?</span>
         <button
           onClick={onConfirmDelete}
           disabled={isPending}
-          className="rounded-lg px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs font-semibold bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 disabled:opacity-50 transition-colors"
+          className="rounded-lg bg-rose-100 px-2 py-1 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-200 disabled:opacity-50 dark:bg-rose-500/15 dark:text-rose-300 dark:hover:bg-rose-500/25 sm:px-2.5 sm:py-1.5"
         >
           {isPending ? "..." : "Ja"}
         </button>
         <button
           onClick={onCancelDelete}
-          className="rounded-lg px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs font-semibold bg-white/[0.06] text-slate-400 hover:bg-white/[0.1] transition-colors"
+          className="rounded-lg bg-sunken px-2 py-1 text-xs font-semibold text-ink-2 transition-colors hover:text-ink sm:px-2.5 sm:py-1.5"
         >
           Nee
         </button>
@@ -44,14 +44,14 @@ export function DeleteConfirmActions({
     <div className="flex items-center justify-end gap-0.5 sm:gap-1">
       <button
         onClick={onEdit}
-        className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white/[0.06] hover:text-slate-300 transition-colors"
+        className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink sm:h-8 sm:w-8"
         title="Bewerken"
       >
         <Pencil size={14} />
       </button>
       <button
         onClick={onRequestDelete}
-        className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors"
+        className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 sm:h-8 sm:w-8"
         title="Verwijderen"
       >
         <Trash2 size={14} />
