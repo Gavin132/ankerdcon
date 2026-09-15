@@ -1,5 +1,5 @@
-import type { CalendarEvent, Meal, Ride } from "../types";
-import { parseEventDate, toDateKey, todayKey } from "./date";
+import type { CalendarEvent, HotelRoom, Meal, Ride } from "../types";
+import { daysBetween, parseEventDate, toDateKey, todayKey } from "./date";
 import { formatDateRange, groupCalendarEntries } from "./multiDay";
 
 /**
@@ -130,6 +130,47 @@ export function isTripOver(trip: Trip): boolean {
   return toDateKey(trip.days[trip.days.length - 1].date) < todayKey();
 }
 
+export type TripPhase = "upcoming" | "live" | "past";
+
+/** Whether the trip is still ahead, underway today, or over. */
+export function tripPhase(trip: Trip): TripPhase {
+  const today = todayKey();
+  if (toDateKey(trip.days[trip.days.length - 1].date) < today) return "past";
+  return toDateKey(trip.days[0].date) <= today ? "live" : "upcoming";
+}
+
+/** The day photos can be added to right now: a trip day that is today or tomorrow. */
+export function tripUploadDay(trip: Trip): TripDay | undefined {
+  const today = todayKey();
+  return trip.days.find(({ date }) => {
+    const key = toDateKey(date);
+    return key >= today && daysBetween(today, key) <= 1;
+  });
+}
+
+type SharedInfoKey =
+  | "description" | "location" | "website" | "ticket_url" | "ticket_sale_start" | "ticket_types"
+  | "locker_info" | "parking_info" | "special_instructions" | "what_to_bring" | "hotel_location" | "hotel_info";
+
+const SHARED_INFO_KEYS: SharedInfoKey[] = [
+  "description", "location", "website", "ticket_url", "ticket_sale_start", "ticket_types",
+  "locker_info", "parking_info", "special_instructions", "what_to_bring", "hotel_location", "hotel_info",
+];
+
+/**
+ * The first day of the trip with every shared field (description, tickets,
+ * practical info, hotel) filled in from whichever day has it — admins often
+ * only fill these in on one day of a multi-day event.
+ */
+export function tripInfo(trip: Trip): CalendarEvent {
+  const info: CalendarEvent = { ...trip.days[0].ev };
+  for (const key of SHARED_INFO_KEYS) {
+    const filled = trip.days.map((d) => d.ev[key]).find((v) => v != null && v !== "" && !(Array.isArray(v) && v.length === 0));
+    if (filled !== undefined) Object.assign(info, { [key]: filled });
+  }
+  return info;
+}
+
 /** The day to show when none is picked: today if it's part of the trip, else the first day still ahead, else the first day. */
 export function defaultTripDayId(trip: Trip): string {
   const today = todayKey();
@@ -198,4 +239,11 @@ export function tripGaps(trip: Trip, rides: Ride[], meals: Meal[]): TripGaps {
     : [];
 
   return { transport, food };
+}
+
+/** People signed up for a hotel trip who aren't in any of its rooms yet. Names compare case-insensitively. */
+export function tripRoomGaps(trip: Trip, rooms: HotelRoom[]): string[] {
+  if (!trip.isHotel) return [];
+  const assigned = new Set(rooms.flatMap((r) => r.occupants).map((n) => n.toLowerCase()));
+  return trip.participants.filter((name) => !assigned.has(name.toLowerCase()));
 }

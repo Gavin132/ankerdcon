@@ -33,3 +33,9 @@ export function daysBetween(fromKey: string, toKey: string): number {
   const to = new Date(toKey + "T00:00:00").getTime();
   return Math.round((to - from) / 86400000);
 }
+
+/** "2026-09-25 09:00" or "2026-09-25T09:00" → ["2026-09-25", "09:00"]. */
+export function splitDateTime(value: string): [string, string] {
+  const [date = "", time = ""] = value.trim().split(/[ T]/);
+  return [date, time.slice(0, 5)];
+}

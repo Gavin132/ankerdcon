@@ -6,12 +6,12 @@ import { CollectedStubs } from "../components/calendar/CollectedStubs";
 import { RecapView } from "../components/calendar/recap/RecapView";
 import { TripRsvpModal } from "../components/calendar/TripRsvpModal";
 import { EmptyState } from "../components/common/EmptyState";
-import { useCurrentUser, useUsers } from "../hooks/useUsers";
+import { useUsers } from "../hooks/useUsers";
 import { useMeals } from "../hooks/useMeals";
 import { useRides } from "../hooks/useRides";
-import { useCalendar, useRsvpCalendarEvent, useLeaveCalendarEvent } from "../hooks/useCalendar";
+import { useCalendar } from "../hooks/useCalendar";
+import { useTripRsvp } from "../hooks/useTripRsvp";
 import { useTimeStore } from "../store/time.store";
-import { toast } from "../store/toast.store";
 import { toDateKey, todayKey } from "../utils/date";
 import { buildTrips, type Trip } from "../utils/trips";
 import { env } from "../config/env";
@@ -29,24 +29,18 @@ export function CalendarPage() {
   const [manageTripId, setManageTripId] = useState<string | null>(null);
   const [justJoinedId, setJustJoinedId] = useState<string | null>(null);
 
-  const { data: me } = useCurrentUser();
   const { data: users = [] } = useUsers();
   const { data: calendarEvents = [], isLoading } = useCalendar();
   const { data: meals = [] } = useMeals();
   const { data: rides = [] } = useRides();
-  const rsvpMutation = useRsvpCalendarEvent();
-  const leaveMutation = useLeaveCalendarEvent();
+  const tripRsvp = useTripRsvp();
+  const { myNames, manageRsvp } = tripRsvp;
 
   const trips = useMemo(() => buildTrips(calendarEvents), [calendarEvents]);
   const today = todayKey();
   const upcomingTrips = trips.filter((t) => toDateKey(t.days[t.days.length - 1].date) >= today);
   const pastTrips = trips.filter((t) => toDateKey(t.days[t.days.length - 1].date) < today).reverse();
   const manageTrip = trips.find((t) => t.id === manageTripId) ?? null;
-
-  const myNames = useMemo(
-    () => (me ? [me.name, me.discord_username, ...(me.aliases ?? [])].filter((n): n is string => !!n) : []),
-    [me],
-  );
 
   const feedUrl = `${env.API_BASE_URL || window.location.origin}/api/calendar/feed.ics`;
   const googleCalUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(feedUrl.replace(/^https?:/, "webcal:"))}`;
@@ -58,50 +52,14 @@ export function CalendarPage() {
     });
   }
 
-  async function onCalendarRsvp(id: string, userNames: string[]) {
-    for (const userName of userNames) {
-      try {
-        await rsvpMutation.mutateAsync({ id, userName });
-      } catch {
-        // silently ignore duplicate sign-ups
-      }
-    }
-  }
-
-  async function onCalendarLeave(id: string, userNames: string[]) {
-    for (const userName of userNames) {
-      try {
-        await leaveMutation.mutateAsync({ id, userName });
-      } catch {
-        // silently ignore if not found
-      }
-    }
-  }
-
-  /** Sign yourself up for every day of the trip you aren't on yet. */
-  async function joinTrip(trip: Trip) {
-    if (!me) return;
+  function joinTrip(trip: Trip) {
     setJustJoinedId(trip.id);
-    const days = trip.days.filter((d) => !d.ev.participants.some((p) => myNames.includes(p)));
-    for (const d of days) await onCalendarRsvp(d.ev.id, [me.name]);
-    toast("success", `Je gaat mee naar ${trip.title}`);
+    return tripRsvp.joinTrip(trip);
   }
 
-  /** Sign yourself off every day of the trip, under whichever name you're listed. */
-  async function leaveTrip(trip: Trip) {
+  function leaveTrip(trip: Trip) {
     setJustJoinedId(null);
-    for (const d of trip.days) {
-      await onCalendarLeave(d.ev.id, d.ev.participants.filter((p) => myNames.includes(p)));
-    }
-    toast("success", `Afgemeld voor ${trip.title}`);
-  }
-
-  async function manageRsvp(mode: "join" | "leave", names: string[], eventIds: string[]) {
-    // One at a time: each call snapshots the calendar cache for its optimistic update.
-    for (const id of eventIds) {
-      if (mode === "join") await onCalendarRsvp(id, names);
-      else await onCalendarLeave(id, names);
-    }
+    return tripRsvp.leaveTrip(trip);
   }
 
   if (isLoading) {

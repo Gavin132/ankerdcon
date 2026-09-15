@@ -3,10 +3,11 @@ import type { CalendarEvent } from "../../types";
 
 interface HotelInfoCardProps {
   event: CalendarEvent;
-  onHotelClick: () => void;
+  /** Adds a "Bekijk hotelkamers" row; left out on Kamers itself. */
+  onHotelClick?: () => void;
 }
 
-/** Shown in place of con-day content on a hotel-only travel day. */
+/** Where the crew sleeps and the hotel's notes, at the top of Event › Kamers. */
 export function HotelInfoCard({ event, onHotelClick }: HotelInfoCardProps) {
   const location = event.hotel_location || event.location;
 
@@ -51,7 +52,7 @@ export function HotelInfoCard({ event, onHotelClick }: HotelInfoCardProps) {
         </div>
       )}
 
-      <button
+      {onHotelClick && <button
         type="button"
         onClick={onHotelClick}
         className="group mt-1 flex w-full items-center gap-4 border-t border-line px-5 py-3.5 text-left transition-colors hover:bg-sunken"
@@ -68,7 +69,7 @@ export function HotelInfoCard({ event, onHotelClick }: HotelInfoCardProps) {
           size={15}
           className="shrink-0 text-ink-3 transition-colors group-hover:text-ink"
         />
-      </button>
+      </button>}
     </div>
   );
 }
