@@ -47,9 +47,10 @@ interface ImageEntry {
   uploading: boolean;
 }
 
-const SF = "space-y-4 rounded-2xl border border-slate-100 dark:border-white/[0.07] bg-slate-50 dark:bg-white/[0.03] p-4";
-const ST = "text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3";
-const SL = "block text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5";
+// Flat form sections separated by a divider; labels follow the design system.
+const SF = "space-y-3 border-t-1.5 border-line pt-5 first:border-t-0 first:pt-0";
+const ST = "section-label";
+const SL = "mb-1.5 block text-[12.5px] font-semibold text-ink-2";
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -212,9 +213,11 @@ export function TripCosplayTab() {
 
   if (!event) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 py-20 text-slate-400">
-        <Sparkles size={40} className="opacity-30" />
-        <p className="text-sm">Deze dag bestaat niet meer</p>
+      <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
+          <Sparkles size={22} />
+        </div>
+        <p className="text-sm font-semibold text-ink">Deze dag bestaat niet meer</p>
       </div>
     );
   }
@@ -235,6 +238,13 @@ export function TripCosplayTab() {
 
   const isFiltered = activeFilterCount > 0;
 
+  const removableChip =
+    "inline-flex items-center gap-1.5 rounded-full border-1.5 border-line bg-surface py-1 pl-2.5 pr-1 text-[11.5px] font-semibold text-ink-2";
+  const removeChipButton =
+    "flex h-5 w-5 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-sunken hover:text-ink";
+  const pageArrow =
+    "flex h-8 w-8 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-line";
+
   return (
     <div className="pb-10">
       {/* ── Content ────────────────────────────────────────────────── */}
@@ -247,23 +257,23 @@ export function TripCosplayTab() {
               {/* Filter trigger */}
               <button
                 onClick={() => setFilterOpen(true)}
-                className={`relative flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-all ${
+                className={`relative flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
                   activeFilterCount > 0
-                    ? "border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300"
-                    : "border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.03] text-slate-600 dark:text-slate-300 hover:border-violet-300 dark:hover:border-violet-700/50"
+                    ? "border-1.5 border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
+                    : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"
                 }`}
               >
                 <SlidersHorizontal size={13} />
                 Filter & Sorteren
                 {activeFilterCount > 0 && (
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-violet-500 text-[9px] font-bold text-white">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-paper font-mono text-[9.5px] font-semibold text-ink">
                     {activeFilterCount}
                   </span>
                 )}
               </button>
 
               {/* Result count */}
-              <span className="text-xs text-slate-400 ml-auto">
+              <span className="ml-auto truncate font-mono text-[11px] uppercase tracking-[0.05em] text-ink-3 tabular-nums">
                 {isFiltered
                   ? `${filtered.length} van ${eventCosplays.length} cosplays`
                   : `${eventCosplays.length} ${eventCosplays.length === 1 ? "cosplay" : "cosplays"}`}
@@ -271,8 +281,7 @@ export function TripCosplayTab() {
 
               <button
                 onClick={openCreate}
-                className="flex items-center gap-1.5 rounded-xl bg-violet-500 px-3 py-2 text-xs font-bold text-white
-                           hover:bg-violet-600 active:bg-violet-700 transition-colors shrink-0"
+                className="btn-primary shrink-0 px-3 py-2 text-xs"
               >
                 <Plus size={14} />
                 Toevoegen
@@ -289,38 +298,26 @@ export function TripCosplayTab() {
                   className="flex flex-wrap gap-2 overflow-hidden"
                 >
                   {filters.persons.map((name) => (
-                    <span
-                      key={name}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-violet-200 dark:border-violet-700/50 bg-violet-50 dark:bg-violet-900/20 pl-2.5 pr-1.5 py-1 text-[11px] font-semibold text-violet-700 dark:text-violet-300"
-                    >
+                    <span key={name} className={removableChip}>
                       {name}
-                      <button
-                        onClick={() => removePersonFilter(name)}
-                        className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-violet-200 dark:hover:bg-violet-700/40 transition-colors"
-                      >
-                        <X size={9} />
+                      <button onClick={() => removePersonFilter(name)} className={removeChipButton}>
+                        <X size={11} />
                       </button>
                     </span>
                   ))}
                   {filters.days.length > 0 && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-200 dark:border-violet-700/50 bg-violet-50 dark:bg-violet-900/20 pl-2.5 pr-1.5 py-1 text-[11px] font-semibold text-violet-700 dark:text-violet-300">
+                    <span className={removableChip}>
                       {filters.days.length} {filters.days.length === 1 ? "dag" : "dagen"}
-                      <button
-                        onClick={removeDayFilter}
-                        className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-violet-200 dark:hover:bg-violet-700/40 transition-colors"
-                      >
-                        <X size={9} />
+                      <button onClick={removeDayFilter} className={removeChipButton}>
+                        <X size={11} />
                       </button>
                     </span>
                   )}
                   {filters.sort !== "newest" && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-200 dark:border-violet-700/50 bg-violet-50 dark:bg-violet-900/20 pl-2.5 pr-1.5 py-1 text-[11px] font-semibold text-violet-700 dark:text-violet-300">
+                    <span className={removableChip}>
                       {SORT_LABELS[filters.sort]}
-                      <button
-                        onClick={removeSortFilter}
-                        className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-violet-200 dark:hover:bg-violet-700/40 transition-colors"
-                      >
-                        <X size={9} />
+                      <button onClick={removeSortFilter} className={removeChipButton}>
+                        <X size={11} />
                       </button>
                     </span>
                   )}
@@ -332,27 +329,18 @@ export function TripCosplayTab() {
 
         {/* ── Loading skeletons ── */}
         {isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="card-surface rounded-2xl overflow-hidden animate-pulse">
-                <div className="h-[3px] bg-violet-200 dark:bg-violet-900/40" />
-                <div className="flex">
-                  <div className="flex-1 p-4 space-y-2.5">
-                    <div className="flex items-center gap-2">
-                      <div className="h-5 w-5 rounded-full bg-slate-200 dark:bg-slate-700" />
-                      <div className="h-3 w-16 bg-slate-200 dark:bg-slate-700 rounded" />
-                    </div>
-                    <div className="h-4 w-28 bg-slate-200 dark:bg-slate-700 rounded" />
-                    <div className="h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
-                    <div className="flex gap-1.5">
-                      <div className="h-4 w-16 bg-violet-100 dark:bg-violet-900/30 rounded-full" />
-                    </div>
+              <div key={i} className="card-surface overflow-hidden animate-pulse">
+                <div className="aspect-[4/3] w-full border-b-1.5 border-line bg-sunken" />
+                <div className="space-y-2.5 p-3">
+                  <div className="h-4 w-3/4 rounded bg-sunken" />
+                  <div className="h-3 w-1/2 rounded bg-sunken" />
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-5 w-5 rounded-full bg-sunken" />
+                    <div className="h-3 w-16 rounded bg-sunken" />
                   </div>
-                  <div className="w-20 bg-slate-100 dark:bg-slate-800" />
-                </div>
-                <div className="flex items-center justify-between px-4 py-2 border-t border-slate-100 dark:border-slate-800/60">
-                  <div className="h-3 w-12 bg-slate-200 dark:bg-slate-700 rounded" />
-                  <div className="h-3 w-14 bg-slate-200 dark:bg-slate-700 rounded" />
+                  <div className="h-4 w-20 rounded-md bg-sunken" />
                 </div>
               </div>
             ))}
@@ -361,20 +349,19 @@ export function TripCosplayTab() {
 
         {/* ── Empty state (no cosplays at all) ── */}
         {!isLoading && eventCosplays.length === 0 && (
-          <div className="flex flex-col items-center gap-5 py-16 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-900/30">
-              <Sparkles size={28} className="text-violet-500" />
+          <div className="flex flex-col items-center gap-4 py-16 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
+              <Sparkles size={22} />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+              <p className="text-sm font-semibold text-ink">
                 Nog geen cosplays gedeeld
               </p>
-              <p className="text-xs text-slate-400 mt-1">Laat anderen weten wat je draagt!</p>
+              <p className="mt-1 text-xs text-ink-3">Laat anderen weten wat je draagt!</p>
             </div>
             <button
               onClick={openCreate}
-              className="flex items-center gap-2 rounded-2xl bg-violet-500 px-5 py-3 text-sm font-bold text-white
-                         hover:bg-violet-600 active:bg-violet-700 transition-colors shadow-lg shadow-violet-500/20"
+              className="btn-primary px-4 py-2.5 text-sm"
             >
               <Plus size={16} />
               Eerste cosplay toevoegen
@@ -385,16 +372,18 @@ export function TripCosplayTab() {
         {/* ── Filtered empty state ── */}
         {!isLoading && eventCosplays.length > 0 && filtered.length === 0 && (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <SlidersHorizontal size={32} className="text-slate-300 dark:text-slate-600" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
+              <SlidersHorizontal size={22} />
+            </div>
             <div>
-              <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+              <p className="text-sm font-semibold text-ink">
                 Geen cosplays gevonden
               </p>
-              <p className="text-xs text-slate-400 mt-1">Pas je filters aan of wis ze.</p>
+              <p className="mt-1 text-xs text-ink-3">Pas je filters aan of wis ze.</p>
             </div>
             <button
               onClick={() => setFilters(DEFAULT_COSPLAY_FILTERS)}
-              className="text-xs font-semibold text-violet-500 hover:text-violet-600 underline"
+              className="text-[12.5px] font-semibold text-brand-text hover:underline"
             >
               Filters wissen
             </button>
@@ -404,7 +393,7 @@ export function TripCosplayTab() {
         {/* ── Grid ── */}
         {!isLoading && paginated.length > 0 && (
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+            className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4"
             variants={listContainer}
             initial="hidden"
             animate="show"
@@ -427,14 +416,9 @@ export function TripCosplayTab() {
                   variants={listItem}
                   type="button"
                   onClick={openCreate}
-                  className="rounded-2xl border-2 border-dashed border-slate-200 dark:border-violet-800/40
-                             flex flex-col items-center justify-center gap-2.5 py-10
-                             text-slate-400 dark:text-slate-600
-                             hover:border-violet-400 dark:hover:border-violet-500
-                             hover:text-violet-500 dark:hover:text-violet-400
-                             transition-all duration-150 cursor-pointer min-h-[120px] group"
+                  className="flex min-h-[160px] cursor-pointer flex-col items-center justify-center gap-2.5 rounded-[12px] border-1.5 border-dashed border-line py-10 text-ink-3 transition-colors hover:border-ink-3 hover:text-ink"
                 >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-current transition-colors">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sunken">
                     <Plus size={16} />
                   </div>
                   <span className="text-xs font-semibold">Cosplay toevoegen</span>
@@ -446,14 +430,11 @@ export function TripCosplayTab() {
 
         {/* ── Pagination ── */}
         {!isLoading && totalPages > 1 && (
-          <div className="flex items-center justify-center gap-1.5 mt-8">
+          <div className="mt-8 flex items-center justify-center gap-1.5">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 dark:border-white/[0.08]
-                         text-slate-500 dark:text-slate-400 disabled:opacity-30
-                         hover:border-violet-400 hover:text-violet-600 dark:hover:border-violet-600 dark:hover:text-violet-400
-                         transition-colors disabled:cursor-not-allowed"
+              className={pageArrow}
             >
               <ChevronLeft size={15} />
             </button>
@@ -467,7 +448,7 @@ export function TripCosplayTab() {
               const showEllipsisAfter  = p === page + 2 && page < totalPages - 2;
               if (showEllipsisBefore || showEllipsisAfter) {
                 return (
-                  <span key={p} className="w-8 text-center text-xs text-slate-400">…</span>
+                  <span key={p} className="w-8 text-center text-xs text-ink-3">…</span>
                 );
               }
               if (!show) return null;
@@ -475,10 +456,10 @@ export function TripCosplayTab() {
                 <button
                   key={p}
                   onClick={() => setPage(p)}
-                  className={`h-8 min-w-[2rem] px-2 rounded-xl text-xs font-bold transition-all ${
+                  className={`h-8 min-w-[2rem] rounded-xl px-2 font-mono text-xs font-semibold tabular-nums transition-colors ${
                     active
-                      ? "bg-violet-500 text-white shadow-md shadow-violet-500/20"
-                      : "border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-300 hover:border-violet-400 hover:text-violet-600 dark:hover:border-violet-600 dark:hover:text-violet-400"
+                      ? "border-1.5 border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
+                      : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
                   }`}
                 >
                   {p}
@@ -489,10 +470,7 @@ export function TripCosplayTab() {
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 dark:border-white/[0.08]
-                         text-slate-500 dark:text-slate-400 disabled:opacity-30
-                         hover:border-violet-400 hover:text-violet-600 dark:hover:border-violet-600 dark:hover:text-violet-400
-                         transition-colors disabled:cursor-not-allowed"
+              className={pageArrow}
             >
               <ChevronRight size={15} />
             </button>
@@ -513,7 +491,7 @@ export function TripCosplayTab() {
           <div className={SF}>
             <p className={ST}>Wie draagt dit?</p>
             <NamePicker options={userNames} value={selectedUser} onChange={setSelectedUser} placeholder="Zoek naam…" color="sky" />
-            {!selectedUser && <p className="text-xs text-slate-400 mt-1">Selecteer de persoon die dit cosplay draagt.</p>}
+            {!selectedUser && <p className="mt-1 text-xs text-ink-3">Selecteer de persoon die dit cosplay draagt.</p>}
           </div>
 
           <div className={SF}>
@@ -521,7 +499,7 @@ export function TripCosplayTab() {
             <div>
               <label className={SL}>Karakter naam *</label>
               <input className="input-field" placeholder="Bijv. Luffy, Batman, Pikachu…" autoComplete="off" {...register("character_name")} />
-              {errors.character_name && <p className="mt-1.5 text-xs text-rose-500">{errors.character_name.message}</p>}
+              {errors.character_name && <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400">{errors.character_name.message}</p>}
             </div>
             <div>
               <label className={SL}>Serie / film / game (optioneel)</label>
@@ -536,19 +514,19 @@ export function TripCosplayTab() {
                 {allRelatedEvents.map((e) => (
                   <label
                     key={e.id}
-                    className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 cursor-pointer transition-colors ${
+                    className={`flex cursor-pointer items-center gap-3 rounded-xl border-1.5 px-3 py-2.5 transition-colors ${
                       selectedDays.includes(e.id)
-                        ? "border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-900/20"
-                        : "border-slate-200 dark:border-white/[0.08] hover:border-violet-300 dark:hover:border-violet-600/50"
+                        ? "border-ink bg-sunken"
+                        : "border-line bg-surface hover:border-ink-3"
                     }`}
                   >
-                    <input type="checkbox" className="h-4 w-4 rounded accent-violet-500 shrink-0" checked={selectedDays.includes(e.id)} onChange={() => toggleDay(e.id)} />
-                    <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{formatDate(e.date)}</span>
-                    <span className="text-xs text-slate-400 ml-auto">{e.event_name}</span>
+                    <input type="checkbox" className="cb" checked={selectedDays.includes(e.id)} onChange={() => toggleDay(e.id)} />
+                    <span className="text-sm font-semibold text-ink">{formatDate(e.date)}</span>
+                    <span className="ml-auto truncate text-xs text-ink-3">{e.event_name}</span>
                   </label>
                 ))}
               </div>
-              {selectedDays.length === 0 && <p className="text-xs text-rose-500">Selecteer minimaal één dag.</p>}
+              {selectedDays.length === 0 && <p className="text-xs text-rose-600 dark:text-rose-400">Selecteer minimaal één dag.</p>}
             </div>
           )}
 
@@ -557,14 +535,15 @@ export function TripCosplayTab() {
             <div className="space-y-3">
               {images.map((entry, index) => (
                 <div key={index} className="space-y-1.5">
-                  <div className="flex items-center gap-0.5">
+                  <div className="inline-flex gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]">
                     {(["url", "file"] as const).map((m) => (
                       <button
                         key={m} type="button" onClick={() => setImageField(index, { mode: m })}
-                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-colors ${
+                        aria-pressed={entry.mode === m}
+                        className={`rounded-[7px] px-2.5 py-1 text-[11.5px] font-semibold transition-colors ${
                           entry.mode === m
-                            ? "bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400"
-                            : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                            ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]"
+                            : "text-ink-2 hover:text-ink"
                         }`}
                       >
                         {m === "url" ? "Link" : "Bestand"}
@@ -574,7 +553,7 @@ export function TripCosplayTab() {
                   <div className="flex items-center gap-2">
                     {entry.mode === "url" ? (
                       <>
-                        <Image size={14} className="text-slate-400 shrink-0" />
+                        <Image size={14} className="shrink-0 text-ink-3" />
                         <input
                           className="input-field flex-1"
                           placeholder="https://i.imgur.com/… of Pinterest URL"
@@ -583,24 +562,24 @@ export function TripCosplayTab() {
                         />
                       </>
                     ) : (
-                      <label className={`flex-1 flex items-center gap-2 rounded-xl border px-3 py-2.5 cursor-pointer transition-colors ${
+                      <label className={`flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-xl border-1.5 px-3 py-2.5 transition-colors ${
                         entry.url
-                          ? "border-emerald-300 dark:border-emerald-600/50 bg-emerald-50 dark:bg-emerald-900/20"
-                          : "border-slate-200 dark:border-white/[0.08] hover:border-violet-300 dark:hover:border-violet-600/40 bg-slate-50 dark:bg-white/[0.02]"
+                          ? "border-emerald-300 bg-emerald-50 dark:border-emerald-500/40 dark:bg-emerald-500/10"
+                          : "border-line bg-surface hover:border-ink-3"
                       }`}>
                         {entry.uploading
-                          ? <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-500 border-t-transparent shrink-0" />
+                          ? <div className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-ink-3 border-t-transparent" />
                           : entry.url
-                          ? <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
-                          : <Upload size={14} className="text-slate-400 shrink-0" />}
-                        <span className={`text-xs font-medium truncate ${entry.url ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400"}`}>
+                          ? <CheckCircle2 size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                          : <Upload size={14} className="shrink-0 text-ink-3" />}
+                        <span className={`truncate text-xs font-medium ${entry.url ? "text-emerald-700 dark:text-emerald-300" : "text-ink-2"}`}>
                           {entry.uploading ? "Uploaden…" : entry.url ? "Geüpload" : "Kies afbeelding…"}
                         </span>
                         <input type="file" accept="image/*" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileChange(index, f); }} />
                       </label>
                     )}
                     {images.length > 1 && (
-                      <button type="button" onClick={() => removeImage(index)} className="shrink-0 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors">
+                      <button type="button" onClick={() => removeImage(index)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400">
                         <X size={13} />
                       </button>
                     )}
@@ -608,7 +587,7 @@ export function TripCosplayTab() {
                 </div>
               ))}
             </div>
-            <button type="button" onClick={addImage} className="flex items-center gap-1.5 text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors mt-1">
+            <button type="button" onClick={addImage} className="flex items-center gap-1.5 text-[12.5px] font-semibold text-brand-text hover:underline">
               <Plus size={12} />
               Afbeelding toevoegen
             </button>

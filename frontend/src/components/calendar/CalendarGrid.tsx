@@ -14,7 +14,6 @@ import {
   X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Badge } from "../common/Badge";
 import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
 import { UserAvatar } from "../common/UserAvatar";
@@ -24,6 +23,8 @@ import { useTimeStore, getNow } from "../../store/time.store";
 import { routes } from "../../config/routes";
 import type { CalendarEvent, Meal, User } from "../../types";
 import { DAY_LABELS } from "../../constants";
+
+const TAG = "inline-flex items-center gap-1 rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase leading-[18px] tracking-[0.05em] text-ink-2";
 
 interface CalendarGridProps {
   events: CalendarEvent[];
@@ -170,40 +171,40 @@ export function CalendarGrid({
   }
 
   return (
-    <div className="card-surface rounded-2xl overflow-hidden">
+    <div className="card-surface overflow-hidden">
       {/* Month navigation */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-700/60">
+      <div className="flex items-center justify-between border-b-1.5 border-line px-3 py-2.5">
         <button
           onClick={prevMonth}
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 active:bg-slate-100 transition-colors dark:hover:bg-slate-700"
+          className="flex h-10 w-10 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
         >
-          <ChevronLeft size={16} />
+          <ChevronLeft size={18} />
         </button>
         <div className="text-center">
-          <p className="text-sm font-black text-slate-800 dark:text-white capitalize">
+          <p className="font-display text-[24px] font-extrabold uppercase leading-none text-ink">
             {monthLabel}
           </p>
           {monthEventCount > 0 && (
-            <p className="text-xs text-sky-500 font-semibold mt-0.5">
+            <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3">
               {monthEventCount} {monthEventCount === 1 ? "event" : "events"}
             </p>
           )}
         </div>
         <button
           onClick={nextMonth}
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 active:bg-slate-100 transition-colors dark:hover:bg-slate-700"
+          className="flex h-10 w-10 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
         >
-          <ChevronRight size={16} />
+          <ChevronRight size={18} />
         </button>
       </div>
 
-      <div className="px-3 py-3">
+      <div className="px-3 py-3 sm:px-4">
         {/* Day-of-week headers */}
         <div className="grid grid-cols-7 mb-1">
           {DAY_LABELS.map((d) => (
             <div
               key={d}
-              className="text-center text-xs font-bold text-slate-300 py-1"
+              className="py-1 text-center font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-3"
             >
               {d}
             </div>
@@ -227,22 +228,19 @@ export function CalendarGrid({
                 onClick={() => hasEvents && setSelectedDate(isSelected ? null : dateKey)}
                 disabled={!hasEvents}
                 className={[
-                  "relative flex h-11 flex-col items-center justify-center text-sm transition-all select-none",
+                  "relative flex h-11 flex-col items-center justify-center font-mono text-sm tabular-nums transition-colors select-none sm:h-12",
                   hasEvents ? "cursor-pointer" : "cursor-default",
                   // Hover for non-group single-event days
-                  !isSelected && hasEvents && !isInGroup ? "rounded-xl hover:bg-sky-50 dark:hover:bg-sky-900/20" : "",
-                  // Hover for group days
-                  !isSelected && isInGroup ? "hover:brightness-95 dark:hover:brightness-110" : "",
+                  !isSelected && hasEvents && !isInGroup ? "rounded-lg hover:bg-sunken" : "",
                 ].filter(Boolean).join(" ")}
               >
                 {/* ── Multi-day group background span ── */}
                 {!isSelected && primaryBand && (
                   <div
-                    className="absolute inset-y-1 pointer-events-none z-0"
+                    className="pointer-events-none absolute inset-y-1 z-0 bg-brand-soft"
                     style={{
-                      left: primaryBand.isStart ? "20%" : 0,
-                      right: primaryBand.isEnd ? "20%" : 0,
-                      backgroundColor: primaryBand.accent + "2a",
+                      left: primaryBand.isStart ? "12%" : 0,
+                      right: primaryBand.isEnd ? "12%" : 0,
                       borderRadius:
                         primaryBand.isStart && primaryBand.isEnd ? "9999px"
                         : primaryBand.isStart ? "9999px 0 0 9999px"
@@ -254,42 +252,34 @@ export function CalendarGrid({
 
                 {/* ── Selected state circle ── */}
                 {isSelected && (
-                  <div className="absolute inset-y-1 left-[12%] right-[12%] bg-sky-500 rounded-full shadow-sm pointer-events-none z-0" />
+                  <div className="pointer-events-none absolute inset-y-1 left-[12%] right-[12%] z-0 rounded-full bg-ink dark:bg-brand" />
                 )}
 
                 {/* ── Today ring ── */}
                 {isToday && !isSelected && (
-                  <div
-                    className="absolute inset-y-1 left-[12%] right-[12%] rounded-full pointer-events-none z-0"
-                    style={{ boxShadow: "0 0 0 2px #38bdf8" }}
-                  />
+                  <div className="pointer-events-none absolute inset-y-1 left-[12%] right-[12%] z-0 rounded-full border-2 border-outline" />
                 )}
 
                 {/* ── Day number ── */}
                 <span
                   className={[
                     "relative z-10 leading-none",
-                    isSelected ? "font-black text-white" : "",
-                    !isSelected && isInGroup ? "font-black" : "",
-                    !isSelected && !isInGroup && hasEvents ? "font-black text-sky-700 dark:text-sky-400" : "",
-                    !isSelected && !hasEvents ? "font-medium text-slate-300 dark:text-slate-600" : "",
+                    isSelected ? "font-bold text-paper dark:text-brand-on" : "",
+                    !isSelected && hasEvents ? "font-bold text-ink" : "",
+                    !isSelected && !hasEvents ? (isToday ? "font-semibold text-ink" : "font-normal text-ink-3") : "",
                   ].filter(Boolean).join(" ")}
-                  style={!isSelected && primaryBand ? { color: primaryBand.accent } : undefined}
                 >
                   {day}
                 </span>
 
                 {/* ── Dot for single (non-group) events ── */}
                 {hasEvents && !isSelected && !isInGroup && (
-                  <span className="mt-0.5 h-1 w-1 rounded-full bg-sky-400 z-10" />
+                  <span className="z-10 mt-1 h-1 w-1 rounded-full bg-ink" />
                 )}
 
                 {/* ── Extra band dot when day has 2+ groups ── */}
                 {!isSelected && (dayBands[dateKey]?.length ?? 0) > 1 && (
-                  <span
-                    className="absolute bottom-1 right-1 h-1.5 w-1.5 rounded-full z-10"
-                    style={{ backgroundColor: dayBands[dateKey][1].accent }}
-                  />
+                  <span className="absolute bottom-1 right-1 z-10 h-1.5 w-1.5 rounded-full bg-ink-3" />
                 )}
               </button>
             );
@@ -306,7 +296,7 @@ export function CalendarGrid({
               transition={{ duration: 0.22 }}
               className="overflow-hidden"
             >
-              <div className="mt-3 space-y-2.5 border-t border-slate-100 dark:border-slate-700/60 pt-3">
+              <div className="mt-3 space-y-2.5 border-t-1.5 border-line pt-3">
                 {selectedEvents.map((ev) => {
                   const isPast = selectedDate !== null && selectedDate < today;
                   const isRsvpOpen = activeRsvpEvent === ev.id;
@@ -316,57 +306,43 @@ export function CalendarGrid({
                   return (
                     <div
                       key={ev.id}
-                      className="rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-black/20"
+                      className="rounded-xl border-1.5 border-line bg-surface"
                     >
-                      {/* Accent line */}
-                      <div
-                        className="h-[3px]"
-                        style={{
-                          background: evColor
-                            ? `linear-gradient(to right, ${evColor.accent}, ${evColor.accent}80)`
-                            : "linear-gradient(to right, #38bdf8, #818cf8)",
-                        }}
-                      />
                       <div className="p-3">
                       <div className="flex items-start gap-2.5">
-                        <div
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                          style={evColor
-                            ? { backgroundColor: evColor.accent + "22" }
-                            : { background: "linear-gradient(135deg,#38bdf8,#818cf8)" }}
-                        >
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
                           {evColor
-                            ? <Layers size={14} style={{ color: evColor.accent }} />
-                            : <CalendarDays size={14} className="text-white" />}
+                            ? <Layers size={15} />
+                            : <CalendarDays size={15} />}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="font-black text-slate-900 dark:text-white text-sm leading-tight">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <p className="mr-0.5 text-[14px] font-semibold leading-tight text-ink">
                               {ev.event_name}
                             </p>
                             {ev.is_hotel && (
-                              <Badge variant="teal">
+                              <span className={TAG}>
                                 <BedDouble size={10} />
                                 Hotel
-                              </Badge>
+                              </span>
                             )}
                             {ev.has_con === false && (
-                              <Badge variant="teal">
+                              <span className={TAG}>
                                 <BedDouble size={10} />
                                 Reisdag
-                              </Badge>
+                              </span>
                             )}
                             {hasMeal(ev.id) && (
-                              <Badge variant="yellow">
+                              <span className={TAG} title="Etentje gepland">
                                 <Utensils size={10} />
-                              </Badge>
+                              </span>
                             )}
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); navigate(routes.event.view(ev.id)); }}
-                              className="flex items-center gap-1 rounded-lg bg-sky-50 dark:bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-sky-600 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-500/20 transition-colors"
+                              className="ml-auto flex items-center gap-1 text-[12.5px] font-semibold text-brand-text hover:underline"
                             >
-                              <Info size={10} />
+                              <Info size={12} />
                               Details
                             </button>
                           </div>
@@ -381,7 +357,7 @@ export function CalendarGrid({
                                     key={p}
                                     name={resolved?.name ?? p}
                                     user={resolved}
-                                    className="h-7 w-7 text-[10px] ring-2 ring-white dark:ring-[#1e293b]"
+                                    className="h-7 w-7 text-[10px] ring-2 ring-surface"
                                   />
                                 );
                               })}
@@ -404,8 +380,8 @@ export function CalendarGrid({
                               return (
                                 <div className="space-y-2">
                                   <div className="flex items-center justify-between">
-                                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">{label}</p>
-                                    <button type="button" onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                    <p className="section-label">{label}</p>
+                                    <button type="button" onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink">
                                       <X size={12} />
                                     </button>
                                   </div>
@@ -426,7 +402,7 @@ export function CalendarGrid({
                             }
 
                             return (
-                              <div className="mt-3 border-t border-sky-100/60 pt-3 dark:border-sky-800/30">
+                              <div className="mt-3 border-t border-line pt-3">
                                 {isRsvpOpen ? (
                                   <RsvpPanel
                                     mode={rsvpMode}
@@ -462,7 +438,7 @@ export function CalendarGrid({
                                       <button
                                         type="button"
                                         onClick={() => { setActiveRsvpEvent(ev.id); setRsvpMode("join"); setRsvpNames([]); setGroupRsvpId(null); }}
-                                        className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-sky-200/60 bg-sky-50 py-2 text-xs font-semibold text-sky-700 hover:bg-sky-100 transition-colors dark:border-sky-800/50 dark:bg-sky-900/25 dark:text-sky-400 dark:hover:bg-sky-900/40"
+                                        className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border-1.5 border-line bg-surface py-2 text-[12.5px] font-semibold text-ink transition-colors hover:border-ink-3"
                                       >
                                         <UserPlus size={12} />
                                         {isMultiDay ? "Deze dag" : "Aanmelden"}
@@ -471,7 +447,7 @@ export function CalendarGrid({
                                         <button
                                           type="button"
                                           onClick={() => { setActiveRsvpEvent(ev.id); setRsvpMode("leave"); setRsvpNames([]); setGroupRsvpId(null); }}
-                                          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200/60 bg-slate-50 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-100 transition-colors dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400 dark:hover:bg-slate-800"
+                                          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border-1.5 border-line bg-surface py-2 text-[12.5px] font-semibold text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
                                         >
                                           <UserMinus size={12} />
                                           Afmelden
@@ -483,8 +459,7 @@ export function CalendarGrid({
                                       <button
                                         type="button"
                                         onClick={() => { setGroupRsvpId(ev.multi_day_id!); setGroupRsvpMode("join"); setRsvpNames([]); setActiveRsvpEvent(null); }}
-                                        className="flex w-full items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition-colors"
-                                        style={{ border: `1px solid ${evColor?.accent ?? "#38bdf8"}40`, backgroundColor: `${evColor?.accent ?? "#38bdf8"}12`, color: evColor?.accent ?? "#38bdf8" }}
+                                        className="flex w-full items-center justify-center gap-1.5 rounded-xl border-1.5 border-line bg-surface py-2 text-[12.5px] font-semibold text-ink transition-colors hover:border-ink-3"
                                       >
                                         <Layers size={11} />
                                         Alle {groupIds.length} dagen aanmelden

@@ -2,6 +2,31 @@ import { Wind, Droplets, Sun, Sunrise, Lightbulb, History } from "lucide-react";
 import type { EventWeather, ClimateAverage } from "../../hooks/useEventWeather";
 import { getWeatherAdvice, getClimateAdvice } from "../../utils/weather";
 
+/** The "Advies" footer shared by both weather cards, with the mascot at the edge. */
+function AdviceRow({ tip }: { tip: string }) {
+  return (
+    <div className="flex items-center gap-3 border-t border-line px-4 pt-3.5">
+      <div className="mb-3.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+        <Lightbulb size={14} />
+      </div>
+      <div className="mb-3.5 min-w-0 flex-1">
+        <p className="section-label mb-0.5">
+          Advies
+        </p>
+        <p className="text-xs font-medium leading-relaxed text-ink-2">
+          {tip}
+        </p>
+      </div>
+      <img
+        src="/assets/images/ankerd-nerd-logo.png"
+        alt=""
+        aria-hidden
+        className="pointer-events-none h-14 w-14 shrink-0 select-none self-end object-contain object-bottom"
+      />
+    </div>
+  );
+}
+
 export function WeatherCard({ weather }: { weather: EventWeather }) {
   const uvLabel =
     weather.uv_index <= 2
@@ -13,58 +38,55 @@ export function WeatherCard({ weather }: { weather: EventWeather }) {
           : "Zeer hoog";
   const uvColor =
     weather.uv_index <= 2
-      ? "text-emerald-400"
+      ? "text-emerald-600 dark:text-emerald-400"
       : weather.uv_index <= 5
-        ? "text-yellow-400"
+        ? "text-amber-600 dark:text-amber-400"
         : weather.uv_index <= 7
-          ? "text-orange-400"
-          : "text-rose-400";
+          ? "text-orange-600 dark:text-orange-400"
+          : "text-rose-600 dark:text-rose-400";
 
   const advice = getWeatherAdvice(weather);
 
   return (
-    <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden bg-white dark:bg-slate-900">
+    <div className="card-surface overflow-hidden">
       {/* Header */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-sky-400 via-sky-500 to-indigo-600 p-4">
-        <div className="pointer-events-none absolute -top-6 -right-6 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
-        <div className="pointer-events-none absolute bottom-0 left-8 h-20 w-20 rounded-full bg-indigo-400/20 blur-xl" />
-
-        <p className="relative text-[10px] font-bold uppercase tracking-widest text-sky-100/60 mb-2">
+      <div className="px-4 pb-4 pt-4">
+        <p className="section-label mb-2">
           Weersvoorspelling
         </p>
-        <div className="relative flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-black text-white leading-none tabular-nums">
+              <span className="font-display text-[40px] font-extrabold leading-[0.95] tabular-nums text-ink">
                 {weather.temp_max}°
               </span>
-              <span className="text-base font-light text-sky-100/80">
+              <span className="font-mono text-sm tabular-nums text-ink-3">
                 /{weather.temp_min}°C
               </span>
             </div>
-            <p className="text-sm font-semibold text-white mt-1">
+            <p className="mt-1 text-sm font-semibold text-ink">
               {weather.description}
             </p>
-            <p className="text-xs text-sky-200/70 mt-0.5">
+            <p className="mt-0.5 text-xs text-ink-3">
               Voelt als {weather.feels_max}° – {weather.feels_min}°C
             </p>
-            <div className="flex items-center gap-3 mt-2">
-              <span className="flex items-center gap-1 text-xs text-sky-100/80">
-                <Droplets size={12} className="text-sky-200" /> {weather.precip_prob_max}%
+            <div className="mt-2 flex items-center gap-3">
+              <span className="flex items-center gap-1 font-mono text-xs tabular-nums text-ink-2">
+                <Droplets size={12} className="text-ink-3" /> {weather.precip_prob_max}%
               </span>
-              <span className="flex items-center gap-1 text-xs text-sky-100/80">
-                <Wind size={12} className="text-sky-200" /> {weather.wind_max_kmh} km/h
+              <span className="flex items-center gap-1 font-mono text-xs tabular-nums text-ink-2">
+                <Wind size={12} className="text-ink-3" /> {weather.wind_max_kmh} km/h
               </span>
             </div>
           </div>
-          <span className="text-5xl leading-none shrink-0 drop-shadow-sm">
+          <span className="shrink-0 text-5xl leading-none">
             {weather.icon}
           </span>
         </div>
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-slate-800 border-b border-slate-100 dark:border-slate-800">
+      <div className="grid grid-cols-2 divide-x divide-line border-t border-line">
         {[
           {
             icon: Sun,
@@ -76,17 +98,17 @@ export function WeatherCard({ weather }: { weather: EventWeather }) {
             icon: Sunrise,
             value: weather.sunrise,
             sub: `↓${weather.sunset}`,
-            cls: "text-amber-500",
+            cls: "text-ink-3",
           },
         ].map(({ icon: Icon, value, sub, cls }) => (
           <div
             key={value}
-            className="flex items-center justify-center gap-1 py-2 px-1.5"
+            className="flex items-center justify-center gap-1 px-1.5 py-2"
           >
             <Icon size={12} className={`${cls} shrink-0`} />
-            <p className="text-[11px] leading-none tabular-nums truncate">
-              <span className="font-bold text-slate-800 dark:text-white">{value}</span>
-              <span className="text-slate-400 dark:text-slate-500 font-medium"> {sub}</span>
+            <p className="truncate font-mono text-[11px] leading-none tabular-nums">
+              <span className="font-semibold text-ink">{value}</span>
+              <span className="font-medium text-ink-3"> {sub}</span>
             </p>
           </div>
         ))}
@@ -94,22 +116,22 @@ export function WeatherCard({ weather }: { weather: EventWeather }) {
 
       {/* Hourly timeline */}
       {weather.hourly.length > 0 && (
-        <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="border-t border-line px-4 py-3">
           <div className="grid grid-cols-6 gap-1">
             {weather.hourly.map((slot) => (
               <div
                 key={slot.hour}
                 className="flex flex-col items-center gap-0.5"
               >
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium tabular-nums">
+                <p className="font-mono text-[10px] font-medium tabular-nums text-ink-3">
                   {slot.hour}u
                 </p>
                 <span className="text-xl leading-none">{slot.icon}</span>
-                <p className="text-xs font-bold text-slate-700 dark:text-slate-200 tabular-nums">
+                <p className="font-mono text-xs font-semibold tabular-nums text-ink">
                   {slot.temp}°
                 </p>
                 {slot.precip_prob > 0 && (
-                  <p className="text-[9px] font-semibold text-sky-500 tabular-nums">
+                  <p className="font-mono text-[9px] font-semibold tabular-nums text-brand-text">
                     {slot.precip_prob}%
                   </p>
                 )}
@@ -120,25 +142,7 @@ export function WeatherCard({ weather }: { weather: EventWeather }) {
       )}
 
       {/* Weather advice */}
-      <div className="relative flex items-center gap-3 px-4 py-3.5 overflow-hidden bg-amber-50/60 dark:bg-amber-500/[0.06]">
-        <img
-          src="/assets/images/ankerd-nerd-logo.png"
-          alt=""
-          aria-hidden
-          className="absolute right-2 bottom-0 h-16 w-16 object-contain object-bottom pointer-events-none select-none"
-        />
-        <div className="h-7 w-7 shrink-0 rounded-lg bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center">
-          <Lightbulb size={14} className="text-amber-500" />
-        </div>
-        <div className="min-w-0 pr-14">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-amber-500/80 dark:text-amber-400/60 mb-0.5">
-            Advies
-          </p>
-          <p className="text-xs font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
-            {advice.tip}
-          </p>
-        </div>
-      </div>
+      <AdviceRow tip={advice.tip} />
     </div>
   );
 }
@@ -150,90 +154,73 @@ export function ClimateAverageCard({ climate }: { climate: ClimateAverage }) {
   const advice = getClimateAdvice(climate);
 
   return (
-    <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden bg-white dark:bg-slate-900">
+    <div className="card-surface overflow-hidden">
       {/* Header */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-500 via-slate-600 to-indigo-700 p-4">
-        <div className="pointer-events-none absolute -top-6 -right-6 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
-        <div className="pointer-events-none absolute bottom-0 left-8 h-20 w-20 rounded-full bg-indigo-400/20 blur-xl" />
-
-        <div className="relative flex items-center gap-1.5 mb-2">
-          <History size={11} className="text-slate-300/70" />
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-300/70">
+      <div className="px-4 pb-4 pt-4">
+        <div className="mb-2 flex items-center gap-1.5">
+          <History size={11} className="text-ink-3" />
+          <p className="section-label">
             Historisch gemiddelde
           </p>
         </div>
-        <div className="relative flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-black text-white leading-none tabular-nums">
+              <span className="font-display text-[40px] font-extrabold leading-[0.95] tabular-nums text-ink">
                 {climate.temp_max_avg}°
               </span>
-              <span className="text-base font-light text-slate-200/80">
+              <span className="font-mono text-sm tabular-nums text-ink-3">
                 /{climate.temp_min_avg}°C
               </span>
             </div>
-            <p className="text-sm font-semibold text-white mt-1">
+            <p className="mt-1 text-sm font-semibold text-ink">
               {climate.description}
             </p>
-            <div className="flex items-center gap-3 mt-2">
-              <span className="flex items-center gap-1 text-xs text-slate-200/80">
-                <Droplets size={12} className="text-slate-300" /> {climate.precip_prob}%
+            <div className="mt-2 flex items-center gap-3">
+              <span className="flex items-center gap-1 font-mono text-xs tabular-nums text-ink-2">
+                <Droplets size={12} className="text-ink-3" /> {climate.precip_prob}%
               </span>
-              <span className="flex items-center gap-1 text-xs text-slate-200/80">
-                <Wind size={12} className="text-slate-300" /> {climate.wind_avg_kmh} km/h
+              <span className="flex items-center gap-1 font-mono text-xs tabular-nums text-ink-2">
+                <Wind size={12} className="text-ink-3" /> {climate.wind_avg_kmh} km/h
               </span>
             </div>
           </div>
-          <span className="text-5xl leading-none shrink-0 drop-shadow-sm">
+          <span className="shrink-0 text-5xl leading-none">
             {climate.icon}
           </span>
         </div>
       </div>
 
       {/* Advice */}
-      <div className="relative flex items-center gap-3 px-4 py-3.5 overflow-hidden bg-amber-50/60 dark:bg-amber-500/[0.06]">
-        <img
-          src="/assets/images/ankerd-nerd-logo.png"
-          alt=""
-          aria-hidden
-          className="absolute right-2 bottom-0 h-16 w-16 object-contain object-bottom pointer-events-none select-none"
-        />
-        <div className="h-7 w-7 shrink-0 rounded-lg bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center">
-          <Lightbulb size={14} className="text-amber-500" />
-        </div>
-        <div className="min-w-0 pr-14">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-amber-500/80 dark:text-amber-400/60 mb-0.5">
-            Advies
-          </p>
-          <p className="text-xs font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
-            {advice.tip}
-          </p>
-        </div>
-      </div>
+      <AdviceRow tip={advice.tip} />
     </div>
   );
 }
 
 export function WeatherSkeleton() {
   return (
-    <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden animate-pulse">
-      <div className="h-28 bg-gradient-to-br from-sky-500/30 to-indigo-600/30" />
-      <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-slate-800 border-b border-slate-100 dark:border-slate-800">
+    <div className="card-surface animate-pulse overflow-hidden">
+      <div className="space-y-2.5 px-4 py-4">
+        <div className="h-3 w-28 rounded bg-sunken" />
+        <div className="h-10 w-24 rounded-lg bg-sunken" />
+        <div className="h-3 w-40 rounded bg-sunken" />
+      </div>
+      <div className="grid grid-cols-2 divide-x divide-line border-t border-line">
         {[...Array(2)].map((_, i) => (
-          <div key={i} className="h-9 bg-slate-50 dark:bg-slate-800/40" />
+          <div key={i} className="h-9" />
         ))}
       </div>
-      <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 grid grid-cols-6 gap-2">
+      <div className="grid grid-cols-6 gap-2 border-t border-line px-4 py-3">
         {[...Array(6)].map((_, i) => (
           <div
             key={i}
-            className="h-12 rounded-lg bg-slate-100 dark:bg-slate-800"
+            className="h-12 rounded-lg bg-sunken"
           />
         ))}
       </div>
-      <div className="px-4 py-3.5 flex gap-3 items-center bg-slate-50 dark:bg-slate-800/50">
-        <div className="h-9 w-9 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" />
-        <div className="h-3 rounded bg-slate-200 dark:bg-slate-700 flex-1" />
+      <div className="flex items-center gap-3 border-t border-line px-4 py-3.5">
+        <div className="h-8 w-8 shrink-0 rounded-lg bg-sunken" />
+        <div className="h-3 flex-1 rounded bg-sunken" />
       </div>
     </div>
   );

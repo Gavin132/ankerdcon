@@ -188,7 +188,7 @@ function RideDrawer({
             )}
           />
           {errors.driver && (
-            <p className="text-xs text-rose-400 mt-1">
+            <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
               {errors.driver.message}
             </p>
           )}
@@ -198,7 +198,7 @@ function RideDrawer({
           <label className={L}>Vertrektijd</label>
           <input {...register("departure_time")} type="datetime-local" className={F} />
           {errors.departure_time && (
-            <p className="text-xs text-rose-400 mt-1">
+            <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
               {errors.departure_time.message}
             </p>
           )}
@@ -219,7 +219,7 @@ function RideDrawer({
             )}
           />
           {errors.start_location && (
-            <p className="text-xs text-rose-400 mt-1">{errors.start_location.message}</p>
+            <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.start_location.message}</p>
           )}
         </div>
 
@@ -243,7 +243,7 @@ function RideDrawer({
           <div>
             <label className={L}>Totaal aantal plekken in de auto</label>
             <input {...register("total_seats")} type="number" min={0} className={F} />
-            <p className="mt-1.5 text-[11px] text-slate-500">Incl. de chauffeur</p>
+            <p className="mt-1.5 text-[11px] text-ink-3">Incl. de chauffeur</p>
           </div>
         )}
 
@@ -259,7 +259,7 @@ function RideDrawer({
               {...register("car_available")}
               className="cb"
             />
-            <span className="text-sm text-slate-300">Auto beschikbaar</span>
+            <span className="text-sm text-ink-2">Auto beschikbaar</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -267,13 +267,13 @@ function RideDrawer({
               {...register("action_required")}
               className="cb"
             />
-            <span className="text-sm text-slate-300">Actie vereist</span>
+            <span className="text-sm text-ink-2">Actie vereist</span>
           </label>
         </div>
 
         <div>
           <label className={L}>Koppel aan evenement</label>
-          <select {...register("linked_event_id")} className={`${F} [color-scheme:dark]`}>
+          <select {...register("linked_event_id")} className={F}>
             <option value="">— Geen evenement —</option>
             {allEvents.map((ev) => (
               <option key={ev.id} value={ev.id}>
@@ -364,14 +364,14 @@ export function AdminRidesPage() {
   }
 
   return (
-    <div className="p-5 lg:p-8 max-w-6xl mx-auto space-y-5">
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
       <AdminPageHeader
         title="Ritten"
         subtitle={`${rides.length} ritten gepland`}
         action={
           <button
             onClick={() => setDrawer("new")}
-            className="flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 transition-colors shadow-sm"
+            className="btn-primary gap-2 px-4 py-2.5 text-sm"
           >
             <Plus size={16} />
             Nieuwe rit
@@ -386,10 +386,10 @@ export function AdminRidesPage() {
             <button
               key={d}
               onClick={() => handleFilter(d)}
-              className={`shrink-0 rounded-xl px-3.5 py-1.5 text-sm font-semibold transition-colors ${
+              className={`shrink-0 rounded-full border-1.5 px-3.5 py-1.5 text-sm font-semibold transition-colors ${
                 dirFilter === d
-                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
-                  : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                  ? "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
+                  : "border-line bg-surface text-ink-2 hover:border-ink-3"
               }`}
             >
               {d === "All" ? "Alle" : d}
@@ -403,11 +403,11 @@ export function AdminRidesPage() {
         />
       </div>
 
-      <div className="rounded-2xl border border-slate-200/80 dark:border-white/[0.06] bg-white dark:bg-slate-800/60 overflow-hidden shadow-sm">
+      <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
+              <tr className="border-b-1.5 border-line">
                 <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
                   <input
                     type="checkbox"
@@ -417,31 +417,31 @@ export function AdminRidesPage() {
                     className="cb"
                   />
                 </th>
-                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Rit
                 </th>
-                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Vertrek
                 </th>
-                <th className="hidden sm:table-cell px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="hidden sm:table-cell px-5 py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Zitplaatsen
                 </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Passagiers
                 </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Acties
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+            <tbody className="divide-y divide-line">
               {isLoading ? (
                 <AdminTableSkeleton cols={6} />
               ) : filtered.length === 0 ? (
                 <tr>
                   <td
                     colSpan={6}
-                    className="px-5 py-10 text-center text-sm text-slate-400"
+                    className="px-5 py-10 text-center text-sm text-ink-3"
                   >
                     Geen ritten gevonden.
                   </td>
@@ -450,7 +450,7 @@ export function AdminRidesPage() {
                 paginated.map((ride) => (
                   <tr
                     key={ride.id}
-                    className={`transition-colors ${selectedIds.has(ride.id) ? "bg-sky-500/[0.06] hover:bg-sky-500/[0.08]" : "hover:bg-slate-50 dark:hover:bg-white/[0.03]"}`}
+                    className={`transition-colors ${selectedIds.has(ride.id) ? "bg-brand-soft/50 hover:bg-brand-soft/70" : "hover:bg-sunken"}`}
                   >
                     <td
                       className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3.5"
@@ -467,24 +467,20 @@ export function AdminRidesPage() {
                     <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                       <div className="flex items-center gap-2 sm:gap-2.5">
                         <div
-                          className={`flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-lg ${
-                            ride.is_public_transport
-                              ? "bg-violet-100 dark:bg-violet-500/10"
-                              : "bg-sky-100 dark:bg-sky-500/10"
-                          }`}
+                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink sm:h-7 sm:w-7"
                         >
                           {ride.is_public_transport ? (
-                            <Train size={13} className="text-violet-500" />
+                            <Train size={13} />
                           ) : (
-                            <Car size={13} className="text-sky-500" />
+                            <Car size={13} />
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                          <p className="text-sm font-semibold text-ink truncate">
                             {ride.driver}
                           </p>
                           <span
-                            className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${DIRECTION_COLORS[ride.direction] ?? ""}`}
+                            className={`mt-0.5 inline-block rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] ${DIRECTION_COLORS[ride.direction] ?? "text-ink-2"}`}
                           >
                             {ride.direction}
                           </span>
@@ -492,18 +488,18 @@ export function AdminRidesPage() {
                       </div>
                     </td>
                     <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
-                      <p className="text-sm text-slate-700 dark:text-slate-300 font-mono whitespace-nowrap">
+                      <p className="text-sm text-ink-2 font-mono whitespace-nowrap">
                         {formatDateTime(ride.departure_time)}
                       </p>
-                      <p className="text-xs text-slate-400 truncate max-w-[140px] sm:max-w-none">
+                      <p className="text-xs text-ink-3 truncate max-w-[140px] sm:max-w-none">
                         {ride.start_location}
                       </p>
                     </td>
                     <td className="hidden sm:table-cell px-5 py-3.5">
                       {ride.is_public_transport ? (
-                        <span className="text-xs text-slate-400">N/A</span>
+                        <span className="text-xs text-ink-3">N/A</span>
                       ) : (
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        <span className="font-mono text-sm font-medium tabular-nums text-ink-2">
                           {ride.passengers.length}/{ride.total_seats}
                         </span>
                       )}
@@ -511,7 +507,7 @@ export function AdminRidesPage() {
                     <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
                       <div className="flex -space-x-1.5">
                         {ride.passengers.length === 0 ? (
-                          <span className="text-xs text-slate-400">—</span>
+                          <span className="text-xs text-ink-3">—</span>
                         ) : (
                           <>
                             {ride.passengers.slice(0, 4).map((p) => {
@@ -523,12 +519,12 @@ export function AdminRidesPage() {
                                   key={p}
                                   name={resolved?.name ?? p}
                                   user={resolved}
-                                  className="h-5 w-5 sm:h-6 sm:w-6 text-[7px] sm:text-[8px] ring-2 ring-slate-800"
+                                  className="h-5 w-5 sm:h-6 sm:w-6 text-[7px] sm:text-[8px] ring-2 ring-surface"
                                 />
                               );
                             })}
                             {ride.passengers.length > 4 && (
-                              <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full ring-2 ring-slate-800 bg-slate-700 text-[8px] sm:text-[9px] font-bold text-slate-300">
+                              <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full ring-2 ring-surface bg-sunken text-[8px] sm:text-[9px] font-bold text-ink-2">
                                 +{ride.passengers.length - 4}
                               </span>
                             )}

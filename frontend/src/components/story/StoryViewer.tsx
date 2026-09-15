@@ -140,7 +140,7 @@ export function StoryViewer({ eventDayId, open, onClose }: StoryViewerProps) {
     <AnimatePresence>
       {open && current && (
         <motion.div
-          className="fixed inset-0 z-[600] bg-black/95 flex flex-col"
+          className="fixed inset-0 z-[600] flex flex-col bg-[#080C0F]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -167,14 +167,14 @@ export function StoryViewer({ eventDayId, open, onClose }: StoryViewerProps) {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 shrink-0">
             <div className="flex items-center gap-2 min-w-0">
-              <UserAvatar name={current.uploaded_by} className="h-6 w-6 text-[9px]" />
-              <p className="text-xs font-bold text-white/90 truncate">{current.uploaded_by}</p>
+              <UserAvatar name={current.uploaded_by} className="h-6 w-6 text-[9px] !border-0" />
+              <p className="truncate text-xs font-semibold text-[#E6F0F3]">{current.uploaded_by}</p>
             </div>
             <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => handleShare(current.image_url)}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
               >
                 <Share2 size={16} />
               </button>
@@ -182,7 +182,7 @@ export function StoryViewer({ eventDayId, open, onClose }: StoryViewerProps) {
                 type="button"
                 disabled={downloadingId === current.id}
                 onClick={() => handleDownload(current)}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-50"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3] disabled:opacity-50"
               >
                 {downloadingId === current.id ? (
                   <Loader2 size={16} className="animate-spin" />
@@ -194,7 +194,7 @@ export function StoryViewer({ eventDayId, open, onClose }: StoryViewerProps) {
                 <button
                   type="button"
                   onClick={() => handleDelete(current.id)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -202,7 +202,7 @@ export function StoryViewer({ eventDayId, open, onClose }: StoryViewerProps) {
               <button
                 type="button"
                 onClick={handleClose}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
               >
                 <X size={20} />
               </button>

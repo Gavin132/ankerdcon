@@ -14,7 +14,6 @@ import { useMeals } from "../hooks/useMeals";
 import { useExpenses } from "../hooks/useExpenses";
 import { useCurrentUser, useUsers } from "../hooks/useUsers";
 import { groupCalendarEntries, dayShort } from "../utils/multiDay";
-import { UserAvatar } from "../components/common/UserAvatar";
 import { UpcomingEventsCarousel } from "../components/hub/UpcomingEventsCarousel";
 import { QuickRideTiles } from "../components/hub/QuickRideTiles";
 import { LocationPingModal } from "../components/hub/LocationPingModal";
@@ -115,7 +114,7 @@ export function HubPage() {
   return (
     <>
     <motion.div
-      className="space-y-4"
+      className="space-y-6"
       variants={listContainer}
       initial="hidden"
       animate="show"
@@ -124,19 +123,15 @@ export function HubPage() {
       {/* ── Greeting ──────────────────────────────────────────────────────── */}
       {me?.show_greeting !== false && (
         <motion.div variants={listItem}>
-          <div className="flex items-center justify-between pt-1">
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
-                {greeting}
+          <div>
+            <div className="min-w-0">
+              <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3">
+                {greeting} · {todayFormatted}
               </p>
-              <h1 className="mt-0.5 text-[22px] font-black leading-tight tracking-tight text-slate-900 dark:text-white truncate">
+              <h1 className="mt-1 truncate font-display text-[34px] font-extrabold uppercase leading-[0.95] tracking-[0.005em] text-ink md:text-[42px]">
                 {me?.name ?? "…"}
               </h1>
-              <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500 font-medium">{todayFormatted}</p>
             </div>
-            {me && (
-              <UserAvatar name={me.name} className="h-12 w-12 text-base shrink-0 ml-4" />
-            )}
           </div>
         </motion.div>
       )}
@@ -146,7 +141,7 @@ export function HubPage() {
         <motion.div variants={listItem}>
           <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <AddStoryTile eventDayId={uploadTargetDay?.id ?? null} />
-            <div className="w-px h-16 shrink-0 self-start bg-slate-200 dark:bg-slate-700" />
+            <div className="w-px h-16 shrink-0 self-start bg-line" />
             {storyDays.map((day) => {
               const summary = storySummary?.[day.id];
               return (
@@ -168,57 +163,64 @@ export function HubPage() {
         </motion.div>
       )}
 
-      {/* ── Upcoming events carousel ─────────────────────────────────────── */}
-      {upcomingItems.length > 0 && (
-        <motion.div variants={listItem}>
-          <UpcomingEventsCarousel
-            items={upcomingItems}
-            allEvents={events ?? []}
+      {/* Two columns on wide screens: the trip on the left, what needs doing on the right. */}
+      <div className="space-y-6 xl:grid xl:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] xl:items-start xl:gap-8 xl:space-y-0">
+        <div className="min-w-0 space-y-6">
+          {/* ── Upcoming events carousel ───────────────────────────────── */}
+          {upcomingItems.length > 0 && (
+            <motion.div variants={listItem}>
+              <UpcomingEventsCarousel
+                items={upcomingItems}
+                allEvents={events ?? []}
+                meals={meals ?? []}
+                users={users ?? []}
+                onNavigate={(id) => navigate(routes.event.view(id))}
+                onParticipantClick={(user, rect) => {
+                  setPopupAnchorRect(rect);
+                  setPopupUser(user);
+                }}
+              />
+            </motion.div>
+          )}
+
+          {/* ── Quick ride shortcuts — switches to the shared restaurant ride
+                itself in the evening when a meal still needs transport. ── */}
+          {event && (
+            <motion.div variants={listItem}>
+              <QuickRideTiles event={event} restaurantMeal={restaurantMeal} rides={rides ?? []} />
+            </motion.div>
+          )}
+        </div>
+
+        <div className="min-w-0 space-y-6">
+          {/* ── Voor jou ─────────────────────────────────────────────────── */}
+          <ForYouPanel
+            events={events ?? []}
+            rides={rides ?? []}
             meals={meals ?? []}
-            users={users ?? []}
-            onNavigate={(id) => navigate(routes.event.view(id))}
-            onParticipantClick={(user, rect) => {
-              setPopupAnchorRect(rect);
-              setPopupUser(user);
-            }}
+            expenses={expenses}
+            myName={me?.name}
           />
-        </motion.div>
-      )}
 
-      {/* ── Quick ride shortcuts — switches to the shared restaurant ride
-            itself in the evening when a meal still needs transport. ──── */}
-      {event && (
-        <motion.div variants={listItem}>
-          <QuickRideTiles event={event} restaurantMeal={restaurantMeal} rides={rides ?? []} />
-        </motion.div>
-      )}
-
-      {/* ── Voor jou ───────────────────────────────────────────────────────── */}
-      <ForYouPanel
-        events={events ?? []}
-        rides={rides ?? []}
-        meals={meals ?? []}
-        expenses={expenses}
-        myName={me?.name}
-      />
-
-      {/* ── Locatie pingen ────────────────────────────────────────────────── */}
-      <motion.div variants={listItem}>
-        <button
-          type="button"
-          onClick={() => setPingOpen(true)}
-          className="card-surface-hover flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left"
-        >
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-500/10">
-            <MapPin size={15} className="text-emerald-500" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-semibold text-slate-900 dark:text-white">Locatie pingen</span>
-            <span className="block text-xs text-slate-400 dark:text-slate-500">Laat de groep weten waar je bent</span>
-          </span>
-          <ChevronRight size={14} className="shrink-0 text-slate-300 dark:text-slate-600" />
-        </button>
-      </motion.div>
+          {/* ── Locatie pingen ───────────────────────────────────────────── */}
+          <motion.div variants={listItem}>
+            <button
+              type="button"
+              onClick={() => setPingOpen(true)}
+              className="card-surface-hover flex w-full items-center gap-3 px-4 py-3.5 text-left"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                <MapPin size={15} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-ink">Locatie pingen</span>
+                <span className="block text-xs text-ink-3">Laat de groep weten waar je bent</span>
+              </span>
+              <ChevronRight size={14} className="shrink-0 text-ink-3" />
+            </button>
+          </motion.div>
+        </div>
+      </div>
 
     </motion.div>
 

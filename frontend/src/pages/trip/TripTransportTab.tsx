@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { Fragment, useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Car,
@@ -75,9 +75,9 @@ const createSchema = z
 
 type CreateForm = z.infer<typeof createSchema>;
 
-const SL = "block text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5";
-const SF = "space-y-4 rounded-2xl border border-slate-100 dark:border-white/[0.07] bg-slate-50 dark:bg-white/[0.03] p-4";
-const ST = "text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3";
+const SL = "section-label mb-1.5 block";
+const SF = "space-y-4 rounded-xl border-1.5 border-line bg-sunken p-4";
+const ST = "section-label mb-3";
 
 const container = {
   hidden: { opacity: 0 },
@@ -85,6 +85,27 @@ const container = {
 };
 
 const TAB_ORDER: Direction[] = ["Inbound", "Outbound", "Restaurant"];
+
+const DIRECTION_LABEL: Record<Direction, string> = {
+  Inbound: "Heen",
+  Outbound: "Terug",
+  Restaurant: "Restaurant",
+};
+
+const WIDE_QUERY = "(min-width: 1280px)";
+
+/** True from Tailwind's `xl` breakpoint, where the three lanes fit side by side. */
+function useIsWide() {
+  const [wide, setWide] = useState(() => typeof window !== "undefined" && window.matchMedia(WIDE_QUERY).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(WIDE_QUERY);
+    const onChange = () => setWide(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return wide;
+}
 
 /** Event › Vervoer: this trip's Heen / Terug / Restaurant rides, plus who has none yet. */
 export function TripTransportTab() {
@@ -99,6 +120,7 @@ export function TripTransportTab() {
   const [showTimeline, setShowTimeline] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
+  const isWide = useIsWide();
   const { data: allRides, isLoading } = useRides();
   const { data: users } = useUsers();
   const { data: currentUser } = useCurrentUser();
@@ -149,27 +171,31 @@ export function TripTransportTab() {
     }
   }, [formDirection, setValue]);
 
-  const allFiltered = rides.filter((r) => r.direction === tab);
-  const activeRides = allFiltered.filter(
-    (r) => getRideStatus(r.departure_time).status !== "past",
-  );
-  const pastRides = allFiltered
-    .filter((r) => getRideStatus(r.departure_time).status === "past")
-    .sort(
-      (a, b) =>
-        new Date(b.departure_time.replace(" ", "T")).getTime() -
-        new Date(a.departure_time.replace(" ", "T")).getTime(),
+  // Rides per direction, split into still-to-come and already departed.
+  function laneRides(d: Direction) {
+    const all = rides.filter((r) => r.direction === d);
+    const active = all.filter(
+      (r) => getRideStatus(r.departure_time).status !== "past",
     );
+    const past = all
+      .filter((r) => getRideStatus(r.departure_time).status === "past")
+      .sort(
+        (a, b) =>
+          new Date(b.departure_time.replace(" ", "T")).getTime() -
+          new Date(a.departure_time.replace(" ", "T")).getTime(),
+      );
+    return { all, active, past };
+  }
 
-  function openCreate() {
+  function openCreate(direction: Direction = tab) {
     const defaultDay = upcomingTripDays.find((d) => d.id === dayId) ?? upcomingTripDays[0];
     reset({
-      direction: tab,
+      direction,
       total_seats: 5,
       driver: currentUser?.name ?? "",
-      linked_event_id: tab === "Restaurant" ? undefined : defaultDay?.id,
-      start_location: tab === "Outbound" ? defaultDay?.location ?? "" : "",
-      end_location: tab === "Inbound" ? defaultDay?.location ?? "" : "",
+      linked_event_id: direction === "Restaurant" ? undefined : defaultDay?.id,
+      start_location: direction === "Outbound" ? defaultDay?.location ?? "" : "",
+      end_location: direction === "Inbound" ? defaultDay?.location ?? "" : "",
       parking_info: defaultDay?.parking_info ?? "",
     });
     setCreateOpen(true);
@@ -210,6 +236,133 @@ export function TripTransportTab() {
     }
   }
 
+  function renderLane(d: Direction, withHead: boolean) {
+    const { all, active, past } = laneRides(d);
+    const addLabel = d === "Restaurant" ? "Route toevoegen" : "Rit toevoegen";
+
+    return (
+      <section className="flex min-w-0 flex-col gap-3" aria-label={withHead ? DIRECTION_LABEL[d] : undefined}>
+        {withHead && (
+          <div className="flex items-center gap-2 border-b-2 border-outline px-0.5 pb-1">
+            <h3 className="font-display text-[22px] font-extrabold uppercase leading-none tracking-[0.02em] text-ink">
+              {DIRECTION_LABEL[d]}
+            </h3>
+            <span className="font-mono text-[12px] tabular-nums text-ink-3">{active.length}</span>
+            <button
+              type="button"
+              onClick={() => openCreate(d)}
+              className="ml-auto flex h-7 w-7 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+              title={addLabel}
+              aria-label={addLabel}
+            >
+              <Plus size={15} />
+            </button>
+          </div>
+        )}
+
+        {d !== "Restaurant" && !isTripOver(trip) && (
+          <TripMissingList
+            title="Nog geen vervoer"
+            people={gaps.transport
+              .filter((g) => g.items.includes(d === "Inbound" ? "Heen" : "Terug"))
+              .map((g) => ({ name: g.name, detail: g.items.join(" & ") }))}
+          />
+        )}
+
+        {isLoading ? (
+          <div className="space-y-3">
+            {[0, 1, 2].map((i) => <RideCardSkeleton key={i} />)}
+          </div>
+        ) : all.length === 0 ? (
+          <EmptyState
+            icon={<Car size={22} />}
+            title="Geen ritten gepland"
+            description={`Er zijn nog geen ${d === "Inbound" ? "heenritten" : d === "Outbound" ? "terugritten" : "restaurantritten"} toegevoegd.`}
+          />
+        ) : (
+          <>
+            {active.length === 0 ? (
+              <EmptyState
+                icon={<Car size={22} />}
+                title="Geen actieve ritten"
+                description="Alle ritten zijn al vertrokken. Bekijk de geschiedenis hieronder."
+              />
+            ) : (
+              <motion.div
+                key={d}
+                className="space-y-5"
+                variants={container}
+                initial="hidden"
+                animate="show"
+              >
+                {groupRidesByDay(active).map((group) => (
+                  <div key={group.label}>
+                    <p className="section-label mb-2">
+                      {group.label}
+                    </p>
+                    <div className="space-y-3">
+                      {group.rides.map((ride) =>
+                        ride.direction === "Restaurant" ? (
+                          <RestaurantCard key={ride.id} ride={ride} userNames={userNames} />
+                        ) : (
+                          <RideCard key={ride.id} ride={ride} userNames={userNames} />
+                        ),
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+
+            {past.length > 0 && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowHistory((v) => !v)}
+                  aria-expanded={showHistory}
+                  className="card-surface-hover flex min-h-[44px] w-full items-center justify-between px-4 py-2.5 text-[13px] font-semibold text-ink-2 hover:text-ink"
+                >
+                  <span className="flex items-center gap-2">
+                    <History size={14} />
+                    Geschiedenis <span className="font-mono tabular-nums">({past.length})</span>
+                  </span>
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${showHistory ? "rotate-180" : ""}`} />
+                </button>
+
+                <AnimatePresence>
+                  {showHistory && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.22 }}
+                      className="overflow-hidden"
+                    >
+                      <motion.div
+                        className="mt-3 space-y-3"
+                        variants={container}
+                        initial="hidden"
+                        animate="show"
+                      >
+                        {past.map((ride) =>
+                          ride.direction === "Restaurant" ? (
+                            <RestaurantCard key={ride.id} ride={ride} userNames={userNames} />
+                          ) : (
+                            <RideCard key={ride.id} ride={ride} userNames={userNames} />
+                          ),
+                        )}
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+          </>
+        )}
+      </section>
+    );
+  }
+
   const footer = (
     <Button
       type="submit"
@@ -223,7 +376,7 @@ export function TripTransportTab() {
 
   return (
     <div
-      className="space-y-5 pb-36 min-h-[65vh]"
+      className="min-h-[65vh] space-y-5 pb-44 xl:pb-10"
       onTouchStart={(e) => {
         touchStartX.current = e.touches[0].clientX;
         touchStartY.current = e.touches[0].clientY;
@@ -234,160 +387,97 @@ export function TripTransportTab() {
         const dy = e.changedTouches[0].clientY - touchStartY.current;
         touchStartX.current = null;
         touchStartY.current = null;
-        if (showTimeline) return;
+        if (showTimeline || isWide) return;
         if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
         const currentIndex = TAB_ORDER.indexOf(tab);
         if (dx < 0 && currentIndex < TAB_ORDER.length - 1) setTab(TAB_ORDER[currentIndex + 1]);
         if (dx > 0 && currentIndex > 0) setTab(TAB_ORDER[currentIndex - 1]);
       }}
     >
-      {tab !== "Restaurant" && !showTimeline && !isTripOver(trip) && (
-        <TripMissingList
-          title="Nog geen vervoer"
-          people={gaps.transport
-            .filter((g) => g.items.includes(tab === "Inbound" ? "Heen" : "Terug"))
-            .map((g) => ({ name: g.name, detail: g.items.join(" & ") }))}
-        />
+      {/* Desktop toolbar: lanes sit side by side, so only the timeline toggle is needed */}
+      {isWide && (
+        <div className="flex items-center justify-end">
+          <button
+            type="button"
+            onClick={() => setShowTimeline((v) => !v)}
+            aria-pressed={showTimeline}
+            className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-[13px] font-semibold transition-colors ${showTimeline
+              ? "bg-ink text-paper dark:bg-brand dark:text-brand-on"
+              : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
+              }`}
+            title="Tijdlijn"
+          >
+            <CalendarClock size={15} />
+            Tijdlijn
+          </button>
+        </div>
       )}
 
       {/* Timeline view */}
       {showTimeline && (
-        <RideTimeline rides={rides} />
+        <div className="mx-auto w-full max-w-3xl">
+          <RideTimeline rides={rides} />
+        </div>
       )}
 
-      {/* Tab content */}
-      {!showTimeline && (isLoading ? (
-        <div className="space-y-3">
-          {[0, 1, 2].map((i) => <RideCardSkeleton key={i} />)}
-        </div>
-      ) : allFiltered.length === 0 ? (
-        <EmptyState
-          icon={<Car size={36} />}
-          title="Geen ritten gepland"
-          description={`Er zijn nog geen ${tab === "Inbound" ? "heenritten" : tab === "Outbound" ? "terugritten" : "restaurantritten"} toegevoegd.`}
-        />
-      ) : (
-        <>
-          {activeRides.length === 0 ? (
-            <EmptyState
-              icon={<Car size={36} />}
-              title="Geen actieve ritten"
-              description="Alle ritten zijn al vertrokken. Bekijk de geschiedenis hieronder."
-            />
-          ) : (
-            <motion.div
-              key={tab}
-              className="space-y-5"
-              variants={container}
-              initial="hidden"
-              animate="show"
-            >
-              {groupRidesByDay(activeRides).map((group) => (
-                <div key={group.label}>
-                  <p className="mb-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                    {group.label}
-                  </p>
-                  <div className="space-y-3">
-                    {group.rides.map((ride) =>
-                      ride.direction === "Restaurant" ? (
-                        <RestaurantCard key={ride.id} ride={ride} userNames={userNames} />
-                      ) : (
-                        <RideCard key={ride.id} ride={ride} userNames={userNames} />
-                      ),
-                    )}
-                  </div>
-                </div>
-              ))}
-            </motion.div>
-          )}
-
-          {pastRides.length > 0 && (
-            <div>
-              <button
-                onClick={() => setShowHistory((v) => !v)}
-                className="card-surface flex w-full items-center justify-between rounded-2xl px-4 py-3 min-h-[48px] text-sm font-semibold text-slate-500 dark:text-slate-400 hover:shadow-sm transition-all"
-              >
-                <span className="flex items-center gap-2">
-                  <History size={14} />
-                  Geschiedenis ({pastRides.length})
-                </span>
-                <motion.div
-                  animate={{ rotate: showHistory ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ChevronDown size={14} />
-                </motion.div>
-              </button>
-
-              <AnimatePresence>
-                {showHistory && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.22 }}
-                    className="overflow-hidden"
-                  >
-                    <motion.div
-                      className="mt-3 space-y-3"
-                      variants={container}
-                      initial="hidden"
-                      animate="show"
-                    >
-                      {pastRides.map((ride) =>
-                        ride.direction === "Restaurant" ? (
-                          <RestaurantCard key={ride.id} ride={ride} userNames={userNames} />
-                        ) : (
-                          <RideCard key={ride.id} ride={ride} userNames={userNames} />
-                        ),
-                      )}
-                    </motion.div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
-        </>
-      ))}
+      {/* Lanes: one at a time on phones and tablets, side by side from xl */}
+      {!showTimeline && (
+        isWide ? (
+          <div className="grid grid-cols-3 items-start gap-6">
+            {TAB_ORDER.map((d) => (
+              <Fragment key={d}>{renderLane(d, true)}</Fragment>
+            ))}
+          </div>
+        ) : (
+          renderLane(tab, false)
+        )
+      )}
 
       {/* Direction tabs + timeline toggle + add button */}
-      <StickyActionBar>
-        <div className="space-y-2">
-          <div className="flex gap-2">
-            <div className="flex flex-1 gap-1.5 rounded-2xl bg-white dark:bg-slate-800 shadow-lg p-1">
-              {TAB_ORDER.map((d) => (
-                <button
-                  key={d}
-                  onClick={() => { setTab(d); setShowTimeline(false); }}
-                  className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-semibold transition-all duration-200 ${tab === d && !showTimeline
-                    ? "bg-slate-900 text-white dark:bg-slate-700 dark:text-slate-100"
-                    : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                    }`}
-                >
-                  {d === "Inbound" && <ArrowRight size={13} className={tab === d && !showTimeline ? "text-sky-400" : ""} />}
-                  {d === "Outbound" && <ArrowLeft size={13} className={tab === d && !showTimeline ? "text-sky-400" : ""} />}
-                  {d === "Restaurant" && <Utensils size={13} className={tab === d && !showTimeline ? "text-amber-400" : ""} />}
-                  {d === "Inbound" ? "Heen" : d === "Outbound" ? "Terug" : "Restaurant"}
-                </button>
-              ))}
+      {!isWide && (
+        <StickyActionBar>
+          <div className="space-y-2 rounded-2xl border-1.5 border-line bg-surface p-2 shadow-lg">
+            <div className="flex gap-2">
+              <div className="flex flex-1 gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]">
+                {TAB_ORDER.map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => { setTab(d); setShowTimeline(false); }}
+                    aria-pressed={tab === d && !showTimeline}
+                    className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-[7px] px-2 py-2 text-[13px] font-semibold transition-colors ${tab === d && !showTimeline
+                      ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]"
+                      : "text-ink-2 hover:text-ink"
+                      }`}
+                  >
+                    {d === "Inbound" && <ArrowRight size={13} className="shrink-0" />}
+                    {d === "Outbound" && <ArrowLeft size={13} className="shrink-0" />}
+                    {d === "Restaurant" && <Utensils size={13} className="shrink-0" />}
+                    {DIRECTION_LABEL[d]}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTimeline((v) => !v)}
+                aria-pressed={showTimeline}
+                aria-label="Tijdlijn"
+                className={`flex w-11 shrink-0 items-center justify-center rounded-[10px] transition-colors ${showTimeline
+                  ? "bg-ink text-paper dark:bg-brand dark:text-brand-on"
+                  : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
+                  }`}
+                title="Tijdlijn"
+              >
+                <CalendarClock size={16} />
+              </button>
             </div>
-            <button
-              onClick={() => setShowTimeline((v) => !v)}
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-lg transition-all ${showTimeline
-                ? "bg-sky-500 text-white"
-                : "bg-white text-slate-500 hover:text-slate-700 dark:bg-slate-800 dark:text-slate-400"
-                }`}
-              title="Tijdlijn"
-            >
-              <CalendarClock size={16} />
-            </button>
+            <Button className="w-full" onClick={() => openCreate()}>
+              <Plus size={16} />
+              {tab === "Restaurant" ? "Route toevoegen" : "Rit toevoegen"}
+            </Button>
           </div>
-          <Button className="w-full shadow-lg" onClick={openCreate}>
-            <Plus size={16} />
-            {tab === "Restaurant" ? "Route toevoegen" : "Rit toevoegen"}
-          </Button>
-        </div>
-      </StickyActionBar>
+        </StickyActionBar>
+      )}
 
       {/* Create drawer */}
       <Drawer
@@ -427,7 +517,7 @@ export function TripTransportTab() {
                 <button
                   type="button"
                   onClick={() => setValue("driver", "", { shouldValidate: true })}
-                  className="absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition-colors"
+                  className="absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
                   title="Chauffeur verwijderen"
                 >
                   <XIcon size={14} />
@@ -435,7 +525,7 @@ export function TripTransportTab() {
               )}
             </div>
             {errors.driver && (
-              <p className="mt-1.5 text-xs text-rose-500">{errors.driver.message}</p>
+              <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400">{errors.driver.message}</p>
             )}
           </div>
 
@@ -480,11 +570,11 @@ export function TripTransportTab() {
                   />
                 )}
               />
-              <p className="mt-1.5 text-xs text-slate-400">
+              <p className="mt-1.5 text-xs text-ink-3">
                 De datum en {formDirection === "Outbound" ? "het vertrekpunt" : "de bestemming"} volgen uit het event.
               </p>
               {errors.linked_event_id && (
-                <p className="mt-1.5 text-xs text-rose-500">{errors.linked_event_id.message}</p>
+                <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400">{errors.linked_event_id.message}</p>
               )}
             </div>
           )}
@@ -501,7 +591,7 @@ export function TripTransportTab() {
                   {...register(formDirection === "Restaurant" ? "departure_time" : "ride_time")}
                 />
                 {(errors.departure_time || errors.ride_time) && (
-                  <p className="mt-1.5 text-xs text-rose-500">
+                  <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400">
                     {(errors.departure_time ?? errors.ride_time)?.message}
                   </p>
                 )}
@@ -516,7 +606,7 @@ export function TripTransportTab() {
                     className="input-field"
                     {...register("total_seats")}
                   />
-                  <p className="mt-1 text-xs text-slate-400">Incl. bestuurder</p>
+                  <p className="mt-1 text-xs text-ink-3">Incl. bestuurder</p>
                 </div>
               )}
             </div>
@@ -540,15 +630,15 @@ export function TripTransportTab() {
                 )}
               />
               {errors.start_location && (
-                <p className="mt-1.5 text-xs text-rose-500">{errors.start_location.message}</p>
+                <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400">{errors.start_location.message}</p>
               )}
               {formDirection === "Restaurant" && (
-                <p className="mt-1.5 text-xs text-slate-400">
+                <p className="mt-1.5 text-xs text-ink-3">
                   Waar vertrekt deze rit vandaan? De bestemming (het restaurant) komt automatisch uit het gekoppelde etentje hierboven.
                 </p>
               )}
               {formDirection === "Outbound" && (
-                <p className="mt-1.5 text-xs text-slate-400">Komt automatisch uit het gekoppelde event.</p>
+                <p className="mt-1.5 text-xs text-ink-3">Komt automatisch uit het gekoppelde event.</p>
               )}
             </div>
             {formDirection !== "Restaurant" && (
@@ -567,7 +657,7 @@ export function TripTransportTab() {
                   )}
                 />
                 {formDirection === "Inbound" && (
-                  <p className="mt-1.5 text-xs text-slate-400">Komt automatisch uit het gekoppelde event.</p>
+                  <p className="mt-1.5 text-xs text-ink-3">Komt automatisch uit het gekoppelde event.</p>
                 )}
               </div>
             )}
@@ -575,19 +665,19 @@ export function TripTransportTab() {
 
           {/* Restaurant opties */}
           {formDirection === "Restaurant" && (
-            <div className="rounded-2xl border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 p-4 space-y-3">
-              <p className={`${ST} text-amber-600 dark:text-amber-400`}>Restaurant opties</p>
+            <div className="space-y-3 rounded-xl border-1.5 border-amber-200 bg-amber-50 p-4 dark:border-amber-500/25 dark:bg-amber-500/10">
+              <p className="mb-3 font-mono text-[11px] font-semibold uppercase tracking-[0.09em] text-amber-800 dark:text-amber-300">Restaurant opties</p>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
-                  className="h-4 w-4 rounded accent-amber-500 shrink-0"
+                  className="cb"
                   {...register("action_required")}
                 />
                 <div>
-                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-sm font-semibold text-ink">
                     Actie vereist
                   </span>
-                  <p className="text-xs text-slate-400 mt-0.5">Reageer verplicht voor deelname</p>
+                  <p className="mt-0.5 text-xs text-ink-3">Reageer verplicht voor deelname</p>
                 </div>
               </label>
             </div>

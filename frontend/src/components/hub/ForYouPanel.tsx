@@ -30,9 +30,9 @@ interface ForYouItem {
 const COLLAPSED_COUNT = 4;
 
 const TONE = {
-  bad:  "bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400",
-  warn: "bg-amber-100 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
-  info: "bg-sky-100 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400",
+  bad:  "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
+  warn: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
+  info: "bg-brand-soft text-brand-text",
 };
 
 function people(n: number) {
@@ -132,18 +132,18 @@ export function ForYouPanel({ events, rides, meals, expenses, myName }: ForYouPa
   const hidden = items.length - shown.length;
 
   return (
-    <motion.section variants={listItem} className="card-surface rounded-2xl overflow-hidden" aria-labelledby="for-you-title">
+    <motion.section variants={listItem} className="card-surface overflow-hidden" aria-labelledby="for-you-title">
       <div className="flex items-center gap-2 px-4 pt-4 pb-2">
         <p id="for-you-title" className="section-label">Voor jou</p>
         {items.length > 0 && (
-          <span className="rounded-full bg-rose-100 px-2 text-[10px] font-bold leading-[18px] text-rose-600 tabular-nums dark:bg-rose-500/15 dark:text-rose-400">
+          <span className="rounded-full bg-rose-600 px-2 font-mono text-[11px] font-semibold leading-[18px] text-white tabular-nums dark:bg-rose-500">
             {items.length}
           </span>
         )}
       </div>
 
       {items.length === 0 ? (
-        <p className="flex items-center gap-2 px-4 pb-4 text-sm text-slate-500 dark:text-slate-400">
+        <p className="flex items-center gap-2 px-4 pb-4 text-sm text-ink-2">
           <CheckCircle2 size={16} className="text-emerald-500" />
           Alles is geregeld
         </p>
@@ -154,16 +154,16 @@ export function ForYouPanel({ events, rides, meals, expenses, myName }: ForYouPa
               <button
                 type="button"
                 onClick={item.go}
-                className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left hover:bg-slate-50 active:bg-slate-100 dark:hover:bg-white/[0.04] dark:active:bg-white/[0.06] transition-colors"
+                className="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left hover:bg-sunken active:bg-sunken transition-colors"
               >
                 <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${TONE[item.tone]}`}>
                   {item.icon}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[13px] font-semibold leading-snug text-slate-900 dark:text-white">{item.title}</span>
-                  <span className="block truncate text-[11px] text-slate-400 dark:text-slate-500">{item.where}</span>
+                  <span className="block text-[13px] font-semibold leading-snug text-ink">{item.title}</span>
+                  <span className="block truncate text-[11px] text-ink-3">{item.where}</span>
                 </span>
-                <ChevronRight size={14} className="shrink-0 text-slate-300 dark:text-slate-600" />
+                <ChevronRight size={14} className="shrink-0 text-ink-3" />
               </button>
             </li>
           ))}
@@ -172,7 +172,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName }: ForYouPa
               <button
                 type="button"
                 onClick={() => setExpanded((v) => !v)}
-                className="flex w-full items-center justify-center gap-1 rounded-xl py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                className="flex w-full items-center justify-center gap-1 rounded-lg py-2 text-xs font-semibold text-ink-3 hover:text-ink"
               >
                 <ChevronDown size={13} className={expanded ? "rotate-180" : ""} />
                 {expanded ? "Minder tonen" : `Nog ${hidden} tonen`}

@@ -105,10 +105,10 @@ export function MealDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <div className="min-h-screen bg-paper">
         <DetailTopbar title="Laden…" onBack={goBack} />
         <div className="flex items-center justify-center py-24">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-ink border-t-transparent" />
         </div>
       </div>
     );
@@ -116,10 +116,12 @@ export function MealDetailPage() {
 
   if (!meal) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4 text-slate-400">
-        <UtensilsCrossed size={40} className="opacity-30" />
-        <p className="text-sm">Maaltijd niet gevonden</p>
-        <button onClick={goBack} className="text-xs text-sky-500 underline">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-paper px-4 text-center">
+        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
+          <UtensilsCrossed size={22} />
+        </span>
+        <p className="text-sm font-semibold text-ink">Maaltijd niet gevonden</p>
+        <button onClick={goBack} className="text-xs font-semibold text-brand-text hover:underline">
           Terug
         </button>
       </div>
@@ -127,20 +129,21 @@ export function MealDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-paper">
       <DetailTopbar title={meal.meal_name} onBack={goBack} onShare={onShare} />
-      <MealHero
-        meal={meal}
-        linkedEvent={linkedEvent}
-        users={users}
-        onRsvpClick={() => setRsvpOpen(true)}
-        onCancelClick={() => setCancelOpen(true)}
-      />
 
       {(() => {
         const hasSidePanel = !!linkedEvent;
         return (
-          <div className="max-w-4xl mx-auto px-4 py-7 space-y-5">
+          <div className="mx-auto max-w-3xl space-y-5 px-4 pb-10 pt-4 sm:pt-6">
+            <MealHero
+              meal={meal}
+              linkedEvent={linkedEvent}
+              users={users}
+              onRsvpClick={() => setRsvpOpen(true)}
+              onCancelClick={() => setCancelOpen(true)}
+            />
+
             {/* ── Transport for this meal — leads the page, same as the ride
                   detail page's own car list. ─────────────────────────────── */}
             {restaurantRide ? (
@@ -150,7 +153,7 @@ export function MealDetailPage() {
                 <button
                   type="button"
                   onClick={() => setQuickRideOpen(true)}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 py-6 text-sm font-semibold text-slate-400 hover:border-amber-400 hover:text-amber-500 dark:hover:border-amber-500 dark:hover:text-amber-400 transition-colors"
+                  className="flex w-full items-center justify-center gap-2 rounded-[12px] border-1.5 border-dashed border-rose-400 bg-rose-50 px-4 py-6 text-sm font-semibold text-rose-700 transition-colors hover:border-rose-500 dark:border-rose-400/60 dark:bg-rose-500/10 dark:text-rose-300"
                 >
                   <Car size={16} />
                   Nog geen rit georganiseerd — bied een auto aan
@@ -158,15 +161,11 @@ export function MealDetailPage() {
               )
             )}
 
-            <div className={`grid gap-5 items-start ${hasSidePanel ? "grid-cols-1 lg:grid-cols-3" : ""}`}>
-              <div className={`${hasSidePanel ? "lg:col-span-2" : ""} space-y-4`}>
-                <MealPractical meal={meal} />
-                <MealLinks website={meal.website} menuUrl={meal.menu_url} />
-              </div>
+            <div className="space-y-4">
+              <MealPractical meal={meal} />
+              <MealLinks website={meal.website} menuUrl={meal.menu_url} />
               {hasSidePanel && (
-                <div>
-                  <LinkedEventCard event={linkedEvent!} />
-                </div>
+                <LinkedEventCard event={linkedEvent!} />
               )}
             </div>
           </div>
@@ -189,7 +188,7 @@ export function MealDetailPage() {
         onClose={() => { setRsvpOpen(false); setRsvpNames([]); }}
         title={`Aanmelden — ${meal.meal_name}`}
         description={meal.location || undefined}
-        accent="from-emerald-400 to-green-500"
+        accent="from-emerald-500"
       >
         <div className="space-y-3">
           <NamePicker
@@ -221,7 +220,7 @@ export function MealDetailPage() {
         onClose={() => { setCancelOpen(false); setCancelNames([]); }}
         title="Aanmelding annuleren"
         description={meal.meal_name}
-        accent="from-rose-400 to-red-500"
+        accent="from-rose-500"
       >
         <div className="space-y-3">
           <NamePicker

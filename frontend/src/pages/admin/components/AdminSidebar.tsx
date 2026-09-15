@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
-  Shield,
   ChevronDown,
   ArrowLeft,
   LogOut,
@@ -18,6 +17,9 @@ interface Props {
   collapsed: boolean;
   onClose?: () => void;
 }
+
+const ACTIVE = "bg-[rgb(var(--nav-active-bg))] text-[rgb(var(--nav-active-fg))]";
+const IDLE = "text-ink-2 hover:bg-sunken hover:text-ink";
 
 export function AdminSidebar({ collapsed, onClose }: Props) {
   const navigate = useNavigate();
@@ -50,19 +52,17 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
     <div className="flex h-full flex-col">
       {/* Logo */}
       <div
-        className={`flex shrink-0 items-center border-b border-white/[0.06] ${
-          collapsed ? "h-[60px] justify-center" : "h-[60px] gap-3 px-4"
+        className={`flex h-[60px] shrink-0 items-center ${
+          collapsed ? "justify-center" : "gap-2.5 px-4"
         }`}
       >
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-sky-600">
-          <Shield size={15} className="text-white" />
-        </div>
+        <img src="/icons/icon-192.png" alt="" className="h-9 w-9 shrink-0 object-contain" />
         {!collapsed && (
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 leading-none">
+            <p className="font-mono text-[10px] uppercase leading-none tracking-[0.08em] text-ink-3">
               Ankerd Con
             </p>
-            <p className="text-[15px] font-black text-white leading-tight mt-0.5">
+            <p className="mt-0.5 font-display text-[22px] font-black uppercase leading-none tracking-[0.02em] text-ink">
               Admin
             </p>
           </div>
@@ -70,7 +70,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
         {onClose && (
           <button
             onClick={onClose}
-            className="ml-auto flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:text-white transition-colors"
+            className="ml-auto flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
           >
             <Menu size={16} />
           </button>
@@ -78,20 +78,20 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
       </div>
 
       {/* Nav groups */}
-      <nav className="flex-1 overflow-y-auto py-4">
+      <nav className="flex-1 overflow-y-auto px-2.5 pb-4 pt-1">
         {NAV_GROUPS.map((group) => (
           <div key={group.key} className="mb-1">
             {!collapsed && (
               <button
                 onClick={() => toggleGroup(group.key)}
-                className="flex w-full items-center justify-between px-4 pb-1.5 pt-3"
+                className="flex w-full items-center justify-between px-2.5 pb-1.5 pt-3"
               >
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-3">
                   {group.label}
                 </span>
                 <ChevronDown
                   size={12}
-                  className={`shrink-0 text-slate-600 transition-transform duration-200 ${
+                  className={`shrink-0 text-ink-3 transition-transform duration-200 ${
                     openGroups[group.key] ? "" : "-rotate-90"
                   }`}
                 />
@@ -102,8 +102,8 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
               <div
                 className={
                   collapsed
-                    ? "flex flex-col items-center gap-1 px-2"
-                    : "space-y-0.5 px-2"
+                    ? "flex flex-col items-center gap-1 pt-2"
+                    : "space-y-0.5"
                 }
               >
                 {group.items.map((item) => {
@@ -117,22 +117,19 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
                       <div key={path}>
                         <button
                           onClick={() => setExpandedItems((prev) => ({ ...prev, [path]: !isExpanded }))}
-                          className={`group flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 transition-colors ${
-                            isChildActive
-                              ? "text-sky-400 font-bold"
-                              : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-100 font-medium"
+                          className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] transition-colors ${
+                            isChildActive ? "font-semibold text-ink" : `font-medium ${IDLE}`
                           }`}
                         >
-                          <span className={`text-[8px] shrink-0 transition-opacity ${isChildActive ? "opacity-100 text-sky-400" : "opacity-0"}`}>●</span>
-                          <Icon size={14} className={`shrink-0 ${isChildActive ? "text-sky-400" : "text-slate-500 group-hover:text-slate-300"}`} />
-                          <span className="flex-1 text-[13px] leading-none text-left">{label}</span>
+                          <Icon size={16} strokeWidth={isChildActive ? 2.4 : 2} className="shrink-0" />
+                          <span className="flex-1 text-left leading-none">{label}</span>
                           <ChevronDown
-                            size={11}
-                            className={`shrink-0 text-slate-600 transition-transform duration-200 ${isExpanded ? "" : "-rotate-90"}`}
+                            size={12}
+                            className={`shrink-0 text-ink-3 transition-transform duration-200 ${isExpanded ? "" : "-rotate-90"}`}
                           />
                         </button>
                         {isExpanded && (
-                          <div className="ml-5 mt-0.5 space-y-0.5 border-l border-white/[0.06] pl-3">
+                          <div className="ml-[18px] mt-0.5 space-y-0.5 border-l-1.5 border-line pl-2">
                             {children!.map(({ label: cLabel, path: cPath, icon: CIcon, end: cEnd }) => (
                               <NavLink
                                 key={cPath}
@@ -140,17 +137,19 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
                                 end={cEnd}
                                 onClick={onClose}
                                 className={({ isActive }) =>
-                                  `group flex items-center gap-2 rounded-xl px-2.5 py-2 transition-colors ${
-                                    isActive
-                                      ? "bg-sky-600 text-white font-bold"
-                                      : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-100 font-medium"
+                                  `flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors ${
+                                    isActive ? ACTIVE : IDLE
                                   }`
                                 }
                               >
                                 {({ isActive }) => (
                                   <>
-                                    <CIcon size={13} className={`shrink-0 ${isActive ? "text-white" : "text-slate-500 group-hover:text-slate-300"}`} />
-                                    <span className="text-[12px] leading-none">{cLabel}</span>
+                                    <CIcon
+                                      size={14}
+                                      strokeWidth={isActive ? 2.4 : 2}
+                                      className={`shrink-0 ${isActive ? "text-brand dark:text-brand-on" : ""}`}
+                                    />
+                                    <span className="leading-none">{cLabel}</span>
                                   </>
                                 )}
                               </NavLink>
@@ -170,29 +169,23 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
                       title={collapsed ? label : undefined}
                       className={({ isActive }) =>
                         collapsed
-                          ? `flex h-9 w-9 items-center justify-center rounded-xl transition-colors ${
-                              isActive
-                                ? "bg-sky-600 text-white"
-                                : "text-slate-500 hover:bg-white/[0.06] hover:text-slate-200"
+                          ? `flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${
+                              isActive ? ACTIVE : IDLE
                             }`
-                          : `group flex items-center gap-2.5 rounded-xl px-3 py-2.5 transition-colors ${
-                              isActive
-                                ? "bg-sky-600 text-white font-bold"
-                                : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-100 font-medium"
+                          : `flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] font-medium transition-colors ${
+                              isActive ? ACTIVE : IDLE
                             }`
                       }
                     >
                       {({ isActive }) => (
                         <>
-                          {!collapsed && (
-                            <span className={`text-[8px] shrink-0 transition-opacity ${isActive ? "opacity-100 text-white" : "opacity-0"}`}>●</span>
-                          )}
                           <Icon
-                            size={collapsed ? 17 : 14}
-                            className={`shrink-0 ${isActive ? "text-white" : "text-slate-500 group-hover:text-slate-300"}`}
+                            size={collapsed ? 19 : 16}
+                            strokeWidth={isActive ? 2.4 : 2}
+                            className={`shrink-0 ${isActive ? "text-brand dark:text-brand-on" : ""}`}
                           />
                           {!collapsed && (
-                            <span className="text-[13px] leading-none">{label}</span>
+                            <span className="truncate leading-none">{label}</span>
                           )}
                         </>
                       )}
@@ -206,21 +199,21 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
       </nav>
 
       {/* Footer */}
-      <div className="shrink-0 border-t border-white/[0.06] p-2 space-y-0.5">
+      <div className="shrink-0 space-y-0.5 border-t-1.5 border-line p-2.5">
         {collapsed ? (
           <button
             title="Terug naar app"
             onClick={() => { navigate(routes.hub); onClose?.(); }}
-            className="flex h-9 w-9 mx-auto items-center justify-center rounded-xl text-slate-500 hover:bg-white/[0.06] hover:text-slate-200 transition-colors"
+            className={`mx-auto flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${IDLE}`}
           >
-            <ArrowLeft size={15} />
+            <ArrowLeft size={16} />
           </button>
         ) : (
           <button
             onClick={() => { navigate(routes.hub); onClose?.(); }}
-            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium text-slate-500 hover:bg-white/[0.06] hover:text-slate-200 transition-colors"
+            className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] font-medium transition-colors ${IDLE}`}
           >
-            <ArrowLeft size={14} className="shrink-0" />
+            <ArrowLeft size={16} className="shrink-0" />
             Terug naar app
           </button>
         )}
@@ -231,26 +224,26 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
             <button
               title="Uitloggen"
               onClick={handleLogout}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 hover:text-rose-400 transition-colors"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-rose-600 dark:hover:text-rose-400"
             >
-              <LogOut size={13} />
+              <LogOut size={14} />
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-2.5 rounded-xl px-3 py-2.5">
-            <UserAvatar name={me?.name ?? ""} className="h-7 w-7 shrink-0 text-[9px]" />
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-semibold text-white truncate leading-tight">
+          <div className="flex items-center gap-2.5 rounded-lg px-2 py-2">
+            <UserAvatar name={me?.name ?? ""} className="h-8 w-8 shrink-0 text-[10px]" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-semibold leading-tight text-ink">
                 {me?.name ?? "Admin"}
               </p>
-              <p className="text-[10px] text-slate-500 leading-tight mt-0.5">
+              <p className="mt-0.5 text-[12px] leading-tight text-ink-3">
                 Administrator
               </p>
             </div>
             <button
               title="Uitloggen"
               onClick={handleLogout}
-              className="shrink-0 text-slate-600 hover:text-rose-400 transition-colors"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-rose-600 dark:hover:text-rose-400"
             >
               <LogOut size={14} />
             </button>

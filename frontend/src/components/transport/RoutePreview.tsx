@@ -28,7 +28,7 @@ export function RoutePreview({ start, end }: RoutePreviewProps) {
   const label = committed.end ? "Route preview" : "Locatie preview";
 
   return (
-    <div className="mt-2 relative rounded-xl overflow-hidden border border-slate-100">
+    <div className="relative mt-2 overflow-hidden rounded-xl border-1.5 border-line">
       <iframe
         key={src}
         title={label}
@@ -37,8 +37,8 @@ export function RoutePreview({ start, end }: RoutePreviewProps) {
         loading="lazy"
         referrerPolicy="no-referrer-when-downgrade"
       />
-      <div className="absolute top-2 left-2 flex items-center gap-1.5 rounded-lg bg-white/90 backdrop-blur-sm border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-600 pointer-events-none">
-        <MapPin size={10} className="text-sky-500" />
+      <div className="pointer-events-none absolute left-2 top-2 flex items-center gap-1.5 rounded-md border border-line bg-surface px-2 py-1 font-mono text-[10.5px] font-semibold uppercase tracking-[0.05em] text-ink-2">
+        <MapPin size={10} className="text-ink-3" />
         {label}
       </div>
     </div>

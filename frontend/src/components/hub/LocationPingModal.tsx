@@ -48,7 +48,7 @@ export function LocationPingModal({ open, onClose, userNames }: Props) {
     >
       <form onSubmit={handleSubmit(onPing)} className="space-y-4">
         <div>
-          <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
+          <label className="mb-2 block section-label">
             Jouw naam
           </label>
           <NamePicker
@@ -64,7 +64,7 @@ export function LocationPingModal({ open, onClose, userNames }: Props) {
           )}
         </div>
         <div>
-          <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
+          <label className="mb-2 block section-label">
             Zone
           </label>
           <select className="input-field" {...register("zone")}>
@@ -82,7 +82,7 @@ export function LocationPingModal({ open, onClose, userNames }: Props) {
           )}
         </div>
         <div>
-          <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
+          <label className="mb-2 block section-label">
             Details
           </label>
           <input

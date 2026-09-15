@@ -9,14 +9,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<NonNullable<ButtonProps["variant"]>, string> = {
+  // Cyan with an ink outline and a hard shadow that presses in (see .btn-primary).
   primary:
-    "gradient-brand text-white shadow-stat disabled:opacity-60",
+    "border-2 border-outline bg-brand text-brand-on shadow-btn active:enabled:translate-x-0.5 active:enabled:translate-y-0.5 active:enabled:shadow-btn-press disabled:opacity-60",
   secondary:
-    "bg-white text-slate-700 border border-slate-200 shadow-card hover:border-sky-200 hover:shadow-card-hover hover:text-sky-700 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:border-sky-500 dark:hover:text-sky-400",
+    "bg-surface text-ink border-1.5 border-line hover:border-ink-3 disabled:opacity-50",
   ghost:
-    "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200",
+    "bg-transparent text-ink-2 hover:bg-sunken hover:text-ink disabled:opacity-50",
   danger:
-    "bg-gradient-to-r from-rose-500 to-red-500 text-white shadow-stat disabled:opacity-60",
+    "bg-rose-600 text-white border-2 border-rose-800 disabled:opacity-60 dark:border-rose-400",
 };
 
 const sizeClasses: Record<NonNullable<ButtonProps["size"]>, string> = {
@@ -36,9 +37,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <motion.button
-      whileTap={{ scale: 0.97 }}
-      transition={{ duration: 0.1 }}
-      className={`inline-flex items-center justify-center whitespace-nowrap transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center justify-center whitespace-nowrap transition-[transform,box-shadow,background-color,border-color,color] duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       disabled={disabled || loading}
       {...(props as object)}
     >

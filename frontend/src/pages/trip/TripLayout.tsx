@@ -46,9 +46,9 @@ export function TripLayout() {
   if (isLoading) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-16 rounded-2xl bg-slate-200 dark:bg-slate-800" />
-        <div className="h-10 rounded-2xl bg-slate-200 dark:bg-slate-800" />
-        <div className="h-64 rounded-2xl bg-slate-200 dark:bg-slate-800" />
+        <div className="h-16 rounded-2xl bg-sunken" />
+        <div className="h-10 rounded-2xl bg-sunken" />
+        <div className="h-64 rounded-2xl bg-sunken" />
       </div>
     );
   }
@@ -100,15 +100,15 @@ export function TripLayout() {
     <div className="space-y-4">
       <header className="space-y-3">
         <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3">
             {whenLabel(trip)} · {trip.dateRange}
           </p>
-          <h1 className="mt-0.5 text-[22px] font-black leading-tight tracking-tight text-slate-900 dark:text-white">
+          <h1 className="mt-1 font-display text-[34px] font-extrabold uppercase leading-[0.95] tracking-[0.005em] text-ink md:text-[42px]">
             {trip.title}
           </h1>
           {trip.location && (
-            <p className="mt-0.5 flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500 truncate">
-              <MapPin size={11} className="shrink-0" />
+            <p className="mt-1.5 flex items-center gap-1.5 truncate text-[13px] text-ink-2">
+              <MapPin size={13} className="shrink-0" />
               {trip.location}
             </p>
           )}
@@ -116,7 +116,7 @@ export function TripLayout() {
 
         <nav
           aria-label="Onderdelen van dit event"
-          className="-mx-4 flex gap-1 overflow-x-auto border-b border-slate-200 px-4 dark:border-slate-800 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="-mx-4 flex gap-1 overflow-x-auto border-b-1.5 border-line px-4 md:mx-0 md:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {tabs.map((tab) => {
             const count = counts[tab.id] ?? 0;
@@ -125,17 +125,17 @@ export function TripLayout() {
                 key={tab.id}
                 to={routes.trip.view(trip.id, tab.id, dayId ?? undefined)}
                 replace
-                className={`-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2.5 text-[13px] font-semibold whitespace-nowrap transition-colors ${
+                className={`-mb-[1.5px] flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2.5 text-[13.5px] font-semibold whitespace-nowrap transition-colors ${
                   tab.id === activeTab
-                    ? "border-slate-900 text-slate-900 dark:border-white dark:text-white"
-                    : "border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                    ? "border-ink text-ink"
+                    : "border-transparent text-ink-3 hover:text-ink"
                 }`}
                 aria-current={tab.id === activeTab ? "page" : undefined}
               >
                 {tab.label}
                 {count > 0 && (
                   <span
-                    className="rounded-full bg-amber-100 px-1.5 text-[10px] font-bold leading-[17px] text-amber-700 tabular-nums dark:bg-amber-500/15 dark:text-amber-400"
+                    className="rounded-full bg-amber-100 px-1.5 font-mono text-[11px] font-semibold leading-[17px] text-amber-800 tabular-nums dark:bg-amber-500/15 dark:text-amber-300"
                     aria-label={`${count} ${count === 1 ? "persoon mist" : "mensen missen"} nog iets`}
                   >
                     {count}

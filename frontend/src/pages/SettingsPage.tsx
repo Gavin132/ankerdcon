@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronRight,
@@ -17,12 +18,15 @@ import { useSmartBack } from "../hooks/useSmartBack";
 import { useThemeStore } from "../store/theme.store";
 import { startDiscordLink } from "../services/auth.service";
 import { routes } from "../config/routes";
-import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { listContainer, listItem } from "../utils/motion";
 import { toast } from "../store/toast.store";
 
 const ROW =
-  "flex w-full items-center gap-3.5 px-4 py-3.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-50 dark:active:bg-slate-800/50 transition-colors";
+  "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-sunken active:bg-sunken";
+const PANEL = "card-surface overflow-hidden";
+const PANEL_ROWS = "divide-y divide-line border-t border-line";
+/** Flat top bar for the pages outside the app shell: back, title, and home on a fresh entry. */
+
 
 function Switch({ checked, onChange, disabled, label }: { checked: boolean; onChange: () => void; disabled?: boolean; label: string }) {
   return (
@@ -33,13 +37,13 @@ function Switch({ checked, onChange, disabled, label }: { checked: boolean; onCh
       aria-label={label}
       disabled={disabled}
       onClick={onChange}
-      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 disabled:opacity-60 ${
-        checked ? "bg-sky-500" : "bg-slate-200 dark:bg-slate-700"
+      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-1.5 transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-60 ${
+        checked ? "border-outline bg-brand" : "border-line bg-sunken"
       }`}
     >
       <span
-        className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
-          checked ? "translate-x-5" : "translate-x-0"
+        className={`pointer-events-none inline-block h-4 w-4 rounded-full transition-transform duration-200 ${
+          checked ? "translate-x-[22px] bg-brand-on" : "translate-x-[3px] bg-ink-3"
         }`}
       />
     </button>
@@ -72,71 +76,71 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-950">
-      <DetailTopbar title="Instellingen" onBack={goBack} />
+    <div className="min-h-[100dvh] bg-paper">
+      <DetailTopbar title="Instellingen" onBack={goBack} width="2xl" />
 
       <motion.div
-        className="mx-auto max-w-lg px-4 py-6 space-y-5"
+        className="mx-auto max-w-2xl space-y-5 px-4 py-6 md:py-10"
         style={{ paddingBottom: "max(3rem, env(safe-area-inset-bottom, 0px))" }}
         variants={listContainer}
         initial="hidden"
         animate="show"
       >
         {/* Account */}
-        <motion.section variants={listItem}>
-          <p className="section-label mb-3">Account</p>
-          <div className="card-surface rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+        <motion.section variants={listItem} className={PANEL}>
+          <p className="section-label px-4 pb-2.5 pt-3.5">Account</p>
+          <div className={PANEL_ROWS}>
             <button onClick={() => navigate(routes.notifications)} className={ROW}>
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-500/10">
-                <Bell size={16} className="text-sky-500" />
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                <Bell size={16} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-900 dark:text-white">Notificaties</p>
-                <p className="text-xs text-slate-400">Kies welke Discord DM's je ontvangt</p>
+                <p className="text-[14px] font-semibold text-ink">Notificaties</p>
+                <p className="text-[12.5px] text-ink-3">Kies welke Discord DM's je ontvangt</p>
               </div>
-              <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0" />
+              <ChevronRight size={16} className="shrink-0 text-ink-3" />
             </button>
 
             {me && !me.discord_id && (
               <button onClick={onLinkDiscord} disabled={linkingDiscord} className={`${ROW} disabled:opacity-60`}>
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#5865F2]/10">
-                  <MessageSquare size={16} className="text-[#5865F2]" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                  <MessageSquare size={16} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">
+                  <p className="text-[14px] font-semibold text-ink">
                     {linkingDiscord ? "Bezig met koppelen…" : "Discord koppelen"}
                   </p>
-                  <p className="text-xs text-slate-400">Nodig om Discord-DM's van de bot te kunnen ontvangen</p>
+                  <p className="text-[12.5px] text-ink-3">Nodig om Discord-DM's van de bot te kunnen ontvangen</p>
                 </div>
-                <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0" />
+                <ChevronRight size={16} className="shrink-0 text-ink-3" />
               </button>
             )}
           </div>
         </motion.section>
 
         {/* Weergave */}
-        <motion.section variants={listItem}>
-          <p className="section-label mb-3">Weergave</p>
-          <div className="card-surface rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
-            <div className="flex w-full items-center gap-3.5 px-4 py-3.5">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
-                {isDark ? <Moon size={16} className="text-slate-500 dark:text-slate-300" /> : <Sun size={16} className="text-slate-500" />}
+        <motion.section variants={listItem} className={PANEL}>
+          <p className="section-label px-4 pb-2.5 pt-3.5">Weergave</p>
+          <div className={PANEL_ROWS}>
+            <div className="flex w-full items-center gap-3 px-4 py-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                {isDark ? <Moon size={16} /> : <Sun size={16} />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-900 dark:text-white">Donker thema</p>
-                <p className="text-xs text-slate-400">Geldt voor dit apparaat</p>
+                <p className="text-[14px] font-semibold text-ink">Donker thema</p>
+                <p className="text-[12.5px] text-ink-3">Geldt voor dit apparaat</p>
               </div>
               <Switch checked={isDark} onChange={toggleTheme} label="Donker thema" />
             </div>
 
             {me && (
-              <div className="flex w-full items-center gap-3.5 px-4 py-3.5">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-500/10">
-                  <Sun size={16} className="text-amber-500" />
+              <div className="flex w-full items-center gap-3 px-4 py-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                  <Sun size={16} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">Begroeting tonen</p>
-                  <p className="text-xs text-slate-400">"Goedemiddag, {me.name}" bovenaan de Hub</p>
+                  <p className="text-[14px] font-semibold text-ink">Begroeting tonen</p>
+                  <p className="text-[12.5px] text-ink-3">"Goedemiddag, {me.name}" bovenaan de Hub</p>
                 </div>
                 <Switch
                   checked={me.show_greeting !== false}
@@ -154,19 +158,19 @@ export function SettingsPage() {
         </motion.section>
 
         {/* Delen & links */}
-        <motion.section variants={listItem}>
-          <p className="section-label mb-3">Delen &amp; links</p>
-          <div className="card-surface rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+        <motion.section variants={listItem} className={PANEL}>
+          <p className="section-label px-4 pb-2.5 pt-3.5">Delen &amp; links</p>
+          <div className={PANEL_ROWS}>
             <button onClick={() => setQrOpen((v) => !v)} aria-expanded={qrOpen} className={ROW}>
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
-                <QrCode size={16} className="text-slate-500 dark:text-slate-400" />
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                <QrCode size={16} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-900 dark:text-white">Deel via QR-code</p>
-                <p className="text-xs text-slate-400">Scan om de app te openen</p>
+                <p className="text-[14px] font-semibold text-ink">Deel via QR-code</p>
+                <p className="text-[12.5px] text-ink-3">Scan om de app te openen</p>
               </div>
               <motion.div animate={{ rotate: qrOpen ? 90 : 0 }} transition={{ duration: 0.18 }}>
-                <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0" />
+                <ChevronRight size={16} className="shrink-0 text-ink-3" />
               </motion.div>
             </button>
 
@@ -180,50 +184,50 @@ export function SettingsPage() {
                   className="overflow-hidden"
                 >
                   <div className="px-4 pb-5 pt-1 flex flex-col items-center gap-3">
-                    <div className="rounded-2xl bg-white p-3 shadow-sm border border-slate-100">
-                      <QRCodeSVG value={window.location.origin} size={160} bgColor="#ffffff" fgColor="#0f172a" level="M" />
+                    <div className="rounded-xl border-1.5 border-line bg-white p-3">
+                      <QRCodeSVG value={window.location.origin} size={160} bgColor="#ffffff" fgColor="#0F1519" level="M" />
                     </div>
-                    <p className="text-xs text-slate-400">Scan om de app te openen</p>
+                    <p className="text-[12.5px] text-ink-3">Scan om de app te openen</p>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
             <a href="https://github.com/Gavin132/ankerdcon" target="_blank" rel="noopener noreferrer" className={ROW}>
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
-                <Github size={16} className="text-slate-600 dark:text-slate-300" />
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                <Github size={16} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-900 dark:text-white">Broncode</p>
-                <p className="text-xs text-slate-400">Bekijk de repository op GitHub</p>
+                <p className="text-[14px] font-semibold text-ink">Broncode</p>
+                <p className="text-[12.5px] text-ink-3">Bekijk de repository op GitHub</p>
               </div>
-              <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0" />
+              <ChevronRight size={16} className="shrink-0 text-ink-3" />
             </a>
 
             <a href="https://www.youtube.com/@ankerd" target="_blank" rel="noopener noreferrer" className={ROW}>
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-100 dark:bg-red-500/10">
-                <Youtube size={16} className="text-red-500" />
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                <Youtube size={16} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-900 dark:text-white">YouTube</p>
-                <p className="text-xs text-slate-400">Bekijk het YouTube-kanaal</p>
+                <p className="text-[14px] font-semibold text-ink">YouTube</p>
+                <p className="text-[12.5px] text-ink-3">Bekijk het YouTube-kanaal</p>
               </div>
-              <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0" />
+              <ChevronRight size={16} className="shrink-0 text-ink-3" />
             </a>
           </div>
         </motion.section>
 
         {/* App */}
-        <motion.section variants={listItem}>
-          <p className="section-label mb-3">App</p>
-          <div className="card-surface rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
-            <div className="flex items-center gap-3.5 px-4 py-3.5">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-                <img src="/icons/icon-192.png" alt="Ankerd" className="h-7 w-7 object-contain" />
+        <motion.section variants={listItem} className={PANEL}>
+          <p className="section-label px-4 pb-2.5 pt-3.5">App</p>
+          <div className={PANEL_ROWS}>
+            <div className="flex items-center gap-3 px-4 py-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border-1.5 border-line bg-white">
+                <img src="/icons/icon-192.png" alt="Ankerd" className="h-6 w-6 object-contain" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-900 dark:text-white">Ankerd Con</p>
-                <p className="text-xs text-slate-400">Event portal · v{__APP_VERSION__}</p>
+                <p className="text-[14px] font-semibold text-ink">Ankerd Con</p>
+                <p className="text-[12.5px] text-ink-3">Event portal · v{__APP_VERSION__}</p>
               </div>
             </div>
 

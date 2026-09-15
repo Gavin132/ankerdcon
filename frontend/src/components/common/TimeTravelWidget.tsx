@@ -58,12 +58,11 @@ export function TimeTravelWidget() {
         type="button"
         onClick={openPanel}
         aria-label="Tijdreizen (testtool)"
-        className={`fixed right-4 z-40 flex h-11 items-center gap-2 rounded-full px-4 text-xs font-bold shadow-lg transition-colors ${
+        className={`fixed right-4 bottom-[calc(9.5rem+env(safe-area-inset-bottom,0px))] md:bottom-24 z-40 flex h-10 items-center gap-2 rounded-xl border-2 border-outline px-3.5 font-mono text-xs font-semibold transition-colors ${
           override
-            ? "bg-amber-500 text-white shadow-amber-500/30"
-            : "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+            ? "bg-amber-400 text-slate-900"
+            : "bg-surface text-ink"
         }`}
-        style={{ bottom: "max(5.5rem, calc(env(safe-area-inset-bottom, 0px) + 5.5rem))" }}
       >
         <Clock size={15} />
         {override ? formatOverride(override) : "Tijd"}

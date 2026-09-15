@@ -25,12 +25,12 @@ export function PastTripPhotos({ items }: { items: CalendarItem[] }) {
   if (withPhotos.length === 0) return null;
 
   return (
-    <div className="card-surface rounded-2xl overflow-hidden">
-      <p className="section-label flex items-center gap-1.5 px-4 pt-4 pb-1">
-        <Camera size={11} className="text-rose-400" />
+    <div className="card-surface overflow-hidden">
+      <p className="section-label flex items-center gap-1.5 px-4 pt-4 pb-2">
+        <Camera size={12} />
         Foto's
       </p>
-      <div className="divide-y divide-slate-100 dark:divide-slate-800">
+      <div className="divide-y divide-line border-t border-line">
         {withPhotos.map((item) => {
           const days = item.type === "single" ? [{ ev: item.ev, date: item.date }] : item.events;
           const tripId = item.type === "single" ? tripIdOf(item.ev) : item.multiDayId;
@@ -38,11 +38,11 @@ export function PastTripPhotos({ items }: { items: CalendarItem[] }) {
             <div key={tripId} className="px-4 py-3">
               <Link
                 to={routes.trip.view(tripId, "photos")}
-                className="flex items-center gap-2 text-sm font-bold text-slate-900 hover:underline dark:text-white"
+                className="flex items-center gap-2 text-[14px] font-semibold text-ink hover:underline"
               >
                 <span className="min-w-0 truncate">{days[0].ev.event_name}</span>
-                <span className="shrink-0 text-xs font-medium text-slate-400">{formatDateRange(days.map((d) => d.date))}</span>
-                <ChevronRight size={13} className="ml-auto shrink-0 text-slate-300 dark:text-slate-600" />
+                <span className="shrink-0 font-mono text-[11.5px] uppercase text-ink-3">{formatDateRange(days.map((d) => d.date))}</span>
+                <ChevronRight size={14} className="ml-auto shrink-0 text-ink-3" />
               </Link>
               <div className="mt-2 flex gap-3 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {days.map(({ ev, date }) => {

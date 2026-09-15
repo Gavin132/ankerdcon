@@ -38,9 +38,9 @@ const queryClient = new QueryClient({
   },
 });
 
-// Matches Header.tsx's actual background: bg-white in light, slate-900 in dark.
-const THEME_COLOR_LIGHT = "#ffffff";
-const THEME_COLOR_DARK = "#0f172a";
+// Matches the top bar's background: --surface in light and dark (index.css).
+const THEME_COLOR_LIGHT = "#FFFFFF";
+const THEME_COLOR_DARK = "#141B20";
 
 function ThemeSync() {
   const isDark = useThemeStore((s) => s.isDark);
@@ -197,8 +197,8 @@ function AppBackdrop() {
 
 function RouteFallback() {
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-slate-50 dark:bg-slate-950">
-      <div className="h-8 w-8 rounded-full border-2 border-sky-500 border-t-transparent animate-spin" />
+    <div className="flex min-h-[100dvh] items-center justify-center bg-paper">
+      <div className="h-8 w-8 rounded-full border-2 border-ink-3 border-t-transparent animate-spin" />
     </div>
   );
 }

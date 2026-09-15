@@ -94,7 +94,7 @@ export function MealPicker({
       <div className="relative">
         <Search
           size={13}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3"
         />
         <input
           className="input-field pl-8"
@@ -117,10 +117,10 @@ export function MealPicker({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15 }}
-            className="max-h-[220px] overflow-y-auto overscroll-contain rounded-xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg divide-y divide-slate-50 dark:divide-slate-800"
+            className="max-h-[220px] overflow-y-auto overscroll-contain rounded-xl border-1.5 border-line bg-surface shadow-xl divide-y divide-line"
           >
             {filtered.length === 0 ? (
-              <p className="px-4 py-4 text-center text-xs text-slate-400">
+              <p className="px-4 py-4 text-center text-xs text-ink-3">
                 {query ? `Geen resultaten voor "${query}"` : "Geen eetafspraken beschikbaar"}
               </p>
             ) : (
@@ -134,17 +134,17 @@ export function MealPicker({
                     className={`flex w-full items-center gap-3 px-3 py-3 text-left transition-colors min-h-[48px] ${
                       isSelected
                         ? "bg-amber-50 dark:bg-amber-500/10"
-                        : "hover:bg-slate-50 active:bg-slate-50 dark:hover:bg-slate-800/60 dark:active:bg-slate-800/60"
+                        : "hover:bg-sunken active:bg-sunken"
                     }`}
                   >
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/15">
                       <Utensils size={15} className="text-amber-500" />
                     </div>
                     <span className="flex-1 min-w-0">
-                      <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
+                      <span className="block text-sm font-semibold text-ink truncate">
                         {meal.meal_name}
                       </span>
-                      <span className="block text-[11px] text-slate-400 truncate">
+                      <span className="block text-[11px] text-ink-3 truncate">
                         {formatMealTime(meal.time)}
                         {meal.location ? ` · ${meal.location}` : ""}
                       </span>

@@ -14,10 +14,10 @@ interface DayChipsProps {
 /** Day filter for a multi-day trip — travel (hotel-only) days get a bed icon. */
 export function DayChips({ days, value, onChange, allowAll = false }: DayChipsProps) {
   const chip = (active: boolean) =>
-    `shrink-0 flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors ${
+    `shrink-0 flex items-center gap-1.5 rounded-[10px] border-1.5 px-3 py-1.5 text-[13px] font-semibold whitespace-nowrap transition-colors ${
       active
-        ? "border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-900"
-        : "border-slate-200 bg-white text-slate-500 hover:text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+        ? "border-outline bg-ink text-paper dark:bg-brand dark:text-brand-on"
+        : "border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
     }`;
 
   return (
@@ -40,7 +40,7 @@ export function DayChips({ days, value, onChange, allowAll = false }: DayChipsPr
           className={chip(value === ev.id)}
         >
           {ev.has_con === false && <BedDouble size={12} />}
-          <span className="capitalize">{dayShort(date)}</span> {date.getDate()}
+          <span className="capitalize">{dayShort(date)}</span> <span className="font-mono tabular-nums">{date.getDate()}</span>
         </button>
       ))}
     </div>

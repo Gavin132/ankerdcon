@@ -17,7 +17,7 @@ export function DiscardChangesConfirm({ open, onCancel, onConfirm }: Props) {
       {open && (
         <div className="fixed inset-0 z-[210] flex items-center justify-center p-4">
           <motion.div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-950/50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -25,31 +25,31 @@ export function DiscardChangesConfirm({ open, onCancel, onConfirm }: Props) {
             onClick={onCancel}
           />
           <motion.div
-            className="relative w-full max-w-xs rounded-2xl bg-[#0c1220] border border-white/[0.08] shadow-2xl p-5"
-            initial={{ opacity: 0, scale: 0.95, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 8 }}
-            transition={{ type: "spring", damping: 26, stiffness: 320 }}
+            className="relative w-full max-w-xs rounded-2xl border-1.5 border-line bg-surface p-5 shadow-xl"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.15 }}
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-500/15 mb-3">
-              <AlertTriangle size={18} className="text-amber-400" />
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+              <AlertTriangle size={18} />
             </div>
-            <h3 className="text-sm font-black text-white">Niet-opgeslagen wijzigingen</h3>
-            <p className="mt-1 text-xs text-slate-400 leading-relaxed">
+            <h3 className="text-sm font-semibold text-ink">Niet-opgeslagen wijzigingen</h3>
+            <p className="mt-1 text-xs leading-relaxed text-ink-2">
               Weet je zeker dat je dit paneel wilt sluiten zonder op te slaan?
             </p>
             <div className="mt-4 flex items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={onCancel}
-                className="rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-300 hover:bg-white/[0.06] transition-colors"
+                className="rounded-xl border-1.5 border-line bg-surface px-3.5 py-2 text-xs font-semibold text-ink transition-colors hover:border-ink-3"
               >
                 Blijf hier
               </button>
               <button
                 type="button"
                 onClick={onConfirm}
-                className="rounded-xl bg-gradient-to-r from-rose-500 to-red-500 px-3.5 py-2 text-xs font-bold text-white hover:opacity-90 transition-opacity"
+                className="rounded-xl border-2 border-rose-800 bg-rose-600 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-rose-700 dark:border-rose-400"
               >
                 Sluiten
               </button>

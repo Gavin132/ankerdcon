@@ -103,16 +103,17 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
     >
       <div className="space-y-5">
         {/* Direction toggle */}
-        <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-800 p-1">
+        <div className="flex gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]">
           {(["Inbound", "Outbound"] as const).map((d) => (
             <button
               key={d}
               type="button"
               onClick={() => switchDirection(d)}
-              className={`flex-1 rounded-xl py-2.5 text-xs font-semibold transition-all ${
+              aria-pressed={direction === d}
+              className={`flex-1 rounded-[7px] px-3 py-2 text-[13px] font-semibold transition-colors ${
                 direction === d
-                  ? "bg-white text-slate-900 shadow-card dark:bg-slate-700 dark:text-slate-100"
-                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                  ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]"
+                  : "text-ink-2 hover:text-ink"
               }`}
             >
               {event.is_hotel ? (d === "Inbound" ? "Naar congres" : "Naar hotel") : (d === "Inbound" ? "Heen" : "Terug")}
@@ -122,25 +123,25 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
 
         {/* Route summary — editable, so a missing location (e.g. a non-hotel
             event's "home" end) can just be typed in right here. */}
-        <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-4 py-3">
+        <div className="flex items-center gap-2.5 rounded-xl border-1.5 border-line bg-sunken px-4 py-3">
           <input
             type="text"
             value={startLocation}
             onChange={(e) => setStartLocation(e.target.value)}
             placeholder="Onbekende locatie"
-            className="flex-1 min-w-0 bg-transparent text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder:font-normal placeholder:text-slate-400 outline-none"
+            className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-3"
           />
-          <ArrowRight size={14} className="shrink-0 text-slate-400" />
+          <ArrowRight size={14} className="shrink-0 text-ink-3" />
           <input
             type="text"
             value={endLocation}
             onChange={(e) => setEndLocation(e.target.value)}
             placeholder="Onbekende locatie"
-            className="flex-1 min-w-0 bg-transparent text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder:font-normal placeholder:text-slate-400 outline-none text-right"
+            className="min-w-0 flex-1 bg-transparent text-right text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-3"
           />
         </div>
         {missingLocation && (
-          <p className="-mt-3 text-xs text-amber-500">
+          <p className="-mt-3 text-xs font-medium text-amber-700 dark:text-amber-300">
             Vul de ontbrekende locatie hierboven in.
           </p>
         )}
@@ -148,7 +149,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
         {/* Time + seats */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
+            <label className="section-label mb-1.5 block">
               Vertrektijd
             </label>
             <input
@@ -160,30 +161,30 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
           </div>
           {vehicleType !== "Public Transport" && (
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
+              <label className="section-label mb-1.5 block">
                 Totaal aantal plekken in je auto
               </label>
-              <div className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-1">
+              <div className="flex items-center gap-2 rounded-xl border-1.5 border-line bg-surface px-1">
                 <button
                   type="button"
                   onClick={() => setSeats((s) => Math.max(1, s - 1))}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
                 >
                   −
                 </button>
-                <div className="flex-1 flex items-center justify-center gap-1.5 text-sm font-bold text-slate-900 dark:text-white tabular-nums">
-                  <Users size={13} className="text-slate-400" />
+                <div className="flex flex-1 items-center justify-center gap-1.5 font-mono text-sm font-semibold tabular-nums text-ink">
+                  <Users size={13} className="text-ink-3" />
                   {seats}
                 </div>
                 <button
                   type="button"
                   onClick={() => setSeats((s) => Math.min(99, s + 1))}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
                 >
                   +
                 </button>
               </div>
-              <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">Incl. jezelf</p>
+              <p className="mt-1.5 text-xs text-ink-3">Incl. jezelf</p>
             </div>
           )}
         </div>
@@ -193,7 +194,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
           <button
             type="button"
             onClick={() => setAdvancedOpen((v) => !v)}
-            className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-sky-500 transition-colors"
+            className="flex items-center gap-1.5 text-xs font-semibold text-ink-3 transition-colors hover:text-ink"
           >
             <motion.span animate={{ rotate: advancedOpen ? 180 : 0 }} transition={{ duration: 0.18 }}>
               <ChevronDown size={13} />
@@ -212,7 +213,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
               >
                 <div className="mt-3 space-y-3">
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
+                    <label className="section-label mb-1.5 block">
                       Type vervoer
                     </label>
                     <select
@@ -225,7 +226,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
+                    <label className="section-label mb-1.5 block">
                       Parkeerinfo
                     </label>
                     <input

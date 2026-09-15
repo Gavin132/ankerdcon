@@ -23,7 +23,7 @@ function persistDismissedIds(ids: Set<string>) {
 }
 
 const SEVERITY_STYLE: Record<AnnouncementSeverity, { bg: string; icon: ElementType }> = {
-  info:    { bg: "bg-sky-500",   icon: Info },
+  info:    { bg: "bg-slate-900 dark:bg-slate-800", icon: Info },
   warning: { bg: "bg-amber-500", icon: AlertTriangle },
   urgent:  { bg: "bg-rose-600",  icon: Megaphone },
 };
@@ -64,7 +64,7 @@ export function AnnouncementBanner() {
               <button
                 type="button"
                 onClick={() => setExpanded(announcement)}
-                className="mx-auto flex w-full max-w-2xl items-center gap-2.5 px-5 py-2.5 text-left hover:bg-black/5 transition-colors"
+                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left hover:bg-black/10 transition-colors md:px-8 lg:px-10"
               >
                 <Icon size={15} className="shrink-0" />
                 <p className="min-w-0 flex-1 text-xs font-semibold leading-snug truncate">
@@ -77,7 +77,7 @@ export function AnnouncementBanner() {
                     onClick={(e) => { e.stopPropagation(); dismiss(announcement.id); }}
                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); dismiss(announcement.id); } }}
                     aria-label="Sluiten"
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg hover:bg-white/20 transition-colors"
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md hover:bg-white/20 transition-colors"
                   >
                     <X size={14} />
                   </span>
@@ -93,7 +93,7 @@ export function AnnouncementBanner() {
         onClose={() => setExpanded(null)}
         title="Aankondiging"
       >
-        <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-line">
+        <p className="text-sm text-ink-2 leading-relaxed whitespace-pre-line">
           {expanded?.message}
         </p>
       </Modal>

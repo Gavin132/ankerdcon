@@ -27,10 +27,10 @@ export function TripPhotosTab() {
 
   return (
     <div className="space-y-4">
-      <div className="card-surface rounded-2xl px-5 py-4">
+      <div className="card-surface px-4 py-4 sm:px-5">
         <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <AddStoryTile eventDayId={uploadDay?.ev.id ?? null} />
-          <div className="w-px h-16 shrink-0 self-start bg-slate-200 dark:bg-slate-700" />
+          <div className="h-16 w-px shrink-0 self-start bg-line" />
           {trip.days.map(({ ev, date }) => {
             const summary = storySummary?.[ev.id];
             const hasPhotos = !!summary && summary.photo_count > 0;
@@ -50,11 +50,11 @@ export function TripPhotosTab() {
 
       {!isLoading && photoCount === 0 && (
         <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-100 dark:bg-rose-500/10">
-            <Camera size={24} className="text-rose-400 dark:text-rose-400/70" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
+            <Camera size={22} />
           </div>
-          <p className="text-sm font-bold text-slate-600 dark:text-slate-300">Nog geen foto's</p>
-          <p className="text-xs text-slate-400 dark:text-slate-500 max-w-[260px]">
+          <p className="text-sm font-semibold text-ink">Nog geen foto's</p>
+          <p className="max-w-[260px] text-xs text-ink-3">
             {uploadDay
               ? "Voeg de eerste foto toe met de camera hierboven."
               : "Vanaf de dag voor het event kun je hier foto's toevoegen."}

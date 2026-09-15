@@ -3,6 +3,8 @@ import { Outlet } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Header } from "./Header";
 import { BottomNav } from "./BottomNav";
+import { Sidebar } from "./Sidebar";
+import { CONTENT_WIDTH } from "./contentWidth";
 import { AnnouncementBanner } from "./AnnouncementBanner";
 import { ChangelogBanner } from "./ChangelogBanner";
 import { ScrollToTop } from "../common/ScrollToTop";
@@ -18,24 +20,25 @@ import { PullToRefresh } from "../common/PullToRefresh";
 function TabFallback() {
   return (
     <div className="flex items-center justify-center py-24">
-      <div className="h-8 w-8 rounded-full border-2 border-sky-500 border-t-transparent animate-spin" />
+      <div className="h-8 w-8 rounded-full border-2 border-ink-3 border-t-transparent animate-spin" />
     </div>
   );
 }
 
 export function AppShell() {
   return (
-    <div className="flex min-h-[100dvh] flex-col">
+    <div className="flex min-h-[100dvh] flex-col md:pl-[76px] lg:pl-60">
       <ScrollToTop />
+      <Sidebar />
       <AnnouncementBanner />
       <ChangelogBanner />
       <Header />
       <PullToRefresh />
       <motion.main
-        initial={{ opacity: 0, y: 22 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-        className="mx-auto w-full max-w-2xl flex-1 px-4 pt-5 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))]"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
+        className={`mx-auto w-full flex-1 px-4 pt-5 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:px-8 md:pt-8 md:pb-16 lg:px-10 ${CONTENT_WIDTH}`}
       >
         <Suspense fallback={<TabFallback />}>
           <Outlet />

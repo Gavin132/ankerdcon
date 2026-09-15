@@ -4,8 +4,8 @@ import type { CalendarEvent } from "../../types";
 
 interface EventLinksProps {
   event: CalendarEvent;
-  /** When true, renders only the row content — no card surface, gradient bar
-   * or "Tickets & Links" label — for embedding inside a parent card. */
+  /** When true, renders only the row content — no card surface or
+   * "Tickets & Links" label — for embedding inside a parent card. */
   bare?: boolean;
 }
 
@@ -14,19 +14,22 @@ export function EventLinks({ event, bare = false }: EventLinksProps) {
   const hasCTAs     = !!(event.ticket_url || event.website);
   const hasSaleInfo = !!event.ticket_sale_start;
 
+  const linkButton =
+    "flex flex-1 items-center justify-center gap-2 rounded-xl border-1.5 border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-3";
+
   const content = (
-      <div className="divide-y divide-slate-100 dark:divide-slate-800/70">
+      <div className="divide-y divide-line">
         {/* Ticket prices */}
         {hasTickets && (
           <div className="px-5 py-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2.5">
+            <p className="section-label mb-2.5">
               Tickets
             </p>
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {event.ticket_types!.map((t, i) => (
                 <div key={i} className="flex items-center justify-between gap-4">
-                  <span className="text-sm font-medium text-slate-600 dark:text-slate-400">{t.title}</span>
-                  <span className="text-base font-black text-emerald-600 dark:text-emerald-400 tabular-nums shrink-0">
+                  <span className="text-sm text-ink-2">{t.title}</span>
+                  <span className="shrink-0 font-mono text-sm font-semibold tabular-nums text-ink">
                     {formatCurrency(t.price)}
                   </span>
                 </div>
@@ -38,14 +41,14 @@ export function EventLinks({ event, bare = false }: EventLinksProps) {
         {/* Sale start */}
         {hasSaleInfo && (
           <div className="flex items-center gap-3 px-5 py-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/10 shrink-0">
-              <Clock size={14} className="text-amber-600 dark:text-amber-400" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+              <Clock size={14} />
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-0.5">
+              <p className="section-label mb-0.5">
                 Verkoop start
               </p>
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <p className="font-mono text-sm font-semibold tabular-nums text-ink">
                 {formatTicketSaleStart(event.ticket_sale_start!)}
               </p>
             </div>
@@ -54,17 +57,17 @@ export function EventLinks({ event, bare = false }: EventLinksProps) {
 
         {/* CTA buttons */}
         {hasCTAs && (
-          <div className="px-5 py-4 flex flex-col sm:flex-row gap-2.5">
+          <div className="flex flex-col gap-2.5 px-5 py-4 sm:flex-row">
             {event.ticket_url && (
               <a
                 href={event.ticket_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 flex-1 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3 text-sm font-bold text-white hover:opacity-90 active:scale-[0.98] transition-all shadow-sm"
+                className={linkButton}
               >
                 <Ticket size={15} />
                 Tickets kopen
-                <ExternalLink size={12} className="opacity-70 ml-0.5" />
+                <ExternalLink size={12} className="ml-0.5 text-ink-3" />
               </a>
             )}
             {event.website && (
@@ -72,11 +75,11 @@ export function EventLinks({ event, bare = false }: EventLinksProps) {
                 href={event.website}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 flex-1 rounded-xl bg-slate-100 dark:bg-slate-800 px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-[0.98] transition-all"
+                className={linkButton}
               >
                 <Globe size={15} />
                 Officiële website
-                <ExternalLink size={12} className="opacity-50 ml-0.5" />
+                <ExternalLink size={12} className="ml-0.5 text-ink-3" />
               </a>
             )}
           </div>
@@ -87,11 +90,9 @@ export function EventLinks({ event, bare = false }: EventLinksProps) {
   if (bare) return content;
 
   return (
-    <div className="card-surface rounded-2xl overflow-hidden">
-      <div className="h-[3px] bg-gradient-to-r from-sky-400 via-blue-500 to-teal-500" />
-
-      <div className="px-5 pt-4 pb-1">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+    <div className="card-surface overflow-hidden">
+      <div className="px-5 pb-1 pt-4">
+        <p className="section-label">
           Tickets & Links
         </p>
       </div>

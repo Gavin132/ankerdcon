@@ -9,9 +9,9 @@ interface ModalProps {
   title: string;
   description?: string;
   children: ReactNode;
-  /** Tailwind `from-... [via-...] to-...` stops for the thin gradient ribbon
-   * across the top of the panel, matching the same accent bar every card
-   * elsewhere in the app leads with. Defaults to the general brand gradient. */
+  /** Tailwind `from-...` colour for the thin ribbon across the top of the
+   * panel (e.g. rose for a destructive confirm). Only the first stop is used:
+   * the ribbon is a flat colour. Defaults to the brand cyan. */
   accent?: string;
 }
 
@@ -21,7 +21,7 @@ export function Modal({
   title,
   description,
   children,
-  accent = "from-sky-400 via-violet-400 to-purple-500",
+  accent = "from-sky-400",
 }: ModalProps) {
   // Capture the mobile swipe-back gesture (and the Android back button) so it
   // closes this modal instead of navigating the page away underneath it.
@@ -101,7 +101,7 @@ export function Modal({
         <>
           {/* Backdrop — only visible on sm+ where the modal doesn't cover the full screen */}
           <motion.div
-            className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm sm:block"
+            className="fixed inset-0 z-40 bg-slate-950/50 sm:block"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -118,10 +118,7 @@ export function Modal({
             {/* Mobile: fullscreen, no border radius. sm+: auto height, centered card with rounded corners. */}
             <motion.div
               onClick={(e) => e.stopPropagation()}
-              className="w-full flex flex-col overflow-hidden bg-white dark:bg-slate-900 h-[100dvh] rounded-none sm:h-auto sm:max-h-[90dvh] sm:rounded-3xl sm:max-w-md sm:mx-auto"
-              style={{
-                boxShadow: "0 -8px 40px rgba(12,42,62,0.18), 0 2px 8px rgba(0,0,0,0.06)",
-              }}
+              className="w-full flex flex-col overflow-hidden bg-surface h-[100dvh] rounded-none sm:h-auto sm:max-h-[90dvh] sm:rounded-2xl sm:border-2 sm:border-outline sm:max-w-md sm:mx-auto"
               initial={{ y: "100%", opacity: 0.6 }}
               animate={{ y: 0, opacity: 1, transition: { type: "spring", damping: 32, stiffness: 320 } }}
               exit={{ y: "100%", opacity: 0.6, transition: { duration: 0.18, ease: "easeIn" } }}
@@ -134,27 +131,26 @@ export function Modal({
                   before the accent ribbon so the ribbon lands below the
                   status bar on mobile instead of hiding behind it. */}
               <div
-                className="shrink-0 bg-white dark:bg-slate-900 sm:hidden"
+                className="shrink-0 bg-surface sm:hidden"
                 style={{ height: "env(safe-area-inset-top, 0px)" }}
               />
 
-              {/* Accent ribbon — the same thin gradient bar every card leads
-                  with elsewhere in the app. */}
-              <div className={`h-[3px] shrink-0 bg-gradient-to-r ${accent}`} />
+              {/* Accent ribbon — flat, in the first colour of `accent`. */}
+              <div className={`h-[3px] shrink-0 ${accent.split(" ")[0].replace("from-", "bg-")}`} />
 
               {/* Header */}
-              <div className="flex shrink-0 items-start justify-between px-6 pb-4 pt-6 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex shrink-0 items-start justify-between px-6 pb-4 pt-6 border-b-1.5 border-line">
                 <div>
-                  <h2 className="text-base font-black text-slate-900 dark:text-slate-100">
+                  <h2 className="font-display text-2xl font-extrabold uppercase leading-none tracking-[0.01em] text-ink">
                     {title}
                   </h2>
                   {description && (
-                    <p className="mt-0.5 text-sm text-slate-400">{description}</p>
+                    <p className="mt-1.5 text-sm text-ink-3">{description}</p>
                   )}
                 </div>
                 <button
                   onClick={onClose}
-                  className="ml-3 mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 active:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="ml-3 -mt-1 flex h-10 w-10 items-center justify-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink active:bg-sunken transition-colors"
                 >
                   <X size={20} />
                 </button>

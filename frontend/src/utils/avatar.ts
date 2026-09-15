@@ -1,10 +1,13 @@
+// Flat fills for people without their own colour or Discord avatar. Callers
+// may still add `bg-gradient-to-br`; without gradient stops that draws nothing,
+// so the fill shows.
 const AVATAR_COLORS = [
-  "from-sky-400 to-blue-500",
-  "from-violet-400 to-purple-500",
-  "from-emerald-400 to-teal-500",
-  "from-rose-400 to-pink-500",
-  "from-amber-400 to-orange-500",
-  "from-indigo-400 to-blue-600",
+  "bg-sky-600",
+  "bg-emerald-600",
+  "bg-amber-600",
+  "bg-rose-500",
+  "bg-slate-600",
+  "bg-fuchsia-600",
 ];
 
 export function avatarColor(name: string): string {

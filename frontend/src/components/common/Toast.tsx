@@ -7,45 +7,41 @@ export function ToastContainer() {
   const { toasts, removeToast } = useToastStore();
 
   return createPortal(
-    <div className="fixed left-1/2 z-[300] flex -translate-x-1/2 flex-col items-center gap-2 pointer-events-none w-full max-w-sm px-4 bottom-[calc(6rem+env(safe-area-inset-bottom,0px))]">
+    <div className="fixed left-1/2 z-[300] flex -translate-x-1/2 flex-col items-center gap-2 pointer-events-none w-full max-w-sm px-4 bottom-[calc(6rem+env(safe-area-inset-bottom,0px))] md:bottom-6">
       <AnimatePresence>
         {toasts.map((t) => (
           <motion.div
             key={t.id}
-            initial={{ opacity: 0, y: 16, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.96 }}
-            transition={{ type: "spring", stiffness: 420, damping: 32 }}
-            className={`pointer-events-auto flex w-full items-center gap-3 rounded-2xl bg-white/95 backdrop-blur-sm dark:bg-slate-800/95 px-4 py-3 shadow-xl border ${
-              t.type === "success"
-                ? "border-sky-100 dark:border-sky-800/60"
-                : t.type === "error"
-                ? "border-rose-100 dark:border-rose-800/60"
-                : "border-slate-100 dark:border-slate-700"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.18 }}
+            className={`pointer-events-auto flex w-full items-center gap-3 rounded-xl border-1.5 bg-surface px-3 py-2.5 shadow-xl ${
+              t.type === "error" ? "border-rose-500" : "border-outline"
             }`}
           >
             <div
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl overflow-hidden ${
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg overflow-hidden ${
                 t.type === "success"
-                  ? "gradient-brand"
+                  ? "bg-brand"
                   : t.type === "error"
-                  ? "bg-gradient-to-br from-rose-400 to-rose-600"
-                  : "bg-gradient-to-br from-slate-400 to-slate-500"
+                  ? "bg-rose-600"
+                  : "bg-slate-600"
               }`}
             >
               <img
                 src="/assets/images/ankerd-logo.png"
                 alt=""
                 className="h-5 w-5 object-contain"
-                style={{ filter: "brightness(0) invert(1)" }}
+                style={{ filter: t.type === "success" ? "brightness(0)" : "brightness(0) invert(1)" }}
               />
             </div>
-            <p className="flex-1 text-sm font-semibold text-slate-800 dark:text-slate-100 leading-tight">
+            <p className="flex-1 text-sm font-medium text-ink leading-tight">
               {t.message}
             </p>
             <button
               onClick={() => removeToast(t.id)}
-              className="shrink-0 flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors dark:hover:text-slate-200 dark:hover:bg-slate-700"
+              className="shrink-0 flex h-6 w-6 items-center justify-center rounded-md text-ink-3 hover:text-ink hover:bg-sunken transition-colors"
             >
               <X size={13} />
             </button>

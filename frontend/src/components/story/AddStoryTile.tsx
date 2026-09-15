@@ -59,22 +59,22 @@ export function AddStoryTile({ eventDayId }: AddStoryTileProps) {
         type="button"
         disabled={busy}
         onClick={handleClick}
-        className="relative flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-slate-300 dark:border-slate-600 disabled:cursor-not-allowed"
+        className="relative flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-ink-3/60 transition-colors hover:border-ink-3 disabled:cursor-not-allowed"
       >
         {busy ? (
-          <Loader2 size={18} className="animate-spin text-slate-400 dark:text-slate-500" />
+          <Loader2 size={18} className="animate-spin text-ink-3" />
         ) : (
-          <ImagePlus size={18} className="text-slate-300 dark:text-slate-600" />
+          <ImagePlus size={18} className="text-ink-3" />
         )}
         <span
-          className={`absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full text-white ring-2 ring-white dark:ring-slate-950 ${
-            disabled ? "bg-slate-400 dark:bg-slate-600" : "gradient-brand"
+          className={`absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-1.5 ${
+            disabled ? "border-line bg-sunken text-ink-3" : "border-outline bg-brand text-brand-on"
           }`}
         >
           <Plus size={12} strokeWidth={3} />
         </span>
       </button>
-      <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate max-w-full">
+      <span className="max-w-full truncate font-mono text-[10.5px] font-semibold uppercase text-ink-2">
         Toevoegen
       </span>
     </div>

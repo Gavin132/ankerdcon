@@ -7,6 +7,19 @@ All notable changes to Ankerd Con are documented here.
 ## [Unreleased]
 
 ### Changed
+- New look, based on the Ankerd mascot: flat surfaces with ink outlines,
+  anchor cyan for the main action, Poppins for text and a condensed display
+  face for names and countdowns. Works in light and dark mode.
+  - On desktop the navigation moves to a sidebar (an icon rail on tablets)
+    with the next trip as a wristband; phones keep the tab bar.
+  - The Hub shows the nearest trip as a ticket with a countdown, and uses
+    two columns on wide screens.
+  - Every screen follows the new style, including trip pages, ride and meal
+    pages, Agenda, Financiën, Crew, profile, settings, onboarding, error
+    pages and the admin portal.
+  - On desktop, transport shows Heen, Terug and Restaurant side by side, and
+    Financiën puts your balance next to the expense list. "Add" buttons no
+    longer stretch across the whole page there.
 - New navigation built around trips. The tabs are now **Hub · Event ·
   Agenda · Financiën · Crew**.
   - **Event** opens the current trip, with Overzicht, Vervoer, Eten,

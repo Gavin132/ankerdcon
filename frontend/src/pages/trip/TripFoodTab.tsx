@@ -43,9 +43,9 @@ function isMealPast(time: string): boolean {
   return !isNaN(d.getTime()) && d < getNow();
 }
 
-const SL = "block text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5";
-const SF = "space-y-4 rounded-2xl border border-slate-100 dark:border-white/[0.07] bg-slate-50 dark:bg-white/[0.03] p-4";
-const ST = "text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3";
+const SL = "section-label mb-1.5 block";
+const SF = "space-y-4 rounded-xl border-1.5 border-line bg-sunken p-4";
+const ST = "section-label mb-3";
 
 /** Event › Eten: this trip's meals, plus who on the trip isn't eating along yet. */
 export function TripFoodTab() {
@@ -146,7 +146,7 @@ export function TripFoodTab() {
         </div>
       ) : meals.length === 0 ? (
         <EmptyState
-          icon={<UtensilsCrossed size={36} />}
+          icon={<UtensilsCrossed size={22} />}
           title="Geen maaltijden"
           description="Er is nog geen maaltijd of restaurant gepland voor dit event."
         />
@@ -158,12 +158,12 @@ export function TripFoodTab() {
           <>
             {upcomingMeals.length === 0 ? (
               <EmptyState
-                icon={<UtensilsCrossed size={36} />}
+                icon={<UtensilsCrossed size={22} />}
                 title="Geen aankomende maaltijden"
                 description="Alle maaltijden zijn al geweest. Bekijk de geschiedenis hieronder."
               />
             ) : (
-              <motion.div className="space-y-3" variants={listContainer} initial="hidden" animate="show">
+              <motion.div className="grid items-stretch gap-3 xl:grid-cols-2" variants={listContainer} initial="hidden" animate="show">
                 {upcomingMeals.map((meal) => (
                   <MealCard key={meal.id} meal={meal} userNames={userNames} />
                 ))}
@@ -173,12 +173,14 @@ export function TripFoodTab() {
             {pastMeals.length > 0 && (
               <div>
                 <button
+                  type="button"
                   onClick={() => setShowPastMeals((v) => !v)}
-                  className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 min-h-[48px] text-sm font-semibold text-slate-500 hover:bg-slate-100 active:bg-slate-100 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+                  aria-expanded={showPastMeals}
+                  className="card-surface-hover flex min-h-[44px] w-full items-center justify-between px-4 py-2.5 text-[13px] font-semibold text-ink-2 hover:text-ink"
                 >
                   <span className="flex items-center gap-2">
                     <History size={14} />
-                    Geschiedenis ({pastMeals.length})
+                    Geschiedenis <span className="font-mono tabular-nums">({pastMeals.length})</span>
                   </span>
                   <motion.div
                     animate={{ rotate: showPastMeals ? 180 : 0 }}
@@ -198,7 +200,7 @@ export function TripFoodTab() {
                       className="overflow-hidden"
                     >
                       <motion.div
-                        className="mt-3 space-y-3"
+                        className="mt-3 grid items-stretch gap-3 xl:grid-cols-2"
                         variants={listContainer}
                         initial="hidden"
                         animate="show"
@@ -217,7 +219,7 @@ export function TripFoodTab() {
       })()}
 
       <StickyActionBar>
-        <Button className="w-full shadow-lg" onClick={openCreate}>
+        <Button className="w-full" onClick={openCreate}>
           <Plus size={16} />
           Maaltijd toevoegen
         </Button>
@@ -243,7 +245,7 @@ export function TripFoodTab() {
                   {...register("meal_name")}
                 />
                 {errors.meal_name && (
-                  <p className="mt-1.5 text-xs text-rose-500">{errors.meal_name.message}</p>
+                  <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400">{errors.meal_name.message}</p>
                 )}
               </div>
 
@@ -261,9 +263,9 @@ export function TripFoodTab() {
                     />
                   )}
                 />
-                <p className="mt-1.5 text-xs text-slate-400">De datum van het etentje volgt uit het event.</p>
+                <p className="mt-1.5 text-xs text-ink-3">De datum van het etentje volgt uit het event.</p>
                 {errors.linked_event_id && (
-                  <p className="mt-1.5 text-xs text-rose-500">{errors.linked_event_id.message}</p>
+                  <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400">{errors.linked_event_id.message}</p>
                 )}
               </div>
 
@@ -275,7 +277,7 @@ export function TripFoodTab() {
                   {...register("meal_time")}
                 />
                 {errors.meal_time && (
-                  <p className="mt-1.5 text-xs text-rose-500">{errors.meal_time.message}</p>
+                  <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400">{errors.meal_time.message}</p>
                 )}
               </div>
 
@@ -304,17 +306,17 @@ export function TripFoodTab() {
                 />
               </div>
 
-              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.03] px-4 py-3 hover:border-sky-300 dark:hover:border-sky-500/40 hover:bg-sky-50 dark:hover:bg-sky-500/5 transition-colors">
+              <label className="flex cursor-pointer items-center gap-3 rounded-xl border-1.5 border-line bg-surface px-4 py-3 transition-colors hover:border-ink-3">
                 <input
                   type="checkbox"
-                  className="h-4 w-4 rounded accent-sky-500 shrink-0"
+                  className="cb"
                   {...register("transport_needed")}
                 />
                 <div>
-                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-sm font-semibold text-ink">
                     Autovervoer nodig
                   </span>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="mt-0.5 text-xs text-ink-3">
                     Zichtbaar op de kaart als blauwe badge
                   </p>
                 </div>
@@ -323,20 +325,21 @@ export function TripFoodTab() {
           </div>
 
           {/* Details — collapsible */}
-          <div className="rounded-2xl border border-slate-100 dark:border-white/[0.07] overflow-hidden">
+          <div className="overflow-hidden rounded-xl border-1.5 border-line">
             <button
               type="button"
               onClick={() => setShowDetails((v) => !v)}
-              className="flex w-full items-center justify-between px-4 py-3.5 bg-slate-50 dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+              aria-expanded={showDetails}
+              className="flex w-full items-center justify-between bg-sunken px-4 py-3.5 transition-colors hover:bg-line/40"
             >
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+              <span className="section-label">
                 Details (optioneel)
               </span>
               <motion.div
                 animate={{ rotate: showDetails ? 180 : 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <ChevronDown size={14} className="text-slate-400" />
+                <ChevronDown size={14} className="text-ink-3" />
               </motion.div>
             </button>
 
@@ -349,7 +352,7 @@ export function TripFoodTab() {
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden"
                 >
-                  <div className="space-y-4 px-4 py-4 bg-slate-50 dark:bg-white/[0.03] border-t border-slate-100 dark:border-white/[0.06]">
+                  <div className="space-y-4 border-t border-line bg-sunken px-4 py-4">
                     <div>
                       <label className={SL}>Omschrijving</label>
                       <textarea

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { BedDouble, CalendarDays, MapPin, UserCheck, UserMinus, UtensilsCrossed } from "lucide-react";
+import { BedDouble, MapPin, UserCheck, UserMinus, UtensilsCrossed } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { UserProfilePopup, type AnchorRect } from "../common/UserProfilePopup";
 import { AttendanceSummary } from "./AttendanceSummary";
@@ -43,78 +43,52 @@ export function EventHero({ event, daysUntil, users, meals = [], onRsvpClick, on
 
   const isPast = daysUntil !== null && daysUntil < 0;
   const isToday = daysUntil === 0;
-  const isTravelDay = event.has_con === false;
 
-  const bgGradient = isPast
-    ? { a: "#0a0f1e", b: "#111827", c: "#1e293b" }
-    : isToday
-      ? { a: "#14532d", b: "#166534", c: "#15803d" }
-      : isTravelDay
-        // Distinct teal/slate tone for a hotel-only travel day — deliberately
-        // calmer than the con-day blue, and not amber (that's meals).
-        ? { a: "#0c2a2e", b: "#0f3d3e", c: "#115e59" }
-        : { a: "#172554", b: "#1e3a8a", c: "#075985" };
+  const chip =
+    "inline-flex max-w-full items-center gap-1.5 rounded-md border border-white/25 bg-white/10 px-2 py-[3px] font-mono text-[10.5px] font-semibold uppercase tracking-[0.05em] text-[#E6F0F3]";
+  const chipLink = `${chip} transition-colors hover:border-white/60`;
 
   return (
-    <div className={`relative overflow-hidden ${isPast ? "opacity-75" : ""}`} style={{ minHeight: 280 }}>
-      {/* Cover image (if set) */}
+    <div
+      className={`relative overflow-hidden rounded-[14px] border-2 border-outline bg-[#0F1519] text-[#E6F0F3] ${isPast ? "opacity-75" : ""}`}
+    >
+      {/* Cover image (if set) under a flat dark overlay for legibility */}
       {event.image_url && (
-        <img
-          src={event.image_url}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover object-center"
-        />
+        <>
+          <img
+            src={event.image_url}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover object-center"
+          />
+          <div aria-hidden className="absolute inset-0 bg-[#0F1519]/60" />
+        </>
       )}
-      {/* Layered gradient (sits on top of image to ensure text legibility) */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: event.image_url
-            ? `linear-gradient(135deg, ${bgGradient.a}e6 0%, ${bgGradient.b}cc 50%, ${bgGradient.c}99 100%)`
-            : `
-              radial-gradient(ellipse at 0% 50%, ${bgGradient.a}ff 0%, transparent 60%),
-              radial-gradient(ellipse at 100% 0%, ${bgGradient.c}cc 0%, transparent 55%),
-              radial-gradient(ellipse at 60% 100%, ${bgGradient.b}88 0%, transparent 50%),
-              linear-gradient(135deg, ${bgGradient.a} 0%, ${bgGradient.b} 45%, ${bgGradient.c} 100%)
-            `,
-        }}
-      />
-      {/* Film grain */}
-      <svg className="absolute inset-0 h-full w-full opacity-[0.15] pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-        <filter id="hero-noise">
-          <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="4" stitchTiles="stitch" />
-          <feColorMatrix type="saturate" values="0" />
-        </filter>
-        <rect width="100%" height="100%" filter="url(#hero-noise)" />
-      </svg>
-      {/* Inner glow top-left */}
-      <div
-        className="absolute -top-20 -left-20 h-72 w-72 rounded-full opacity-20 pointer-events-none"
-        style={{ background: `radial-gradient(circle, #a78bfa 0%, transparent 70%)` }}
-      />
-      {/* Vignette */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/10 pointer-events-none" />
-      {/* Bottom fade into page bg */}
-      <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-50 dark:from-slate-950 to-transparent pointer-events-none" />
-
-      {/* Watermark */}
-      <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-[0.05] pointer-events-none">
-        <CalendarDays size={200} strokeWidth={0.75} className="text-white" />
-      </div>
 
       {/* Content */}
-      <div className="relative max-w-4xl mx-auto px-4 pt-8 pb-12">
+      <div className="relative px-4 py-5 sm:px-6 sm:py-6">
 
-        {/* Top badges row */}
-        <div className="flex flex-wrap items-center gap-2 mb-5">
+        {/* Top chips row */}
+        <div className="mb-3 flex flex-wrap items-center gap-1.5">
+          {(isToday || daysUntil === 1) && (
+            <span
+              className={
+                isToday
+                  ? "inline-flex items-center rounded-md border border-brand bg-brand px-2 py-[3px] font-mono text-[10.5px] font-semibold uppercase tracking-[0.05em] text-brand-on"
+                  : chip
+              }
+            >
+              {isToday ? "Vandaag 🎉" : "Morgen!"}
+            </span>
+          )}
+          {isPast && <span className={`${chip} text-[#E6F0F3]/60`}>Afgelopen</span>}
           {event.is_hotel && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-500/25 border border-teal-400/40 backdrop-blur-sm px-3 py-1 text-[11px] font-bold text-teal-200">
-              <BedDouble size={10} /> Hotel
+            <span className={chip}>
+              <BedDouble size={11} /> Hotel
             </span>
           )}
           {event.has_con === false && !event.is_party && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-500/20 border border-teal-400/30 backdrop-blur-sm px-3 py-1 text-[11px] font-bold text-teal-200">
-              <BedDouble size={10} /> Reisdag
+            <span className={chip}>
+              <BedDouble size={11} /> Reisdag
             </span>
           )}
           {event.location && (
@@ -122,44 +96,27 @@ export function EventHero({ event, daysUntil, users, meals = [], onRsvpClick, on
               href={`https://maps.google.com/?q=${encodeURIComponent(event.location)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-sm px-3 py-1 text-[11px] font-bold text-white/80 hover:bg-white/15 hover:text-white transition-colors"
+              className={chipLink}
             >
-              <MapPin size={10} /> {event.location}
+              <MapPin size={11} className="shrink-0" /> <span className="truncate">{event.location}</span>
             </a>
           )}
           {meals.length > 0 && (
-            <Link
-              to={routes.meal.view(meals[0].id)}
-              className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 border border-amber-400/30 backdrop-blur-sm px-3 py-1 text-[11px] font-bold text-amber-200 hover:bg-amber-500/30 transition-colors max-w-[220px]"
-            >
-              <UtensilsCrossed size={10} className="shrink-0" />
+            <Link to={routes.meal.view(meals[0].id)} className={`${chipLink} max-w-[220px]`}>
+              <UtensilsCrossed size={11} className="shrink-0" />
               <span className="truncate">{meals[0].meal_name}</span>
-              {meals.length > 1 && <span className="shrink-0 text-amber-200/60">+{meals.length - 1}</span>}
+              {meals.length > 1 && <span className="shrink-0 opacity-60">+{meals.length - 1}</span>}
             </Link>
-          )}
-          {(isToday || daysUntil === 1) && (
-            <span className={`inline-flex items-center rounded-full border backdrop-blur-sm px-3 py-1 text-[11px] font-black ${
-              isToday
-                ? "bg-emerald-500/25 border-emerald-400/40 text-emerald-200"
-                : "bg-sky-500/20 border-sky-400/30 text-sky-200"
-            }`}>
-              {isToday ? "Vandaag 🎉" : "Morgen!"}
-            </span>
-          )}
-          {isPast && (
-            <span className="inline-flex items-center rounded-full bg-white/10 border border-white/10 px-3 py-1 text-[11px] font-bold text-white/40">
-              Afgelopen
-            </span>
           )}
         </div>
 
-        {/* Title */}
-        <h1 className="text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight drop-shadow-lg">
+        {/* Title — the trip name is already the page title above, so this stays a size smaller */}
+        <h2 className="font-display text-[26px] font-extrabold uppercase leading-[0.95] tracking-[0.005em] text-[#E6F0F3] sm:text-[30px]">
           {event.event_name}
-        </h1>
+        </h2>
 
         {event.description && (
-          <p className="mt-2 text-sm text-white/55 leading-relaxed max-w-lg">
+          <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-[#E6F0F3]/70">
             {event.description}
           </p>
         )}
@@ -167,49 +124,49 @@ export function EventHero({ event, daysUntil, users, meals = [], onRsvpClick, on
         {/* Attendees + sign-up */}
         <div className="mt-5 flex flex-wrap items-center gap-3">
           {event.participants.length > 0 && (
-            <div className="flex items-center gap-3">
-              <div className="flex -space-x-2.5">
+            <div className="flex items-center gap-2.5">
+              <div className="flex -space-x-2">
                 {event.participants.slice(0, 8).map((p) => {
                   const u = resolveUser(p);
                   return u ? (
-                    <button key={p} type="button" onClick={(e) => openPopup(u, e)}>
+                    <button key={p} type="button" onClick={(e) => openPopup(u, e)} className="rounded-full">
                       <UserAvatar
                         name={u.name}
                         user={u}
-                        className="h-8 w-8 text-[10px] ring-2 ring-black/30 hover:ring-white/40 transition-all"
+                        className="h-8 w-8 text-[10px] !border-[#0F1519]"
                       />
                     </button>
                   ) : (
                     <UserAvatar
                       key={p}
                       name={p}
-                      className="h-8 w-8 text-[10px] ring-2 ring-black/30"
+                      className="h-8 w-8 text-[10px] !border-[#0F1519]"
                     />
                   );
                 })}
               </div>
-              <p className="text-sm text-white/60">
-                <span className="font-black text-white">{event.participants.length}</span>{" "}
+              <p className="text-[13px] text-[#E6F0F3]/70">
+                <span className="font-mono font-semibold tabular-nums text-[#E6F0F3]">{event.participants.length}</span>{" "}
                 {event.participants.length === 1 ? "aanmelding" : "aanmeldingen"}
               </p>
             </div>
           )}
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="ml-auto flex items-center gap-2">
             {event.participants.length > 0 && (
               <button
                 type="button"
                 onClick={onCancelClick}
-                className="flex items-center gap-1.5 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 px-3 py-2 text-xs font-bold text-white/80 hover:bg-black/50 hover:border-white/20 active:scale-[0.97] transition-all"
+                className="inline-flex items-center gap-1.5 rounded-xl border-1.5 border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-3"
               >
-                <UserMinus size={13} /> Afmelden
+                <UserMinus size={14} /> Afmelden
               </button>
             )}
             <button
               type="button"
               onClick={onRsvpClick}
-              className="flex items-center gap-1.5 rounded-xl gradient-brand px-3.5 py-2 text-xs font-bold text-white hover:opacity-90 active:scale-[0.97] transition-all"
+              className="btn-primary px-4 py-2.5 text-sm"
             >
-              <UserCheck size={13} /> Aanmelden
+              <UserCheck size={14} /> Aanmelden
             </button>
           </div>
         </div>

@@ -163,17 +163,19 @@ export function TripOverviewTab() {
   if (eventsLoading) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-[280px] rounded-2xl bg-slate-200 dark:bg-slate-800" />
-        <div className="h-32 rounded-2xl bg-slate-200 dark:bg-slate-800" />
+        <div className="h-[220px] rounded-[14px] bg-sunken" />
+        <div className="h-32 rounded-xl bg-sunken" />
       </div>
     );
   }
 
   if (!rawEvent || !event) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 py-20 text-slate-400">
-        <CalendarDays size={40} className="opacity-30" />
-        <p className="text-sm">Deze dag bestaat niet meer</p>
+      <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
+          <CalendarDays size={22} />
+        </div>
+        <p className="text-sm font-semibold text-ink">Deze dag bestaat niet meer</p>
       </div>
     );
   }
@@ -258,9 +260,16 @@ export function TripOverviewTab() {
   }
 
   const iconButton =
-    "flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 " +
-    "hover:text-slate-900 transition-colors disabled:opacity-40 disabled:hover:text-slate-600 " +
-    "dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:text-white";
+    "flex h-9 items-center gap-1.5 rounded-xl border-1.5 border-line bg-surface px-3 text-xs font-semibold text-ink-2 " +
+    "hover:border-ink-3 hover:text-ink transition-colors disabled:opacity-40 disabled:hover:border-line disabled:hover:text-ink-2";
+
+  // From xl the panels sit in two columns (logistics left, weather + cosplays
+  // right); below that the columns dissolve (`contents`) and `order-*` keeps
+  // the single-column reading order.
+  const hasLeftPanels = linkedMeals.length > 0 || showHotelInfoCard || hasPracticalInfo || hasLinks || linkedRides.length > 0;
+  const hasRightPanels = showWeather || !!event.has_con;
+  const twoColumns = hasLeftPanels && hasRightPanels;
+  const column = twoColumns ? "contents xl:flex xl:flex-col xl:gap-4" : "contents";
 
   return (
     <div className="space-y-4">
@@ -285,123 +294,129 @@ export function TripOverviewTab() {
         </button>
       </div>
 
-      <div className="overflow-hidden rounded-2xl">
-        <EventHero
-          event={event}
-          daysUntil={daysUntil}
-          users={users}
-          meals={linkedMeals}
-          onRsvpClick={() => {
-            setRsvpOpen(true);
-            // Pre-fill with your own name — the common case is signing
-            // yourself up, and it's still a multi-select so anyone else can
-            // be added or your own name removed before confirming.
-            if (me?.name && !event.participants.includes(me.name)) {
-              setRsvpNames([me.name]);
-            }
-          }}
-          onCancelClick={() => setCancelOpen(true)}
-          groupDays={groupDays ?? undefined}
-        />
-      </div>
+      <EventHero
+        event={event}
+        daysUntil={daysUntil}
+        users={users}
+        meals={linkedMeals}
+        onRsvpClick={() => {
+          setRsvpOpen(true);
+          // Pre-fill with your own name — the common case is signing
+          // yourself up, and it's still a multi-select so anyone else can
+          // be added or your own name removed before confirming.
+          if (me?.name && !event.participants.includes(me.name)) {
+            setRsvpNames([me.name]);
+          }
+        }}
+        onCancelClick={() => setCancelOpen(true)}
+        groupDays={groupDays ?? undefined}
+      />
 
       {/* ── Main content ── */}
-      <div className="space-y-4">
-
-        {/* 1 ── Linked meal(s) — leads the page when there's a meal plan,
-              since that's often the thing people actually need to check. */}
-        <EventLinkedMeals meals={linkedMeals} />
-
-        {/* 2 ── Hotel info + Weather — same two slots always, just reordered,
-              so switching days via DayStrip doesn't reflow the rest of the
-              page: hotel info leads (weather demoted below it) on a travel
-              day or on day one of the trip — arrival/check-in day either
-              way — weather leads on every other con day. */}
-        {showHotelInfoCard && (
-          <HotelInfoCard event={event} onHotelClick={() => navigate(routes.trip.view(trip.id, "rooms"))} />
-        )}
-
-        {showWeather && (
-          weatherLoading ? (
-            <WeatherSkeleton />
-          ) : weather?.kind === "forecast" ? (
-            <WeatherCard weather={weather.data} />
-          ) : weather?.kind === "climate" ? (
-            <ClimateAverageCard climate={weather.data} />
-          ) : (
-            <div className="card-surface rounded-2xl px-5 py-4 flex items-center gap-3 text-slate-400 dark:text-slate-500">
-              <span className="text-2xl">🌐</span>
-              <p className="text-sm">Geen weersdata beschikbaar voor deze locatie.</p>
-            </div>
-          )
-        )}
-
-        {/* 3 ── Cosplays (con days only — nothing to cosplay for on a travel day) */}
-        {event.has_con && (
-          <div className="card-surface rounded-2xl overflow-hidden">
-            <div className="h-[3px] bg-gradient-to-r from-blue-400 to-sky-500" />
-            <button
-              type="button"
-              onClick={() => navigate(routes.trip.view(trip.id, "cosplay"))}
-              className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-slate-50 dark:hover:bg-white/[0.02] active:bg-slate-100 dark:active:bg-white/[0.04] transition-colors group"
-            >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-500/10">
-                <Sparkles size={16} className="text-blue-500 dark:text-blue-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-0.5">
-                  Cosplays
-                </p>
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  {eventCosplays.length === 0
-                    ? "Nog geen cosplays — voeg toe"
-                    : `${eventCosplays.length} cosplay${eventCosplays.length !== 1 ? "s" : ""} · ${cosplayerNames.length} ${cosplayerNames.length === 1 ? "persoon" : "personen"}`}
-                </p>
-                {cosplayerNames.length > 0 && (
-                  <div className="mt-1.5 flex -space-x-1.5">
-                    {cosplayerNames.slice(0, 7).map((name) => {
-                      const u = users.find((x) => x.name === name || x.discord_username === name || x.aliases?.includes(name));
-                      return (
-                        <UserAvatar key={name} name={u?.name ?? name} user={u} className="h-5 w-5 text-[7px] ring-[1.5px] ring-white dark:ring-slate-900" />
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-              <ChevronRight size={15} className="shrink-0 text-slate-300 dark:text-slate-600 group-hover:text-slate-400 dark:group-hover:text-slate-500 transition-colors" />
-            </button>
+      <div className={`flex flex-col gap-4 ${twoColumns ? "xl:grid xl:grid-cols-2 xl:items-start" : ""}`}>
+        <div className={column}>
+          {/* 1 ── Linked meal(s) — leads the page when there's a meal plan,
+                since that's often the thing people actually need to check. */}
+          <div className="order-1 empty:hidden xl:order-none">
+            <EventLinkedMeals meals={linkedMeals} />
           </div>
-        )}
 
-        {/* 4 ── Practical info + hotel + tickets, one combined card */}
-        {(hasPracticalInfo || hasLinks) && (
-          <div className="card-surface rounded-2xl overflow-hidden">
-            <div className="h-[3px] bg-gradient-to-r from-sky-400 via-blue-400 to-teal-500" />
-            <div className="px-5 pt-4 pb-1">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                Praktische info
-              </p>
+          {/* 2 ── Hotel info + Weather — same two slots always, just reordered,
+                so switching days via DayStrip doesn't reflow the rest of the
+                page: hotel info leads (weather demoted below it) on a travel
+                day or on day one of the trip — arrival/check-in day either
+                way — weather leads on every other con day. */}
+          {showHotelInfoCard && (
+            <div className="order-2 xl:order-none">
+              <HotelInfoCard event={event} onHotelClick={() => navigate(routes.trip.view(trip.id, "rooms"))} />
             </div>
-            <EventPractical
-              event={event}
-              showHotel={showHotel}
-              hotelRooms={hotelRooms}
-              participantCount={event.participants.length}
-              users={users}
-              isAdmin={isAdmin}
-              onHotelClick={() => navigate(routes.trip.view(trip.id, "rooms"))}
-              bare
-            />
-            {hasPracticalInfo && hasLinks && (
-              <div className="border-t border-slate-100 dark:border-slate-800" />
-            )}
-            {hasLinks && <EventLinks event={event} bare />}
+          )}
+
+          {/* 4 ── Practical info + hotel + tickets, one combined card */}
+          {(hasPracticalInfo || hasLinks) && (
+            <div className="card-surface order-5 overflow-hidden xl:order-none">
+              <div className="px-5 pb-1 pt-4">
+                <p className="section-label">
+                  Praktische info
+                </p>
+              </div>
+              <EventPractical
+                event={event}
+                showHotel={showHotel}
+                hotelRooms={hotelRooms}
+                participantCount={event.participants.length}
+                users={users}
+                isAdmin={isAdmin}
+                onHotelClick={() => navigate(routes.trip.view(trip.id, "rooms"))}
+                bare
+              />
+              {hasPracticalInfo && hasLinks && (
+                <div className="h-px bg-line" />
+              )}
+              {hasLinks && <EventLinks event={event} bare />}
+            </div>
+          )}
+
+          {/* 5 ── Linked rides */}
+          <div className="order-6 empty:hidden xl:order-none">
+            <EventLinkedRides rides={linkedRides} />
           </div>
-        )}
+        </div>
 
-        {/* 5 ── Linked rides */}
-        <EventLinkedRides rides={linkedRides} />
+        <div className={column}>
+          {showWeather && (
+            <div className="order-3 xl:order-none">
+              {weatherLoading ? (
+                <WeatherSkeleton />
+              ) : weather?.kind === "forecast" ? (
+                <WeatherCard weather={weather.data} />
+              ) : weather?.kind === "climate" ? (
+                <ClimateAverageCard climate={weather.data} />
+              ) : (
+                <div className="card-surface flex items-center gap-3 px-5 py-4 text-ink-3">
+                  <span className="text-2xl">🌐</span>
+                  <p className="text-sm">Geen weersdata beschikbaar voor deze locatie.</p>
+                </div>
+              )}
+            </div>
+          )}
 
+          {/* 3 ── Cosplays (con days only — nothing to cosplay for on a travel day) */}
+          {event.has_con && (
+            <div className="card-surface order-4 overflow-hidden xl:order-none">
+              <button
+                type="button"
+                onClick={() => navigate(routes.trip.view(trip.id, "cosplay"))}
+                className="group flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-sunken"
+              >
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink group-hover:bg-surface">
+                  <Sparkles size={14} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="section-label mb-0.5">
+                    Cosplays
+                  </p>
+                  <p className="text-sm font-semibold text-ink">
+                    {eventCosplays.length === 0
+                      ? "Nog geen cosplays — voeg toe"
+                      : `${eventCosplays.length} cosplay${eventCosplays.length !== 1 ? "s" : ""} · ${cosplayerNames.length} ${cosplayerNames.length === 1 ? "persoon" : "personen"}`}
+                  </p>
+                  {cosplayerNames.length > 0 && (
+                    <div className="mt-1.5 flex -space-x-1.5">
+                      {cosplayerNames.slice(0, 7).map((name) => {
+                        const u = users.find((x) => x.name === name || x.discord_username === name || x.aliases?.includes(name));
+                        return (
+                          <UserAvatar key={name} name={u?.name ?? name} user={u} className="h-5 w-5 text-[7px] !border-[1.5px] !border-surface" />
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                <ChevronRight size={15} className="shrink-0 text-ink-3 transition-colors group-hover:text-ink" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <StoryViewer eventDayId={event.id} open={storyOpen} onClose={() => setStoryOpen(false)} />
@@ -423,14 +438,14 @@ export function TripOverviewTab() {
             color="green"
           />
           {isMultiDay && (
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3">
+            <div className="flex items-center justify-between gap-3 rounded-xl border-1.5 border-line bg-sunken p-3">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${rsvpAllDays ? "bg-sky-500/10" : "bg-slate-100 dark:bg-slate-800"}`}>
-                  <Layers size={14} className={rsvpAllDays ? "text-sky-500" : "text-slate-400"} />
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${rsvpAllDays ? "bg-brand-soft" : "bg-surface"}`}>
+                  <Layers size={14} className={rsvpAllDays ? "text-brand-text" : "text-ink-3"} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-slate-900 dark:text-white">Aanmelden voor elke dag</p>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                  <p className="text-xs font-semibold text-ink">Aanmelden voor elke dag</p>
+                  <p className="mt-0.5 text-[11px] text-ink-3">
                     Geldt voor alle {groupEventIds.length} dagen van {event.event_name}
                   </p>
                 </div>
@@ -441,7 +456,7 @@ export function TripOverviewTab() {
                 aria-checked={rsvpAllDays}
                 onClick={() => setRsvpAllDays((v) => !v)}
                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
-                  rsvpAllDays ? "bg-sky-500" : "bg-slate-200 dark:bg-slate-700"
+                  rsvpAllDays ? "bg-sky-500" : "bg-line"
                 }`}
               >
                 <span
@@ -476,14 +491,14 @@ export function TripOverviewTab() {
             color="rose"
           />
           {isMultiDay && (
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3">
+            <div className="flex items-center justify-between gap-3 rounded-xl border-1.5 border-line bg-sunken p-3">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${cancelAllDays ? "bg-rose-500/10" : "bg-slate-100 dark:bg-slate-800"}`}>
-                  <Layers size={14} className={cancelAllDays ? "text-rose-500" : "text-slate-400"} />
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${cancelAllDays ? "bg-rose-100 dark:bg-rose-500/15" : "bg-surface"}`}>
+                  <Layers size={14} className={cancelAllDays ? "text-rose-700 dark:text-rose-300" : "text-ink-3"} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-slate-900 dark:text-white">Afmelden voor elke dag</p>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                  <p className="text-xs font-semibold text-ink">Afmelden voor elke dag</p>
+                  <p className="mt-0.5 text-[11px] text-ink-3">
                     Geldt voor alle {groupEventIds.length} dagen van {event.event_name}
                   </p>
                 </div>
@@ -494,7 +509,7 @@ export function TripOverviewTab() {
                 aria-checked={cancelAllDays}
                 onClick={() => { setCancelAllDays((v) => !v); setCancelNames([]); }}
                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 ${
-                  cancelAllDays ? "bg-rose-500" : "bg-slate-200 dark:bg-slate-700"
+                  cancelAllDays ? "bg-rose-500" : "bg-line"
                 }`}
               >
                 <span

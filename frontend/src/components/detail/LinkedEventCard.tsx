@@ -10,30 +10,26 @@ interface LinkedEventCardProps {
 
 export function LinkedEventCard({ event }: LinkedEventCardProps) {
   return (
-    <div className="card-surface rounded-2xl overflow-hidden">
-      <div className="h-[3px] bg-gradient-to-r from-sky-400 to-indigo-500" />
-      <div className="px-5 py-4">
-      <h2 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">
-        Gekoppeld evenement
-      </h2>
-      <Link
-        to={routes.event.view(event.id)}
-        className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700
-                   bg-slate-50 dark:bg-slate-800 px-4 py-3
-                   hover:border-sky-300 dark:hover:border-sky-500/40
-                   hover:bg-sky-50 dark:hover:bg-sky-500/10 transition-colors"
-      >
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-100 dark:bg-sky-500/10">
-          <CalendarDays size={16} className="text-sky-500" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
-            {event.event_name}
-          </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{formatDate(event.date)}</p>
-        </div>
-        <ExternalLink size={14} className="shrink-0 text-slate-400" />
-      </Link>
+    <div className="card-surface overflow-hidden">
+      <div className="px-4 py-4">
+        <h2 className="section-label mb-3">
+          Gekoppeld evenement
+        </h2>
+        <Link
+          to={routes.event.view(event.id)}
+          className="flex items-center gap-3 rounded-xl border-1.5 border-line bg-surface px-3.5 py-3 transition-colors hover:border-ink-3"
+        >
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+            <CalendarDays size={15} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-ink">
+              {event.event_name}
+            </p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.05em] text-ink-3">{formatDate(event.date)}</p>
+          </div>
+          <ExternalLink size={14} className="shrink-0 text-ink-3" />
+        </Link>
       </div>
     </div>
   );

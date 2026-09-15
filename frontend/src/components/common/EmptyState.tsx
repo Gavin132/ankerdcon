@@ -7,13 +7,13 @@ export function EmptyState({
   action,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-sky-50 to-sky-100 text-sky-300 shadow-inner dark:from-sky-900/30 dark:to-sky-800/20 dark:text-sky-500">
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
         {icon}
       </div>
-      <h3 className="mb-1.5 text-base font-black text-slate-800">{title}</h3>
+      <h3 className="mb-1 text-sm font-semibold text-ink">{title}</h3>
       {description && (
-        <p className="mb-5 max-w-[220px] text-sm text-slate-400 leading-relaxed">
+        <p className="mb-5 max-w-[240px] text-xs text-ink-3 leading-relaxed">
           {description}
         </p>
       )}

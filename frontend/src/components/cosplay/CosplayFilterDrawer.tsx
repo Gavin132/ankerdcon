@@ -61,8 +61,9 @@ interface CosplayFilterDrawerProps {
 
 // ── Section helpers ───────────────────────────────────────────────────────────
 
-const SECTION = "space-y-3 rounded-2xl border border-slate-100 dark:border-white/[0.07] bg-slate-50 dark:bg-white/[0.03] p-4";
-const SECTION_TITLE = "text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1";
+// Flat sections separated by a divider.
+const SECTION = "space-y-3 border-t-1.5 border-line pt-5 first:border-t-0 first:pt-0";
+const SECTION_TITLE = "section-label flex items-center";
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -102,7 +103,7 @@ export function CosplayFilterDrawer({
       >
         Filters wissen
         {activeCount > 0 && (
-          <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/30 text-[9px] font-bold text-violet-600 dark:text-violet-400">
+          <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-ink font-mono text-[9.5px] font-semibold text-paper dark:bg-brand dark:text-brand-on">
             {activeCount}
           </span>
         )}
@@ -134,28 +135,20 @@ export function CosplayFilterDrawer({
                   key={value}
                   type="button"
                   onClick={() => setSort(value)}
-                  className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left transition-all ${
+                  aria-pressed={active}
+                  className={`flex items-center gap-2 rounded-xl border-1.5 px-3 py-2.5 text-left transition-colors ${
                     active
-                      ? "border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-900/20 shadow-sm"
-                      : "border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] hover:border-violet-300 dark:hover:border-violet-700/50"
+                      ? "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
+                      : "border-line bg-surface text-ink-2 hover:border-ink-3"
                   }`}
                 >
                   <Icon
                     size={14}
-                    className={active ? "text-violet-500" : "text-slate-400"}
+                    className={`shrink-0 ${active ? "" : "text-ink-3"}`}
                   />
-                  <span
-                    className={`text-xs font-semibold leading-tight ${
-                      active
-                        ? "text-violet-700 dark:text-violet-300"
-                        : "text-slate-600 dark:text-slate-300"
-                    }`}
-                  >
+                  <span className="text-xs font-semibold leading-tight">
                     {label}
                   </span>
-                  {active && (
-                    <span className="ml-auto h-1.5 w-1.5 rounded-full bg-violet-500 shrink-0" />
-                  )}
                 </button>
               );
             })}
@@ -168,7 +161,7 @@ export function CosplayFilterDrawer({
             <p className={SECTION_TITLE}>
               Persoon
               {filters.persons.length > 0 && (
-                <span className="ml-2 inline-flex h-4 w-4 items-center justify-center rounded-full bg-violet-500 text-[8px] font-bold text-white">
+                <span className="ml-2 inline-flex h-4 w-4 items-center justify-center rounded-full bg-ink font-mono text-[9.5px] font-semibold text-paper dark:bg-brand dark:text-brand-on">
                   {filters.persons.length}
                 </span>
               )}
@@ -179,10 +172,10 @@ export function CosplayFilterDrawer({
               value={filters.persons}
               onChange={setPersons}
               placeholder="Zoek persoon…"
-              color="violet"
+              color="sky"
             />
             {filters.persons.length === 0 && (
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-ink-3">
                 Selecteer één of meer personen om te filteren.
               </p>
             )}
@@ -195,7 +188,7 @@ export function CosplayFilterDrawer({
             <p className={SECTION_TITLE}>
               Dag
               {filters.days.length > 0 && (
-                <span className="ml-2 inline-flex h-4 w-4 items-center justify-center rounded-full bg-violet-500 text-[8px] font-bold text-white">
+                <span className="ml-2 inline-flex h-4 w-4 items-center justify-center rounded-full bg-ink font-mono text-[9.5px] font-semibold text-paper dark:bg-brand dark:text-brand-on">
                   {filters.days.length}
                 </span>
               )}
@@ -206,22 +199,22 @@ export function CosplayFilterDrawer({
                 return (
                   <label
                     key={e.id}
-                    className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 cursor-pointer transition-colors ${
+                    className={`flex cursor-pointer items-center gap-3 rounded-xl border-1.5 px-3 py-2.5 transition-colors ${
                       selected
-                        ? "border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-900/20"
-                        : "border-slate-200 dark:border-white/[0.08] hover:border-violet-300 dark:hover:border-violet-600/50"
+                        ? "border-ink bg-sunken"
+                        : "border-line bg-surface hover:border-ink-3"
                     }`}
                   >
                     <input
                       type="checkbox"
-                      className="h-4 w-4 rounded accent-violet-500 shrink-0"
+                      className="cb"
                       checked={selected}
                       onChange={() => toggleDay(e.id)}
                     />
-                    <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    <span className="text-sm font-semibold text-ink">
                       {formatDate(e.date)}
                     </span>
-                    <span className="text-xs text-slate-400 ml-auto truncate max-w-[8rem]">
+                    <span className="ml-auto max-w-[8rem] truncate text-xs text-ink-3">
                       {e.event_name}
                     </span>
                   </label>
@@ -229,16 +222,18 @@ export function CosplayFilterDrawer({
               })}
             </div>
             {filters.days.length === 0 && (
-              <p className="text-xs text-slate-400">Alle dagen worden getoond.</p>
+              <p className="text-xs text-ink-3">Alle dagen worden getoond.</p>
             )}
           </div>
         )}
 
         {/* No filter options available */}
         {personOptions.length === 0 && dayOptions.length <= 1 && (
-          <div className="flex flex-col items-center gap-2 py-10 text-center text-slate-400">
-            <ArrowUpDown size={22} className="opacity-40" />
-            <p className="text-xs">Alleen sortering beschikbaar.<br />Voeg meer cosplays toe om filteropties te zien.</p>
+          <div className="flex flex-col items-center gap-3 py-10 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
+              <ArrowUpDown size={22} />
+            </div>
+            <p className="text-xs text-ink-3">Alleen sortering beschikbaar.<br />Voeg meer cosplays toe om filteropties te zien.</p>
           </div>
         )}
       </div>

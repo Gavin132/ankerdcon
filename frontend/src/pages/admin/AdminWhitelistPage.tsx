@@ -44,13 +44,13 @@ export function AdminWhitelistPage() {
   }
 
   return (
-    <div className="p-5 lg:p-8 max-w-4xl mx-auto space-y-5">
+    <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
       <AdminPageHeader
         title="Whitelist"
         subtitle={`${entries.length} personen mogen inloggen`}
       />
 
-      <p className="text-sm text-slate-500 dark:text-slate-400">
+      <p className="text-sm text-ink-3">
         Alleen wie hier op staat kan bij de eerste keer inloggen een profiel aanmaken —
         op Discord ID voor wie via Discord inlogt, op e-mailadres voor wie via Google inlogt.
         Iemand die al een profiel heeft blijft gewoon toegang houden als deze hier
@@ -75,7 +75,7 @@ export function AdminWhitelistPage() {
         <button
           type="submit"
           disabled={(!discordId.trim() && !email.trim()) || createMutation.isPending}
-          className="flex items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-40 transition-colors shadow-sm shrink-0"
+          className="btn-primary shrink-0 px-4 py-2.5 text-sm disabled:opacity-50"
         >
           <Plus size={15} />
           Toevoegen
@@ -83,38 +83,38 @@ export function AdminWhitelistPage() {
       </form>
 
       {/* Entries table */}
-      <div className="rounded-2xl border border-slate-200/80 dark:border-white/[0.06] bg-white dark:bg-slate-800/60 overflow-hidden shadow-sm">
+      <div className="card-surface overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
-              <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <tr className="border-b-1.5 border-line">
+              <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                 Identificatie
               </th>
-              <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                 Acties
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+          <tbody className="divide-y divide-line">
             {isLoading ? (
               <AdminTableSkeleton cols={2} />
             ) : entries.length === 0 ? (
               <tr>
-                <td colSpan={2} className="px-5 py-10 text-center text-sm text-slate-400">
+                <td colSpan={2} className="px-5 py-10 text-center text-sm text-ink-3">
                   Nog niemand op de whitelist.
                 </td>
               </tr>
             ) : (
               entries.map((entry) => (
-                <tr key={entry.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors">
+                <tr key={entry.id} className="hover:bg-sunken transition-colors">
                   <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                     <div className="flex items-center gap-2 sm:gap-2.5">
-                      <div className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-lg bg-sky-100 dark:bg-sky-500/10">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink sm:h-7 sm:w-7">
                         {entry.discord_id
-                          ? <MessageSquare size={13} className="text-sky-500" />
-                          : <Mail size={13} className="text-sky-500" />}
+                          ? <MessageSquare size={13} />
+                          : <Mail size={13} />}
                       </div>
-                      <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                      <span className="truncate font-mono text-[13px] font-medium text-ink">
                         {entry.discord_id || entry.email}
                       </span>
                     </div>
@@ -122,17 +122,17 @@ export function AdminWhitelistPage() {
                   <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
                     {confirmDeleteId === entry.id ? (
                       <div className="flex items-center justify-end gap-1.5 sm:gap-2">
-                        <span className="hidden sm:inline text-xs text-slate-500">Verwijderen?</span>
+                        <span className="hidden sm:inline text-xs text-ink-3">Verwijderen?</span>
                         <button
                           onClick={() => handleDelete(entry.id)}
                           disabled={deleteMutation.isPending}
-                          className="rounded-lg px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs font-semibold bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 disabled:opacity-50 transition-colors"
+                          className="rounded-lg px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs font-semibold bg-rose-100 text-rose-700 hover:bg-rose-200 dark:bg-rose-500/15 dark:text-rose-300 dark:hover:bg-rose-500/25 disabled:opacity-50 transition-colors"
                         >
                           {deleteMutation.isPending ? "..." : "Ja"}
                         </button>
                         <button
                           onClick={() => setConfirmDeleteId(null)}
-                          className="rounded-lg px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs font-semibold bg-white/[0.06] text-slate-400 hover:bg-white/[0.1] transition-colors"
+                          className="rounded-lg px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs font-semibold bg-sunken text-ink-2 hover:text-ink transition-colors"
                         >
                           Nee
                         </button>
@@ -141,7 +141,7 @@ export function AdminWhitelistPage() {
                       <div className="flex items-center justify-end">
                         <button
                           onClick={() => setConfirmDeleteId(entry.id)}
-                          className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors"
+                          className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 transition-colors"
                           title="Verwijderen"
                         >
                           <Trash2 size={14} />
@@ -157,7 +157,7 @@ export function AdminWhitelistPage() {
       </div>
 
       {entries.length > 0 && (
-        <p className="flex items-center gap-1.5 text-xs text-slate-400">
+        <p className="flex items-center gap-1.5 text-xs text-ink-3">
           <ShieldCheck size={12} />
           Deze lijst is alleen zichtbaar voor admins.
         </p>

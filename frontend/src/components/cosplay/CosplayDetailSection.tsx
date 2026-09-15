@@ -28,9 +28,10 @@ type CosplayForm = z.infer<typeof cosplaySchema>;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const SL = "block text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5";
-const SF = "space-y-4 rounded-2xl border border-slate-100 dark:border-white/[0.07] bg-slate-50 dark:bg-white/[0.03] p-4";
-const ST = "text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3";
+// Flat form sections separated by a divider; labels follow the design system.
+const SL = "mb-1.5 block text-[12.5px] font-semibold text-ink-2";
+const SF = "space-y-3 border-t-1.5 border-line pt-5 first:border-t-0 first:pt-0";
+const ST = "section-label";
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -176,7 +177,7 @@ export function CosplayDetailSection({ event, siblingEvents, users }: CosplayDet
         <SectionLabel>Cosplays</SectionLabel>
         <button
           onClick={openDrawer}
-          className="flex items-center gap-1.5 rounded-xl border border-violet-200 dark:border-violet-700/50 bg-violet-50 dark:bg-violet-900/20 px-3 py-1.5 text-xs font-bold text-violet-700 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-900/40 transition-colors"
+          className="flex items-center gap-1.5 rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-ink-3"
         >
           <Plus size={12} />
           Toevoegen
@@ -184,15 +185,15 @@ export function CosplayDetailSection({ event, siblingEvents, users }: CosplayDet
       </div>
 
       {eventCosplays.length === 0 ? (
-        <div className="card-surface rounded-2xl px-5 py-8 flex flex-col items-center gap-3 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-900/30">
-            <Sparkles size={22} className="text-violet-500" />
+        <div className="card-surface flex flex-col items-center gap-3 px-5 py-8 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
+            <Sparkles size={22} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+            <p className="text-sm font-semibold text-ink">
               Nog geen cosplays gedeeld
             </p>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="mt-1 text-xs text-ink-3">
               Laat anderen weten wat je draagt!
             </p>
           </div>
@@ -203,7 +204,7 @@ export function CosplayDetailSection({ event, siblingEvents, users }: CosplayDet
         </div>
       ) : (
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+          className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4"
           variants={listContainer}
           initial="hidden"
           animate="show"
@@ -219,7 +220,7 @@ export function CosplayDetailSection({ event, siblingEvents, users }: CosplayDet
               {/* Delete button — shown on hover */}
               <button
                 onClick={(e) => { e.preventDefault(); setDeleteId(cosplay.id); }}
-                className="absolute top-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-lg bg-white/80 dark:bg-slate-900/80 text-slate-400 hover:text-rose-500 opacity-0 group-hover/card:opacity-100 transition-all"
+                className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-lg border-1.5 border-line bg-surface text-ink-3 opacity-0 transition-opacity hover:text-rose-600 group-hover/card:opacity-100 dark:hover:text-rose-400"
                 title="Verwijderen"
               >
                 <Trash2 size={13} />
@@ -232,13 +233,13 @@ export function CosplayDetailSection({ event, siblingEvents, users }: CosplayDet
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
-                    className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm"
+                    className="absolute inset-0 z-20 flex items-center justify-center rounded-[12px] border-1.5 border-line bg-surface"
                   >
                     <div className="text-center space-y-3 px-4">
-                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                      <p className="text-sm font-semibold text-ink">
                         Verwijderen?
                       </p>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap justify-center gap-2">
                         <Button
                           size="sm"
                           variant="ghost"
@@ -285,7 +286,7 @@ export function CosplayDetailSection({ event, siblingEvents, users }: CosplayDet
               color="sky"
             />
             {!selectedUser && (
-              <p className="text-xs text-slate-400 mt-1">Selecteer de persoon die dit cosplay draagt.</p>
+              <p className="mt-1 text-xs text-ink-3">Selecteer de persoon die dit cosplay draagt.</p>
             )}
           </div>
 
@@ -301,7 +302,7 @@ export function CosplayDetailSection({ event, siblingEvents, users }: CosplayDet
                 {...register("character_name")}
               />
               {errors.character_name && (
-                <p className="mt-1.5 text-xs text-rose-500">{errors.character_name.message}</p>
+                <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400">{errors.character_name.message}</p>
               )}
             </div>
             <div>
@@ -323,27 +324,27 @@ export function CosplayDetailSection({ event, siblingEvents, users }: CosplayDet
                 {allRelatedEvents.map((e) => (
                   <label
                     key={e.id}
-                    className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 cursor-pointer transition-colors ${
+                    className={`flex cursor-pointer items-center gap-3 rounded-xl border-1.5 px-3 py-2.5 transition-colors ${
                       selectedDays.includes(e.id)
-                        ? "border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-900/20"
-                        : "border-slate-200 dark:border-white/[0.08] hover:border-violet-300 dark:hover:border-violet-600/50"
+                        ? "border-ink bg-sunken"
+                        : "border-line bg-surface hover:border-ink-3"
                     }`}
                   >
                     <input
                       type="checkbox"
-                      className="h-4 w-4 rounded accent-violet-500 shrink-0"
+                      className="cb"
                       checked={selectedDays.includes(e.id)}
                       onChange={() => toggleDay(e.id)}
                     />
-                    <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    <span className="text-sm font-semibold text-ink">
                       {formatDate(e.date)}
                     </span>
-                    <span className="text-xs text-slate-400 ml-auto">{e.event_name}</span>
+                    <span className="ml-auto truncate text-xs text-ink-3">{e.event_name}</span>
                   </label>
                 ))}
               </div>
               {selectedDays.length === 0 && (
-                <p className="text-xs text-rose-500">Selecteer minimaal één dag.</p>
+                <p className="text-xs text-rose-600 dark:text-rose-400">Selecteer minimaal één dag.</p>
               )}
             </div>
           )}
@@ -354,7 +355,7 @@ export function CosplayDetailSection({ event, siblingEvents, users }: CosplayDet
             <div className="space-y-2">
               {inspoImages.map((url, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <Image size={14} className="text-slate-400 shrink-0" />
+                  <Image size={14} className="shrink-0 text-ink-3" />
                   <input
                     className="input-field flex-1"
                     placeholder="https://i.imgur.com/… of Pinterest URL"
@@ -365,7 +366,7 @@ export function CosplayDetailSection({ event, siblingEvents, users }: CosplayDet
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
-                      className="shrink-0 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
                     >
                       <X size={13} />
                     </button>
@@ -376,7 +377,7 @@ export function CosplayDetailSection({ event, siblingEvents, users }: CosplayDet
             <button
               type="button"
               onClick={addImageField}
-              className="flex items-center gap-1.5 text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors mt-1"
+              className="flex items-center gap-1.5 text-[12.5px] font-semibold text-brand-text hover:underline"
             >
               <Plus size={12} />
               Afbeelding toevoegen

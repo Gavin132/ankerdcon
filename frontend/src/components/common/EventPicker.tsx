@@ -74,20 +74,20 @@ export function EventPicker({
             transition={{ duration: 0.15 }}
             className="overflow-hidden"
           >
-            <div className="flex items-center gap-2 rounded-xl border border-sky-200 dark:border-sky-500/30 bg-sky-50 dark:bg-sky-500/10 px-3 py-2">
-              <CalendarDays size={14} className="shrink-0 text-sky-500" />
+            <div className="flex items-center gap-2 rounded-xl border-1.5 border-outline bg-surface px-3 py-2">
+              <CalendarDays size={14} className="shrink-0 text-ink" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-sky-800 dark:text-sky-300 truncate">
+                <p className="text-sm font-semibold text-ink truncate">
                   {selectedEvent.event_name}
                 </p>
-                <p className="text-[11px] text-sky-600/70 dark:text-sky-400/70">
+                <p className="font-mono text-[11px] text-ink-3">
                   {formatDateWithDay(selectedEvent.date)}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={handleClear}
-                className="shrink-0 flex h-6 w-6 items-center justify-center rounded-lg text-sky-400 hover:text-sky-600 dark:hover:text-sky-200 hover:bg-sky-100 dark:hover:bg-sky-500/20 transition-colors"
+                className="shrink-0 flex h-6 w-6 items-center justify-center rounded-md text-ink-3 hover:text-ink hover:bg-sunken transition-colors"
               >
                 <X size={12} />
               </button>
@@ -100,7 +100,7 @@ export function EventPicker({
       <div className="relative">
         <Search
           size={13}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3"
         />
         <input
           className="input-field pl-8"
@@ -124,10 +124,10 @@ export function EventPicker({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15 }}
-            className="max-h-[220px] overflow-y-auto overscroll-contain rounded-xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg divide-y divide-slate-50 dark:divide-slate-800"
+            className="max-h-[220px] overflow-y-auto overscroll-contain rounded-xl border-1.5 border-line bg-surface shadow-xl divide-y divide-line"
           >
             {filtered.length === 0 ? (
-              <p className="px-4 py-4 text-center text-xs text-slate-400">
+              <p className="px-4 py-4 text-center text-xs text-ink-3">
                 {query ? `Geen resultaten voor "${query}"` : "Geen events beschikbaar"}
               </p>
             ) : (
@@ -140,24 +140,24 @@ export function EventPicker({
                     onClick={() => handleSelect(event.id)}
                     className={`flex w-full items-center gap-3 px-3 py-3 text-left transition-colors min-h-[48px] ${
                       isSelected
-                        ? "bg-sky-50 dark:bg-sky-500/10"
-                        : "hover:bg-slate-50 active:bg-slate-50 dark:hover:bg-slate-800/60 dark:active:bg-slate-800/60"
+                        ? "bg-sunken"
+                        : "hover:bg-sunken active:bg-sunken"
                     }`}
                   >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-100 dark:bg-sky-500/15">
-                      <CalendarDays size={15} className="text-sky-500" />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken">
+                      <CalendarDays size={15} className="text-ink" />
                     </div>
                     <span className="flex-1 min-w-0">
-                      <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
+                      <span className="block text-sm font-semibold text-ink truncate">
                         {event.event_name}
                       </span>
-                      <span className="block text-[11px] text-slate-400 truncate">
+                      <span className="block text-[11px] text-ink-3 truncate">
                         {formatDateWithDay(event.date)}
                         {event.location ? ` · ${event.location}` : ""}
                       </span>
                     </span>
                     {isSelected && (
-                      <Check size={15} className="shrink-0 text-sky-500" />
+                      <Check size={15} className="shrink-0 text-ink" />
                     )}
                   </button>
                 );

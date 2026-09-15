@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Check, Minus, Plus } from "lucide-react";
 import type { User } from "../../types";
-import { ACTIVITY_STOPS, STARS, YEAR_MIN, YEAR_MAX, YEAR_DEFAULT } from "./constants";
+import { ACTIVITY_STOPS, YEAR_MIN, YEAR_MAX, YEAR_DEFAULT } from "./constants";
 import type { DialoguePhase } from "./types";
 
 export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: () => void }) {
@@ -125,63 +125,44 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
 
   return (
     <div
-      className="fixed inset-0 flex flex-col"
-      style={{ background: "linear-gradient(175deg,#050a18 0%,#081225 55%,#0c1930 100%)", paddingTop: "env(safe-area-inset-top,0px)" }}
+      className="fixed inset-0 flex flex-col bg-paper"
+      style={{ paddingTop: "env(safe-area-inset-top,0px)" }}
     >
-      {/* Stars */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {STARS.map((s, i) => (
-          <div key={i} className="absolute rounded-full bg-white"
-            style={{ left: s.left, top: s.top, opacity: s.opacity, width: s.size, height: s.size }} />
-        ))}
-        <div className="absolute top-0 left-1/3 h-96 w-96 rounded-full bg-sky-500/[0.07] blur-3xl" />
-        <div className="absolute bottom-1/3 right-0 h-64 w-64 rounded-full bg-indigo-600/[0.07] blur-3xl" />
-      </div>
-
       {/* Upper area — mascot */}
-      <div className="relative flex-1 flex items-end pl-5 sm:pl-8 pb-0 overflow-hidden">
+      <div className="relative mx-auto flex w-full max-w-xl flex-1 items-end overflow-hidden pl-5 pb-0 sm:pl-8">
         <motion.img
           src="/assets/images/ankerd-mascotte.png"
           alt=""
           draggable={false}
           className="select-none pointer-events-none w-auto"
-          style={{
-            height: "clamp(140px, 28vh, 240px)",
-            filter: "drop-shadow(0 16px 40px rgba(0,0,0,0.8))",
-          }}
-          initial={{ x: -240, opacity: 0 }}
+          style={{ height: "clamp(140px, 28vh, 240px)" }}
+          initial={{ x: -40, opacity: 0 }}
           animate={mascotIn ? { x: 0, opacity: 1 } : {}}
-          transition={{ type: "spring", stiffness: 58, damping: 14 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
         />
       </div>
 
       {/* Dialogue box */}
       <div
-        className="relative z-10 shrink-0 px-3"
+        className="relative z-10 mx-auto w-full max-w-xl shrink-0 px-3"
         style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom,0px))" }}
       >
         <div
-          className="rounded-3xl overflow-hidden"
-          style={{
-            background: "rgba(10, 16, 36, 0.96)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            boxShadow: "0 0 0 1px rgba(255,255,255,0.03), 0 -8px 32px rgba(0,0,0,0.6), 0 24px 60px rgba(0,0,0,0.5)",
-            backdropFilter: "blur(20px)",
-          }}
+          className="overflow-hidden rounded-[14px] border-2 border-outline bg-surface"
           onClick={handleBoxTap}
         >
           {/* Name bar */}
-          <div className="flex items-center justify-between px-5 pt-3.5 pb-3 border-b border-white/[0.06]">
+          <div className="flex items-center justify-between border-b-1.5 border-line px-5 pt-3.5 pb-3">
             <div className="flex items-center gap-2.5">
               <motion.div
-                className="h-1.5 w-1.5 rounded-full bg-sky-400"
+                className="h-1.5 w-1.5 rounded-full bg-brand"
                 animate={{ opacity: [1, 0.3, 1] }}
                 transition={{ repeat: Infinity, duration: 1.8 }}
               />
-              <span className="text-[10px] font-black text-sky-400/80 uppercase tracking-[0.25em]">Mascotte</span>
+              <span className="section-label">Mascotte</span>
             </div>
             {phase === "talking" && (
-              <span className="text-[10px] text-white/20 tabular-nums">{lineIndex + 1} / {introLines.length}</span>
+              <span className="font-mono text-[11px] tabular-nums text-ink-3">{lineIndex + 1} / {introLines.length}</span>
             )}
           </div>
 
@@ -191,11 +172,11 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
             {/* ── Phase: typewriter or reaction ── */}
             {(phase === "talking" || phase === "reacting" || phase === "ready") && (
               <div className="relative">
-                <p className="text-[16px] sm:text-[17px] font-medium text-slate-100 leading-relaxed" style={{ minHeight: "3.6em" }}>
+                <p className="text-[16px] font-medium leading-relaxed text-ink sm:text-[17px]" style={{ minHeight: "3.6em" }}>
                   {displayText}
                   {typing && (
                     <motion.span
-                      className="inline-block w-[2px] h-[15px] bg-sky-400 ml-0.5 align-middle rounded-full"
+                      className="ml-0.5 inline-block h-[15px] w-[2px] rounded-full bg-ink align-middle"
                       animate={{ opacity: [1, 1, 0, 0] }}
                       transition={{ repeat: Infinity, duration: 0.5, ease: "linear", times: [0, 0.5, 0.5, 1] }}
                     />
@@ -204,9 +185,9 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
 
                 {showCaret && phase === "talking" && (
                   <div className="mt-3 flex items-center gap-1.5">
-                    <span className="text-[11px] text-white/30">Tik om verder te gaan</span>
+                    <span className="text-[11px] text-ink-3">Tik om verder te gaan</span>
                     <motion.span
-                      className="text-[11px] text-white/30"
+                      className="text-[11px] text-ink-3"
                       animate={{ opacity: [0.3, 0.9, 0.3] }}
                       transition={{ repeat: Infinity, duration: 1.2 }}
                     >▼</motion.span>
@@ -215,11 +196,11 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
 
                 {phase === "ready" && showCaret && (
                   <motion.button
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4, type: "spring", stiffness: 260, damping: 22 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4, duration: 0.25 }}
                     onClick={e => { e.stopPropagation(); onDone(); }}
-                    className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-white font-bold px-5 py-2.5 text-sm shadow-lg shadow-emerald-500/25 transition-colors"
+                    className="btn-primary mt-4 px-5 py-2.5 text-sm"
                   >
                     Aan de slag! <ArrowRight size={14} />
                   </motion.button>
@@ -230,7 +211,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
             {/* ── Phase: activity selection ── */}
             {phase === "con-count" && (
               <div onClick={e => e.stopPropagation()}>
-                <p className="text-[15px] font-semibold text-slate-200 leading-snug mb-4">
+                <p className="mb-4 text-[15px] font-semibold leading-snug text-ink">
                   Hoelang ben jij al actief binnen Ankerd?
                 </p>
 
@@ -240,28 +221,27 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                       key={i}
                       type="button"
                       onClick={() => setConIndex(i)}
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full flex items-center gap-4 rounded-2xl px-4 py-3 text-left transition-all"
-                      style={{
-                        background: conIndex === i ? "rgba(56,189,248,0.10)" : "rgba(255,255,255,0.03)",
-                        border: conIndex === i ? "1px solid rgba(56,189,248,0.35)" : "1px solid rgba(255,255,255,0.06)",
-                      }}
+                      className={`flex w-full items-center gap-4 rounded-xl border-1.5 px-4 py-3 text-left transition-colors ${
+                        conIndex === i
+                          ? "border-outline bg-brand-soft"
+                          : "border-line bg-surface hover:border-ink-3"
+                      }`}
                     >
                       <span className="text-xl leading-none w-7 text-center">{stop.emoji}</span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-slate-100">{stop.label}</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">{stop.tag}</p>
+                        <p className="text-sm font-semibold text-ink">{stop.label}</p>
+                        <p className="mt-0.5 text-[11px] text-ink-3">{stop.tag}</p>
                       </div>
                       <AnimatePresence>
                         {conIndex === i && (
                           <motion.div
-                            initial={{ scale: 0, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0, opacity: 0 }}
-                            transition={{ type: "spring", stiffness: 400, damping: 22 }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.12 }}
                           >
-                            <div className="h-5 w-5 rounded-full bg-sky-500 flex items-center justify-center">
-                              <Check size={11} className="text-white" strokeWidth={3} />
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-ink text-paper">
+                              <Check size={11} strokeWidth={3} />
                             </div>
                           </motion.div>
                         )}
@@ -272,9 +252,8 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
 
                 <div className="flex justify-end">
                   <motion.button
-                    whileTap={{ scale: 0.96 }}
                     onClick={handleConConfirm}
-                    className="flex items-center gap-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-bold px-5 py-2.5 text-sm shadow-lg shadow-sky-500/20 transition-colors"
+                    className="btn-primary px-5 py-2.5 text-sm"
                   >
                     Volgende <ArrowRight size={14} />
                   </motion.button>
@@ -285,29 +264,26 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
             {/* ── Phase: birth year stepper ── */}
             {phase === "birthyear" && (
               <div onClick={e => e.stopPropagation()}>
-                <p className="text-[15px] font-semibold text-slate-200 leading-snug mb-5">
+                <p className="mb-5 text-[15px] font-semibold leading-snug text-ink">
                   En jouw geboortejaar?
                 </p>
 
                 {!manualEntry ? (
                   <>
                     <div
-                      className="flex items-center justify-between gap-4 rounded-2xl px-6 py-5 mb-3 select-none"
-                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+                      className="flex items-center justify-between gap-4 rounded-xl border-1.5 border-line bg-sunken px-6 py-5 mb-3 select-none"
                     >
                       {/* Decrease */}
                       <motion.button
                         type="button"
-                        whileTap={{ scale: 0.92 }}
                         onPointerDown={() => startHold(-1)}
                         onPointerUp={stopHold}
                         onPointerLeave={stopHold}
                         onPointerCancel={stopHold}
                         disabled={birthYear <= YEAR_MIN}
-                        className="h-11 w-11 rounded-2xl flex items-center justify-center transition-all disabled:opacity-25"
-                        style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.08)" }}
+                        className="flex h-11 w-11 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink transition-colors hover:border-ink-3 disabled:opacity-30"
                       >
-                        <Minus size={18} className="text-slate-300" />
+                        <Minus size={18} />
                       </motion.button>
 
                       {/* Year display */}
@@ -319,12 +295,12 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 10 }}
                             transition={{ duration: 0.12 }}
-                            className="text-5xl font-black text-white tabular-nums leading-none"
+                            className="font-display text-[56px] font-extrabold leading-none tabular-nums text-ink"
                           >
                             {birthYear}
                           </motion.span>
                         </AnimatePresence>
-                        <span className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">
+                        <span className="mt-1 font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">
                           {new Date().getFullYear() - birthYear} jaar oud
                         </span>
                       </div>
@@ -332,33 +308,28 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                       {/* Increase */}
                       <motion.button
                         type="button"
-                        whileTap={{ scale: 0.92 }}
                         onPointerDown={() => startHold(1)}
                         onPointerUp={stopHold}
                         onPointerLeave={stopHold}
                         onPointerCancel={stopHold}
                         disabled={birthYear >= YEAR_MAX}
-                        className="h-11 w-11 rounded-2xl flex items-center justify-center transition-all disabled:opacity-25"
-                        style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.08)" }}
+                        className="flex h-11 w-11 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink transition-colors hover:border-ink-3 disabled:opacity-30"
                       >
-                        <Plus size={18} className="text-slate-300" />
+                        <Plus size={18} />
                       </motion.button>
                     </div>
 
                     {/* Mini progress bar */}
-                    <div className="relative h-1 rounded-full mb-3 overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                    <div className="relative mb-3 h-1.5 overflow-hidden rounded-full bg-line">
                       <motion.div
-                        className="absolute left-0 top-0 h-full rounded-full bg-sky-500/60"
+                        className="absolute left-0 top-0 h-full rounded-full bg-ink"
                         animate={{ width: `${((birthYear - YEAR_MIN) / (YEAR_MAX - YEAR_MIN)) * 100}%` }}
                         transition={{ duration: 0.08 }}
                       />
                     </div>
                   </>
                 ) : (
-                  <div
-                    className="flex flex-col items-center gap-1.5 rounded-2xl px-6 py-5 mb-3"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
-                  >
+                  <div className="mb-3 flex flex-col items-center gap-1.5 rounded-xl border-1.5 border-line bg-sunken px-6 py-5">
                     <input
                       type="number"
                       inputMode="numeric"
@@ -366,9 +337,9 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                       onChange={e => setYearInput(e.target.value)}
                       onBlur={commitYearInput}
                       onKeyDown={e => { if (e.key === "Enter") { commitYearInput(); (e.target as HTMLInputElement).blur(); } }}
-                      className="w-32 bg-transparent text-center text-5xl font-black text-white tabular-nums leading-none focus:outline-none"
+                      className="w-36 bg-transparent text-center font-display text-[56px] font-extrabold leading-none tabular-nums text-ink focus:outline-none"
                     />
-                    <span className="text-[10px] text-slate-500 uppercase tracking-widest">
+                    <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">
                       {new Date().getFullYear() - birthYear} jaar oud · {YEAR_MIN}–{YEAR_MAX}
                     </span>
                   </div>
@@ -377,16 +348,15 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                 <button
                   type="button"
                   onClick={toggleManualEntry}
-                  className="block text-[11px] text-sky-400/70 hover:text-sky-400 underline underline-offset-2 mb-5 transition-colors"
+                  className="mb-5 block text-[12px] font-semibold text-brand-text underline underline-offset-2"
                 >
                   {manualEntry ? "Terug naar de schuifknop" : "Liever het jaar zelf intypen?"}
                 </button>
 
                 <div className="flex justify-end">
                   <motion.button
-                    whileTap={{ scale: 0.96 }}
                     onClick={handleYearConfirm}
-                    className="flex items-center gap-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-bold px-5 py-2.5 text-sm shadow-lg shadow-sky-500/20 transition-colors"
+                    className="btn-primary px-5 py-2.5 text-sm"
                   >
                     Klaar! <ArrowRight size={14} />
                   </motion.button>

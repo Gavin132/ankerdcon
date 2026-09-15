@@ -103,9 +103,9 @@ export function LocationSearchInput({
       <div className="relative flex items-center">
         <div className="pointer-events-none absolute left-3 z-10 flex items-center">
           {loading ? (
-            <Loader2 size={14} className="animate-spin text-sky-400" />
+            <Loader2 size={14} className="animate-spin text-ink-3" />
           ) : (
-            <Search size={14} className="text-slate-500" />
+            <Search size={14} className="text-ink-3" />
           )}
         </div>
         <input
@@ -122,7 +122,7 @@ export function LocationSearchInput({
           <button
             type="button"
             onClick={clear}
-            className="absolute right-3 text-slate-500 hover:text-slate-300 transition-colors"
+            className="absolute right-3 text-ink-3 hover:text-ink transition-colors"
           >
             <X size={13} />
           </button>
@@ -131,7 +131,7 @@ export function LocationSearchInput({
 
       {/* ── Dropdown results ───────────────────────────────── */}
       {open && results.length > 0 && (
-        <div className="absolute z-50 left-0 right-0 mt-1 rounded-xl border border-white/[0.08] bg-[#141c2e] shadow-2xl overflow-hidden">
+        <div className="absolute z-50 left-0 right-0 mt-1 rounded-xl border-1.5 border-line bg-surface shadow-xl overflow-hidden">
           {results.map((place) => {
             const parts = place.display_name.split(",");
             const name = parts[0].trim();
@@ -142,18 +142,18 @@ export function LocationSearchInput({
                 type="button"
                 onClick={() => selectPlace(place)}
                 className="flex w-full items-start gap-2.5 px-3.5 py-2.5 text-left
-                           hover:bg-white/[0.06] transition-colors
-                           border-b border-white/[0.04] last:border-0"
+                           hover:bg-sunken transition-colors
+                           border-b border-line last:border-0"
               >
-                <MapPin size={13} className="text-sky-400 shrink-0 mt-0.5" />
+                <MapPin size={13} className="text-ink-3 shrink-0 mt-0.5" />
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-slate-200 truncate">{name}</p>
-                  {sub && <p className="text-xs text-slate-500 truncate mt-0.5">{sub}</p>}
+                  <p className="text-sm font-semibold text-ink truncate">{name}</p>
+                  {sub && <p className="text-xs text-ink-3 truncate mt-0.5">{sub}</p>}
                 </div>
               </button>
             );
           })}
-          <p className="px-3.5 py-2 text-[10px] text-slate-600 border-t border-white/[0.04]">
+          <p className="px-3.5 py-2 text-[10px] text-ink-3 border-t border-line">
             © OpenStreetMap contributors
           </p>
         </div>

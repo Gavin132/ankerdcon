@@ -10,48 +10,34 @@ interface DetailTopbarProps {
    * e.g. the event page's story add/view actions. Compose with the same
    * h-8 w-8 rounded-xl icon-button styling used by the buttons here. */
   actions?: React.ReactNode;
+  /** Match the page's content column so the bar lines up with it. */
+  width?: "2xl" | "3xl";
 }
 
-export function DetailTopbar({ title, onBack, onShare, actions }: DetailTopbarProps) {
+const ICON_BUTTON =
+  "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-sunken hover:text-ink";
+
+/** Flat surface bar on top of a detail page (these render outside the app shell). */
+export function DetailTopbar({ title, onBack, onShare, actions, width = "3xl" }: DetailTopbarProps) {
   return (
-    <div
-      className="sticky top-0 z-10 flex items-center gap-3 h-14 px-4
-                 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md
-                 border-b border-slate-200 dark:border-white/[0.06]"
-    >
-      <button
-        onClick={onBack}
-        className="flex h-8 w-8 items-center justify-center rounded-xl
-                   text-slate-500 dark:text-slate-400
-                   hover:bg-slate-100 dark:hover:bg-white/[0.08]
-                   hover:text-slate-900 dark:hover:text-white transition-colors"
-      >
-        <ArrowLeft size={18} />
-      </button>
-      <span className="font-bold text-slate-900 dark:text-white text-sm truncate flex-1 min-w-0">
-        {title}
-      </span>
-      {onShare && (
-        <button
-          onClick={onShare}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl
-                     text-slate-500 dark:text-slate-400
-                     hover:bg-slate-100 dark:hover:bg-white/[0.08]
-                     hover:text-slate-900 dark:hover:text-white transition-colors"
-        >
-          <Share2 size={17} />
+    <header className="sticky top-0 z-10 border-b-1.5 border-line bg-surface pt-[env(safe-area-inset-top,0px)]">
+      <div className={`mx-auto flex h-14 items-center gap-2 px-4 ${width === "2xl" ? "max-w-2xl" : "max-w-3xl"}`}>
+        <button onClick={onBack} className={ICON_BUTTON} aria-label="Terug">
+          <ArrowLeft size={18} />
         </button>
-      )}
-      {actions}
-      {isFreshEntry() && (
-        <HomeLinkButton
-          size={17}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl
-                     text-slate-500 dark:text-slate-400
-                     hover:bg-slate-100 dark:hover:bg-white/[0.08]
-                     hover:text-slate-900 dark:hover:text-white transition-colors"
-        />
-      )}
-    </div>
+        <h1 className="min-w-0 flex-1 truncate font-display text-[22px] font-extrabold uppercase leading-none tracking-[0.02em] text-ink">
+          {title}
+        </h1>
+        {onShare && (
+          <button onClick={onShare} className={ICON_BUTTON} aria-label="Delen">
+            <Share2 size={17} />
+          </button>
+        )}
+        {actions}
+        {isFreshEntry() && (
+          <HomeLinkButton size={17} className={ICON_BUTTON} />
+        )}
+      </div>
+    </header>
   );
 }
