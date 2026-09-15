@@ -6,6 +6,35 @@ import { readFileSync } from "fs";
 // there only; the backend reads the same file at runtime (see backend/main.py).
 const appVersion = readFileSync("../backend/VERSION", "utf-8").trim();
 
+// Swaps the PWA's icon/manifest/theme-color/title in index.html when this is
+// a dev build — set via APP_ENV, a plain build-time var (not exposed to the
+// browser, unlike VITE_-prefixed ones). This only rewrites references; the
+// actual dev icon files (favicon-dev.png, apple-touch-icon-dev.png,
+// icons/dev/icon-192.png, icons/dev/icon-512.png,
+// icons/dev/icon-maskable-512.png, manifest.dev.json) need to exist under
+// public/ for those references to resolve to anything.
+function devIconPlugin(isDev: boolean) {
+  return {
+    name: "dev-icon-swap",
+    transformIndexHtml(html: string) {
+      if (!isDev) return html;
+      return html
+        .replace(
+          '<link rel="icon" type="image/x-icon" href="/favicon.ico" />',
+          '<link rel="icon" type="image/png" href="/favicon-dev.png" />',
+        )
+        .replace('href="/apple-touch-icon.png"', 'href="/apple-touch-icon-dev.png"')
+        .replace('href="/manifest.json"', 'href="/manifest.dev.json"')
+        .replace('content="#0f172a"', 'content="#EA6A1F"')
+        .replace(
+          '<meta name="apple-mobile-web-app-title" content="Ankerd Con" />',
+          '<meta name="apple-mobile-web-app-title" content="Ankerd Con (Dev)" />',
+        )
+        .replace("<title>Ankerd Con</title>", "<title>Ankerd Con (Dev)</title>");
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode`. The third parameter '' loads all env variables.
   const env = loadEnv(mode, process.cwd(), '');
@@ -13,9 +42,10 @@ export default defineConfig(({ mode }) => {
   // Dynamic variables with safe fallbacks for local (non-Docker) development
   const allowedHost = env.ALLOWED_HOST || 'localhost';
   const backendUrl = env.BACKEND_URL || 'http://localhost:8000';
+  const isDevBuild = env.APP_ENV === "dev";
 
   return {
-    plugins: [react()],
+    plugins: [react(), devIconPlugin(isDevBuild)],
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
     },
