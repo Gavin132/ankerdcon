@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 import { APP_NAME } from "../../constants";
 import { AccountMenu } from "./AccountMenu";
+import { TimeTravelControl } from "../common/TimeTravelWidget";
 
 const PAGE_META: Record<string, { title: string; subtitle: string }> = {
   "/": { title: "Hub", subtitle: "Live event logistics" },
@@ -41,6 +42,9 @@ export function Header() {
           )}
         </div>
 
+        <div className="md:hidden">
+          <TimeTravelControl variant="icon" />
+        </div>
         <div className="lg:hidden">
           <AccountMenu />
         </div>

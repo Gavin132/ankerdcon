@@ -6,10 +6,8 @@ import { router } from "./router";
 import { ToastContainer } from "./components/common/Toast";
 import { SplashScreen } from "./components/splash/SplashScreen";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
-import { TimeTravelWidget } from "./components/common/TimeTravelWidget";
 import { ImpersonationBanner } from "./components/common/ImpersonationBanner";
 import { useThemeStore } from "./store/theme.store";
-import { useTimeStore } from "./store/time.store";
 import { useSplash } from "./hooks/useSplash";
 
 // Add these two imports!
@@ -203,13 +201,6 @@ function RouteFallback() {
   );
 }
 
-function TimeTravelGate() {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const widgetEnabled = useTimeStore((s) => s.widgetEnabled);
-  if (!isAuthenticated || !widgetEnabled) return null;
-  return <TimeTravelWidget />;
-}
-
 export function App() {
   return (
     <ErrorBoundary>
@@ -224,7 +215,6 @@ export function App() {
         </Suspense>
         <ToastContainer />
         <SplashController />
-        <TimeTravelGate />
       </QueryClientProvider>
     </ErrorBoundary>
   );

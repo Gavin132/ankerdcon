@@ -1,5 +1,6 @@
 import { ArrowLeft, Share2 } from "lucide-react";
 import { HomeLinkButton } from "../common/HomeLinkButton";
+import { TimeTravelControl } from "../common/TimeTravelWidget";
 import { isFreshEntry } from "../../hooks/useSmartBack";
 
 interface DetailTopbarProps {
@@ -34,6 +35,7 @@ export function DetailTopbar({ title, onBack, onShare, actions, width = "3xl" }:
           </button>
         )}
         {actions}
+        <TimeTravelControl variant="icon" />
         {isFreshEntry() && (
           <HomeLinkButton size={17} className={ICON_BUTTON} />
         )}

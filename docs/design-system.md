@@ -94,5 +94,6 @@ Page head pattern (see `TripLayout`, `HubPage`):
 - `StickyActionBar` pins a page's main "add" button above the tab bar on phones; from md
   it becomes a normal-width button floating at the bottom right of the content column.
   Detail and settings pages (outside the shell) use `DetailTopbar`.
+- The admin time-travel tool (`TimeTravelControl`) lives in the chrome, never floating over content: a row at the bottom of the sidebar, an icon in the phone, detail and admin top bars.
 - Pages can use more room on wide screens (two columns from `xl` where it helps),
   but single-column pages should stay readable: cap long text blocks around `max-w-3xl`.

@@ -2,6 +2,7 @@ import { useLocation } from "react-router-dom";
 import { Menu, Sun, Moon } from "lucide-react";
 import { useThemeStore } from "../../../store/theme.store";
 import { PAGE_TITLES } from "../constants";
+import { TimeTravelControl } from "../../../components/common/TimeTravelWidget";
 
 interface Props {
   onToggleDesktop: () => void;
@@ -37,6 +38,7 @@ export function AdminTopbar({ onToggleDesktop, onToggleMobile }: Props) {
       </div>
 
       <div className="flex items-center gap-2">
+        <TimeTravelControl variant="icon" />
         <button
           onClick={toggleTheme}
           title={isDark ? "Lichte modus" : "Donkere modus"}

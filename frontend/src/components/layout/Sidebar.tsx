@@ -6,6 +6,7 @@ import { useTimeStore } from "../../store/time.store";
 import { daysBetween, toDateKey, todayKey } from "../../utils/date";
 import { buildTrip, currentTripId } from "../../utils/trips";
 import { AccountMenu } from "./AccountMenu";
+import { TimeTravelControl } from "../common/TimeTravelWidget";
 
 /**
  * The next (or current) trip as a small cyan wristband above the nav: name,
@@ -93,8 +94,11 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-auto hidden border-t-1.5 border-line pt-3 lg:block">
-        <AccountMenu variant="row" />
+      <div className="mt-auto flex flex-col gap-2">
+        <TimeTravelControl variant="sidebar" />
+        <div className="hidden border-t-1.5 border-line pt-3 lg:block">
+          <AccountMenu variant="row" />
+        </div>
       </div>
     </aside>
   );
