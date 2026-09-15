@@ -170,6 +170,42 @@
     @apply flex items-center justify-center rounded-full font-bold text-white;
   }
 
+  /* Agenda ticket: two punched notches where the stub tears off. On phones the
+     stub is the bottom 118px (incl. the 2px outline); from md it's the right
+     column, 170px wide and 190px from lg. */
+  .ticket-notch {
+    -webkit-mask:
+      radial-gradient(circle 11px at 0 calc(100% - 118px), transparent 97%, #000) left / 51% 100% no-repeat,
+      radial-gradient(circle 11px at 100% calc(100% - 118px), transparent 97%, #000) right / 51% 100% no-repeat;
+    mask:
+      radial-gradient(circle 11px at 0 calc(100% - 118px), transparent 97%, #000) left / 51% 100% no-repeat,
+      radial-gradient(circle 11px at 100% calc(100% - 118px), transparent 97%, #000) right / 51% 100% no-repeat;
+  }
+  @media (min-width: 768px) {
+    .ticket-notch {
+      --stub: 170px;
+      -webkit-mask:
+        radial-gradient(circle 11px at calc(100% - var(--stub)) 0, transparent 97%, #000) top / 100% 51% no-repeat,
+        radial-gradient(circle 11px at calc(100% - var(--stub)) 100%, transparent 97%, #000) bottom / 100% 51% no-repeat;
+      mask:
+        radial-gradient(circle 11px at calc(100% - var(--stub)) 0, transparent 97%, #000) top / 100% 51% no-repeat,
+        radial-gradient(circle 11px at calc(100% - var(--stub)) 100%, transparent 97%, #000) bottom / 100% 51% no-repeat;
+    }
+  }
+  @media (min-width: 1024px) {
+    .ticket-notch { --stub: 190px; }
+  }
+
+  /* A collected stub on Agenda › Geweest: small notches at the perforation. */
+  .stub-notch {
+    -webkit-mask:
+      radial-gradient(circle 7px at 0 36px, transparent 97%, #000) left / 51% 100% no-repeat,
+      radial-gradient(circle 7px at 100% 36px, transparent 97%, #000) right / 51% 100% no-repeat;
+    mask:
+      radial-gradient(circle 7px at 0 36px, transparent 97%, #000) left / 51% 100% no-repeat,
+      radial-gradient(circle 7px at 100% 36px, transparent 97%, #000) right / 51% 100% no-repeat;
+  }
+
   /* The one bold call to action on a screen: cyan, ink outline, hard shadow
      that presses in on click. Nothing moves on hover. */
   .btn-primary {

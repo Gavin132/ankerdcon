@@ -15,10 +15,12 @@ interface StoryViewerProps {
   eventDayId: string;
   open: boolean;
   onClose: () => void;
+  /** Photo to start on (position in the day's story). Defaults to the first. */
+  initialIndex?: number;
 }
 
 /** Full-screen Instagram-style tap-through photo story. */
-export function StoryViewer({ eventDayId, open, onClose }: StoryViewerProps) {
+export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: StoryViewerProps) {
   // Latched, not the raw prop — a caller that stores "which day is open" as
   // a single `string | null` (see HubPage.tsx) naturally passes an empty
   // string in the same render that flips `open` to false, while the exit
@@ -47,7 +49,7 @@ export function StoryViewer({ eventDayId, open, onClose }: StoryViewerProps) {
 
   useEffect(() => {
     if (open) {
-      setIndex(0);
+      setIndex(initialIndex);
       highestSeqRef.current = 0;
     }
   }, [open, eventDayId]);

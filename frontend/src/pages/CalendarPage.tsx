@@ -1,25 +1,52 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CalendarDays, CalendarPlus, Copy, Check } from "lucide-react";
-import { CalendarGrid } from "../components/calendar/CalendarGrid";
-import { CalendarArchive } from "../components/calendar/CalendarArchive";
+import { TicketStack } from "../components/calendar/TicketStack";
+import { CollectedStubs } from "../components/calendar/CollectedStubs";
+import { RecapView } from "../components/calendar/recap/RecapView";
+import { TripRsvpModal } from "../components/calendar/TripRsvpModal";
 import { EmptyState } from "../components/common/EmptyState";
-import { useUsers } from "../hooks/useUsers";
+import { useCurrentUser, useUsers } from "../hooks/useUsers";
 import { useMeals } from "../hooks/useMeals";
+import { useRides } from "../hooks/useRides";
 import { useCalendar, useRsvpCalendarEvent, useLeaveCalendarEvent } from "../hooks/useCalendar";
+import { useTimeStore } from "../store/time.store";
+import { toast } from "../store/toast.store";
+import { toDateKey, todayKey } from "../utils/date";
+import { buildTrips, type Trip } from "../utils/trips";
 import { env } from "../config/env";
 
-/** Agenda tab: every event, as a list or a month grid, with sign-up and the .ics feed. */
+/**
+ * Agenda tab: upcoming trips as a stack of tickets with past trips collected
+ * as stubs underneath, or Recap — a month grid for looking back at past
+ * trips (and ahead). Sign-up and the .ics feed live here too.
+ */
 export function CalendarPage() {
-  const [calendarView, setCalendarView] = useState<"list" | "calendar">("list");
+  useTimeStore((s) => s.override); // re-render when the time-travel override changes
+  const [calendarView, setCalendarView] = useState<"tickets" | "recap">("tickets");
   const [subscribeOpen, setSubscribeOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [manageTripId, setManageTripId] = useState<string | null>(null);
+  const [justJoinedId, setJustJoinedId] = useState<string | null>(null);
 
+  const { data: me } = useCurrentUser();
   const { data: users = [] } = useUsers();
   const { data: calendarEvents = [], isLoading } = useCalendar();
   const { data: meals = [] } = useMeals();
+  const { data: rides = [] } = useRides();
   const rsvpMutation = useRsvpCalendarEvent();
   const leaveMutation = useLeaveCalendarEvent();
+
+  const trips = useMemo(() => buildTrips(calendarEvents), [calendarEvents]);
+  const today = todayKey();
+  const upcomingTrips = trips.filter((t) => toDateKey(t.days[t.days.length - 1].date) >= today);
+  const pastTrips = trips.filter((t) => toDateKey(t.days[t.days.length - 1].date) < today).reverse();
+  const manageTrip = trips.find((t) => t.id === manageTripId) ?? null;
+
+  const myNames = useMemo(
+    () => (me ? [me.name, me.discord_username, ...(me.aliases ?? [])].filter((n): n is string => !!n) : []),
+    [me],
+  );
 
   const feedUrl = `${env.API_BASE_URL || window.location.origin}/api/calendar/feed.ics`;
   const googleCalUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(feedUrl.replace(/^https?:/, "webcal:"))}`;
@@ -51,11 +78,37 @@ export function CalendarPage() {
     }
   }
 
+  /** Sign yourself up for every day of the trip you aren't on yet. */
+  async function joinTrip(trip: Trip) {
+    if (!me) return;
+    setJustJoinedId(trip.id);
+    const days = trip.days.filter((d) => !d.ev.participants.some((p) => myNames.includes(p)));
+    for (const d of days) await onCalendarRsvp(d.ev.id, [me.name]);
+    toast("success", `Je gaat mee naar ${trip.title}`);
+  }
+
+  /** Sign yourself off every day of the trip, under whichever name you're listed. */
+  async function leaveTrip(trip: Trip) {
+    setJustJoinedId(null);
+    for (const d of trip.days) {
+      await onCalendarLeave(d.ev.id, d.ev.participants.filter((p) => myNames.includes(p)));
+    }
+    toast("success", `Afgemeld voor ${trip.title}`);
+  }
+
+  async function manageRsvp(mode: "join" | "leave", names: string[], eventIds: string[]) {
+    // One at a time: each call snapshots the calendar cache for its optimistic update.
+    for (const id of eventIds) {
+      if (mode === "join") await onCalendarRsvp(id, names);
+      else await onCalendarLeave(id, names);
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="animate-pulse space-y-3">
         <div className="h-10 rounded-xl bg-sunken" />
-        <div className="h-24 rounded-2xl bg-sunken" />
+        <div className="h-72 rounded-2xl bg-sunken" />
         <div className="h-24 rounded-2xl bg-sunken" />
       </div>
     );
@@ -72,7 +125,7 @@ export function CalendarPage() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <button
           onClick={() => setSubscribeOpen((v) => !v)}
@@ -87,7 +140,7 @@ export function CalendarPage() {
           Abonneren
         </button>
         <div className="flex gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]" role="group" aria-label="Weergave">
-          {(["list", "calendar"] as const).map((view) => (
+          {(["tickets", "recap"] as const).map((view) => (
             <button
               key={view}
               onClick={() => setCalendarView(view)}
@@ -98,7 +151,7 @@ export function CalendarPage() {
                   : "text-ink-2 hover:text-ink"
               }`}
             >
-              {view === "list" ? "Lijst" : "Maand"}
+              {view === "tickets" ? "Tickets" : "Recap"}
             </button>
           ))}
         </div>
@@ -138,16 +191,52 @@ export function CalendarPage() {
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
-        {calendarView === "list" ? (
-          <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-            <CalendarArchive events={calendarEvents} meals={meals} allUsers={users} onRsvp={onCalendarRsvp} onLeave={onCalendarLeave} />
+        {calendarView === "tickets" ? (
+          <motion.div key="tickets" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="space-y-6">
+            {upcomingTrips.length > 0 ? (
+              <TicketStack
+                trips={upcomingTrips}
+                meals={meals}
+                users={users}
+                myNames={myNames}
+                justJoinedId={justJoinedId}
+                onJoin={joinTrip}
+                onLeave={leaveTrip}
+                onManage={(trip) => setManageTripId(trip.id)}
+              />
+            ) : (
+              <div className="card-surface">
+                <EmptyState
+                  icon={<CalendarDays size={28} />}
+                  title="Niks gepland"
+                  description="Er staat nog geen nieuw event in de agenda. Hieronder vind je alles waar jullie al geweest zijn."
+                />
+              </div>
+            )}
+            <CollectedStubs trips={pastTrips} myNames={myNames} />
           </motion.div>
         ) : (
-          <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-            <CalendarGrid events={calendarEvents} meals={meals} allUsers={users} onRsvp={onCalendarRsvp} onLeave={onCalendarLeave} />
+          <motion.div key="recap" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+            <RecapView
+              trips={trips}
+              myNames={myNames}
+              users={users}
+              rides={rides}
+              meals={meals}
+              onJoin={joinTrip}
+              onLeave={leaveTrip}
+              onManage={(trip) => setManageTripId(trip.id)}
+            />
           </motion.div>
         )}
       </AnimatePresence>
+
+      <TripRsvpModal
+        trip={manageTrip}
+        users={users}
+        onClose={() => setManageTripId(null)}
+        onConfirm={manageRsvp}
+      />
     </div>
   );
 }
