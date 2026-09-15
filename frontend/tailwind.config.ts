@@ -4,9 +4,9 @@ import type { Config } from "tailwindcss";
 //
 // `slate` and `sky` are redefined instead of added next to the defaults: the
 // app uses them in ~1500 class names, so remapping them moves every screen onto
-// the new neutrals (cool ink greys) and the anchor cyan in one place. New code
+// the new neutrals (cool ink greys) and the brand blue in one place. New code
 // should prefer the semantic tokens below (`ink`, `paper`, `surface`, `line`,
-// `cyan`), which follow light/dark mode through the CSS variables in index.css.
+// `brand`), which follow light/dark mode through the CSS variables in index.css.
 const slate = {
   50: "#F5F8F9",
   100: "#EBF1F3",
@@ -21,20 +21,21 @@ const slate = {
   950: "#080C0F",
 };
 
-// 400 is the mascot's anchor cyan. 500 and up are darker so the many existing
-// `bg-sky-500 text-white` buttons stay readable.
-const cyan = {
-  50: "#ECFBFD",
-  100: "#D5F5FA",
-  200: "#ABEDF6",
-  300: "#74E3F2",
-  400: "#3FD8EE",
-  500: "#0A9CB3",
-  600: "#00839A",
-  700: "#006D80",
-  800: "#0A5664",
-  900: "#0E4550",
-  950: "#0E353D",
+// 400 is the brand blue (#48A0E5, Gavin's pick, replacing the anchor cyan).
+// 500 and up are darker so the many existing `bg-sky-500 text-white` buttons
+// stay readable.
+const blue = {
+  50: "#EEF6FD",
+  100: "#DCEEFB",
+  200: "#B9DCF6",
+  300: "#8BC4EF",
+  400: "#48A0E5",
+  500: "#2A84CC",
+  600: "#1F6CB0",
+  700: "#1A5A94",
+  800: "#174B7A",
+  900: "#133D63",
+  950: "#0F2A40",
 };
 
 const token = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
@@ -46,8 +47,8 @@ const config: Config = {
     extend: {
       colors: {
         slate,
-        sky: cyan,
-        ankerd: cyan,
+        sky: blue,
+        ankerd: blue,
         ink: {
           DEFAULT: token("ink"),
           2: token("ink-2"),

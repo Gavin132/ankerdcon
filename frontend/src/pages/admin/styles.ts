@@ -30,7 +30,7 @@ export const TD = "border-b border-line px-4 py-3 align-middle text-[13.5px] tex
 /** Table body row: hover sunken, no border on the last row. */
 export const TR = "transition-colors hover:bg-sunken [&:last-child>td]:border-b-0";
 
-/** Primary action (cyan, ink outline, hard shadow). Add padding and text size. */
+/** Primary action (brand blue, ink outline, hard shadow). Add padding and text size. */
 export const BTN_PRIMARY = "btn-primary px-4 py-2.5 text-sm disabled:opacity-50";
 
 /** Secondary action. */

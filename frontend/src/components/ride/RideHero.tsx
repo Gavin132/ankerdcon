@@ -26,7 +26,7 @@ interface RideHeroProps {
   onLeaveClick?: () => void;
 }
 
-/** Flat ink hero for a ride: route in the display face, mono chips, cyan "Stap in". */
+/** Flat ink hero for a ride: route in the display face, mono chips, brand-blue "Stap in". */
 export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, onLeaveClick }: RideHeroProps) {
   const { data: calendarEvents } = useCalendar();
   const currentUser = useAuthStore((s) => s.currentUser);

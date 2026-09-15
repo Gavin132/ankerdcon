@@ -1,7 +1,7 @@
 # Design system
 
 The look Gavin approved in September 2026 (see `docs/ui-proposal/ui-rework-proposal.html`):
-flat, based on the Ankerd anchor mascot. Ink outlines, one cyan brand fill, status
+flat, based on the Ankerd anchor mascot. Ink outlines, one blue brand fill (`#48A0E5`), status
 colours only for status, calm screens.
 
 The tokens live in `frontend/tailwind.config.ts` and `frontend/src/index.css`.
@@ -15,8 +15,10 @@ The tokens live in `frontend/tailwind.config.ts` and `frontend/src/index.css`.
 - **One bold element per screen** gets the 2px ink outline (`border-2 border-outline`),
   for example the Hub ticket or a trip's headline block. Everything else uses the
   1.5px `border-line`.
-- **Cyan is the brand fill**, for the main action and the one bold element. Text on
-  cyan is ink (`text-brand-on`), never white. Cyan as *text* is `text-brand-text`.
+- **Blue (`#48A0E5`) is the brand fill**, for the main action and the one bold
+  element. Text on the brand fill is ink (`text-brand-on`, 6.5:1), never white
+  (2.8:1). The fill is too light to use as text, so brand-coloured text and links
+  use `text-brand-text` (`#1F6CB0` light, `#7DBDF0` dark).
 - **Status colours are for status only:** emerald = ok/paid, amber = needs
   attention, rose = problem/destructive. Don't use violet, indigo, purple, blue or
   teal as decoration. Where a component used them to tell categories apart,
@@ -38,11 +40,11 @@ variant is needed with them.
 | `text-ink` / `text-ink-2` / `text-ink-3` | primary / secondary / muted text and icons |
 | `border-line` | normal borders and dividers (`border-1.5`, dividers `h-px bg-line`) |
 | `border-outline` | the bold 2px outline, primary button border |
-| `bg-brand`, `text-brand-on` | cyan fill with ink text |
-| `bg-brand-soft`, `text-brand-text` | soft cyan background, cyan text/links |
+| `bg-brand`, `text-brand-on` | brand blue fill with ink text |
+| `bg-brand-soft`, `text-brand-text` | soft blue background, blue text/links |
 | `bg-hatch-surface` | striped surface for travel days |
 
-`slate-*` and `sky-*` are remapped to the new greys and cyan, so existing classes
+`slate-*` and `sky-*` are remapped to the new greys and the brand blue, so existing classes
 already look right; converting them to tokens is still preferred when you touch a
 line, because tokens also handle dark mode.
 
@@ -71,7 +73,7 @@ Page head pattern (see `TripLayout`, `HubPage`):
 - **Icon square:** `flex h-8 w-8 items-center justify-center rounded-lg bg-sunken text-ink`; status versions use `bg-rose-100 text-rose-700` / `bg-amber-100 text-amber-800` / `bg-emerald-100 text-emerald-700` with `dark:bg-*-500/15 dark:text-*-300`.
 - **Pill (status):** `inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11.5px] font-semibold` in the status colours above; neutral: `bg-sunken text-ink-2`.
 - **Tag / chip:** `rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2`.
-- **Buttons:** use `<Button>` (`primary` cyan with hard shadow, `secondary`, `ghost`, `danger`). For a raw element: `btn-primary px-4 py-2.5 text-sm`, or secondary `rounded-xl border-1.5 border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink hover:border-ink-3`.
+- **Buttons:** use `<Button>` (`primary` blue with hard shadow, `secondary`, `ghost`, `danger`). For a raw element: `btn-primary px-4 py-2.5 text-sm`, or secondary `rounded-xl border-1.5 border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink hover:border-ink-3`.
 - **Segmented control:** track `flex gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]`, item `rounded-[7px] px-3 py-1.5 text-[13px] font-semibold text-ink-2`, active item `bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]`.
 - **Selected chip (filters, day chips):** active `bg-ink text-paper` (in dark mode `bg-brand text-brand-on`), inactive `border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3`.
 - **Inputs:** `input-field`.

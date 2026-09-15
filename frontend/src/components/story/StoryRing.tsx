@@ -10,7 +10,7 @@ interface StoryRingProps {
   onClick: () => void;
 }
 
-/** Circular story-ring indicator — cyan ring with an ink outline while
+/** Circular story-ring indicator — brand-blue ring with an ink outline while
  * there's an unseen photo in that day's story, a grey line once fully seen,
  * dashed when the day has no photos yet (still clickable, to add the first one). */
 export function StoryRing({ label, hasPhotos, hasUnseen, previewUrl, onClick }: StoryRingProps) {
