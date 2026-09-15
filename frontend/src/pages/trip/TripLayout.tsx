@@ -1,14 +1,14 @@
 import { useEffect } from "react";
 import { Link, Navigate, Outlet, useLocation, useParams, useSearchParams } from "react-router-dom";
-import { CalendarDays, MapPin } from "lucide-react";
-import { useCalendar } from "../../hooks/useCalendar";
+import { CalendarDays, ChevronLeft } from "lucide-react";
+import { useCalendar, useHotelRooms } from "../../hooks/useCalendar";
 import { useRides } from "../../hooks/useRides";
 import { useMeals } from "../../hooks/useMeals";
 import { useTimeStore } from "../../store/time.store";
 import { routes } from "../../config/routes";
 import { DayChips } from "../../components/trip/DayChips";
 import { daysBetween, toDateKey, todayKey } from "../../utils/date";
-import { buildTrip, defaultTripDayId, isTripOver, isTripTabId, tripGaps, visibleTripTabs, type Trip, type TripTabId } from "../../utils/trips";
+import { buildTrip, isTripTabId, tripGaps, tripImage, tripPhase, tripRoomGaps, visibleTripTabs, type Trip, type TripTabId } from "../../utils/trips";
 import { rememberTripTab, type TripOutletContext } from "./tripContext";
 
 function whenLabel(trip: Trip): string {
@@ -22,9 +22,10 @@ function whenLabel(trip: Trip): string {
 }
 
 /**
- * Shell for the Event tab: the trip's name, its sub-tabs and (where a tab
- * filters by day) the day chips. Each sub-tab renders in the Outlet with the
- * trip in context.
+ * Shell for the Event tab. Overzicht brings its own header (the trip's
+ * ticket); every other part of the trip gets a compact header with the way
+ * back to Overzicht, the tabs to move sideways and, where a tab filters by
+ * day, the day chips. Each part renders in the Outlet with the trip in context.
  */
 export function TripLayout() {
   const { tripId = "" } = useParams<{ tripId: string }>();
@@ -35,6 +36,10 @@ export function TripLayout() {
   const { data: events = [], isLoading } = useCalendar();
   const { data: rides = [] } = useRides();
   const { data: meals = [] } = useMeals();
+
+  const trip = isLoading ? null : buildTrip(events, tripId);
+  const hotelDay = trip?.days.find((d) => d.ev.is_hotel)?.ev;
+  const { data: rooms = [] } = useHotelRooms(hotelDay?.id ?? "", { enabled: !!hotelDay });
 
   const segment = location.pathname.split("/")[3];
   const activeTab: TripTabId = isTripTabId(segment) ? segment : "overview";
@@ -52,8 +57,6 @@ export function TripLayout() {
       </div>
     );
   }
-
-  const trip = buildTrip(events, tripId);
 
   if (!trip) {
     // A day id of a multi-day event: send it to the whole trip, keeping the day.
@@ -87,31 +90,45 @@ export function TripLayout() {
     setSearchParams(params, { replace: true });
   }
 
-  const gaps = isTripOver(trip) ? null : tripGaps(trip, rides, meals);
+  // Counts of who still misses something: only while there's still time to fix it,
+  // and once the trip is underway only the ride back.
+  const phase = tripPhase(trip);
+  const gaps = phase === "past" ? null : tripGaps(trip, rides, meals);
   const counts: Partial<Record<TripTabId, number>> = {
-    transport: gaps?.transport.length ?? 0,
-    food: gaps?.food.length ?? 0,
+    transport: phase === "live" ? gaps?.transport.filter((g) => g.items.includes("Terug")).length : gaps?.transport.length,
+    food: phase === "upcoming" ? gaps?.food.length : 0,
+    rooms: phase === "upcoming" ? tripRoomGaps(trip, rooms).length : 0,
   };
 
-  const showDayChips = trip.days.length > 1 && (activeTab === "overview" || activeTab === "transport" || activeTab === "food");
+  const showDayChips = trip.days.length > 1 && (activeTab === "transport" || activeTab === "food");
   const context: TripOutletContext = { trip, dayId, setDayId };
+  const image = tripImage(trip);
+  const tabLabel = tabs.find((t) => t.id === activeTab)?.label ?? "";
+
+  if (activeTab === "overview") {
+    return <Outlet context={context} />;
+  }
 
   return (
     <div className="space-y-4">
       <header className="space-y-3">
-        <div className="min-w-0">
-          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3">
-            {whenLabel(trip)} · {trip.dateRange}
-          </p>
-          <h1 className="mt-1 font-display text-[34px] font-extrabold uppercase leading-[0.95] tracking-[0.005em] text-ink md:text-[42px]">
-            {trip.title}
-          </h1>
-          {trip.location && (
-            <p className="mt-1.5 flex items-center gap-1.5 truncate text-[13px] text-ink-2">
-              <MapPin size={13} className="shrink-0" />
-              {trip.location}
-            </p>
-          )}
+        <div className="flex items-center gap-3">
+          <Link
+            to={routes.trip.view(trip.id)}
+            className="flex h-9 shrink-0 items-center gap-0.5 rounded-[10px] border-1.5 border-line bg-surface pl-1.5 pr-3 text-[13px] font-semibold text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
+          >
+            <ChevronLeft size={16} />
+            Overzicht
+          </Link>
+          <div className="flex min-w-0 items-center gap-2.5">
+            {image && <img src={image} alt="" className="h-11 w-11 shrink-0 rounded-[9px] object-cover" />}
+            <div className="min-w-0">
+              <p className="truncate font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3">
+                {trip.title} · {whenLabel(trip)}
+              </p>
+              <h1 className="font-display text-[30px] font-black uppercase leading-[0.9] text-ink md:text-[40px]">{tabLabel}</h1>
+            </div>
+          </div>
         </div>
 
         <nav
@@ -123,7 +140,7 @@ export function TripLayout() {
             return (
               <Link
                 key={tab.id}
-                to={routes.trip.view(trip.id, tab.id, dayId ?? undefined)}
+                to={routes.trip.view(trip.id, tab.id, tab.id === "transport" || tab.id === "food" ? (dayId ?? undefined) : undefined)}
                 replace
                 className={`-mb-[1.5px] flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2.5 text-[13.5px] font-semibold whitespace-nowrap transition-colors ${
                   tab.id === activeTab
@@ -146,14 +163,7 @@ export function TripLayout() {
           })}
         </nav>
 
-        {showDayChips && (
-          <DayChips
-            days={trip.days}
-            value={activeTab === "overview" ? (dayId ?? defaultTripDayId(trip)) : dayId}
-            onChange={setDayId}
-            allowAll={activeTab !== "overview"}
-          />
-        )}
+        {showDayChips && <DayChips days={trip.days} value={dayId} onChange={setDayId} allowAll />}
       </header>
 
       <Outlet context={context} />

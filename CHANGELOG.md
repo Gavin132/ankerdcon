@@ -24,6 +24,16 @@ All notable changes to Ankerd Con are documented here.
   Agenda · Financiën · Crew**.
   - **Event** opens the current trip, with Overzicht, Vervoer, Eten,
     Kamers, Cosplay and Foto's in one place for that trip.
+  - Overzicht is now the trip's ticket with a tile for each part of the
+    trip: Vervoer, Eten, Kamers, Cosplay, Foto's and Uitgaven. Each tile
+    shows the answer (how many rides, who still has no ride back) and opens
+    its own page to change things.
+  - Tap a day on the ticket to sign up for it or off it. Weather and
+    practical info unfold under the tiles.
+  - The tiles reorder before, during and after a trip: plans first, then
+    the next meal and photos, then photos and what you still owe.
+  - The other pages get a compact header with the way back to Overzicht,
+    and Kamers shows the hotel info and how many people still need a room.
   - Transport and Eten no longer mix every event together.
   - Multi-day trips get day buttons to filter by day.
 - **Agenda** replaces the calendar under Meer, and past trips there show

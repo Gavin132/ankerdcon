@@ -4,8 +4,8 @@ import { useStorySummary } from "../../hooks/useStories";
 import { StoryRing } from "../../components/story/StoryRing";
 import { StoryViewer } from "../../components/story/StoryViewer";
 import { AddStoryTile } from "../../components/story/AddStoryTile";
-import { daysBetween, toDateKey, todayKey } from "../../utils/date";
 import { dayShort } from "../../utils/multiDay";
+import { tripUploadDay } from "../../utils/trips";
 import { useTrip } from "./tripContext";
 
 /**
@@ -18,11 +18,7 @@ export function TripPhotosTab() {
   const { data: storySummary, isLoading } = useStorySummary(trip.eventIds);
   const [viewDayId, setViewDayId] = useState<string | null>(null);
 
-  const today = todayKey();
-  const uploadDay = trip.days.find(({ date }) => {
-    const key = toDateKey(date);
-    return key >= today && daysBetween(today, key) <= 1;
-  });
+  const uploadDay = tripUploadDay(trip);
   const photoCount = trip.days.reduce((sum, d) => sum + (storySummary?.[d.ev.id]?.photo_count ?? 0), 0);
 
   return (

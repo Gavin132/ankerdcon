@@ -15,6 +15,8 @@ import { NamePicker } from "../../components/common/NamePicker";
 import { Modal } from "../../components/common/Modal";
 import { Button } from "../../components/common/Button";
 import { toast } from "../../store/toast.store";
+import { HotelInfoCard } from "../../components/event/HotelInfoCard";
+import { tripInfo, tripRoomGaps } from "../../utils/trips";
 import { useTrip } from "./tripContext";
 import type { HotelRoom } from "../../types";
 
@@ -520,7 +522,8 @@ export function TripRoomsTab() {
   // Stats
   const assignedNames = new Set(rooms.flatMap((r) => r.occupants));
   const eventAttendees = trip.participants;
-  const unassigned = eventAttendees.filter((p) => !assignedNames.has(p));
+  const unassigned = tripRoomGaps(trip, rooms);
+  const info = tripInfo(trip);
 
   if (!event) {
     return (
@@ -580,6 +583,8 @@ export function TripRoomsTab() {
       </div>
 
       <div className="space-y-5">
+
+        {(info.hotel_location || info.hotel_info) && <HotelInfoCard event={info} />}
 
         {/* ── Unassigned strip ──────────────────────────────────────── */}
         {unassigned.length > 0 && (

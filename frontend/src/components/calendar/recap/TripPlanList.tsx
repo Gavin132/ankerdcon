@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Car, TrainFront, Utensils } from "lucide-react";
 import { tripMeals, tripRides, type Trip } from "../../../utils/trips";
 import { routes } from "../../../config/routes";
+import { splitDateTime } from "../../../utils/date";
 import type { Meal, Ride } from "../../../types";
 
 interface PlanItem {
@@ -17,12 +18,6 @@ interface PlanItem {
 
 const DAYS = ["zondag", "maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag"];
 const MONTHS = ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
-
-/** "2026-09-25 09:00" → ["2026-09-25", "09:00"]. */
-function splitDateTime(value: string): [string, string] {
-  const [date = "", time = ""] = value.trim().split(/[ T]/);
-  return [date, time.slice(0, 5)];
-}
 
 function planItems(trip: Trip, rides: Ride[], meals: Meal[], past: boolean): PlanItem[] {
   const rideItems = tripRides(rides, meals, trip).map((r): PlanItem => {
