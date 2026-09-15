@@ -57,17 +57,9 @@ export function tripIdOf(ev: CalendarEvent): string {
   return ev.multi_day_id || ev.id;
 }
 
-export function buildTrip(events: CalendarEvent[], tripId: string): Trip | null {
-  const dayEvents = events.filter((e) => e.multi_day_id === tripId);
-  const members = dayEvents.length > 0 ? dayEvents : events.filter((e) => e.id === tripId && !e.multi_day_id);
-  const days = members
-    .map((ev) => ({ ev, date: parseEventDate(ev.date) }))
-    .filter((d): d is TripDay => d.date !== null)
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
-  if (days.length === 0) return null;
-
+function tripFromDays(id: string, days: TripDay[]): Trip {
   return {
-    id: tripId,
+    id,
     days,
     eventIds: days.map((d) => d.ev.id),
     title: days[0].ev.event_name,
@@ -77,6 +69,33 @@ export function buildTrip(events: CalendarEvent[], tripId: string): Trip | null 
     hasCon: days.some((d) => d.ev.has_con !== false),
     participants: [...new Set(days.flatMap((d) => d.ev.participants ?? []))],
   };
+}
+
+export function buildTrip(events: CalendarEvent[], tripId: string): Trip | null {
+  const dayEvents = events.filter((e) => e.multi_day_id === tripId);
+  const members = dayEvents.length > 0 ? dayEvents : events.filter((e) => e.id === tripId && !e.multi_day_id);
+  const days = members
+    .map((ev) => ({ ev, date: parseEventDate(ev.date) }))
+    .filter((d): d is TripDay => d.date !== null)
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+  if (days.length === 0) return null;
+  return tripFromDays(tripId, days);
+}
+
+/** Every trip in the calendar, oldest first. */
+export function buildTrips(events: CalendarEvent[]): Trip[] {
+  const entries = events
+    .map((ev) => ({ ev, date: parseEventDate(ev.date) }))
+    .filter((x): x is TripDay => x.date !== null)
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+  return groupCalendarEntries(entries).map((item) =>
+    item.type === "single" ? tripFromDays(tripIdOf(item.ev), [{ ev: item.ev, date: item.date }]) : tripFromDays(item.multiDayId, item.events),
+  );
+}
+
+/** The event image of a trip: the first day that has one. */
+export function tripImage(trip: Trip): string | null {
+  return trip.days.map((d) => d.ev.image_url).find(Boolean) ?? null;
 }
 
 /** The trip a given event day belongs to, or null when the event doesn't exist. */

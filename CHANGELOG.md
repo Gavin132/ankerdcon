@@ -28,6 +28,17 @@ All notable changes to Ankerd Con are documented here.
   - Multi-day trips get day buttons to filter by day.
 - **Agenda** replaces the calendar under Meer, and past trips there show
   their story photos (replacing the separate story archive).
+  - Upcoming trips are a stack of tickets with the event image, the days,
+    who's going and a countdown. Swipe or use the arrows to flip through them.
+  - "Ik ga mee" signs you up for every day of a trip in one tap;
+    "Anderen aanmelden" signs up (or off) anyone else, for the days you pick.
+  - Past trips are collected as stubs per year, with how many you went to,
+    con days, hotel trips and photos. Tap a stub for its photos.
+  - **Recap** replaces the month view and is built for looking back: days of
+    past trips show their photos (grey when you didn't go), and a past trip
+    opens a look-back with who went, photos per day and the rides and
+    dinners. Upcoming trips still show sign-up and what's planned. Jump to any
+    month, filter on "Waar ik was", and see what you did a year earlier.
 - **Crew** combines the member lists with "Waar is iedereen" location pings.
 - Personal settings (notifications, Discord, theme, greeting) now live in
   one place: **Instellingen** in the avatar menu. The Meer tab is gone.
