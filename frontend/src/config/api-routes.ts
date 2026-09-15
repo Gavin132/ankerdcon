@@ -18,6 +18,7 @@ export const apiRoutes = {
   cosplays: {
     base:  "/api/cosplays/",
     byId:  (id: string) => `/api/cosplays/${id}`,
+    image: "/api/cosplays/images",
   },
 
   // ── Event-day photo stories ─────────────────────────────────────

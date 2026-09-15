@@ -69,6 +69,7 @@ class CosplayRoutes:
     PREFIX = "/cosplays"
     LIST = "/"
     DETAIL = "/{cosplay_id}"
+    IMAGE = "/images"  # POST — upload an inspiration image, returns its URL
 
 
 class StoryRoutes:

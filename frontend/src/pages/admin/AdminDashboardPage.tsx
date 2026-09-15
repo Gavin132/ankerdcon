@@ -349,7 +349,7 @@ export function AdminDashboardPage() {
                 <XAxis dataKey="label" tick={AXIS} tickLine={false} axisLine={false} />
                 <YAxis tick={AXIS} tickLine={false} axisLine={false} allowDecimals={false} />
                 <Tooltip content={<DarkTooltip />} cursor={{ fill: "rgba(116,131,138,0.10)" }} />
-                <Bar dataKey="newUsers" name="Nieuw" fill="#48A0E5" radius={[3, 3, 0, 0]} maxBarSize={32} />
+                <Bar dataKey="newUsers" name="Nieuw" fill="#57B2F9" radius={[3, 3, 0, 0]} maxBarSize={32} />
                 <Line dataKey="cumulative" name="Totaal" type="monotone" stroke="#74838A" strokeWidth={2} dot={false} />
               </ComposedChart>
             </ResponsiveContainer>

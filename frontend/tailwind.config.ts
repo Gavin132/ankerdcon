@@ -21,17 +21,20 @@ const slate = {
   950: "#080C0F",
 };
 
-// 400 is the brand blue (#48A0E5, Gavin's pick, replacing the anchor cyan).
-// 500 and up are darker so the many existing `bg-sky-500 text-white` buttons
-// stay readable.
+// 400 is the brand blue (#57B2F9, a more saturated pass on the lightened
+// #67B0E9, which itself lightened Gavin's original #48A0E5). 200-600 got the
+// same +18 HSL-saturation bump at their own lightness, contrast-checked so
+// the many existing `bg-sky-500 text-white` buttons stay readable (500 still
+// clears 3:1, 600 still clears 4.5:1 against white); 700+ are untouched
+// since they're already high-contrast and rarely the color someone notices.
 const blue = {
   50: "#EEF6FD",
   100: "#DCEEFB",
-  200: "#B9DCF6",
-  300: "#8BC4EF",
-  400: "#48A0E5",
-  500: "#2A84CC",
-  600: "#1F6CB0",
+  200: "#CBE8FE",
+  300: "#97D0FC",
+  400: "#57B2F9",
+  500: "#1B8EEB",
+  600: "#0D75D1",
   700: "#1A5A94",
   800: "#174B7A",
   900: "#133D63",
@@ -87,9 +90,9 @@ const config: Config = {
       ringWidth: {
         "3": "3px",
       },
-      // Flat: no soft card shadows. Only floating layers (menus, drawers,
-      // modals) keep a quiet shadow so they separate from the page, and
-      // primary buttons get the hard offset shadow.
+      // Flat: no soft card shadows, no hard offset button shadows either.
+      // Only floating layers (menus, drawers, modals) keep a quiet shadow so
+      // they separate from the page.
       boxShadow: {
         sm: "none",
         DEFAULT: "none",
@@ -103,8 +106,6 @@ const config: Config = {
         modal: "0 16px 48px rgb(15 21 25 / 0.18)",
         stat: "none",
         glow: "none",
-        btn: "3px 3px 0 rgb(var(--outline))",
-        "btn-press": "1px 1px 0 rgb(var(--outline))",
       },
       backgroundImage: {
         hatch: "repeating-linear-gradient(135deg, rgb(var(--ink) / 0.07) 0 6px, transparent 6px 12px)",

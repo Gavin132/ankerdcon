@@ -39,3 +39,32 @@ export function splitDateTime(value: string): [string, string] {
   const [date = "", time = ""] = value.trim().split(/[ T]/);
   return [date, time.slice(0, 5)];
 }
+
+/** "yyyy-mm-ddTHH:mm", the value shape a datetime-local input (or a split date+time pair) needs. */
+export function toDateTimeLocal(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** Quick presets for "when do we leave" pickers — covers the common cases
+ * (heading off right away, later tonight, or first thing tomorrow) without
+ * having to dial in an exact date and time by hand. */
+export function quickDepartureOptions(): { label: string; value: string }[] {
+  const now = getNow();
+
+  const asap = new Date(now);
+  asap.setMinutes(Math.ceil(asap.getMinutes() / 5) * 5, 0, 0);
+
+  const tonight = new Date(now);
+  tonight.setHours(19, 0, 0, 0);
+
+  const tomorrowMorning = new Date(now);
+  tomorrowMorning.setDate(tomorrowMorning.getDate() + 1);
+  tomorrowMorning.setHours(9, 0, 0, 0);
+
+  return [
+    { label: "Nu", value: toDateTimeLocal(asap) },
+    { label: "Vanavond", value: toDateTimeLocal(tonight) },
+    { label: "Morgenochtend", value: toDateTimeLocal(tomorrowMorning) },
+  ];
+}

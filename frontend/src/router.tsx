@@ -32,13 +32,12 @@ const NotificationSettingsPage = lazyPage(() => import("./pages/NotificationSett
 const ChangelogPage = lazyPage(() => import("./pages/ChangelogPage"), "ChangelogPage");
 
 const TripLayout = lazyPage(() => import("./pages/trip/TripLayout"), "TripLayout");
+// Overzicht is the only real page for the Event tab — Vervoer, Cosplay and
+// Kamers open as sheets on top of it (see TripOverviewTab), so every trip
+// sub-route below renders the same component.
 const TripOverviewTab = lazyPage(() => import("./pages/trip/TripOverviewTab"), "TripOverviewTab");
-const TripTransportTab = lazyPage(() => import("./pages/trip/TripTransportTab"), "TripTransportTab");
-const TripFoodTab = lazyPage(() => import("./pages/trip/TripFoodTab"), "TripFoodTab");
-const TripRoomsTab = lazyPage(() => import("./pages/trip/TripRoomsTab"), "TripRoomsTab");
-const TripCosplayTab = lazyPage(() => import("./pages/trip/TripCosplayTab"), "TripCosplayTab");
-const TripPhotosTab = lazyPage(() => import("./pages/trip/TripPhotosTab"), "TripPhotosTab");
 const CurrentTripRedirect = lazyPage(() => import("./pages/trip/TripRedirects"), "CurrentTripRedirect");
+const TripLegacySubpageRedirect = lazyPage(() => import("./pages/trip/TripRedirects"), "TripLegacySubpageRedirect");
 const EventDayRedirect = lazyPage(() => import("./pages/trip/TripRedirects"), "EventDayRedirect");
 const EventRoomsRedirect = lazyPage(() => import("./pages/trip/TripRedirects"), "EventRoomsRedirect");
 const EventCosplayRedirect = lazyPage(() => import("./pages/trip/TripRedirects"), "EventCosplayRedirect");
@@ -107,12 +106,9 @@ export const router = createBrowserRouter([
                 path: routes.trip.pattern,
                 element: <TripLayout />,
                 children: [
-                  { index: true,        element: <TripOverviewTab /> },
-                  { path: "transport",  element: <TripTransportTab /> },
-                  { path: "food",       element: <TripFoodTab /> },
-                  { path: "rooms",      element: <TripRoomsTab /> },
-                  { path: "cosplay",    element: <TripCosplayTab /> },
-                  { path: "photos",     element: <TripPhotosTab /> },
+                  { index: true,   element: <TripOverviewTab /> },
+                  // Old bookmarks/notifications from before sheets moved to `?sheet=`.
+                  { path: ":tab",  element: <TripLegacySubpageRedirect /> },
                 ],
               },
               { path: routes.event.pattern,         element: <EventDayRedirect /> },

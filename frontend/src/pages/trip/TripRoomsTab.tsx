@@ -13,6 +13,7 @@ import { useUsers, useCurrentUser } from "../../hooks/useUsers";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { NamePicker } from "../../components/common/NamePicker";
 import { Modal } from "../../components/common/Modal";
+import { TripSheet } from "../../components/trip/TripSheet";
 import { Button } from "../../components/common/Button";
 import { toast } from "../../store/toast.store";
 import { HotelInfoCard } from "../../components/event/HotelInfoCard";
@@ -496,10 +497,11 @@ const container = {
 };
 
 /**
- * Event › Kamers. Rooms belong to the whole trip — the backend keys them by
- * the trip's multi-day group — so any hotel day's id reaches the same set.
+ * Event › Kamers, opened as a bottom sheet over Overzicht. Rooms belong to
+ * the whole trip — the backend keys them by the trip's multi-day group — so
+ * any hotel day's id reaches the same set.
  */
-export function TripRoomsTab() {
+export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { trip } = useTrip();
   const event = trip.days.find((d) => d.ev.is_hotel)?.ev;
   const id = event?.id;
@@ -527,12 +529,14 @@ export function TripRoomsTab() {
 
   if (!event) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
-          <BedDouble size={22} />
-        </span>
-        <p className="text-sm font-semibold text-ink">Dit event heeft geen hotel</p>
-      </div>
+      <TripSheet open={open} onClose={onClose} title="Kamers">
+        <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
+          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
+            <BedDouble size={22} />
+          </span>
+          <p className="text-sm font-semibold text-ink">Dit event heeft geen hotel</p>
+        </div>
+      </TripSheet>
     );
   }
 
@@ -550,8 +554,35 @@ export function TripRoomsTab() {
     }
   }
 
+  // Delete confirmation replaces the sheet's footer instead of floating a
+  // separate fixed banner — a fixed-position element would sit relative to
+  // the sheet's own animated panel, not the viewport.
+  const deleteConfirmFooter = confirmDeleteId ? (
+    <div className="flex items-center gap-3">
+      <AlertCircle size={16} className="shrink-0 text-rose-600 dark:text-rose-400" />
+      <p className="flex-1 text-sm font-semibold text-ink">Kamer verwijderen?</p>
+      <button
+        type="button"
+        onClick={() => setConfirmDeleteId(null)}
+        className="rounded-xl px-3 py-1.5 text-xs font-semibold text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+      >
+        Annuleer
+      </button>
+      <button
+        onClick={() => {
+          const room = rooms.find((r) => r.id === confirmDeleteId);
+          if (room) handleDelete(room);
+        }}
+        disabled={deleteRoom.isPending}
+        className="rounded-xl border-2 border-rose-800 bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors disabled:opacity-50 dark:border-rose-400"
+      >
+        {deleteRoom.isPending ? "Bezig…" : "Verwijder"}
+      </button>
+    </div>
+  ) : undefined;
+
   return (
-    <div className="pb-10">
+    <TripSheet open={open} onClose={onClose} title="Kamers" footer={deleteConfirmFooter}>
 
       {/* ── Summary + actions ──────────────────────────────────────── */}
       <div className="mb-5 flex flex-wrap items-center gap-2">
@@ -678,49 +709,6 @@ export function TripRoomsTab() {
             </AnimatePresence>
           </motion.div>
         )}
-
-        {/* Delete confirm banner */}
-        <AnimatePresence>
-          {confirmDeleteId && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:bottom-6 left-4 right-4 md:left-[calc(76px+2rem)] lg:left-[calc(15rem+2.5rem)] z-40 mx-auto flex max-w-lg items-center gap-3 rounded-xl
-                         border-1.5 border-rose-300 bg-surface px-4 py-3.5 shadow-xl dark:border-rose-400/40"
-            >
-              <AlertCircle size={16} className="shrink-0 text-rose-600 dark:text-rose-400" />
-              <p className="flex-1 text-sm font-semibold text-ink">
-                Kamer verwijderen?
-              </p>
-              <button
-                type="button"
-                onClick={() => setConfirmDeleteId(null)}
-                className="rounded-xl px-3 py-1.5 text-xs font-semibold text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
-              >
-                Annuleer
-              </button>
-              <button
-                onClick={() => {
-                  const room = rooms.find((r) => r.id === confirmDeleteId);
-                  if (room) handleDelete(room);
-                }}
-                disabled={deleteRoom.isPending}
-                className="rounded-xl border-2 border-rose-800 bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors disabled:opacity-50 dark:border-rose-400"
-              >
-                {deleteRoom.isPending ? "Bezig…" : "Verwijder"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirmDeleteId(null)}
-                aria-label="Sluiten"
-                className="flex h-6 w-6 items-center justify-center rounded-lg text-ink-3 transition-colors hover:text-ink"
-              >
-                <X size={14} />
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* ── Create / Edit modal ─────────────────────────────────────── */}
@@ -740,6 +728,6 @@ export function TripRoomsTab() {
         onClose={() => setBulkModalOpen(false)}
         eventId={id!}
       />
-    </div>
+    </TripSheet>
   );
 }

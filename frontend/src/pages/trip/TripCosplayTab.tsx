@@ -8,7 +8,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useCosplays, useCreateCosplay, useDeleteCosplay } from "../../hooks/useCosplays";
-import { useUsers } from "../../hooks/useUsers";
+import { uploadCosplayImage } from "../../services/cosplays.service";
+import { useUsers, useCurrentUser } from "../../hooks/useUsers";
 import { CosplayCard } from "../../components/cosplay/CosplayCard";
 import { CosplayDetailDrawer } from "../../components/cosplay/CosplayDetailDrawer";
 import {
@@ -18,10 +19,9 @@ import {
   SORT_LABELS,
   type CosplayFilterState,
 } from "../../components/cosplay/CosplayFilterDrawer";
-import { Drawer } from "../../components/common/Drawer";
+import { TripSheet } from "../../components/trip/TripSheet";
 import { Button } from "../../components/common/Button";
 import { NamePicker } from "../../components/common/NamePicker";
-import { uploadCosplayImage } from "../../services/storage.service";
 import { toast } from "../../store/toast.store";
 import { formatDate } from "../../utils/format";
 import { listContainer, listItem } from "../../utils/motion";
@@ -54,14 +54,21 @@ const SL = "mb-1.5 block text-[12.5px] font-semibold text-ink-2";
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-/** Event › Cosplay: every cosplay planned for any day of the trip. */
-export function TripCosplayTab() {
+/**
+ * Event › Cosplay, opened as a bottom sheet over Overzicht: every cosplay
+ * planned for any day of the trip. Adding one slides the sheet to its own
+ * form view — the same list/form pattern as Vervoer — instead of stacking
+ * a second overlay on top; filtering and viewing a single cosplay's detail
+ * still use their own side drawers since those aren't part of that flow.
+ */
+export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { trip, dayId } = useTrip();
   const firstConDay = trip.days.find((d) => d.ev.has_con !== false) ?? trip.days[0];
   const id = dayId ?? firstConDay.ev.id;
 
   const { data: cosplays = [], isLoading } = useCosplays();
   const { data: users = [] }              = useUsers();
+  const { data: currentUser }             = useCurrentUser();
 
   const createMutation = useCreateCosplay();
   const deleteMutation = useDeleteCosplay();
@@ -130,9 +137,9 @@ export function TripCosplayTab() {
     setFilters((f) => ({ ...f, sort: "newest" }));
   }
 
-  // ── Create drawer ─────────────────────────────────────────────────────────
+  // ── Create form (a second view inside the same sheet) ──────────────────────
 
-  const [createOpen, setCreateOpen]  = useState(false);
+  const [view, setView] = useState<"list" | "form">("list");
   const [selectedUser, setSelectedUser] = useState("");
   const [selectedDays, setSelectedDays] = useState<string[]>(id ? [id] : []);
   const [images, setImages]           = useState<ImageEntry[]>([{ mode: "url", url: "", uploading: false }]);
@@ -142,10 +149,10 @@ export function TripCosplayTab() {
 
   function openCreate() {
     reset();
-    setSelectedUser("");
+    setSelectedUser(currentUser?.name ?? "");
     setSelectedDays(id ? [id] : []);
     setImages([{ mode: "url", url: "", uploading: false }]);
-    setCreateOpen(true);
+    setView("form");
   }
 
   function toggleDay(eid: string) {
@@ -188,7 +195,7 @@ export function TripCosplayTab() {
         inspo_images: cleanImages,
         linked_event_ids: selectedDays,
       });
-      setCreateOpen(false);
+      setView("list");
       toast("success", `${values.character_name} toegevoegd!`);
     } catch {
       toast("error", "Kon cosplay niet opslaan. Probeer opnieuw.");
@@ -207,19 +214,6 @@ export function TripCosplayTab() {
     } catch {
       toast("error", "Verwijderen mislukt.");
     }
-  }
-
-  // ── Not found ─────────────────────────────────────────────────────────────
-
-  if (!event) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
-          <Sparkles size={22} />
-        </div>
-        <p className="text-sm font-semibold text-ink">Deze dag bestaat niet meer</p>
-      </div>
-    );
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -246,246 +240,22 @@ export function TripCosplayTab() {
     "flex h-8 w-8 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-line";
 
   return (
-    <div className="pb-10">
-      {/* ── Content ────────────────────────────────────────────────── */}
-      <div>
-
-        {/* Filter toolbar */}
-        {!isLoading && eventCosplays.length > 0 && (
-          <div className="mb-5 space-y-3">
-            <div className="flex items-center gap-3">
-              {/* Filter trigger */}
-              <button
-                onClick={() => setFilterOpen(true)}
-                className={`relative flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
-                  activeFilterCount > 0
-                    ? "border-1.5 border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
-                    : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"
-                }`}
-              >
-                <SlidersHorizontal size={13} />
-                Filter & Sorteren
-                {activeFilterCount > 0 && (
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-paper font-mono text-[9.5px] font-semibold text-ink">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Result count */}
-              <span className="ml-auto truncate font-mono text-[11px] uppercase tracking-[0.05em] text-ink-3 tabular-nums">
-                {isFiltered
-                  ? `${filtered.length} van ${eventCosplays.length} cosplays`
-                  : `${eventCosplays.length} ${eventCosplays.length === 1 ? "cosplay" : "cosplays"}`}
-              </span>
-
-              <button
-                onClick={openCreate}
-                className="btn-primary shrink-0 px-3 py-2 text-xs"
-              >
-                <Plus size={14} />
-                Toevoegen
-              </button>
-            </div>
-
-            {/* Active filter chips */}
-            <AnimatePresence>
-              {activeFilterCount > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="flex flex-wrap gap-2 overflow-hidden"
-                >
-                  {filters.persons.map((name) => (
-                    <span key={name} className={removableChip}>
-                      {name}
-                      <button onClick={() => removePersonFilter(name)} className={removeChipButton}>
-                        <X size={11} />
-                      </button>
-                    </span>
-                  ))}
-                  {filters.days.length > 0 && (
-                    <span className={removableChip}>
-                      {filters.days.length} {filters.days.length === 1 ? "dag" : "dagen"}
-                      <button onClick={removeDayFilter} className={removeChipButton}>
-                        <X size={11} />
-                      </button>
-                    </span>
-                  )}
-                  {filters.sort !== "newest" && (
-                    <span className={removableChip}>
-                      {SORT_LABELS[filters.sort]}
-                      <button onClick={removeSortFilter} className={removeChipButton}>
-                        <X size={11} />
-                      </button>
-                    </span>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+    <TripSheet
+      open={open}
+      onClose={onClose}
+      onBack={view === "form" ? () => setView("list") : undefined}
+      title={view === "form" ? "Cosplay toevoegen" : "Cosplay"}
+      subtitle={view === "form" ? "Laat zien wat je draagt!" : undefined}
+      footer={view === "form" ? createFooter : undefined}
+    >
+      {!event ? (
+        <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
+            <Sparkles size={22} />
           </div>
-        )}
-
-        {/* ── Loading skeletons ── */}
-        {isLoading && (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="card-surface overflow-hidden animate-pulse">
-                <div className="aspect-[4/3] w-full border-b-1.5 border-line bg-sunken" />
-                <div className="space-y-2.5 p-3">
-                  <div className="h-4 w-3/4 rounded bg-sunken" />
-                  <div className="h-3 w-1/2 rounded bg-sunken" />
-                  <div className="flex items-center gap-1.5">
-                    <div className="h-5 w-5 rounded-full bg-sunken" />
-                    <div className="h-3 w-16 rounded bg-sunken" />
-                  </div>
-                  <div className="h-4 w-20 rounded-md bg-sunken" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ── Empty state (no cosplays at all) ── */}
-        {!isLoading && eventCosplays.length === 0 && (
-          <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
-              <Sparkles size={22} />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-ink">
-                Nog geen cosplays gedeeld
-              </p>
-              <p className="mt-1 text-xs text-ink-3">Laat anderen weten wat je draagt!</p>
-            </div>
-            <button
-              onClick={openCreate}
-              className="btn-primary px-4 py-2.5 text-sm"
-            >
-              <Plus size={16} />
-              Eerste cosplay toevoegen
-            </button>
-          </div>
-        )}
-
-        {/* ── Filtered empty state ── */}
-        {!isLoading && eventCosplays.length > 0 && filtered.length === 0 && (
-          <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
-              <SlidersHorizontal size={22} />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-ink">
-                Geen cosplays gevonden
-              </p>
-              <p className="mt-1 text-xs text-ink-3">Pas je filters aan of wis ze.</p>
-            </div>
-            <button
-              onClick={() => setFilters(DEFAULT_COSPLAY_FILTERS)}
-              className="text-[12.5px] font-semibold text-brand-text hover:underline"
-            >
-              Filters wissen
-            </button>
-          </div>
-        )}
-
-        {/* ── Grid ── */}
-        {!isLoading && paginated.length > 0 && (
-          <motion.div
-            className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4"
-            variants={listContainer}
-            initial="hidden"
-            animate="show"
-          >
-            <AnimatePresence mode="popLayout">
-              {paginated.map((cosplay) => (
-                <CosplayCard
-                  key={cosplay.id}
-                  cosplay={cosplay}
-                  events={allRelatedEvents}
-                  users={users}
-                  onClick={() => setDetailCosplay(cosplay)}
-                />
-              ))}
-
-              {/* Add cosplay card — shown on last page or when no filters active */}
-              {(!isFiltered || page === totalPages) && (
-                <motion.button
-                  key="add-card"
-                  variants={listItem}
-                  type="button"
-                  onClick={openCreate}
-                  className="flex min-h-[160px] cursor-pointer flex-col items-center justify-center gap-2.5 rounded-[12px] border-1.5 border-dashed border-line py-10 text-ink-3 transition-colors hover:border-ink-3 hover:text-ink"
-                >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sunken">
-                    <Plus size={16} />
-                  </div>
-                  <span className="text-xs font-semibold">Cosplay toevoegen</span>
-                </motion.button>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        )}
-
-        {/* ── Pagination ── */}
-        {!isLoading && totalPages > 1 && (
-          <div className="mt-8 flex items-center justify-center gap-1.5">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className={pageArrow}
-            >
-              <ChevronLeft size={15} />
-            </button>
-
-            {Array.from({ length: totalPages }).map((_, i) => {
-              const p = i + 1;
-              const active = page === p;
-              // Show first, last, current and ±1 around current; rest as ellipsis
-              const show = p === 1 || p === totalPages || Math.abs(p - page) <= 1;
-              const showEllipsisBefore = p === page - 2 && page > 3;
-              const showEllipsisAfter  = p === page + 2 && page < totalPages - 2;
-              if (showEllipsisBefore || showEllipsisAfter) {
-                return (
-                  <span key={p} className="w-8 text-center text-xs text-ink-3">…</span>
-                );
-              }
-              if (!show) return null;
-              return (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  className={`h-8 min-w-[2rem] rounded-xl px-2 font-mono text-xs font-semibold tabular-nums transition-colors ${
-                    active
-                      ? "border-1.5 border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
-                      : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
-                  }`}
-                >
-                  {p}
-                </button>
-              );
-            })}
-
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className={pageArrow}
-            >
-              <ChevronRight size={15} />
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* ── Create drawer ──────────────────────────────────────────── */}
-      <Drawer
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        title="Cosplay toevoegen"
-        subtitle="Laat zien wat je draagt!"
-        footer={createFooter}
-      >
+          <p className="text-sm font-semibold text-ink">Deze dag bestaat niet meer</p>
+        </div>
+      ) : view === "form" ? (
         <form id="cosplay-create-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
           <div className={SF}>
@@ -598,7 +368,236 @@ export function TripCosplayTab() {
             <textarea className="input-field resize-none" rows={3} placeholder="Extra info over je cosplay, progress updates…" {...register("notes")} />
           </div>
         </form>
-      </Drawer>
+      ) : (
+        <div>
+          {/* Filter toolbar */}
+          {!isLoading && eventCosplays.length > 0 && (
+            <div className="mb-5 space-y-3">
+              <div className="flex items-center gap-3">
+                {/* Filter trigger */}
+                <button
+                  onClick={() => setFilterOpen(true)}
+                  className={`relative flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
+                    activeFilterCount > 0
+                      ? "border-1.5 border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
+                      : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"
+                  }`}
+                >
+                  <SlidersHorizontal size={13} />
+                  Filter & Sorteren
+                  {activeFilterCount > 0 && (
+                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-paper font-mono text-[9.5px] font-semibold text-ink">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Result count */}
+                <span className="ml-auto truncate font-mono text-[11px] uppercase tracking-[0.05em] text-ink-3 tabular-nums">
+                  {isFiltered
+                    ? `${filtered.length} van ${eventCosplays.length} cosplays`
+                    : `${eventCosplays.length} ${eventCosplays.length === 1 ? "cosplay" : "cosplays"}`}
+                </span>
+
+                <button
+                  onClick={openCreate}
+                  className="btn-primary shrink-0 px-3 py-2 text-xs"
+                >
+                  <Plus size={14} />
+                  Toevoegen
+                </button>
+              </div>
+
+              {/* Active filter chips */}
+              <AnimatePresence>
+                {activeFilterCount > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="flex flex-wrap gap-2 overflow-hidden"
+                  >
+                    {filters.persons.map((name) => (
+                      <span key={name} className={removableChip}>
+                        {name}
+                        <button onClick={() => removePersonFilter(name)} className={removeChipButton}>
+                          <X size={11} />
+                        </button>
+                      </span>
+                    ))}
+                    {filters.days.length > 0 && (
+                      <span className={removableChip}>
+                        {filters.days.length} {filters.days.length === 1 ? "dag" : "dagen"}
+                        <button onClick={removeDayFilter} className={removeChipButton}>
+                          <X size={11} />
+                        </button>
+                      </span>
+                    )}
+                    {filters.sort !== "newest" && (
+                      <span className={removableChip}>
+                        {SORT_LABELS[filters.sort]}
+                        <button onClick={removeSortFilter} className={removeChipButton}>
+                          <X size={11} />
+                        </button>
+                      </span>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+
+          {/* ── Loading skeletons ── */}
+          {isLoading && (
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="card-surface overflow-hidden animate-pulse">
+                  <div className="aspect-[4/3] w-full border-b-1.5 border-line bg-sunken" />
+                  <div className="space-y-2.5 p-3">
+                    <div className="h-4 w-3/4 rounded bg-sunken" />
+                    <div className="h-3 w-1/2 rounded bg-sunken" />
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-5 w-5 rounded-full bg-sunken" />
+                      <div className="h-3 w-16 rounded bg-sunken" />
+                    </div>
+                    <div className="h-4 w-20 rounded-md bg-sunken" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ── Empty state (no cosplays at all) ── */}
+          {!isLoading && eventCosplays.length === 0 && (
+            <div className="flex flex-col items-center gap-4 py-16 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
+                <Sparkles size={22} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-ink">
+                  Nog geen cosplays gedeeld
+                </p>
+                <p className="mt-1 text-xs text-ink-3">Laat anderen weten wat je draagt!</p>
+              </div>
+              <button
+                onClick={openCreate}
+                className="btn-primary px-4 py-2.5 text-sm"
+              >
+                <Plus size={16} />
+                Eerste cosplay toevoegen
+              </button>
+            </div>
+          )}
+
+          {/* ── Filtered empty state ── */}
+          {!isLoading && eventCosplays.length > 0 && filtered.length === 0 && (
+            <div className="flex flex-col items-center gap-4 py-16 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
+                <SlidersHorizontal size={22} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-ink">
+                  Geen cosplays gevonden
+                </p>
+                <p className="mt-1 text-xs text-ink-3">Pas je filters aan of wis ze.</p>
+              </div>
+              <button
+                onClick={() => setFilters(DEFAULT_COSPLAY_FILTERS)}
+                className="text-[12.5px] font-semibold text-brand-text hover:underline"
+              >
+                Filters wissen
+              </button>
+            </div>
+          )}
+
+          {/* ── Grid ── */}
+          {!isLoading && paginated.length > 0 && (
+            <motion.div
+              className="grid grid-cols-2 gap-3 md:grid-cols-3"
+              variants={listContainer}
+              initial="hidden"
+              animate="show"
+            >
+              <AnimatePresence mode="popLayout">
+                {paginated.map((cosplay) => (
+                  <CosplayCard
+                    key={cosplay.id}
+                    cosplay={cosplay}
+                    events={allRelatedEvents}
+                    users={users}
+                    onClick={() => setDetailCosplay(cosplay)}
+                  />
+                ))}
+
+                {/* Add cosplay card — shown on last page or when no filters active */}
+                {(!isFiltered || page === totalPages) && (
+                  <motion.button
+                    key="add-card"
+                    variants={listItem}
+                    type="button"
+                    onClick={openCreate}
+                    className="flex min-h-[160px] cursor-pointer flex-col items-center justify-center gap-2.5 rounded-[12px] border-1.5 border-dashed border-line py-10 text-ink-3 transition-colors hover:border-ink-3 hover:text-ink"
+                  >
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sunken">
+                      <Plus size={16} />
+                    </div>
+                    <span className="text-xs font-semibold">Cosplay toevoegen</span>
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
+
+          {/* ── Pagination ── */}
+          {!isLoading && totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-1.5">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className={pageArrow}
+              >
+                <ChevronLeft size={15} />
+              </button>
+
+              {Array.from({ length: totalPages }).map((_, i) => {
+                const p = i + 1;
+                const active = page === p;
+                // Show first, last, current and ±1 around current; rest as ellipsis
+                const show = p === 1 || p === totalPages || Math.abs(p - page) <= 1;
+                const showEllipsisBefore = p === page - 2 && page > 3;
+                const showEllipsisAfter  = p === page + 2 && page < totalPages - 2;
+                if (showEllipsisBefore || showEllipsisAfter) {
+                  return (
+                    <span key={p} className="w-8 text-center text-xs text-ink-3">…</span>
+                  );
+                }
+                if (!show) return null;
+                return (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`h-8 min-w-[2rem] rounded-xl px-2 font-mono text-xs font-semibold tabular-nums transition-colors ${
+                      active
+                        ? "border-1.5 border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
+                        : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                );
+              })}
+
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className={pageArrow}
+              >
+                <ChevronRight size={15} />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Filter drawer ──────────────────────────────────────────── */}
       <CosplayFilterDrawer
@@ -621,6 +620,6 @@ export function TripCosplayTab() {
         onDelete={handleDelete}
         deleteLoading={deleteMutation.isPending}
       />
-    </div>
+    </TripSheet>
   );
 }

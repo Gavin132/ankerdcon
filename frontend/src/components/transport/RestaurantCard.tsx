@@ -10,14 +10,12 @@ import {
   Timer,
   AlertCircle,
   CheckCircle2,
-  Link2,
   Utensils,
 } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
-import { useCalendar } from "../../hooks/useCalendar";
 import { useMeals } from "../../hooks/useMeals";
 import { useUsers } from "../../hooks/useUsers";
-import { formatDate, formatTime } from "../../utils/format";
+import { formatTime } from "../../utils/format";
 import { getRideStatus, formatCountdown } from "../../utils/rides";
 import { listItem } from "../../utils/motion";
 import { routes } from "../../config/routes";
@@ -33,7 +31,6 @@ export function RestaurantCard({ ride }: RestaurantCardProps) {
   const [attendeesOpen, setAttendeesOpen] = useState(false);
 
   const { data: users = [] } = useUsers();
-  const { data: events = [] } = useCalendar();
   const { data: meals = [] } = useMeals();
 
   const { status, minutesUntil } = getRideStatus(ride.departure_time);
@@ -52,7 +49,6 @@ export function RestaurantCard({ ride }: RestaurantCardProps) {
   const nonDriverAttendees = attendees.filter((a) => !driverNames.has(a));
   const allClear = drivers.length > 0 && nonDriverAttendees.length > 0 && unassigned.length === 0;
   const allParticipants = Array.from(new Set([...attendees, ...drivers.map((d) => d.name)]));
-  const linkedEvent = ride.linked_event_id ? events.find((e) => e.id === ride.linked_event_id) : undefined;
 
   function resolveName(stored: string) {
     return users.find((u) => u.name === stored || u.discord_username === stored || u.aliases?.includes(stored))?.name ?? stored;
@@ -98,7 +94,6 @@ export function RestaurantCard({ ride }: RestaurantCardProps) {
           </div>
           <div className="ml-auto shrink-0 text-right leading-tight">
             <p className="font-mono text-[15px] font-semibold tabular-nums text-ink">{formatTime(ride.departure_time)}</p>
-            <p className="font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-3">{formatDate(ride.departure_time)}</p>
           </div>
         </div>
 
@@ -208,16 +203,6 @@ export function RestaurantCard({ ride }: RestaurantCardProps) {
               >
                 <Utensils size={10} className="shrink-0" />
                 <span className="truncate">{linkedMeal.meal_name}</span>
-              </Link>
-            )}
-            {!linkedMeal && linkedEvent && (
-              <Link
-                to={routes.event.view(linkedEvent.id)}
-                onClick={(e) => e.stopPropagation()}
-                className="flex min-w-0 max-w-[150px] items-center gap-1 rounded-md border border-line bg-surface px-1.5 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
-              >
-                <Link2 size={10} className="shrink-0" />
-                <span className="truncate">{linkedEvent.event_name}</span>
               </Link>
             )}
             <ChevronRight size={14} className="shrink-0 text-ink-3" />

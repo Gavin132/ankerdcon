@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { forwardRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { AlertCircle, BedDouble, Camera, Car, CloudSun, Sparkles, Utensils, Wallet } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { DayChips } from "./DayChips";
@@ -82,6 +83,11 @@ export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Tr
 
 /* ── Eten ────────────────────────────────────────────────────────────────── */
 
+/**
+ * Meals are planned by the organisers in the admin panel, not from here — this
+ * tile only answers "is there a mealplan" and links straight to each meal's
+ * own detail page, so it has no single `to` of its own (each row is its own link).
+ */
 export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: TripPhase; meals: Meal[]; myNames: string[] }) {
   const isMine = sameName(myNames);
   const all = tripMeals(meals, trip).sort((a, b) => a.time.localeCompare(b.time));
@@ -94,7 +100,6 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
     <TripTile
       icon={Utensils}
       label="Eten"
-      to={routes.trip.view(trip.id, "food")}
       size={phase === "past" ? "small" : "wide"}
       pill={missing > 0 && <TilePill>{missing} nergens bij</TilePill>}
     >
@@ -102,16 +107,21 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
         {all.length === 0 ? "Nog niks gepland" : phase === "live" && ahead[0] ? `Straks ${splitDateTime(ahead[0].time)[1]}` : `${all.length} ${all.length === 1 ? "etentje" : "etentjes"}`}
       </TileValue>
       {phase !== "past" && shown.length > 0 && (
-        <ul className="divide-y divide-line">
+        <ul className="-mx-1.5 divide-y divide-line">
           {shown.map((m) => (
-            <li key={m.id} className="grid grid-cols-[62px_minmax(0,1fr)] gap-2 py-1.5 text-[12.5px]">
-              <span className="pt-px font-mono text-[11.5px] uppercase text-ink-3">{dayTime(m.time)}</span>
-              <span className="min-w-0">
-                <span className="block truncate font-semibold text-ink">{m.meal_name}</span>
-                <span className="block text-ink-3">
-                  {m.participants.length} mee, {m.participants.some(isMine) ? "jij ook" : "jij nog niet"}
+            <li key={m.id}>
+              <Link
+                to={routes.meal.view(m.id)}
+                className="grid grid-cols-[62px_minmax(0,1fr)] gap-2 rounded-lg px-1.5 py-1.5 text-[12.5px] transition-colors hover:bg-sunken"
+              >
+                <span className="pt-px font-mono text-[11.5px] uppercase text-ink-3">{dayTime(m.time)}</span>
+                <span className="min-w-0">
+                  <span className="block truncate font-semibold text-ink">{m.meal_name}</span>
+                  <span className="block text-ink-3">
+                    {m.participants.length} mee, {m.participants.some(isMine) ? "jij ook" : "jij nog niet"}
+                  </span>
                 </span>
-              </span>
+              </Link>
             </li>
           ))}
         </ul>
@@ -193,17 +203,30 @@ export function CosplayTile({ trip, cosplays, myNames }: { trip: Trip; cosplays:
 
 /* ── Foto's ──────────────────────────────────────────────────────────────── */
 
-export function PhotosTile({ trip, phase, summary }: { trip: Trip; phase: TripPhase; summary?: Record<string, StoryDaySummary> }) {
+/**
+ * Opens the story viewer directly on the most relevant day instead of
+ * linking to a separate Foto's page — there's little here that the tile
+ * doesn't already show, and adding a photo already happens from the camera
+ * button on the trip's own ticket.
+ */
+export function PhotosTile({ trip, phase, summary, onOpenDay }: { trip: Trip; phase: TripPhase; summary?: Record<string, StoryDaySummary>; onOpenDay: (dayId: string) => void }) {
   const perDay = trip.days.map((d) => ({ day: d, s: summary?.[d.ev.id] }));
   const total = perDay.reduce((sum, x) => sum + (x.s?.photo_count ?? 0), 0);
   const today = todayKey();
-  const todayCount = perDay.find((x) => toDateKey(x.day.date) === today)?.s?.photo_count ?? 0;
+  const todayEntry = perDay.find((x) => toDateKey(x.day.date) === today);
+  const todayCount = todayEntry?.s?.photo_count ?? 0;
   const previews = perDay.filter((x) => x.s && x.s.photo_count > 0 && x.s.preview_url);
   const opens = new Date(trip.days[0].date);
   opens.setDate(opens.getDate() - 1);
+  const primaryDay = (todayEntry?.s?.photo_count ? todayEntry : [...previews].reverse()[0])?.day.ev.id;
 
   return (
-    <TripTile icon={Camera} label="Foto's" to={routes.trip.view(trip.id, "photos")} size={phase === "past" ? "full" : "wide"}>
+    <TripTile
+      icon={Camera}
+      label="Foto's"
+      onOpen={total > 0 && primaryDay ? () => onOpenDay(primaryDay) : undefined}
+      size={phase === "past" ? "full" : "wide"}
+    >
       {total === 0 ? (
         <>
           <TileValue>{phase === "past" ? "Geen foto's" : "Story"}</TileValue>
@@ -223,7 +246,15 @@ export function PhotosTile({ trip, phase, summary }: { trip: Trip; phase: TripPh
           </TileText>
           <span className="flex gap-1.5">
             {previews.map((x) => (
-              <img key={x.day.ev.id} src={x.s!.preview_url} alt="" className="h-16 w-12 rounded-md object-cover" />
+              <span
+                key={x.day.ev.id}
+                role="button"
+                tabIndex={0}
+                onClick={(e) => { e.stopPropagation(); onOpenDay(x.day.ev.id); }}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); onOpenDay(x.day.ev.id); } }}
+              >
+                <img src={x.s!.preview_url} alt="" className="h-16 w-12 rounded-md object-cover" />
+              </span>
             ))}
           </span>
         </>
@@ -295,13 +326,13 @@ export function WeatherTile({ trip, expanded, onToggle }: { trip: Trip; expanded
   );
 }
 
-export function WeatherPanel({ trip }: { trip: Trip }) {
+export const WeatherPanel = forwardRef<HTMLElement, { trip: Trip }>(function WeatherPanel({ trip }, ref) {
   const [dayId, setDayId] = useState(() => defaultTripDayId(trip));
   const day = trip.days.find((d) => d.ev.id === dayId) ?? trip.days[0];
   const { data: weather, isLoading } = useEventWeather(trip.location, toDateKey(day.date));
 
   return (
-    <section className="col-span-2 space-y-3 lg:col-span-4">
+    <section ref={ref} className="col-span-2 space-y-3 lg:col-span-4 scroll-mt-4">
       {trip.days.length > 1 && <DayChips days={trip.days} value={day.ev.id} onChange={(id) => id && setDayId(id)} />}
       {isLoading ? (
         <WeatherSkeleton />
@@ -314,7 +345,7 @@ export function WeatherPanel({ trip }: { trip: Trip }) {
       )}
     </section>
   );
-}
+});
 
 /* ── Praktisch (unfolds in place) ────────────────────────────────────────── */
 
@@ -349,11 +380,11 @@ export function PracticalTile({ info, expanded, onToggle }: { info: CalendarEven
   );
 }
 
-export function PracticalPanel({ info }: { info: CalendarEvent }) {
+export const PracticalPanel = forwardRef<HTMLElement, { info: CalendarEvent }>(function PracticalPanel({ info }, ref) {
   const hasRows = !!(info.special_instructions || info.parking_info || info.what_to_bring || info.locker_info);
   const hasLinks = !!(info.website || info.ticket_url || info.ticket_sale_start || (info.ticket_types?.length ?? 0) > 0);
   return (
-    <section className="card-surface col-span-2 overflow-hidden lg:col-span-4">
+    <section ref={ref} className="card-surface col-span-2 overflow-hidden lg:col-span-4 scroll-mt-4">
       <div className="px-5 pb-1 pt-4">
         <p className="section-label">Praktische info</p>
       </div>
@@ -362,4 +393,4 @@ export function PracticalPanel({ info }: { info: CalendarEvent }) {
       {hasLinks && <EventLinks event={info} bare />}
     </section>
   );
-}
+});

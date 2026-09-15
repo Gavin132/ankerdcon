@@ -7,7 +7,8 @@
    Channels without rgb() so Tailwind can add opacity: `bg-ink/10`.
    Ink outline from the mascot, one brand blue; status colours are only
    for status. The brand tokens keep their old `--cyan` names so existing
-   `rgb(var(--cyan))` references keep working. Nothing lifts on hover — only primary buttons press in. */
+   `rgb(var(--cyan))` references keep working. Nothing lifts on hover, and
+   buttons are flat — no offset shadow, just a slight opacity dip on click. */
 :root {
   --paper: 245 248 249;      /* #F5F8F9  page background */
   --surface: 255 255 255;    /* #FFFFFF  cards, panels */
@@ -16,10 +17,10 @@
   --ink-2: 74 90 99;         /* #4A5A63  secondary text */
   --ink-3: 116 131 138;      /* #74838A  muted text */
   --line: 213 222 226;       /* #D5DEE2  borders */
-  --outline: 15 21 25;       /* #0F1519  bold outline, button shadow */
-  --cyan: 72 160 229;        /* #48A0E5  the one brand fill (brand blue) */
+  --outline: 15 21 25;       /* #0F1519  bold outline */
+  --cyan: 87 178 249;        /* #57B2F9  the one brand fill (brand blue, +18 saturation) */
   --cyan-soft: 220 238 251;  /* #DCEEFB */
-  --cyan-text: 31 108 176;   /* #1F6CB0  brand as text on light (5.5:1 on white) */
+  --cyan-text: 13 117 209;   /* #0D75D1  brand as text on light (4.7:1 on white) */
   --on-cyan: 15 21 25;
   --nav-active-bg: 15 21 25;
   --nav-active-fg: 245 248 249;
@@ -35,8 +36,8 @@
   --line: 36 48 57;          /* #243039 */
   --outline: 191 211 218;    /* #BFD3DA */
   --cyan-soft: 15 42 64;     /* #0F2A40 */
-  --cyan-text: 125 189 240;  /* #7DBDF0 */
-  --nav-active-bg: 72 160 229;
+  --cyan-text: 137 202 254;  /* #89CAFE */
+  --nav-active-bg: 87 178 249; /* #57B2F9 — matches the light-mode --cyan */
   --nav-active-fg: 15 21 25;
 }
 
@@ -207,14 +208,13 @@
       radial-gradient(circle 7px at 100% 36px, transparent 97%, #000) right / 51% 100% no-repeat;
   }
 
-  /* The one bold call to action on a screen: cyan, ink outline, hard shadow
-     that presses in on click. Nothing moves on hover. */
+  /* The one bold call to action on a screen: brand blue, ink outline, flat.
+     Nothing moves on hover; a light opacity dip on click is the only feedback. */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border-2 border-outline bg-brand font-semibold text-brand-on shadow-btn transition-[transform,box-shadow] duration-75;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border-2 border-outline bg-brand font-semibold text-brand-on transition-opacity duration-75;
   }
   .btn-primary:active:not(:disabled) {
-    transform: translate(2px, 2px);
-    @apply shadow-btn-press;
+    opacity: 0.9;
   }
 }
 

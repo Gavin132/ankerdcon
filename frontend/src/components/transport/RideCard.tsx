@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Car,
@@ -7,25 +7,18 @@ import {
   Train,
   ParkingCircle,
   Plus,
-  ChevronDown,
   Timer,
   AlertCircle,
-  CalendarPlus,
-  Link2,
   UserMinus,
-  Users,
 } from "lucide-react";
 import { Button } from "../common/Button";
-import { Modal } from "../common/Modal";
 import { NamePicker } from "../common/NamePicker";
 import { UserAvatar } from "../common/UserAvatar";
-import { SeatDots } from "./SeatDots";
 import { useClaimSeat, useLeaveSeat } from "../../hooks/useRides";
 import { useUsers } from "../../hooks/useUsers";
 import { useCalendar } from "../../hooks/useCalendar";
-import { formatDate, formatTime } from "../../utils/format";
+import { formatTime } from "../../utils/format";
 import { getRideStatus, formatCountdown, rideLocationLabel } from "../../utils/rides";
-import { exportRideToIcs } from "../../utils/ics";
 import { toast } from "../../store/toast.store";
 import { listItem } from "../../utils/motion";
 import { routes } from "../../config/routes";
@@ -38,9 +31,7 @@ interface RideCardProps {
 
 export function RideCard({ ride, userNames }: RideCardProps) {
   const navigate = useNavigate();
-  const [passengersOpen, setPassengersOpen] = useState(false);
-  const [claimOpen, setClaimOpen] = useState(false);
-  const [leaveOpen, setLeaveOpen] = useState(false);
+  const [expandedAction, setExpandedAction] = useState<"claim" | "leave" | null>(null);
   const [claimNames, setClaimNames] = useState<string[]>([]);
   const [leaveNames, setLeaveNames] = useState<string[]>([]);
   const [, tick] = useState(0);
@@ -96,9 +87,6 @@ export function RideCard({ ride, userNames }: RideCardProps) {
       ? "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"
       : "bg-sunken text-ink-2";
 
-  const showSeats = !isPT && ride.total_seats < 99;
-  const takenSeats = ride.total_seats - ride.seats_left;
-
   async function handleClaim() {
     if (claimNames.length === 0) return;
     try {
@@ -106,7 +94,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
         await claimMutation.mutateAsync({ id: ride.id, payload: { user_name: name } });
       }
       setClaimNames([]);
-      setClaimOpen(false);
+      setExpandedAction(null);
       toast("success", claimNames.length === 1 ? `${claimNames[0]} staat in de rit!` : `${claimNames.length} personen staan in de rit!`);
     } catch {
       toast("error", "Kon plek niet claimen. Probeer opnieuw.");
@@ -120,19 +108,24 @@ export function RideCard({ ride, userNames }: RideCardProps) {
         await leaveMutation.mutateAsync({ id: ride.id, payload: { user_name: name } });
       }
       setLeaveNames([]);
-      setLeaveOpen(false);
+      setExpandedAction(null);
       toast("success", leaveNames.length === 1 ? `${leaveNames[0]} is uitgestapt.` : `${leaveNames.length} personen uitgestapt.`);
     } catch {
       toast("error", "Kon je niet uitschrijven.");
     }
   }
 
+  function toggleAction(action: "claim" | "leave") {
+    setExpandedAction((prev) => (prev === action ? null : action));
+    setClaimNames([]);
+    setLeaveNames([]);
+  }
+
   return (
-    <>
-      <motion.div
-        variants={listItem}
-        className={isRecent || isPast ? "opacity-70" : ""}
-      >
+    <motion.div
+      variants={listItem}
+      className={isRecent || isPast ? "opacity-70" : ""}
+    >
         <div
           onClick={() => navigate(routes.ride.view(ride.id))}
           className="card-surface-hover flex cursor-pointer flex-col gap-2.5 p-3.5"
@@ -159,7 +152,6 @@ export function RideCard({ ride, userNames }: RideCardProps) {
             </div>
             <div className="ml-auto shrink-0 text-right leading-tight">
               <p className="font-mono text-[15px] font-semibold tabular-nums text-ink">{formatTime(ride.departure_time)}</p>
-              <p className="font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-3">{formatDate(ride.departure_time)}</p>
             </div>
           </div>
 
@@ -199,86 +191,55 @@ export function RideCard({ ride, userNames }: RideCardProps) {
             </p>
           </div>
 
-          {linkedEvent && (
-            <Link
-              to={routes.event.view(linkedEvent.id)}
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex max-w-full items-center gap-1 self-start rounded-md border border-line px-1.5 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
-            >
-              <Link2 size={10} className="shrink-0" />
-              <span className="truncate">{linkedEvent.event_name}</span>
-            </Link>
-          )}
-
-          {/* ── Footer: seats, passengers, actions ── */}
+          {/* ── Footer: riders, actions ── */}
           <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t border-dashed border-line pt-2.5">
-            <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-ink-2">
-              {showSeats && (
-                <span
-                  className="flex items-center gap-1.5"
-                  title={`${takenSeats}/${ride.total_seats} plekken bezet`}
-                >
-                  <SeatDots total={ride.total_seats} left={ride.seats_left} />
-                  <span className="sr-only">{takenSeats}/{ride.total_seats} plekken bezet</span>
-                  {canAct && (
-                    <span className={ride.is_full ? "font-semibold text-rose-700 dark:text-rose-300" : ""}>
-                      {ride.is_full ? "Vol" : `${ride.seats_left} vrij`}
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 text-[12px] text-ink-2">
+              {ride.passengers.length > 0 ? (
+                <span className="flex -space-x-1.5">
+                  {ride.passengers.slice(0, 6).map((p) => (
+                    <UserAvatar key={p} name={resolveName(p)} className="h-6 w-6 text-[9px] !border-surface" />
+                  ))}
+                  {ride.passengers.length > 6 && (
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-surface bg-sunken font-mono text-[9px] font-semibold text-ink-2">
+                      +{ride.passengers.length - 6}
                     </span>
                   )}
                 </span>
+              ) : (
+                <span className="text-ink-3">Nog geen meerijders</span>
               )}
-              {!showSeats && !isPT && canAct && (
+              {!isPT && canAct && (
                 <span className={ride.is_full ? "font-semibold text-rose-700 dark:text-rose-300" : ""}>
                   {ride.is_full ? "Vol" : `${ride.seats_left} vrij`}
                 </span>
               )}
-
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); if (ride.passengers.length > 0) setPassengersOpen((v) => !v); }}
-                className={`flex min-w-0 items-center gap-1 ${ride.passengers.length > 0 ? "hover:text-ink" : "cursor-default"}`}
-                aria-expanded={ride.passengers.length > 0 ? passengersOpen : undefined}
-              >
-                {ride.passengers.length > 0 ? (
-                  <>
-                    <Users size={12} className="shrink-0 text-ink-3" />
-                    <span>
-                      <span className="font-mono font-semibold tabular-nums text-ink">{ride.passengers.length}</span> meerijder{ride.passengers.length !== 1 ? "s" : ""}
-                    </span>
-                    <ChevronDown size={12} className={`shrink-0 text-ink-3 transition-transform ${passengersOpen ? "rotate-180" : ""}`} />
-                  </>
-                ) : (
-                  <span className="flex items-center gap-1 text-ink-3">
-                    <Users size={12} />
-                    Geen meerijders
-                  </span>
-                )}
-              </button>
             </div>
 
             <div className="ml-auto flex items-center gap-1">
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); exportRideToIcs(ride); }}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
-                title="Exporteer naar kalender"
-              >
-                <CalendarPlus size={14} />
-              </button>
-
               {canAct && ride.passengers.length > 0 && (
                 <button
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); setLeaveNames([]); setLeaveOpen(true); }}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
+                  onClick={(e) => { e.stopPropagation(); toggleAction("leave"); }}
+                  className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                    expandedAction === "leave"
+                      ? "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300"
+                      : "text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
+                  }`}
                   title="Uitstappen"
+                  aria-expanded={expandedAction === "leave"}
                 >
                   <UserMinus size={14} />
                 </button>
               )}
 
               {canAct && !ride.is_full && (
-                <Button size="sm" variant="primary" className="ml-1 !min-h-[36px] !py-1.5" onClick={(e) => { e.stopPropagation(); setClaimNames([]); setClaimOpen(true); }}>
+                <Button
+                  size="sm"
+                  variant={expandedAction === "claim" ? "secondary" : "primary"}
+                  className="ml-1 !min-h-[36px] !py-1.5"
+                  onClick={(e) => { e.stopPropagation(); toggleAction("claim"); }}
+                  aria-expanded={expandedAction === "claim"}
+                >
                   <Plus size={13} />
                   Stap in
                 </Button>
@@ -286,72 +247,62 @@ export function RideCard({ ride, userNames }: RideCardProps) {
             </div>
           </div>
 
-          {/* Expanded passengers */}
-          <AnimatePresence>
-            {passengersOpen && (
+          {/* ── Inline stap-in / uitstappen panel — expands in place instead
+              of a popup, so the ride's own details stay visible while you pick. ── */}
+          <AnimatePresence initial={false}>
+            {expandedAction && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.18 }}
-                className="-mt-1 overflow-hidden"
+                className="overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {ride.passengers.map((p) => (
-                    <div
-                      key={p}
-                      className="inline-flex items-center gap-1.5 rounded-full border-1.5 border-line px-2 py-1 text-[12px] font-medium text-ink-2"
-                    >
-                      <UserAvatar name={p} className="h-4 w-4 text-[8px] !border-0" />
-                      {resolveName(p)}
-                    </div>
-                  ))}
-                  {ride.parking_info && (
-                    <div className="mt-1 flex w-full items-start gap-2 rounded-lg bg-sunken px-3 py-2.5">
-                      <ParkingCircle size={13} className="mt-0.5 shrink-0 text-ink-3" />
-                      <div className="min-w-0">
-                        <p className="section-label mb-0.5">Parkeerinfo</p>
-                        <p className="text-xs leading-relaxed text-ink-2">{ride.parking_info}</p>
-                      </div>
-                    </div>
+                <div className="space-y-2.5 border-t border-dashed border-line pt-2.5">
+                  {expandedAction === "claim" ? (
+                    <NamePicker
+                      multiple
+                      options={availableToJoin}
+                      value={claimNames}
+                      onChange={setClaimNames}
+                      maxSelect={isPT ? undefined : ride.seats_left}
+                      color="sky"
+                    />
+                  ) : (
+                    <NamePicker multiple options={ride.passengers} value={leaveNames} onChange={setLeaveNames} color="rose" />
                   )}
+                  <Button
+                    variant={expandedAction === "leave" ? "danger" : "primary"}
+                    className="w-full"
+                    loading={expandedAction === "claim" ? claimMutation.isPending : leaveMutation.isPending}
+                    disabled={(expandedAction === "claim" ? claimNames : leaveNames).length === 0}
+                    onClick={expandedAction === "claim" ? handleClaim : handleLeave}
+                  >
+                    {expandedAction === "claim" ? (
+                      <>
+                        <Plus size={15} />
+                        {claimNames.length === 0 ? "Selecteer een naam" : claimNames.length === 1 ? `${claimNames[0]} stapt in` : `${claimNames.length} personen stappen in`}
+                      </>
+                    ) : (
+                      leaveNames.length === 0 ? "Selecteer een naam" : leaveNames.length === 1 ? `${leaveNames[0]} uitstappen` : `${leaveNames.length} personen uitstappen`
+                    )}
+                  </Button>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
+
+          {ride.parking_info && (
+            <div className="flex items-start gap-2 rounded-lg bg-sunken px-3 py-2.5">
+              <ParkingCircle size={13} className="mt-0.5 shrink-0 text-ink-3" />
+              <div className="min-w-0">
+                <p className="section-label mb-0.5">Parkeerinfo</p>
+                <p className="text-xs leading-relaxed text-ink-2">{ride.parking_info}</p>
+              </div>
+            </div>
+          )}
         </div>
       </motion.div>
-
-      {/* Stap in modal */}
-      <Modal
-        open={claimOpen}
-        onClose={() => { setClaimOpen(false); setClaimNames([]); }}
-        title="Stap in"
-        description={`${fromLabel} → ${toLabel}${isPT ? "" : ` · ${ride.seats_left} ${ride.seats_left === 1 ? "plek" : "plekken"} vrij`}`}
-      >
-        <div className="space-y-3">
-          <NamePicker multiple options={availableToJoin} value={claimNames} onChange={setClaimNames} maxSelect={isPT ? undefined : ride.seats_left} color="sky" />
-          <Button onClick={handleClaim} loading={claimMutation.isPending} className="w-full" disabled={claimNames.length === 0}>
-            <Plus size={15} />
-            {claimNames.length === 0 ? "Selecteer een naam" : claimNames.length === 1 ? `${claimNames[0]} stapt in` : `${claimNames.length} personen stappen in`}
-          </Button>
-        </div>
-      </Modal>
-
-      {/* Uitstappen modal */}
-      <Modal
-        open={leaveOpen}
-        onClose={() => { setLeaveOpen(false); setLeaveNames([]); }}
-        title="Uitstappen"
-        description="Wie stappen er uit?"
-      >
-        <div className="space-y-3">
-          <NamePicker multiple options={ride.passengers} value={leaveNames} onChange={setLeaveNames} color="rose" />
-          <Button variant="danger" onClick={handleLeave} loading={leaveMutation.isPending} className="w-full" disabled={leaveNames.length === 0}>
-            {leaveNames.length === 0 ? "Selecteer een naam" : leaveNames.length === 1 ? `${leaveNames[0]} uitstappen` : `${leaveNames.length} personen uitstappen`}
-          </Button>
-        </div>
-      </Modal>
-    </>
   );
 }

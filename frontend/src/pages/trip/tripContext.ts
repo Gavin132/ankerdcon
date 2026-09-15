@@ -6,6 +6,8 @@ export interface TripOutletContext {
   /** The day picked with the day chips, or null for "Alle dagen". */
   dayId: string | null;
   setDayId: (dayId: string | null) => void;
+  /** The URL's tab segment — Overzicht is the only real page now; the rest open as sheets on top of it. */
+  activeTab: TripTabId;
 }
 
 /** The trip every `/trips/:tripId/*` tab renders for — provided by TripLayout. */

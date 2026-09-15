@@ -10,6 +10,8 @@ interface TripTileProps {
   /** Unfolds read-only info in place instead of linking out. */
   onToggle?: () => void;
   expanded?: boolean;
+  /** Opens something in place (e.g. a photo viewer) instead of navigating — same "Naar X" affordance as `to`, but a callback. */
+  onOpen?: () => void;
   /** A status pill next to the label, e.g. how many people still miss a ride. */
   pill?: ReactNode;
   /** Two columns wide; `full` takes the whole row. */
@@ -23,9 +25,9 @@ const SPAN = { small: "", wide: "col-span-2", full: "col-span-2 lg:col-span-4" }
  * One tile on Event › Overzicht. The tile answers the question (6 rides, 3
  * people without a ride back); editing happens on the page it links to.
  */
-export function TripTile({ icon: Icon, label, to, onToggle, expanded, pill, size = "small", children }: TripTileProps) {
+export function TripTile({ icon: Icon, label, to, onToggle, expanded, onOpen, pill, size = "small", children }: TripTileProps) {
   const className = `card-surface group flex min-h-[132px] min-w-0 flex-col gap-2 p-4 text-left transition-colors ${SPAN[size]} ${
-    to || onToggle ? "hover:border-ink-3" : ""
+    to || onToggle || onOpen ? "hover:border-ink-3" : ""
   }`;
 
   const header = (
@@ -35,7 +37,7 @@ export function TripTile({ icon: Icon, label, to, onToggle, expanded, pill, size
       </span>
       <span className="section-label min-w-0 flex-1 truncate text-ink-2">{label}</span>
       {pill}
-      {to && <ChevronRight size={15} className="shrink-0 text-ink-3 transition-colors group-hover:text-ink" />}
+      {(to || onOpen) && <ChevronRight size={15} className="shrink-0 text-ink-3 transition-colors group-hover:text-ink" />}
     </span>
   );
 
@@ -58,6 +60,18 @@ export function TripTile({ icon: Icon, label, to, onToggle, expanded, pill, size
         {children}
         <span className="mt-auto flex items-center gap-1 pt-1 text-[12.5px] font-semibold text-brand-text">
           {expanded ? "Inklappen" : "Uitklappen"} <ChevronDown size={13} className={expanded ? "rotate-180" : ""} />
+        </span>
+      </button>
+    );
+  }
+
+  if (onOpen) {
+    return (
+      <button type="button" onClick={onOpen} className={className}>
+        {header}
+        {children}
+        <span className="mt-auto flex items-center gap-1 pt-1 text-[12.5px] font-semibold text-brand-text">
+          Bekijken <ArrowRight size={13} />
         </span>
       </button>
     );

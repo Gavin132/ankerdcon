@@ -43,6 +43,13 @@ export function CurrentTripRedirect() {
   return <Navigate to={routes.trip.view(tripId, target)} state={location.state} replace />;
 }
 
+/** `/trips/:tripId/transport` etc. from before sheets moved to `?sheet=` — same trip, sheet opened via the query param instead. */
+export function TripLegacySubpageRedirect() {
+  const { tripId = "", tab } = useParams<{ tripId: string; tab?: string }>();
+  const target: TripTabId = isTripTabId(tab) ? tab : "overview";
+  return <Navigate to={routes.trip.view(tripId, target)} replace />;
+}
+
 /** `/events/:id` (and its old hotel/cosplay sub-pages) — that day on its trip. */
 export function EventDayRedirect({ tab = "overview" }: { tab?: TripTabId }) {
   const { id = "" } = useParams<{ id: string }>();

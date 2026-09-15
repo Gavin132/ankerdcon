@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Car } from "lucide-react";
-import { Modal } from "../common/Modal";
+import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
 import { useCurrentUser } from "../../hooks/useUsers";
 import { useCreateRide, useAddRestaurantDriver, useClaimSeat } from "../../hooks/useRides";
 import { toast } from "../../store/toast.store";
+import { splitDateTime, toDateTimeLocal } from "../../utils/date";
 import type { CalendarEvent, Meal, Ride } from "../../types";
 
 interface RestaurantQuickDriverModalProps {
@@ -14,11 +15,6 @@ interface RestaurantQuickDriverModalProps {
   meal: Meal;
   /** The shared Restaurant-direction ride for this meal, if one already exists. */
   existingRide?: Ride;
-}
-
-function toLocalInputValue(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 /**
@@ -43,7 +39,7 @@ export function RestaurantQuickDriverModal({ open, onClose, event, meal, existin
     if (!open) return;
     setSeats(5);
     const fallback = new Date(meal.time.replace(" ", "T"));
-    setDepartureTime(toLocalInputValue(isNaN(fallback.getTime()) ? new Date() : fallback));
+    setDepartureTime(toDateTimeLocal(isNaN(fallback.getTime()) ? new Date() : fallback));
   }, [open, meal.time]);
 
   const alreadyDriving = !!existingRide?.restaurant_drivers?.some((d) => d.name === driver);
@@ -80,12 +76,20 @@ export function RestaurantQuickDriverModal({ open, onClose, event, meal, existin
 
   const isPending = createRideMutation.isPending || addDriverMutation.isPending || claimMutation.isPending;
 
+  const footer = !alreadyDriving && (
+    <Button onClick={onSubmit} loading={isPending} className="w-full">
+      <Car size={15} />
+      {existingRide ? `Rijd mee met ${seats} plaatsen` : `Rit aanmaken met ${seats} plaatsen`}
+    </Button>
+  );
+
   return (
-    <Modal
+    <TripSheet
       open={open}
       onClose={onClose}
       title="Ik rijd naar het restaurant"
-      description={`Hoeveel mensen kun je meenemen naar ${meal.location || meal.meal_name}?`}
+      subtitle={`Hoeveel mensen kun je meenemen naar ${meal.location || meal.meal_name}?`}
+      footer={footer}
     >
       <div className="space-y-5">
         {alreadyDriving ? (
@@ -99,12 +103,20 @@ export function RestaurantQuickDriverModal({ open, onClose, event, meal, existin
                 <label className="section-label mb-1.5 block">
                   Vertrektijd
                 </label>
-                <input
-                  type="datetime-local"
-                  className="input-field"
-                  value={departureTime}
-                  onChange={(e) => setDepartureTime(e.target.value)}
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="date"
+                    className="input-field"
+                    value={splitDateTime(departureTime)[0]}
+                    onChange={(e) => setDepartureTime(`${e.target.value}T${splitDateTime(departureTime)[1] || "09:00"}`)}
+                  />
+                  <input
+                    type="time"
+                    className="input-field"
+                    value={splitDateTime(departureTime)[1]}
+                    onChange={(e) => setDepartureTime(`${splitDateTime(departureTime)[0]}T${e.target.value}`)}
+                  />
+                </div>
               </div>
             )}
 
@@ -131,14 +143,9 @@ export function RestaurantQuickDriverModal({ open, onClose, event, meal, existin
               </div>
               <p className="mt-1.5 text-xs text-ink-3">Incl. jezelf</p>
             </div>
-
-            <Button onClick={onSubmit} loading={isPending} className="w-full">
-              <Car size={15} />
-              {existingRide ? `Rijd mee met ${seats} plaatsen` : `Rit aanmaken met ${seats} plaatsen`}
-            </Button>
           </>
         )}
       </div>
-    </Modal>
+    </TripSheet>
   );
 }

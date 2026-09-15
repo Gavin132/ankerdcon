@@ -86,7 +86,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName }: ForYouPa
           ? "Je eet nog nergens mee"
           : `${gaps.food.length === 1 ? "1 persoon eet" : `${gaps.food.length} mensen eten`} nog niet mee`,
         where: `${trip.title} · Event › Eten`,
-        go: () => navigate(routes.trip.view(trip.id, "food")),
+        go: () => navigate(routes.trip.view(trip.id)),
       });
     }
   }

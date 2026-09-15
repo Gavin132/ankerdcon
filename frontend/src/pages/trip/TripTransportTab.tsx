@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Car,
@@ -17,28 +17,25 @@ import { LocationSearchInput } from "../../components/common/LocationSearchInput
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "../../components/common/Button";
-import { Drawer } from "../../components/common/Drawer";
-import { EventPicker } from "../../components/common/EventPicker";
+import { TripSheet } from "../../components/trip/TripSheet";
+import { DayChips } from "../../components/trip/DayChips";
 import { RideCardSkeleton } from "../../components/common/Skeleton";
-import { EmptyState } from "../../components/common/EmptyState";
-import { StickyActionBar } from "../../components/common/StickyActionBar";
 import { NamePicker } from "../../components/common/NamePicker";
 import { RideCard } from "../../components/transport/RideCard";
 import { RestaurantCard } from "../../components/transport/RestaurantCard";
 import { RideTimeline } from "../../components/transport/RideTimeline";
-import { MealPicker } from "../../components/common/MealPicker";
 import { useRides, useCreateRide } from "../../hooks/useRides";
 import { useUsers, useCurrentUser } from "../../hooks/useUsers";
 import { useCalendar } from "../../hooks/useCalendar";
 import { useMeals } from "../../hooks/useMeals";
 import { toast } from "../../store/toast.store";
-import { getRideStatus, groupRidesByDay } from "../../utils/rides";
-import { toDateKey, todayKey, parseEventDate } from "../../utils/date";
+import { getRideStatus } from "../../utils/rides";
+import { toDateKey, todayKey, parseEventDate, splitDateTime } from "../../utils/date";
 import { useTimeStore } from "../../store/time.store";
-import { isTripOver, tripGaps, tripRides } from "../../utils/trips";
+import { defaultTripDayId, isTripOver, tripGaps, tripRides } from "../../utils/trips";
 import { TripMissingList } from "../../components/trip/TripMissingList";
 import { useTrip } from "./tripContext";
-import type { Direction } from "../../types";
+import type { Direction, Ride } from "../../types";
 
 const createSchema = z
   .object({
@@ -81,10 +78,10 @@ const ST = "section-label mb-3";
 
 const container = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.07 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.05 } },
 };
 
-const TAB_ORDER: Direction[] = ["Inbound", "Outbound", "Restaurant"];
+const DIRECTION_ORDER: Direction[] = ["Inbound", "Outbound", "Restaurant"];
 
 const DIRECTION_LABEL: Record<Direction, string> = {
   Inbound: "Heen",
@@ -92,35 +89,29 @@ const DIRECTION_LABEL: Record<Direction, string> = {
   Restaurant: "Restaurant",
 };
 
-const WIDE_QUERY = "(min-width: 1280px)";
+const DIRECTION_ICON: Record<Direction, React.ReactNode> = {
+  Inbound: <ArrowRight size={12} className="shrink-0" />,
+  Outbound: <ArrowLeft size={12} className="shrink-0" />,
+  Restaurant: <Utensils size={12} className="shrink-0" />,
+};
 
-/** True from Tailwind's `xl` breakpoint, where the three lanes fit side by side. */
-function useIsWide() {
-  const [wide, setWide] = useState(() => typeof window !== "undefined" && window.matchMedia(WIDE_QUERY).matches);
-  useEffect(() => {
-    const mq = window.matchMedia(WIDE_QUERY);
-    const onChange = () => setWide(mq.matches);
-    onChange();
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-  return wide;
-}
-
-/** Event › Vervoer: this trip's Heen / Terug / Restaurant rides, plus who has none yet. */
-export function TripTransportTab() {
-  const { trip, dayId } = useTrip();
+/**
+ * Event › Vervoer, opened as a bottom sheet over Overzicht. Rides are
+ * organised by day first (the day chips are right here in the sheet) and by
+ * direction within a day. When a specific day is picked, its Heen/Terug/
+ * Restaurant groups show flat, no accordion needed for just one day; on
+ * "Alle dagen" each day becomes its own collapsible section, nearest day
+ * open by default. Adding a ride slides the sheet to its own form view
+ * instead of stacking a second overlay on top.
+ */
+export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { trip, dayId, setDayId } = useTrip();
   const location = useLocation();
   useTimeStore((s) => s.override); // re-render when the time-travel override changes
-  const [tab, setTab] = useState<Direction>(
-    (location.state as { tab?: Direction })?.tab ?? "Inbound",
-  );
-  const [createOpen, setCreateOpen] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  const [view, setView] = useState<"list" | "form">("list");
   const [showTimeline, setShowTimeline] = useState(false);
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
-  const isWide = useIsWide();
+  const [openDayIds, setOpenDayIds] = useState<Set<string>>(() => new Set([defaultTripDayId(trip)]));
+  const [historyOpenIds, setHistoryOpenIds] = useState<Set<string>>(new Set());
   const { data: allRides, isLoading } = useRides();
   const { data: users } = useUsers();
   const { data: currentUser } = useCurrentUser();
@@ -131,8 +122,18 @@ export function TripTransportTab() {
 
   const rides = tripRides(allRides ?? [], meals, trip, dayId);
   const gaps = tripGaps(trip, allRides ?? [], meals);
+  const missingPeople = gaps.transport.map((g) => ({ name: g.name, detail: g.items.join(" & ") }));
   const tripMealIds = new Set(meals.filter((m) => m.linked_event_id && trip.eventIds.includes(m.linked_event_id)).map((m) => m.id));
   const tripMealOptions = meals.filter((m) => tripMealIds.has(m.id));
+
+  // A day the trip's gap list attributes a missing Heen applies to the
+  // trip's first day, missing Terug to its last — that's the only day each
+  // one is ever actually resolved on.
+  const firstDayId = trip.days[0]?.ev.id;
+  const lastDayId = trip.days[trip.days.length - 1]?.ev.id;
+  const dayNeedsAttention = (id: string) =>
+    (id === firstDayId && gaps.transport.some((g) => g.items.includes("Heen"))) ||
+    (id === lastDayId && gaps.transport.some((g) => g.items.includes("Terug")));
 
   // Linking a ride to an event only makes sense for something still coming
   // up — a past event's date isn't a useful default for a new ride. New rides
@@ -144,7 +145,6 @@ export function TripTransportTab() {
     return !!d && toDateKey(d) >= todayStr;
   };
   const upcomingTripDays = trip.days.filter((d) => isUpcoming(d.ev.date)).map((d) => d.ev);
-  const upcomingEvents = upcomingTripDays.length > 0 ? upcomingTripDays : events.filter((e) => isUpcoming(e.date));
 
   const {
     register,
@@ -171,39 +171,56 @@ export function TripTransportTab() {
     }
   }, [formDirection, setValue]);
 
-  // Rides per direction, split into still-to-come and already departed.
-  function laneRides(d: Direction) {
-    const all = rides.filter((r) => r.direction === d);
-    const active = all.filter(
-      (r) => getRideStatus(r.departure_time).status !== "past",
-    );
-    const past = all
-      .filter((r) => getRideStatus(r.departure_time).status === "past")
-      .sort(
-        (a, b) =>
-          new Date(b.departure_time.replace(" ", "T")).getTime() -
-          new Date(a.departure_time.replace(" ", "T")).getTime(),
-      );
-    return { all, active, past };
+  useEffect(() => {
+    // Opening the sheet straight from elsewhere (e.g. the Hub's restaurant
+    // rides prompt) can ask a specific direction's form to pop right open.
+    if (!open) return;
+    const state = location.state as { tab?: Direction } | null;
+    if (state?.tab) openCreate(state.tab, dayId ?? undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  function toggleDay(id: string) {
+    setOpenDayIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
-  function openCreate(direction: Direction = tab) {
-    const defaultDay = upcomingTripDays.find((d) => d.id === dayId) ?? upcomingTripDays[0];
+  function toggleHistory(key: string) {
+    setHistoryOpenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  function openCreate(direction: Direction = "Inbound", explicitDayId?: string) {
+    const defaultDay = upcomingTripDays.find((d) => d.id === (explicitDayId ?? dayId)) ?? upcomingTripDays[0];
+    // The meal a new restaurant ride links to by default — whichever of this
+    // day's etentjes comes first; falls back to the trip's next one if this
+    // day doesn't have one of its own yet.
+    const dayMeals = tripMealOptions
+      .filter((m) => m.linked_event_id === defaultDay?.id)
+      .sort((a, b) => a.time.localeCompare(b.time));
+    const defaultMeal = dayMeals[0] ?? tripMealOptions[0];
     reset({
       direction,
       total_seats: 5,
       driver: currentUser?.name ?? "",
       linked_event_id: direction === "Restaurant" ? undefined : defaultDay?.id,
+      linked_meal_id: direction === "Restaurant" ? defaultMeal?.id : undefined,
       start_location: direction === "Outbound" ? defaultDay?.location ?? "" : "",
-      end_location: direction === "Inbound" ? defaultDay?.location ?? "" : "",
+      end_location: direction === "Inbound" ? defaultDay?.location ?? "" : direction === "Restaurant" ? defaultMeal?.location ?? "" : "",
       parking_info: defaultDay?.parking_info ?? "",
+      departure_time: direction === "Restaurant"
+        ? `${toDateKey(parseEventDate(defaultDay?.date ?? "") ?? new Date())}T${defaultMeal ? splitDateTime(defaultMeal.time)[1] : "18:00"}`
+        : undefined,
     });
-    setCreateOpen(true);
-  }
-
-  function handleClose() {
-    setCreateOpen(false);
-    reset();
+    setView("form");
   }
 
   async function onCreate(values: CreateForm) {
@@ -229,279 +246,137 @@ export function TripTransportTab() {
         linked_event_id: values.linked_event_id || undefined,
         linked_meal_id: values.linked_meal_id || undefined,
       });
-      handleClose();
+      reset();
+      setView("list");
       toast("success", "Rit toegevoegd aan het schema!");
     } catch {
       toast("error", "Kon de rit niet toevoegen. Probeer opnieuw.");
     }
   }
 
-  function renderLane(d: Direction, withHead: boolean) {
-    const { all, active, past } = laneRides(d);
-    const addLabel = d === "Restaurant" ? "Route toevoegen" : "Rit toevoegen";
+  /** One direction's rides within an already day-scoped ride list. */
+  function renderDirectionGroup(direction: Direction, dayRides: Ride[], targetDayId?: string) {
+    const all = dayRides.filter((r) => r.direction === direction);
+    const active = all.filter((r) => getRideStatus(r.departure_time).status !== "past");
+    const addLabel = direction === "Restaurant" ? "Route toevoegen" : "Rit toevoegen";
 
     return (
-      <section className="flex min-w-0 flex-col gap-3" aria-label={withHead ? DIRECTION_LABEL[d] : undefined}>
-        {withHead && (
-          <div className="flex items-center gap-2 border-b-2 border-outline px-0.5 pb-1">
-            <h3 className="font-display text-[22px] font-extrabold uppercase leading-none tracking-[0.02em] text-ink">
-              {DIRECTION_LABEL[d]}
-            </h3>
-            <span className="font-mono text-[12px] tabular-nums text-ink-3">{active.length}</span>
-            <button
-              type="button"
-              onClick={() => openCreate(d)}
-              className="ml-auto flex h-7 w-7 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
-              title={addLabel}
-              aria-label={addLabel}
-            >
-              <Plus size={15} />
-            </button>
-          </div>
-        )}
-
-        {d !== "Restaurant" && !isTripOver(trip) && (
-          <TripMissingList
-            title="Nog geen vervoer"
-            people={gaps.transport
-              .filter((g) => g.items.includes(d === "Inbound" ? "Heen" : "Terug"))
-              .map((g) => ({ name: g.name, detail: g.items.join(" & ") }))}
-          />
-        )}
-
-        {isLoading ? (
-          <div className="space-y-3">
-            {[0, 1, 2].map((i) => <RideCardSkeleton key={i} />)}
-          </div>
-        ) : all.length === 0 ? (
-          <EmptyState
-            icon={<Car size={22} />}
-            title="Geen ritten gepland"
-            description={`Er zijn nog geen ${d === "Inbound" ? "heenritten" : d === "Outbound" ? "terugritten" : "restaurantritten"} toegevoegd.`}
-          />
+      <div key={direction}>
+        <div className="mb-2 flex items-center gap-1.5">
+          {DIRECTION_ICON[direction]}
+          <span className="section-label">{DIRECTION_LABEL[direction]}</span>
+          <span className="font-mono text-[11px] tabular-nums text-ink-3">{active.length}</span>
+          <button
+            type="button"
+            onClick={() => openCreate(direction, targetDayId)}
+            className="ml-auto flex h-7 w-7 items-center justify-center rounded-full border-1.5 border-outline bg-brand text-brand-on transition-opacity hover:opacity-90"
+            title={addLabel}
+            aria-label={addLabel}
+          >
+            <Plus size={15} strokeWidth={2.5} />
+          </button>
+        </div>
+        {active.length === 0 ? (
+          <p className="py-1 text-xs text-ink-3">
+            Nog geen {direction === "Restaurant" ? "route" : "rit"}.
+          </p>
         ) : (
-          <>
-            {active.length === 0 ? (
-              <EmptyState
-                icon={<Car size={22} />}
-                title="Geen actieve ritten"
-                description="Alle ritten zijn al vertrokken. Bekijk de geschiedenis hieronder."
-              />
-            ) : (
-              <motion.div
-                key={d}
-                className="space-y-5"
-                variants={container}
-                initial="hidden"
-                animate="show"
-              >
-                {groupRidesByDay(active).map((group) => (
-                  <div key={group.label}>
-                    <p className="section-label mb-2">
-                      {group.label}
-                    </p>
-                    <div className="space-y-3">
-                      {group.rides.map((ride) =>
-                        ride.direction === "Restaurant" ? (
-                          <RestaurantCard key={ride.id} ride={ride} userNames={userNames} />
-                        ) : (
-                          <RideCard key={ride.id} ride={ride} userNames={userNames} />
-                        ),
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </motion.div>
+          <motion.div className="space-y-2.5" variants={container} initial="hidden" animate="show">
+            {active.map((ride) =>
+              ride.direction === "Restaurant" ? (
+                <RestaurantCard key={ride.id} ride={ride} userNames={userNames} />
+              ) : (
+                <RideCard key={ride.id} ride={ride} userNames={userNames} />
+              ),
             )}
-
-            {past.length > 0 && (
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setShowHistory((v) => !v)}
-                  aria-expanded={showHistory}
-                  className="card-surface-hover flex min-h-[44px] w-full items-center justify-between px-4 py-2.5 text-[13px] font-semibold text-ink-2 hover:text-ink"
-                >
-                  <span className="flex items-center gap-2">
-                    <History size={14} />
-                    Geschiedenis <span className="font-mono tabular-nums">({past.length})</span>
-                  </span>
-                  <ChevronDown size={14} className={`transition-transform duration-200 ${showHistory ? "rotate-180" : ""}`} />
-                </button>
-
-                <AnimatePresence>
-                  {showHistory && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.22 }}
-                      className="overflow-hidden"
-                    >
-                      <motion.div
-                        className="mt-3 space-y-3"
-                        variants={container}
-                        initial="hidden"
-                        animate="show"
-                      >
-                        {past.map((ride) =>
-                          ride.direction === "Restaurant" ? (
-                            <RestaurantCard key={ride.id} ride={ride} userNames={userNames} />
-                          ) : (
-                            <RideCard key={ride.id} ride={ride} userNames={userNames} />
-                          ),
-                        )}
-                      </motion.div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
-          </>
+          </motion.div>
         )}
-      </section>
+      </div>
     );
   }
 
-  const footer = (
-    <Button
-      type="submit"
-      form="create-ride-form"
-      loading={isSubmitting}
-      className="w-full"
-    >
+  /** All three direction groups for one day, plus that day's own history toggle. */
+  function renderDayContent(dayRides: Ride[], historyKey: string, targetDayId?: string) {
+    const past = dayRides.filter((r) => getRideStatus(r.departure_time).status === "past");
+    const historyOpen = historyOpenIds.has(historyKey);
+
+    return (
+      <div className="space-y-4">
+        <div className="grid gap-4 xl:grid-cols-3">
+          {DIRECTION_ORDER.map((d) => renderDirectionGroup(d, dayRides, targetDayId))}
+        </div>
+        {past.length > 0 && (
+          <div>
+            <button
+              type="button"
+              onClick={() => toggleHistory(historyKey)}
+              aria-expanded={historyOpen}
+              className="flex min-h-[40px] items-center gap-2 text-[13px] font-semibold text-ink-2 hover:text-ink"
+            >
+              <History size={13} />
+              Geschiedenis <span className="font-mono tabular-nums">({past.length})</span>
+              <ChevronDown size={13} className={`transition-transform duration-200 ${historyOpen ? "rotate-180" : ""}`} />
+            </button>
+            <AnimatePresence>
+              {historyOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-2 space-y-2.5 opacity-60">
+                    {past.map((ride) =>
+                      ride.direction === "Restaurant" ? (
+                        <RestaurantCard key={ride.id} ride={ride} userNames={userNames} />
+                      ) : (
+                        <RideCard key={ride.id} ride={ride} userNames={userNames} />
+                      ),
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const listFooter = !isTripOver(trip) && (
+    <Button variant="secondary" className="w-full" onClick={() => openCreate("Inbound")}>
+      <Car size={15} />
+      Rit of route toevoegen
+    </Button>
+  );
+
+  const formFooter = (
+    <Button type="submit" form="create-ride-form" loading={isSubmitting} className="w-full">
       {formDirection === "Restaurant" ? "Route opslaan" : "Rit opslaan"}
     </Button>
   );
 
   return (
-    <div
-      className="min-h-[65vh] space-y-5 pb-44 xl:pb-10"
-      onTouchStart={(e) => {
-        touchStartX.current = e.touches[0].clientX;
-        touchStartY.current = e.touches[0].clientY;
-      }}
-      onTouchEnd={(e) => {
-        if (touchStartX.current === null || touchStartY.current === null) return;
-        const dx = e.changedTouches[0].clientX - touchStartX.current;
-        const dy = e.changedTouches[0].clientY - touchStartY.current;
-        touchStartX.current = null;
-        touchStartY.current = null;
-        if (showTimeline || isWide) return;
-        if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-        const currentIndex = TAB_ORDER.indexOf(tab);
-        if (dx < 0 && currentIndex < TAB_ORDER.length - 1) setTab(TAB_ORDER[currentIndex + 1]);
-        if (dx > 0 && currentIndex > 0) setTab(TAB_ORDER[currentIndex - 1]);
-      }}
-    >
-      {/* Desktop toolbar: lanes sit side by side, so only the timeline toggle is needed */}
-      {isWide && (
-        <div className="flex items-center justify-end">
-          <button
-            type="button"
-            onClick={() => setShowTimeline((v) => !v)}
-            aria-pressed={showTimeline}
-            className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-[13px] font-semibold transition-colors ${showTimeline
-              ? "bg-ink text-paper dark:bg-brand dark:text-brand-on"
-              : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
-              }`}
-            title="Tijdlijn"
-          >
-            <CalendarClock size={15} />
-            Tijdlijn
-          </button>
-        </div>
-      )}
-
-      {/* Timeline view */}
-      {showTimeline && (
-        <div className="mx-auto w-full max-w-3xl">
-          <RideTimeline rides={rides} />
-        </div>
-      )}
-
-      {/* Lanes: one at a time on phones and tablets, side by side from xl */}
-      {!showTimeline && (
-        isWide ? (
-          <div className="grid grid-cols-3 items-start gap-6">
-            {TAB_ORDER.map((d) => (
-              <Fragment key={d}>{renderLane(d, true)}</Fragment>
-            ))}
-          </div>
-        ) : (
-          renderLane(tab, false)
-        )
-      )}
-
-      {/* Direction tabs + timeline toggle + add button */}
-      {!isWide && (
-        <StickyActionBar>
-          <div className="space-y-2 rounded-2xl border-1.5 border-line bg-surface p-2 shadow-lg">
-            <div className="flex gap-2">
-              <div className="flex flex-1 gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]">
-                {TAB_ORDER.map((d) => (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => { setTab(d); setShowTimeline(false); }}
-                    aria-pressed={tab === d && !showTimeline}
-                    className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-[7px] px-2 py-2 text-[13px] font-semibold transition-colors ${tab === d && !showTimeline
-                      ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]"
-                      : "text-ink-2 hover:text-ink"
-                      }`}
-                  >
-                    {d === "Inbound" && <ArrowRight size={13} className="shrink-0" />}
-                    {d === "Outbound" && <ArrowLeft size={13} className="shrink-0" />}
-                    {d === "Restaurant" && <Utensils size={13} className="shrink-0" />}
-                    {DIRECTION_LABEL[d]}
-                  </button>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowTimeline((v) => !v)}
-                aria-pressed={showTimeline}
-                aria-label="Tijdlijn"
-                className={`flex w-11 shrink-0 items-center justify-center rounded-[10px] transition-colors ${showTimeline
-                  ? "bg-ink text-paper dark:bg-brand dark:text-brand-on"
-                  : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
-                  }`}
-                title="Tijdlijn"
-              >
-                <CalendarClock size={16} />
-              </button>
-            </div>
-            <Button className="w-full" onClick={() => openCreate()}>
-              <Plus size={16} />
-              {tab === "Restaurant" ? "Route toevoegen" : "Rit toevoegen"}
-            </Button>
-          </div>
-        </StickyActionBar>
-      )}
-
-      {/* Create drawer */}
-      <Drawer
-        open={createOpen}
-        onClose={handleClose}
-        title={formDirection === "Restaurant" ? "Route toevoegen" : "Rit toevoegen"}
-        subtitle={
-          formDirection === "Restaurant"
+    <TripSheet
+      open={open}
+      onClose={onClose}
+      onBack={view === "form" ? () => setView("list") : undefined}
+      title={view === "form" ? (formDirection === "Restaurant" ? "Route toevoegen" : "Rit toevoegen") : "Vervoer"}
+      subtitle={
+        view === "form"
+          ? formDirection === "Restaurant"
             ? "Zet tijd en locatie neer — pas als iemand “Ik rijd” aangeeft, is er echt een rit"
             : "Vul de details van de rit in"
-        }
-        footer={footer}
-      >
+          : undefined
+      }
+      footer={view === "form" ? formFooter : listFooter}
+    >
+      {view === "form" ? (
         <form id="create-ride-form" onSubmit={handleSubmit(onCreate)} className="space-y-5">
-
-          {/* Richting */}
-          <div className={SF}>
-            <p className={ST}>Richting</p>
-            <select className="input-field dark:[color-scheme:dark]" {...register("direction")}>
-              <option value="Inbound">Heen</option>
-              <option value="Outbound">Terug</option>
-              <option value="Restaurant">Restaurant</option>
-            </select>
-          </div>
+          {/* Richting en event/etentje komen uit welke "+" is aangeklikt — dat is al
+              duidelijk uit de sectie en dag waar de rit vandaan komt, dus geen keuze
+              meer hier. */}
 
           {/* Chauffeur — defaults to jezelf, maar kan verwijderd worden als je de rit voor iemand anders aanmaakt */}
           <div className={SF}>
@@ -529,67 +404,36 @@ export function TripTransportTab() {
             )}
           </div>
 
-          {/* Event / etentje koppeling — de datum (en voor Heen/Terug ook de locatie) volgt hieruit */}
-          {formDirection === "Restaurant" ? (
-            (tripMealOptions.length > 0 || meals.length > 0) && (
-              <div className={SF}>
-                <p className={ST}>Koppel aan etentje</p>
-                <Controller
-                  name="linked_meal_id"
-                  control={control}
-                  render={({ field }) => (
-                    <MealPicker
-                      meals={tripMealOptions.length > 0 ? tripMealOptions : meals}
-                      value={field.value || undefined}
-                      onChange={(id) => field.onChange(id ?? "")}
-                    />
-                  )}
-                />
-              </div>
-            )
-          ) : (
-            <div className={SF}>
-              <p className={ST}>Event</p>
-              <Controller
-                name="linked_event_id"
-                control={control}
-                render={({ field }) => (
-                  <EventPicker
-                    events={upcomingEvents}
-                    value={field.value || undefined}
-                    onChange={(id) => {
-                      field.onChange(id ?? "");
-                      if (id) {
-                        const event = events.find((e) => e.id === id);
-                        const locationField = formDirection === "Outbound" ? "start_location" : "end_location";
-                        if (event?.location) setValue(locationField, event.location, { shouldValidate: true });
-                        if (event?.parking_info) setValue("parking_info", event.parking_info, { shouldValidate: true });
-                      }
-                    }}
-                    placeholder="Zoek en koppel een event…"
-                  />
-                )}
-              />
-              <p className="mt-1.5 text-xs text-ink-3">
-                De datum en {formDirection === "Outbound" ? "het vertrekpunt" : "de bestemming"} volgen uit het event.
-              </p>
-              {errors.linked_event_id && (
-                <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400">{errors.linked_event_id.message}</p>
-              )}
-            </div>
-          )}
-
           {/* Vertrektijd & zitplaatsen */}
           <div className={SF}>
             <p className={ST}>Timing</p>
             <div className={`grid gap-3 ${formDirection === "Restaurant" ? "grid-cols-1" : "grid-cols-2"}`}>
               <div>
                 <label className={SL}>{formDirection === "Restaurant" ? "Vertrektijd" : "Tijd"}</label>
-                <input
-                  type={formDirection === "Restaurant" ? "datetime-local" : "time"}
-                  className="input-field"
-                  {...register(formDirection === "Restaurant" ? "departure_time" : "ride_time")}
-                />
+                {formDirection === "Restaurant" ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="date"
+                      className="input-field"
+                      value={splitDateTime(watch("departure_time") ?? "")[0]}
+                      onChange={(e) => {
+                        const time = splitDateTime(watch("departure_time") ?? "")[1] || "09:00";
+                        setValue("departure_time", `${e.target.value}T${time}`, { shouldValidate: true });
+                      }}
+                    />
+                    <input
+                      type="time"
+                      className="input-field"
+                      value={splitDateTime(watch("departure_time") ?? "")[1]}
+                      onChange={(e) => {
+                        const date = splitDateTime(watch("departure_time") ?? "")[0];
+                        setValue("departure_time", `${date}T${e.target.value}`, { shouldValidate: true });
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <input type="time" className="input-field" {...register("ride_time")} />
+                )}
                 {(errors.departure_time || errors.ride_time) && (
                   <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400">
                     {(errors.departure_time ?? errors.ride_time)?.message}
@@ -599,13 +443,7 @@ export function TripTransportTab() {
               {formDirection !== "Restaurant" && (
                 <div>
                   <label className={SL}>Plekken in de auto</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={99}
-                    className="input-field"
-                    {...register("total_seats")}
-                  />
+                  <input type="number" min={1} max={99} className="input-field" {...register("total_seats")} />
                   <p className="mt-1 text-xs text-ink-3">Incl. bestuurder</p>
                 </div>
               )}
@@ -634,14 +472,30 @@ export function TripTransportTab() {
               )}
               {formDirection === "Restaurant" && (
                 <p className="mt-1.5 text-xs text-ink-3">
-                  Waar vertrekt deze rit vandaan? De bestemming (het restaurant) komt automatisch uit het gekoppelde etentje hierboven.
+                  Waar vertrekt deze rit vandaan? De bestemming (het restaurant) is al ingevuld vanuit het etentje.
                 </p>
               )}
               {formDirection === "Outbound" && (
-                <p className="mt-1.5 text-xs text-ink-3">Komt automatisch uit het gekoppelde event.</p>
+                <p className="mt-1.5 text-xs text-ink-3">Alvast ingevuld met de locatie van dit event.</p>
               )}
             </div>
-            {formDirection !== "Restaurant" && (
+            {formDirection === "Restaurant" ? (
+              <div>
+                <label className={SL}>Bestemming</label>
+                <Controller
+                  name="end_location"
+                  control={control}
+                  render={({ field }) => (
+                    <LocationSearchInput
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      inputClassName="input-field"
+                      placeholder="Zoek bestemming…"
+                    />
+                  )}
+                />
+              </div>
+            ) : (
               <div>
                 <label className={SL}>Bestemming (optioneel)</label>
                 <Controller
@@ -657,7 +511,7 @@ export function TripTransportTab() {
                   )}
                 />
                 {formDirection === "Inbound" && (
-                  <p className="mt-1.5 text-xs text-ink-3">Komt automatisch uit het gekoppelde event.</p>
+                  <p className="mt-1.5 text-xs text-ink-3">Alvast ingevuld met de locatie van dit event.</p>
                 )}
               </div>
             )}
@@ -668,15 +522,9 @@ export function TripTransportTab() {
             <div className="space-y-3 rounded-xl border-1.5 border-amber-200 bg-amber-50 p-4 dark:border-amber-500/25 dark:bg-amber-500/10">
               <p className="mb-3 font-mono text-[11px] font-semibold uppercase tracking-[0.09em] text-amber-800 dark:text-amber-300">Restaurant opties</p>
               <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="cb"
-                  {...register("action_required")}
-                />
+                <input type="checkbox" className="cb" {...register("action_required")} />
                 <div>
-                  <span className="text-sm font-semibold text-ink">
-                    Actie vereist
-                  </span>
+                  <span className="text-sm font-semibold text-ink">Actie vereist</span>
                   <p className="mt-0.5 text-xs text-ink-3">Reageer verplicht voor deelname</p>
                 </div>
               </label>
@@ -696,7 +544,88 @@ export function TripTransportTab() {
             </div>
           )}
         </form>
-      </Drawer>
-    </div>
+      ) : (
+        <div className="space-y-5">
+          <div className="flex items-center justify-between gap-3">
+            {trip.days.length > 1 ? (
+              <DayChips days={trip.days} value={dayId} onChange={setDayId} allowAll />
+            ) : (
+              <span />
+            )}
+            <button
+              type="button"
+              onClick={() => setShowTimeline((v) => !v)}
+              className="flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-brand-text hover:underline"
+            >
+              <CalendarClock size={14} />
+              {showTimeline ? "Verberg tijdlijn" : "Tijdlijn"}
+            </button>
+          </div>
+
+          {missingPeople.length > 0 && <TripMissingList title="Nog geen vervoer" people={missingPeople} />}
+
+          {showTimeline ? (
+            <RideTimeline rides={rides} />
+          ) : isLoading ? (
+            <div className="space-y-3">
+              {[0, 1, 2].map((i) => <RideCardSkeleton key={i} />)}
+            </div>
+          ) : dayId ? (
+            // One day picked via the day chips — flat groups, nothing to expand.
+            renderDayContent(rides, dayId, dayId)
+          ) : (
+            // "Alle dagen" — one collapsible section per trip day.
+            <div className="space-y-2.5">
+              {trip.days.map(({ ev }) => {
+                const dayRides = tripRides(allRides ?? [], meals, trip, ev.id);
+                const isOpen = openDayIds.has(ev.id);
+                const activeCount = dayRides.filter((r) => getRideStatus(r.departure_time).status !== "past").length;
+                return (
+                  <div key={ev.id} className="overflow-hidden rounded-xl border-1.5 border-line bg-surface">
+                    <button
+                      type="button"
+                      onClick={() => toggleDay(ev.id)}
+                      aria-expanded={isOpen}
+                      className="flex min-h-[44px] w-full items-center gap-2.5 px-4 py-3 text-left"
+                    >
+                      {dayNeedsAttention(ev.id) && (
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" aria-hidden />
+                      )}
+                      <span className="flex min-w-0 flex-1 flex-col gap-0.5 leading-tight">
+                        <span className="truncate font-display text-[15px] font-extrabold uppercase tracking-[0.02em] text-ink">
+                          {ev.event_name}
+                        </span>
+                        <span className="font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-3">
+                          {parseEventDate(ev.date)?.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" }) ?? ev.date}
+                        </span>
+                      </span>
+                      <span className="ml-auto shrink-0 font-mono text-[11px] tabular-nums text-ink-3">
+                        {activeCount} {activeCount === 1 ? "rit" : "ritten"}
+                      </span>
+                      <ChevronDown size={14} className={`shrink-0 text-ink-3 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+                    </button>
+                    <AnimatePresence>
+                      {isOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="border-t-1.5 border-line px-4 py-4">
+                            {renderDayContent(dayRides, ev.id, ev.id)}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </TripSheet>
   );
 }

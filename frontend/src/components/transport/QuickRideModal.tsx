@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ChevronDown, Users } from "lucide-react";
-import { Modal } from "../common/Modal";
+import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
 import { useCurrentUser } from "../../hooks/useUsers";
 import { useCreateRide } from "../../hooks/useRides";
 import { toast } from "../../store/toast.store";
+import { quickDepartureOptions, splitDateTime } from "../../utils/date";
 import type { CalendarEvent, Direction, VehicleType } from "../../types";
 
 interface QuickRideModalProps {
@@ -13,14 +14,6 @@ interface QuickRideModalProps {
   onClose: () => void;
   event: CalendarEvent;
   initialDirection: Direction;
-}
-
-/** Rounds up to the next 5 minutes and formats for a datetime-local input. */
-function defaultDepartureTime(): string {
-  const d = new Date();
-  d.setMinutes(Math.ceil(d.getMinutes() / 5) * 5, 0, 0);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 /** Best-guess start/end for a direction — event.location on the con side,
@@ -42,7 +35,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
   const [direction, setDirection] = useState<Direction>(initialDirection);
   const [startLocation, setStartLocation] = useState("");
   const [endLocation, setEndLocation] = useState("");
-  const [departureTime, setDepartureTime] = useState(defaultDepartureTime);
+  const [departureTime, setDepartureTime] = useState(() => quickDepartureOptions()[0].value);
   const [seats, setSeats] = useState(5);
   const [vehicleType, setVehicleType] = useState<VehicleType>("Car");
   const [parkingInfo, setParkingInfo] = useState("");
@@ -55,7 +48,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
       const defaults = defaultLocationsFor(initialDirection, event);
       setStartLocation(defaults.start);
       setEndLocation(defaults.end);
-      setDepartureTime(defaultDepartureTime());
+      setDepartureTime(quickDepartureOptions()[0].value);
       setSeats(5);
       setVehicleType("Car");
       setParkingInfo("");
@@ -94,12 +87,19 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
     }
   }
 
+  const footer = (
+    <Button onClick={onSubmit} loading={createMutation.isPending} className="w-full">
+      Rit plaatsen
+    </Button>
+  );
+
   return (
-    <Modal
+    <TripSheet
       open={open}
       onClose={onClose}
       title={event.is_hotel ? (toHotel ? "Rit naar hotel aanbieden" : "Rit naar congres aanbieden") : "Rit aanbieden"}
-      description="Alleen de vertrektijd en het aantal plekken zijn nodig."
+      subtitle="Alleen de vertrektijd en het aantal plekken zijn nodig."
+      footer={footer}
     >
       <div className="space-y-5">
         {/* Direction toggle */}
@@ -146,48 +146,74 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
           </p>
         )}
 
-        {/* Time + seats */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="section-label mb-1.5 block">
-              Vertrektijd
-            </label>
+        {/* Vertrektijd — quick presets plus separate date/time fields, so
+            "when" is never hidden behind a single fiddly datetime-local
+            control (its time portion is easy to miss/mistap on mobile). */}
+        <div>
+          <label className="section-label mb-1.5 block">
+            Vertrektijd
+          </label>
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {quickDepartureOptions().map((opt) => (
+              <button
+                key={opt.label}
+                type="button"
+                onClick={() => setDepartureTime(opt.value)}
+                aria-pressed={departureTime === opt.value}
+                className={`rounded-full border-1.5 px-3 py-1.5 text-[12.5px] font-semibold transition-colors ${
+                  departureTime === opt.value
+                    ? "border-outline bg-brand text-brand-on"
+                    : "border-line bg-surface text-ink-2 hover:border-ink-3"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
             <input
-              type="datetime-local"
+              type="date"
               className="input-field"
-              value={departureTime}
-              onChange={(e) => setDepartureTime(e.target.value)}
+              value={splitDateTime(departureTime)[0]}
+              onChange={(e) => setDepartureTime(`${e.target.value}T${splitDateTime(departureTime)[1] || "09:00"}`)}
+            />
+            <input
+              type="time"
+              className="input-field"
+              value={splitDateTime(departureTime)[1]}
+              onChange={(e) => setDepartureTime(`${splitDateTime(departureTime)[0]}T${e.target.value}`)}
             />
           </div>
-          {vehicleType !== "Public Transport" && (
-            <div>
-              <label className="section-label mb-1.5 block">
-                Totaal aantal plekken in je auto
-              </label>
-              <div className="flex items-center gap-2 rounded-xl border-1.5 border-line bg-surface px-1">
-                <button
-                  type="button"
-                  onClick={() => setSeats((s) => Math.max(1, s - 1))}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
-                >
-                  −
-                </button>
-                <div className="flex flex-1 items-center justify-center gap-1.5 font-mono text-sm font-semibold tabular-nums text-ink">
-                  <Users size={13} className="text-ink-3" />
-                  {seats}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSeats((s) => Math.min(99, s + 1))}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
-                >
-                  +
-                </button>
-              </div>
-              <p className="mt-1.5 text-xs text-ink-3">Incl. jezelf</p>
-            </div>
-          )}
         </div>
+
+        {vehicleType !== "Public Transport" && (
+          <div>
+            <label className="section-label mb-1.5 block">
+              Totaal aantal plekken in je auto
+            </label>
+            <div className="flex items-center gap-2 rounded-xl border-1.5 border-line bg-surface px-1">
+              <button
+                type="button"
+                onClick={() => setSeats((s) => Math.max(1, s - 1))}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+              >
+                −
+              </button>
+              <div className="flex flex-1 items-center justify-center gap-1.5 font-mono text-sm font-semibold tabular-nums text-ink">
+                <Users size={13} className="text-ink-3" />
+                {seats}
+              </div>
+              <button
+                type="button"
+                onClick={() => setSeats((s) => Math.min(99, s + 1))}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+              >
+                +
+              </button>
+            </div>
+            <p className="mt-1.5 text-xs text-ink-3">Incl. jezelf</p>
+          </div>
+        )}
 
         {/* Advanced options */}
         <div>
@@ -241,11 +267,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
             )}
           </AnimatePresence>
         </div>
-
-        <Button onClick={onSubmit} loading={createMutation.isPending} className="w-full">
-          Rit plaatsen
-        </Button>
       </div>
-    </Modal>
+    </TripSheet>
   );
 }

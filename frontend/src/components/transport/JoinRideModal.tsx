@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ArrowRight, Users, ChevronDown, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Modal } from "../common/Modal";
+import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
 import { UserAvatar } from "../common/UserAvatar";
@@ -92,11 +92,11 @@ export function JoinRideModal({ open, onClose, event, initialDirection, onOfferI
   }
 
   return (
-    <Modal
+    <TripSheet
       open={open}
       onClose={close}
       title="Meerijden"
-      description={`Ritten voor ${event.event_name}`}
+      subtitle={`Ritten voor ${event.event_name}`}
     >
       <div className="space-y-3">
         {/* Direction toggle */}
@@ -242,6 +242,6 @@ export function JoinRideModal({ open, onClose, event, initialDirection, onOfferI
           </div>
         )}
       </div>
-    </Modal>
+    </TripSheet>
   );
 }

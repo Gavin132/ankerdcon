@@ -39,11 +39,20 @@ export const routes = {
 
   /**
    * One trip: every day of a multi-day event (by `multi_day_id`), or a
-   * single event day (by its id). `day` preselects one day of the trip.
+   * single event day (by its id). `tab` opens that part as a sheet over
+   * Overzicht and `day` preselects one day of the trip — both are query
+   * params, not path segments, so opening/closing a sheet never changes
+   * which route is matched and never remounts (or scroll-resets) Overzicht
+   * underneath it.
    */
   trip: {
-    view: (tripId: string, tab: TripTabId = "overview", day?: string) =>
-      `/trips/${encodeURIComponent(tripId)}${tab === "overview" ? "" : `/${tab}`}${day ? `?day=${encodeURIComponent(day)}` : ""}`,
+    view: (tripId: string, tab: TripTabId = "overview", day?: string) => {
+      const params = new URLSearchParams();
+      if (tab !== "overview") params.set("sheet", tab);
+      if (day) params.set("day", day);
+      const qs = params.toString();
+      return `/trips/${encodeURIComponent(tripId)}${qs ? `?${qs}` : ""}`;
+    },
     pattern: "/trips/:tripId",
   },
 
