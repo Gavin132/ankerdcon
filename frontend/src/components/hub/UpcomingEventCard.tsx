@@ -25,7 +25,7 @@ function Chip({ children, tone = "plain" }: { children: React.ReactNode; tone?: 
   );
 }
 
-/** The cyan tear-off stub with the countdown. Beside the ticket from sm, below it on phones. */
+/** The brand-blue tear-off stub with the countdown. Beside the ticket from sm, below it on phones. */
 function Stub({ urgency, daysUntil, dayCount }: { urgency: EventUrgency; daysUntil: number; dayCount: number }) {
   const label = urgency === "today" ? "Vandaag" : "Nog";
   const big = urgency === "today" ? "Nu" : String(daysUntil);
@@ -64,7 +64,7 @@ interface UpcomingEventCardProps {
 /**
  * The Hub's one bold element: the nearest trip as a ticket. Ink outline, a
  * dotted ink cover (or the event image), the name in the display face and a
- * cyan stub with the countdown. Flat — no lift or shadow.
+ * brand-blue stub with the countdown. Flat — no lift or shadow.
  */
 export function UpcomingEventCard({
   event,
@@ -119,7 +119,7 @@ export function UpcomingEventCard({
               aria-hidden
               className="absolute inset-0"
               style={{
-                backgroundImage: "radial-gradient(circle, rgba(63,216,238,.55) 1.5px, transparent 1.9px)",
+                backgroundImage: "radial-gradient(circle, rgb(var(--cyan) / .55) 1.5px, transparent 1.9px)",
                 backgroundSize: "9px 9px",
               }}
             />

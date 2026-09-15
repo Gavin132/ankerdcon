@@ -23,7 +23,7 @@ interface MealHeroProps {
   onCancelClick: () => void;
 }
 
-/** Flat ink hero for a meal: name in the display face, mono chips, cyan "Aanmelden". */
+/** Flat ink hero for a meal: name in the display face, mono chips, brand-blue "Aanmelden". */
 export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick }: MealHeroProps) {
   const { data: calendarEvents } = useCalendar();
   const currentUser = useAuthStore((s) => s.currentUser);

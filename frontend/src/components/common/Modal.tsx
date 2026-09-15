@@ -11,7 +11,7 @@ interface ModalProps {
   children: ReactNode;
   /** Tailwind `from-...` colour for the thin ribbon across the top of the
    * panel (e.g. rose for a destructive confirm). Only the first stop is used:
-   * the ribbon is a flat colour. Defaults to the brand cyan. */
+   * the ribbon is a flat colour. Defaults to the brand blue. */
   accent?: string;
 }
 

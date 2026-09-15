@@ -9,7 +9,7 @@ import { AccountMenu } from "./AccountMenu";
 import { TimeTravelControl } from "../common/TimeTravelWidget";
 
 /**
- * The next (or current) trip as a small cyan wristband above the nav: name,
+ * The next (or current) trip as a small brand-blue wristband above the nav: name,
  * dates and a countdown. Links to the trip's Event page.
  */
 function TripWristband() {

@@ -5,8 +5,9 @@
 /* ─── Design tokens ──────────────────────────────────────────────────────────
    Flat, mascot-based design (docs/ui-proposal/ui-rework-proposal.html).
    Channels without rgb() so Tailwind can add opacity: `bg-ink/10`.
-   Ink outline and anchor cyan come from the mascot; status colours are only
-   for status. Nothing lifts on hover — only primary buttons press in. */
+   Ink outline from the mascot, one brand blue; status colours are only
+   for status. The brand tokens keep their old `--cyan` names so existing
+   `rgb(var(--cyan))` references keep working. Nothing lifts on hover — only primary buttons press in. */
 :root {
   --paper: 245 248 249;      /* #F5F8F9  page background */
   --surface: 255 255 255;    /* #FFFFFF  cards, panels */
@@ -16,9 +17,9 @@
   --ink-3: 116 131 138;      /* #74838A  muted text */
   --line: 213 222 226;       /* #D5DEE2  borders */
   --outline: 15 21 25;       /* #0F1519  bold outline, button shadow */
-  --cyan: 63 216 238;        /* #3FD8EE  the one brand fill */
-  --cyan-soft: 213 245 250;  /* #D5F5FA */
-  --cyan-text: 0 118 138;    /* #00768A  cyan as text on light */
+  --cyan: 72 160 229;        /* #48A0E5  the one brand fill (brand blue) */
+  --cyan-soft: 220 238 251;  /* #DCEEFB */
+  --cyan-text: 31 108 176;   /* #1F6CB0  brand as text on light (5.5:1 on white) */
   --on-cyan: 15 21 25;
   --nav-active-bg: 15 21 25;
   --nav-active-fg: 245 248 249;
@@ -33,9 +34,9 @@
   --ink-3: 110 126 134;      /* #6E7E86 */
   --line: 36 48 57;          /* #243039 */
   --outline: 191 211 218;    /* #BFD3DA */
-  --cyan-soft: 14 53 61;     /* #0E353D */
-  --cyan-text: 98 226 244;   /* #62E2F4 */
-  --nav-active-bg: 63 216 238;
+  --cyan-soft: 15 42 64;     /* #0F2A40 */
+  --cyan-text: 125 189 240;  /* #7DBDF0 */
+  --nav-active-bg: 72 160 229;
   --nav-active-fg: 15 21 25;
 }
 
@@ -126,17 +127,17 @@
     border: 1.5px solid rgb(255 255 255 / 0.12);
   }
 
-  /* The old blue gradients, flattened. Brand = anchor cyan with ink text;
+  /* The old blue gradients, flattened. Brand = brand blue with ink text;
      hero = the dark ink block used behind a trip's headline. */
   .gradient-brand {
-    background: #0A9CB3;
+    background: #2A84CC;
   }
 
   .gradient-hero {
     background-color: #0F1519;
   }
 
-  .gradient-card-blue { background: #0A9CB3; }
+  .gradient-card-blue { background: #2A84CC; }
   .gradient-card-green { background: #1FA971; }
   .gradient-card-amber { background: #E89B0C; }
   .gradient-card-violet { background: #7C3AED; }
@@ -216,7 +217,7 @@
 
 .dark .gradient-brand,
 .dark .gradient-card-blue {
-  background: #00839A;
+  background: #1F6CB0;
 }
 
 /* ── Global Tailwind utility overrides in dark mode ─────────────────────── */

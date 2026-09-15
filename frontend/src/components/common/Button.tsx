@@ -9,7 +9,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<NonNullable<ButtonProps["variant"]>, string> = {
-  // Cyan with an ink outline and a hard shadow that presses in (see .btn-primary).
+  // Brand blue with an ink outline and a hard shadow that presses in (see .btn-primary).
   primary:
     "border-2 border-outline bg-brand text-brand-on shadow-btn active:enabled:translate-x-0.5 active:enabled:translate-y-0.5 active:enabled:shadow-btn-press disabled:opacity-60",
   secondary:
