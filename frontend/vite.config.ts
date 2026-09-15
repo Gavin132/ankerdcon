@@ -25,7 +25,7 @@ function devIconPlugin(isDev: boolean) {
         )
         .replace('href="/apple-touch-icon.png"', 'href="/apple-touch-icon-dev.png"')
         .replace('href="/manifest.json"', 'href="/manifest.dev.json"')
-        .replace('content="#0f172a"', 'content="#EA6A1F"')
+        .replace('content="#F5F8F9"', 'content="#EA6A1F"')
         .replace(
           '<meta name="apple-mobile-web-app-title" content="Ankerd Con" />',
           '<meta name="apple-mobile-web-app-title" content="Ankerd Con (Dev)" />',
