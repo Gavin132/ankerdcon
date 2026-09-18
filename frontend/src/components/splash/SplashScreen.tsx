@@ -31,7 +31,7 @@ export function SplashScreen({ onDismiss }: SplashScreenProps) {
         transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
       >
         <img
-          src="/assets/images/ankerd-logo.png"
+          src="/assets/images/ankerd-logo.webp"
           alt={APP_NAME}
           className="h-[96px] w-[96px] object-contain"
           draggable={false}

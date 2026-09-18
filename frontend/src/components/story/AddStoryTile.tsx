@@ -40,7 +40,7 @@ export function AddStoryTile({ eventDayId }: AddStoryTileProps) {
 
   function handleClick() {
     if (disabled) {
-      toast("info", "Nog even geduld — uploaden kan vanaf de dag voor het evenement.");
+      toast("info", "Er is nog geen evenement om foto's aan toe te voegen.");
       return;
     }
     inputRef.current?.click();

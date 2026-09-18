@@ -6,11 +6,18 @@ import { toast } from "../../store/toast.store";
 
 interface StoryUploadButtonProps {
   eventDayId: string;
+  /** Overrides the default neutral icon-button look — e.g. a bolder brand-blue
+   * treatment when this sits somewhere that needs to read as the primary action. */
+  className?: string;
 }
+
+const DEFAULT_CLASS =
+  "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-1.5 border-line bg-surface " +
+  "text-ink-2 transition-colors hover:border-ink-3 hover:text-ink disabled:opacity-50";
 
 /** Icon-only "add a photo to this day's story" button — sized and styled to
  * sit alongside the other icon buttons in DetailTopbar. */
-export function StoryUploadButton({ eventDayId }: StoryUploadButtonProps) {
+export function StoryUploadButton({ eventDayId, className }: StoryUploadButtonProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [compressing, setCompressing] = useState(false);
   const uploadMutation = useUploadStoryPhoto(eventDayId);
@@ -46,9 +53,7 @@ export function StoryUploadButton({ eventDayId }: StoryUploadButtonProps) {
         disabled={busy}
         onClick={() => inputRef.current?.click()}
         title="Foto toevoegen aan story"
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-1.5 border-line bg-surface
-                   text-ink-2 transition-colors hover:border-ink-3 hover:text-ink
-                   disabled:opacity-50"
+        className={className ?? DEFAULT_CLASS}
       >
         {busy ? <Loader2 size={16} className="animate-spin" /> : <ImagePlus size={16} />}
       </button>

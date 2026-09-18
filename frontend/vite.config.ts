@@ -62,6 +62,22 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: "../backend/dist",
       emptyOutDir: true,
+      rollupOptions: {
+        output: {
+          // Long-lived libraries get their own chunks so an app deploy doesn't
+          // bust their cache, and the browser can fetch them in parallel. Only
+          // libs the app shell needs on every page are listed — recharts etc.
+          // stay in the lazy admin chunk.
+          manualChunks(id: string) {
+            if (!id.includes("node_modules")) return undefined;
+            if (/node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(id)) return "vendor-react";
+            if (id.includes("node_modules/framer-motion")) return "vendor-motion";
+            if (id.includes("node_modules/@supabase")) return "vendor-supabase";
+            if (id.includes("node_modules/@tanstack")) return "vendor-query";
+            return undefined;
+          },
+        },
+      },
     },
   };
 });

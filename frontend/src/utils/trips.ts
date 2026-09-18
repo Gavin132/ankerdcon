@@ -1,5 +1,5 @@
 import type { CalendarEvent, HotelRoom, Meal, Ride } from "../types";
-import { daysBetween, parseEventDate, toDateKey, todayKey } from "./date";
+import { parseEventDate, toDateKey, todayKey } from "./date";
 import { formatDateRange, groupCalendarEntries } from "./multiDay";
 
 /**
@@ -139,13 +139,18 @@ export function tripPhase(trip: Trip): TripPhase {
   return toDateKey(trip.days[0].date) <= today ? "live" : "upcoming";
 }
 
-/** The day photos can be added to right now: a trip day that is today or tomorrow. */
-export function tripUploadDay(trip: Trip): TripDay | undefined {
+/**
+ * The day a photo added right now lands in — never restricted by date: today's
+ * day when the trip is on, otherwise the closest one (before the trip starts
+ * that's the first day, after it ends the last day, and in a gap between days
+ * the most recent one).
+ */
+export function tripUploadDay(trip: Trip): TripDay {
   const today = todayKey();
-  return trip.days.find(({ date }) => {
-    const key = toDateKey(date);
-    return key >= today && daysBetween(today, key) <= 1;
-  });
+  const exact = trip.days.find(({ date }) => toDateKey(date) === today);
+  if (exact) return exact;
+  const past = trip.days.filter(({ date }) => toDateKey(date) < today);
+  return past.length > 0 ? past[past.length - 1] : trip.days[0];
 }
 
 type SharedInfoKey =

@@ -22,7 +22,7 @@ import { StoryViewer } from "../components/story/StoryViewer";
 import { AddStoryTile } from "../components/story/AddStoryTile";
 import { useStorySummary } from "../hooks/useStories";
 import { listItem, listContainer } from "../utils/motion";
-import { parseEventDate, toDateKey, todayKey, daysBetween } from "../utils/date";
+import { parseEventDate, toDateKey, todayKey } from "../utils/date";
 import { useTimeStore } from "../store/time.store";
 import type { CalendarEvent, Meal, User } from "../types";
 
@@ -77,14 +77,10 @@ export function HubPage() {
   const { data: storySummary } = useStorySummary(storyDays.map((d) => d.id));
   // The quick "add to story" tile targets whichever trip day a photo added
   // right now would land in, by upload time — never whatever day the photo
-  // itself depicts. It opens a day early (e.g. an event on the 20th starts
-  // accepting photos on the 19th) so people can get a head start once
-  // they've arrived; storyDays is already date-ascending and filtered to
-  // today-or-later, so the first entry within that 1-day window is it.
-  const uploadTargetDay = storyDays.find((d) => {
-    const diff = daysBetween(todayStr, d.dateKey);
-    return diff <= 1;
-  }) ?? null;
+  // itself depicts. No date restriction: storyDays is date-ascending and
+  // filtered to today-or-later, so its first entry is today's day mid-trip
+  // or the trip's first day before it starts.
+  const uploadTargetDay = storyDays[0] ?? null;
 
   if (evLoading) return <HubSkeleton />;
 

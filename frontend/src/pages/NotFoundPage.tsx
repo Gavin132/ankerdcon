@@ -15,7 +15,7 @@ export function NotFoundPage() {
         transition={{ duration: 0.3 }}
       >
         <img
-          src="/assets/images/ankerd-logo.png"
+          src="/assets/images/ankerd-logo.webp"
           alt=""
           className="mb-5 h-16 w-16 object-contain"
           draggable={false}

@@ -30,7 +30,7 @@ export function ToastContainer() {
               }`}
             >
               <img
-                src="/assets/images/ankerd-logo.png"
+                src="/assets/images/ankerd-logo.webp"
                 alt=""
                 className="h-5 w-5 object-contain"
                 style={{ filter: t.type === "success" ? "brightness(0)" : "brightness(0) invert(1)" }}

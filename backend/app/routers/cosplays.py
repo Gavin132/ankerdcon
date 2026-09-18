@@ -16,8 +16,9 @@ router = APIRouter(prefix=CosplayRoutes.PREFIX, tags=["cosplays"])
 
 _DB_ERROR = "Databasefout. Probeer het opnieuw."
 
-# Photos come straight off someone's phone here (no client-side compression
-# step, unlike the story uploader) — a generous cap, not a normal ceiling.
+# Compression already happens client-side before upload, same as the story
+# uploader — this cap is a safety net (a broken/bypassed client, not the
+# normal path), not the normal ceiling.
 _MAX_BYTES = 15 * 1024 * 1024  # 15 MB
 _ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
 _EXT = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}

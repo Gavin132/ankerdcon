@@ -175,16 +175,24 @@ function AppBackdrop() {
     >
       {/* Mascot — large, bottom-right, partially clipped */}
       <img
-        src="/assets/images/ankerd-mascotte.png"
+        src="/assets/images/ankerd-mascotte.webp"
         alt=""
+        width={760}
+        height={771}
+        loading="lazy"
+        decoding="async"
         draggable={false}
         className="absolute -bottom-12 -right-12 w-[380px] select-none opacity-[0.045] dark:opacity-[0.055]"
         style={{ transform: "rotate(6deg)" }}
       />
       {/* Nerd logo — smaller, top-left, softly rotated */}
       <img
-        src="/assets/images/ankerd-nerd-logo.png"
+        src="/assets/images/ankerd-nerd-logo.webp"
         alt=""
+        width={400}
+        height={400}
+        loading="lazy"
+        decoding="async"
         draggable={false}
         className="absolute -top-10 -left-10 w-[200px] select-none opacity-[0.035] dark:opacity-[0.045]"
         style={{ transform: "rotate(-8deg)" }}

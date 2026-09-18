@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useCosplays, useCreateCosplay, useDeleteCosplay } from "../../hooks/useCosplays";
 import { uploadCosplayImage } from "../../services/cosplays.service";
+import { compressImage } from "../../utils/imageCompression";
 import { useUsers, useCurrentUser } from "../../hooks/useUsers";
 import { CosplayCard } from "../../components/cosplay/CosplayCard";
 import { CosplayDetailDrawer } from "../../components/cosplay/CosplayDetailDrawer";
@@ -174,7 +175,8 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
   async function handleFileChange(index: number, file: File) {
     setImageField(index, { uploading: true });
     try {
-      const url = await uploadCosplayImage(file);
+      const blob = await compressImage(file);
+      const url = await uploadCosplayImage(blob);
       setImageField(index, { url, uploading: false });
     } catch {
       toast("error", "Upload mislukt. Probeer een URL in te voeren.");

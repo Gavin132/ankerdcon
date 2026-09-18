@@ -18,7 +18,7 @@ function AdviceRow({ tip }: { tip: string }) {
         </p>
       </div>
       <img
-        src="/assets/images/ankerd-nerd-logo.png"
+        src="/assets/images/ankerd-nerd-logo.webp"
         alt=""
         aria-hidden
         className="pointer-events-none h-14 w-14 shrink-0 select-none self-end object-contain object-bottom"

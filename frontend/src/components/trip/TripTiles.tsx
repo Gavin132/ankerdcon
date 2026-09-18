@@ -2,6 +2,7 @@ import { forwardRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertCircle, BedDouble, Camera, Car, CloudSun, Sparkles, Utensils, Wallet } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
+import { StoryUploadButton } from "../story/StoryUploadButton";
 import { DayChips } from "./DayChips";
 import { WeatherCard, ClimateAverageCard, WeatherSkeleton } from "../event/WeatherCard";
 import { EventPractical } from "../event/EventPractical";
@@ -203,21 +204,26 @@ export function CosplayTile({ trip, cosplays, myNames }: { trip: Trip; cosplays:
 
 /* ── Foto's ──────────────────────────────────────────────────────────────── */
 
+// Brand-blue circle (matches the Vervoer sheet's "+" buttons) instead of the
+// neutral icon-button StoryUploadButton normally wears — this one needs to
+// read as a pressable action at a glance, not blend in like the ticket's.
+const UPLOAD_BUTTON_CLASS =
+  "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-1.5 border-outline bg-brand text-brand-on transition-opacity hover:opacity-90";
+
 /**
  * Opens the story viewer directly on the most relevant day instead of
  * linking to a separate Foto's page — there's little here that the tile
- * doesn't already show, and adding a photo already happens from the camera
- * button on the trip's own ticket.
+ * doesn't already show. Also carries its own upload button (same one as the
+ * trip ticket's camera icon) so adding a photo doesn't require hunting for
+ * it elsewhere.
  */
-export function PhotosTile({ trip, phase, summary, onOpenDay }: { trip: Trip; phase: TripPhase; summary?: Record<string, StoryDaySummary>; onOpenDay: (dayId: string) => void }) {
+export function PhotosTile({ trip, phase, summary, onOpenDay, uploadDayId }: { trip: Trip; phase: TripPhase; summary?: Record<string, StoryDaySummary>; onOpenDay: (dayId: string) => void; uploadDayId?: string }) {
   const perDay = trip.days.map((d) => ({ day: d, s: summary?.[d.ev.id] }));
   const total = perDay.reduce((sum, x) => sum + (x.s?.photo_count ?? 0), 0);
   const today = todayKey();
   const todayEntry = perDay.find((x) => toDateKey(x.day.date) === today);
   const todayCount = todayEntry?.s?.photo_count ?? 0;
   const previews = perDay.filter((x) => x.s && x.s.photo_count > 0 && x.s.preview_url);
-  const opens = new Date(trip.days[0].date);
-  opens.setDate(opens.getDate() - 1);
   const primaryDay = (todayEntry?.s?.photo_count ? todayEntry : [...previews].reverse()[0])?.day.ev.id;
 
   return (
@@ -229,22 +235,34 @@ export function PhotosTile({ trip, phase, summary, onOpenDay }: { trip: Trip; ph
     >
       {total === 0 ? (
         <>
-          <TileValue>{phase === "past" ? "Geen foto's" : "Story"}</TileValue>
+          <div className="flex items-center justify-between gap-2">
+            <TileValue>{phase === "past" ? "Geen foto's" : "Story"}</TileValue>
+            {uploadDayId && (
+              <span onClick={(e) => e.stopPropagation()} className="shrink-0">
+                <StoryUploadButton eventDayId={uploadDayId} className={UPLOAD_BUTTON_CLASS} />
+              </span>
+            )}
+          </div>
           <TileText>
-            {phase === "upcoming"
-              ? `Foto's toevoegen kan vanaf ${dayShort(opens)} ${opens.getDate()}. Alle dagen komen hier samen.`
-              : phase === "live" ? "Nog geen foto's. Voeg de eerste toe met de camera op het ticket." : "Er zijn geen foto's toegevoegd."}
+            {phase === "past" ? "Er zijn geen foto's toegevoegd." : "Nog geen foto's. Voeg de eerste toe."}
           </TileText>
         </>
       ) : (
         <>
-          <TileValue>{phase === "live" && todayCount > 0 ? `${todayCount} vandaag` : `${total} foto's`}</TileValue>
+          <div className="flex items-center justify-between gap-2">
+            <TileValue>{phase === "live" && todayCount > 0 ? `${todayCount} vandaag` : `${total} foto's`}</TileValue>
+            {uploadDayId && (
+              <span onClick={(e) => e.stopPropagation()} className="shrink-0">
+                <StoryUploadButton eventDayId={uploadDayId} className={UPLOAD_BUTTON_CLASS} />
+              </span>
+            )}
+          </div>
           <TileText>
             {trip.days.length > 1
               ? perDay.filter((x) => (x.s?.photo_count ?? 0) > 0).map((x) => `${x.s!.photo_count} op ${dayShort(x.day.date)}`).join(", ")
               : `${total} in de story`}
           </TileText>
-          <span className="flex gap-1.5">
+          <span className="flex items-center gap-1.5">
             {previews.map((x) => (
               <span
                 key={x.day.ev.id}

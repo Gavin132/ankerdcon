@@ -107,7 +107,7 @@ export function TripOverviewTab() {
     weather: trip.location && phase !== "past" && (
       <WeatherTile trip={trip} expanded={openPanel === "weather"} onToggle={() => togglePanel("weather")} />
     ),
-    photos: <PhotosTile trip={trip} phase={phase} summary={storySummary} onOpenDay={setViewDayId} />,
+    photos: <PhotosTile trip={trip} phase={phase} summary={storySummary} onOpenDay={setViewDayId} uploadDayId={uploadDay?.ev.id} />,
     practical: phase !== "past" && hasPracticalInfo(info) && (
       <PracticalTile info={info} expanded={openPanel === "practical"} onToggle={() => togglePanel("practical")} />
     ),
