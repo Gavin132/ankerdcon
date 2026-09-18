@@ -14,6 +14,8 @@ interface QuickRideModalProps {
   onClose: () => void;
   event: CalendarEvent;
   initialDirection: Direction;
+  /** Pre-selected departure (`datetime-local`); defaults to "now". */
+  initialDeparture?: string;
 }
 
 /** Best-guess start/end for a direction — event.location on the con side,
@@ -27,7 +29,7 @@ function defaultLocationsFor(direction: Direction, event: CalendarEvent): { star
   };
 }
 
-export function QuickRideModal({ open, onClose, event, initialDirection }: QuickRideModalProps) {
+export function QuickRideModal({ open, onClose, event, initialDirection, initialDeparture }: QuickRideModalProps) {
   const { data: me } = useCurrentUser();
   const driver = me?.name ?? "";
   const createMutation = useCreateRide();
@@ -35,7 +37,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
   const [direction, setDirection] = useState<Direction>(initialDirection);
   const [startLocation, setStartLocation] = useState("");
   const [endLocation, setEndLocation] = useState("");
-  const [departureTime, setDepartureTime] = useState(() => quickDepartureOptions()[0].value);
+  const [departureTime, setDepartureTime] = useState(() => initialDeparture ?? quickDepartureOptions()[0].value);
   const [seats, setSeats] = useState(5);
   const [vehicleType, setVehicleType] = useState<VehicleType>("Car");
   const [parkingInfo, setParkingInfo] = useState("");
@@ -48,7 +50,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
       const defaults = defaultLocationsFor(initialDirection, event);
       setStartLocation(defaults.start);
       setEndLocation(defaults.end);
-      setDepartureTime(quickDepartureOptions()[0].value);
+      setDepartureTime(initialDeparture ?? quickDepartureOptions()[0].value);
       setSeats(5);
       setVehicleType("Car");
       setParkingInfo("");
@@ -97,7 +99,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
     <TripSheet
       open={open}
       onClose={onClose}
-      title={event.is_hotel ? (toHotel ? "Rit naar hotel aanbieden" : "Rit naar congres aanbieden") : "Rit aanbieden"}
+      title={event.is_hotel ? (toHotel ? "Rit naar hotel aanbieden" : "Rit naar evenement aanbieden") : "Rit aanbieden"}
       subtitle="Alleen de vertrektijd en het aantal plekken zijn nodig."
       footer={footer}
     >
@@ -116,7 +118,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
                   : "text-ink-2 hover:text-ink"
               }`}
             >
-              {event.is_hotel ? (d === "Inbound" ? "Naar congres" : "Naar hotel") : (d === "Inbound" ? "Heen" : "Terug")}
+              {event.is_hotel ? (d === "Inbound" ? "Naar evenement" : "Naar hotel") : (d === "Inbound" ? "Heen" : "Terug")}
             </button>
           ))}
         </div>

@@ -1,6 +1,6 @@
 import { getNow } from "../store/time.store";
 import { toDateKey, todayKey } from "./date";
-import type { CalendarEvent, RestaurantDriver, Ride } from "../types";
+import type { CalendarEvent, Ride } from "../types";
 
 export type RideStatus = "upcoming" | "soon" | "urgent" | "recent" | "past";
 
@@ -45,8 +45,8 @@ export function rideLocationLabel(
   return location;
 }
 
-/** "Vandaag" / "Morgen" / a Dutch weekday+date, for grouping rides by day. */
-export function rideDayLabel(date: Date): string {
+/** "Vandaag" / "Morgen" / "zaterdag 25 september", for a group heading. */
+function rideDayLabel(date: Date): string {
   const key = toDateKey(date);
   if (key === todayKey()) return "Vandaag";
   const tomorrow = new Date(getNow());
@@ -68,20 +68,3 @@ export function groupRidesByDay(rides: Ride[]): { label: string; rides: Ride[] }
   return groups;
 }
 
-export function parseRestaurantDrivers(
-  parkingInfo: string,
-): RestaurantDriver[] {
-  if (!parkingInfo || parkingInfo.trim() === "") return [];
-  try {
-    const parsed = JSON.parse(parkingInfo);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter((d) => typeof d.name === "string" && typeof d.seats === "number")
-      .map((d) => ({
-        ...d,
-        passengers: Array.isArray(d.passengers) ? d.passengers : [],
-      }));
-  } catch {
-    return [];
-  }
-}

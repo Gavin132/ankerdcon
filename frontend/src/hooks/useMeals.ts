@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getMeals, createMeal, rsvpMeal, cancelRsvp, deleteMeal } from "../services/meals.service";
+import { getMeals, createMeal, rsvpMeal, cancelRsvp } from "../services/meals.service";
 import { QUERY_KEYS, STALE_TIME } from "../constants";
 import type { CreateMealRequest, RsvpRequest, Meal } from "../types";
 
@@ -67,10 +67,3 @@ export function useCancelRsvp() {
   });
 }
 
-export function useDeleteMeal() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => deleteMeal(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.meals }),
-  });
-}

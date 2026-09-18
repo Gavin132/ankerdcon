@@ -1,9 +1,8 @@
 import { motion } from "framer-motion";
-import { BedDouble, Check, MapPin, Share2, Ticket } from "lucide-react";
+import { BedDouble, MapPin, Ticket, UserPlus } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
-import { StoryUploadButton } from "../story/StoryUploadButton";
+import { TripDayPicker } from "./TripDayPicker";
 import { daysBetween, toDateKey, todayKey } from "../../utils/date";
-import { dayShort, monthShort } from "../../utils/multiDay";
 import { tripImage, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
 import { getNow } from "../../store/time.store";
 import type { User } from "../../types";
@@ -16,15 +15,12 @@ interface TripTicketProps {
   myNames: string[];
   description?: string;
   hotel?: string;
-  /** The trip day photos can be added to right now, if any. */
-  uploadDayId?: string;
   /** Plays the stamp animation — set right after signing up. */
   justJoined: boolean;
   onToggleDay: (day: TripDay) => void;
   onJoin: () => void;
   onLeave: () => void;
   onManage: () => void;
-  onShare: () => void;
 }
 
 /**
@@ -33,8 +29,8 @@ interface TripTicketProps {
  * counts down, says the trip is underway, or how long ago it was.
  */
 export function TripTicket({
-  trip, phase, users, myNames, description, hotel, uploadDayId, justJoined,
-  onToggleDay, onJoin, onLeave, onManage, onShare,
+  trip, phase, users, myNames, description, hotel, justJoined,
+  onToggleDay, onJoin, onLeave, onManage,
 }: TripTicketProps) {
   const image = tripImage(trip);
   const today = todayKey();
@@ -69,7 +65,7 @@ export function TripTicket({
   const stamp = phase === "past" ? (going ? "Geweest" : "Gemist") : phase === "live" ? "Erbij" : "Je gaat mee";
 
   return (
-    <article className="ticket-notch grid overflow-hidden rounded-[14px] border-2 border-outline bg-surface md:grid-cols-[200px_minmax(0,1fr)_168px] lg:grid-cols-[240px_minmax(0,1fr)_188px]">
+    <article className="ticket-notch grid grid-cols-[minmax(0,1fr)] overflow-hidden rounded-[14px] border-2 border-outline bg-surface md:grid-cols-[200px_minmax(0,1fr)_168px] lg:grid-cols-[240px_minmax(0,1fr)_188px]">
       {/* ── Cover ── */}
       <div className="relative h-40 overflow-hidden bg-[#0F1519] sm:h-52 md:h-auto md:min-h-[280px]">
         {image ? (
@@ -117,50 +113,7 @@ export function TripTicket({
 
         {/* Days: tap one to sign up for it or off it, until it has passed */}
         {trip.days.length > 1 && (
-          <div className="grid grid-cols-3 gap-2 sm:max-w-[320px]" role="group" aria-label="Jouw dagen">
-            {trip.days.map((day) => {
-              const { ev, date } = day;
-              const isTravelDay = ev.has_con === false;
-              const imGoing = ev.participants.some(isMine);
-              const canToggle = toDateKey(date) >= today;
-              const label = `${dayShort(date)} ${date.getDate()}`;
-              const className = `relative min-w-0 rounded-[10px] border-1.5 border-line px-1.5 py-2 text-center transition-colors ${
-                isTravelDay ? "bg-hatch-surface" : "bg-surface"
-              } ${canToggle ? "hover:border-ink-3" : ""} ${imGoing || phase === "past" ? "" : "opacity-60"}`;
-              const content = (
-                <>
-                  {imGoing && (
-                    <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full border-1.5 border-outline bg-brand text-brand-on">
-                      <Check size={9} strokeWidth={3} />
-                    </span>
-                  )}
-                  <span className="block font-mono text-[10px] uppercase leading-none tracking-[0.08em] text-ink-3">
-                    {dayShort(date)} {monthShort(date)}
-                  </span>
-                  <span className="block font-display text-[26px] font-extrabold leading-none text-ink">{date.getDate()}</span>
-                  <span className="mt-1 block truncate text-[11.5px] leading-none text-ink-2">
-                    {isTravelDay ? "Reisdag" : `${ev.participants.length} mee`}
-                  </span>
-                </>
-              );
-              return canToggle ? (
-                <button
-                  key={ev.id}
-                  type="button"
-                  onClick={() => onToggleDay(day)}
-                  aria-pressed={imGoing}
-                  aria-label={`${label}: ${imGoing ? "je gaat mee, tik om je af te melden" : "tik om je aan te melden"}`}
-                  className={className}
-                >
-                  {content}
-                </button>
-              ) : (
-                <div key={ev.id} className={className} title={ev.event_name}>
-                  {content}
-                </div>
-              );
-            })}
-          </div>
+          <TripDayPicker trip={trip} myNames={myNames} readOnly={phase === "past"} onToggleDay={onToggleDay} />
         )}
 
         <div className="mt-auto flex flex-wrap items-center gap-2.5">
@@ -183,26 +136,24 @@ export function TripTicket({
               <span className="text-ink-3"> · jij {myDays.length} van {trip.days.length} dagen</span>
             )}
           </span>
-          <span className="flex items-center gap-2">
-            {uploadDayId && <StoryUploadButton eventDayId={uploadDayId} />}
-            <button
-              type="button"
-              onClick={onShare}
-              title="Delen"
-              aria-label="Delen"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
-            >
-              <Share2 size={15} />
-            </button>
-          </span>
         </div>
       </div>
 
       {/* ── Stub ── */}
-      <div className="relative flex h-[118px] items-center justify-between gap-4 border-t-2 border-dashed border-line px-5 md:h-auto md:flex-col md:items-stretch md:border-l-2 md:border-t-0 md:py-5">
-        <div className="flex items-end gap-2.5 md:flex-col md:items-start md:gap-1">
-          <span className="font-display text-[60px] font-black leading-[0.8] text-ink md:text-[96px]">{count.big}</span>
-          <span className="pb-0.5 text-[13px] leading-tight text-ink-2">{count.small}</span>
+      <div className="relative flex min-h-[118px] flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t-2 border-dashed border-line px-5 py-3 md:h-auto md:flex-col md:flex-nowrap md:items-stretch md:border-l-2 md:border-t-0 md:py-5">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-end gap-2.5 md:flex-col md:items-start md:gap-1">
+            <span className="font-display text-[60px] font-black leading-[0.8] text-ink md:text-[96px]">{count.big}</span>
+            <span className="pb-0.5 text-[13px] leading-tight text-ink-2">{count.small}</span>
+          </div>
+          <button
+            type="button"
+            onClick={onManage}
+            className="flex items-center gap-1 text-left text-[12.5px] font-semibold text-brand-text hover:underline"
+          >
+            <UserPlus size={13} className="shrink-0" />
+            {phase === "past" ? "Aanmeldingen aanpassen" : "Iemand aanmelden"}
+          </button>
         </div>
 
         {(going || phase === "past") && (
@@ -219,29 +170,25 @@ export function TripTicket({
           </motion.span>
         )}
 
-        <div className="flex flex-col items-end gap-2 md:items-stretch">
-          {phase !== "past" && (going ? (
-            <button
-              type="button"
-              onClick={onLeave}
-              className="text-[12.5px] font-semibold text-ink-3 transition-colors hover:text-ink hover:underline md:text-left"
-            >
-              Toch niet? Afmelden
-            </button>
-          ) : (
-            <button type="button" onClick={onJoin} className="btn-primary h-11 px-4 text-[14px]">
-              <Ticket size={16} />
-              Ik ga mee
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={onManage}
-            className="text-[12.5px] font-semibold text-brand-text hover:underline md:text-left"
-          >
-            {phase === "past" ? "Aanmeldingen aanpassen" : "Anderen aanmelden"}
-          </button>
-        </div>
+        {/* Multi-day trips sign up per day (see the day boxes); only a single day needs a button. */}
+        {phase !== "past" && trip.days.length === 1 && (
+          <div className="flex flex-col items-end gap-2 md:items-stretch">
+            {going ? (
+              <button
+                type="button"
+                onClick={onLeave}
+                className="text-[12.5px] font-semibold text-ink-3 transition-colors hover:text-ink hover:underline md:text-left"
+              >
+                Toch niet? Afmelden
+              </button>
+            ) : (
+              <button type="button" onClick={onJoin} className="btn-primary h-11 px-4 text-[14px]">
+                <Ticket size={16} />
+                Ik ga mee
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </article>
   );

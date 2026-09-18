@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Car,
-  Plus,
   ChevronDown,
   ArrowRight,
   ArrowLeft,
@@ -22,7 +21,7 @@ import { DayChips } from "../../components/trip/DayChips";
 import { RideCardSkeleton } from "../../components/common/Skeleton";
 import { NamePicker } from "../../components/common/NamePicker";
 import { RideCard } from "../../components/transport/RideCard";
-import { RestaurantCard } from "../../components/transport/RestaurantCard";
+import { RestaurantMealPrompt, RestaurantRideGroup } from "../../components/transport/RestaurantRideGroup";
 import { RideTimeline } from "../../components/transport/RideTimeline";
 import { useRides, useCreateRide } from "../../hooks/useRides";
 import { useUsers, useCurrentUser } from "../../hooks/useUsers";
@@ -258,7 +257,16 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
   function renderDirectionGroup(direction: Direction, dayRides: Ride[], targetDayId?: string) {
     const all = dayRides.filter((r) => r.direction === direction);
     const active = all.filter((r) => getRideStatus(r.departure_time).status !== "past");
-    const addLabel = direction === "Restaurant" ? "Route toevoegen" : "Rit toevoegen";
+    // Restaurant rides are created from the meal ("Ik rijd" on a meal that has no ride yet).
+    const restaurantDayId = targetDayId ?? dayId;
+    const mealsWithoutRide = direction === "Restaurant"
+      ? tripMealOptions.filter(
+          (m) =>
+            m.transport_needed &&
+            (!restaurantDayId || m.linked_event_id === restaurantDayId) &&
+            !(allRides ?? []).some((r) => r.direction === "Restaurant" && r.linked_meal_id === m.id),
+        )
+      : [];
 
     return (
       <div key={direction}>
@@ -266,25 +274,26 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
           {DIRECTION_ICON[direction]}
           <span className="section-label">{DIRECTION_LABEL[direction]}</span>
           <span className="font-mono text-[11px] tabular-nums text-ink-3">{active.length}</span>
-          <button
-            type="button"
-            onClick={() => openCreate(direction, targetDayId)}
-            className="ml-auto flex h-7 w-7 items-center justify-center rounded-full border-1.5 border-outline bg-brand text-brand-on transition-opacity hover:opacity-90"
-            title={addLabel}
-            aria-label={addLabel}
-          >
-            <Plus size={15} strokeWidth={2.5} />
-          </button>
+          {direction !== "Restaurant" && !isTripOver(trip) && (
+            <button
+              type="button"
+              onClick={() => openCreate(direction, targetDayId)}
+              className="btn-primary ml-auto h-8 px-3 text-xs"
+            >
+              <Car size={13} /> Ik rijd
+            </button>
+          )}
         </div>
-        {active.length === 0 ? (
+        {active.length === 0 && mealsWithoutRide.length === 0 ? (
           <p className="py-1 text-xs text-ink-3">
             Nog geen {direction === "Restaurant" ? "route" : "rit"}.
           </p>
         ) : (
           <motion.div className="space-y-2.5" variants={container} initial="hidden" animate="show">
+            {mealsWithoutRide.map((m) => <RestaurantMealPrompt key={m.id} meal={m} />)}
             {active.map((ride) =>
               ride.direction === "Restaurant" ? (
-                <RestaurantCard key={ride.id} ride={ride} userNames={userNames} />
+                <RestaurantRideGroup key={ride.id} ride={ride} userNames={userNames} />
               ) : (
                 <RideCard key={ride.id} ride={ride} userNames={userNames} />
               ),
@@ -300,10 +309,16 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
     const past = dayRides.filter((r) => getRideStatus(r.departure_time).status === "past");
     const historyOpen = historyOpenIds.has(historyKey);
 
+    // No restaurant section on a day without a mealplan (unless a restaurant ride already exists).
+    const mealDayId = targetDayId ?? dayId;
+    const hasMealplan = tripMealOptions.some((m) => !mealDayId || m.linked_event_id === mealDayId);
+    const hasRestaurantRide = dayRides.some((r) => r.direction === "Restaurant");
+    const directions = DIRECTION_ORDER.filter((d) => d !== "Restaurant" || hasMealplan || hasRestaurantRide);
+
     return (
       <div className="space-y-4">
-        <div className="grid gap-4 xl:grid-cols-3">
-          {DIRECTION_ORDER.map((d) => renderDirectionGroup(d, dayRides, targetDayId))}
+        <div className={`grid gap-4 ${directions.length === 3 ? "xl:grid-cols-3" : "xl:grid-cols-2"}`}>
+          {directions.map((d) => renderDirectionGroup(d, dayRides, targetDayId))}
         </div>
         {past.length > 0 && (
           <div>
@@ -329,7 +344,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
                   <div className="mt-2 space-y-2.5 opacity-60">
                     {past.map((ride) =>
                       ride.direction === "Restaurant" ? (
-                        <RestaurantCard key={ride.id} ride={ride} userNames={userNames} />
+                        <RestaurantRideGroup key={ride.id} ride={ride} userNames={userNames} />
                       ) : (
                         <RideCard key={ride.id} ride={ride} userNames={userNames} />
                       ),
@@ -344,13 +359,6 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
     );
   }
 
-  const listFooter = !isTripOver(trip) && (
-    <Button variant="secondary" className="w-full" onClick={() => openCreate("Inbound")}>
-      <Car size={15} />
-      Rit of route toevoegen
-    </Button>
-  );
-
   const formFooter = (
     <Button type="submit" form="create-ride-form" loading={isSubmitting} className="w-full">
       {formDirection === "Restaurant" ? "Route opslaan" : "Rit opslaan"}
@@ -361,6 +369,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
     <TripSheet
       open={open}
       onClose={onClose}
+      viewKey={view}
       onBack={view === "form" ? () => setView("list") : undefined}
       title={view === "form" ? (formDirection === "Restaurant" ? "Route toevoegen" : "Rit toevoegen") : "Vervoer"}
       subtitle={
@@ -370,7 +379,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
             : "Vul de details van de rit in"
           : undefined
       }
-      footer={view === "form" ? formFooter : listFooter}
+      footer={view === "form" ? formFooter : undefined}
     >
       {view === "form" ? (
         <form id="create-ride-form" onSubmit={handleSubmit(onCreate)} className="space-y-5">
@@ -564,6 +573,14 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
 
           {missingPeople.length > 0 && <TripMissingList title="Nog geen vervoer" people={missingPeople} />}
 
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={showTimeline ? "timeline" : (dayId ?? "all")}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.14, ease: "easeOut" }}
+            >
           {showTimeline ? (
             <RideTimeline rides={rides} />
           ) : isLoading ? (
@@ -624,6 +641,8 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
               })}
             </div>
           )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       )}
     </TripSheet>

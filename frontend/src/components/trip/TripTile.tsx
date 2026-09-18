@@ -7,13 +7,17 @@ interface TripTileProps {
   label: string;
   /** Opens this page. Tiles for things you change (rides, meals, rooms…) link out. */
   to?: string;
+  /** `to` opens a bottom sheet over this page, so the chevron already says enough — no "Naar …" footer. */
+  sheet?: boolean;
   /** Unfolds read-only info in place instead of linking out. */
   onToggle?: () => void;
   expanded?: boolean;
-  /** Opens something in place (e.g. a photo viewer) instead of navigating — same "Naar X" affordance as `to`, but a callback. */
+  /** Opens something in place (e.g. a photo viewer) instead of navigating — the chevron is the affordance, no footer line. */
   onOpen?: () => void;
   /** A status pill next to the label, e.g. how many people still miss a ride. */
   pill?: ReactNode;
+  /** A small button at the end of the header, e.g. the "+" that adds something to this tile. */
+  action?: ReactNode;
   /** Two columns wide; `full` takes the whole row. */
   size?: "small" | "wide" | "full";
   children: ReactNode;
@@ -25,7 +29,7 @@ const SPAN = { small: "", wide: "col-span-2", full: "col-span-2 lg:col-span-4" }
  * One tile on Event › Overzicht. The tile answers the question (6 rides, 3
  * people without a ride back); editing happens on the page it links to.
  */
-export function TripTile({ icon: Icon, label, to, onToggle, expanded, onOpen, pill, size = "small", children }: TripTileProps) {
+export function TripTile({ icon: Icon, label, to, onToggle, expanded, onOpen, sheet, pill, action, size = "small", children }: TripTileProps) {
   const className = `card-surface group flex min-h-[132px] min-w-0 flex-col gap-2 p-4 text-left transition-colors ${SPAN[size]} ${
     to || onToggle || onOpen ? "hover:border-ink-3" : ""
   }`;
@@ -37,6 +41,7 @@ export function TripTile({ icon: Icon, label, to, onToggle, expanded, onOpen, pi
       </span>
       <span className="section-label min-w-0 flex-1 truncate text-ink-2">{label}</span>
       {pill}
+      {action}
       {(to || onOpen) && <ChevronRight size={15} className="shrink-0 text-ink-3 transition-colors group-hover:text-ink" />}
     </span>
   );
@@ -46,9 +51,11 @@ export function TripTile({ icon: Icon, label, to, onToggle, expanded, onOpen, pi
       <Link to={to} className={className}>
         {header}
         {children}
-        <span className="mt-auto flex items-center gap-1 pt-1 text-[12.5px] font-semibold text-brand-text">
-          Naar {label.toLowerCase()} <ArrowRight size={13} />
-        </span>
+        {!sheet && (
+          <span className="mt-auto flex items-center gap-1 pt-1 text-[12.5px] font-semibold text-brand-text">
+            Naar {label.toLowerCase()} <ArrowRight size={13} />
+          </span>
+        )}
       </Link>
     );
   }
@@ -70,9 +77,6 @@ export function TripTile({ icon: Icon, label, to, onToggle, expanded, onOpen, pi
       <button type="button" onClick={onOpen} className={className}>
         {header}
         {children}
-        <span className="mt-auto flex items-center gap-1 pt-1 text-[12.5px] font-semibold text-brand-text">
-          Bekijken <ArrowRight size={13} />
-        </span>
       </button>
     );
   }

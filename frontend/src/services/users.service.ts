@@ -65,9 +65,6 @@ export async function completeOnboarding(payload: CompleteOnboardingPayload): Pr
 }
 
 export async function pingLocation(payload: LocationPingRequest): Promise<void> {
-  const { user_name, zone, text } = payload;
-  await apiClient.put(
-    apiRoutes.users.location(encodeURIComponent(user_name)),
-    { zone, text },
-  );
+  const { user_name, ...body } = payload;
+  await apiClient.put(apiRoutes.users.location(encodeURIComponent(user_name)), body);
 }

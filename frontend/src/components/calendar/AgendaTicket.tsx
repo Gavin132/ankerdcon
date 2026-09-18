@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BedDouble, Check, MapPin, PartyPopper, Ticket, Utensils } from "lucide-react";
+import { BedDouble, MapPin, PartyPopper, Ticket, Utensils } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
+import { TripDayPicker } from "../trip/TripDayPicker";
 import { daysBetween, toDateKey, todayKey } from "../../utils/date";
-import { dayShort, monthShort } from "../../utils/multiDay";
-import { tripImage, type Trip } from "../../utils/trips";
+import { tripImage, type Trip, type TripDay } from "../../utils/trips";
 import { routes } from "../../config/routes";
 import { getNow } from "../../store/time.store";
 import type { Meal, User } from "../../types";
@@ -19,7 +19,7 @@ interface AgendaTicketProps {
   justJoined: boolean;
   onJoin: () => void;
   onLeave: () => void;
-  onManage: () => void;
+  onToggleDay: (day: TripDay) => void;
 }
 
 /**
@@ -29,7 +29,7 @@ interface AgendaTicketProps {
  * phones; the stub sits on the right from md and along the bottom on phones.
  * The notches where the stub tears off come from `.ticket-notch`.
  */
-export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, onLeave, onManage }: AgendaTicketProps) {
+export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, onLeave, onToggleDay }: AgendaTicketProps) {
   const image = tripImage(trip);
   const today = todayKey();
   const firstKey = toDateKey(trip.days[0].date);
@@ -60,7 +60,7 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
     : participants.length === 0 ? "Nog niemand aangemeld" : `${participants.length} gaan mee`;
 
   return (
-    <article className="ticket-notch grid overflow-hidden rounded-[14px] border-2 border-outline bg-surface md:grid-cols-[200px_minmax(0,1fr)_168px] lg:grid-cols-[240px_minmax(0,1fr)_188px]">
+    <article className="ticket-notch grid grid-cols-[minmax(0,1fr)] overflow-hidden rounded-[14px] border-2 border-outline bg-surface md:grid-cols-[200px_minmax(0,1fr)_168px] lg:grid-cols-[240px_minmax(0,1fr)_188px]">
       {/* ── Cover ── */}
       <Link
         to={routes.trip.view(trip.id)}
@@ -109,39 +109,8 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
           </p>
         </div>
 
-        {/* Days of a multi-day trip — travel-only days are hatched */}
-        {trip.days.length > 1 && (
-          <div className="grid grid-cols-3 gap-2 sm:max-w-[300px]">
-            {trip.days.map(({ ev, date }) => {
-              const isTravelDay = ev.has_con === false;
-              const imGoing = ev.participants.some(isMine);
-              return (
-                <Link
-                  key={ev.id}
-                  to={routes.trip.view(trip.id, "overview", ev.id)}
-                  draggable={false}
-                  title={ev.event_name}
-                  className={`relative min-w-0 rounded-[10px] border-1.5 border-line px-1.5 py-2 text-center transition-colors hover:border-ink-3 ${
-                    isTravelDay ? "bg-hatch-surface" : "bg-surface"
-                  }`}
-                >
-                  {imGoing && (
-                    <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full border-1.5 border-outline bg-brand text-brand-on" title="Jij gaat">
-                      <Check size={9} strokeWidth={3} />
-                    </span>
-                  )}
-                  <span className="block font-mono text-[10px] uppercase leading-none tracking-[0.08em] text-ink-3">
-                    {dayShort(date)} {monthShort(date)}
-                  </span>
-                  <span className="block font-display text-[26px] font-extrabold leading-none text-ink">{date.getDate()}</span>
-                  <span className="mt-1 block truncate text-[11.5px] leading-none text-ink-2">
-                    {isTravelDay ? "Reisdag" : `${ev.participants.length} mee`}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        )}
+        {/* Days of a multi-day trip — tap one to sign up for it or off it */}
+        {trip.days.length > 1 && <TripDayPicker trip={trip} myNames={myNames} onToggleDay={onToggleDay} />}
 
         <div className="mt-auto flex items-center gap-2.5">
           {participants.length > 0 && (
@@ -167,7 +136,7 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
       </div>
 
       {/* ── Stub ── */}
-      <div className="relative flex h-[118px] items-center justify-between gap-4 border-t-2 border-dashed border-line px-5 md:h-auto md:flex-col md:items-stretch md:border-l-2 md:border-t-0 md:py-5">
+      <div className="relative flex min-h-[118px] flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t-2 border-dashed border-line px-5 py-3 md:h-auto md:flex-col md:flex-nowrap md:items-stretch md:border-l-2 md:border-t-0 md:py-5">
         <div className="flex items-end gap-2.5 md:flex-col md:items-start md:gap-1">
           <span className="font-display text-[60px] font-black leading-[0.8] text-ink md:text-[96px]">
             {isLive ? "Nu" : daysUntil}
@@ -191,29 +160,25 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
           </motion.span>
         )}
 
-        <div className="flex flex-col items-end gap-2 md:items-stretch">
-          {going ? (
-            <button
-              type="button"
-              onClick={onLeave}
-              className="text-[12.5px] font-semibold text-ink-3 transition-colors hover:text-ink hover:underline md:text-left"
-            >
-              Toch niet? Afmelden
-            </button>
-          ) : (
-            <button type="button" onClick={onJoin} className="btn-primary h-11 px-4 text-[14px]">
-              <Ticket size={16} />
-              Ik ga mee
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={onManage}
-            className="text-[12.5px] font-semibold text-brand-text hover:underline md:text-left"
-          >
-            Anderen aanmelden
-          </button>
-        </div>
+        {/* Multi-day trips sign up per day (see the day boxes); only a single day needs a button. */}
+        {trip.days.length === 1 && (
+          <div className="flex flex-col items-end gap-2 md:items-stretch">
+            {going ? (
+              <button
+                type="button"
+                onClick={onLeave}
+                className="text-[12.5px] font-semibold text-ink-3 transition-colors hover:text-ink hover:underline md:text-left"
+              >
+                Toch niet? Afmelden
+              </button>
+            ) : (
+              <button type="button" onClick={onJoin} className="btn-primary h-11 px-4 text-[14px]">
+                <Ticket size={16} />
+                Ik ga mee
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </article>
   );

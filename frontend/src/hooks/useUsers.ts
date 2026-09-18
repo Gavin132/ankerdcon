@@ -3,7 +3,6 @@ import {
   completeOnboarding,
   deleteBanner,
   getCurrentUser,
-  getPublicUserNames,
   getUser,
   getUsers,
   pingLocation,
@@ -33,14 +32,6 @@ export function useCompleteOnboarding() {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.userBase });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.currentUser });
     },
-  });
-}
-
-export function usePublicUserNames() {
-  return useQuery({
-    queryKey: QUERY_KEYS.userNames,
-    queryFn: getPublicUserNames,
-    staleTime: STALE_TIME,
   });
 }
 

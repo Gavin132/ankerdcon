@@ -39,10 +39,6 @@ export const apiRoutes = {
   },
 
   // ── Payments ─────────────────────────────────────────────────────
-  payments: {
-    base: "/api/payments/",
-    byId: (id: string) => `/api/payments/${id}`,
-  },
 
   // ── Expenses ──────────────────────────────────────────────────────
   expenses: {

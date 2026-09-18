@@ -6,6 +6,7 @@ import { routes } from "../../config/routes";
 import { Phone, MapPin, Pencil, CalendarDays, User as UserIcon, BedDouble } from "lucide-react";
 import { avatarColor } from "../../utils/avatar";
 import { LocationPingDisplay } from "./LocationPingDisplay";
+import { isPingFresh } from "../../utils/locationPing";
 import { useCurrentTripRoomNumbers } from "../../hooks/useTripRooms";
 import { BadgeIcon } from "./BadgeIcon";
 import { useUser } from "../../hooks/useUsers";
@@ -97,7 +98,7 @@ export function UserProfilePopup({
   const hasDetails = !!(
     room ||
     u?.phone_number ||
-    u?.live_location_ping ||
+    isPingFresh(u?.live_location_ping) ||
     u?.discord_username
   );
 
@@ -285,13 +286,13 @@ export function UserProfilePopup({
                             </a>
                           </div>
                         )}
-                        {u?.live_location_ping && (
+                        {isPingFresh(u?.live_location_ping) && (
                           <div className="flex items-center gap-2.5">
                             <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
                               <MapPin size={11} />
                             </div>
                             <LocationPingDisplay
-                              raw={u.live_location_ping}
+                              raw={u!.live_location_ping}
                               align="start"
                             />
                           </div>

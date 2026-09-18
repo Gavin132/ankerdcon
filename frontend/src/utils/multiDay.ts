@@ -1,50 +1,4 @@
 import type { CalendarEvent } from "../types";
-import { parseEventDate, toDateKey, todayKey } from "./date";
-
-// ── Color palette ─────────────────────────────────────────────────────────────
-
-export const MULTI_DAY_COLORS = [
-  { accent: "#38bdf8", bg: "bg-sky-500/10", text: "text-sky-400" },
-  { accent: "#a78bfa", bg: "bg-violet-500/10", text: "text-violet-400" },
-  { accent: "#fbbf24", bg: "bg-amber-500/10", text: "text-amber-400" },
-  { accent: "#fb7185", bg: "bg-rose-500/10", text: "text-rose-400" },
-  { accent: "#34d399", bg: "bg-emerald-500/10", text: "text-emerald-400" },
-  { accent: "#22d3ee", bg: "bg-cyan-500/10", text: "text-cyan-400" },
-  { accent: "#f472b6", bg: "bg-pink-500/10", text: "text-pink-400" },
-  { accent: "#fb923c", bg: "bg-orange-500/10", text: "text-orange-400" },
-] as const;
-
-export type MultiDayColor = (typeof MULTI_DAY_COLORS)[number];
-
-/** Deterministic color for a multi_day_id string (hash-based, kept as fallback). */
-export function multiDayColor(id: string): MultiDayColor {
-  let h = 0;
-  for (let i = 0; i < id.length; i++)
-    h = (h * 31 + id.charCodeAt(i)) & 0xffffff;
-  return MULTI_DAY_COLORS[h % MULTI_DAY_COLORS.length];
-}
-
-/**
- * Build a collision-free color map for all multi-day groups in a list of events.
- * Colors are assigned by ascending first-event-date order, so ungrouping/regrouping
- * a set of events never produces the same color as an unrelated group.
- */
-export function buildGroupColorMap(events: CalendarEvent[]): Map<string, MultiDayColor> {
-  // Find the earliest date string per multi_day_id
-  const groupFirstDate = new Map<string, string>();
-  for (const ev of events) {
-    if (!ev.multi_day_id) continue;
-    const existing = groupFirstDate.get(ev.multi_day_id);
-    if (!existing || ev.date < existing) {
-      groupFirstDate.set(ev.multi_day_id, ev.date);
-    }
-  }
-  // Sort groups by first date (ISO strings sort correctly)
-  const sorted = [...groupFirstDate.entries()].sort((a, b) => a[1].localeCompare(b[1]));
-  const map = new Map<string, MultiDayColor>();
-  sorted.forEach(([id], i) => map.set(id, MULTI_DAY_COLORS[i % MULTI_DAY_COLORS.length]));
-  return map;
-}
 
 // ── Data model ────────────────────────────────────────────────────────────────
 
@@ -94,23 +48,6 @@ export function groupCalendarEntries(
     const bDate = b.type === "single" ? b.date : b.events[0].date;
     return aDate.getTime() - bDate.getTime();
   });
-}
-
-/**
- * The events belonging to whichever event is happening first — either a single
- * event, or every day of the nearest upcoming multi-day group. Empty when there
- * are no upcoming events.
- */
-export function firstUpcomingEvents(events: CalendarEvent[]): CalendarEvent[] {
-  const today = todayKey();
-  const upcomingEntries = events
-    .map((ev) => ({ ev, date: parseEventDate(ev.date) }))
-    .filter((x): x is { ev: CalendarEvent; date: Date } => x.date !== null && toDateKey(x.date) >= today)
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
-
-  const first = groupCalendarEntries(upcomingEntries)[0];
-  if (!first) return [];
-  return first.type === "single" ? [first.ev] : first.events.map((x) => x.ev);
 }
 
 // ── Display helpers ───────────────────────────────────────────────────────────

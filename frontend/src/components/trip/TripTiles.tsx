@@ -1,9 +1,10 @@
 import { forwardRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertCircle, BedDouble, Camera, Car, CloudSun, Sparkles, Utensils, Wallet } from "lucide-react";
+import { AlertCircle, BedDouble, Camera, Car, ChevronRight, CloudSun, Plus, Sparkles, Utensils, Wallet } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { StoryUploadButton } from "../story/StoryUploadButton";
 import { DayChips } from "./DayChips";
+import { TripMealSheet } from "./TripMealSheet";
 import { WeatherCard, ClimateAverageCard, WeatherSkeleton } from "../event/WeatherCard";
 import { EventPractical } from "../event/EventPractical";
 import { EventLinks } from "../event/EventLinks";
@@ -14,7 +15,7 @@ import { getNow } from "../../store/time.store";
 import { parseEventDate, splitDateTime, toDateKey, todayKey } from "../../utils/date";
 import { dayShort } from "../../utils/multiDay";
 import { formatCurrency } from "../../utils/format";
-import { defaultTripDayId, tripGaps, tripMeals, tripRides, tripRoomGaps, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
+import { defaultTripDayId, tripGaps, tripMeals, tripRides, tripOutliers, tripRoomGaps, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
 import type { CalendarEvent, Cosplay, Expense, HotelRoom, Meal, Ride, StoryDaySummary, User } from "../../types";
 
 const sameName = (names: string[]) => (n: string) => names.some((m) => m.toLowerCase() === n.toLowerCase());
@@ -54,6 +55,7 @@ export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Tr
       icon={Car}
       label="Vervoer"
       to={routes.trip.view(trip.id, "transport")}
+      sheet
       size={phase === "past" ? "small" : "wide"}
       pill={phase !== "past" && missing > 0 && <TilePill>{missing} zonder rit</TilePill>}
     >
@@ -85,9 +87,9 @@ export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Tr
 /* ── Eten ────────────────────────────────────────────────────────────────── */
 
 /**
- * Meals are planned by the organisers in the admin panel, not from here — this
- * tile only answers "is there a mealplan" and links straight to each meal's
- * own detail page, so it has no single `to` of its own (each row is its own link).
+ * Answers "is there a mealplan", links straight to each meal's own detail page
+ * (so it has no single `to` of its own — each row is its own link) and, while
+ * the trip isn't over, has a "+" for anyone to plan another one.
  */
 export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: TripPhase; meals: Meal[]; myNames: string[] }) {
   const isMine = sameName(myNames);
@@ -96,6 +98,7 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
   const ahead = all.filter((m) => m.time.replace(" ", "T") >= now);
   const shown = (phase === "live" && ahead.length > 0 ? ahead : all).slice(0, 3);
   const missing = phase === "upcoming" ? tripGaps(trip, [], meals).food.length : 0;
+  const [addOpen, setAddOpen] = useState(false);
 
   return (
     <TripTile
@@ -103,6 +106,19 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
       label="Eten"
       size={phase === "past" ? "small" : "wide"}
       pill={missing > 0 && <TilePill>{missing} nergens bij</TilePill>}
+      action={
+        phase !== "past" && (
+          <button
+            type="button"
+            onClick={() => setAddOpen(true)}
+            title="Etentje toevoegen"
+            aria-label="Etentje toevoegen"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-1.5 border-outline bg-brand text-brand-on transition-opacity hover:opacity-90"
+          >
+            <Plus size={15} strokeWidth={2.5} />
+          </button>
+        )
+      }
     >
       <TileValue>
         {all.length === 0 ? "Nog niks gepland" : phase === "live" && ahead[0] ? `Straks ${splitDateTime(ahead[0].time)[1]}` : `${all.length} ${all.length === 1 ? "etentje" : "etentjes"}`}
@@ -113,7 +129,7 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
             <li key={m.id}>
               <Link
                 to={routes.meal.view(m.id)}
-                className="grid grid-cols-[62px_minmax(0,1fr)] gap-2 rounded-lg px-1.5 py-1.5 text-[12.5px] transition-colors hover:bg-sunken"
+                className="grid grid-cols-[62px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg px-1.5 py-1.5 text-[12.5px] transition-colors hover:bg-sunken"
               >
                 <span className="pt-px font-mono text-[11.5px] uppercase text-ink-3">{dayTime(m.time)}</span>
                 <span className="min-w-0">
@@ -122,11 +138,13 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
                     {m.participants.length} mee, {m.participants.some(isMine) ? "jij ook" : "jij nog niet"}
                   </span>
                 </span>
+                <ChevronRight size={14} className="shrink-0 text-ink-3" />
               </Link>
             </li>
           ))}
         </ul>
       )}
+      <TripMealSheet open={addOpen} onClose={() => setAddOpen(false)} trip={trip} />
     </TripTile>
   );
 }
@@ -145,6 +163,7 @@ export function RoomsTile({ trip, phase, rooms, users, myNames }: { trip: Trip; 
       icon={BedDouble}
       label="Kamers"
       to={routes.trip.view(trip.id, "rooms")}
+      sheet
       size={phase === "past" ? "small" : "wide"}
       pill={missing > 0 && <TilePill>{missing} zonder kamer</TilePill>}
     >
@@ -190,7 +209,7 @@ export function CosplayTile({ trip, cosplays, myNames }: { trip: Trip; cosplays:
   const images = list.map((c) => c.inspo_images[0]).filter(Boolean).slice(0, 5);
 
   return (
-    <TripTile icon={Sparkles} label="Cosplay" to={routes.trip.view(trip.id, "cosplay")}>
+    <TripTile icon={Sparkles} label="Cosplay" to={routes.trip.view(trip.id, "cosplay")} sheet>
       <TileValue>{list.length}</TileValue>
       <TileText>{list.length === 1 ? "cosplay" : "cosplays"}{mine ? `, jij als ${mine.character_name}` : ""}</TileText>
       {images.length > 0 && (
@@ -374,13 +393,14 @@ export function hasPracticalInfo(info: CalendarEvent): boolean {
   );
 }
 
-export function PracticalTile({ info, expanded, onToggle }: { info: CalendarEvent; expanded: boolean; onToggle: () => void }) {
+export function PracticalTile({ info, trip, expanded, onToggle }: { info: CalendarEvent; trip: Trip; expanded: boolean; onToggle: () => void }) {
   const topics = [
     info.parking_info && "parkeren",
     info.what_to_bring && "meenemen",
     info.locker_info && "lockers",
     (info.ticket_url || (info.ticket_types?.length ?? 0) > 0) && "tickets",
     info.website && "website",
+    tripOutliers(trip).length > 0 && "aanwezigheid",
   ].filter(Boolean) as string[];
 
   return (
@@ -398,7 +418,14 @@ export function PracticalTile({ info, expanded, onToggle }: { info: CalendarEven
   );
 }
 
-export const PracticalPanel = forwardRef<HTMLElement, { info: CalendarEvent }>(function PracticalPanel({ info }, ref) {
+const OUTLIER_TEXT = {
+  "leaves-early": (days: TripDay[]) => `t/m ${dayShort(days[days.length - 1].date)}`,
+  "arrives-late": (days: TripDay[]) => `vanaf ${dayShort(days[0].date)}`,
+  "some-days": (days: TripDay[]) => `alleen ${days.map((d) => dayShort(d.date)).join(", ")}`,
+};
+
+export const PracticalPanel = forwardRef<HTMLElement, { info: CalendarEvent; trip: Trip }>(function PracticalPanel({ info, trip }, ref) {
+  const outliers = tripOutliers(trip);
   const hasRows = !!(info.special_instructions || info.parking_info || info.what_to_bring || info.locker_info);
   const hasLinks = !!(info.website || info.ticket_url || info.ticket_sale_start || (info.ticket_types?.length ?? 0) > 0);
   return (
@@ -406,6 +433,20 @@ export const PracticalPanel = forwardRef<HTMLElement, { info: CalendarEvent }>(f
       <div className="px-5 pb-1 pt-4">
         <p className="section-label">Praktische info</p>
       </div>
+      {outliers.length > 0 && (
+        <div className="px-5 pb-4 pt-2">
+          <p className="text-[12.5px] font-semibold text-ink-2">Niet alle dagen erbij</p>
+          <ul className="mt-1.5 space-y-1">
+            {outliers.map((o) => (
+              <li key={o.name} className="flex items-baseline justify-between gap-3 text-[13px]">
+                <span className="font-medium text-ink">{o.name}</span>
+                <span className="text-ink-3">{OUTLIER_TEXT[o.kind](o.days)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {outliers.length > 0 && (hasRows || hasLinks) && <div className="h-px bg-line" />}
       {hasRows && <EventPractical event={info} bare />}
       {hasRows && hasLinks && <div className="h-px bg-line" />}
       {hasLinks && <EventLinks event={info} bare />}

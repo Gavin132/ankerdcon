@@ -92,7 +92,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName }: ForYouPa
   }
 
   // ── Restaurant rides and payments ─────────────────────────────────────────
-  for (const action of computeAllActions({ rides, expenses, myName })) {
+  for (const action of computeAllActions({ rides, meals, expenses, myName })) {
     if (action.kind === "restaurant_gap") {
       const { gap } = action;
       items.push({

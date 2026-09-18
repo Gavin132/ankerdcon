@@ -6,6 +6,7 @@ import {
   Truck,
   Train,
   ParkingCircle,
+  ChevronDown,
   Plus,
   Timer,
   AlertCircle,
@@ -14,6 +15,7 @@ import {
 import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
 import { UserAvatar } from "../common/UserAvatar";
+import { Collapse } from "../common/Collapse";
 import { useClaimSeat, useLeaveSeat } from "../../hooks/useRides";
 import { useUsers } from "../../hooks/useUsers";
 import { useCalendar } from "../../hooks/useCalendar";
@@ -34,6 +36,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
   const [expandedAction, setExpandedAction] = useState<"claim" | "leave" | null>(null);
   const [claimNames, setClaimNames] = useState<string[]>([]);
   const [leaveNames, setLeaveNames] = useState<string[]>([]);
+  const [namesOpen, setNamesOpen] = useState(false);
   const [, tick] = useState(0);
 
   const claimMutation = useClaimSeat();
@@ -195,16 +198,25 @@ export function RideCard({ ride, userNames }: RideCardProps) {
           <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t border-dashed border-line pt-2.5">
             <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 text-[12px] text-ink-2">
               {ride.passengers.length > 0 ? (
-                <span className="flex -space-x-1.5">
-                  {ride.passengers.slice(0, 6).map((p) => (
-                    <UserAvatar key={p} name={resolveName(p)} className="h-6 w-6 text-[9px] !border-surface" />
-                  ))}
-                  {ride.passengers.length > 6 && (
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-surface bg-sunken font-mono text-[9px] font-semibold text-ink-2">
-                      +{ride.passengers.length - 6}
-                    </span>
-                  )}
-                </span>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setNamesOpen((v) => !v); }}
+                  aria-expanded={namesOpen}
+                  title="Wie rijden er mee?"
+                  className="flex items-center gap-1 rounded-lg"
+                >
+                  <span className="flex -space-x-1.5">
+                    {ride.passengers.slice(0, 6).map((p) => (
+                      <UserAvatar key={p} name={resolveName(p)} className="h-6 w-6 text-[9px] !border-surface" />
+                    ))}
+                    {ride.passengers.length > 6 && (
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-surface bg-sunken font-mono text-[9px] font-semibold text-ink-2">
+                        +{ride.passengers.length - 6}
+                      </span>
+                    )}
+                  </span>
+                  <ChevronDown size={12} className={`text-ink-3 transition-transform ${namesOpen ? "rotate-180" : ""}`} />
+                </button>
               ) : (
                 <span className="text-ink-3">Nog geen meerijders</span>
               )}
@@ -246,6 +258,10 @@ export function RideCard({ ride, userNames }: RideCardProps) {
               )}
             </div>
           </div>
+
+          <Collapse open={namesOpen && ride.passengers.length > 0}>
+            <p className="text-[12.5px] leading-snug text-ink-2">{ride.passengers.map(resolveName).join(", ")}</p>
+          </Collapse>
 
           {/* ── Inline stap-in / uitstappen panel — expands in place instead
               of a popup, so the ride's own details stay visible while you pick. ── */}

@@ -271,6 +271,28 @@ async function fetchWeather(
   };
 }
 
+/** The times of day a forecast is worth fetching again. */
+const REFRESH_HOURS = [8, 12, 16, 20];
+
+/**
+ * How long the current forecast stays fresh: until the next slot above. A
+ * forecast barely moves between those, and Open-Meteo's free tier has a modest
+ * request budget that a group all opening the app at once can burn through —
+ * so everyone shares four fetches a day per location instead of one per visit.
+ */
+export function msUntilNextWeatherSlot(now: Date = new Date()): number {
+  const next = new Date(now);
+  next.setMinutes(0, 0, 0);
+  const hour = REFRESH_HOURS.find((h) => h > now.getHours());
+  if (hour === undefined) {
+    next.setDate(next.getDate() + 1);
+    next.setHours(REFRESH_HOURS[0]);
+  } else {
+    next.setHours(hour);
+  }
+  return next.getTime() - now.getTime();
+}
+
 export function useEventWeather(
   location: string | undefined,
   date: string | undefined,
@@ -279,7 +301,7 @@ export function useEventWeather(
     queryKey: ["eventWeather", location, date],
     queryFn: () => fetchWeather(location!, date!),
     enabled: !!location && !!date,
-    staleTime: 1000 * 60 * 60,
+    staleTime: msUntilNextWeatherSlot(),
     retry: false,
   });
 }

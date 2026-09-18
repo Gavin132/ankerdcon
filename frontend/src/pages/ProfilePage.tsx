@@ -25,6 +25,7 @@ import { motion } from "framer-motion";
 import { Button } from "../components/common/Button";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { LocationPingDisplay } from "../components/common/LocationPingDisplay";
+import { isPingFresh } from "../utils/locationPing";
 import {
   useUser,
   useUpdatePreferences,
@@ -372,7 +373,7 @@ function ViewProfile({
         </p>
       )}
 
-      {(room || user.phone_number || user.live_location_ping) && (
+      {(room || user.phone_number || isPingFresh(user.live_location_ping)) && (
         <div className="mt-4 space-y-2.5 border-t border-line pt-4">
           {room && (
             <div className="flex items-center gap-2.5 text-sm text-ink-2">
@@ -392,7 +393,7 @@ function ViewProfile({
               </a>
             </div>
           )}
-          {user.live_location_ping && (
+          {isPingFresh(user.live_location_ping) && (
             <div className="flex items-center gap-2.5 text-sm text-ink-2">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
                 <MapPin size={15} />

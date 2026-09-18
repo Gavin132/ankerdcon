@@ -44,49 +44,6 @@ export function RideCardSkeleton() {
   );
 }
 
-/** Mirrors the MealCard layout. */
-export function MealCardSkeleton() {
-  return (
-    <div className="card-surface p-4 space-y-3">
-      {/* Header row */}
-      <div className="flex items-start gap-3">
-        <Bone className="h-11 w-11 rounded-xl shrink-0" />
-        <div className="flex-1 space-y-2 pt-0.5">
-          <Bone className="h-4 w-36" />
-          <Bone className="h-3 w-28" />
-        </div>
-        <Bone className="h-10 w-10 rounded-xl shrink-0" />
-      </div>
-      {/* Pill row */}
-      <div className="flex gap-2">
-        <Bone className="h-7 w-28 rounded-lg" />
-        <Bone className="h-7 w-20 rounded-lg" />
-      </div>
-      {/* Person count */}
-      <Bone className="h-3 w-32" />
-    </div>
-  );
-}
-
-/** Mirrors the PaymentCard layout. */
-export function PaymentCardSkeleton() {
-  return (
-    <div className="card-surface p-4">
-      <div className="flex items-center gap-3">
-        <Bone className="h-10 w-10 rounded-full shrink-0" />
-        <div className="flex-1 space-y-2">
-          <Bone className="h-3.5 w-24" />
-          <Bone className="h-3 w-40" />
-        </div>
-        <div className="flex flex-col items-end gap-2 shrink-0">
-          <Bone className="h-5 w-16" />
-          <Bone className="h-3 w-12" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /** Mirrors the HubPage layout: greeting, trip ticket, quick tiles and "Voor jou". */
 export function HubSkeleton() {
   return (

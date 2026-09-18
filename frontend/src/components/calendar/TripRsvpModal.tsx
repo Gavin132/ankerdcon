@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
-import { Modal } from "../common/Modal";
+import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
 import { dayShort, monthShort } from "../../utils/multiDay";
@@ -15,9 +15,9 @@ interface TripRsvpModalProps {
 }
 
 /**
- * Sign anyone up for (or off) a trip from the Agenda ticket — the ticket's own
- * button only covers yourself. For a multi-day trip you pick the days too;
- * all days are ticked to start with.
+ * Sign anyone up for (or off) a trip, as a bottom sheet — the day boxes on the
+ * ticket only cover yourself. For a multi-day trip you pick the days too; all
+ * days are ticked to start with.
  */
 export function TripRsvpModal({ trip: openTrip, users, onClose, onConfirm }: TripRsvpModalProps) {
   // Keep showing the last trip while the modal animates out.
@@ -53,12 +53,22 @@ export function TripRsvpModal({ trip: openTrip, users, onClose, onConfirm }: Tri
     : `${count} ${count === 1 ? "persoon" : "personen"} ${mode === "join" ? "aanmelden" : "afmelden"}${dayText}`;
 
   return (
-    <Modal
+    <TripSheet
       open={openTrip !== null}
       onClose={onClose}
       title={mode === "join" ? "Wie gaat er mee?" : "Wie gaat er niet mee?"}
-      description={trip ? `${trip.title} · ${trip.dateRange}` : undefined}
-      accent={mode === "leave" ? "from-rose-500" : undefined}
+      subtitle={trip ? `${trip.title} · ${trip.dateRange}` : undefined}
+      footer={
+        <Button
+          variant={mode === "leave" ? "danger" : "primary"}
+          disabled={count === 0 || dayIds.length === 0}
+          className="w-full"
+          onClick={() => { onConfirm(mode, names, dayIds); onClose(); }}
+        >
+          <Check size={15} />
+          {label}
+        </Button>
+      }
     >
       {trip && (
         <div className="space-y-4">
@@ -90,19 +100,22 @@ export function TripRsvpModal({ trip: openTrip, users, onClose, onConfirm }: Tri
                       type="button"
                       onClick={() => toggleDay(ev.id)}
                       aria-pressed={on}
-                      className={`relative rounded-[10px] px-1.5 py-2 text-center transition-colors ${
-                        on ? "border-2 border-outline bg-surface" : "border-1.5 border-line bg-surface text-ink-3 hover:border-ink-3"
+                      className={`relative min-w-0 rounded-[10px] border-1.5 px-1.5 pb-2 pt-3 text-center transition-[colors,transform] active:scale-[0.97] ${
+                        on ? "border-brand-text bg-brand-soft" : "border-line bg-surface hover:border-ink-3"
                       }`}
                     >
-                      {on && (
-                        <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full border-1.5 border-outline bg-brand text-brand-on">
-                          <Check size={9} strokeWidth={3} />
-                        </span>
-                      )}
+                      <span
+                        aria-hidden
+                        className={`absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full border-1.5 ${
+                          on ? "border-brand-text bg-brand text-brand-on" : "border-ink-3 bg-surface"
+                        }`}
+                      >
+                        {on && <Check size={9} strokeWidth={3} />}
+                      </span>
                       <span className="block font-mono text-[10px] uppercase leading-none tracking-[0.08em] text-ink-3">
                         {dayShort(date)} {monthShort(date)}
                       </span>
-                      <span className={`block font-display text-[24px] font-extrabold leading-none ${on ? "text-ink" : "text-ink-3"}`}>
+                      <span className="block font-display text-[24px] font-extrabold leading-none text-ink">
                         {date.getDate()}
                       </span>
                       <span className="mt-1 block truncate text-[11px] leading-none text-ink-2">
@@ -129,18 +142,8 @@ export function TripRsvpModal({ trip: openTrip, users, onClose, onConfirm }: Tri
               />
             )}
           </div>
-
-          <Button
-            variant={mode === "leave" ? "danger" : "primary"}
-            disabled={count === 0 || dayIds.length === 0}
-            className="w-full"
-            onClick={() => { onConfirm(mode, names, dayIds); onClose(); }}
-          >
-            <Check size={15} />
-            {label}
-          </Button>
         </div>
       )}
-    </Modal>
+    </TripSheet>
   );
 }

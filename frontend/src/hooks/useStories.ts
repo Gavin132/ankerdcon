@@ -3,7 +3,6 @@ import {
   getStoryPhotos,
   uploadStoryPhoto,
   deleteStoryPhoto,
-  getStorySeen,
   markStorySeen,
   getStorySummary,
 } from "../services/stories.service";
@@ -38,15 +37,6 @@ export function useDeleteStoryPhoto(eventDayId: string) {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.storyDay(eventDayId) });
       qc.invalidateQueries({ queryKey: ["stories", "summary"] });
     },
-  });
-}
-
-export function useStorySeen(eventDayId: string, options?: { enabled?: boolean }) {
-  return useQuery({
-    queryKey: QUERY_KEYS.storySeen(eventDayId),
-    queryFn: () => getStorySeen(eventDayId),
-    staleTime: STALE_TIME,
-    enabled: options?.enabled ?? !!eventDayId,
   });
 }
 

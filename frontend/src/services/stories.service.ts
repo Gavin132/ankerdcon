@@ -1,6 +1,6 @@
 import { apiClient } from "../lib/api/client";
 import { apiRoutes } from "../config/api-routes";
-import type { StoryPhoto, StorySeenState, StoryDaySummary } from "../types";
+import type { StoryPhoto, StoryDaySummary } from "../types";
 
 export async function getStoryPhotos(eventDayId: string): Promise<StoryPhoto[]> {
   const { data } = await apiClient.get<StoryPhoto[]>(apiRoutes.stories.byDay(eventDayId));
@@ -24,11 +24,6 @@ export async function downloadStoryPhoto(photoId: string): Promise<Blob> {
   const { data } = await apiClient.get<Blob>(apiRoutes.stories.download(photoId), {
     responseType: "blob",
   });
-  return data;
-}
-
-export async function getStorySeen(eventDayId: string): Promise<StorySeenState> {
-  const { data } = await apiClient.get<StorySeenState>(apiRoutes.stories.seen(eventDayId));
   return data;
 }
 

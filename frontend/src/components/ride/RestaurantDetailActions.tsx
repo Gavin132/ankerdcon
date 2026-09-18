@@ -3,13 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Car,
   Plus,
+  UserMinus,
   AlertCircle,
   CheckCircle2,
   CalendarPlus,
   ArrowRight,
 } from "lucide-react";
 import { Button } from "../common/Button";
-import { Modal } from "../common/Modal";
+import { TripSheet } from "../trip/TripSheet";
 import { NamePicker } from "../common/NamePicker";
 import { UserAvatar } from "../common/UserAvatar";
 import { CarCard } from "./CarCard";
@@ -21,6 +22,7 @@ import {
   useAssignToDriver,
   useUnassignFromDriver,
 } from "../../hooks/useRides";
+import { useRestaurantCars } from "../../hooks/useRestaurantCars";
 import { exportRideToIcs } from "../../utils/ics";
 import { getRideStatus } from "../../utils/rides";
 import { toast } from "../../store/toast.store";
@@ -40,13 +42,10 @@ export function RestaurantDetailActions({
   linkedMeal,
 }: Props) {
   const [driverOpen, setDriverOpen] = useState(false);
-  const [joinOpen, setJoinOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [assignPersonOpen, setAssignPersonOpen] = useState(false);
-  const [joinTarget, setJoinTarget] = useState("");
   const [driverName, setDriverName] = useState("");
   const [driverSeats, setDriverSeats] = useState(5);
-  const [joinNames, setJoinNames] = useState<string[]>([]);
   const [leaveName, setLeaveName] = useState("");
   const [assignPersonName, setAssignPersonName] = useState("");
   const [assignPersonDriver, setAssignPersonDriver] = useState("");
@@ -57,6 +56,7 @@ export function RestaurantDetailActions({
   const leaveSeatMutation = useLeaveSeat();
   const assignMutation = useAssignToDriver();
   const unassignMutation = useUnassignFromDriver();
+  const cars = useRestaurantCars(ride, linkedMeal);
 
   const { status } = getRideStatus(ride.departure_time);
   const canAct = status !== "past" && status !== "recent";
@@ -72,11 +72,6 @@ export function RestaurantDetailActions({
     new Set([...attendees, ...drivers.map((d) => d.name)]),
   );
 
-  const targetDriver = drivers.find((d) => d.name === joinTarget);
-  const spotsInTarget = targetDriver
-    ? targetDriver.seats - targetDriver.passengers.length
-    : 0;
-
   const isMutating =
     addDriverMutation.isPending ||
     leaveDriverMutation.isPending ||
@@ -87,6 +82,7 @@ export function RestaurantDetailActions({
   async function handleAddDriver() {
     if (!driverName.trim()) return;
     try {
+      await cars.ensureOnMeal(driverName.trim());
       await addDriverMutation.mutateAsync({
         id: ride.id,
         payload: { user_name: driverName.trim(), seats: driverSeats },
@@ -108,49 +104,10 @@ export function RestaurantDetailActions({
     }
   }
 
-  async function handleJoin() {
-    if (joinNames.length === 0 || !joinTarget) return;
-    try {
-      for (const name of joinNames) {
-        if (!attendees.includes(name)) {
-          await claimMutation.mutateAsync({
-            id: ride.id,
-            payload: { user_name: name },
-          });
-        }
-        await assignMutation.mutateAsync({
-          id: ride.id,
-          payload: { user_name: name, driver_name: joinTarget },
-        });
-      }
-      toast(
-        "success",
-        joinNames.length === 1
-          ? `${joinNames[0]} rijdt mee met ${joinTarget}`
-          : `${joinNames.length} personen rijden mee met ${joinTarget}`,
-      );
-      setJoinNames([]);
-      setJoinOpen(false);
-    } catch {
-      toast("error", "Kon niet toewijzen.");
-    }
-  }
-
-  async function handleUnassign(userName: string) {
-    try {
-      await unassignMutation.mutateAsync({
-        id: ride.id,
-        payload: { user_name: userName },
-      });
-      toast("info", `${userName} verwijderd uit auto`);
-    } catch {
-      toast("error", "Kon niet verwijderen.");
-    }
-  }
-
   async function handleAssignPerson() {
     if (!assignPersonName || !assignPersonDriver) return;
     try {
+      await cars.ensureOnMeal(assignPersonName);
       if (!attendees.includes(assignPersonName)) {
         await claimMutation.mutateAsync({ id: ride.id, payload: { user_name: assignPersonName } });
       }
@@ -237,26 +194,28 @@ export function RestaurantDetailActions({
               </div>
               <div className="flex items-center gap-2 shrink-0 ml-auto">
                 {canAct && allParticipants.length > 0 && (
-                  <Button
-                    variant="ghost"
+                  <button
+                    type="button"
                     onClick={() => {
                       setLeaveName("");
                       setLeaveOpen(true);
                     }}
+                    className="flex h-9 items-center gap-1.5 rounded-xl border-1.5 border-line px-3 text-xs font-semibold text-ink transition-colors hover:border-ink-3"
                   >
-                    Afmelden
-                  </Button>
+                    <UserMinus size={13} /> Afmelden
+                  </button>
                 )}
                 {canAct && (
-                  <Button
+                  <button
+                    type="button"
                     onClick={() => {
                       setDriverName("");
                       setDriverOpen(true);
                     }}
+                    className="btn-primary h-9 px-3.5 text-xs"
                   >
-                    <Car size={14} />
-                    Ik rijd
-                  </Button>
+                    <Car size={13} /> Ik rijd
+                  </button>
                 )}
               </div>
             </div>
@@ -295,12 +254,9 @@ export function RestaurantDetailActions({
                       key={d.name}
                       driver={d}
                       canAct={canAct}
-                      onJoin={(name) => {
-                        setJoinTarget(name);
-                        setJoinNames([]);
-                        setJoinOpen(true);
-                      }}
-                      onUnassign={handleUnassign}
+                      userNames={userNames}
+                      onJoin={cars.join}
+                      onUnassign={cars.unassign}
                       isPending={isMutating}
                     />
                   ))}
@@ -375,27 +331,31 @@ export function RestaurantDetailActions({
         </button>
       </div>
 
-      {/* Ik rijd modal */}
-      <Modal
+      {/* Ik rijd */}
+      <TripSheet
         open={driverOpen}
         onClose={() => {
           setDriverOpen(false);
           setDriverName("");
         }}
         title="Ik rijd"
-        description="Hoeveel mensen kun je meenemen?"
+        subtitle="Hoeveel mensen kun je meenemen?"
+        footer={
+          <Button
+            onClick={handleAddDriver}
+            loading={addDriverMutation.isPending || claimMutation.isPending}
+            className="w-full"
+            disabled={!driverName.trim()}
+          >
+            <Car size={15} />
+            {driverName.trim() ? `${driverName} rijdt met ${driverSeats} plaatsen` : "Selecteer een naam"}
+          </Button>
+        }
       >
         <div className="space-y-4">
-          <NamePicker
-            options={userNames}
-            value={driverName}
-            onChange={setDriverName}
-            color="sky"
-          />
+          <NamePicker options={userNames} value={driverName} onChange={setDriverName} color="sky" />
           <div>
-            <label className="section-label mb-2 block">
-              Totaal aantal plekken in je auto
-            </label>
+            <label className="section-label mb-2 block">Totaal aantal plekken in je auto</label>
             <div className="flex gap-2">
               {[2, 3, 4, 5, 6, 7].map((n) => (
                 <button
@@ -411,98 +371,50 @@ export function RestaurantDetailActions({
             </div>
             <p className="mt-1.5 text-xs text-ink-3">Incl. de chauffeur</p>
           </div>
-          <Button
-            onClick={handleAddDriver}
-            loading={addDriverMutation.isPending || claimMutation.isPending}
-            className="w-full"
-            disabled={!driverName.trim()}
-          >
-            <Car size={15} />
-            {driverName.trim()
-              ? `${driverName} rijdt met ${driverSeats} plaatsen`
-              : "Selecteer een naam"}
-          </Button>
         </div>
-      </Modal>
+      </TripSheet>
 
-      {/* Stap in modal */}
-      <Modal
-        open={joinOpen}
-        onClose={() => {
-          setJoinOpen(false);
-          setJoinNames([]);
-        }}
-        title={`Stap in bij ${joinTarget}`}
-        description={
-          spotsInTarget > 0
-            ? `${spotsInTarget} ${spotsInTarget === 1 ? "plek" : "plekken"} beschikbaar`
-            : ""
-        }
-      >
-        <div className="space-y-4">
-          <NamePicker
-            multiple
-            options={userNames}
-            value={joinNames}
-            onChange={setJoinNames}
-            maxSelect={spotsInTarget}
-            color="sky"
-          />
-          <Button
-            onClick={handleJoin}
-            loading={assignMutation.isPending || claimMutation.isPending}
-            className="w-full"
-            disabled={joinNames.length === 0}
-          >
-            <ArrowRight size={15} />
-            {joinNames.length === 0
-              ? "Selecteer een naam"
-              : joinNames.length === 1
-                ? `${joinNames[0]} stap in bij ${joinTarget}`
-                : `${joinNames.length} personen stap in bij ${joinTarget}`}
-          </Button>
-        </div>
-      </Modal>
-
-      {/* Afmelden modal */}
-      <Modal
+      {/* Afmelden */}
+      <TripSheet
         open={leaveOpen}
         onClose={() => {
           setLeaveOpen(false);
           setLeaveName("");
         }}
         title="Afmelden"
-        description="Verwijder jezelf van de lijst"
-      >
-        <div className="space-y-4">
-          <NamePicker
-            options={allParticipants}
-            value={leaveName}
-            onChange={setLeaveName}
-            color="rose"
-          />
+        subtitle="Verwijder jezelf van de lijst"
+        footer={
           <Button
             onClick={handleLeave}
             variant="danger"
-            loading={
-              leaveDriverMutation.isPending ||
-              leaveSeatMutation.isPending ||
-              unassignMutation.isPending
-            }
+            loading={leaveDriverMutation.isPending || leaveSeatMutation.isPending || unassignMutation.isPending}
             className="w-full"
             disabled={!leaveName.trim()}
           >
             {leaveName ? `${leaveName} afmelden` : "Selecteer een naam"}
           </Button>
-        </div>
-      </Modal>
+        }
+      >
+        <NamePicker options={allParticipants} value={leaveName} onChange={setLeaveName} color="rose" />
+      </TripSheet>
 
-      {/* Wijs toe modal */}
-      <Modal
+      {/* Wijs toe */}
+      <TripSheet
         open={assignPersonOpen}
         onClose={() => { setAssignPersonOpen(false); setAssignPersonName(""); setAssignPersonDriver(""); }}
         title={`${assignPersonName} toewijzen`}
-        description="Kies een auto om deze persoon in te plaatsen"
+        subtitle="Kies een auto om deze persoon in te plaatsen"
+        footer={
+          <Button
+            onClick={handleAssignPerson}
+            loading={assignMutation.isPending || claimMutation.isPending}
+            className="w-full"
+            disabled={!assignPersonDriver}
+          >
+            <ArrowRight size={15} />
+            {assignPersonDriver ? `${assignPersonName} → ${assignPersonDriver}` : "Selecteer een auto"}
+          </Button>
+        }
       >
         <div className="space-y-3">
           {drivers.map((d) => {
@@ -533,19 +445,8 @@ export function RestaurantDetailActions({
               </button>
             );
           })}
-          <Button
-            onClick={handleAssignPerson}
-            loading={assignMutation.isPending || claimMutation.isPending}
-            className="w-full"
-            disabled={!assignPersonDriver}
-          >
-            <ArrowRight size={15} />
-            {assignPersonDriver
-              ? `${assignPersonName} → ${assignPersonDriver}`
-              : "Selecteer een auto"}
-          </Button>
         </div>
-      </Modal>
+      </TripSheet>
     </>
   );
 }

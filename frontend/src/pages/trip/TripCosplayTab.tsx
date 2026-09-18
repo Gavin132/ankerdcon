@@ -245,6 +245,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
     <TripSheet
       open={open}
       onClose={onClose}
+      viewKey={view}
       onBack={view === "form" ? () => setView("list") : undefined}
       title={view === "form" ? "Cosplay toevoegen" : "Cosplay"}
       subtitle={view === "form" ? "Laat zien wat je draagt!" : undefined}

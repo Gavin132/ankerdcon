@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Search, Users, X, BedDouble, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUsers } from "../hooks/useUsers";
@@ -10,6 +10,7 @@ import { UserAvatar } from "../components/common/UserAvatar";
 import { UserProfilePopup, type AnchorRect } from "../components/common/UserProfilePopup";
 import { BadgeIcon } from "../components/common/BadgeIcon";
 import { LocationPingDisplay } from "../components/common/LocationPingDisplay";
+import { isPingFresh, parsePing } from "../utils/locationPing";
 import { LocationPingModal } from "../components/hub/LocationPingModal";
 import type { User } from "../types";
 
@@ -23,6 +24,9 @@ const cardItem = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { duration: 0.18 } },
 };
+
+// Leaflet is only fetched when someone has actually shared a position.
+const CrewMap = lazy(() => import("../components/crew/CrewMap"));
 
 /** Crew tab: everyone in the group, where people are right now, and a way to share your own location. */
 export function CrewPage() {
@@ -38,7 +42,9 @@ export function CrewPage() {
   const roomNumbers = useCurrentTripRoomNumbers();
 
   const sorted = [...users].sort((a, b) => a.name.localeCompare(b.name, "nl"));
-  const pinged = sorted.filter((u) => u.live_location_ping);
+  const pinged = sorted.filter((u) => isPingFresh(u.live_location_ping));
+  // Of those, the ones who shared a GPS position (a text-only ping has nothing to put on a map).
+  const pinned = pinged.filter((u) => parsePing(u.live_location_ping)?.lat !== undefined);
   const filtered = query.trim()
     ? sorted.filter((u) => {
         const q = query.toLowerCase();
@@ -82,6 +88,17 @@ export function CrewPage() {
             Locatie pingen
           </button>
         </div>
+        {pinned.length > 0 && (
+          <Suspense fallback={<div className="h-[280px] animate-pulse border-t border-line bg-sunken sm:h-[340px]" />}>
+            <CrewMap
+              users={pinned}
+              onOpenProfile={(u, rect) => {
+                setAnchorRect(rect);
+                setPopupUser(u);
+              }}
+            />
+          </Suspense>
+        )}
         {pinged.length === 0 ? (
           <p className="border-t border-line px-4 py-3.5 text-[13px] text-ink-3">
             Nog niemand heeft een locatie gedeeld.
@@ -182,7 +199,7 @@ export function CrewPage() {
                 >
                   <div className="relative shrink-0">
                     <UserAvatar name={u.name} user={u} className="h-9 w-9 text-sm" />
-                    {u.live_location_ping && (
+                    {isPingFresh(u.live_location_ping) && (
                       <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-surface animate-pulse" />
                     )}
                   </div>

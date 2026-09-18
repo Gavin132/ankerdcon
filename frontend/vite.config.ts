@@ -35,6 +35,21 @@ function devIconPlugin(isDev: boolean) {
   };
 }
 
+// Emits sw/service-worker.js as /sw.js with the version stamped in, so each
+// release gets its own caches and clears out the previous ones. It's kept out
+// of public/ deliberately: that would ship it unversioned, and a worker that
+// never changes byte-for-byte is a worker that never updates.
+function serviceWorkerPlugin(version: string) {
+  return {
+    name: "emit-service-worker",
+    apply: "build" as const,
+    generateBundle(this: { emitFile: (f: { type: "asset"; fileName: string; source: string }) => void }) {
+      const source = readFileSync("sw/service-worker.js", "utf-8").replace("__SW_VERSION__", version);
+      this.emitFile({ type: "asset", fileName: "sw.js", source });
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode`. The third parameter '' loads all env variables.
   const env = loadEnv(mode, process.cwd(), '');
@@ -45,7 +60,7 @@ export default defineConfig(({ mode }) => {
   const isDevBuild = env.APP_ENV === "dev";
 
   return {
-    plugins: [react(), devIconPlugin(isDevBuild)],
+    plugins: [react(), devIconPlugin(isDevBuild), serviceWorkerPlugin(appVersion)],
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
     },

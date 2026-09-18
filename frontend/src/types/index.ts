@@ -100,6 +100,10 @@ export interface LocationPingRequest {
   user_name: string;
   zone: string;
   text: string;
+  /** GPS fix from the browser, when the user shared it. */
+  lat?: number;
+  lng?: number;
+  accuracy?: number;
 }
 
 // Rides
@@ -251,28 +255,6 @@ export interface RsvpRequest {
 }
 
 // Payments
-export interface Split {
-  name: string;
-  amount: number;
-}
-
-export interface Payment {
-  id: string;
-  paid_by: string;
-  amount: number;
-  description: string;
-  date: string;
-  splits: Split[];
-}
-
-export interface CreatePaymentRequest {
-  paid_by: string;
-  amount: number;
-  description: string;
-  date: string;
-  splits?: Split[];
-}
-
 export interface TicketType {
   title: string;
   price: number;

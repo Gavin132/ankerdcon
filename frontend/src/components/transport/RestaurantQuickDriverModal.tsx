@@ -3,6 +3,7 @@ import { Car } from "lucide-react";
 import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
 import { useCurrentUser } from "../../hooks/useUsers";
+import { useRsvpMeal } from "../../hooks/useMeals";
 import { useCreateRide, useAddRestaurantDriver, useClaimSeat } from "../../hooks/useRides";
 import { toast } from "../../store/toast.store";
 import { splitDateTime, toDateTimeLocal } from "../../utils/date";
@@ -31,6 +32,7 @@ export function RestaurantQuickDriverModal({ open, onClose, event, meal, existin
   const createRideMutation = useCreateRide();
   const addDriverMutation = useAddRestaurantDriver();
   const claimMutation = useClaimSeat();
+  const rsvpMealMutation = useRsvpMeal();
 
   const [seats, setSeats] = useState(5);
   const [departureTime, setDepartureTime] = useState("");
@@ -48,6 +50,10 @@ export function RestaurantQuickDriverModal({ open, onClose, event, meal, existin
   async function onSubmit() {
     if (!driver || alreadyDriving) return;
     try {
+      // Driving to the meal means eating at it: sign the driver up for it as well.
+      if (!(meal.participants ?? []).includes(driver)) {
+        await rsvpMealMutation.mutateAsync({ id: meal.id, payload: { user_name: driver } });
+      }
       let rideId = existingRide?.id;
       if (!rideId) {
         const created = await createRideMutation.mutateAsync({

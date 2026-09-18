@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timezone
+import json
 import uuid
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
@@ -139,10 +140,24 @@ def ping_location(
     body: LocationPingRequest,
     current_user: str = Depends(get_current_user),
 ) -> None:
-    """Update the live location ping for a user."""
-    now = datetime.now().strftime("%H:%M")
-    base = f"{body.zone}|{body.text}" if body.text else body.zone
-    value = f"{base} (at {now})"
+    """Update the live location ping for a user.
+
+    Stored as JSON in the existing `live_location_ping` text column: zone, note,
+    an ISO timestamp (the frontend hides pings after a couple of hours) and the
+    optional coordinates. Older pings are plain "zone|text (at HH:MM)" strings,
+    which the frontend still understands.
+    """
+    ping: dict = {
+        "zone": body.zone.strip(),
+        "text": body.text.strip(),
+        "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+    if body.lat is not None and body.lng is not None:
+        ping["lat"] = round(body.lat, 5)
+        ping["lng"] = round(body.lng, 5)
+        if body.accuracy is not None:
+            ping["accuracy"] = round(body.accuracy)
+    value = json.dumps(ping, ensure_ascii=False)
     try:
         response = supabase.table(Tables.PROFILES).update({"live_location_ping": value}).eq("name", identifier).execute()
     except Exception as e:

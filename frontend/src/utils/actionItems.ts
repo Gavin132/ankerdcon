@@ -1,5 +1,5 @@
 import { computeRestaurantGaps } from "../components/hub/ComputeRestaurantGap";
-import type { Ride, Expense, ExpenseShare, RestaurantGap } from "../types";
+import type { Ride, Meal, Expense, ExpenseShare, RestaurantGap } from "../types";
 
 // Missing transport / food per trip lives in utils/trips.ts (`tripGaps`), so
 // the Hub's "Voor jou" panel and the Event tab's counts always agree. This
@@ -18,15 +18,16 @@ export type ActionKind = AnyAction["kind"];
 
 interface ComputeInput {
   rides:    Ride[];
+  meals?:   Meal[];
   expenses: Expense[];
   myName:   string | undefined;
 }
 
-export function computeAllActions({ rides, expenses, myName }: ComputeInput): AnyAction[] {
+export function computeAllActions({ rides, meals, expenses, myName }: ComputeInput): AnyAction[] {
   const items: AnyAction[] = [];
 
   // ── 1. Restaurant transport gaps ──────────────────────────────────────────
-  for (const gap of computeRestaurantGaps(rides)) {
+  for (const gap of computeRestaurantGaps(rides, meals)) {
     items.push({ kind: "restaurant_gap", gap });
   }
 

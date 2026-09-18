@@ -13,7 +13,7 @@ import { useCalendar } from "../hooks/useCalendar";
 import { useTripRsvp } from "../hooks/useTripRsvp";
 import { useTimeStore } from "../store/time.store";
 import { toDateKey, todayKey } from "../utils/date";
-import { buildTrips, type Trip } from "../utils/trips";
+import { buildTrips, type Trip, type TripDay } from "../utils/trips";
 import { env } from "../config/env";
 
 /**
@@ -55,6 +55,11 @@ export function CalendarPage() {
   function joinTrip(trip: Trip) {
     setJustJoinedId(trip.id);
     return tripRsvp.joinTrip(trip);
+  }
+
+  async function toggleDay(trip: Trip, day: TripDay) {
+    const joined = await tripRsvp.toggleDay(day);
+    if (joined) setJustJoinedId(trip.id);
   }
 
   function leaveTrip(trip: Trip) {
@@ -160,7 +165,7 @@ export function CalendarPage() {
                 justJoinedId={justJoinedId}
                 onJoin={joinTrip}
                 onLeave={leaveTrip}
-                onManage={(trip) => setManageTripId(trip.id)}
+                onToggleDay={toggleDay}
               />
             ) : (
               <div className="card-surface">

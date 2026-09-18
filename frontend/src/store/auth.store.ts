@@ -2,6 +2,7 @@ import { create } from "zustand";
 // IMPORTANT: Import your Supabase client here! Adjust the path as needed.
 import { supabase } from "../services/supabase";
 import { routes } from "../config/routes";
+import { clearPersistedQueries } from "../lib/queryPersist";
 
 function parseJwtSub(token: string): string | null {
   try {
@@ -35,6 +36,29 @@ interface ImpersonationRecord {
   name: string;
 }
 
+export type RefreshOutcome = { token: string } | { retry: true } | { dead: true };
+
+/**
+ * Whether a failed refresh says "the network was in the way" rather than "this
+ * session is over". Supabase tags its own fetch failures as
+ * `AuthRetryableFetchError`; a bare `TypeError: Failed to fetch` (offline) and
+ * a 5xx from the auth server mean the same thing. Everything else — a 400 with
+ * `invalid_grant`, a revoked or reused refresh token — is a genuine sign-out.
+ *
+ * This matters most on a phone at an event: the app resumes on bad reception,
+ * the refresh call fails, and treating that as a dead session logs someone out
+ * of an app they were using seconds earlier.
+ */
+function isTransientAuthError(error: unknown): boolean {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return true;
+  if (!error || typeof error !== "object") return false;
+  const { name, status, message } = error as { name?: string; status?: number; message?: string };
+  if (name === "AuthRetryableFetchError") return true;
+  if (name === "TypeError" && /fetch|network/i.test(message ?? "")) return true;
+  if (typeof status === "number" && (status === 0 || status === 408 || status === 429 || status >= 500)) return true;
+  return false;
+}
+
 // sessionStorage (not localStorage) — impersonation should not silently
 // survive into a brand new tab/window, only reloads of this one.
 function loadImpersonation(): ImpersonationRecord | null {
@@ -58,8 +82,15 @@ interface AuthState {
   setForbidden: () => void;
   setInitialized: () => void;
   clearAuth: () => void;
-  // Add the new refresh function to the interface
-  refreshAccessToken: () => Promise<string | null>;
+  /**
+   * Trades the refresh token for a fresh access token.
+   * - `{ token }`      — refreshed, carry on.
+   * - `{ retry: true }` — couldn't reach Supabase (no reception, radio still
+   *   waking up, server blip). The session is untouched and is worth trying
+   *   again; the caller must NOT sign the user out.
+   * - `{ dead: true }`  — the refresh token itself was rejected. Signed out.
+   */
+  refreshAccessToken: () => Promise<RefreshOutcome>;
   /** Admin-only: swap the session to a minted token for another profile. */
   startImpersonation: (token: string, name: string) => void;
   /** Drop the impersonated session and restore the real admin session. */
@@ -87,6 +118,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   clearAuth: () => {
     set({ accessToken: null, currentUser: null, isAuthenticated: false, forbidden: false });
+    // The persisted query cache holds this account's data; the next person to
+    // sign in on this device must not see it flash past before their own loads.
+    clearPersistedQueries();
     // Hard redirect (not an in-app navigate) so every query/component
     // remounts fresh with the cleared session — but only when we're not
     // already there. Without this guard, a session that keeps failing to
@@ -114,11 +148,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // Use your existing setter to update everything cleanly
       get().setAccessToken(newToken);
 
-      return newToken;
+      return { token: newToken };
     } catch (error) {
+      if (isTransientAuthError(error)) {
+        // Keep the session: the refresh token is probably still perfectly
+        // good, we just couldn't reach the server to spend it.
+        console.warn("Token refresh failed, keeping the session:", error);
+        return { retry: true };
+      }
       console.error("Failed to refresh token:", error);
       get().clearAuth(); // Kick them out if the refresh token is also dead
-      return null;
+      return { dead: true };
     }
   },
 
@@ -128,6 +168,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch {
       // sessionStorage unavailable — impersonation just won't survive a reload
     }
+    // The restored cache belongs to the admin's own account; without this the
+    // impersonated session would open on their data.
+    clearPersistedQueries();
     // Hard reload: guarantees every query/component picks up the new
     // identity fresh, rather than trying to invalidate everything by hand.
     window.location.href = "/";
@@ -139,6 +182,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch {
       // ignore
     }
+    clearPersistedQueries();
     // The real Supabase session was never touched, so a reload lets AuthSync
     // pick it back up on its own.
     window.location.href = "/";

@@ -56,14 +56,14 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h2 className="font-display text-[26px] font-extrabold uppercase leading-none text-ink">Geweest in {year}</h2>
         {years.length > 1 && (
-          <div className="flex gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]" role="group" aria-label="Jaar">
+          <div className="flex max-w-full gap-1 overflow-x-auto rounded-[10px] border-1.5 border-line bg-sunken p-[3px]" role="group" aria-label="Jaar">
             {years.map((y) => (
               <button
                 key={y}
                 type="button"
                 onClick={() => { setYear(y); setOpenId(null); }}
                 aria-pressed={y === year}
-                className={`rounded-[7px] px-2.5 py-1 font-mono text-[12px] font-semibold transition-colors ${
+                className={`shrink-0 rounded-[7px] px-2.5 py-1 font-mono text-[12px] font-semibold transition-colors ${
                   y === year ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]" : "text-ink-2 hover:text-ink"
                 }`}
               >

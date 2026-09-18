@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Clock, MapPin, Banknote, Bus, CalendarDays, UserCheck, UserMinus } from "lucide-react";
+import { Clock, MapPin, Banknote, Bus, CalendarDays, ChevronDown, UserCheck, UserMinus } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
+import { Collapse } from "../common/Collapse";
 import { UserProfilePopup, type AnchorRect } from "../common/UserProfilePopup";
 import { useCalendar } from "../../hooks/useCalendar";
 import { useAuthStore } from "../../store/auth.store";
@@ -29,6 +30,7 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
   const currentUser = useAuthStore((s) => s.currentUser);
   const [popupUser, setPopupUser] = useState<User | null>(null);
   const [popupAnchorRect, setPopupAnchorRect] = useState<AnchorRect>(CLOSED_RECT);
+  const [namesOpen, setNamesOpen] = useState(false);
   const participants = meal.participants ?? [];
 
   function resolveUser(stored: string) {
@@ -99,32 +101,29 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
         {/* Attendees + sign-up */}
         <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-dashed border-white/20 pt-4">
           {participants.length > 0 && (
-            <div className="flex items-center gap-3">
-              <div className="flex -space-x-2">
+            <button
+              type="button"
+              onClick={() => setNamesOpen((v) => !v)}
+              aria-expanded={namesOpen}
+              className="flex items-center gap-3 rounded-lg text-left"
+            >
+              <span className="flex -space-x-2">
                 {participants.slice(0, 6).map((p) => {
                   const u = resolveUser(p);
-                  return u ? (
-                    <button key={p} type="button" onClick={(e) => openPopup(u, e)} className="rounded-full" aria-label={u.name}>
-                      <UserAvatar
-                        name={u.name}
-                        user={u}
-                        className="h-7 w-7 text-[10px] !border-[#0F1519]"
-                      />
-                    </button>
-                  ) : (
-                    <UserAvatar
-                      key={p}
-                      name={p}
-                      className="h-7 w-7 text-[10px] !border-[#0F1519]"
-                    />
-                  );
+                  return <UserAvatar key={p} name={u?.name ?? p} user={u} className="h-7 w-7 text-[10px] !border-[#0F1519]" />;
                 })}
-              </div>
-              <span className="text-xs font-medium text-white/65">
+                {participants.length > 6 && (
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#0F1519] bg-white/15 font-mono text-[10px] font-semibold text-[#E6F0F3]">
+                    +{participants.length - 6}
+                  </span>
+                )}
+              </span>
+              <span className="flex items-center gap-1 text-xs font-medium text-white/65">
                 <span className="font-mono font-semibold tabular-nums text-[#E6F0F3]">{participants.length}</span>{" "}
                 {participants.length === 1 ? "aanmelding" : "aanmeldingen"}
+                <ChevronDown size={13} className={`transition-transform ${namesOpen ? "rotate-180" : ""}`} />
               </span>
-            </div>
+            </button>
           )}
           <div className="ml-auto flex items-center gap-2">
             {participants.length > 0 && (
@@ -145,6 +144,29 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
             </button>
           </div>
         </div>
+
+        {/* Who's on the list, by name — the avatars alone don't say. */}
+        <Collapse open={namesOpen && participants.length > 0}>
+          <div className="flex flex-wrap gap-1.5 pt-3">
+            {participants.map((p) => {
+              const u = resolveUser(p);
+              const chip = (
+                <>
+                  <UserAvatar name={u?.name ?? p} user={u} className="h-5 w-5 text-[8px] !border-0" />
+                  {u?.name ?? p}
+                </>
+              );
+              const cls = "inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 py-1 pl-1 pr-2.5 text-xs font-medium text-[#E6F0F3]";
+              return u ? (
+                <button key={p} type="button" onClick={(e) => openPopup(u, e)} className={`${cls} transition-colors hover:bg-white/20`}>
+                  {chip}
+                </button>
+              ) : (
+                <span key={p} className={cls}>{chip}</span>
+              );
+            })}
+          </div>
+        </Collapse>
       </div>
 
       <UserProfilePopup

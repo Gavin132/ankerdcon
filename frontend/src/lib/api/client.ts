@@ -79,20 +79,20 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const newAccessToken = await useAuthStore.getState().refreshAccessToken();
+        const outcome = await useAuthStore.getState().refreshAccessToken();
 
-        if (newAccessToken) {
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          processQueue(null, newAccessToken);
+        if ("token" in outcome) {
+          originalRequest.headers.Authorization = `Bearer ${outcome.token}`;
+          processQueue(null, outcome.token);
           return apiClient(originalRequest);
-        } else {
-          // If Supabase returns null, the session is completely dead. 
-          // Trigger the logout and redirect.
-          useAuthStore.getState().clearAuth();
-          processQueue(new Error("Session expired"), null);
         }
+        // `dead` already signed the user out inside the store. `retry` means we
+        // simply couldn't reach the auth server — the session stands, so this
+        // one request fails and the next attempt (a refetch, or the user
+        // pulling the screen again) picks up where it left off. Signing out
+        // here is what used to boot people off the app on bad reception.
+        processQueue(new Error("retry" in outcome ? "Kon niet vernieuwen" : "Session expired"), null);
       } catch (refreshError) {
-        useAuthStore.getState().clearAuth();
         processQueue(refreshError, null);
       } finally {
         isRefreshing = false;

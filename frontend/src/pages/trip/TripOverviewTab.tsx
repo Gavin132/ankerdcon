@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useHotelRooms } from "../../hooks/useCalendar";
 import { useUsers } from "../../hooks/useUsers";
@@ -12,13 +13,16 @@ import { useTimeStore } from "../../store/time.store";
 import { toast } from "../../store/toast.store";
 import { routes } from "../../config/routes";
 import { TripTicket } from "../../components/trip/TripTicket";
+import { HeaderAction } from "../../components/layout/HeaderAction";
+import { ShareButton } from "../../components/common/ShareButton";
+import { smoothScrollIntoView } from "../../utils/scroll";
 import { TripRsvpModal } from "../../components/calendar/TripRsvpModal";
 import { StoryViewer } from "../../components/story/StoryViewer";
 import {
   CosplayTile, ExpensesTile, FoodTile, PhotosTile, PracticalPanel, PracticalTile, RoomsTile, TransportTile, WeatherPanel, WeatherTile,
   hasPracticalInfo,
 } from "../../components/trip/TripTiles";
-import { tripInfo, tripPhase, tripUploadDay, type TripDay, type TripPhase } from "../../utils/trips";
+import { tripInfo, tripOutliers, tripPhase, tripUploadDay, type TripDay, type TripPhase } from "../../utils/trips";
 import { useTrip } from "./tripContext";
 import { TripTransportSheet } from "./TripTransportTab";
 import { TripCosplaySheet } from "./TripCosplayTab";
@@ -26,11 +30,12 @@ import { TripRoomsSheet } from "./TripRoomsTab";
 
 type TileId = "transport" | "food" | "rooms" | "cosplay" | "weather" | "photos" | "practical" | "expenses";
 
-/** What matters most first: plans ahead of the trip, the day itself while it's on, photos and costs after. */
+/** Always the same first four (rooms only when the trip has a hotel); the phase only orders what comes after. */
+const CORE_TILES: TileId[] = ["transport", "rooms", "photos", "food"];
 const TILE_ORDER: Record<TripPhase, TileId[]> = {
-  upcoming: ["transport", "food", "rooms", "cosplay", "weather", "photos", "practical", "expenses"],
-  live: ["food", "photos", "transport", "practical", "weather", "rooms", "cosplay", "expenses"],
-  past: ["photos", "expenses", "transport", "food", "cosplay", "rooms"],
+  upcoming: [...CORE_TILES, "cosplay", "weather", "practical", "expenses"],
+  live: [...CORE_TILES, "practical", "weather", "cosplay", "expenses"],
+  past: [...CORE_TILES, "expenses", "cosplay"],
 };
 
 /**
@@ -64,7 +69,7 @@ export function TripOverviewTab() {
   // view on open so "Uitklappen" doesn't look like it did nothing.
   useEffect(() => {
     if (!openPanel) return;
-    panelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (panelRef.current) smoothScrollIntoView(panelRef.current);
   }, [openPanel]);
 
   /** Closes whichever sheet the URL currently has open, back to plain Overzicht. */
@@ -108,14 +113,17 @@ export function TripOverviewTab() {
       <WeatherTile trip={trip} expanded={openPanel === "weather"} onToggle={() => togglePanel("weather")} />
     ),
     photos: <PhotosTile trip={trip} phase={phase} summary={storySummary} onOpenDay={setViewDayId} uploadDayId={uploadDay?.ev.id} />,
-    practical: phase !== "past" && hasPracticalInfo(info) && (
-      <PracticalTile info={info} expanded={openPanel === "practical"} onToggle={() => togglePanel("practical")} />
+    practical: phase !== "past" && (hasPracticalInfo(info) || tripOutliers(trip).length > 0) && (
+      <PracticalTile info={info} trip={trip} expanded={openPanel === "practical"} onToggle={() => togglePanel("practical")} />
     ),
     expenses: <ExpensesTile trip={trip} phase={phase} expenses={expenses} myNames={myNames} />,
   };
 
   return (
     <div className="space-y-4">
+      <HeaderAction>
+        <ShareButton onClick={onShare} />
+      </HeaderAction>
       <TripTicket
         trip={trip}
         phase={phase}
@@ -123,7 +131,6 @@ export function TripOverviewTab() {
         myNames={myNames}
         description={info.description}
         hotel={info.hotel_location}
-        uploadDayId={uploadDay?.ev.id}
         justJoined={justJoined}
         onToggleDay={onToggleDay}
         onJoin={() => {
@@ -135,14 +142,23 @@ export function TripOverviewTab() {
           leaveTrip(trip);
         }}
         onManage={() => setManageOpen(true)}
-        onShare={onShare}
       />
 
       {/* Dense flow fills the gaps a missing tile (no hotel, no con) would leave. */}
       <div className="grid grid-flow-dense grid-cols-2 gap-3 lg:grid-cols-4">
         {TILE_ORDER[phase].map((id) => tiles[id] && <Fragment key={id}>{tiles[id]}</Fragment>)}
-        {openPanel === "weather" && trip.location && <WeatherPanel ref={panelRef} trip={trip} />}
-        {openPanel === "practical" && <PracticalPanel ref={panelRef} info={info} />}
+        <AnimatePresence>
+          {openPanel === "weather" && trip.location && (
+            <motion.div key="weather" className="col-span-2 lg:col-span-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2 }}>
+              <WeatherPanel ref={panelRef} trip={trip} />
+            </motion.div>
+          )}
+          {openPanel === "practical" && (
+            <motion.div key="practical" className="col-span-2 lg:col-span-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2 }}>
+              <PracticalPanel ref={panelRef} info={info} trip={trip} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <TripRsvpModal

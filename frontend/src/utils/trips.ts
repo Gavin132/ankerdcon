@@ -71,6 +71,31 @@ function tripFromDays(id: string, days: TripDay[]): Trip {
   };
 }
 
+export interface TripOutlier {
+  name: string;
+  /** Days (in trip order) this person is signed up for. */
+  days: TripDay[];
+  kind: "leaves-early" | "arrives-late" | "some-days";
+}
+
+/**
+ * People who aren't signed up for every day of a multi-day trip — they arrive
+ * late or go home early. Single-day trips have no outliers by definition.
+ */
+export function tripOutliers(trip: Trip): TripOutlier[] {
+  if (trip.days.length < 2) return [];
+  return trip.participants.flatMap((name) => {
+    const flags = trip.days.map((d) => (d.ev.participants ?? []).includes(name));
+    const days = trip.days.filter((_, i) => flags[i]);
+    if (days.length === trip.days.length) return [];
+    const first = flags.indexOf(true);
+    const last = flags.lastIndexOf(true);
+    const contiguous = flags.slice(first, last + 1).every(Boolean);
+    const kind: TripOutlier["kind"] = !contiguous ? "some-days" : first === 0 ? "leaves-early" : last === flags.length - 1 ? "arrives-late" : "some-days";
+    return [{ name, days, kind }];
+  });
+}
+
 export function buildTrip(events: CalendarEvent[], tripId: string): Trip | null {
   const dayEvents = events.filter((e) => e.multi_day_id === tripId);
   const members = dayEvents.length > 0 ? dayEvents : events.filter((e) => e.id === tripId && !e.multi_day_id);

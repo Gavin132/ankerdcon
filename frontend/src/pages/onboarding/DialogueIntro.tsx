@@ -17,6 +17,11 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const holdRef     = useRef<ReturnType<typeof setInterval> | null>(null);
   const holdDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // What's being typed, and what to do once it's fully shown — so a tap can
+  // jump straight to the end of either.
+  const fullTextRef = useRef("");
+  const finishRef   = useRef<(() => void) | null>(null);
   const [manualEntry, setManualEntry] = useState(false);
   const [yearInput, setYearInput]     = useState(String(YEAR_DEFAULT));
 
@@ -35,6 +40,8 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
 
   function typeText(text: string, onFinish?: () => void) {
     if (intervalRef.current) clearInterval(intervalRef.current);
+    fullTextRef.current = text;
+    finishRef.current = onFinish ?? null;
     setDisplayText("");
     setTyping(true);
     setShowCaret(false);
@@ -47,23 +54,29 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
         intervalRef.current = null;
         setTyping(false);
         setShowCaret(true);
-        onFinish?.();
+        const finish = finishRef.current;
+        finishRef.current = null;
+        finish?.();
       }
     }, 28);
   }
 
-  function skipTyping(fullText: string) {
+  /** Show the whole line at once and carry on as if it had finished typing. */
+  function skipTyping() {
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = null;
-    setDisplayText(fullText);
+    setDisplayText(fullTextRef.current);
     setTyping(false);
     setShowCaret(true);
+    const finish = finishRef.current;
+    finishRef.current = null;
+    finish?.();
   }
 
   useEffect(() => {
     const t1 = setTimeout(() => setMascotIn(true), 300);
-    const t2 = setTimeout(() => typeText(introLines[0]), 1000);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    startRef.current = setTimeout(() => { startRef.current = null; typeText(introLines[0]); }, 1000);
+    return () => { clearTimeout(t1); if (startRef.current) clearTimeout(startRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -73,9 +86,21 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
     if (holdDelayRef.current) clearTimeout(holdDelayRef.current);
   }, []);
 
+  // Every tap moves things along, so clicking through without reading works
+  // at any moment: before the first line has started, mid-line, and on the
+  // closing reaction.
   function handleBoxTap() {
+    if (phase === "reacting") { if (typing) skipTyping(); return; }
     if (phase !== "talking") return;
-    if (typing) { skipTyping(introLines[lineIndex]); return; }
+    if (typing) { skipTyping(); return; }
+    if (displayText === "") {
+      if (startRef.current) { clearTimeout(startRef.current); startRef.current = null; }
+      setMascotIn(true);
+      fullTextRef.current = introLines[0];
+      setDisplayText(introLines[0]);
+      setShowCaret(true);
+      return;
+    }
     const next = lineIndex + 1;
     if (next < introLines.length) {
       setLineIndex(next);

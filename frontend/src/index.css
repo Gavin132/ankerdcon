@@ -150,7 +150,11 @@
   }
 
   .card-surface-hover {
-    @apply card-surface transition-colors duration-150;
+    @apply card-surface transition-[colors,transform] duration-150;
+  }
+
+  .card-surface-hover:active {
+    transform: scale(0.985);
   }
 
   .card-surface-hover:hover {
@@ -275,4 +279,36 @@
 /* Dividers */
 .dark .divide-slate-50 > :not([hidden]) ~ :not([hidden]) {
   border-color: #1E2A31;
+}
+
+/* `truncate` clips on all sides, which shears the descenders (g, j, y) off
+   text with a tight line-height — the display font and every `leading-none`
+   label. Clip sideways only so the ellipsis still works but nothing below the
+   line box is cut. Must stay after the Tailwind utilities to win.
+   `min-width: 0` because a flex/grid item only gets its automatic zero
+   minimum from overflow: hidden/auto — not from clip — and without it the
+   text refuses to shrink and spills out of its container. */
+.truncate {
+  overflow-x: clip;
+  overflow-y: visible;
+  min-width: 0;
+}
+
+/* Crew map, dark theme: OpenStreetMap only ships a light style, so its tiles
+   are inverted (hue-rotated back so water stays blue). Pins and controls are
+   outside the tile pane and keep their own colours. */
+.crew-map-dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9) saturate(0.7);
+}
+.crew-map-dark .leaflet-container {
+  background: #1b2227;
+}
+.crew-pin {
+  background: none;
+  border: none;
+}
+
+/* Leaflet gives popup paragraphs a big margin; the crew map's popups are compact lists. */
+.leaflet-container .leaflet-popup-content p {
+  margin: 0;
 }

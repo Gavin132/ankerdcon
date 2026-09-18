@@ -6,7 +6,6 @@ export const APP_NAME = "Ankerd Con";
 export const QUERY_KEYS = {
   rides:     ["rides"]     as const,
   meals:     ["meals"]     as const,
-  payments:  ["payments"]  as const,
   calendar:  ["calendar"]  as const,
   users:     ["users"]     as const,
   userNames: ["userNames"] as const,

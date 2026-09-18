@@ -1,5 +1,6 @@
-import { ArrowLeft, Share2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { HomeLinkButton } from "../common/HomeLinkButton";
+import { ShareButton } from "../common/ShareButton";
 import { TimeTravelControl } from "../common/TimeTravelWidget";
 import { isFreshEntry } from "../../hooks/useSmartBack";
 
@@ -29,11 +30,7 @@ export function DetailTopbar({ title, onBack, onShare, actions, width = "3xl" }:
         <h1 className="min-w-0 flex-1 truncate font-display text-[22px] font-extrabold uppercase leading-none tracking-[0.02em] text-ink">
           {title}
         </h1>
-        {onShare && (
-          <button onClick={onShare} className={ICON_BUTTON} aria-label="Delen">
-            <Share2 size={17} />
-          </button>
-        )}
+        {onShare && <ShareButton onClick={onShare} />}
         {actions}
         <TimeTravelControl variant="icon" />
         {isFreshEntry() && (

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { X, ChevronLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { AnimatedHeight } from "../common/AnimatedHeight";
 
 interface TripSheetProps {
   open: boolean;
@@ -11,6 +12,8 @@ interface TripSheetProps {
   /** Shown as a back-chevron in place of the close-adjacent gap; goes to a previous view within the same sheet instead of closing it. */
   onBack?: () => void;
   footer?: React.ReactNode;
+  /** Change this when the sheet swaps to another internal view (list ↔ form): the old view fades out, the new one slides in and the sheet eases to its new height. */
+  viewKey?: string;
   children: React.ReactNode;
 }
 
@@ -21,7 +24,7 @@ interface TripSheetProps {
  * than one internal view (e.g. a list and an add-form) without stacking a
  * second overlay on top — only the header's X fully closes it.
  */
-export function TripSheet({ open, onClose, title, subtitle, onBack, footer, children }: TripSheetProps) {
+export function TripSheet({ open, onClose, title, subtitle, onBack, footer, viewKey, children }: TripSheetProps) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -93,7 +96,21 @@ export function TripSheet({ open, onClose, title, subtitle, onBack, footer, chil
             </div>
 
             {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5">{children}</div>
+            <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5">
+              <AnimatedHeight>
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={viewKey ?? "main"}
+                    initial={{ opacity: 0, x: viewKey ? 14 : 0 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: viewKey ? -14 : 0 }}
+                    transition={{ duration: 0.16, ease: "easeOut" }}
+                  >
+                    {children}
+                  </motion.div>
+                </AnimatePresence>
+              </AnimatedHeight>
+            </div>
 
             {/* Sticky footer — padding-bottom set inline rather than via a
                 `safe-bottom` utility class: that class also sets

@@ -1,22 +1,51 @@
-import { motion } from "framer-motion";
-import { Car, Truck, X, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Car, ChevronDown, Truck, Plus, UserMinus } from "lucide-react";
+import { Button } from "../common/Button";
+import { NamePicker } from "../common/NamePicker";
 import { UserAvatar } from "../common/UserAvatar";
-import { SeatDots } from "../transport/SeatDots";
+import { Collapse } from "../common/Collapse";
 import type { RestaurantDriver } from "../../types";
 
 interface CarCardProps {
   driver: RestaurantDriver;
   canAct: boolean;
-  onJoin: (driverName: string) => void;
-  onUnassign: (userName: string) => void;
+  /** Everyone who could step into this car. */
+  userNames: string[];
+  onJoin: (driverName: string, names: string[]) => Promise<boolean>;
+  onUnassign: (names: string[]) => Promise<boolean>;
   isPending: boolean;
 }
 
-export function CarCard({ driver, canAct, onJoin, onUnassign, isPending }: CarCardProps) {
-  const spotsLeft = driver.seats - driver.passengers.length;
-  const isFull = spotsLeft <= 0;
+/**
+ * One car on a restaurant ride — laid out like a ride on the transport tab:
+ * driver on top, riders as an avatar stack in the footer, and "Stap in" /
+ * "Uitstappen" expanding in place instead of opening a popup.
+ */
+export function CarCard({ driver, canAct, userNames, onJoin, onUnassign, isPending }: CarCardProps) {
+  const [action, setAction] = useState<"join" | "leave" | null>(null);
+  const [joinNames, setJoinNames] = useState<string[]>([]);
+  const [leaveNames, setLeaveNames] = useState<string[]>([]);
+  const [namesOpen, setNamesOpen] = useState(false);
+
+  const spotsLeft = Math.max(0, driver.seats - driver.passengers.length);
+  const isFull = spotsLeft === 0;
   const isTimo = driver.name.trim().toLowerCase().startsWith("timo");
   const CarIcon = isTimo ? Truck : Car;
+  const available = userNames.filter((n) => n !== driver.name && !driver.passengers.includes(n));
+
+  function toggle(next: "join" | "leave") {
+    setAction((prev) => (prev === next ? null : next));
+    setJoinNames([]);
+    setLeaveNames([]);
+  }
+
+  async function submit() {
+    const ok = action === "join" ? await onJoin(driver.name, joinNames) : await onUnassign(leaveNames);
+    if (ok) toggle(action!);
+  }
+
+  const names = action === "join" ? joinNames : leaveNames;
 
   return (
     <motion.div
@@ -24,70 +53,123 @@ export function CarCard({ driver, canAct, onJoin, onUnassign, isPending }: CarCa
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="card-surface flex flex-col gap-3 p-3.5"
+      className="card-surface flex flex-col gap-2.5 p-3.5"
     >
-      {/* Driver row */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <UserAvatar name={driver.name} className="h-8 w-8 shrink-0 text-[11px]" />
-          <div className="min-w-0 leading-tight">
-            <p className="truncate text-sm font-semibold text-ink">{driver.name}</p>
-            <div className="mt-0.5 flex items-center gap-1 text-[11.5px] text-ink-3">
-              <CarIcon size={12} className="shrink-0" />
-              <span>Chauffeur</span>
-            </div>
-          </div>
+      {/* ── Driver ── */}
+      <div className="flex items-center gap-2.5">
+        <UserAvatar name={driver.name} className="h-8 w-8 shrink-0 text-[11px]" />
+        <div className="flex min-w-0 flex-col leading-tight">
+          <span className="truncate text-[14px] font-semibold text-ink">{driver.name}</span>
+          <span className="flex items-center gap-1 text-[11.5px] text-ink-3">
+            <CarIcon size={12} className="shrink-0" />
+            Chauffeur
+          </span>
         </div>
-        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${
-          isFull
-            ? "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300"
-            : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
-        }`}>
-          {isFull ? "Vol" : `${spotsLeft} vrij`}
-        </span>
       </div>
 
-      {/* Capacity: seat squares */}
-      <div className="flex items-center gap-2">
-        <SeatDots total={driver.seats} left={Math.max(0, spotsLeft)} />
-        <span className="font-mono text-[11px] font-semibold tabular-nums text-ink-3">
-          {driver.passengers.length}/{driver.seats}
-        </span>
-      </div>
-
-      {/* Passengers */}
-      {driver.passengers.length > 0 ? (
-        <div className="flex flex-wrap gap-1.5">
-          {driver.passengers.map((pax) => (
+      {/* ── Footer: riders, actions ── */}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t border-dashed border-line pt-2.5">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 text-[12px] text-ink-2">
+          {driver.passengers.length > 0 ? (
             <button
-              key={pax}
-              onClick={() => canAct && onUnassign(pax)}
-              disabled={!canAct || isPending}
-              title={canAct ? "Klik om te verwijderen" : undefined}
-              className="group inline-flex items-center gap-1 rounded-full border-1.5 border-line px-2 py-1 text-xs font-medium text-ink-2 transition-colors hover:border-rose-300 hover:text-rose-700 disabled:cursor-default disabled:opacity-60 dark:hover:border-rose-400/40 dark:hover:text-rose-300"
+              type="button"
+              onClick={() => setNamesOpen((v) => !v)}
+              aria-expanded={namesOpen}
+              title="Wie rijden er mee?"
+              className="flex items-center gap-1 rounded-lg"
             >
-              <UserAvatar name={pax} className="h-4 w-4 shrink-0 text-[8px] !border-0" />
-              {pax}
-              {canAct && <X size={10} className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />}
+              <span className="flex -space-x-1.5">
+                {driver.passengers.slice(0, 6).map((p) => (
+                  <UserAvatar key={p} name={p} className="h-6 w-6 text-[9px] !border-surface" />
+                ))}
+                {driver.passengers.length > 6 && (
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-surface bg-sunken font-mono text-[9px] font-semibold text-ink-2">
+                    +{driver.passengers.length - 6}
+                  </span>
+                )}
+              </span>
+              <ChevronDown size={12} className={`text-ink-3 transition-transform ${namesOpen ? "rotate-180" : ""}`} />
             </button>
-          ))}
+          ) : (
+            <span className="text-ink-3">Nog geen meerijders</span>
+          )}
+          <span className={isFull ? "font-semibold text-rose-700 dark:text-rose-300" : ""}>
+            {isFull ? "Vol" : `${spotsLeft} vrij`}
+          </span>
         </div>
-      ) : (
-        <p className="text-xs text-ink-3">Nog niemand ingestapt</p>
-      )}
 
-      {/* Stap in — full width at bottom */}
-      {canAct && !isFull && (
-        <div className="border-t border-dashed border-line pt-3">
-          <button
-            onClick={() => onJoin(driver.name)}
-            disabled={isPending}
-            className="flex w-full items-center justify-center gap-1.5 rounded-xl border-1.5 border-line bg-surface py-2.5 text-xs font-semibold text-ink transition-colors hover:border-ink-3 disabled:opacity-50"
+        {canAct && (
+          <div className="ml-auto flex items-center gap-1">
+            {driver.passengers.length > 0 && (
+              <button
+                type="button"
+                onClick={() => toggle("leave")}
+                disabled={isPending}
+                title="Uitstappen"
+                aria-expanded={action === "leave"}
+                className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                  action === "leave"
+                    ? "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300"
+                    : "text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
+                }`}
+              >
+                <UserMinus size={14} />
+              </button>
+            )}
+            {!isFull && (
+              <Button
+                size="sm"
+                variant={action === "join" ? "secondary" : "primary"}
+                className="ml-1 !min-h-[36px] !py-1.5"
+                onClick={() => toggle("join")}
+                aria-expanded={action === "join"}
+              >
+                <Plus size={13} />
+                Stap in
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+
+      <Collapse open={namesOpen && driver.passengers.length > 0}>
+        <p className="text-[12.5px] leading-snug text-ink-2">{driver.passengers.join(", ")}</p>
+      </Collapse>
+
+      {/* ── Inline stap-in / uitstappen panel ── */}
+      <AnimatePresence initial={false}>
+        {action && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="overflow-hidden"
           >
-            Stap in <ArrowRight size={12} />
-          </button>
-        </div>
-      )}
+            <div className="space-y-2.5 border-t border-dashed border-line pt-2.5">
+              {action === "join" ? (
+                <NamePicker multiple options={available} value={joinNames} onChange={setJoinNames} maxSelect={spotsLeft} color="sky" />
+              ) : (
+                <NamePicker multiple options={driver.passengers} value={leaveNames} onChange={setLeaveNames} color="rose" />
+              )}
+              <Button
+                variant={action === "leave" ? "danger" : "primary"}
+                className="w-full"
+                loading={isPending}
+                disabled={names.length === 0}
+                onClick={submit}
+              >
+                {action === "join" ? (
+                  <>
+                    <Plus size={15} />
+                    {names.length === 0 ? "Selecteer een naam" : names.length === 1 ? `${names[0]} stapt in` : `${names.length} personen stappen in`}
+                  </>
+                ) : names.length === 0 ? "Selecteer een naam" : names.length === 1 ? `${names[0]} uitstappen` : `${names.length} personen uitstappen`}
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Users, ChevronDown, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TripSheet } from "../trip/TripSheet";
@@ -33,6 +33,14 @@ export function JoinRideModal({ open, onClose, event, initialDirection, onOfferI
   const [direction, setDirection] = useState<Direction>(initialDirection);
   const [selectedRideId, setSelectedRideId] = useState<string | null>(null);
   const [joinNames, setJoinNames] = useState<string[]>([]);
+  // The hub tile picks Heen/Terug from the time of day at the moment it's
+  // tapped; this modal stays mounted, so re-sync every time it opens.
+  useEffect(() => {
+    if (open) {
+      setDirection(initialDirection);
+      setSelectedRideId(null);
+    }
+  }, [open, initialDirection]);
   const [collapsedDays, setCollapsedDays] = useState<Set<string>>(new Set());
 
   function toggleDay(label: string) {
@@ -113,7 +121,7 @@ export function JoinRideModal({ open, onClose, event, initialDirection, onOfferI
                   : "text-ink-2 hover:text-ink"
               }`}
             >
-              {event.is_hotel ? (d === "Inbound" ? "Naar congres" : "Naar hotel") : (d === "Inbound" ? "Heen" : "Terug")}
+              {event.is_hotel ? (d === "Inbound" ? "Naar evenement" : "Naar hotel") : (d === "Inbound" ? "Heen" : "Terug")}
             </button>
           ))}
         </div>

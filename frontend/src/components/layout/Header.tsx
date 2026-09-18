@@ -2,6 +2,7 @@ import { useLocation } from "react-router-dom";
 import { APP_NAME } from "../../constants";
 import { AccountMenu } from "./AccountMenu";
 import { TimeTravelControl } from "../common/TimeTravelWidget";
+import { HEADER_ACTIONS_ID } from "./HeaderAction";
 
 const PAGE_META: Record<string, { title: string; subtitle: string }> = {
   "/": { title: "Hub", subtitle: "Live event logistics" },
@@ -45,6 +46,7 @@ export function Header() {
         <div className="md:hidden">
           <TimeTravelControl variant="icon" />
         </div>
+        <div id={HEADER_ACTIONS_ID} className="flex items-center gap-2 empty:hidden" />
         <div className="lg:hidden">
           <AccountMenu />
         </div>

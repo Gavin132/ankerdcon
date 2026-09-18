@@ -16,6 +16,7 @@ import { useCurrentUser, useUsers } from "../hooks/useUsers";
 import { groupCalendarEntries, dayShort } from "../utils/multiDay";
 import { UpcomingEventsCarousel } from "../components/hub/UpcomingEventsCarousel";
 import { QuickRideTiles } from "../components/hub/QuickRideTiles";
+import { MealTodayCard } from "../components/hub/MealTodayCard";
 import { LocationPingModal } from "../components/hub/LocationPingModal";
 import { StoryRing } from "../components/story/StoryRing";
 import { StoryViewer } from "../components/story/StoryViewer";
@@ -61,26 +62,45 @@ export function HubPage() {
     .sort((a, b) => a.date.getTime() - b.date.getTime());
   const upcomingItems = groupCalendarEntries(upcomingEntries).slice(0, MAX_CAROUSEL_ITEMS);
 
-  // Story rings — one per day of the nearest upcoming trip (a single day for
-  // a one-off event, every day for a multi-day group), same "nearest trip"
-  // scope the rest of the hub already focuses on.
+  // Story rings — one per day of whichever trip is closest in date, past or
+  // upcoming: the running one during an event, and in between two events the
+  // one that's nearer (the one just gone stays until the next is closer). All
+  // of its days are shown, including the ones already over.
   const storyDays: { id: string; label: string; dateKey: string }[] = (() => {
-    const nearest = upcomingItems[0];
-    if (!nearest) return [];
-    const dayEntries = nearest.type === "single"
-      ? [{ ev: nearest.ev, date: parseEventDate(nearest.ev.date) }]
-      : nearest.events;
+    const all = (events ?? [])
+      .map((ev) => ({ ev, date: parseEventDate(ev.date) }))
+      .filter((x): x is { ev: CalendarEvent; date: Date } => x.date !== null);
+    const dayMs = 86_400_000;
+    const todayMs = new Date(`${todayStr}T00:00:00`).getTime();
+    // Days from today to the trip: 0 while it's on, else to its nearest edge.
+    // On a tie the upcoming trip wins (its distance is nudged down by half a day).
+    const distance = (days: { date: Date }[]) => {
+      const first = Math.min(...days.map((d) => d.date.getTime()));
+      const last = Math.max(...days.map((d) => d.date.getTime()));
+      if (todayMs < first) return (first - todayMs) / dayMs - 0.5;
+      if (todayMs > last) return (todayMs - last) / dayMs;
+      return -1;
+    };
+    const closest = groupCalendarEntries(all)
+      .map((item) => ({ item, d: distance(item.type === "single" ? [item] : item.events) }))
+      .sort((a, b) => a.d - b.d)[0]?.item;
+    if (!closest) return [];
+    const dayEntries = closest.type === "single"
+      ? [{ ev: closest.ev, date: closest.date as Date | null }]
+      : closest.events;
     return dayEntries
       .filter((d): d is { ev: CalendarEvent; date: Date } => d.date !== null)
       .map(({ ev, date }) => ({ id: ev.id, label: `${dayShort(date)} ${date.getDate()}`, dateKey: toDateKey(date) }));
   })();
   const { data: storySummary } = useStorySummary(storyDays.map((d) => d.id));
   // The quick "add to story" tile targets whichever trip day a photo added
-  // right now would land in, by upload time — never whatever day the photo
-  // itself depicts. No date restriction: storyDays is date-ascending and
-  // filtered to today-or-later, so its first entry is today's day mid-trip
-  // or the trip's first day before it starts.
-  const uploadTargetDay = storyDays[0] ?? null;
+  // right now would land in, by upload time: today's day, else the most recent
+  // day that's over, else the trip's first day (same rule as tripUploadDay).
+  const uploadTargetDay =
+    storyDays.find((d) => d.dateKey === todayStr) ??
+    [...storyDays].reverse().find((d) => d.dateKey < todayStr) ??
+    storyDays[0] ??
+    null;
 
   if (evLoading) return <HubSkeleton />;
 
@@ -178,6 +198,9 @@ export function HubPage() {
               />
             </motion.div>
           )}
+
+          {/* ── A mealplan today: shortcut to it, above the ride cards ── */}
+          <MealTodayCard meals={meals ?? []} myNames={[me?.name, ...(me?.aliases ?? [])].filter((n): n is string => !!n)} />
 
           {/* ── Quick ride shortcuts — switches to the shared restaurant ride
                 itself in the evening when a meal still needs transport. ── */}
