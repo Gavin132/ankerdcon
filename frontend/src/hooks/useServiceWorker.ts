@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
  * finished downloading and is waiting to take over.
  */
 export function useServiceWorker(): { updateReady: boolean; applyUpdate: () => void } {
-  const [waiting, setWaiting] = useState<ServiceWorker | null>(null);
+  const [updateReady, setUpdateReady] = useState(false);
 
   useEffect(() => {
     if (!import.meta.env.PROD || !("serviceWorker" in navigator)) return;
@@ -19,15 +19,22 @@ export function useServiceWorker(): { updateReady: boolean; applyUpdate: () => v
         if (cancelled) return;
 
         // A worker can already be waiting from a previous visit.
-        if (reg.waiting && navigator.serviceWorker.controller) setWaiting(reg.waiting);
+        if (reg.waiting && navigator.serviceWorker.controller) setUpdateReady(true);
 
         reg.addEventListener("updatefound", () => {
           const incoming = reg.installing;
           if (!incoming) return;
           incoming.addEventListener("statechange", () => {
-            // `controller` is null on the very first install — that's this same
-            // version arriving, not an update to announce.
-            if (incoming.state === "installed" && navigator.serviceWorker.controller) setWaiting(incoming);
+            // The worker skips waiting and activates on its own, so "installed"
+            // and "activated" both mean the new build is in place; this page is
+            // still running the old one until it reloads. `controller` is null
+            // on a first install — that's this same build, not an update.
+            if (
+              (incoming.state === "installed" || incoming.state === "activated") &&
+              navigator.serviceWorker.controller
+            ) {
+              setUpdateReady(true);
+            }
           });
         });
 
@@ -49,12 +56,10 @@ export function useServiceWorker(): { updateReady: boolean; applyUpdate: () => v
   }, []);
 
   function applyUpdate() {
-    if (!waiting) return;
-    // The new worker takes over, which fires `controllerchange`; reloading
-    // there (rather than immediately) guarantees the new bundle is what loads.
-    navigator.serviceWorker.addEventListener("controllerchange", () => window.location.reload(), { once: true });
-    waiting.postMessage("SKIP_WAITING");
+    // The new worker is already in charge, so a plain reload fetches the new
+    // index.html through it and the new bundle with it.
+    window.location.reload();
   }
 
-  return { updateReady: waiting !== null, applyUpdate };
+  return { updateReady, applyUpdate };
 }

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncGenerator
@@ -74,17 +75,36 @@ app.add_middleware(
 )
 
 
+# Vite names its build output like `index-8998340c.js` — the hash is the file's
+# content, so such a URL can never mean anything else. Files we ship by hand
+# (public/assets/images/…, public/icons/…) keep their name across builds and
+# must NOT be treated that way.
+_HASHED_ASSET = re.compile(r"-[0-9a-f]{8,}\.[a-z0-9]+$")
+
+
 @app.middleware("http")
-async def cache_hashed_assets(request: Request, call_next):
-    """Vite's build gives every JS/CSS/image under /assets a content hash in
-    its filename, so a build never reuses a URL for different content — the
-    browser can cache these forever instead of revalidating on every visit.
-    Without this, StaticFiles serves them with no explicit Cache-Control,
-    so a returning visitor (or the app resuming from background) re-fetches
-    the whole bundle instead of reading it straight from disk cache."""
+async def cache_static_assets(request: Request, call_next):
+    """Tells browsers what they may keep and for how long.
+
+    Content-hashed build output is immutable and cached for a year: a returning
+    visitor reads the bundle from disk instead of the network.
+
+    Everything else gets `no-cache`, which still allows a cached copy but forces
+    a revalidation first. That matters most for index.html: it is the one file
+    that names the current bundle, and without a Cache-Control header browsers
+    fall back to heuristic caching and may hold on to it for hours. After a
+    deploy, such a stale index.html asks for chunk filenames the new build no
+    longer has, and the app fails to start until its storage is cleared — which
+    is exactly what a returning visitor is least equipped to do.
+    """
     response = await call_next(request)
-    if request.url.path.startswith("/assets/"):
+    path = request.url.path
+    if path.startswith(API_PREFIX):
+        return response
+    if path.startswith("/assets/") and _HASHED_ASSET.search(path):
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    else:
+        response.headers.setdefault("Cache-Control", "no-cache")
     return response
 
 

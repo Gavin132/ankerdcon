@@ -15,6 +15,9 @@
  * new release is never applied underneath someone mid-action.
  */
 
+// Unique per build, not per release: two builds of the same version number must
+// still count as different workers, or the browser sees an identical file, skips
+// the update, and keeps serving the previous build's caches indefinitely.
 const VERSION = "__SW_VERSION__";
 const SHELL_CACHE = `ankerd-shell-${VERSION}`;
 const ASSET_CACHE = `ankerd-assets-${VERSION}`;
@@ -24,6 +27,12 @@ const ASSET_CACHE = `ankerd-assets-${VERSION}`;
 const SHELL_URLS = ["/", "/manifest.json", "/assets/images/ankerd-logo.webp", "/icons/icon-192.png"];
 
 self.addEventListener("install", (event) => {
+  // Take over as soon as this worker is ready rather than waiting for every tab
+  // to close. A worker that waits is a worker that can't fix anything: if a
+  // previous one ever leaves the app in a state that won't start, the user has
+  // no way to reach the button that would replace it. The page still decides
+  // when to *reload* — see UpdateBanner.
+  self.skipWaiting();
   event.waitUntil(
     // One bad URL must not fail the whole install, so each is added on its own.
     caches.open(SHELL_CACHE).then((cache) => Promise.allSettled(SHELL_URLS.map((url) => cache.add(url)))),
@@ -40,12 +49,11 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// The page asks for the update to be applied once the user agrees.
 self.addEventListener("message", (event) => {
   if (event.data === "SKIP_WAITING") self.skipWaiting();
 });
 
-/** Cache-first: these filenames carry a content hash, so they never change meaning. */
+/** Build output is named after its own content, so a hit can be served with no questions asked. */
 async function cacheFirst(request) {
   const cache = await caches.open(ASSET_CACHE);
   const hit = await cache.match(request);
@@ -55,28 +63,40 @@ async function cacheFirst(request) {
   return response;
 }
 
-/** Reception at an event can be slow rather than absent; don't wait forever on it. */
-const SHELL_TIMEOUT_MS = 3500;
+/**
+ * For files we ship by hand — the logo, the app icons — whose names stay the
+ * same while their contents can change. Serve the copy we have, fetch a newer
+ * one for next time; caching these forever would freeze a replaced logo on
+ * every device that had already seen the old one.
+ */
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(ASSET_CACHE);
+  const hit = await cache.match(request);
+  const network = fetch(request)
+    .then((response) => {
+      if (response.ok) cache.put(request, response.clone());
+      return response;
+    })
+    .catch(() => hit);
+  return hit ?? network;
+}
 
 /**
- * Network-first for the HTML shell, with a deadline: a returning visitor should
- * get the newest index.html (it points at the new bundle), but nobody should
- * stare at a white screen because one request is crawling. Past the deadline we
- * serve the cached shell and let the real response finish in the background, so
- * the next start has it either way.
+ * Strictly network-first for the HTML shell, falling back to cache only when the
+ * request actually fails.
+ *
+ * index.html is the one file that names the current bundle, so a stale copy asks
+ * for chunk filenames the newest deploy no longer has — half the app loads and
+ * the rest 404s. Serving it because the network was merely *slow* would trade a
+ * few seconds of waiting for a broken app, so the cached shell is kept strictly
+ * for the offline case, where the matching bundle is cached alongside it.
  */
 async function shellFirst(request) {
   const cache = await caches.open(SHELL_CACHE);
-  const network = fetch(request).then((response) => {
+  try {
+    const response = await fetch(request);
     if (response.ok) cache.put("/", response.clone());
     return response;
-  });
-
-  try {
-    const cached = await cache.match("/");
-    if (!cached) return await network;
-    const timeout = new Promise((resolve) => setTimeout(() => resolve(null), SHELL_TIMEOUT_MS));
-    return (await Promise.race([network.catch(() => null), timeout])) ?? cached;
   } catch (err) {
     const cached = (await cache.match("/")) ?? (await cache.match(request));
     if (cached) return cached;
@@ -96,7 +116,11 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(shellFirst(request));
     return;
   }
-  if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/icons/")) {
+  // Same rule the backend uses to decide what may be cached forever: a content
+  // hash in the filename (index-8998340c.js), and nothing else.
+  if (/-[0-9a-f]{8,}\.[a-z0-9]+$/.test(url.pathname)) {
     event.respondWith(cacheFirst(request));
+  } else if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/icons/")) {
+    event.respondWith(staleWhileRevalidate(request));
   }
 });

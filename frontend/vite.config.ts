@@ -44,7 +44,10 @@ function serviceWorkerPlugin(version: string) {
     name: "emit-service-worker",
     apply: "build" as const,
     generateBundle(this: { emitFile: (f: { type: "asset"; fileName: string; source: string }) => void }) {
-      const source = readFileSync("sw/service-worker.js", "utf-8").replace("__SW_VERSION__", version);
+      // Version *plus* build time: the worker must differ byte-for-byte between
+      // builds, otherwise the browser sees no change and never replaces it.
+      const buildId = `${version}-${Date.now().toString(36)}`;
+      const source = readFileSync("sw/service-worker.js", "utf-8").replace("__SW_VERSION__", buildId);
       this.emitFile({ type: "asset", fileName: "sw.js", source });
     },
   };
