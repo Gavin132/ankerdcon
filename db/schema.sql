@@ -73,7 +73,8 @@ CREATE TABLE IF NOT EXISTS meals (
   description      TEXT,
   dietary_options  TEXT,
   parking_info     TEXT,
-  extra_notes      TEXT
+  extra_notes      TEXT,
+  created_by       TEXT
 );
 
 
@@ -160,3 +161,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.calendar      TO service_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.badges        TO service_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.event_groups  TO service_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.announcements TO service_role;
+
+-- ── no direct access from browsers ────────────────────────────────────────────
+-- The frontend only uses Supabase to log in; everything else goes through the
+-- backend (service_role). After running the migrations, run
+-- migrations/migration_v2.22_lock_down_direct_access.sql to remove the
+-- anon/authenticated grants Supabase adds by default and enable RLS everywhere.

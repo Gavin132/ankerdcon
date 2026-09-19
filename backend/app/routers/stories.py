@@ -10,7 +10,7 @@ from app.constants import Tables
 from app.core import minio_client
 from app.core.database import supabase
 from app.core.logging import get_logger
-from app.core.uploads import read_capped
+from app.core.uploads import clean_image, read_capped
 from app.dependencies import get_current_user
 from app.models.story import MarkStorySeenRequest, StoryDaySummary, StoryPhoto, StorySeenState
 from app.routes import StoryRoutes
@@ -125,6 +125,7 @@ async def upload_story_photo(
         )
 
     content = await read_capped(file, _MAX_BYTES)
+    content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP"})
 
     # Nest under the parent event too (not just the day) so MinIO's own
     # browser groups a multi-day con's photos together instead of scattering
@@ -143,11 +144,10 @@ async def upload_story_photo(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenementdag niet gevonden.")
     event_id = day_row.data[0]["event_id"]
 
-    ext = _EXT.get(file.content_type, "jpg")
     key = f"{event_id}/{event_day_id}/{uuid.uuid4().hex}.{ext}"
 
     try:
-        image_url = minio_client.upload_bytes(key, content, file.content_type)
+        image_url = minio_client.upload_bytes(key, content, content_type)
     except RuntimeError as e:
         # MinIO not configured yet — a clear message instead of a generic 503.
         logger.error("Story photo upload failed (MinIO not configured): %s", e)

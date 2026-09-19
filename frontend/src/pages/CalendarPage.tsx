@@ -9,7 +9,7 @@ import { EmptyState } from "../components/common/EmptyState";
 import { useUsers } from "../hooks/useUsers";
 import { useMeals } from "../hooks/useMeals";
 import { useRides } from "../hooks/useRides";
-import { useCalendar } from "../hooks/useCalendar";
+import { useCalendar, useCalendarFeedPath } from "../hooks/useCalendar";
 import { useTripRsvp } from "../hooks/useTripRsvp";
 import { useTimeStore } from "../store/time.store";
 import { toDateKey, todayKey } from "../utils/date";
@@ -42,10 +42,12 @@ export function CalendarPage() {
   const pastTrips = trips.filter((t) => toDateKey(t.days[t.days.length - 1].date) < today).reverse();
   const manageTrip = trips.find((t) => t.id === manageTripId) ?? null;
 
-  const feedUrl = `${env.API_BASE_URL || window.location.origin}/api/calendar/feed.ics`;
+  const { data: feedPath } = useCalendarFeedPath(subscribeOpen);
+  const feedUrl = feedPath ? `${env.API_BASE_URL || window.location.origin}${feedPath}` : "";
   const googleCalUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(feedUrl.replace(/^https?:/, "webcal:"))}`;
 
   function copyFeedUrl() {
+    if (!feedUrl) return;
     navigator.clipboard.writeText(feedUrl).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -131,7 +133,7 @@ export function CalendarPage() {
           >
             <div className="card-surface flex items-center gap-2 px-3.5 py-2.5">
               <p className="flex-1 truncate font-mono text-[11.5px] text-ink-2">
-                {feedUrl}
+                {feedUrl || "Link ophalen…"}
               </p>
               <button
                 onClick={copyFeedUrl}
@@ -141,7 +143,7 @@ export function CalendarPage() {
                 {copied ? <Check size={14} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={14} />}
               </button>
               <a
-                href={googleCalUrl}
+                href={feedUrl ? googleCalUrl : undefined}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="shrink-0 whitespace-nowrap rounded-lg border-1.5 border-line bg-surface px-2.5 py-1.5 text-[12px] font-semibold text-ink transition-colors hover:border-ink-3"

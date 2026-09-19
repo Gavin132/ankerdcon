@@ -3,7 +3,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from app.config import Settings, get_settings
 from app.constants import Tables
 from app.core.logging import get_logger
-from app.dependencies import get_current_user
+from app.dependencies import act_as, get_current_user, require_owner_or_admin
 from app.models.meal import CreateMealRequest, Meal, RsvpRequest
 from app.routes import MealRoutes
 from app.services import notification_service
@@ -29,10 +29,11 @@ def list_meals(_: str = Depends(get_current_user)) -> list[Meal]:
 def create_meal(
     body: CreateMealRequest,
     background_tasks: BackgroundTasks,
-    _: str = Depends(get_current_user),
+    current_user: str = Depends(get_current_user),
     settings: Settings = Depends(get_settings),
 ) -> None:
     meal_data = {
+        "created_by": current_user,
         "meal_name": body.meal_name,
         "time": body.time,
         "location": body.location,
@@ -66,7 +67,8 @@ def create_meal(
 
 
 @router.post(MealRoutes.RSVP, status_code=status.HTTP_204_NO_CONTENT)
-def rsvp(meal_id: str, body: RsvpRequest, _: str = Depends(get_current_user)) -> None:
+def rsvp(meal_id: str, body: RsvpRequest, current_user: str = Depends(get_current_user)) -> None:
+    user_name = act_as(current_user, body.user_name)
     try:
         meal = supabase.table(Tables.MEALS).select("participants").eq("id", meal_id).single().execute()
     except Exception as e:
@@ -77,8 +79,8 @@ def rsvp(meal_id: str, body: RsvpRequest, _: str = Depends(get_current_user)) ->
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Maaltijd niet gevonden.")
 
     participants = meal.data.get("participants") or []
-    if body.user_name not in participants:
-        participants.append(body.user_name)
+    if user_name not in participants:
+        participants.append(user_name)
         try:
             supabase.table(Tables.MEALS).update({"participants": participants}).eq("id", meal_id).execute()
         except Exception as e:
@@ -87,7 +89,8 @@ def rsvp(meal_id: str, body: RsvpRequest, _: str = Depends(get_current_user)) ->
 
 
 @router.post(MealRoutes.CANCEL_RSVP, status_code=status.HTTP_204_NO_CONTENT)
-def cancel_rsvp(meal_id: str, body: RsvpRequest, _: str = Depends(get_current_user)) -> None:
+def cancel_rsvp(meal_id: str, body: RsvpRequest, current_user: str = Depends(get_current_user)) -> None:
+    user_name = act_as(current_user, body.user_name)
     try:
         meal = supabase.table(Tables.MEALS).select("participants").eq("id", meal_id).single().execute()
     except Exception as e:
@@ -98,8 +101,8 @@ def cancel_rsvp(meal_id: str, body: RsvpRequest, _: str = Depends(get_current_us
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Maaltijd niet gevonden.")
 
     participants = meal.data.get("participants") or []
-    if body.user_name in participants:
-        participants.remove(body.user_name)
+    if user_name in participants:
+        participants.remove(user_name)
         try:
             supabase.table(Tables.MEALS).update({"participants": participants}).eq("id", meal_id).execute()
         except Exception as e:
@@ -108,7 +111,20 @@ def cancel_rsvp(meal_id: str, body: RsvpRequest, _: str = Depends(get_current_us
 
 
 @router.delete(MealRoutes.DETAIL, status_code=status.HTTP_204_NO_CONTENT)
-def delete_meal(meal_id: str, _: str = Depends(get_current_user)) -> None:
+def delete_meal(meal_id: str, current_user: str = Depends(get_current_user)) -> None:
+    try:
+        row = supabase.table(Tables.MEALS).select("created_by").eq("id", meal_id).execute()
+    except Exception as e:
+        logger.error("Failed to fetch meal %s for delete: %s", meal_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if not row.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Maaltijd niet gevonden.")
+    require_owner_or_admin(
+        current_user,
+        row.data[0].get("created_by"),
+        "Alleen wie deze maaltijd heeft aangemaakt, of een admin, kan hem verwijderen.",
+    )
+
     try:
         supabase.table(Tables.MEALS).delete().eq("id", meal_id).execute()
     except Exception as e:

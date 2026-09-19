@@ -24,6 +24,18 @@ export function useCurrentUser(options?: { enabled?: boolean }) {
   });
 }
 
+/** Who the signed-in user may act for: everyone for an admin, only
+ * themselves otherwise. Mirrors act_as() on the backend, so a name picker
+ * never offers a name the API would refuse. */
+export function useActingPermissions() {
+  const { data: me } = useCurrentUser();
+  const canActFor = (name: string) => !!me && (me.is_admin || name === me.name);
+  return {
+    canActFor,
+    actable: (names: string[]) => names.filter(canActFor),
+  };
+}
+
 export function useCompleteOnboarding() {
   const qc = useQueryClient();
   return useMutation({

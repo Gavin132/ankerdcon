@@ -66,6 +66,41 @@ All notable changes to Ankerd Con are documented here.
 - The Acties page, the Meer tab, the separate story archive and the admin
   "Hotelkamer" field on users. Old links redirect to the new pages.
 
+### Security
+- Logging in can no longer be used to take over someone else's account. The
+  backend now identifies you only by what Supabase verified during the
+  Discord or Google login, never by details a user can edit themselves.
+  - A profile an admin created ahead of time is only linked to a Discord
+    account on the whitelist.
+- Members can only sign themselves up or off (meals, rides, restaurant cars,
+  trip days, hotel rooms), post their own location and log expenses they
+  paid. Admins can still do this for anyone. Name pickers only show names
+  you're allowed to pick.
+- Only the creator (or an admin) can delete a meal, cosplay, expense or
+  payment. Only the person who owes a share can mark it as paid, and only
+  the payer can confirm it.
+- Links on meals, events, cosplays and badges must be http(s). A plain
+  domain like `www.pizzeria.nl` gets `https://` added. Older links that
+  aren't http(s) are no longer clickable.
+- Uploaded photos lose their metadata, including where they were taken, and
+  a file has to really be an image to be accepted.
+- Browsers can no longer read or change the database or storage directly;
+  everything goes through the backend. Event covers and badge images are
+  uploaded through the backend too.
+- The Agenda subscription link now contains a secret. Existing calendar
+  subscriptions stop updating: subscribe again from Agenda → Abonneren.
+- Discord messages can't ping `@everyone` or anyone else through text
+  members typed.
+- Admins can no longer log in as another admin, and every "log in as" is
+  logged.
+- You can't rename yourself to, or add as an alias, a name that belongs to
+  someone else, including their former names.
+- The app sends security headers, including a Content Security Policy that
+  limits where scripts and connections may come from.
+- The API documentation is off unless `API_DOCS_ENABLED` is set, the
+  public list of member names is gone, and too many requests from one place
+  get a "wait a moment" (429) instead of being served.
+
 ---
 
 ## [1.5.0] - 2026-09-02

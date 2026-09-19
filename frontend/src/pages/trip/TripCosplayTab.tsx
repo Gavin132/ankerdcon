@@ -10,7 +10,7 @@ import { z } from "zod";
 import { useCosplays, useCreateCosplay, useDeleteCosplay } from "../../hooks/useCosplays";
 import { uploadCosplayImage } from "../../services/cosplays.service";
 import { compressImage } from "../../utils/imageCompression";
-import { useUsers, useCurrentUser } from "../../hooks/useUsers";
+import { useUsers, useCurrentUser, useActingPermissions } from "../../hooks/useUsers";
 import { CosplayCard } from "../../components/cosplay/CosplayCard";
 import { CosplayDetailDrawer } from "../../components/cosplay/CosplayDetailDrawer";
 import {
@@ -69,6 +69,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
 
   const { data: cosplays = [], isLoading } = useCosplays();
   const { data: users = [] }              = useUsers();
+  const { actable } = useActingPermissions();
   const { data: currentUser }             = useCurrentUser();
 
   const createMutation = useCreateCosplay();
@@ -263,7 +264,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
 
           <div className={SF}>
             <p className={ST}>Wie draagt dit?</p>
-            <NamePicker options={userNames} value={selectedUser} onChange={setSelectedUser} placeholder="Zoek naam…" color="sky" />
+            <NamePicker options={actable(userNames)} value={selectedUser} onChange={setSelectedUser} placeholder="Zoek naam…" color="sky" />
             {!selectedUser && <p className="mt-1 text-xs text-ink-3">Selecteer de persoon die dit cosplay draagt.</p>}
           </div>
 

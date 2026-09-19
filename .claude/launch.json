@@ -11,6 +11,13 @@
     {
       "name": "backend",
       "url": "http://localhost:8000"
+    },
+    {
+      "name": "backend-serve-build",
+      "cwd": "backend",
+      "runtimeExecutable": "../.venv/Scripts/python.exe",
+      "runtimeArgs": ["-m", "uvicorn", "main:app", "--port", "8010"],
+      "port": 8010
     }
   ]
 }

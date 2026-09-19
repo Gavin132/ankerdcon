@@ -42,8 +42,27 @@ Recent MinIO's free "Community Edition" console dropped the GUI for both
 anonymous-access policies and access-key management, so this goes through
 `mc` in a throwaway container instead:
 
+Anonymous visitors may read a photo when they know its URL, and nothing else.
+Don't use `mc anonymous set download` for this: MinIO's canned "download"
+policy also grants `s3:ListBucket`, so anyone could list every photo in the
+bucket. Save this as `read-only.json`:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": { "AWS": ["*"] },
+    "Action": ["s3:GetObject"],
+    "Resource": ["arn:aws:s3:::story-photos/*"]
+  }]
+}
+```
+
+and apply it, then create the app's access key:
+
 ```bash
-docker run --rm minio/mc sh -c "mc alias set local http://<lan-ip>:9002 <root_user> <root_password> && mc anonymous set download local/story-photos && mc admin accesskey create local"
+docker run --rm -v "$PWD/read-only.json:/read-only.json" minio/mc sh -c "mc alias set local http://<lan-ip>:9002 <root_user> <root_password> && mc anonymous set-json /read-only.json local/story-photos && mc admin accesskey create local"
 ```
 
 (Bucket itself was still created via the console: **Create Bucket** →
@@ -93,7 +112,13 @@ same as the other subdomains.
 response to an unauthenticated ListBuckets call, not a failure. The real
 test is fetching an actual object: `cdn.ankerd.org/story-photos/<path>`
 should return the file directly with no auth needed (confirmed via the
-anonymous-download policy from step 2).
+read-only policy from step 2).
+
+Listing the bucket must be refused:
+`curl -s -o /dev/null -w "%{http_code}" "https://cdn.ankerd.org/story-photos/?list-type=2"`
+should print `403`. A `200` means the bucket still has the canned
+"download" policy and anyone can list every photo; apply `read-only.json`
+from step 2.
 
 ## Current `backend/.env` values
 

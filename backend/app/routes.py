@@ -20,6 +20,7 @@ class RideRoutes:
 class CalendarRoutes:
     PREFIX = "/calendar"
     FEED = "/feed.ics"
+    FEED_URL = "/feed-url"
     LIST = "/"
     RSVP = "/{event_id}/rsvp"
     LEAVE = "/{event_id}/leave"
@@ -31,7 +32,6 @@ class CalendarRoutes:
 
 class UserRoutes:
     PREFIX = "/users"
-    NAMES = "/names"
     LIST = "/"
     PREFERENCES = "/preferences"
     NAME = "/name"
@@ -107,6 +107,10 @@ class AdminRoutes:
     USERS_BULK_DEACTIVATE = "/users/bulk-deactivate"
     USER_BADGE = "/users/{user_id}/badges/{badge_id}"
     IMPERSONATE = "/impersonate/{user_id}"
+
+    # Images (event covers, badges) — uploaded through the backend, never
+    # straight from the browser to storage.
+    UPLOAD_IMAGE = "/uploads/{kind}"
 
     # Rides
     RIDES = "/rides"

@@ -54,7 +54,8 @@ def _send_dm(bot_token: str, discord_id: str, content: str) -> None:
             r = client.post(
                 f"{_DISCORD_API}/channels/{channel_id}/messages",
                 headers=_headers(bot_token),
-                json={"content": content},
+                # Content includes text members typed — never let it ping anyone.
+                json={"content": content, "allowed_mentions": {"parse": []}},
             )
             if r.status_code not in (200, 201):
                 print(f"[discord_bot] send_message failed ({r.status_code}): {r.text}")

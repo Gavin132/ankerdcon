@@ -18,6 +18,8 @@ export function AdminImpersonatePage() {
 
   const filtered = users
     .filter((u) => u.name !== me?.name)
+    // The backend refuses to sign in as another admin.
+    .filter((u) => !u.is_admin)
     .filter((u) => {
       if (!search) return true;
       const q = search.toLowerCase();
@@ -81,11 +83,6 @@ export function AdminImpersonatePage() {
                 {!user.discord_id && (
                   <span className="rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2">
                     Gast
-                  </span>
-                )}
-                {user.is_admin && (
-                  <span className="rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2">
-                    Admin
                   </span>
                 )}
                 {user.is_active === false && (

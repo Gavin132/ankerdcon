@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 
 from app.constants import Tables
 from app.core.logging import get_logger
-from app.core.uploads import read_capped
-from app.dependencies import get_current_user, _strip_discriminator
+from app.core.uploads import clean_image, read_capped
+from app.dependencies import act_as, get_current_user, _strip_discriminator
 from app.models.user import CompleteOnboardingRequest, LocationPingRequest, UpdateNameRequest, UpdatePreferencesRequest, User
 from app.routes import UserRoutes
 from app.core.database import supabase
@@ -17,22 +17,49 @@ logger = get_logger(__name__)
 BANNER_BUCKET = "banners"
 BANNER_MAX_BYTES = 8 * 1024 * 1024  # 8 MB
 BANNER_ALLOWED_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
-BANNER_EXT = {"image/jpeg": "jpg", "image/png": "png", "image/gif": "gif", "image/webp": "webp"}
 
 router = APIRouter(prefix=UserRoutes.PREFIX, tags=["users"])
 
 _DB_ERROR = "Databasefout. Probeer het opnieuw."
 
 
-@router.get(UserRoutes.NAMES, response_model=list[str])
-def list_names() -> list[str]:
-    """Public endpoint — returns only names for the login name picker."""
+def _names_claimed_by_others(names: list[str], current_user: str) -> list[str]:
+    """Names that already belong to someone else — as their current name or
+    one of their former names (aliases). Rides, meals and trips record people
+    by name, so claiming one of those would hand you their sign-ups."""
+    wanted = {n.strip().casefold(): n for n in names if n and n.strip()}
+    if not wanted:
+        return []
     try:
-        response = supabase.table(Tables.PROFILES).select("name").execute()
-        return [row["name"] for row in response.data if row.get("name") and str(row.get("name")).strip()]
+        rows = supabase.table(Tables.PROFILES).select("name, aliases").execute().data
     except Exception as e:
-        logger.error("Failed to list user names: %s", e)
+        logger.error("Failed to check names against other profiles: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    taken: set[str] = set()
+    for row in rows:
+        if row["name"] == current_user:
+            continue
+        taken.update(n.casefold() for n in [row["name"], *(row.get("aliases") or [])] if n)
+    return [original for key, original in wanted.items() if key in taken]
+
+
+def _reject_claimed_aliases(aliases: list[str] | None, current_user: str) -> None:
+    if not aliases:
+        return
+    # Only aliases being added now: an overlap already in older data
+    # shouldn't stop someone from saving the rest of their profile.
+    try:
+        row = supabase.table(Tables.PROFILES).select("aliases").eq("name", current_user).execute()
+    except Exception as e:
+        logger.error("Failed to fetch aliases for %s: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    existing = set((row.data[0].get("aliases") or []) if row.data else [])
+    claimed = _names_claimed_by_others([a for a in aliases if a not in existing], current_user)
+    if claimed:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Deze naam hoort al bij een ander account: {', '.join(claimed)}.",
+        )
 
 
 @router.get(UserRoutes.LIST, response_model=list[User])
@@ -72,6 +99,7 @@ def update_preferences(
 
     if not updates:
         return
+    _reject_claimed_aliases(body.aliases, current_user)
 
     try:
         response = supabase.table(Tables.PROFILES).update(updates).eq("name", current_user).execute()
@@ -105,7 +133,7 @@ def update_name(
         logger.error("Failed to check name uniqueness for %s: %s", new_name, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
-    if existing.data:
+    if existing.data or _names_claimed_by_others([new_name], current_user):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Deze naam is al in gebruik door een ander account.",
@@ -147,6 +175,7 @@ def ping_location(
     optional coordinates. Older pings are plain "zone|text (at HH:MM)" strings,
     which the frontend still understands.
     """
+    identifier = act_as(current_user, identifier)
     ping: dict = {
         "zone": body.zone.strip(),
         "text": body.text.strip(),
@@ -186,6 +215,7 @@ def complete_onboarding(
     if body.banner_color is not None:
         updates["banner_color"] = body.banner_color
     if body.aliases is not None:
+        _reject_claimed_aliases(body.aliases, current_user)
         updates["aliases"] = body.aliases
     if body.notification_categories is not None:
         updates["notification_categories"] = body.notification_categories
@@ -324,6 +354,7 @@ async def upload_banner(
         )
 
     content = await read_capped(file, BANNER_MAX_BYTES)
+    content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP", "GIF"})
 
     try:
         user_row = supabase.table(Tables.PROFILES).select("id, banner_url").eq("name", current_user).execute()
@@ -344,14 +375,13 @@ async def upload_banner(
         except Exception:
             pass  # non-fatal — old banner cleanup is best-effort
 
-    ext = BANNER_EXT.get(file.content_type, "jpg")
     path = f"{user_id}/banner.{ext}"
 
     try:
         supabase.storage.from_(BANNER_BUCKET).upload(
             path,
             content,
-            {"upsert": "true", "content-type": file.content_type},
+            {"upsert": "true", "content-type": content_type},
         )
     except Exception as e:
         logger.error("Storage upload failed for user %s: %s", current_user, e)

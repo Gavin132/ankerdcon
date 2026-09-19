@@ -28,8 +28,7 @@ export function useCreateExpense() {
 export function useDeleteExpense() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, userName }: { id: string; userName: string }) =>
-      deleteExpense(id, userName),
+    mutationFn: (id: string) => deleteExpense(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.expenses }),
   });
 }

@@ -22,3 +22,19 @@ export function validatePhoneNumber(value: string): string | null {
   }
   return null;
 }
+
+// ─── Links from stored data ──────────────────────────────────────────────────
+// A `javascript:` or `data:` URL in an href runs code when clicked, and React 18
+// still renders it. The API only accepts http(s) links now, but rows saved
+// before that may hold anything — so every link that comes from data goes
+// through here first.
+
+export function safeHref(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  try {
+    const parsed = new URL(url.trim(), window.location.origin);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.href : undefined;
+  } catch {
+    return undefined;
+  }
+}
