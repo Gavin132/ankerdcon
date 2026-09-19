@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
 import { routes } from "../../config/routes";
 import { attemptAutoReload } from "../../utils/errorRecovery";
+import { StatusLink } from "./StatusLink";
 
 interface Props {
   children: ReactNode;
@@ -54,6 +55,7 @@ export function ErrorFallback() {
             Terug naar start
           </a>
         </div>
+        <StatusLink className="mt-6" />
       </motion.div>
     </div>
   );

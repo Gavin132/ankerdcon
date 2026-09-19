@@ -3,6 +3,9 @@ import type { TabId } from "../types";
 
 export const APP_NAME = "Ankerd Con";
 
+/** Public uptime page — on its own host, so it stays up when this app is down. */
+export const STATUS_PAGE_URL = "https://status.ankerd.org/";
+
 export const QUERY_KEYS = {
   rides:     ["rides"]     as const,
   meals:     ["meals"]     as const,
