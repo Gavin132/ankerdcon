@@ -190,6 +190,7 @@ export interface Meal {
   dietary_options?: string;
   parking_info?: string;
   extra_notes?: string;
+  created_by?: string | null;
 }
 
 // Event-day photo stories

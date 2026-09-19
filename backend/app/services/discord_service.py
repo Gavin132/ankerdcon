@@ -83,7 +83,9 @@ def _embed(
 
 
 def _payload(*embeds: dict) -> dict[str, Any]:
-    return {"username": _BOT_NAME, "embeds": list(embeds)}
+    # Messages carry text members typed (meal names, descriptions). An empty
+    # allowed_mentions list means "@everyone" or "<@id>" in there never pings.
+    return {"username": _BOT_NAME, "embeds": list(embeds), "allowed_mentions": {"parse": []}}
 
 
 async def _post(webhook_url: str, payload: dict) -> None:

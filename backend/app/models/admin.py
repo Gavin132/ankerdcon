@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from pydantic import BaseModel, field_validator
+from app.core.validation import ImageUrl, WebUrl
 
 
 class AdminCreateUserRequest(BaseModel):
@@ -43,8 +44,8 @@ class AdminCreateMealRequest(BaseModel):
     cost: float = 0.0
     transport_needed: bool = False
     linked_event_id: Optional[str] = None
-    website: Optional[str] = None
-    menu_url: Optional[str] = None
+    website: WebUrl = None
+    menu_url: WebUrl = None
     description: Optional[str] = None
     dietary_options: Optional[str] = None
     parking_info: Optional[str] = None
@@ -58,8 +59,8 @@ class AdminUpdateMealRequest(BaseModel):
     cost: Optional[float] = None
     transport_needed: Optional[bool] = None
     linked_event_id: Optional[str] = None
-    website: Optional[str] = None
-    menu_url: Optional[str] = None
+    website: WebUrl = None
+    menu_url: WebUrl = None
     description: Optional[str] = None
     dietary_options: Optional[str] = None
     parking_info: Optional[str] = None
@@ -73,11 +74,11 @@ class AdminCreateEventRequest(BaseModel):
     is_party: bool = False
     hotel_location: Optional[str] = None
     hotel_info: Optional[str] = None
-    image_url: Optional[str] = None
+    image_url: ImageUrl = None
     description: Optional[str] = None
     location: Optional[str] = None
-    website: Optional[str] = None
-    ticket_url: Optional[str] = None
+    website: WebUrl = None
+    ticket_url: WebUrl = None
     ticket_sale_start: Optional[str] = None
     ticket_types: Optional[list[dict]] = None
     locker_info: Optional[str] = None
@@ -93,11 +94,11 @@ class AdminUpdateEventRequest(BaseModel):
     is_party: Optional[bool] = None
     hotel_location: Optional[str] = None
     hotel_info: Optional[str] = None
-    image_url: Optional[str] = None
+    image_url: ImageUrl = None
     description: Optional[str] = None
     location: Optional[str] = None
-    website: Optional[str] = None
-    ticket_url: Optional[str] = None
+    website: WebUrl = None
+    ticket_url: WebUrl = None
     ticket_sale_start: Optional[str] = None
     ticket_types: Optional[list[dict]] = None
     locker_info: Optional[str] = None

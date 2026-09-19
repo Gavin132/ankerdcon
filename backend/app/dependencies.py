@@ -1,13 +1,15 @@
 """FastAPI dependency providers shared across routers."""
 from __future__ import annotations
 
+import threading
 import time
+import uuid
+from dataclasses import dataclass
 from typing import Any
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import ExpiredSignatureError, JWTError
-from jose import jwt as jose_jwt
+import jwt
 
 from app.config import Settings, get_settings
 from app.core.database import supabase
@@ -25,15 +27,13 @@ _AUTH_FAILED = "Authenticatie mislukt."
 _ACCESS_DENIED = "Toegang geweigerd. Neem contact op met een beheerder."
 _DEACTIVATED = "Je account is gedeactiveerd. Neem contact op met een beheerder."
 _TRY_AGAIN = "Kon niet controleren of je toegang hebt. Probeer het opnieuw."
+_NOT_YOURSELF = "Je kunt dit alleen voor jezelf doen."
 
-# Supabase stamps the identity provider's own issuer into user_metadata.iss —
-# unlike app_metadata.provider (pinned to whichever provider created the
-# account, never updated after) this gets overwritten on every sign-in with
-# whichever linked provider actually authenticated that session, so it's the
-# only reliable way to tell which provider is "live" right now once an
-# account has more than one linked (Supabase auto-links accounts that share
-# a verified email across providers).
-_DISCORD_ISSUER = "https://discord.com/api"
+# How long a user's verified identities (see _verified_identity) are reused
+# before Supabase is asked again. Identities only change when someone links
+# or unlinks a provider, so a few minutes of staleness costs nothing.
+_IDENTITY_TTL_SECONDS = 600
+_IDENTITY_MISS_TTL_SECONDS = 60
 
 
 def _strip_discriminator(name: str | None) -> str | None:
@@ -51,37 +51,110 @@ def _decode_token(token: str, jwt_secret: str) -> dict[str, Any] | None:
 
     Returns the payload on success.
     Raises HTTP 401 if the token is definitively expired.
-    Returns None for any other JWTError (e.g. wrong secret) so the caller can fall back.
+    Returns None for any other invalid token (e.g. wrong secret) so the caller can fall back.
     """
     try:
-        return jose_jwt.decode(
+        return jwt.decode(
             token,
             jwt_secret,
             algorithms=[_JWT_ALGORITHM],
             audience=_JWT_AUDIENCE,
+            options={"require": ["exp", "sub"]},
         )
-    except ExpiredSignatureError:
+    except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Ongeldige of verlopen sessie. Log opnieuw in.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except JWTError as e:
+    except jwt.InvalidTokenError as e:
         logger.debug("Local JWT decode failed, falling back to Supabase API: %s", e)
         return None
 
 
+# ── Verified identities ───────────────────────────────────────────────────────
+#
+# A token's user_metadata must never decide who someone is: the signed-in user
+# can rewrite it at will with supabase.auth.updateUser({ data: {...} }), and
+# the next token they get carries whatever they wrote — a victim's Discord id
+# as provider_id, for instance. The only trustworthy parts of a token are its
+# signature and its `sub`. Everything else about the person (Discord id, email,
+# names, avatar) is read from the identities Supabase itself recorded during
+# the OAuth flow, via the admin API.
+
+@dataclass(frozen=True)
+class VerifiedIdentity:
+    discord_id: str | None = None
+    discord_username: str | None = None
+    discord_display_name: str | None = None
+    discord_avatar: str | None = None
+    email: str | None = None  # only set once Supabase has confirmed it
+    email_display_name: str | None = None
+    email_avatar: str | None = None
+
+
+_identity_cache: dict[str, tuple[float, VerifiedIdentity | None]] = {}
+_identity_lock = threading.Lock()
+
+
+def _verified_identity(user_id: str) -> VerifiedIdentity | None:
+    """Everything Supabase verified about this auth user, or None when there is
+    no such auth user (an impersonation token for a guest profile) or Supabase
+    couldn't be reached."""
+    now = time.monotonic()
+    with _identity_lock:
+        hit = _identity_cache.get(user_id)
+    if hit and now < hit[0]:
+        return hit[1]
+
+    try:
+        user = supabase.auth.admin.get_user_by_id(user_id).user
+    except Exception as e:
+        # Also what an impersonated guest profile (no auth user at all) ends
+        # up here with — remember the miss briefly so its every request
+        # doesn't ask Supabase again.
+        logger.warning("Auth: could not fetch verified identities: %s", e)
+        with _identity_lock:
+            _identity_cache[user_id] = (now + _IDENTITY_MISS_TTL_SECONDS, None)
+        return None
+
+    identity: VerifiedIdentity | None = None
+    if user:
+        identities = user.identities or []
+        discord = next((i for i in identities if i.provider == "discord"), None)
+        other = next((i for i in identities if i.provider != "discord"), None)
+        discord_data = (discord.identity_data or {}) if discord else {}
+        other_data = (other.identity_data or {}) if other else {}
+        identity = VerifiedIdentity(
+            discord_id=(discord_data.get("provider_id") or discord.id) if discord else None,
+            discord_username=_strip_discriminator(discord_data.get("preferred_username") or discord_data.get("name")),
+            discord_display_name=discord_data.get("full_name") or discord_data.get("name"),
+            discord_avatar=discord_data.get("avatar_url") or discord_data.get("picture"),
+            email=user.email.lower() if user.email and user.email_confirmed_at else None,
+            email_display_name=other_data.get("full_name") or other_data.get("name"),
+            email_avatar=other_data.get("avatar_url") or other_data.get("picture"),
+        )
+
+    with _identity_lock:
+        _identity_cache[user_id] = (now + _IDENTITY_TTL_SECONDS, identity)
+    return identity
+
+
 def _unique_profile_name(candidate: str) -> str:
-    """Discord usernames are unique enough in practice that name collisions were
-    never handled — but a Google/email display name (or an email's local part)
-    collides much more easily, so a fresh non-Discord signup needs a fallback."""
-    if not supabase.table("profiles").select("name").eq("name", candidate).execute().data:
+    """A name for a new profile that nobody uses yet — not as their current
+    name and not as a former one (alias), ignoring case. Rides, meals and
+    trips record people by name, so a clash would hand the newcomer someone
+    else's sign-ups. Discord usernames are unique on Discord, but not against
+    Google display names or names people picked themselves here."""
+    rows = supabase.table("profiles").select("name, aliases").execute().data or []
+    taken = {n.casefold() for r in rows for n in [r.get("name"), *(r.get("aliases") or [])] if n}
+    if candidate.casefold() not in taken:
         return candidate
-    for suffix in range(2, 6):
+    for suffix in range(2, 100):
         attempt = f"{candidate}{suffix}"
-        if not supabase.table("profiles").select("name").eq("name", attempt).execute().data:
+        if attempt.casefold() not in taken:
             return attempt
-    return candidate  # give up disambiguating; the insert will surface a clear conflict
+    return f"{candidate}-{uuid.uuid4().hex[:6]}"
 
 
 def get_current_user(
@@ -101,23 +174,10 @@ def get_current_user(
         # Falls back to Supabase Auth API if the secret is not set or decode fails.
         payload = _decode_token(token, settings.supabase_jwt_secret) if settings.supabase_jwt_secret else None
         if payload is not None:
-            meta = payload.get("user_metadata") or {}
-            app_meta = payload.get("app_metadata") or {}
             user_id = payload.get("sub") or ""
-            token_email = payload.get("email")
         else:
-            auth_response = supabase.auth.get_user(token)
-            user = auth_response.user
-            if not user:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail=_AUTH_FAILED,
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
-            meta = user.user_metadata or {}
-            app_meta = user.app_metadata or {}
-            user_id = user.id
-            token_email = user.email
+            user = supabase.auth.get_user(token).user
+            user_id = user.id if user else ""
 
         if not user_id:
             raise HTTPException(
@@ -129,11 +189,7 @@ def get_current_user(
         # Stable identity: profiles.id is the Supabase auth user id, which
         # stays the same no matter which linked provider authenticated this
         # session. Try this first so a returning user with more than one
-        # linked provider is always found — otherwise, once Discord and
-        # Google get auto-linked to the same account, resolving by
-        # discord_id/name/email from (session-dependent) metadata can miss
-        # the existing profile entirely and either deny access or create a
-        # duplicate.
+        # linked provider is always found.
         try:
             existing = supabase.table("profiles").select(
                 "name, is_active, is_first_login, allow_dm, discord_id, avatar_url, discord_username, email"
@@ -143,11 +199,14 @@ def get_current_user(
             existing = None
 
         if existing and existing.data:
-            return _finalize_returning_user(existing.data[0], meta, user_id, settings)
+            return _finalize_returning_user(existing.data[0], user_id, settings)
 
-        if meta.get("iss") == _DISCORD_ISSUER or app_meta.get("provider") == "discord":
-            return _resolve_discord_user(meta, user_id, settings)
-        return _resolve_email_user(meta, token_email, user_id, settings)
+        identity = _verified_identity(user_id)
+        if identity is None:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_TRY_AGAIN)
+        if identity.discord_id:
+            return _resolve_discord_user(identity, user_id, settings)
+        return _resolve_email_user(identity, user_id, settings)
 
     except HTTPException:
         raise
@@ -160,19 +219,15 @@ def get_current_user(
         )
 
 
-def _finalize_returning_user(profile_row: dict, meta: dict, user_id: str, settings: Settings) -> str:
+def _finalize_returning_user(profile_row: dict, user_id: str, settings: Settings) -> str:
     """Runs the is_active check, first-login welcome DM, and a conservative
     backfill for a profile already found by its stable id — used for every
     returning user, regardless of which linked provider they signed in with
     this time.
 
     Backfill only ever fills a field that is currently empty; it never
-    overwrites one that already has a value. That matters because meta here
-    reflects whichever linked provider authenticated most recently, so on an
-    account with two linked providers it can just as easily be Google's data
-    as Discord's — blindly trusting it to overwrite discord_id/discord_username
-    would risk clobbering the real Discord identity with the other provider's
-    values the next time that person happens to sign in via Google.
+    overwrites one that already has a value, and it only uses what Supabase
+    verified (see _verified_identity).
     """
     profile_name = profile_row["name"]
 
@@ -182,70 +237,60 @@ def _finalize_returning_user(profile_row: dict, meta: dict, user_id: str, settin
     if profile_row.get("is_first_login"):
         try:
             supabase.table("profiles").update({"is_first_login": False}).eq("id", user_id).execute()
-            # Use the profile's own stored discord_id for the welcome DM, not
-            # meta's — meta may belong to whichever provider was used this
-            # session, which isn't necessarily Discord.
             existing_discord_id = profile_row.get("discord_id")
             if existing_discord_id and profile_row.get("allow_dm", True):
                 discord_bot.send_welcome_dm(settings.discord_bot_token, existing_discord_id, profile_name)
         except Exception as e:
             logger.warning("Auth: first-login handling failed: %s", e)
 
+    missing = [f for f in ("discord_id", "discord_username", "email", "avatar_url") if not profile_row.get(f)]
+    if not missing:
+        return profile_name
+
     try:
+        identity = _verified_identity(user_id)
+        if identity is None:
+            return profile_name
         sync: dict = {}
-        if meta.get("iss") == _DISCORD_ISSUER:
-            if not profile_row.get("discord_id") and meta.get("provider_id"):
-                sync["discord_id"] = meta["provider_id"]
-            if not profile_row.get("discord_username"):
-                discord_username = _strip_discriminator(meta.get("preferred_username") or meta.get("name"))
-                if discord_username:
-                    sync["discord_username"] = discord_username
-        else:
-            if not profile_row.get("email") and meta.get("email"):
-                sync["email"] = meta["email"].lower()
-        if not profile_row.get("avatar_url"):
-            avatar = meta.get("avatar_url") or meta.get("picture")
+        if "discord_id" in missing and identity.discord_id and not _discord_id_taken(identity.discord_id):
+            sync["discord_id"] = identity.discord_id
+        if "discord_username" in missing and identity.discord_username:
+            sync["discord_username"] = identity.discord_username
+        if "email" in missing and identity.email:
+            sync["email"] = identity.email
+        if "avatar_url" in missing:
+            avatar = identity.discord_avatar or identity.email_avatar
             if avatar:
                 sync["avatar_url"] = avatar
         if sync:
             supabase.table("profiles").update(sync).eq("id", user_id).execute()
     except Exception:
-        pass  # columns don't exist yet, or a transient DB error — non-fatal
+        pass  # a transient DB error — non-fatal
 
     return profile_name
 
 
-def _resolve_discord_user(meta: dict, user_id: str, settings: Settings) -> str:
-    discord_display_name = meta.get("full_name") or meta.get("name")
+def _discord_id_taken(discord_id: str) -> bool:
+    resp = supabase.table("profiles").select("name").eq("discord_id", discord_id).execute()
+    return bool(resp.data)
 
-    if not discord_display_name:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=_AUTH_FAILED,
-            headers={"WWW-Authenticate": "Bearer"},
-        )
 
-    discord_id       = meta.get("provider_id")
-    discord_avatar   = meta.get("avatar_url") or meta.get("picture")
-    discord_username = _strip_discriminator(meta.get("preferred_username") or meta.get("name"))
+def _is_whitelisted(column: str, value: str) -> bool:
+    try:
+        wl = supabase.table("whitelist").select(column).eq(column, value).execute()
+    except Exception as e:
+        logger.error("Auth: whitelist check failed: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_TRY_AGAIN)
+    return bool(wl.data)
 
-    # All name fields Discord may populate (tried in order)
-    discord_names = list(dict.fromkeys(filter(None, [
-        meta.get("full_name"),
-        meta.get("name"),
-        meta.get("preferred_username"),
-    ])))
 
-    profile_name: str | None = None
+def _resolve_discord_user(identity: VerifiedIdentity, user_id: str, settings: Settings) -> str:
+    discord_id = identity.discord_id
+    assert discord_id  # the caller only routes verified Discord identities here
 
-    # ── 1 & 2. Profile lookup with one retry on transient DB failure ──────
-    # discord_id/avatar_url/discord_username are selected here (not just
-    # name/is_active/...) so step 3 below can skip its UPDATE when they
-    # already match — this dependency runs on every authenticated
-    # request, so an unconditional write here was costing every single
-    # API call a second DB round-trip for values that rarely change.
-    _select = "name, is_active, is_first_login, allow_dm, discord_id, avatar_url, discord_username"
+    _select = "id, name, is_active, is_first_login, allow_dm, discord_id, avatar_url, discord_username"
     profile_row: dict | None = None
+    profile_name: str | None = None
     _db_error = False
 
     for _attempt in range(2):
@@ -253,43 +298,19 @@ def _resolve_discord_user(meta: dict, user_id: str, settings: Settings) -> str:
         profile_name = None
         _db_error = False
 
-        # Stable lookup by discord_id (works even after a name change)
-        if discord_id:
-            try:
-                resp = supabase.table("profiles").select(_select).eq("discord_id", discord_id).execute()
-                if resp.data:
-                    profile_row = resp.data[0]
-                    profile_name = profile_row["name"]
-                    logger.debug("Auth: found profile by discord_id")
-                else:
-                    logger.debug("Auth: discord_id lookup returned no rows")
-            except Exception as e:
-                logger.warning("Auth: discord_id lookup failed: %s", e)
-                _db_error = True
+        try:
+            resp = supabase.table("profiles").select(_select).eq("discord_id", discord_id).execute()
+            if resp.data:
+                profile_row = resp.data[0]
+                profile_name = profile_row["name"]
+        except Exception as e:
+            logger.warning("Auth: discord_id lookup failed: %s", e)
+            _db_error = True
 
-        # Fall back to Discord display name (first-time / pre-migration)
-        if profile_name is None and not _db_error:
-            for candidate in discord_names:
-                try:
-                    resp = supabase.table("profiles").select(_select).eq("name", candidate).execute()
-                    if resp.data:
-                        profile_row = resp.data[0]
-                        profile_name = profile_row["name"]
-                        break
-                except Exception as e:
-                    logger.warning("Auth: name lookup failed: %s", e)
-                    _db_error = True
-                    break
-
-        if profile_name is not None:
+        if profile_name is not None or not _db_error:
             break
-
-        if _attempt == 0:
-            if _db_error:
-                logger.warning("Auth: DB error on first attempt, retrying after 300ms")
-            else:
-                logger.debug("Auth: profile not found on first attempt, retrying after 300ms")
-            time.sleep(0.3)
+        logger.warning("Auth: DB error on first attempt, retrying after 300ms")
+        time.sleep(0.3)
 
     # If DB errors prevented lookup, fail with 401 rather than falling through to
     # profile creation (which would cause a duplicate-key 500 for existing users).
@@ -301,100 +322,120 @@ def _resolve_discord_user(meta: dict, user_id: str, settings: Settings) -> str:
         )
 
     if profile_name is None:
-        # No existing profile — check whitelist before creating one.
-        if not discord_id:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_ACCESS_DENIED)
-        try:
-            wl = supabase.table("whitelist").select("discord_id").eq("discord_id", discord_id).execute()
-        except Exception as e:
-            logger.error("Auth: whitelist check failed: %s", e)
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_TRY_AGAIN)
-        if not wl.data:
+        # Not linked to any profile yet — only allowlisted Discord accounts get in.
+        if not _is_whitelisted("discord_id", discord_id):
             logger.info("Auth: discord_id %s not in whitelist", discord_id)
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_ACCESS_DENIED)
-        try:
-            new_name = (
-                discord_username
-                or _strip_discriminator(discord_display_name)
-                or f"user_{user_id[:8]}"
-            )
-            insert_data: dict = {
+
+        # An admin may have created a placeholder profile for this person ahead
+        # of time (Admin › Gebruikers). It's only linked to a whitelisted
+        # account whose Discord username is exactly its name, and only while
+        # it has no login of its own yet (no Discord account, no email).
+        # Setting the Discord ID on the placeholder is the surer way: then
+        # it's found by ID above and the name doesn't matter.
+        profile_row = _claim_stub_profile(identity, _select)
+        if profile_row:
+            profile_name = profile_row["name"]
+            logger.info("Auth: linked Discord account %s to stub profile %s", discord_id, profile_name)
+        else:
+            profile_row = _create_profile({
                 "id": user_id,
-                "name": new_name,
-                "is_active": True,
-                "is_first_login": True,
-                "allow_dm": True,
+                "name": _unique_profile_name(
+                    identity.discord_username
+                    or _strip_discriminator(identity.discord_display_name)
+                    or f"user_{user_id[:8]}"
+                ),
                 "discord_id": discord_id,
-            }
-            if discord_avatar:
-                insert_data["avatar_url"] = discord_avatar
-            if discord_username:
-                insert_data["discord_username"] = discord_username
-            resp = supabase.table("profiles").insert(insert_data).execute()
-            if resp.data:
-                profile_row = resp.data[0]
-                profile_name = new_name
-                logger.info("Auth: auto-created profile for %s", new_name)
-            else:
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Profiel aanmaken mislukt.")
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error("Auth: auto-create profile failed: %s", e)
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Profiel aanmaken mislukt.")
+                "discord_username": identity.discord_username,
+                "avatar_url": identity.discord_avatar,
+            })
+            profile_name = profile_row["name"]
 
-    # ── 2b. Check if account is active ───────────────────────────────────
-    if profile_row and profile_row.get("is_active") is False:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=_DEACTIVATED,
-        )
+    if profile_row.get("is_active") is False:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_DEACTIVATED)
 
-    # ── 2c. First login — send welcome DM once ───────────────────────────
-    if profile_row and profile_row.get("is_first_login") and discord_id:
+    if profile_row.get("is_first_login"):
         try:
-            supabase.table("profiles").update({"is_first_login": False}).eq("name", profile_name).execute()
+            supabase.table("profiles").update({"is_first_login": False}).eq("id", profile_row["id"]).execute()
             if profile_row.get("allow_dm", True):
                 discord_bot.send_welcome_dm(settings.discord_bot_token, discord_id, profile_name)
         except Exception as e:
             logger.warning("Auth: first-login DM failed: %s", e)
 
-    # ── 3. Best-effort: backfill discord_id + avatar_url ─────────────────
-    # Only write fields that actually changed from what's stored — the
-    # profile row was already fetched with these columns in step 1, so
-    # comparing here is free.
+    # Best-effort: keep Discord-owned fields current. Only write what changed —
+    # this runs on every request for profiles whose id isn't the auth user id.
     try:
         sync: dict = {}
-        if discord_id and profile_row.get("discord_id") != discord_id:
+        if profile_row.get("discord_id") != discord_id:
             sync["discord_id"] = discord_id
-        if discord_avatar and profile_row.get("avatar_url") != discord_avatar:
-            sync["avatar_url"] = discord_avatar
-        if discord_username and profile_row.get("discord_username") != discord_username:
-            sync["discord_username"] = discord_username
+        if identity.discord_avatar and profile_row.get("avatar_url") != identity.discord_avatar:
+            sync["avatar_url"] = identity.discord_avatar
+        if identity.discord_username and profile_row.get("discord_username") != identity.discord_username:
+            sync["discord_username"] = identity.discord_username
         if sync:
-            supabase.table("profiles").update(sync).eq("name", profile_name).execute()
+            supabase.table("profiles").update(sync).eq("id", profile_row["id"]).execute()
     except Exception:
-        pass  # columns don't exist yet — non-fatal
+        pass  # non-fatal
 
     return profile_name
 
 
-def _resolve_email_user(meta: dict, email: str | None, user_id: str, settings: Settings) -> str:
+def _claim_stub_profile(identity: VerifiedIdentity, select: str) -> dict | None:
+    # Only the Discord username: it's unique on Discord, unlike the display
+    # name, which anyone can set to anything.
+    candidates = [identity.discord_username] if identity.discord_username else []
+    for candidate in candidates:
+        try:
+            resp = (
+                supabase.table("profiles")
+                .select(select)
+                .eq("name", candidate)
+                .is_("discord_id", "null")
+                # A profile with an email is a real Google login, not a
+                # placeholder — never hand that to a Discord account.
+                .is_("email", "null")
+                .execute()
+            )
+        except Exception as e:
+            logger.warning("Auth: stub profile lookup failed: %s", e)
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_TRY_AGAIN)
+        if resp.data:
+            return resp.data[0]
+    return None
+
+
+def _create_profile(fields: dict) -> dict:
+    insert_data = {
+        "is_active": True,
+        "is_first_login": True,
+        "allow_dm": True,
+        **{k: v for k, v in fields.items() if v},
+    }
+    try:
+        resp = supabase.table("profiles").insert(insert_data).execute()
+    except Exception as e:
+        logger.error("Auth: auto-create profile failed: %s", e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Profiel aanmaken mislukt.")
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Profiel aanmaken mislukt.")
+    logger.info("Auth: auto-created profile for %s", insert_data["name"])
+    return resp.data[0]
+
+
+def _resolve_email_user(identity: VerifiedIdentity, user_id: str, settings: Settings) -> str:
     """Non-Discord providers (currently just Google) have no discord_id, so the
-    email address is the stable identity instead — mirrors _resolve_discord_user's
-    lookup -> whitelist -> auto-create -> active-check -> backfill flow."""
+    confirmed email address is the stable identity instead — mirrors
+    _resolve_discord_user's lookup -> whitelist -> auto-create -> active-check
+    -> backfill flow."""
+    email = identity.email
     if not email:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=_AUTH_FAILED,
             headers={"WWW-Authenticate": "Bearer"},
         )
-    email = email.lower()
 
-    display_name = meta.get("full_name") or meta.get("name")
-    avatar = meta.get("avatar_url") or meta.get("picture")
-
-    _select = "name, is_active, is_first_login, allow_dm, avatar_url, email"
+    _select = "id, name, is_active, is_first_login, allow_dm, avatar_url, email"
     profile_row: dict | None = None
     profile_name: str | None = None
     _db_error = False
@@ -425,83 +466,86 @@ def _resolve_email_user(meta: dict, email: str | None, user_id: str, settings: S
         )
 
     if profile_name is None:
-        # No existing profile — check whitelist before creating one.
-        try:
-            wl = supabase.table("whitelist").select("email").eq("email", email).execute()
-        except Exception as e:
-            logger.error("Auth: whitelist check failed: %s", e)
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_TRY_AGAIN)
-        if not wl.data:
+        if not _is_whitelisted("email", email):
             logger.info("Auth: email %s not in whitelist", email)
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_ACCESS_DENIED)
-        try:
-            candidate = display_name or email.split("@")[0]
-            new_name = _unique_profile_name(candidate)
-            insert_data: dict = {
-                "id": user_id,
-                "name": new_name,
-                "is_active": True,
-                "is_first_login": True,
-                "allow_dm": True,
-                "email": email,
-            }
-            if avatar:
-                insert_data["avatar_url"] = avatar
-            resp = supabase.table("profiles").insert(insert_data).execute()
-            if resp.data:
-                profile_row = resp.data[0]
-                profile_name = new_name
-                logger.info("Auth: auto-created profile for %s (email login)", new_name)
-            else:
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Profiel aanmaken mislukt.")
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error("Auth: auto-create profile failed: %s", e)
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Profiel aanmaken mislukt.")
+        profile_row = _create_profile({
+            "id": user_id,
+            "name": _unique_profile_name(identity.email_display_name or email.split("@")[0]),
+            "email": email,
+            "avatar_url": identity.email_avatar,
+        })
+        profile_name = profile_row["name"]
 
-    if profile_row and profile_row.get("is_active") is False:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=_DEACTIVATED,
-        )
+    if profile_row.get("is_active") is False:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_DEACTIVATED)
 
     # No discord_id to send a welcome DM to — just clear the flag.
-    if profile_row and profile_row.get("is_first_login"):
+    if profile_row.get("is_first_login"):
         try:
-            supabase.table("profiles").update({"is_first_login": False}).eq("name", profile_name).execute()
+            supabase.table("profiles").update({"is_first_login": False}).eq("id", profile_row["id"]).execute()
         except Exception as e:
             logger.warning("Auth: clearing is_first_login failed: %s", e)
 
     try:
-        sync: dict = {}
-        if profile_row.get("email") != email:
-            sync["email"] = email
-        if avatar and profile_row.get("avatar_url") != avatar:
-            sync["avatar_url"] = avatar
-        if sync:
-            supabase.table("profiles").update(sync).eq("name", profile_name).execute()
+        if identity.email_avatar and profile_row.get("avatar_url") != identity.email_avatar:
+            supabase.table("profiles").update({"avatar_url": identity.email_avatar}).eq("id", profile_row["id"]).execute()
     except Exception:
         pass
 
     return profile_name
 
 
+def _is_admin(name: str) -> bool:
+    try:
+        resp = supabase.table("profiles").select("is_admin").eq("name", name).execute()
+    except Exception as e:
+        logger.error("Admin check failed for %s: %s", name, e)
+        return False
+    return bool(resp.data and resp.data[0].get("is_admin"))
+
+
 def get_admin_user(current_user: str = Depends(get_current_user)) -> str:
     """Extends get_current_user — additionally requires is_admin = true on the profile row."""
-    try:
-        resp = supabase.table("profiles").select("is_admin").eq("name", current_user).execute()
-        if not resp.data or not resp.data[0].get("is_admin"):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Toegang geweigerd. Alleen admins hebben toegang tot dit gedeelte.",
-            )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error("Admin check failed for %s: %s", current_user, e)
+    if not _is_admin(current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Toegang geweigerd. Alleen admins hebben toegang tot dit gedeelte.",
         )
     return current_user
+
+
+def act_as(current_user: str, requested: str | None) -> str:
+    """The name an action is performed for. Members only ever act for
+    themselves; admins may name someone else. Every endpoint that takes a
+    user name from the request (RSVPs, ride seats, "paid by", …) routes it
+    through here instead of trusting it."""
+    if not requested or requested == current_user:
+        return current_user
+    if _is_admin(current_user) or _is_own_former_name(current_user, requested):
+        return requested
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_NOT_YOURSELF)
+
+
+def _is_own_former_name(current_user: str, name: str) -> bool:
+    """Older RSVPs and seats still carry someone's name from before a rename,
+    which lives on in their aliases — leaving a trip clears those too. Members
+    edit their own alias list, so an alias only counts while no other profile
+    goes by that name."""
+    try:
+        me = supabase.table("profiles").select("aliases").eq("name", current_user).execute()
+        if name not in ((me.data[0].get("aliases") or []) if me.data else []):
+            return False
+        return not supabase.table("profiles").select("name").eq("name", name).execute().data
+    except Exception as e:
+        logger.error("Alias check failed for %s: %s", current_user, e)
+        return False
+
+
+def require_owner_or_admin(current_user: str, owner: str | None, detail: str) -> None:
+    """For changing or deleting something someone else created."""
+    if owner and owner == current_user:
+        return
+    if _is_admin(current_user):
+        return
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)

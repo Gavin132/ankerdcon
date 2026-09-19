@@ -25,7 +25,13 @@ export function NamePicker(props: NamePickerProps) {
   const maxSelect = isMulti ? (props as MultiProps).maxSelect : undefined;
   const atMax = maxSelect !== undefined && selected.length >= maxSelect;
 
-  const filtered = query.trim()
+  // A single option (e.g. a member who can only act for themselves) is shown
+  // straight away instead of waiting for a search that can only find one name.
+  const showAll = !query.trim() && options.length === 1;
+
+  const filtered = showAll
+    ? options
+    : query.trim()
     ? options.filter((o) => {
         const q = query.toLowerCase();
         if (o.toLowerCase().includes(q)) return true;
@@ -69,7 +75,7 @@ export function NamePicker(props: NamePickerProps) {
   // ── Options list: rendered in a fixed-position portal so it can't be
   // clipped by a scrolling/overflow-hidden ancestor (e.g. a Drawer or Modal
   // body) and always sits above them regardless of stacking context. ──────
-  const showMenu = open && query.trim().length > 0;
+  const showMenu = open && (query.trim().length > 0 || showAll);
 
   useLayoutEffect(() => {
     if (!showMenu) return;

@@ -54,6 +54,9 @@ All notable changes to Ankerd Con are documented here.
   one place: **Instellingen** in the avatar menu. The Meer tab is gone.
 - "Kamer X" labels now come from the room assignments on Event › Kamers
   instead of a separate free-text field.
+- Event covers, badge images and profile banners are now stored in MinIO,
+  next to story photos and cosplay images. Images uploaded earlier stay in
+  Supabase Storage and keep working.
 
 ### Added
 - **Voor jou** on the Hub lists everything you still need to arrange, and
@@ -65,6 +68,64 @@ All notable changes to Ankerd Con are documented here.
 ### Removed
 - The Acties page, the Meer tab, the separate story archive and the admin
   "Hotelkamer" field on users. Old links redirect to the new pages.
+
+### Security
+- Logging in can no longer be used to take over someone else's account. The
+  backend now identifies you only by what Supabase verified during the
+  Discord or Google login, never by details a user can edit themselves.
+  - A profile an admin created ahead of time is only linked to a Discord
+    account on the whitelist.
+- Members can only sign themselves up or off (meals, rides, restaurant cars,
+  trip days, hotel rooms), post their own location and log expenses they
+  paid. Admins can still do this for anyone. Name pickers only show names
+  you're allowed to pick.
+- Only the creator (or an admin) can delete a meal, cosplay, expense or
+  payment. Only the person who owes a share can mark it as paid, and only
+  the payer can confirm it.
+- Links on meals, events, cosplays and badges must be http(s). A plain
+  domain like `www.pizzeria.nl` gets `https://` added. Older links that
+  aren't http(s) are no longer clickable.
+- Uploaded photos lose their metadata, including where they were taken, and
+  a file has to really be an image to be accepted.
+- Browsers can no longer read or change the database or storage directly;
+  everything goes through the backend. Event covers and badge images are
+  uploaded through the backend too.
+- The Agenda subscription link now contains a secret. Existing calendar
+  subscriptions stop updating: subscribe again from Agenda → Abonneren.
+- Discord messages can't ping `@everyone` or anyone else through text
+  members typed.
+- Admins can no longer log in as another admin, and every "log in as" is
+  logged.
+- You can't rename yourself to, or add as an alias, a name that belongs to
+  someone else, including their former names.
+- The app sends security headers, including a Content Security Policy that
+  limits where scripts and connections may come from.
+- The API documentation is off unless `API_DOCS_ENABLED` is set, the
+  public list of member names is gone, and too many requests from one place
+  get a "wait a moment" (429) instead of being served.
+- An old database trigger that gave every new login a profile, skipping the
+  whitelist, is removed (migration v2.23).
+- A first Discord login only takes over a placeholder profile an admin made
+  (no Discord account, no email) whose name is exactly the Discord username.
+  New profiles always get a name nobody uses, including former names, and
+  the database refuses two profiles with the same name.
+- Deleting a user also removes them from the whitelist, so they can't just
+  log in again.
+- Bulk-adding hotel rooms is capped at 100 per request, and a new room only
+  lists yourself unless you're an admin.
+- Logging out while "logged in as" someone ends that session too, and an
+  expired "log in as" session ends instead of switching to the admin's own
+  account. Signing out elsewhere also clears the data saved on this device.
+- Login uses the PKCE flow, so tokens no longer appear in the URL.
+- Updated FastAPI, Starlette, python-multipart and Vite to versions without
+  known denial-of-service bugs, and replaced python-jose with PyJWT.
+- The backend image leaves out `.env` and runs as a normal user instead of root.
+- Link previews (Discord, WhatsApp, …) of an event show only its name, date
+  and cover image; the location and description stay behind the login.
+- Oversized uploads are refused before they're received, the rate limit only
+  trusts forwarded IP addresses from the proxy (and covers link previews),
+  and text members write is shown literally in bot DMs, so it can't hide a
+  link behind other text.
 
 ---
 

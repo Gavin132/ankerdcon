@@ -82,7 +82,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
   async function handleDelete() {
     if (!expense || !me) return;
     try {
-      await deleteMutation.mutateAsync({ id: expense.id, userName: me });
+      await deleteMutation.mutateAsync(expense.id);
       toast("success", `"${expense.description}" verwijderd.`);
       setConfirmDelete(false);
       onClose();

@@ -7,7 +7,8 @@
 
 
 -- ── profiles ─────────────────────────────────────────────────────────────────
--- One row per user. Created automatically on first Discord OAuth login.
+-- One row per user. Created by the backend on a whitelisted first login
+-- (never by a database trigger — that would skip the whitelist).
 
 CREATE TABLE IF NOT EXISTS profiles (
   id                   UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -35,6 +36,9 @@ CREATE TABLE IF NOT EXISTS profiles (
   onboarding_completed BOOLEAN     NOT NULL DEFAULT false,
   created_at           TIMESTAMPTZ          DEFAULT now()
 );
+
+-- Many tables record people by name, so a name belongs to one profile only.
+CREATE UNIQUE INDEX IF NOT EXISTS profiles_name_lower_key ON profiles (lower(name));
 
 
 -- ── rides ─────────────────────────────────────────────────────────────────────
@@ -73,7 +77,8 @@ CREATE TABLE IF NOT EXISTS meals (
   description      TEXT,
   dietary_options  TEXT,
   parking_info     TEXT,
-  extra_notes      TEXT
+  extra_notes      TEXT,
+  created_by       TEXT
 );
 
 
@@ -160,3 +165,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.calendar      TO service_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.badges        TO service_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.event_groups  TO service_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.announcements TO service_role;
+
+-- ── no direct access from browsers ────────────────────────────────────────────
+-- The frontend only uses Supabase to log in; everything else goes through the
+-- backend (service_role). After running the migrations, run
+-- migrations/migration_v2.22_lock_down_direct_access.sql to remove the
+-- anon/authenticated grants Supabase adds by default and enable RLS everywhere.

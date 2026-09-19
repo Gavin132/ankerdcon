@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     discord_webhook_url: str = ""
     discord_bot_token: str = ""
     app_url: str = ""
+    # Secret in the calendar subscription link. Empty = derived from
+    # SUPABASE_JWT_SECRET; set it explicitly to invalidate every existing link.
+    calendar_feed_token: str = ""
 
     # MinIO (self-hosted, S3-compatible) — event-day photo stories
     minio_endpoint: str = ""
@@ -30,6 +33,14 @@ class Settings(BaseSettings):
     minio_secret_key: str = ""
     minio_bucket: str = "story-photos"
     minio_secure: bool = True
+
+    # Interactive API docs at /api/docs. Off unless asked for: they map out
+    # every endpoint for whoever finds them.
+    api_docs_enabled: bool = False
+
+    # Requests per minute from one client (by IP) before the API answers 429.
+    # Writes (anything but GET) get a quarter of this.
+    rate_limit_per_minute: int = 600
 
     # CORS — comma-separated string in .env, or a list when set programmatically
     cors_origins: list[str] = ["http://localhost:5173"]

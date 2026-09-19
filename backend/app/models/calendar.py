@@ -105,6 +105,9 @@ class CreateHotelRoomRequest(BaseModel):
     occupants: list[str] = []
 
 
+MAX_ROOMS_PER_REQUEST = 100
+
+
 class HotelRoomBatch(BaseModel):
     """One "10 rooms of 2 people" line in a bulk-create request."""
     count: int
@@ -112,10 +115,10 @@ class HotelRoomBatch(BaseModel):
 
     @model_validator(mode="after")
     def _validate(self) -> "HotelRoomBatch":
-        if self.count < 1:
-            raise ValueError("Aantal kamers moet minstens 1 zijn.")
-        if self.capacity is not None and self.capacity < 1:
-            raise ValueError("Capaciteit moet minstens 1 zijn.")
+        if not 1 <= self.count <= MAX_ROOMS_PER_REQUEST:
+            raise ValueError(f"Aantal kamers moet tussen 1 en {MAX_ROOMS_PER_REQUEST} liggen.")
+        if self.capacity is not None and not 1 <= self.capacity <= 20:
+            raise ValueError("Capaciteit moet tussen 1 en 20 liggen.")
         return self
 
 
@@ -126,6 +129,10 @@ class BulkCreateHotelRoomsRequest(BaseModel):
     def _require_batches(self) -> "BulkCreateHotelRoomsRequest":
         if not self.batches:
             raise ValueError("Geef minstens één groep kamers op.")
+        # Any member may call this, so the total is capped: an uncapped count
+        # would let one request build millions of rows in memory.
+        if sum(b.count for b in self.batches) > MAX_ROOMS_PER_REQUEST:
+            raise ValueError(f"Maximaal {MAX_ROOMS_PER_REQUEST} kamers per keer.")
         return self
 
 

@@ -3,7 +3,7 @@ import { Check, Crosshair, MapPin } from "lucide-react";
 import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
-import { useCurrentUser, usePingLocation } from "../../hooks/useUsers";
+import { useCurrentUser, usePingLocation, useActingPermissions } from "../../hooks/useUsers";
 import { toast } from "../../store/toast.store";
 
 const ZONES = ["Op locatie", "Hotel", "Onderweg", "Off-site", "Thuis"] as const;
@@ -28,6 +28,7 @@ interface Props {
  */
 export function LocationPingModal({ open, onClose, userNames }: Props) {
   const { data: me } = useCurrentUser();
+  const { actable } = useActingPermissions();
   const pingMutation = usePingLocation();
 
   const [name, setName] = useState("");
@@ -175,7 +176,7 @@ export function LocationPingModal({ open, onClose, userNames }: Props) {
         <div>
           <p className="section-label mb-2">Wie pingt?</p>
           <NamePicker
-            options={userNames}
+            options={actable(userNames)}
             value={name}
             onChange={(v) => {
               setName(v);

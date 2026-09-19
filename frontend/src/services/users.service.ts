@@ -7,11 +7,6 @@ export async function getCurrentUser(): Promise<User> {
   return data;
 }
 
-export async function getPublicUserNames(): Promise<string[]> {
-  const { data } = await apiClient.get<string[]>(apiRoutes.users.names);
-  return data;
-}
-
 export async function getUsers(): Promise<User[]> {
   const { data } = await apiClient.get<User[]>(apiRoutes.users.base);
   return data;

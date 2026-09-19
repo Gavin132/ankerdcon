@@ -82,6 +82,10 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
       rollupOptions: {
         output: {
+          // Hex hashes (Vite 6 defaults to base64). The backend's cache headers
+          // (backend/main.py) and the service worker (sw/service-worker.js)
+          // recognise build output by a `-<hex>.` file name suffix.
+          hashCharacters: "hex",
           // Long-lived libraries get their own chunks so an app deploy doesn't
           // bust their cache, and the browser can fetch them in parallel. Only
           // libs the app shell needs on every page are listed — recharts etc.
