@@ -5,6 +5,7 @@ import uuid
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 
 from app.constants import Tables
+from app.core import minio_client
 from app.core.logging import get_logger
 from app.core.uploads import clean_image, read_capped
 from app.dependencies import act_as, get_current_user, _strip_discriminator
@@ -14,13 +15,28 @@ from app.core.database import supabase
 
 logger = get_logger(__name__)
 
-BANNER_BUCKET = "banners"
+# Banners used to live in this Supabase Storage bucket; new ones go to MinIO.
+LEGACY_BANNER_BUCKET = "banners"
 BANNER_MAX_BYTES = 8 * 1024 * 1024  # 8 MB
 BANNER_ALLOWED_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 
 router = APIRouter(prefix=UserRoutes.PREFIX, tags=["users"])
 
 _DB_ERROR = "Databasefout. Probeer het opnieuw."
+
+
+def _remove_banner_file(url: str | None) -> None:
+    """Best-effort cleanup of a replaced or removed banner, wherever it lives."""
+    if not url:
+        return
+    try:
+        if key := minio_client.key_from_url(url):
+            minio_client.delete_object(key)
+        elif f"/public/{LEGACY_BANNER_BUCKET}/" in url:
+            path = url.split(f"/public/{LEGACY_BANNER_BUCKET}/")[-1].split("?")[0]
+            supabase.storage.from_(LEGACY_BANNER_BUCKET).remove([path])
+    except Exception:
+        pass  # non-fatal
 
 
 def _names_claimed_by_others(names: list[str], current_user: str) -> list[str]:
@@ -346,7 +362,7 @@ async def upload_banner(
     position: str | None = Form(None),
     current_user: str = Depends(get_current_user),
 ) -> dict:
-    """Upload a banner image/GIF for the current user to Supabase Storage."""
+    """Upload a banner image/GIF for the current user to MinIO."""
     if file.content_type not in BANNER_ALLOWED_TYPES:
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
@@ -368,40 +384,36 @@ async def upload_banner(
     user_id = user_row.data[0]["id"]
     old_url: str | None = user_row.data[0].get("banner_url")
 
-    if old_url:
-        try:
-            old_path = old_url.split(f"/public/{BANNER_BUCKET}/")[-1].split("?")[0]
-            supabase.storage.from_(BANNER_BUCKET).remove([old_path])
-        except Exception:
-            pass  # non-fatal — old banner cleanup is best-effort
-
-    path = f"{user_id}/banner.{ext}"
-
+    # A new name per upload, so browsers and the CDN never show a cached old one.
+    key = f"banners/{user_id}/{uuid.uuid4().hex}.{ext}"
     try:
-        supabase.storage.from_(BANNER_BUCKET).upload(
-            path,
-            content,
-            {"upsert": "true", "content-type": content_type},
-        )
+        url = minio_client.upload_bytes(key, content, content_type)
+    except RuntimeError as e:
+        logger.error("Banner upload failed (MinIO not configured): %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
     except Exception as e:
-        logger.error("Storage upload failed for user %s: %s", current_user, e)
+        logger.error("MinIO banner upload failed for user %s: %s", current_user, e)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Uploaden mislukt. Probeer het opnieuw.",
         )
 
     try:
-        public_url = supabase.storage.from_(BANNER_BUCKET).get_public_url(path)
-        versioned_url = f"{public_url}?v={uuid.uuid4().hex[:8]}"
         supabase.table(Tables.PROFILES).update({
-            "banner_url": versioned_url,
+            "banner_url": url,
             "banner_position": position or None,
         }).eq("name", current_user).execute()
     except Exception as e:
         logger.error("Failed to save banner URL for user %s: %s", current_user, e)
+        try:
+            minio_client.delete_object(key)
+        except Exception:
+            pass
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
-    return {"url": versioned_url}
+    # Only now that the new banner is saved: remove the one it replaces.
+    _remove_banner_file(old_url)
+    return {"url": url}
 
 
 @router.delete(UserRoutes.BANNER, status_code=status.HTTP_204_NO_CONTENT)
@@ -417,12 +429,7 @@ def delete_banner(current_user: str = Depends(get_current_user)) -> None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
 
     old_url: str | None = user_row.data[0].get("banner_url")
-    if old_url:
-        try:
-            old_path = old_url.split(f"/public/{BANNER_BUCKET}/")[-1].split("?")[0]
-            supabase.storage.from_(BANNER_BUCKET).remove([old_path])
-        except Exception:
-            pass  # non-fatal
+    _remove_banner_file(old_url)
 
     try:
         supabase.table(Tables.PROFILES).update({"banner_url": None, "banner_position": None}).eq("name", current_user).execute()

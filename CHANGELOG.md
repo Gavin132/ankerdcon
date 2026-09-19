@@ -54,6 +54,9 @@ All notable changes to Ankerd Con are documented here.
   one place: **Instellingen** in the avatar menu. The Meer tab is gone.
 - "Kamer X" labels now come from the room assignments on Event › Kamers
   instead of a separate free-text field.
+- Event covers, badge images and profile banners are now stored in MinIO,
+  next to story photos and cosplay images. Images uploaded earlier stay in
+  Supabase Storage and keep working.
 
 ### Added
 - **Voor jou** on the Hub lists everything you still need to arrange, and

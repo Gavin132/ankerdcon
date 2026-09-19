@@ -7,6 +7,7 @@ from jose import jwt as jose_jwt
 
 from app.config import Settings, get_settings
 from app.constants import Tables
+from app.core import minio_client
 from app.core.logging import get_logger
 from app.core.uploads import clean_image, read_capped
 from app.dependencies import get_admin_user
@@ -55,8 +56,8 @@ router = APIRouter(prefix=AdminRoutes.PREFIX, tags=["admin"])
 
 _DB_ERROR = "Databasefout. Probeer het opnieuw."
 
-# Upload kind -> Supabase Storage bucket
-_IMAGE_BUCKETS = {"event-cover": "event-covers", "badge": "badges"}
+# Upload kind -> folder in the MinIO bucket
+_IMAGE_FOLDERS = {"event-cover": "event-covers", "badge": "badges"}
 _IMAGE_MAX_BYTES = 10 * 1024 * 1024  # 10 MB
 
 
@@ -1158,23 +1159,25 @@ async def admin_upload_image(
     file: UploadFile = File(...),
     _: str = Depends(get_admin_user),
 ) -> dict:
-    """Store an event cover or badge image and return its public URL.
+    """Store an event cover or badge image in MinIO and return its public URL.
 
     These used to be uploaded from the browser straight into Supabase Storage,
     which meant storage had to accept writes from any signed-in Supabase user —
-    including people who aren't on the whitelist. Going through here keeps
-    those buckets writable by the backend (and so by admins) only.
+    including people who aren't on the whitelist. Now only the backend (and so
+    only admins) can write them, next to the rest of the app's images.
     """
-    bucket = _IMAGE_BUCKETS.get(kind)
-    if not bucket:
+    folder = _IMAGE_FOLDERS.get(kind)
+    if not folder:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Onbekend soort afbeelding.")
 
     content = await read_capped(file, _IMAGE_MAX_BYTES)
     content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP"})
-    path = f"{uuid.uuid4().hex}.{ext}"
+    key = f"{folder}/{uuid.uuid4().hex}.{ext}"
     try:
-        supabase.storage.from_(bucket).upload(path, content, {"content-type": content_type})
-        return {"url": supabase.storage.from_(bucket).get_public_url(path)}
+        return {"url": minio_client.upload_bytes(key, content, content_type)}
+    except RuntimeError as e:
+        logger.error("%s upload failed (MinIO not configured): %s", kind, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
     except Exception as e:
-        logger.error("Storage upload to %s failed: %s", bucket, e)
+        logger.error("MinIO upload of a %s failed: %s", kind, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Uploaden mislukt. Probeer het opnieuw.")

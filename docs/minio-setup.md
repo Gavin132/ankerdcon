@@ -5,6 +5,21 @@
 generic MinIO+SWAG guide in a couple of specific ways that turned out to
 matter for this Portainer/SWAG setup — see the notes below each step.
 
+Every image the app uploads lives in the one `story-photos` bucket, a folder
+per kind:
+
+| Folder | What |
+|---|---|
+| `<event id>/<day id>/` | Story photos |
+| `cosplay/` | Cosplay inspiration images |
+| `event-covers/` | Event covers (admins) |
+| `badges/` | Badge images (admins) |
+| `banners/<user id>/` | Profile banners |
+
+Event covers, badges and banners uploaded before they moved here still live
+in Supabase Storage (buckets `event-covers`, `badges`, `banners`) and keep
+working from there.
+
 ## 1. Deploy MinIO as a Portainer stack
 
 ```yaml

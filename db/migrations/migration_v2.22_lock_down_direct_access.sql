@@ -59,7 +59,8 @@ DROP POLICY IF EXISTS "shares_update"   ON expense_shares;
 DROP POLICY IF EXISTS "shares_delete"   ON expense_shares;
 
 -- ── 3. Storage: no browser uploads, no listing ─────────────────────────────
--- Banners, event covers and badges are all uploaded by the backend now.
+-- Banners, event covers and badges are all uploaded by the backend now, to
+-- MinIO; the Supabase buckets only still serve images uploaded before that.
 -- Public buckets keep serving their files by URL without any policy; these
 -- policies only ever allowed browsers to upload, change, delete or list.
 
