@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 import uuid
 
+from fastapi.concurrency import run_in_threadpool
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
 import jwt
 
@@ -1173,6 +1174,19 @@ def admin_delete_changelog_entry(entry_id: str, _: str = Depends(get_admin_user)
 
 # ── Image uploads ──────────────────────────────────────────────────────────────
 
+def _store_admin_image(kind: str, folder: str, content: bytes) -> dict:
+    content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP"})
+    key = f"{folder}/{uuid.uuid4().hex}.{ext}"
+    try:
+        return {"url": minio_client.upload_bytes(key, content, content_type)}
+    except RuntimeError as e:
+        logger.error("%s upload failed (MinIO not configured): %s", kind, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
+    except Exception as e:
+        logger.error("MinIO upload of a %s failed: %s", kind, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Uploaden mislukt. Probeer het opnieuw.")
+
+
 @router.post(AdminRoutes.UPLOAD_IMAGE)
 async def admin_upload_image(
     kind: str,
@@ -1191,13 +1205,4 @@ async def admin_upload_image(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Onbekend soort afbeelding.")
 
     content = await read_capped(file, _IMAGE_MAX_BYTES)
-    content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP"})
-    key = f"{folder}/{uuid.uuid4().hex}.{ext}"
-    try:
-        return {"url": minio_client.upload_bytes(key, content, content_type)}
-    except RuntimeError as e:
-        logger.error("%s upload failed (MinIO not configured): %s", kind, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
-    except Exception as e:
-        logger.error("MinIO upload of a %s failed: %s", kind, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Uploaden mislukt. Probeer het opnieuw.")
+    return await run_in_threadpool(_store_admin_image, kind, folder, content)

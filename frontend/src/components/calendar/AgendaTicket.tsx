@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { BedDouble, MapPin, PartyPopper, Ticket, Utensils } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { TripDayPicker } from "../trip/TripDayPicker";
+import { TripParticipants } from "../trip/TripParticipants";
 import { daysBetween, toDateKey, todayKey } from "../../utils/date";
 import { tripImage, type Trip, type TripDay } from "../../utils/trips";
 import { routes } from "../../config/routes";
@@ -113,6 +114,7 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
         {trip.days.length > 1 && <TripDayPicker trip={trip} myNames={myNames} onToggleDay={onToggleDay} />}
 
         <div className="mt-auto flex items-center gap-2.5">
+          <TripParticipants trip={trip} users={users} myNames={myNames}>
           {participants.length > 0 && (
             <span className="flex -space-x-1.5">
               {participants.slice(0, 6).map((p) => {
@@ -132,6 +134,7 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
               <span className="text-ink-3"> · jij {myDays.length} van {trip.days.length} dagen</span>
             )}
           </span>
+          </TripParticipants>
         </div>
       </div>
 

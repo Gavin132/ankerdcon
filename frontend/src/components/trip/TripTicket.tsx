@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { BedDouble, MapPin, Ticket, UserPlus } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { TripDayPicker } from "./TripDayPicker";
+import { TripParticipants } from "./TripParticipants";
 import { daysBetween, toDateKey, todayKey } from "../../utils/date";
 import { tripImage, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
 import { getNow } from "../../store/time.store";
@@ -117,6 +118,7 @@ export function TripTicket({
         )}
 
         <div className="mt-auto flex flex-wrap items-center gap-2.5">
+          <TripParticipants trip={trip} users={users} myNames={myNames} phase={phase}>
           {participants.length > 0 && (
             <span className="flex -space-x-1.5">
               {participants.slice(0, 6).map((p) => {
@@ -136,6 +138,7 @@ export function TripTicket({
               <span className="text-ink-3"> · jij {myDays.length} van {trip.days.length} dagen</span>
             )}
           </span>
+          </TripParticipants>
         </div>
       </div>
 

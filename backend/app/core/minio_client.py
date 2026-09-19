@@ -3,9 +3,23 @@ from __future__ import annotations
 from functools import lru_cache
 from io import BytesIO
 
+import certifi
+import urllib3
 from minio import Minio
 
 from app.config import get_settings
+
+
+# minio-py's own defaults are a 5 minute connect and read timeout with five
+# retries — so a MinIO that is down or wedged holds an upload open for many
+# minutes, long past Cloudflare's 100 seconds (a 524 in the browser, and an
+# upload button stuck on "Uploaden…"). Fail fast instead: the photos this app
+# stores are already compressed to a few hundred KB, so a healthy MinIO answers
+# in well under a second. Worst case is (RETRIES + 1) x (connect or read
+# timeout) — about 30 seconds, comfortably inside Cloudflare's limit.
+_CONNECT_TIMEOUT_SECONDS = 5
+_READ_TIMEOUT_SECONDS = 15
+_RETRIES = 1
 
 
 @lru_cache
@@ -26,6 +40,13 @@ def _client() -> Minio:
         access_key=settings.minio_access_key,
         secret_key=settings.minio_secret_key,
         secure=settings.minio_secure,
+        http_client=urllib3.PoolManager(
+            timeout=urllib3.Timeout(connect=_CONNECT_TIMEOUT_SECONDS, read=_READ_TIMEOUT_SECONDS),
+            maxsize=10,
+            cert_reqs="CERT_REQUIRED",
+            ca_certs=certifi.where(),
+            retries=urllib3.Retry(total=_RETRIES, backoff_factor=0.2, status_forcelist=[500, 502, 503, 504]),
+        ),
     )
 
 

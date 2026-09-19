@@ -1,4 +1,4 @@
-import { apiClient } from "../lib/api/client";
+import { apiClient, UPLOAD_TIMEOUT_MS } from "../lib/api/client";
 import { apiRoutes } from "../config/api-routes";
 import type { StoryPhoto, StoryDaySummary } from "../types";
 
@@ -12,6 +12,7 @@ export async function uploadStoryPhoto(eventDayId: string, blob: Blob): Promise<
   form.append("file", blob, "photo.jpg");
   const { data } = await apiClient.post<StoryPhoto>(apiRoutes.stories.byDay(eventDayId), form, {
     headers: { "Content-Type": "multipart/form-data" },
+    timeout: UPLOAD_TIMEOUT_MS,
   });
   return data;
 }

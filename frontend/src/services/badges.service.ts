@@ -1,4 +1,4 @@
-import { apiClient } from "../lib/api/client";
+import { apiClient, UPLOAD_TIMEOUT_MS } from "../lib/api/client";
 import { apiRoutes } from "../config/api-routes";
 import type { Badge } from "../types";
 
@@ -36,6 +36,7 @@ export async function uploadBadgeImage(file: File): Promise<string> {
   form.append("file", blob, "badge.png");
   const { data } = await apiClient.post<{ url: string }>(apiRoutes.admin.uploadImage("badge"), form, {
     headers: { "Content-Type": "multipart/form-data" },
+    timeout: UPLOAD_TIMEOUT_MS,
   });
   return data.url;
 }

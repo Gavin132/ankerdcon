@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from collections import defaultdict
 
+from fastapi.concurrency import run_in_threadpool
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
 
 from app.config import get_settings
@@ -111,20 +112,7 @@ def list_story_photos(event_day_id: str, _: str = Depends(get_current_user)):
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
-@router.post(StoryRoutes.LIST, status_code=status.HTTP_201_CREATED, response_model=StoryPhoto)
-async def upload_story_photo(
-    event_day_id: str,
-    file: UploadFile = File(...),
-    current_user: str = Depends(get_current_user),
-):
-    _require_day_id(event_day_id)
-    if file.content_type not in _ALLOWED_TYPES:
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail="Bestandstype niet toegestaan. Gebruik JPG, PNG of WebP.",
-        )
-
-    content = await read_capped(file, _MAX_BYTES)
+def _store_story_photo(event_day_id: str, current_user: str, content: bytes) -> dict:
     content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP"})
 
     # Nest under the parent event too (not just the day) so MinIO's own
@@ -179,6 +167,23 @@ async def upload_story_photo(
         except Exception:
             pass
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+
+@router.post(StoryRoutes.LIST, status_code=status.HTTP_201_CREATED, response_model=StoryPhoto)
+async def upload_story_photo(
+    event_day_id: str,
+    file: UploadFile = File(...),
+    current_user: str = Depends(get_current_user),
+):
+    _require_day_id(event_day_id)
+    if file.content_type not in _ALLOWED_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Bestandstype niet toegestaan. Gebruik JPG, PNG of WebP.",
+        )
+
+    content = await read_capped(file, _MAX_BYTES)
+    return await run_in_threadpool(_store_story_photo, event_day_id, current_user, content)
 
 
 @router.delete(StoryRoutes.DETAIL, status_code=status.HTTP_204_NO_CONTENT)

@@ -1,3 +1,4 @@
+import { TripParticipants } from "../../trip/TripParticipants";
 import { Link } from "react-router-dom";
 import { BedDouble, ChevronRight, MapPin, Ticket, X } from "lucide-react";
 import { UserAvatar } from "../../common/UserAvatar";
@@ -95,6 +96,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
         )}
 
         <div className="flex items-center gap-2.5">
+          <TripParticipants trip={trip} users={users} myNames={myNames}>
           {names.length > 0 && (
             <span className="flex -space-x-1.5">
               {names.slice(0, 6).map((p) => {
@@ -108,6 +110,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
               ? others === 0 ? "Alleen jij" : `Jij en ${others} ${others === 1 ? "ander" : "anderen"}`
               : names.length === 0 ? "Nog niemand aangemeld" : `${names.length} gaan mee`}
           </span>
+          </TripParticipants>
         </div>
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">

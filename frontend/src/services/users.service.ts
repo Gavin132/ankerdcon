@@ -1,4 +1,4 @@
-import { apiClient } from "../lib/api/client";
+import { apiClient, UPLOAD_TIMEOUT_MS } from "../lib/api/client";
 import { apiRoutes } from "../config/api-routes";
 import type { UpdateNameRequest, UpdatePreferencesRequest, User, LocationPingRequest } from "../types";
 
@@ -31,6 +31,7 @@ export async function uploadBanner(blob: Blob, mimeType: string, position?: stri
   if (position) form.append("position", position);
   const { data } = await apiClient.post<{ url: string }>(apiRoutes.users.banner, form, {
     headers: { "Content-Type": "multipart/form-data" },
+    timeout: UPLOAD_TIMEOUT_MS,
   });
   return data;
 }

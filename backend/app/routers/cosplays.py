@@ -1,6 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi.concurrency import run_in_threadpool
 
 from app.constants import Tables
 from app.core import minio_client
@@ -54,15 +55,7 @@ def create_cosplay(body: CreateCosplayRequest, current_user: str = Depends(get_c
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
-@router.post(CosplayRoutes.IMAGE, response_model=dict)
-async def upload_cosplay_image(file: UploadFile = File(...), _: str = Depends(get_current_user)):
-    if file.content_type not in _ALLOWED_TYPES:
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail="Bestandstype niet toegestaan. Gebruik JPG, PNG of WebP.",
-        )
-
-    content = await read_capped(file, _MAX_BYTES)
+def _store_image(content: bytes) -> dict:
     content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP"})
     key = f"cosplay/{uuid.uuid4().hex}.{ext}"
 
@@ -79,6 +72,21 @@ async def upload_cosplay_image(file: UploadFile = File(...), _: str = Depends(ge
         )
 
     return {"url": image_url}
+
+
+@router.post(CosplayRoutes.IMAGE, response_model=dict)
+async def upload_cosplay_image(file: UploadFile = File(...), _: str = Depends(get_current_user)):
+    if file.content_type not in _ALLOWED_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Bestandstype niet toegestaan. Gebruik JPG, PNG of WebP.",
+        )
+
+    content = await read_capped(file, _MAX_BYTES)
+    # Everything after the read is blocking (Pillow, then MinIO over the
+    # network). Run on the event loop, one slow upload would freeze every other
+    # request too; in the threadpool it can only hold up itself.
+    return await run_in_threadpool(_store_image, content)
 
 
 @router.delete(CosplayRoutes.DETAIL, status_code=status.HTTP_204_NO_CONTENT)

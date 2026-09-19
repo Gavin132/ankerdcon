@@ -29,8 +29,19 @@ export class ApiError extends Error {
 
 // ── HTTP client ────────────────────────────────────────────────────
 
+/**
+ * How long any request may take before it is given up on. axios has no limit
+ * of its own, so on a bad connection — or when the server is stuck — a button
+ * would sit on its spinner indefinitely. Cloudflare in front of the server
+ * gives up after 100 s anyway (a 524), so waiting longer than this never helps.
+ */
+export const REQUEST_TIMEOUT_MS = 30_000;
+/** Uploads carry a photo over what may be a poor connection, so they get longer. */
+export const UPLOAD_TIMEOUT_MS = 60_000;
+
 export const apiClient = axios.create({
   baseURL: env.API_BASE_URL,
+  timeout: REQUEST_TIMEOUT_MS,
 });
 
 apiClient.interceptors.request.use((config) => {

@@ -12,19 +12,21 @@ import { uploadCosplayImage } from "../../services/cosplays.service";
 import { compressImage } from "../../utils/imageCompression";
 import { useUsers, useCurrentUser, useActingPermissions } from "../../hooks/useUsers";
 import { CosplayCard } from "../../components/cosplay/CosplayCard";
-import { CosplayDetailDrawer } from "../../components/cosplay/CosplayDetailDrawer";
+import { CosplayDetailBody, CosplayDetailFooter } from "../../components/cosplay/CosplayDetailView";
 import {
-  CosplayFilterDrawer,
+  CosplayFilterPanel,
+  CosplayFilterFooter,
   DEFAULT_COSPLAY_FILTERS,
   cosplayActiveFilterCount,
   SORT_LABELS,
   type CosplayFilterState,
-} from "../../components/cosplay/CosplayFilterDrawer";
+} from "../../components/cosplay/CosplayFilterPanel";
 import { TripSheet } from "../../components/trip/TripSheet";
+import { SelectableDayCards } from "../../components/trip/SelectableDayCards";
 import { Button } from "../../components/common/Button";
 import { NamePicker } from "../../components/common/NamePicker";
 import { toast } from "../../store/toast.store";
-import { formatDate } from "../../utils/format";
+import { ApiError } from "../../lib/api/client";
 import { listContainer, listItem } from "../../utils/motion";
 import { useTrip } from "./tripContext";
 import type { Cosplay } from "../../types";
@@ -32,6 +34,9 @@ import type { Cosplay } from "../../types";
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 12;
+
+/** Inspiration images per cosplay; the backend enforces the same limit. */
+const MAX_IMAGES = 3;
 
 // ── Form ──────────────────────────────────────────────────────────────────────
 
@@ -57,10 +62,9 @@ const SL = "mb-1.5 block text-[12.5px] font-semibold text-ink-2";
 
 /**
  * Event › Cosplay, opened as a bottom sheet over Overzicht: every cosplay
- * planned for any day of the trip. Adding one slides the sheet to its own
- * form view — the same list/form pattern as Vervoer — instead of stacking
- * a second overlay on top; filtering and viewing a single cosplay's detail
- * still use their own side drawers since those aren't part of that flow.
+ * planned for any day of the trip. Adding one, filtering, and opening a single
+ * cosplay each swap the sheet to their own view with a back arrow — the same
+ * list/form pattern as Vervoer — instead of stacking a second overlay on top.
  */
 export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { trip, dayId } = useTrip();
@@ -84,13 +88,15 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
     c.linked_event_ids.some((eid) => relatedIds.has(eid)),
   );
 
+  const countByDay: Record<string, number> = {};
+  for (const c of eventCosplays) for (const eid of c.linked_event_ids) countByDay[eid] = (countByDay[eid] ?? 0) + 1;
+
   const userNames       = users.map((u) => u.name);
   const cosplayerNames  = [...new Set(eventCosplays.map((c) => c.user_name))];
 
   // ── Filter & sort ─────────────────────────────────────────────────────────
 
   const [filters, setFilters]     = useState<CosplayFilterState>(DEFAULT_COSPLAY_FILTERS);
-  const [filterOpen, setFilterOpen] = useState(false);
   const [page, setPage]            = useState(1);
 
   // Reset to page 1 whenever filters change
@@ -141,7 +147,12 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
 
   // ── Create form (a second view inside the same sheet) ──────────────────────
 
-  const [view, setView] = useState<"list" | "form">("list");
+  const [view, setView] = useState<"list" | "form" | "filter" | "detail">("list");
+
+  // Reopening starts on the list, not wherever the sheet was left.
+  useEffect(() => {
+    if (!open) setView("list");
+  }, [open]);
   const [selectedUser, setSelectedUser] = useState("");
   const [selectedDays, setSelectedDays] = useState<string[]>(id ? [id] : []);
   const [images, setImages]           = useState<ImageEntry[]>([{ mode: "url", url: "", uploading: false }]);
@@ -167,7 +178,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
     setImages((prev) => prev.map((img, i) => (i === index ? { ...img, ...patch } : img)));
   }
   function addImage() {
-    setImages((prev) => [...prev, { mode: "url", url: "", uploading: false }]);
+    setImages((prev) => (prev.length >= MAX_IMAGES ? prev : [...prev, { mode: "url", url: "", uploading: false }]));
   }
   function removeImage(index: number) {
     setImages((prev) => prev.filter((_, i) => i !== index));
@@ -179,8 +190,15 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
       const blob = await compressImage(file);
       const url = await uploadCosplayImage(blob);
       setImageField(index, { url, uploading: false });
-    } catch {
-      toast("error", "Upload mislukt. Probeer een URL in te voeren.");
+    } catch (err) {
+      // A timeout is what a slow or stuck connection looks like (see the client's limit).
+      const slow = err instanceof ApiError && (err.status === 0 || err.status === 503 || err.status === 524);
+      toast(
+        "error",
+        slow
+          ? "Uploaden duurde te lang. Controleer je verbinding, of plak een link naar de afbeelding."
+          : "Upload mislukt. Probeer een andere afbeelding, of plak een link.",
+      );
       setImageField(index, { uploading: false });
     }
   }
@@ -209,10 +227,16 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
 
   const [detailCosplay, setDetailCosplay] = useState<Cosplay | null>(null);
 
+  function openDetail(cosplay: Cosplay) {
+    setDetailCosplay(cosplay);
+    setView("detail");
+  }
+
   async function handleDelete(cosplayId: string) {
     try {
       await deleteMutation.mutateAsync(cosplayId);
       setDetailCosplay(null);
+      setView("list");
       toast("success", "Cosplay verwijderd.");
     } catch {
       toast("error", "Verwijderen mislukt.");
@@ -247,10 +271,33 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
       open={open}
       onClose={onClose}
       viewKey={view}
-      onBack={view === "form" ? () => setView("list") : undefined}
-      title={view === "form" ? "Cosplay toevoegen" : "Cosplay"}
-      subtitle={view === "form" ? "Laat zien wat je draagt!" : undefined}
-      footer={view === "form" ? createFooter : undefined}
+      onBack={view !== "list" ? () => setView("list") : undefined}
+      title={
+        view === "form" ? "Cosplay toevoegen"
+        : view === "filter" ? "Filter & sorteren"
+        : view === "detail" && detailCosplay ? detailCosplay.character_name
+        : "Cosplay"
+      }
+      subtitle={
+        view === "form" ? "Laat zien wat je draagt!"
+        : view === "filter" ? "Vind het cosplay dat je zoekt"
+        : view === "detail" ? detailCosplay?.series ?? undefined
+        : undefined
+      }
+      footer={
+        view === "form" ? createFooter
+        : view === "filter" ? (
+          <CosplayFilterFooter
+            activeCount={activeFilterCount}
+            onReset={() => setFilters(DEFAULT_COSPLAY_FILTERS)}
+            onDone={() => setView("list")}
+          />
+        )
+        : view === "detail" && detailCosplay ? (
+          <CosplayDetailFooter cosplay={detailCosplay} onDelete={handleDelete} deleteLoading={deleteMutation.isPending} />
+        )
+        : undefined
+      }
     >
       {!event ? (
         <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
@@ -259,6 +306,21 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
           </div>
           <p className="text-sm font-semibold text-ink">Deze dag bestaat niet meer</p>
         </div>
+      ) : view === "filter" ? (
+        <CosplayFilterPanel
+          filters={filters}
+          onChange={setFilters}
+          personOptions={cosplayerNames}
+          days={trip.days}
+          countByDay={countByDay}
+        />
+      ) : view === "detail" && detailCosplay ? (
+        <CosplayDetailBody
+          cosplay={detailCosplay}
+          events={allRelatedEvents}
+          users={users}
+          onLeave={onClose}
+        />
       ) : view === "form" ? (
         <form id="cosplay-create-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
@@ -284,22 +346,16 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
           {isMultiDay && (
             <div className={SF}>
               <p className={ST}>Welke dag(en)?</p>
-              <div className="space-y-2">
-                {allRelatedEvents.map((e) => (
-                  <label
-                    key={e.id}
-                    className={`flex cursor-pointer items-center gap-3 rounded-xl border-1.5 px-3 py-2.5 transition-colors ${
-                      selectedDays.includes(e.id)
-                        ? "border-ink bg-sunken"
-                        : "border-line bg-surface hover:border-ink-3"
-                    }`}
-                  >
-                    <input type="checkbox" className="cb" checked={selectedDays.includes(e.id)} onChange={() => toggleDay(e.id)} />
-                    <span className="text-sm font-semibold text-ink">{formatDate(e.date)}</span>
-                    <span className="ml-auto truncate text-xs text-ink-3">{e.event_name}</span>
-                  </label>
-                ))}
-              </div>
+              <SelectableDayCards
+                days={trip.days}
+                selected={selectedDays}
+                onToggle={toggleDay}
+                caption={(d) => {
+                  const n = countByDay[d.ev.id] ?? 0;
+                  return `${n} ${n === 1 ? "cosplay" : "cosplays"}`;
+                }}
+                label="Welke dagen draag je dit?"
+              />
               {selectedDays.length === 0 && <p className="text-xs text-rose-600 dark:text-rose-400">Selecteer minimaal één dag.</p>}
             </div>
           )}
@@ -349,7 +405,18 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                         <span className={`truncate text-xs font-medium ${entry.url ? "text-emerald-700 dark:text-emerald-300" : "text-ink-2"}`}>
                           {entry.uploading ? "Uploaden…" : entry.url ? "Geüpload" : "Kies afbeelding…"}
                         </span>
-                        <input type="file" accept="image/*" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileChange(index, f); }} />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          disabled={entry.uploading}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            // Cleared so choosing the same file again (after a failure) still fires.
+                            e.target.value = "";
+                            if (f) handleFileChange(index, f);
+                          }}
+                        />
                       </label>
                     )}
                     {images.length > 1 && (
@@ -361,10 +428,14 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                 </div>
               ))}
             </div>
-            <button type="button" onClick={addImage} className="flex items-center gap-1.5 text-[12.5px] font-semibold text-brand-text hover:underline">
-              <Plus size={12} />
-              Afbeelding toevoegen
-            </button>
+            {images.length < MAX_IMAGES ? (
+              <button type="button" onClick={addImage} className="flex items-center gap-1.5 text-[12.5px] font-semibold text-brand-text hover:underline">
+                <Plus size={12} />
+                Afbeelding toevoegen <span className="font-mono font-normal text-ink-3">({images.length}/{MAX_IMAGES})</span>
+              </button>
+            ) : (
+              <p className="text-[12.5px] text-ink-3">Maximaal {MAX_IMAGES} afbeeldingen.</p>
+            )}
           </div>
 
           <div className={SF}>
@@ -380,7 +451,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
               <div className="flex items-center gap-3">
                 {/* Filter trigger */}
                 <button
-                  onClick={() => setFilterOpen(true)}
+                  onClick={() => setView("filter")}
                   className={`relative flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
                     activeFilterCount > 0
                       ? "border-1.5 border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
@@ -529,7 +600,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                     cosplay={cosplay}
                     events={allRelatedEvents}
                     users={users}
-                    onClick={() => setDetailCosplay(cosplay)}
+                    onClick={() => openDetail(cosplay)}
                   />
                 ))}
 
@@ -602,28 +673,6 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
           )}
         </div>
       )}
-
-      {/* ── Filter drawer ──────────────────────────────────────────── */}
-      <CosplayFilterDrawer
-        open={filterOpen}
-        onClose={() => setFilterOpen(false)}
-        filters={filters}
-        onChange={setFilters}
-        onReset={() => setFilters(DEFAULT_COSPLAY_FILTERS)}
-        personOptions={cosplayerNames}
-        dayOptions={allRelatedEvents}
-      />
-
-      {/* ── Detail drawer ──────────────────────────────────────────── */}
-      <CosplayDetailDrawer
-        cosplay={detailCosplay}
-        events={allRelatedEvents}
-        users={users}
-        open={detailCosplay !== null}
-        onClose={() => setDetailCosplay(null)}
-        onDelete={handleDelete}
-        deleteLoading={deleteMutation.isPending}
-      />
     </TripSheet>
   );
 }

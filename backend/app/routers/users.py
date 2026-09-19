@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 import json
 import uuid
 
+from fastapi.concurrency import run_in_threadpool
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 
 from app.constants import Tables
@@ -356,20 +357,7 @@ def get_user(identifier: str, _: str = Depends(get_current_user)) -> User:
     return user
 
 
-@router.post(UserRoutes.BANNER, response_model=dict)
-async def upload_banner(
-    file: UploadFile = File(...),
-    position: str | None = Form(None),
-    current_user: str = Depends(get_current_user),
-) -> dict:
-    """Upload a banner image/GIF for the current user to MinIO."""
-    if file.content_type not in BANNER_ALLOWED_TYPES:
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail="Bestandstype niet toegestaan. Gebruik JPG, PNG, GIF of WebP.",
-        )
-
-    content = await read_capped(file, BANNER_MAX_BYTES)
+def _store_banner(current_user: str, position: str | None, content: bytes) -> dict:
     content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP", "GIF"})
 
     try:
@@ -414,6 +402,23 @@ async def upload_banner(
     # Only now that the new banner is saved: remove the one it replaces.
     _remove_banner_file(old_url)
     return {"url": url}
+
+
+@router.post(UserRoutes.BANNER, response_model=dict)
+async def upload_banner(
+    file: UploadFile = File(...),
+    position: str | None = Form(None),
+    current_user: str = Depends(get_current_user),
+) -> dict:
+    """Upload a banner image/GIF for the current user to MinIO."""
+    if file.content_type not in BANNER_ALLOWED_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Bestandstype niet toegestaan. Gebruik JPG, PNG, GIF of WebP.",
+        )
+
+    content = await read_capped(file, BANNER_MAX_BYTES)
+    return await run_in_threadpool(_store_banner, current_user, position, content)
 
 
 @router.delete(UserRoutes.BANNER, status_code=status.HTTP_204_NO_CONTENT)
