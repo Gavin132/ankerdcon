@@ -167,3 +167,34 @@ MINIO_BUCKET=story-photos
 MINIO_SECURE=true
 # MINIO_ACCESS_KEY / MINIO_SECRET_KEY — already set, not reproduced here
 ```
+
+## Changing the root password
+
+The root user/password live in one place: `MINIO_ROOT_USER` /
+`MINIO_ROOT_PASSWORD` in the Portainer stack. Edit them there and redeploy.
+The `mc` commands in step 2 don't store anything — the throwaway container
+(`--rm`) only used the password to log in — so there is nothing to update
+there, and nothing to re-run just to set the password.
+
+**But the app's access key may not survive a change.** MinIO keeps its users
+and access keys encrypted with the root credentials. Reports on MinIO's
+tracker ([#20574](https://github.com/minio/minio/issues/20574),
+[#10911](https://github.com/minio/minio/issues/10911)) describe existing access
+keys vanishing after the root credentials were changed, with "data is not
+authentic" errors, and the only workaround was putting the old values back.
+Those reports changed the user and password together; whether changing the
+password alone is safe isn't documented, so treat it as untested.
+
+So after changing it:
+
+1. Upload one photo on the site. If it works, you're done.
+2. If uploads fail, create a new key with the **new** password
+   (`… quay.io/minio/mc admin accesskey create local`, step 2), put it in
+   `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY`, and redeploy the backend.
+3. Check that the public bucket rules survived (they're stored with the bucket,
+   not with the users, so they should): listing must still be refused —
+   `curl -s -o /dev/null -w "%{http_code}" "https://cdn.ankerd.org/story-photos/?list-type=2"`
+   prints `403` — while a photo URL still opens.
+
+The old password will also be in the Pi's shell history if it was ever typed
+into a command: `history -c && history -w` clears it.
