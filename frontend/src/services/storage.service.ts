@@ -1,18 +1,12 @@
-import { supabase } from "./supabase";
+import { apiClient } from "../lib/api/client";
+import { apiRoutes } from "../config/api-routes";
 
-const EVENT_COVERS_BUCKET = "event-covers";
-
-/** Upload an event cover image to Supabase Storage and return the public URL. */
+/** Upload an event cover image (admins only) and return its public URL. */
 export async function uploadEventCoverImage(file: File): Promise<string> {
-  const ext = file.name.split(".").pop() ?? "jpg";
-  const path = `${crypto.randomUUID()}.${ext}`;
-
-  const { error } = await supabase.storage
-    .from(EVENT_COVERS_BUCKET)
-    .upload(path, file, { contentType: file.type });
-
-  if (error) throw new Error(error.message);
-
-  const { data } = supabase.storage.from(EVENT_COVERS_BUCKET).getPublicUrl(path);
-  return data.publicUrl;
+  const form = new FormData();
+  form.append("file", file, file.name);
+  const { data } = await apiClient.post<{ url: string }>(apiRoutes.admin.uploadImage("event-cover"), form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data.url;
 }

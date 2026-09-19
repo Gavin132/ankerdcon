@@ -4,7 +4,7 @@ import { Car, Plus } from "lucide-react";
 import { useRides, useClaimSeat, useLeaveSeat } from "../hooks/useRides";
 import { useCalendar } from "../hooks/useCalendar";
 import { useMeals } from "../hooks/useMeals";
-import { useUsers } from "../hooks/useUsers";
+import { useUsers, useActingPermissions } from "../hooks/useUsers";
 import { useSmartBack } from "../hooks/useSmartBack";
 import { toast } from "../store/toast.store";
 import { routes } from "../config/routes";
@@ -26,6 +26,7 @@ export function RideDetailPage() {
   const { data: events = [] } = useCalendar();
   const { data: meals = [] } = useMeals();
   const { data: users = [] } = useUsers();
+  const { actable } = useActingPermissions();
 
   const [claimOpen, setClaimOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
@@ -168,7 +169,7 @@ export function RideDetailPage() {
             <div className="space-y-3">
               <NamePicker
                 multiple
-                options={availableToJoin}
+                options={actable(availableToJoin)}
                 value={claimNames}
                 onChange={setClaimNames}
                 maxSelect={isPT ? undefined : ride.seats_left}
@@ -201,7 +202,7 @@ export function RideDetailPage() {
             <div className="space-y-3">
               <NamePicker
                 multiple
-                options={ride.passengers}
+                options={actable(ride.passengers)}
                 value={leaveNames}
                 onChange={setLeaveNames}
                 color="rose"

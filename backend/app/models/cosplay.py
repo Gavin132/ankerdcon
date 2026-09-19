@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from pydantic import BaseModel
+from app.core.validation import RequiredImageUrl
 
 
 class Cosplay(BaseModel):
@@ -21,5 +22,5 @@ class CreateCosplayRequest(BaseModel):
     character_name: str
     series: Optional[str] = None
     notes: Optional[str] = None
-    inspo_images: list[str] = []
+    inspo_images: list[RequiredImageUrl] = []
     linked_event_ids: list[str]

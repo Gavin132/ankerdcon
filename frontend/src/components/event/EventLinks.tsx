@@ -1,5 +1,6 @@
 import { Clock, ExternalLink, Globe, Ticket } from "lucide-react";
 import { formatCurrency, formatTicketSaleStart } from "../../utils/format";
+import { safeHref } from "../../utils/validation";
 import type { CalendarEvent } from "../../types";
 
 interface EventLinksProps {
@@ -11,7 +12,9 @@ interface EventLinksProps {
 
 export function EventLinks({ event, bare = false }: EventLinksProps) {
   const hasTickets  = (event.ticket_types?.length ?? 0) > 0;
-  const hasCTAs     = !!(event.ticket_url || event.website);
+  const ticketUrl   = safeHref(event.ticket_url);
+  const websiteUrl  = safeHref(event.website);
+  const hasCTAs     = !!(ticketUrl || websiteUrl);
   const hasSaleInfo = !!event.ticket_sale_start;
 
   const linkButton =
@@ -58,9 +61,9 @@ export function EventLinks({ event, bare = false }: EventLinksProps) {
         {/* CTA buttons */}
         {hasCTAs && (
           <div className="flex flex-col gap-2.5 px-5 py-4 sm:flex-row">
-            {event.ticket_url && (
+            {ticketUrl && (
               <a
-                href={event.ticket_url}
+                href={ticketUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={linkButton}
@@ -70,9 +73,9 @@ export function EventLinks({ event, bare = false }: EventLinksProps) {
                 <ExternalLink size={12} className="ml-0.5 text-ink-3" />
               </a>
             )}
-            {event.website && (
+            {websiteUrl && (
               <a
-                href={event.website}
+                href={websiteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={linkButton}

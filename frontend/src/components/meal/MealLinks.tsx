@@ -1,4 +1,5 @@
 import { Globe, BookOpen, ExternalLink } from "lucide-react";
+import { safeHref } from "../../utils/validation";
 
 interface MealLinksProps {
   website?: string;
@@ -8,7 +9,9 @@ interface MealLinksProps {
 const LINK =
   "flex items-center gap-2.5 rounded-xl border-1.5 border-line bg-surface px-3.5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-3";
 
-export function MealLinks({ website, menuUrl }: MealLinksProps) {
+export function MealLinks(props: MealLinksProps) {
+  const website = safeHref(props.website);
+  const menuUrl = safeHref(props.menuUrl);
   if (!website && !menuUrl) return null;
 
   return (

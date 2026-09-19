@@ -29,8 +29,19 @@ def _client() -> Minio:
     )
 
 
+def _public_base() -> str:
+    settings = get_settings()
+    scheme = "https" if settings.minio_secure else "http"
+    return f"{scheme}://{settings.minio_endpoint}/{settings.minio_bucket}/"
+
+
 def upload_bytes(key: str, content: bytes, content_type: str) -> str:
-    """Upload a file to the story-photos bucket and return its public URL."""
+    """Upload a file to the bucket and return its public URL.
+
+    Every uploaded image lives in this one bucket, a folder per kind: story
+    photos under <event>/<day>/, and cosplay/, event-covers/, badges/ and
+    banners/ — so one read-only policy covers all of them.
+    """
     settings = get_settings()
     client = _client()
     client.put_object(
@@ -40,8 +51,18 @@ def upload_bytes(key: str, content: bytes, content_type: str) -> str:
         length=len(content),
         content_type=content_type,
     )
-    scheme = "https" if settings.minio_secure else "http"
-    return f"{scheme}://{settings.minio_endpoint}/{settings.minio_bucket}/{key}"
+    return f"{_public_base()}{key}"
+
+
+def key_from_url(url: str | None) -> str | None:
+    """The object key behind a URL upload_bytes returned, or None when the URL
+    points somewhere else (an older Supabase Storage file, a pasted link)."""
+    if not url or not get_settings().minio_endpoint:
+        return None
+    base = _public_base()
+    if not url.startswith(base):
+        return None
+    return url[len(base):].split("?", 1)[0] or None
 
 
 def delete_object(key: str) -> None:

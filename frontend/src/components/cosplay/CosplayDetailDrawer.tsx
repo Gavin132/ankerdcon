@@ -6,7 +6,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Drawer } from "../common/Drawer";
 import { Button } from "../common/Button";
 import { UserAvatar } from "../common/UserAvatar";
+import { useActingPermissions } from "../../hooks/useUsers";
 import { formatDate } from "../../utils/format";
+import { safeHref } from "../../utils/validation";
 import { routes } from "../../config/routes";
 import type { Cosplay, CalendarEvent, User } from "../../types";
 
@@ -31,6 +33,7 @@ export function CosplayDetailDrawer({
 }: CosplayDetailDrawerProps) {
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const { canActFor } = useActingPermissions();
 
   if (!cosplay) return null;
 
@@ -52,7 +55,8 @@ export function CosplayDetailDrawer({
     setConfirmDelete(false);
   }
 
-  const footer = (
+  // Only the cosplayer themselves (or an admin) may delete it.
+  const footer = canActFor(cosplay.user_name) && (
     <div className="space-y-2">
       {confirmDelete ? (
         <div className="flex items-center gap-2">
@@ -82,7 +86,7 @@ export function CosplayDetailDrawer({
         onClose={() => { onClose(); setConfirmDelete(false); }}
         title={cosplay.character_name}
         subtitle={cosplay.series ?? undefined}
-        footer={footer}
+        footer={footer || undefined}
       >
         <div className="space-y-6">
 
@@ -146,7 +150,7 @@ export function CosplayDetailDrawer({
                     />
                     <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <a
-                        href={url}
+                        href={safeHref(url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}

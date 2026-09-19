@@ -10,7 +10,7 @@ import { EventPicker } from "../common/EventPicker";
 import { useCalendar } from "../../hooks/useCalendar";
 import { UserAvatar } from "../common/UserAvatar";
 import { useCreateExpense } from "../../hooks/useExpenses";
-import { useUsers } from "../../hooks/useUsers";
+import { useUsers, useActingPermissions } from "../../hooks/useUsers";
 import { formatAmount } from "../../utils/format";
 import { toast } from "../../store/toast.store";
 import type { CreateExpenseShareInput, User } from "../../types";
@@ -53,6 +53,7 @@ interface Props {
 
 export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props) {
   const { data: users = [] } = useUsers();
+  const { actable } = useActingPermissions();
   const { data: events = [] } = useCalendar();
   const userNames = users.map((u: User) => u.name);
 
@@ -175,7 +176,7 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
           <div>
             <label className={SL}>Betaald door</label>
             <NamePicker
-              options={userNames}
+              options={actable(userNames)}
               value={watch("paid_by") ?? ""}
               onChange={(name) => setValue("paid_by", name, { shouldValidate: true })}
               color="sky"

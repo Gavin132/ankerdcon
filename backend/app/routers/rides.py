@@ -5,7 +5,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from app.config import Settings, get_settings
 from app.constants import Tables
 from app.core.logging import get_logger
-from app.dependencies import get_current_user
+from app.dependencies import act_as, get_current_user
 from app.models.rides import (
     ClaimSeatRequest,
     CreateRideRequest,
@@ -17,6 +17,7 @@ from app.models.rides import (
 )
 from app.routes import RideRoutes
 from app.services import notification_service
+from app.services.discord_bot import escape_markdown
 from app import messages as M
 from app.core.database import supabase
 
@@ -57,11 +58,12 @@ def list_rides(
 def create_ride(
     body: CreateRideRequest,
     background_tasks: BackgroundTasks,
-    _: str = Depends(get_current_user),
+    current_user: str = Depends(get_current_user),
     settings: Settings = Depends(get_settings),
 ) -> Ride:
-    new_ride = body.model_dump()
-    new_ride["passengers"] = [body.driver] if body.vehicle_type == "Car" else []
+    driver = act_as(current_user, body.driver)
+    new_ride = {**body.model_dump(), "driver": driver}
+    new_ride["passengers"] = [driver] if body.vehicle_type == "Car" else []
     new_ride["restaurant_drivers"] = []
 
     try:
@@ -77,23 +79,24 @@ def create_ride(
         settings.discord_bot_token,
         notification_service.NotificationCategory.RIDE_CREATED,
         M.DM_RIDE_CREATED.format(
-            driver=body.driver,
-            departure_time=body.departure_time,
-            start_location=body.start_location,
+            driver=escape_markdown(driver),
+            departure_time=escape_markdown(body.departure_time),
+            start_location=escape_markdown(body.start_location),
         ),
     )
     return ride
 
 
 @router.post(RideRoutes.CLAIM, response_model=Ride)
-def claim_seat(ride_id: str, body: ClaimSeatRequest, _: str = Depends(get_current_user)) -> Ride:
+def claim_seat(ride_id: str, body: ClaimSeatRequest, current_user: str = Depends(get_current_user)) -> Ride:
+    user_name = act_as(current_user, body.user_name)
     row = _get_ride_or_404(ride_id, "passengers, total_seats")
     passengers = row.get("passengers") or []
 
-    if body.user_name not in passengers:
+    if user_name not in passengers:
         if len(passengers) >= row.get("total_seats", 0):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Rit is vol.")
-        passengers.append(body.user_name)
+        passengers.append(user_name)
         try:
             resp = supabase.table(Tables.RIDES).update({"passengers": passengers}).eq("id", ride_id).execute()
         except Exception as e:
@@ -110,12 +113,13 @@ def claim_seat(ride_id: str, body: ClaimSeatRequest, _: str = Depends(get_curren
 
 
 @router.post(RideRoutes.LEAVE, response_model=Ride)
-def leave_seat(ride_id: str, body: ClaimSeatRequest, _: str = Depends(get_current_user)) -> Ride:
+def leave_seat(ride_id: str, body: ClaimSeatRequest, current_user: str = Depends(get_current_user)) -> Ride:
+    user_name = act_as(current_user, body.user_name)
     row = _get_ride_or_404(ride_id, "passengers")
     passengers = row.get("passengers") or []
 
-    if body.user_name in passengers:
-        passengers.remove(body.user_name)
+    if user_name in passengers:
+        passengers.remove(user_name)
         try:
             resp = supabase.table(Tables.RIDES).update({"passengers": passengers}).eq("id", ride_id).execute()
             return resp.data[0]
@@ -134,14 +138,15 @@ def leave_seat(ride_id: str, body: ClaimSeatRequest, _: str = Depends(get_curren
 # ── Restaurant driver endpoints ────────────────────────────────────
 
 @router.post(RideRoutes.RESTAURANT_DRIVER, status_code=status.HTTP_204_NO_CONTENT)
-def add_restaurant_driver(ride_id: str, body: RestaurantDriverRequest, _: str = Depends(get_current_user)) -> None:
+def add_restaurant_driver(ride_id: str, body: RestaurantDriverRequest, current_user: str = Depends(get_current_user)) -> None:
+    user_name = act_as(current_user, body.user_name)
     row = _get_ride_or_404(ride_id, "restaurant_drivers")
     drivers = row.get("restaurant_drivers") or []
 
-    if not any(d.get("name") == body.user_name for d in drivers):
+    if not any(d.get("name") == user_name for d in drivers):
         # The driver counts as one of their own seats, so a new car with 5
         # seats starts at 1/5 rather than 0/5.
-        drivers.append({"name": body.user_name, "seats": body.seats, "passengers": [body.user_name]})
+        drivers.append({"name": user_name, "seats": body.seats, "passengers": [user_name]})
         try:
             supabase.table(Tables.RIDES).update({"restaurant_drivers": drivers}).eq("id", ride_id).execute()
         except Exception as e:
@@ -150,9 +155,10 @@ def add_restaurant_driver(ride_id: str, body: RestaurantDriverRequest, _: str = 
 
 
 @router.post(RideRoutes.RESTAURANT_DRIVER_LEAVE, status_code=status.HTTP_204_NO_CONTENT)
-def leave_restaurant_driver(ride_id: str, body: LeaveRestaurantDriverRequest, _: str = Depends(get_current_user)) -> None:
+def leave_restaurant_driver(ride_id: str, body: LeaveRestaurantDriverRequest, current_user: str = Depends(get_current_user)) -> None:
+    user_name = act_as(current_user, body.user_name)
     row = _get_ride_or_404(ride_id, "restaurant_drivers")
-    drivers = [d for d in (row.get("restaurant_drivers") or []) if d.get("name") != body.user_name]
+    drivers = [d for d in (row.get("restaurant_drivers") or []) if d.get("name") != user_name]
     try:
         supabase.table(Tables.RIDES).update({"restaurant_drivers": drivers}).eq("id", ride_id).execute()
     except Exception as e:
@@ -161,7 +167,8 @@ def leave_restaurant_driver(ride_id: str, body: LeaveRestaurantDriverRequest, _:
 
 
 @router.post(RideRoutes.RESTAURANT_DRIVER_ASSIGN, status_code=status.HTTP_204_NO_CONTENT)
-def assign_to_driver(ride_id: str, body: RestaurantAssignRequest, _: str = Depends(get_current_user)) -> None:
+def assign_to_driver(ride_id: str, body: RestaurantAssignRequest, current_user: str = Depends(get_current_user)) -> None:
+    user_name = act_as(current_user, body.user_name)
     row = _get_ride_or_404(ride_id, "restaurant_drivers")
     drivers = row.get("restaurant_drivers") or []
 
@@ -170,10 +177,10 @@ def assign_to_driver(ride_id: str, body: RestaurantAssignRequest, _: str = Depen
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chauffeur niet gevonden.")
 
     for d in drivers:
-        if body.user_name in d.get("passengers", []):
-            d["passengers"].remove(body.user_name)
+        if user_name in d.get("passengers", []):
+            d["passengers"].remove(user_name)
 
-    target_driver.setdefault("passengers", []).append(body.user_name)
+    target_driver.setdefault("passengers", []).append(user_name)
 
     try:
         supabase.table(Tables.RIDES).update({"restaurant_drivers": drivers}).eq("id", ride_id).execute()
@@ -183,13 +190,14 @@ def assign_to_driver(ride_id: str, body: RestaurantAssignRequest, _: str = Depen
 
 
 @router.post(RideRoutes.RESTAURANT_DRIVER_UNASSIGN, status_code=status.HTTP_204_NO_CONTENT)
-def unassign_from_driver(ride_id: str, body: RestaurantUnassignRequest, _: str = Depends(get_current_user)) -> None:
+def unassign_from_driver(ride_id: str, body: RestaurantUnassignRequest, current_user: str = Depends(get_current_user)) -> None:
+    user_name = act_as(current_user, body.user_name)
     row = _get_ride_or_404(ride_id, "restaurant_drivers")
     drivers = row.get("restaurant_drivers") or []
 
     for d in drivers:
-        if body.user_name in d.get("passengers", []):
-            d["passengers"].remove(body.user_name)
+        if user_name in d.get("passengers", []):
+            d["passengers"].remove(user_name)
 
     try:
         supabase.table(Tables.RIDES).update({"restaurant_drivers": drivers}).eq("id", ride_id).execute()

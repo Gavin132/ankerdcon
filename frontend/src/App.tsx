@@ -2,7 +2,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { RouterProvider } from "react-router-dom";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { QUERY_CACHE_MAX_AGE, queryPersister, shouldPersistQuery } from "./lib/queryPersist";
+import { QUERY_CACHE_MAX_AGE, clearPersistedQueries, queryPersister, shouldPersistQuery } from "./lib/queryPersist";
 import { AnimatePresence } from "framer-motion";
 import { router } from "./router";
 import { ToastContainer } from "./components/common/Toast";
@@ -120,6 +120,10 @@ function AuthSync() {
         }
       } else {
         setAccessToken(null);
+        // Signed out elsewhere (another tab, a revoked session): the saved
+        // query cache still holds this account's data, phone numbers and
+        // location pings included.
+        if (event === "SIGNED_OUT") clearPersistedQueries();
       }
       // INITIAL_SESSION fires once on subscription, after Supabase has processed
       // any OAuth hash/PKCE code in the URL — safe to mark as initialized here.

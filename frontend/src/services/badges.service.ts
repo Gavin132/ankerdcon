@@ -1,9 +1,7 @@
 import { apiClient } from "../lib/api/client";
 import { apiRoutes } from "../config/api-routes";
-import { supabase } from "./supabase";
 import type { Badge } from "../types";
 
-const BADGE_BUCKET = "badges";
 const BADGE_SIZE = 128;
 
 /** Resize any image to a square BADGE_SIZE×BADGE_SIZE PNG using Canvas. */
@@ -34,13 +32,12 @@ function normalizeImage(file: File): Promise<Blob> {
 
 export async function uploadBadgeImage(file: File): Promise<string> {
   const blob = await normalizeImage(file);
-  const path = `${crypto.randomUUID()}.png`;
-  const { error } = await supabase.storage
-    .from(BADGE_BUCKET)
-    .upload(path, blob, { contentType: "image/png", upsert: false });
-  if (error) throw new Error(error.message);
-  const { data } = supabase.storage.from(BADGE_BUCKET).getPublicUrl(path);
-  return data.publicUrl;
+  const form = new FormData();
+  form.append("file", blob, "badge.png");
+  const { data } = await apiClient.post<{ url: string }>(apiRoutes.admin.uploadImage("badge"), form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data.url;
 }
 
 export interface CreateBadgePayload {

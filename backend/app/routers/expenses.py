@@ -6,11 +6,12 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from app.config import Settings, get_settings
 from app.constants import Tables
 from app.core.logging import get_logger
-from app.dependencies import get_current_user
+from app.dependencies import act_as, get_current_user, require_owner_or_admin
 from app.models.expense import CreateExpenseRequest, Expense
 from app.routes import ExpenseRoutes
 from app.core.database import supabase
 from app.services import notification_service
+from app.services.discord_bot import escape_markdown
 from app import messages as M
 
 logger = get_logger(__name__)
@@ -69,12 +70,13 @@ def list_expenses(_: str = Depends(get_current_user)):
 def create_expense(
     body: CreateExpenseRequest,
     background_tasks: BackgroundTasks,
-    _: str = Depends(get_current_user),
+    current_user: str = Depends(get_current_user),
     settings: Settings = Depends(get_settings),
 ):
+    paid_by = act_as(current_user, body.paid_by)
     try:
         result = supabase.table(Tables.EXPENSES).insert({
-            "paid_by":         body.paid_by,
+            "paid_by":         paid_by,
             "amount":          body.amount,
             "currency":        body.currency,
             "description":     body.description,
@@ -112,16 +114,16 @@ def create_expense(
         settings.discord_bot_token,
         notification_service.NotificationCategory.EXPENSE_CREATED,
         M.DM_EXPENSE_CREATED.format(
-            paid_by=body.paid_by,
+            paid_by=escape_markdown(paid_by),
             amount=body.amount,
-            currency=body.currency,
-            description=body.description,
+            currency=escape_markdown(body.currency),
+            description=escape_markdown(body.description),
         ),
     )
 
 
 @router.delete(ExpenseRoutes.DETAIL, status_code=status.HTTP_204_NO_CONTENT)
-def delete_expense(expense_id: str, user_name: str, _: str = Depends(get_current_user)):
+def delete_expense(expense_id: str, current_user: str = Depends(get_current_user)):
     try:
         row = (
             supabase.table(Tables.EXPENSES)
@@ -136,11 +138,7 @@ def delete_expense(expense_id: str, user_name: str, _: str = Depends(get_current
 
     if not row.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Uitgave niet gevonden.")
-    if row.data["paid_by"] != user_name:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Alleen de betaler kan deze uitgave verwijderen.",
-        )
+    require_owner_or_admin(current_user, row.data["paid_by"], "Alleen de betaler kan deze uitgave verwijderen.")
 
     try:
         supabase.table(Tables.EXPENSES).delete().eq("id", expense_id).execute()
@@ -150,11 +148,11 @@ def delete_expense(expense_id: str, user_name: str, _: str = Depends(get_current
 
 
 @router.post(ExpenseRoutes.SHARE_CLAIM)
-def claim_share(share_id: str, _: str = Depends(get_current_user)):
+def claim_share(share_id: str, current_user: str = Depends(get_current_user)):
     try:
         row = (
             supabase.table(Tables.EXPENSE_SHARES)
-            .select("status")
+            .select("status, participant")
             .eq("id", share_id)
             .single()
             .execute()
@@ -165,6 +163,7 @@ def claim_share(share_id: str, _: str = Depends(get_current_user)):
 
     if not row.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Aandeel niet gevonden.")
+    require_owner_or_admin(current_user, row.data["participant"], "Je kunt alleen je eigen aandeel als betaald melden.")
     if row.data["status"] != "pending":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Aandeel is al geclaimd of bevestigd.")
 
@@ -181,11 +180,11 @@ def claim_share(share_id: str, _: str = Depends(get_current_user)):
 
 
 @router.post(ExpenseRoutes.SHARE_CONFIRM)
-def confirm_share(share_id: str, _: str = Depends(get_current_user)):
+def confirm_share(share_id: str, current_user: str = Depends(get_current_user)):
     try:
         row = (
             supabase.table(Tables.EXPENSE_SHARES)
-            .select("status")
+            .select("status, expenses(paid_by)")
             .eq("id", share_id)
             .single()
             .execute()
@@ -196,6 +195,8 @@ def confirm_share(share_id: str, _: str = Depends(get_current_user)):
 
     if not row.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Aandeel niet gevonden.")
+    payer = (row.data.get("expenses") or {}).get("paid_by")
+    require_owner_or_admin(current_user, payer, "Alleen de betaler kan dit bevestigen.")
     if row.data["status"] != "claimed":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Aandeel is nog niet geclaimd.")
 

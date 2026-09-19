@@ -17,7 +17,7 @@ import { NamePicker } from "../common/NamePicker";
 import { UserAvatar } from "../common/UserAvatar";
 import { Collapse } from "../common/Collapse";
 import { useClaimSeat, useLeaveSeat } from "../../hooks/useRides";
-import { useUsers } from "../../hooks/useUsers";
+import { useUsers, useActingPermissions } from "../../hooks/useUsers";
 import { useCalendar } from "../../hooks/useCalendar";
 import { formatTime } from "../../utils/format";
 import { getRideStatus, formatCountdown, rideLocationLabel } from "../../utils/rides";
@@ -42,6 +42,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
   const claimMutation = useClaimSeat();
   const leaveMutation = useLeaveSeat();
   const { data: users = [] } = useUsers();
+  const { actable } = useActingPermissions();
   const { data: events = [] } = useCalendar();
 
   const linkedEvent = ride.linked_event_id
@@ -279,14 +280,14 @@ export function RideCard({ ride, userNames }: RideCardProps) {
                   {expandedAction === "claim" ? (
                     <NamePicker
                       multiple
-                      options={availableToJoin}
+                      options={actable(availableToJoin)}
                       value={claimNames}
                       onChange={setClaimNames}
                       maxSelect={isPT ? undefined : ride.seats_left}
                       color="sky"
                     />
                   ) : (
-                    <NamePicker multiple options={ride.passengers} value={leaveNames} onChange={setLeaveNames} color="rose" />
+                    <NamePicker multiple options={actable(ride.passengers)} value={leaveNames} onChange={setLeaveNames} color="rose" />
                   )}
                   <Button
                     variant={expandedAction === "leave" ? "danger" : "primary"}

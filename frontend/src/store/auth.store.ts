@@ -117,7 +117,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setInitialized: () => set({ initializing: false }),
 
   clearAuth: () => {
-    set({ accessToken: null, currentUser: null, isAuthenticated: false, forbidden: false });
+    set({ accessToken: null, currentUser: null, isAuthenticated: false, forbidden: false, impersonating: null });
+    // Logging out while "logged in as" someone else must end that too:
+    // otherwise the reload below restores the minted token from
+    // sessionStorage and the next person on this device is that member.
+    try {
+      sessionStorage.removeItem(IMPERSONATION_KEY);
+    } catch {
+      // sessionStorage unavailable — nothing stored to remove
+    }
     // The persisted query cache holds this account's data; the next person to
     // sign in on this device must not see it flash past before their own loads.
     clearPersistedQueries();
@@ -135,6 +143,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   // The Supabase-powered refresh function
   refreshAccessToken: async () => {
+    // A minted "log in as" token can't be refreshed. Refreshing would hand
+    // back the admin's own session while the banner still names the member,
+    // so changes would quietly be saved as the admin. End it instead.
+    if (get().impersonating) {
+      get().stopImpersonation();
+      return { dead: true };
+    }
     try {
       // Supabase handles the actual refresh logic under the hood
       const { data, error } = await supabase.auth.refreshSession();

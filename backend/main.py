@@ -17,6 +17,7 @@ from app.config import get_settings
 from app.constants import API_PREFIX, Tables
 from app.core.database import supabase
 from app.core.logging import configure_logging, get_logger
+from app.core.security import add_security_headers, limit_body_size, rate_limit
 from app.routers import admin, announcements, badges, calendar, changelog, cosplays, expenses, link_preview, meals, payments, rides, stories, users
 from app.services.reminder_scheduler import check_and_send_reminders, check_and_send_ticket_reminders
 
@@ -60,11 +61,17 @@ settings = get_settings()
 app = FastAPI(
     title="Ankerd Con API",
     version=APP_VERSION,
-    docs_url=f"{API_PREFIX}/docs",
-    redoc_url=f"{API_PREFIX}/redoc",
-    openapi_url=f"{API_PREFIX}/openapi.json",
+    docs_url=f"{API_PREFIX}/docs" if settings.api_docs_enabled else None,
+    redoc_url=f"{API_PREFIX}/redoc" if settings.api_docs_enabled else None,
+    openapi_url=f"{API_PREFIX}/openapi.json" if settings.api_docs_enabled else None,
     lifespan=lifespan,
 )
+
+# Order matters: the last one added runs first. The headers middleware wraps
+# the others, so even a 413 or 429 gets the security headers.
+app.middleware("http")(rate_limit(settings))
+app.middleware("http")(limit_body_size())
+app.middleware("http")(add_security_headers(settings))
 
 app.add_middleware(
     CORSMiddleware,

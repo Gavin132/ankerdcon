@@ -51,6 +51,7 @@ export const apiRoutes = {
   // ── Calendar ─────────────────────────────────────────────────────
   calendar: {
     base:         "/api/calendar/",
+    feedUrl:      "/api/calendar/feed-url",
     rsvp:         (id: string) => `/api/calendar/${id}/rsvp`,
     leave:        (id: string) => `/api/calendar/${id}/leave`,
     hotelRooms:   (eventId: string) => `/api/calendar/${eventId}/hotel-rooms`,
@@ -64,7 +65,6 @@ export const apiRoutes = {
     base:        "/api/users/",
     me:          "/api/users/me",
     onboarding:  "/api/users/me/onboarding",
-    names:       "/api/users/names",
     preferences: "/api/users/preferences",
     name:        "/api/users/name",
     banner:      "/api/users/banner",
@@ -90,6 +90,7 @@ export const apiRoutes = {
   // ── Admin ─────────────────────────────────────────────────────────
   admin: {
     stats: "/api/admin/stats",
+    uploadImage: (kind: "event-cover" | "badge") => `/api/admin/uploads/${kind}`,
 
     users: {
       base:             "/api/admin/users",

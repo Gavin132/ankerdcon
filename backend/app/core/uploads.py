@@ -1,6 +1,25 @@
 from __future__ import annotations
 
+import warnings
+from io import BytesIO
+
 from fastapi import HTTPException, UploadFile, status
+from PIL import Image, ImageOps
+
+# Pillow format name -> (content type, file extension)
+IMAGE_FORMATS = {
+    "JPEG": ("image/jpeg", "jpg"),
+    "PNG": ("image/png", "png"),
+    "WEBP": ("image/webp", "webp"),
+    "GIF": ("image/gif", "gif"),
+}
+
+# Far above any phone photo, low enough that a tiny file claiming enormous
+# dimensions ("decompression bomb") is refused instead of exhausting memory.
+_MAX_PIXELS = 60_000_000
+Image.MAX_IMAGE_PIXELS = _MAX_PIXELS
+
+_NOT_AN_IMAGE = "Dit bestand is geen geldige afbeelding. Gebruik JPG, PNG of WebP."
 
 
 async def read_capped(file: UploadFile, max_bytes: int) -> bytes:
@@ -24,3 +43,46 @@ async def read_capped(file: UploadFile, max_bytes: int) -> bytes:
             )
         chunks.append(chunk)
     return b"".join(chunks)
+
+
+def clean_image(content: bytes, allowed: set[str]) -> tuple[bytes, str, str]:
+    """Check what an upload really is and strip its metadata.
+
+    The browser's content type is only a claim, so the bytes are decoded to
+    find the actual format. Photos straight off a phone carry EXIF data,
+    including the GPS position where they were taken, so still images are
+    re-encoded without it (after applying the EXIF rotation, so they still
+    display upright). Animated GIFs are only checked, not re-encoded, since
+    that would drop their frames; GIFs have no EXIF block to strip.
+
+    Returns (bytes, content type, file extension).
+    """
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", Image.DecompressionBombWarning)
+            img = Image.open(BytesIO(content))
+            fmt = img.format
+            if fmt not in allowed or fmt not in IMAGE_FORMATS:
+                raise ValueError(fmt)
+            img.load()
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail=_NOT_AN_IMAGE)
+
+    content_type, ext = IMAGE_FORMATS[fmt]
+    if fmt == "GIF":
+        return content, content_type, ext
+
+    img = ImageOps.exif_transpose(img)
+    out = BytesIO()
+    save_args: dict = {}
+    if icc := img.info.get("icc_profile"):
+        save_args["icc_profile"] = icc
+    if fmt == "JPEG":
+        if img.mode not in ("RGB", "L"):
+            img = img.convert("RGB")
+        img.save(out, "JPEG", quality=92, optimize=True, **save_args)
+    elif fmt == "WEBP":
+        img.save(out, "WEBP", quality=92, **save_args)
+    else:
+        img.save(out, "PNG", optimize=True, **save_args)
+    return out.getvalue(), content_type, ext
