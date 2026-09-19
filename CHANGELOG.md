@@ -103,6 +103,29 @@ All notable changes to Ankerd Con are documented here.
 - The API documentation is off unless `API_DOCS_ENABLED` is set, the
   public list of member names is gone, and too many requests from one place
   get a "wait a moment" (429) instead of being served.
+- An old database trigger that gave every new login a profile, skipping the
+  whitelist, is removed (migration v2.23).
+- A first Discord login only takes over a placeholder profile an admin made
+  (no Discord account, no email) whose name is exactly the Discord username.
+  New profiles always get a name nobody uses, including former names, and
+  the database refuses two profiles with the same name.
+- Deleting a user also removes them from the whitelist, so they can't just
+  log in again.
+- Bulk-adding hotel rooms is capped at 100 per request, and a new room only
+  lists yourself unless you're an admin.
+- Logging out while "logged in as" someone ends that session too, and an
+  expired "log in as" session ends instead of switching to the admin's own
+  account. Signing out elsewhere also clears the data saved on this device.
+- Login uses the PKCE flow, so tokens no longer appear in the URL.
+- Updated FastAPI, Starlette, python-multipart and Vite to versions without
+  known denial-of-service bugs, and replaced python-jose with PyJWT.
+- The backend image leaves out `.env` and runs as a normal user instead of root.
+- Link previews (Discord, WhatsApp, …) of an event show only its name, date
+  and cover image; the location and description stay behind the login.
+- Oversized uploads are refused before they're received, the rate limit only
+  trusts forwarded IP addresses from the proxy (and covers link previews),
+  and text members write is shown literally in bot DMs, so it can't hide a
+  link behind other text.
 
 ---
 

@@ -18,7 +18,20 @@ import httpx
 from app import messages
 
 _DISCORD_API = "https://discord.com/api/v10"
+
 _TIMEOUT = 5.0
+
+_MARKDOWN_SPECIALS = set("\\*_~`|>#-[]()<")
+
+
+def escape_markdown(text: object) -> str:
+    """Member-written text for a bot message, shown literally.
+
+    Without this, "[Tickets](https://phishing.example)" in a meal name turns
+    into a disguised link in a DM from the bot, sent to everyone who follows
+    new meals. Mentions are already off (allowed_mentions) either way.
+    """
+    return "".join("\\" + c if c in _MARKDOWN_SPECIALS else c for c in str(text))
 
 
 def _headers(bot_token: str) -> dict[str, str]:

@@ -264,14 +264,15 @@ def list_hotel_rooms(event_id: str, _: str = Depends(get_current_user)) -> list[
 def create_hotel_room(
     event_id: str,
     body: CreateHotelRoomRequest,
-    _: str = Depends(get_current_user),
+    current_user: str = Depends(get_current_user),
 ) -> HotelRoom:
     group_key, is_hotel = _hotel_group_key(event_id)
     if not is_hotel:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Dit evenement heeft geen hotel.")
     data = {k: v for k, v in body.model_dump().items() if v is not None}
     data["event_id"] = group_key
-    data.setdefault("occupants", [])
+    # Same rule as assigning people to a room: members only put themselves in.
+    data["occupants"] = [act_as(current_user, name) for name in body.occupants]
     try:
         resp = supabase.table(Tables.HOTEL_ROOMS).insert(data).execute()
         return resp.data[0]

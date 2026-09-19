@@ -17,6 +17,7 @@ from app.models.rides import (
 )
 from app.routes import RideRoutes
 from app.services import notification_service
+from app.services.discord_bot import escape_markdown
 from app import messages as M
 from app.core.database import supabase
 
@@ -78,9 +79,9 @@ def create_ride(
         settings.discord_bot_token,
         notification_service.NotificationCategory.RIDE_CREATED,
         M.DM_RIDE_CREATED.format(
-            driver=driver,
-            departure_time=body.departure_time,
-            start_location=body.start_location,
+            driver=escape_markdown(driver),
+            departure_time=escape_markdown(body.departure_time),
+            start_location=escape_markdown(body.start_location),
         ),
     )
     return ride

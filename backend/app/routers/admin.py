@@ -3,14 +3,14 @@ from datetime import datetime, timezone
 import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
-from jose import jwt as jose_jwt
+import jwt
 
 from app.config import Settings, get_settings
 from app.constants import Tables
 from app.core import minio_client
 from app.core.logging import get_logger
 from app.core.uploads import clean_image, read_capped
-from app.dependencies import get_admin_user
+from app.dependencies import _unique_profile_name, get_admin_user
 from app.models.admin import (
     AdminCreateEventRequest,
     AdminCreateMealRequest,
@@ -115,6 +115,11 @@ def admin_list_users(_: str = Depends(get_admin_user)) -> list[User]:
 @router.post(AdminRoutes.USERS, response_model=User, status_code=status.HTTP_201_CREATED)
 def admin_create_user(body: AdminCreateUserRequest, _: str = Depends(get_admin_user)) -> User:
     """Create a stub profile to allowlist a new user before they log in with Discord."""
+    if _unique_profile_name(body.name) != body.name:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Deze naam is al in gebruik (of was de naam van iemand anders).",
+        )
     data: dict = {"name": body.name, "is_admin": body.is_admin, "is_active": True, "is_first_login": True}
     if body.discord_id:
         data["discord_id"] = body.discord_id
@@ -190,7 +195,7 @@ def admin_impersonate_user(
     }
     if profile.get("email"):
         payload["email"] = profile["email"]
-    token = jose_jwt.encode(payload, settings.supabase_jwt_secret, algorithm="HS256")
+    token = jwt.encode(payload, settings.supabase_jwt_secret, algorithm="HS256")
     return {"access_token": token, "name": profile["name"]}
 
 
@@ -209,6 +214,19 @@ def _remove_user_from_all_events(name: str) -> None:
                     supabase.table(table).update({field: [m for m in members if m != name]}).eq("id", row["id"]).execute()
         except Exception as e:
             logger.error("Cleanup %s.%s failed for %r: %s", table, field, name, e)
+
+
+def _revoke_whitelist(row: dict) -> None:
+    """Deleting someone must also take away their way back in: without this,
+    their next login passes the whitelist and gets a brand-new profile."""
+    for column in ("discord_id", "email"):
+        value = row.get(column)
+        if not value:
+            continue
+        try:
+            supabase.table(Tables.WHITELIST).delete().eq(column, value.lower() if column == "email" else value).execute()
+        except Exception as e:
+            logger.error("Failed to remove %s from the whitelist for %s: %s", column, row.get("name"), e)
 
 
 @router.put(AdminRoutes.USER_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
@@ -259,7 +277,7 @@ def admin_delete_user(
     settings: Settings = Depends(get_settings),
 ) -> None:
     try:
-        current = supabase.table(Tables.PROFILES).select("name, discord_id, allow_dm").eq("id", user_id).execute()
+        current = supabase.table(Tables.PROFILES).select("name, discord_id, email, allow_dm").eq("id", user_id).execute()
     except Exception as e:
         logger.error("Failed to fetch user %s for deletion: %s", user_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
@@ -276,6 +294,7 @@ def admin_delete_user(
     except Exception as e:
         logger.error("Failed to delete user %s: %s", user_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    _revoke_whitelist(row)
 
     if row.get("allow_dm", True) and row.get("discord_id"):
         try:
@@ -292,7 +311,7 @@ def admin_bulk_delete_users(
 ) -> None:
     for user_id in body.user_ids:
         try:
-            current = supabase.table(Tables.PROFILES).select("name, discord_id, allow_dm").eq("id", user_id).execute()
+            current = supabase.table(Tables.PROFILES).select("name, discord_id, email, allow_dm").eq("id", user_id).execute()
         except Exception as e:
             logger.error("Failed to fetch user %s during bulk delete: %s", user_id, e)
             continue
@@ -306,6 +325,7 @@ def admin_bulk_delete_users(
         except Exception as e:
             logger.error("Failed to delete user %s during bulk delete: %s", user_id, e)
             continue
+        _revoke_whitelist(row)
         if row.get("allow_dm", True) and row.get("discord_id"):
             try:
                 discord_bot.send_removed_dm(settings.discord_bot_token, row["discord_id"])

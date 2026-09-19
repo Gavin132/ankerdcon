@@ -7,6 +7,7 @@ from app.dependencies import act_as, get_current_user, require_owner_or_admin
 from app.models.meal import CreateMealRequest, Meal, RsvpRequest
 from app.routes import MealRoutes
 from app.services import notification_service
+from app.services.discord_bot import escape_markdown
 from app import messages as M
 from app.core.database import supabase
 
@@ -59,9 +60,9 @@ def create_meal(
         settings.discord_bot_token,
         notification_service.NotificationCategory.MEAL_CREATED,
         M.DM_MEAL_CREATED.format(
-            meal_name=body.meal_name,
-            time=body.time,
-            location_line=f"\n📍 {body.location}" if body.location else "",
+            meal_name=escape_markdown(body.meal_name),
+            time=escape_markdown(body.time),
+            location_line=f"\n📍 {escape_markdown(body.location)}" if body.location else "",
         ),
     )
 

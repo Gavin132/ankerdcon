@@ -17,7 +17,7 @@ from app.config import get_settings
 from app.constants import API_PREFIX, Tables
 from app.core.database import supabase
 from app.core.logging import configure_logging, get_logger
-from app.core.security import add_security_headers, rate_limit
+from app.core.security import add_security_headers, limit_body_size, rate_limit
 from app.routers import admin, announcements, badges, calendar, changelog, cosplays, expenses, link_preview, meals, payments, rides, stories, users
 from app.services.reminder_scheduler import check_and_send_reminders, check_and_send_ticket_reminders
 
@@ -68,8 +68,9 @@ app = FastAPI(
 )
 
 # Order matters: the last one added runs first. The headers middleware wraps
-# the rate limiter, so even a 429 gets the security headers.
+# the others, so even a 413 or 429 gets the security headers.
 app.middleware("http")(rate_limit(settings))
+app.middleware("http")(limit_body_size())
 app.middleware("http")(add_security_headers(settings))
 
 app.add_middleware(

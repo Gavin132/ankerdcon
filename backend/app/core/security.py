@@ -1,6 +1,7 @@
 """Security headers and rate limiting for every response."""
 from __future__ import annotations
 
+import ipaddress
 import time
 from collections import deque
 from urllib.parse import urlparse
@@ -86,16 +87,30 @@ _hits: dict[str, deque[float]] = {}
 _last_sweep = 0.0
 
 
+def _from_proxy(host: str) -> bool:
+    """The reverse proxy (SWAG) reaches the backend over the LAN or loopback."""
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        return host == "testclient"
+    return ip.is_private or ip.is_loopback
+
+
 def _client_key(request: Request) -> str:
-    # Behind Cloudflare + the SWAG proxy the socket address is the proxy's;
-    # the real client is in these headers. Someone reaching the backend
-    # directly could spoof them, which only gets them a different bucket.
+    # Behind Cloudflare + the SWAG proxy the socket address is the proxy's and
+    # the real client is in these headers. They're only trusted when the
+    # request really comes from the proxy: anyone reaching the backend
+    # directly could otherwise send a new made-up IP with every request and
+    # never hit the limit.
+    peer = request.client.host if request.client else "unknown"
+    if not _from_proxy(peer):
+        return peer
     for header in ("cf-connecting-ip", "x-real-ip"):
         if value := request.headers.get(header):
             return value.strip()
     if forwarded := request.headers.get("x-forwarded-for"):
         return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else "unknown"
+    return peer
 
 
 def _sweep(now: float) -> None:
@@ -112,7 +127,9 @@ def rate_limit(settings: Settings):
     writes_per_minute = max(per_minute // 4, 1)
 
     async def middleware(request: Request, call_next) -> Response:
-        if per_minute <= 0 or not request.url.path.startswith(API_PREFIX):
+        # The API, plus the public link previews (they read the database).
+        path = request.url.path
+        if per_minute <= 0 or not (path.startswith(API_PREFIX) or path.startswith("/events/")):
             return await call_next(request)
 
         now = time.monotonic()
@@ -132,6 +149,38 @@ def rate_limit(settings: Settings):
                 headers={"Retry-After": str(retry_after)},
             )
         hits.append(now)
+        return await call_next(request)
+
+    return middleware
+
+
+# ── Request size ─────────────────────────────────────────────────────────────
+# Upload endpoints cap what they read, but the multipart parser has already
+# received the whole body by then (to a temp file). Refusing an oversized
+# Content-Length up front means a huge request is turned away before any of
+# it is stored. Largest real upload: a 15 MB photo, plus form overhead.
+
+MAX_BODY_BYTES = 20 * 1024 * 1024
+
+
+def limit_body_size():
+    async def middleware(request: Request, call_next) -> Response:
+        length = request.headers.get("content-length")
+        is_upload = request.headers.get("content-type", "").startswith("multipart/")
+        if length is None and is_upload:
+            # Browsers always state the size of a form upload; one without it
+            # (chunked) could otherwise stream past this check.
+            return JSONResponse(status_code=411, content={"detail": "Upload zonder bestandsgrootte geweigerd."})
+        if length is not None:
+            try:
+                too_big = int(length) > MAX_BODY_BYTES
+            except ValueError:
+                too_big = True
+            if too_big:
+                return JSONResponse(
+                    status_code=413,
+                    content={"detail": f"Bestand te groot. Maximum is {MAX_BODY_BYTES // (1024 * 1024)} MB."},
+                )
         return await call_next(request)
 
     return middleware

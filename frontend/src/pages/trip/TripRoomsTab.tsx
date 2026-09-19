@@ -9,7 +9,7 @@ import {
   useLeaveHotelRoom,
 } from "../../hooks/useCalendar";
 import { useAdminUpdateHotelRoom, useAdminDeleteHotelRoom } from "../../hooks/useAdmin";
-import { useUsers, useCurrentUser } from "../../hooks/useUsers";
+import { useUsers, useCurrentUser, useActingPermissions } from "../../hooks/useUsers";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { NamePicker } from "../../components/common/NamePicker";
 import { Modal } from "../../components/common/Modal";
@@ -50,6 +50,7 @@ function RoomModal({
   const createRoom = useCreateHotelRoom();
   const updateRoom = useAdminUpdateHotelRoom();
 
+  const { actable } = useActingPermissions();
   const [values, setValues] = useState<RoomFormValues>({
     room_number: room?.room_number ?? "",
     floor: room?.floor ?? "",
@@ -168,7 +169,7 @@ function RoomModal({
           </label>
           <NamePicker
             multiple
-            options={userNames}
+            options={actable(userNames)}
             value={values.occupants}
             onChange={(names) => setValues((v) => ({ ...v, occupants: names }))}
             color="sky"

@@ -3,13 +3,13 @@ from __future__ import annotations
 
 import threading
 import time
+import uuid
 from dataclasses import dataclass
 from typing import Any
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import ExpiredSignatureError, JWTError
-from jose import jwt as jose_jwt
+import jwt
 
 from app.config import Settings, get_settings
 from app.core.database import supabase
@@ -51,22 +51,23 @@ def _decode_token(token: str, jwt_secret: str) -> dict[str, Any] | None:
 
     Returns the payload on success.
     Raises HTTP 401 if the token is definitively expired.
-    Returns None for any other JWTError (e.g. wrong secret) so the caller can fall back.
+    Returns None for any other invalid token (e.g. wrong secret) so the caller can fall back.
     """
     try:
-        return jose_jwt.decode(
+        return jwt.decode(
             token,
             jwt_secret,
             algorithms=[_JWT_ALGORITHM],
             audience=_JWT_AUDIENCE,
+            options={"require": ["exp", "sub"]},
         )
-    except ExpiredSignatureError:
+    except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Ongeldige of verlopen sessie. Log opnieuw in.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except JWTError as e:
+    except jwt.InvalidTokenError as e:
         logger.debug("Local JWT decode failed, falling back to Supabase API: %s", e)
         return None
 
@@ -140,16 +141,20 @@ def _verified_identity(user_id: str) -> VerifiedIdentity | None:
 
 
 def _unique_profile_name(candidate: str) -> str:
-    """Discord usernames are unique enough in practice that name collisions were
-    never handled — but a Google/email display name (or an email's local part)
-    collides much more easily, so a fresh non-Discord signup needs a fallback."""
-    if not supabase.table("profiles").select("name").eq("name", candidate).execute().data:
+    """A name for a new profile that nobody uses yet — not as their current
+    name and not as a former one (alias), ignoring case. Rides, meals and
+    trips record people by name, so a clash would hand the newcomer someone
+    else's sign-ups. Discord usernames are unique on Discord, but not against
+    Google display names or names people picked themselves here."""
+    rows = supabase.table("profiles").select("name, aliases").execute().data or []
+    taken = {n.casefold() for r in rows for n in [r.get("name"), *(r.get("aliases") or [])] if n}
+    if candidate.casefold() not in taken:
         return candidate
-    for suffix in range(2, 6):
+    for suffix in range(2, 100):
         attempt = f"{candidate}{suffix}"
-        if not supabase.table("profiles").select("name").eq("name", attempt).execute().data:
+        if attempt.casefold() not in taken:
             return attempt
-    return candidate  # give up disambiguating; the insert will surface a clear conflict
+    return f"{candidate}-{uuid.uuid4().hex[:6]}"
 
 
 def get_current_user(
@@ -283,7 +288,7 @@ def _resolve_discord_user(identity: VerifiedIdentity, user_id: str, settings: Se
     discord_id = identity.discord_id
     assert discord_id  # the caller only routes verified Discord identities here
 
-    _select = "name, is_active, is_first_login, allow_dm, discord_id, avatar_url, discord_username"
+    _select = "id, name, is_active, is_first_login, allow_dm, discord_id, avatar_url, discord_username"
     profile_row: dict | None = None
     profile_name: str | None = None
     _db_error = False
@@ -322,10 +327,12 @@ def _resolve_discord_user(identity: VerifiedIdentity, user_id: str, settings: Se
             logger.info("Auth: discord_id %s not in whitelist", discord_id)
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_ACCESS_DENIED)
 
-        # An admin may have created a stub profile for this person ahead of
-        # time, by name only (Admin › Gebruikers). Discord display names are
-        # not unique, so a stub is only claimed by a whitelisted account, and
-        # only while no Discord account is linked to it yet.
+        # An admin may have created a placeholder profile for this person ahead
+        # of time (Admin › Gebruikers). It's only linked to a whitelisted
+        # account whose Discord username is exactly its name, and only while
+        # it has no login of its own yet (no Discord account, no email).
+        # Setting the Discord ID on the placeholder is the surer way: then
+        # it's found by ID above and the name doesn't matter.
         profile_row = _claim_stub_profile(identity, _select)
         if profile_row:
             profile_name = profile_row["name"]
@@ -333,9 +340,11 @@ def _resolve_discord_user(identity: VerifiedIdentity, user_id: str, settings: Se
         else:
             profile_row = _create_profile({
                 "id": user_id,
-                "name": identity.discord_username
+                "name": _unique_profile_name(
+                    identity.discord_username
                     or _strip_discriminator(identity.discord_display_name)
-                    or f"user_{user_id[:8]}",
+                    or f"user_{user_id[:8]}"
+                ),
                 "discord_id": discord_id,
                 "discord_username": identity.discord_username,
                 "avatar_url": identity.discord_avatar,
@@ -347,7 +356,7 @@ def _resolve_discord_user(identity: VerifiedIdentity, user_id: str, settings: Se
 
     if profile_row.get("is_first_login"):
         try:
-            supabase.table("profiles").update({"is_first_login": False}).eq("name", profile_name).execute()
+            supabase.table("profiles").update({"is_first_login": False}).eq("id", profile_row["id"]).execute()
             if profile_row.get("allow_dm", True):
                 discord_bot.send_welcome_dm(settings.discord_bot_token, discord_id, profile_name)
         except Exception as e:
@@ -364,7 +373,7 @@ def _resolve_discord_user(identity: VerifiedIdentity, user_id: str, settings: Se
         if identity.discord_username and profile_row.get("discord_username") != identity.discord_username:
             sync["discord_username"] = identity.discord_username
         if sync:
-            supabase.table("profiles").update(sync).eq("name", profile_name).execute()
+            supabase.table("profiles").update(sync).eq("id", profile_row["id"]).execute()
     except Exception:
         pass  # non-fatal
 
@@ -372,10 +381,9 @@ def _resolve_discord_user(identity: VerifiedIdentity, user_id: str, settings: Se
 
 
 def _claim_stub_profile(identity: VerifiedIdentity, select: str) -> dict | None:
-    candidates = list(dict.fromkeys(filter(None, [
-        identity.discord_display_name,
-        identity.discord_username,
-    ])))
+    # Only the Discord username: it's unique on Discord, unlike the display
+    # name, which anyone can set to anything.
+    candidates = [identity.discord_username] if identity.discord_username else []
     for candidate in candidates:
         try:
             resp = (
@@ -383,6 +391,9 @@ def _claim_stub_profile(identity: VerifiedIdentity, select: str) -> dict | None:
                 .select(select)
                 .eq("name", candidate)
                 .is_("discord_id", "null")
+                # A profile with an email is a real Google login, not a
+                # placeholder — never hand that to a Discord account.
+                .is_("email", "null")
                 .execute()
             )
         except Exception as e:
@@ -424,7 +435,7 @@ def _resolve_email_user(identity: VerifiedIdentity, user_id: str, settings: Sett
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    _select = "name, is_active, is_first_login, allow_dm, avatar_url, email"
+    _select = "id, name, is_active, is_first_login, allow_dm, avatar_url, email"
     profile_row: dict | None = None
     profile_name: str | None = None
     _db_error = False
@@ -472,13 +483,13 @@ def _resolve_email_user(identity: VerifiedIdentity, user_id: str, settings: Sett
     # No discord_id to send a welcome DM to — just clear the flag.
     if profile_row.get("is_first_login"):
         try:
-            supabase.table("profiles").update({"is_first_login": False}).eq("name", profile_name).execute()
+            supabase.table("profiles").update({"is_first_login": False}).eq("id", profile_row["id"]).execute()
         except Exception as e:
             logger.warning("Auth: clearing is_first_login failed: %s", e)
 
     try:
         if identity.email_avatar and profile_row.get("avatar_url") != identity.email_avatar:
-            supabase.table("profiles").update({"avatar_url": identity.email_avatar}).eq("name", profile_name).execute()
+            supabase.table("profiles").update({"avatar_url": identity.email_avatar}).eq("id", profile_row["id"]).execute()
     except Exception:
         pass
 

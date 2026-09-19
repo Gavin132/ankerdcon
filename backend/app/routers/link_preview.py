@@ -71,13 +71,6 @@ def _format_date(date_str: str | None) -> str | None:
         return None
 
 
-def _truncate(text: str, max_len: int = 220) -> str:
-    text = text.strip()
-    if len(text) <= max_len:
-        return text
-    return f"{text[:max_len].rsplit(' ', 1)[0]}…"
-
-
 def _serve_spa() -> HTMLResponse:
     try:
         return HTMLResponse((_DIST / "index.html").read_text(encoding="utf-8"))
@@ -110,9 +103,12 @@ def event_link_preview(event_id: str, request: Request) -> HTMLResponse:
         if not day_resp.data:
             return _serve_spa()
         day = day_resp.data[0]
+        # Only what a preview needs. Anyone can send a crawler User-Agent, so
+        # this page is effectively public for anyone holding the link: where
+        # the group will be and the event's description stay behind the login.
         event_resp = (
             supabase.table(Tables.EVENTS)
-            .select("event_name, description, location, image_url")
+            .select("event_name, image_url")
             .eq("id", day["event_id"])
             .execute()
         )
@@ -127,13 +123,7 @@ def event_link_preview(event_id: str, request: Request) -> HTMLResponse:
     title = event.get("event_name") or "Ankerd Con"
 
     date_part = _format_date(event.get("date"))
-    summary = " · ".join(p for p in (date_part, event.get("location")) if p)
-    # Discord/Slack/etc. preserve literal newlines inside an og:description
-    # value, so the date/location line and the description snippet render
-    # as separate paragraphs in the embed rather than running together.
-    blurb = event.get("description")
-    parts = [p for p in (summary, _truncate(blurb) if blurb else None) if p]
-    description = "\n\n".join(parts) or "Live Event Logistics"
+    description = " · ".join(p for p in (date_part, "Ankerd Con") if p)
 
     image = event.get("image_url") or (f"{base}/assets/images/ankerd-banner.jpg" if base else None)
 
