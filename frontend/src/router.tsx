@@ -59,6 +59,7 @@ const AdminBetalingenPage = lazyPage(() => import("./pages/admin/AdminBetalingen
 const AdminAnnouncementsPage = lazyPage(() => import("./pages/admin/AdminAnnouncementsPage"), "AdminAnnouncementsPage");
 const AdminChangelogPage = lazyPage(() => import("./pages/admin/AdminChangelogPage"), "AdminChangelogPage");
 const AdminImpersonatePage = lazyPage(() => import("./pages/admin/AdminImpersonatePage"), "AdminImpersonatePage");
+const AdminScreensPage = lazyPage(() => import("./pages/admin/AdminScreensPage"), "AdminScreensPage");
 const AdminTimeTravelPage = lazyPage(() => import("./pages/admin/AdminTimeTravelPage"), "AdminTimeTravelPage");
 
 /** Redirect for a pre-rework path, carrying the query string and navigation state along. */
@@ -182,6 +183,7 @@ export const router = createBrowserRouter([
                   { path: routes.admin.changelog, element: <AdminChangelogPage /> },
                   { path: routes.admin.impersonate, element: <AdminImpersonatePage /> },
                   { path: routes.admin.timeTravel, element: <AdminTimeTravelPage /> },
+                  { path: routes.admin.screens, element: <AdminScreensPage /> },
                 ],
               },
             ],

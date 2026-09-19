@@ -4,10 +4,12 @@ import { supabase } from "../services/supabase";
 import { useAuthStore } from "../store/auth.store";
 import { APP_NAME } from "../constants";
 
-export function ForbiddenPage() {
+/** `onSignOut` lets the admin preview show this screen without really signing out. */
+export function ForbiddenPage({ onSignOut }: { onSignOut?: () => void } = {}) {
   const clearAuth = useAuthStore((s) => s.clearAuth);
 
   async function handleSignOut() {
+    if (onSignOut) return onSignOut();
     await supabase.auth.signOut();
     clearAuth();
   }

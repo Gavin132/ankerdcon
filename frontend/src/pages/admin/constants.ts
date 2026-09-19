@@ -82,7 +82,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Preview: Onboarding", path: routes.admin.previewOnboarding, icon: FlaskConical },
       { label: "Inloggen als gebruiker", path: routes.admin.impersonate, icon: UserCog },
       { label: "Tijdreis-widget", path: routes.admin.timeTravel, icon: Clock },
-      { label: "Foutpagina testen", path: routes.testError, icon: AlertTriangle },
+      { label: "Schermen testen", path: routes.admin.screens, icon: AlertTriangle },
     ],
   },
 ];
@@ -101,6 +101,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [routes.admin.impersonate]: "Inloggen als gebruiker",
   [routes.admin.changelog]: "Wijzigingslog",
   [routes.admin.timeTravel]: "Tijdreis-widget",
+  [routes.admin.screens]: "Schermen testen",
 };
 
 // Ride direction tags are told apart by their label, not by colour (flat design:

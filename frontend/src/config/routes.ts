@@ -110,5 +110,6 @@ export const routes = {
     previewOnboarding: "/admin/preview/onboarding",
     impersonate:       "/admin/impersonate",
     timeTravel:        "/admin/time-travel",
+    screens:           "/admin/screens",
   },
 } as const;
