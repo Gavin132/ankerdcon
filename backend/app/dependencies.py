@@ -5,8 +5,10 @@ import threading
 import time
 import uuid
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Callable
 
+import httpx
+from gotrue.errors import AuthRetryableError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import jwt
@@ -20,8 +22,25 @@ logger = get_logger(__name__)
 
 _bearer = HTTPBearer()
 
-_JWT_ALGORITHM = "HS256"
 _JWT_AUDIENCE = "authenticated"
+
+# Two kinds of token arrive here. Supabase signs real logins with the project's
+# asymmetric signing key (ES256 for this project; RS256 is the other kind
+# Supabase issues) and publishes the public half as a key set. "Log in as"
+# tokens are minted by this backend itself with the shared HS256 secret (see
+# routers/admin.py). Each is only ever checked against its own kind of key.
+_HS256 = "HS256"
+_ASYMMETRIC_ALGORITHMS = frozenset({"ES256", "RS256"})
+
+# Supabase caches its published key set for 10 minutes, so there's no point in
+# holding it longer. A key we haven't seen (a rotation) triggers an immediate
+# refetch either way.
+_JWKS_CACHE_SECONDS = 600
+_JWKS_TIMEOUT_SECONDS = 5
+
+# Tolerates a server clock a little off from Supabase's, which would otherwise
+# reject a token issued a second "in the future" or expired a second early.
+_CLOCK_LEEWAY_SECONDS = 30
 
 _AUTH_FAILED = "Authenticatie mislukt."
 _ACCESS_DENIED = "Toegang geweigerd. Neem contact op met een beheerder."
@@ -46,29 +65,91 @@ def _strip_discriminator(name: str | None) -> str | None:
     return name
 
 
-def _decode_token(token: str, jwt_secret: str) -> dict[str, Any] | None:
+_jwks_client: jwt.PyJWKClient | None = None
+_jwks_lock = threading.Lock()
+_logged_local_check = False
+_logged_local_fallback = False
+
+
+def _jwks(supabase_url: str) -> jwt.PyJWKClient:
+    """The project's published signing keys, fetched lazily and cached."""
+    global _jwks_client
+    if _jwks_client is None:
+        with _jwks_lock:
+            if _jwks_client is None:
+                _jwks_client = jwt.PyJWKClient(
+                    f"{supabase_url}/auth/v1/.well-known/jwks.json",
+                    cache_jwk_set=True,
+                    lifespan=_JWKS_CACHE_SECONDS,
+                    timeout=_JWKS_TIMEOUT_SECONDS,
+                )
+    return _jwks_client
+
+
+def _decode_token(token: str, settings: Settings) -> dict[str, Any] | None:
     """Verify and decode a Supabase JWT locally — no HTTP call to Supabase Auth.
 
     Returns the payload on success.
     Raises HTTP 401 if the token is definitively expired.
-    Returns None for any other invalid token (e.g. wrong secret) so the caller can fall back.
+    Returns None when it can't be checked here — an unfamiliar algorithm, no key
+    configured for it, the key set unreachable, a bad signature — so the caller
+    falls back to asking Supabase.
+
+    Without the asymmetric branch every real login fails this check (Supabase
+    signs them ES256, not HS256), so every API request made an extra round trip
+    to Supabase Auth — slower everywhere, and one dropped connection failed a
+    whole burst of requests at once.
     """
+    global _logged_local_check, _logged_local_fallback
+    supabase_url = settings.supabase_url.rstrip("/")
     try:
-        return jwt.decode(
-            token,
-            jwt_secret,
-            algorithms=[_JWT_ALGORITHM],
-            audience=_JWT_AUDIENCE,
-            options={"require": ["exp", "sub"]},
-        )
+        algorithm = jwt.get_unverified_header(token).get("alg")
+        options: dict[str, Any] = {"require": ["exp", "sub"]}
+        if algorithm == _HS256:
+            if not settings.supabase_jwt_secret:
+                return None
+            return jwt.decode(
+                token,
+                settings.supabase_jwt_secret,
+                algorithms=[_HS256],
+                audience=_JWT_AUDIENCE,
+                leeway=_CLOCK_LEEWAY_SECONDS,
+                options=options,
+            )
+        if algorithm in _ASYMMETRIC_ALGORITHMS and supabase_url:
+            signing_key = _jwks(supabase_url).get_signing_key_from_jwt(token)
+            payload = jwt.decode(
+                token,
+                signing_key.key,
+                # The key's own algorithm, not the one the token claims: a token
+                # can't pick how it gets checked.
+                algorithms=[signing_key.algorithm_name],
+                audience=_JWT_AUDIENCE,
+                issuer=f"{supabase_url}/auth/v1",
+                leeway=_CLOCK_LEEWAY_SECONDS,
+                options=options,
+            )
+            if not _logged_local_check:
+                _logged_local_check = True
+                logger.info("Auth: verifying logins locally with the project's %s signing key", signing_key.algorithm_name)
+            return payload
+        return None
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Ongeldige of verlopen sessie. Log opnieuw in.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except jwt.InvalidTokenError as e:
-        logger.debug("Local JWT decode failed, falling back to Supabase API: %s", e)
+    except jwt.PyJWTError as e:
+        # Includes a key set that couldn't be fetched. Said once at warning
+        # level: if this keeps happening for real logins, the local check isn't
+        # working (a missing `cryptography`, a changed issuer) and every request
+        # is quietly back to asking Supabase.
+        if not _logged_local_fallback:
+            _logged_local_fallback = True
+            logger.warning("Auth: local token check failed, asking Supabase instead: %s", e)
+        else:
+            logger.debug("Local JWT decode failed, falling back to Supabase API: %s", e)
         return None
 
 
@@ -170,13 +251,13 @@ def get_current_user(
     token = credentials.credentials
 
     try:
-        # Prefer local JWT verification (fast, no network call).
-        # Falls back to Supabase Auth API if the secret is not set or decode fails.
-        payload = _decode_token(token, settings.supabase_jwt_secret) if settings.supabase_jwt_secret else None
+        # Prefer local JWT verification (fast, no network call). Falls back to the
+        # Supabase Auth API for anything that can't be checked locally.
+        payload = _decode_token(token, settings)
         if payload is not None:
             user_id = payload.get("sub") or ""
         else:
-            user = supabase.auth.get_user(token).user
+            user = _retry_transient(lambda: supabase.auth.get_user(token)).user
             user_id = user.id if user else ""
 
         if not user_id:
@@ -191,9 +272,11 @@ def get_current_user(
         # session. Try this first so a returning user with more than one
         # linked provider is always found.
         try:
-            existing = supabase.table("profiles").select(
-                "name, is_active, is_first_login, allow_dm, discord_id, avatar_url, discord_username, email"
-            ).eq("id", user_id).execute()
+            existing = _retry_transient(
+                lambda: supabase.table("profiles").select(
+                    "name, is_active, is_first_login, allow_dm, discord_id, avatar_url, discord_username, email"
+                ).eq("id", user_id).execute()
+            )
         except Exception as e:
             logger.warning("Auth: profile-by-id lookup failed, falling back: %s", e)
             existing = None
@@ -210,6 +293,12 @@ def get_current_user(
 
     except HTTPException:
         raise
+    except _TRANSIENT_ERRORS as e:
+        # Supabase couldn't be reached, which says nothing about the token. A 401
+        # here tells the app the login is bad, so it refreshes the session and
+        # replays everything; a 503 is simply retried.
+        logger.warning("Auth: Supabase unreachable, answering 503: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_TRY_AGAIN)
     except Exception:
         logger.error("Auth: unexpected error during authentication", exc_info=True)
         raise HTTPException(
@@ -217,6 +306,31 @@ def get_current_user(
             detail=_AUTH_FAILED,
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+
+# A connection to Supabase that died under us: the network, not the data. The
+# auth library wraps these in its own AuthRetryableError; the database client
+# lets httpx's errors through as they are.
+_TRANSIENT_ERRORS = (httpx.TransportError, AuthRetryableError)
+
+
+def _retry_transient(call: Callable[[], Any]) -> Any:
+    """Runs a Supabase call, once more if the connection was dropped.
+
+    The Supabase client keeps connections open and reuses them, and now and
+    then one is already dead when a request picks it up — in bursts, since the
+    app opens with several requests at once. httpx discards a connection that
+    failed, so the second attempt goes out on a fresh one.
+
+    This matters most on the sign-in path: every API request passes through it,
+    and when the profile-by-id lookup fails, auth falls back to resolving the
+    user from token metadata, which can miss an existing profile and deny
+    access or create a duplicate.
+    """
+    try:
+        return call()
+    except _TRANSIENT_ERRORS:
+        return call()
 
 
 def _finalize_returning_user(profile_row: dict, user_id: str, settings: Settings) -> str:
