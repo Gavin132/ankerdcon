@@ -1,7 +1,9 @@
 import { useRef, useState } from "react";
-import { ImagePlus, Loader2 } from "lucide-react";
+import { ImagePlus, Loader2, UploadCloud } from "lucide-react";
 import { compressImage } from "../../utils/imageCompression";
 import { useUploadStoryPhoto } from "../../hooks/useStories";
+import { usePendingStoryUploadsStore } from "../../store/pendingStoryUploads.store";
+import { queueOrToastUploadError } from "../../utils/pendingStoryUploadUi";
 import { toast } from "../../store/toast.store";
 
 interface StoryUploadButtonProps {
@@ -21,18 +23,36 @@ export function StoryUploadButton({ eventDayId, className }: StoryUploadButtonPr
   const inputRef = useRef<HTMLInputElement>(null);
   const [compressing, setCompressing] = useState(false);
   const uploadMutation = useUploadStoryPhoto(eventDayId);
+  const pendingCount = usePendingStoryUploadsStore((s) => s.items.filter((i) => i.eventDayId === eventDayId).length);
 
   async function handleFile(file: File | undefined) {
     if (!file) return;
     setCompressing(true);
+    let blob: Blob;
     try {
-      const blob = await compressImage(file);
+      blob = await compressImage(file);
+    } catch {
+      toast("error", "Kon foto niet verwerken. Probeer een andere foto.");
+      setCompressing(false);
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
+    setCompressing(false);
+
+    // No point waiting out a full request timeout when the browser already
+    // knows it's offline — queue it straight away.
+    if (!navigator.onLine) {
+      await queueOrToastUploadError(eventDayId, blob, { isOffline: true });
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
+
+    try {
       await uploadMutation.mutateAsync(blob);
       toast("success", "Foto toegevoegd aan de story!");
-    } catch {
-      toast("error", "Kon foto niet uploaden. Probeer opnieuw.");
+    } catch (err) {
+      await queueOrToastUploadError(eventDayId, blob, err);
     } finally {
-      setCompressing(false);
       if (inputRef.current) inputRef.current.value = "";
     }
   }
@@ -52,10 +72,21 @@ export function StoryUploadButton({ eventDayId, className }: StoryUploadButtonPr
         type="button"
         disabled={busy}
         onClick={() => inputRef.current?.click()}
-        title="Foto toevoegen aan story"
-        className={className ?? DEFAULT_CLASS}
+        title={pendingCount > 0 ? `${pendingCount} foto('s) wachten op verbinding` : "Foto toevoegen aan story"}
+        className={`relative ${className ?? DEFAULT_CLASS}`}
       >
-        {busy ? <Loader2 size={16} className="animate-spin" /> : <ImagePlus size={16} />}
+        {busy ? (
+          <Loader2 size={16} className="animate-spin" />
+        ) : pendingCount > 0 ? (
+          <UploadCloud size={16} className="text-amber-600 dark:text-amber-400" />
+        ) : (
+          <ImagePlus size={16} />
+        )}
+        {pendingCount > 0 && (
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 font-mono text-[9px] font-bold text-white">
+            {pendingCount}
+          </span>
+        )}
       </button>
     </>
   );

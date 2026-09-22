@@ -1,7 +1,9 @@
 import { useRef, useState } from "react";
-import { ImagePlus, Plus, Loader2 } from "lucide-react";
+import { ImagePlus, Plus, Loader2, UploadCloud } from "lucide-react";
 import { compressImage } from "../../utils/imageCompression";
 import { useUploadStoryPhoto } from "../../hooks/useStories";
+import { usePendingStoryUploadsStore } from "../../store/pendingStoryUploads.store";
+import { queueOrToastUploadError } from "../../utils/pendingStoryUploadUi";
 import { toast } from "../../store/toast.store";
 
 interface AddStoryTileProps {
@@ -19,18 +21,36 @@ export function AddStoryTile({ eventDayId }: AddStoryTileProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [compressing, setCompressing] = useState(false);
   const uploadMutation = useUploadStoryPhoto(eventDayId ?? "");
+  const pendingCount = usePendingStoryUploadsStore((s) =>
+    eventDayId ? s.items.filter((i) => i.eventDayId === eventDayId).length : 0,
+  );
 
   async function handleFile(file: File | undefined) {
     if (!file || !eventDayId) return;
     setCompressing(true);
+    let blob: Blob;
     try {
-      const blob = await compressImage(file);
+      blob = await compressImage(file);
+    } catch {
+      toast("error", "Kon foto niet verwerken. Probeer een andere foto.");
+      setCompressing(false);
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
+    setCompressing(false);
+
+    if (!navigator.onLine) {
+      await queueOrToastUploadError(eventDayId, blob, { isOffline: true });
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
+
+    try {
       await uploadMutation.mutateAsync(blob);
       toast("success", "Foto toegevoegd aan de story!");
-    } catch {
-      toast("error", "Kon foto niet uploaden. Probeer opnieuw.");
+    } catch (err) {
+      await queueOrToastUploadError(eventDayId, blob, err);
     } finally {
-      setCompressing(false);
       if (inputRef.current) inputRef.current.value = "";
     }
   }
@@ -63,6 +83,8 @@ export function AddStoryTile({ eventDayId }: AddStoryTileProps) {
       >
         {busy ? (
           <Loader2 size={18} className="animate-spin text-ink-3" />
+        ) : pendingCount > 0 ? (
+          <UploadCloud size={18} className="text-amber-600 dark:text-amber-400" />
         ) : (
           <ImagePlus size={18} className="text-ink-3" />
         )}
@@ -73,6 +95,11 @@ export function AddStoryTile({ eventDayId }: AddStoryTileProps) {
         >
           <Plus size={12} strokeWidth={3} />
         </span>
+        {pendingCount > 0 && (
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 font-mono text-[9px] font-bold text-white">
+            {pendingCount}
+          </span>
+        )}
       </button>
       <span className="max-w-full truncate font-mono text-[10.5px] font-semibold uppercase text-ink-2">
         Toevoegen

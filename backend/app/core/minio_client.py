@@ -56,6 +56,17 @@ def _public_base() -> str:
     return f"{scheme}://{settings.minio_endpoint}/{settings.minio_bucket}/"
 
 
+# Every caller names its key with a fresh uuid4 — the same "content-hashed, so
+# it's safe to cache forever" guarantee `main.py`'s asset middleware relies on
+# for build output. Nothing ever overwrites an existing key (a new banner or
+# cosplay photo gets a new key; the old one is deleted separately), so the
+# browser can hold onto a photo it has already downloaded indefinitely instead
+# of re-fetching or revalidating it every time it's shown — the difference
+# between an instant repeat view and another slow round trip on bad
+# convention-hall reception.
+_CACHE_CONTROL_FOREVER = "public, max-age=31536000, immutable"
+
+
 def upload_bytes(key: str, content: bytes, content_type: str) -> str:
     """Upload a file to the bucket and return its public URL.
 
@@ -71,6 +82,7 @@ def upload_bytes(key: str, content: bytes, content_type: str) -> str:
         BytesIO(content),
         length=len(content),
         content_type=content_type,
+        metadata={"Cache-Control": _CACHE_CONTROL_FOREVER},
     )
     return f"{_public_base()}{key}"
 

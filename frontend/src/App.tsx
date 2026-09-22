@@ -12,6 +12,7 @@ import { ImpersonationBanner } from "./components/common/ImpersonationBanner";
 import { UpdateBanner } from "./components/layout/UpdateBanner";
 import { useThemeStore } from "./store/theme.store";
 import { useSplash } from "./hooks/useSplash";
+import { usePendingStoryUploadsFlusher } from "./hooks/usePendingStoryUploads";
 
 // Add these two imports!
 import { supabase } from "./services/supabase";
@@ -245,6 +246,13 @@ function AppBackdrop() {
   );
 }
 
+/** Retries any story photos still queued from a previous, network-starved
+ * upload attempt — see usePendingStoryUploads.ts. */
+function PendingUploadsSync() {
+  usePendingStoryUploadsFlusher();
+  return null;
+}
+
 function RouteFallback() {
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-paper">
@@ -272,6 +280,7 @@ export function App() {
         <ThemeSync />
         <AuthSync /> {/* <- Dropped it right here! */}
         <StaleResumeGuard />
+        <PendingUploadsSync />
         <AppBackdrop />
         <ImpersonationBanner />
         <Suspense fallback={<RouteFallback />}>
