@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Car, Train, Truck, Clock, Timer, AlertCircle, CalendarDays, Users, Utensils, Plus, UserMinus } from "lucide-react";
+import { Clock, Timer, AlertCircle, CalendarDays, Users, Utensils, Plus, UserMinus } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { UserProfilePopup, type AnchorRect } from "../common/UserProfilePopup";
 import { useCalendar } from "../../hooks/useCalendar";
 import { useAuthStore } from "../../store/auth.store";
-import { getRideStatus, formatCountdown, rideLocationLabel } from "../../utils/rides";
+import { getRideStatus, formatCountdown, rideLocationLabel, rideVehicleIcon } from "../../utils/rides";
 import { routes } from "../../config/routes";
 import type { CalendarEvent, Meal, Ride, User } from "../../types";
 
@@ -34,7 +34,6 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
   const [popupAnchorRect, setPopupAnchorRect] = useState<AnchorRect>(CLOSED_RECT);
   const { status, minutesUntil } = getRideStatus(ride.departure_time);
   const isPT = ride.is_public_transport;
-  const isTimo = ride.driver.trim().toLowerCase().startsWith("timo");
   const isRecent = status === "recent";
   const isPast = status === "past";
 
@@ -49,7 +48,7 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
     : rideLocationLabel(ride.end_location, linkedEvent, isInbound ? "Con locatie" : "Bestemming");
   const toIsPlaceholder = isRestaurant ? !linkedMeal?.location : !ride.end_location;
 
-  const TransportIcon = isPT ? Train : isTimo ? Truck : Car;
+  const { Icon: TransportIcon, small: smallVehicle } = rideVehicleIcon(ride.driver, users, ride.total_seats, isPT);
 
   function resolveUser(stored: string) {
     return users.find(
@@ -98,7 +97,7 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
             </Link>
           )}
           <span className={CHIP}>
-            <TransportIcon size={11} />
+            <TransportIcon size={smallVehicle ? 9 : 11} />
             {isPT ? "Openbaar vervoer" : ride.direction === "Inbound" ? "Heen" : ride.direction === "Outbound" ? "Terug" : "Restaurant"}
           </span>
           {!isPT && !isRecent && !isPast && ride.direction !== "Restaurant" && (

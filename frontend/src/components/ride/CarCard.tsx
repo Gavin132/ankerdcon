@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Car, ChevronDown, Truck, Plus, UserMinus } from "lucide-react";
+import { ChevronDown, Plus, UserMinus } from "lucide-react";
 import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
 import { UserAvatar } from "../common/UserAvatar";
 import { Collapse } from "../common/Collapse";
+import { rideVehicleIcon } from "../../utils/rides";
 import type { RestaurantDriver } from "../../types";
-import { useActingPermissions } from "../../hooks/useUsers";
+import { useActingPermissions, useUsers } from "../../hooks/useUsers";
 
 interface CarCardProps {
   driver: RestaurantDriver;
@@ -25,6 +26,7 @@ interface CarCardProps {
  */
 export function CarCard({ driver, canAct, userNames, onJoin, onUnassign, isPending }: CarCardProps) {
   const { actable } = useActingPermissions();
+  const { data: users = [] } = useUsers();
   const [action, setAction] = useState<"join" | "leave" | null>(null);
   const [joinNames, setJoinNames] = useState<string[]>([]);
   const [leaveNames, setLeaveNames] = useState<string[]>([]);
@@ -32,8 +34,7 @@ export function CarCard({ driver, canAct, userNames, onJoin, onUnassign, isPendi
 
   const spotsLeft = Math.max(0, driver.seats - driver.passengers.length);
   const isFull = spotsLeft === 0;
-  const isTimo = driver.name.trim().toLowerCase().startsWith("timo");
-  const CarIcon = isTimo ? Truck : Car;
+  const { Icon: CarIcon, small: smallVehicle } = rideVehicleIcon(driver.name, users, driver.seats);
   const available = userNames.filter((n) => n !== driver.name && !driver.passengers.includes(n));
 
   function toggle(next: "join" | "leave") {
@@ -63,7 +64,7 @@ export function CarCard({ driver, canAct, userNames, onJoin, onUnassign, isPendi
         <div className="flex min-w-0 flex-col leading-tight">
           <span className="truncate text-[14px] font-semibold text-ink">{driver.name}</span>
           <span className="flex items-center gap-1 text-[11.5px] text-ink-3">
-            <CarIcon size={12} className="shrink-0" />
+            <CarIcon size={smallVehicle ? 10 : 12} className="shrink-0" />
             Chauffeur
           </span>
         </div>

@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
-  Sparkles, Plus, Image, Upload, X,
+  Sparkles, Plus, Image, Upload, UploadCloud, X,
   CheckCircle2, SlidersHorizontal, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -51,6 +51,13 @@ interface ImageEntry {
   mode: "url" | "file";
   url: string;
   uploading: boolean;
+  /** Set on a network-shaped upload failure instead of just erroring out —
+   * `blob` is the already-compressed file, kept so a retry doesn't need the
+   * user to pick it again. Cleared the moment the retry succeeds. This only
+   * lives for as long as the form itself does (same as the rest of the
+   * draft): closing the sheet loses it, same as it always has. */
+  queued?: boolean;
+  blob?: Blob;
 }
 
 // Flat form sections separated by a divider; labels follow the design system.
@@ -185,27 +192,91 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
   }
 
   async function handleFileChange(index: number, file: File) {
-    setImageField(index, { uploading: true });
+    setImageField(index, { uploading: true, queued: false });
+    let blob: Blob;
     try {
-      const blob = await compressImage(file);
+      blob = await compressImage(file);
+    } catch {
+      toast("error", "Kon afbeelding niet verwerken. Probeer een andere afbeelding.");
+      setImageField(index, { uploading: false });
+      return;
+    }
+    if (!navigator.onLine) {
+      queueImage(index, blob);
+      return;
+    }
+    try {
       const url = await uploadCosplayImage(blob);
-      setImageField(index, { url, uploading: false });
+      setImageField(index, { url, uploading: false, queued: false, blob: undefined });
     } catch (err) {
       // A timeout is what a slow or stuck connection looks like (see the client's limit).
       const slow = err instanceof ApiError && (err.status === 0 || err.status === 503 || err.status === 524);
-      toast(
-        "error",
-        slow
-          ? "Uploaden duurde te lang. Controleer je verbinding, of plak een link naar de afbeelding."
-          : "Upload mislukt. Probeer een andere afbeelding, of plak een link.",
-      );
-      setImageField(index, { uploading: false });
+      if (slow) {
+        queueImage(index, blob);
+      } else {
+        toast("error", "Upload mislukt. Probeer een andere afbeelding, of plak een link.");
+        setImageField(index, { uploading: false });
+      }
     }
   }
+
+  /** Parks a compressed image on a network-shaped failure instead of giving
+   * up, and lets `retryQueuedImages` pick it back up once the connection
+   * looks like it's back. */
+  function queueImage(index: number, blob: Blob) {
+    setImageField(index, { uploading: false, queued: true, blob });
+    toast("info", "Geen verbinding — deze afbeelding wordt automatisch opnieuw geprobeerd.");
+  }
+
+  // Read inside the retry loop instead of closing over `images` directly —
+  // that array changes on every keystroke in a URL field too, and depending
+  // on it here would tear down and rebuild the interval before it ever gets
+  // a chance to fire.
+  const imagesRef = useRef(images);
+  imagesRef.current = images;
+
+  // Retries every queued image slot when the browser thinks it's back online,
+  // or the sheet regains focus — same triggers as the story-photo queue,
+  // just scoped to this still-open form instead of IndexedDB, since a draft
+  // cosplay that's never been saved has nowhere durable to resume from.
+  useEffect(() => {
+    async function retryQueuedImages() {
+      if (!navigator.onLine) return;
+      for (const [index, entry] of imagesRef.current.entries()) {
+        if (!entry.queued || !entry.blob) continue;
+        setImageField(index, { uploading: true, queued: false });
+        try {
+          const url = await uploadCosplayImage(entry.blob);
+          setImageField(index, { url, uploading: false, blob: undefined });
+          toast("success", "Wachtende afbeelding alsnog geüpload!");
+        } catch (err) {
+          const slow = err instanceof ApiError && (err.status === 0 || err.status === 503 || err.status === 524);
+          if (slow) setImageField(index, { uploading: false, queued: true });
+          else {
+            setImageField(index, { uploading: false, queued: false, blob: undefined });
+            toast("error", "Een wachtende afbeelding kon niet worden verzonden. Probeer opnieuw.");
+          }
+        }
+      }
+    }
+
+    window.addEventListener("online", retryQueuedImages);
+    document.addEventListener("visibilitychange", retryQueuedImages);
+    const interval = setInterval(retryQueuedImages, 20_000);
+    return () => {
+      window.removeEventListener("online", retryQueuedImages);
+      document.removeEventListener("visibilitychange", retryQueuedImages);
+      clearInterval(interval);
+    };
+  }, []);
 
   async function onSubmit(values: CosplayForm) {
     if (!selectedUser) { toast("error", "Selecteer wie dit cosplay draagt."); return; }
     if (selectedDays.length === 0) { toast("error", "Selecteer minimaal één dag."); return; }
+    if (images.some((img) => img.queued)) {
+      toast("error", "Nog een afbeelding aan het verzenden — wacht heel even, of verwijder hem.");
+      return;
+    }
     const cleanImages = images.map((img) => img.url.trim()).filter(Boolean);
     try {
       await createMutation.mutateAsync({
@@ -395,15 +466,27 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                       <label className={`flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-xl border-1.5 px-3 py-2.5 transition-colors ${
                         entry.url
                           ? "border-emerald-300 bg-emerald-50 dark:border-emerald-500/40 dark:bg-emerald-500/10"
+                          : entry.queued
+                          ? "border-amber-300 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10"
                           : "border-line bg-surface hover:border-ink-3"
                       }`}>
                         {entry.uploading
                           ? <div className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-ink-3 border-t-transparent" />
                           : entry.url
                           ? <CheckCircle2 size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                          : entry.queued
+                          ? <UploadCloud size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
                           : <Upload size={14} className="shrink-0 text-ink-3" />}
-                        <span className={`truncate text-xs font-medium ${entry.url ? "text-emerald-700 dark:text-emerald-300" : "text-ink-2"}`}>
-                          {entry.uploading ? "Uploaden…" : entry.url ? "Geüpload" : "Kies afbeelding…"}
+                        <span className={`truncate text-xs font-medium ${
+                          entry.url ? "text-emerald-700 dark:text-emerald-300" : entry.queued ? "text-amber-700 dark:text-amber-400" : "text-ink-2"
+                        }`}>
+                          {entry.uploading
+                            ? "Uploaden…"
+                            : entry.url
+                            ? "Geüpload"
+                            : entry.queued
+                            ? "Wacht op verbinding…"
+                            : "Kies afbeelding…"}
                         </span>
                         <input
                           type="file"

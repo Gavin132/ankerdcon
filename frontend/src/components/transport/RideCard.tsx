@@ -2,9 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Car,
-  Truck,
-  Train,
   ParkingCircle,
   ChevronDown,
   Plus,
@@ -20,7 +17,7 @@ import { useClaimSeat, useLeaveSeat } from "../../hooks/useRides";
 import { useUsers, useActingPermissions } from "../../hooks/useUsers";
 import { useCalendar } from "../../hooks/useCalendar";
 import { formatTime } from "../../utils/format";
-import { getRideStatus, formatCountdown, rideLocationLabel } from "../../utils/rides";
+import { getRideStatus, formatCountdown, rideLocationLabel, rideVehicleIcon } from "../../utils/rides";
 import { toast } from "../../store/toast.store";
 import { listItem } from "../../utils/motion";
 import { routes } from "../../config/routes";
@@ -64,7 +61,6 @@ export function RideCard({ ride, userNames }: RideCardProps) {
 
   const isPT      = ride.is_public_transport;
   const isInbound = ride.direction === "Inbound";
-  const isTimo    = ride.driver.trim().toLowerCase().startsWith("timo");
   const isRecent  = status === "recent";
   const isPast    = status === "past";
   const canAct    = !isRecent && !isPast;
@@ -81,7 +77,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
   );
   const availableToJoin = userNames.filter((n) => !resolvedPassengers.has(n));
 
-  const TransportIcon = isPT ? Train : isTimo ? Truck : Car;
+  const { Icon: TransportIcon, small: smallVehicle } = rideVehicleIcon(ride.driver, users, ride.total_seats, isPT);
 
   // Status pill: rose when leaving very soon, amber when soon, neutral once gone.
   const statusBadge = status === "urgent" || status === "soon" || status === "recent";
@@ -146,7 +142,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
             <div className="flex min-w-0 flex-col leading-tight">
               <span className="truncate text-[14px] font-semibold text-ink">{resolveName(ride.driver)}</span>
               <span className="flex items-center gap-1 text-[11.5px] text-ink-3">
-                <TransportIcon size={12} className="shrink-0" />
+                <TransportIcon size={smallVehicle ? 10 : 12} className="shrink-0" />
                 <span className="truncate">
                   {ride.direction === "Inbound" ? "Heen" : ride.direction === "Outbound" ? "Terug" : "Restaurant"}
                   {" · "}

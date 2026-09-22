@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { useLocation } from "react-router-dom";
+import { Search } from "lucide-react";
 import { APP_NAME } from "../../constants";
 import { AccountMenu } from "./AccountMenu";
 import { TimeTravelControl } from "../common/TimeTravelWidget";
 import { HEADER_ACTIONS_ID } from "./HeaderAction";
+import { GlobalSearch } from "./GlobalSearch";
 
 const PAGE_META: Record<string, { title: string; subtitle: string }> = {
   "/": { title: "Hub", subtitle: "Live event logistics" },
@@ -26,6 +29,7 @@ function pageMeta(pathname: string) {
 export function Header() {
   const { pathname } = useLocation();
   const meta = pageMeta(pathname);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-30 border-b-1.5 border-line bg-surface pt-[env(safe-area-inset-top,0px)] lg:bg-paper">
@@ -43,6 +47,14 @@ export function Header() {
           )}
         </div>
 
+        <button
+          type="button"
+          onClick={() => setSearchOpen(true)}
+          aria-label="Zoeken"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+        >
+          <Search size={17} />
+        </button>
         <div className="md:hidden">
           <TimeTravelControl variant="icon" />
         </div>
@@ -51,6 +63,7 @@ export function Header() {
           <AccountMenu />
         </div>
       </div>
+      <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
   );
 }

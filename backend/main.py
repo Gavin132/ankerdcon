@@ -18,7 +18,7 @@ from app.constants import API_PREFIX, Tables
 from app.core.database import supabase
 from app.core.logging import configure_logging, get_logger
 from app.core.security import add_security_headers, limit_body_size, rate_limit
-from app.routers import admin, announcements, badges, calendar, changelog, cosplays, expenses, link_preview, meals, payments, rides, stories, users
+from app.routers import admin, announcements, badges, calendar, changelog, cosplays, expenses, link_preview, meals, rides, stories, users
 from app.services.reminder_scheduler import check_and_send_reminders, check_and_send_ticket_reminders
 
 configure_logging()
@@ -174,7 +174,11 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 app.include_router(users.router,    prefix=API_PREFIX)
 app.include_router(rides.router,    prefix=API_PREFIX)
 app.include_router(meals.router,    prefix=API_PREFIX)
-app.include_router(payments.router, prefix=API_PREFIX)
+# payments.router is deliberately NOT mounted — superseded by the expenses
+# router (Financiën / "Betalingen" in admin) before any client ever called
+# it. The code stays in app/routers/payments.py and app/models/payment.py in
+# case it's ever worth reusing, but it shouldn't be a live, reachable API
+# with nothing on the other end of it.
 app.include_router(calendar.router, prefix=API_PREFIX)
 app.include_router(badges.router,    prefix=API_PREFIX)
 app.include_router(announcements.router, prefix=API_PREFIX)
