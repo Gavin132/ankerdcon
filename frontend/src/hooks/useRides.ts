@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getRides, createRide, claimSeat, leaveSeat, addRestaurantDriver, leaveRestaurantDriver, assignToDriver, unassignFromDriver } from "../services/rides.service";
+import { getRides, createRide, deleteRide, claimSeat, leaveSeat, addRestaurantDriver, leaveRestaurantDriver, assignToDriver, unassignFromDriver } from "../services/rides.service";
 import { QUERY_KEYS, STALE_TIME } from "../constants";
 import type { Ride, CreateRideRequest, ClaimSeatRequest, Direction, RestaurantDriverRequest, LeaveRestaurantDriverRequest, RestaurantAssignRequest, RestaurantUnassignRequest } from "../types";
 
@@ -15,6 +15,14 @@ export function useCreateRide() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateRideRequest) => createRide(payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.rides }),
+  });
+}
+
+export function useDeleteRide() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteRide(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.rides }),
   });
 }

@@ -9,6 +9,7 @@ import {
   Utensils,
   CalendarClock,
   X as XIcon,
+  Trash2,
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
@@ -23,7 +24,7 @@ import { NamePicker } from "../../components/common/NamePicker";
 import { RideCard } from "../../components/transport/RideCard";
 import { RestaurantMealPrompt, RestaurantRideGroup } from "../../components/transport/RestaurantRideGroup";
 import { RideTimeline } from "../../components/transport/RideTimeline";
-import { useRides, useCreateRide } from "../../hooks/useRides";
+import { useRides, useCreateRide, useDeleteRide } from "../../hooks/useRides";
 import { useUsers, useCurrentUser } from "../../hooks/useUsers";
 import { useCalendar } from "../../hooks/useCalendar";
 import { useMeals } from "../../hooks/useMeals";
@@ -118,6 +119,18 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
   const { data: meals = [] } = useMeals();
   const userNames = (users ?? []).map((u) => u.name);
   const createMutation = useCreateRide();
+  const deleteMutation = useDeleteRide();
+  const [confirmDeleteRideId, setConfirmDeleteRideId] = useState<string | null>(null);
+
+  async function handleDeleteRide(ride: Ride) {
+    try {
+      await deleteMutation.mutateAsync(ride.id);
+      setConfirmDeleteRideId(null);
+      toast("success", "Rit verwijderd.");
+    } catch {
+      toast("error", "Kon de rit niet verwijderen. Probeer opnieuw.");
+    }
+  }
 
   const rides = tripRides(allRides ?? [], meals, trip, dayId);
   const gaps = tripGaps(trip, allRides ?? [], meals);
@@ -268,13 +281,19 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
         )
       : [];
 
+    // Someone can only be the driver of one ride per direction per day — once
+    // they've made one, "Ik rijd" would just be confusing (or invite a second,
+    // duplicate ride), so it turns into a way to take that ride back instead.
+    const myRide = active.find((r) => r.driver === currentUser?.name);
+    const myRideOtherPassengers = myRide ? myRide.passengers.filter((p) => p !== myRide.driver).length : 0;
+
     return (
       <div key={direction}>
         <div className="mb-2 flex items-center gap-1.5">
           {DIRECTION_ICON[direction]}
           <span className="section-label">{DIRECTION_LABEL[direction]}</span>
           <span className="font-mono text-[11px] tabular-nums text-ink-3">{active.length}</span>
-          {direction !== "Restaurant" && !isTripOver(trip) && (
+          {direction !== "Restaurant" && !isTripOver(trip) && !myRide && (
             <button
               type="button"
               onClick={() => openCreate(direction, targetDayId)}
@@ -283,7 +302,43 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
               <Car size={13} /> Ik rijd
             </button>
           )}
+          {direction !== "Restaurant" && !isTripOver(trip) && myRide && (
+            confirmDeleteRideId === myRide.id ? (
+              <div className="ml-auto flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setConfirmDeleteRideId(null)}
+                  className="h-8 rounded-lg px-2 text-xs font-semibold text-ink-2 hover:text-ink"
+                >
+                  Annuleer
+                </button>
+                <button
+                  type="button"
+                  disabled={deleteMutation.isPending}
+                  onClick={() => handleDeleteRide(myRide)}
+                  className="flex h-8 items-center gap-1 rounded-lg bg-rose-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-rose-700 disabled:opacity-60"
+                >
+                  <Trash2 size={13} /> Zeker weten?
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteRideId(myRide.id)}
+                className="ml-auto flex h-8 items-center gap-1 rounded-lg border-1.5 border-line px-3 text-xs font-semibold text-ink-2 transition-colors hover:border-rose-300 hover:text-rose-600 dark:hover:border-rose-500/40 dark:hover:text-rose-400"
+              >
+                <Trash2 size={13} /> Rit verwijderen
+              </button>
+            )
+          )}
         </div>
+        {myRide && confirmDeleteRideId === myRide.id && myRideOtherPassengers > 0 && (
+          <p className="-mt-1 mb-2 text-[11.5px] text-rose-600 dark:text-rose-400">
+            {myRideOtherPassengers === 1
+              ? "Er is al iemand bij deze rit ingedeeld — die persoon verliest zijn plek."
+              : `Er zijn al ${myRideOtherPassengers} mensen bij deze rit ingedeeld — zij verliezen hun plek.`}
+          </p>
+        )}
         {active.length === 0 && mealsWithoutRide.length === 0 ? (
           <p className="py-1 text-xs text-ink-3">
             Nog geen {direction === "Restaurant" ? "route" : "rit"}.

@@ -9,6 +9,7 @@ Import the relevant class instead of writing magic strings in route decorators.
 class RideRoutes:
     PREFIX = "/rides"
     LIST = "/"
+    DETAIL = "/{ride_id}"
     CLAIM = "/{ride_id}/claim"
     LEAVE = "/{ride_id}/leave"
     RESTAURANT_DRIVER = "/{ride_id}/restaurant-driver"

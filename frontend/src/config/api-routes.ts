@@ -6,6 +6,7 @@ export const apiRoutes = {
   // ── Rides ───────────────────────────────────────────────────────
   rides: {
     base:                     "/api/rides/",
+    byId:                     (id: string | number) => `/api/rides/${id}`,
     claim:                    (id: string | number) => `/api/rides/${id}/claim`,
     leave:                    (id: string | number) => `/api/rides/${id}/leave`,
     restaurantDriver:         (id: string | number) => `/api/rides/${id}/restaurant-driver`,

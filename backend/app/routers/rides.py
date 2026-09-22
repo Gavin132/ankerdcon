@@ -5,7 +5,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from app.config import Settings, get_settings
 from app.constants import Tables
 from app.core.logging import get_logger
-from app.dependencies import act_as, get_current_user
+from app.dependencies import act_as, get_current_user, require_owner_or_admin
 from app.models.rides import (
     ClaimSeatRequest,
     CreateRideRequest,
@@ -85,6 +85,20 @@ def create_ride(
         ),
     )
     return ride
+
+
+@router.delete(RideRoutes.DETAIL, status_code=status.HTTP_204_NO_CONTENT)
+def delete_ride(ride_id: str, current_user: str = Depends(get_current_user)) -> None:
+    """Lets a driver take back their own ride — e.g. the "Ik rijd" button on
+    a direction that already has their ride now offers to remove it instead
+    of letting them create a second one. Admins may remove anyone's."""
+    row = _get_ride_or_404(ride_id, "driver")
+    require_owner_or_admin(current_user, row.get("driver"), "Je kunt alleen je eigen rit verwijderen.")
+    try:
+        supabase.table(Tables.RIDES).delete().eq("id", ride_id).execute()
+    except Exception as e:
+        logger.error("Failed to delete ride %s: %s", ride_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
 @router.post(RideRoutes.CLAIM, response_model=Ride)
