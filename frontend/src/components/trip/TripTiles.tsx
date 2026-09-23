@@ -1,9 +1,10 @@
-import { forwardRef, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertCircle, BedDouble, Camera, Car, ChevronRight, CloudSun, Plus, Sparkles, Utensils, Wallet } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { StoryUploadButton } from "../story/StoryUploadButton";
 import { DayChips } from "./DayChips";
+import { TripSheet } from "./TripSheet";
 import { TripMealSheet } from "./TripMealSheet";
 import { WeatherCard, ClimateAverageCard, WeatherSkeleton } from "../event/WeatherCard";
 import { EventPractical } from "../event/EventPractical";
@@ -329,7 +330,7 @@ export function ExpensesTile({ trip, phase, expenses, myNames }: { trip: Trip; p
   );
 }
 
-/* ── Weer (unfolds in place) ─────────────────────────────────────────────── */
+/* ── Weer ────────────────────────────────────────────────────────────────── */
 
 function DayForecast({ location, day }: { location: string; day: TripDay }) {
   const { data } = useEventWeather(location, toDateKey(day.date));
@@ -343,13 +344,13 @@ function DayForecast({ location, day }: { location: string; day: TripDay }) {
   );
 }
 
-export function WeatherTile({ trip, expanded, onToggle }: { trip: Trip; expanded: boolean; onToggle: () => void }) {
+export function WeatherTile({ trip, onOpen }: { trip: Trip; onOpen: () => void }) {
   const days = trip.days.filter((d) => toDateKey(d.date) >= todayKey()).slice(0, 4);
   const first = days[0] ?? trip.days[0];
   const { data } = useEventWeather(trip.location, toDateKey(first.date));
 
   return (
-    <TripTile icon={CloudSun} label="Weer" onToggle={onToggle} expanded={expanded}>
+    <TripTile icon={CloudSun} label="Weer" onOpen={onOpen}>
       <TileValue>
         {data ? `${Math.round(data.kind === "forecast" ? data.data.temp_max : data.data.temp_max_avg)}°` : "–"}
       </TileValue>
@@ -363,28 +364,31 @@ export function WeatherTile({ trip, expanded, onToggle }: { trip: Trip; expanded
   );
 }
 
-export const WeatherPanel = forwardRef<HTMLElement, { trip: Trip }>(function WeatherPanel({ trip }, ref) {
+/** Opened from the Weer tile — a day picker (multi-day trips) plus that day's forecast. */
+export function WeatherSheet({ open, onClose, trip }: { open: boolean; onClose: () => void; trip: Trip }) {
   const [dayId, setDayId] = useState(() => defaultTripDayId(trip));
   const day = trip.days.find((d) => d.ev.id === dayId) ?? trip.days[0];
   const { data: weather, isLoading } = useEventWeather(trip.location, toDateKey(day.date));
 
   return (
-    <section ref={ref} className="col-span-2 space-y-3 lg:col-span-4 scroll-mt-4">
-      {trip.days.length > 1 && <DayChips days={trip.days} value={day.ev.id} onChange={(id) => id && setDayId(id)} />}
-      {isLoading ? (
-        <WeatherSkeleton />
-      ) : weather?.kind === "forecast" ? (
-        <WeatherCard weather={weather.data} />
-      ) : weather?.kind === "climate" ? (
-        <ClimateAverageCard climate={weather.data} />
-      ) : (
-        <div className="card-surface px-5 py-4 text-sm text-ink-3">Geen weersdata beschikbaar voor deze locatie.</div>
-      )}
-    </section>
+    <TripSheet open={open} onClose={onClose} title="Weer" subtitle={trip.title}>
+      <div className="space-y-3">
+        {trip.days.length > 1 && <DayChips days={trip.days} value={day.ev.id} onChange={(id) => id && setDayId(id)} />}
+        {isLoading ? (
+          <WeatherSkeleton />
+        ) : weather?.kind === "forecast" ? (
+          <WeatherCard weather={weather.data} />
+        ) : weather?.kind === "climate" ? (
+          <ClimateAverageCard climate={weather.data} />
+        ) : (
+          <div className="card-surface px-5 py-4 text-sm text-ink-3">Geen weersdata beschikbaar voor deze locatie.</div>
+        )}
+      </div>
+    </TripSheet>
   );
-});
+}
 
-/* ── Praktisch (unfolds in place) ────────────────────────────────────────── */
+/* ── Praktisch ───────────────────────────────────────────────────────────── */
 
 export function hasPracticalInfo(info: CalendarEvent): boolean {
   return !!(
@@ -393,7 +397,7 @@ export function hasPracticalInfo(info: CalendarEvent): boolean {
   );
 }
 
-export function PracticalTile({ info, trip, expanded, onToggle }: { info: CalendarEvent; trip: Trip; expanded: boolean; onToggle: () => void }) {
+export function PracticalTile({ info, trip, onOpen }: { info: CalendarEvent; trip: Trip; onOpen: () => void }) {
   const topics = [
     info.parking_info && "parkeren",
     info.what_to_bring && "meenemen",
@@ -404,7 +408,7 @@ export function PracticalTile({ info, trip, expanded, onToggle }: { info: Calend
   ].filter(Boolean) as string[];
 
   return (
-    <TripTile icon={AlertCircle} label="Praktisch" onToggle={onToggle} expanded={expanded}>
+    <TripTile icon={AlertCircle} label="Praktisch" onOpen={onOpen}>
       {info.special_instructions ? (
         <>
           <span><TilePill>Let op</TilePill></span>
@@ -424,17 +428,15 @@ const OUTLIER_TEXT = {
   "some-days": (days: TripDay[]) => `alleen ${days.map((d) => dayShort(d.date)).join(", ")}`,
 };
 
-export const PracticalPanel = forwardRef<HTMLElement, { info: CalendarEvent; trip: Trip }>(function PracticalPanel({ info, trip }, ref) {
+/** Opened from the Praktisch tile — who's missing which days, plus parking, tickets and the rest. */
+export function PracticalSheet({ open, onClose, info, trip }: { open: boolean; onClose: () => void; info: CalendarEvent; trip: Trip }) {
   const outliers = tripOutliers(trip);
   const hasRows = !!(info.special_instructions || info.parking_info || info.what_to_bring || info.locker_info);
   const hasLinks = !!(info.website || info.ticket_url || info.ticket_sale_start || (info.ticket_types?.length ?? 0) > 0);
   return (
-    <section ref={ref} className="card-surface col-span-2 overflow-hidden lg:col-span-4 scroll-mt-4">
-      <div className="px-5 pb-1 pt-4">
-        <p className="section-label">Praktische info</p>
-      </div>
+    <TripSheet open={open} onClose={onClose} title="Praktisch" subtitle={trip.title}>
       {outliers.length > 0 && (
-        <div className="px-5 pb-4 pt-2">
+        <div className="pb-4">
           <p className="text-[12.5px] font-semibold text-ink-2">Niet alle dagen erbij</p>
           <ul className="mt-1.5 space-y-1">
             {outliers.map((o) => (
@@ -446,10 +448,10 @@ export const PracticalPanel = forwardRef<HTMLElement, { info: CalendarEvent; tri
           </ul>
         </div>
       )}
-      {outliers.length > 0 && (hasRows || hasLinks) && <div className="h-px bg-line" />}
+      {outliers.length > 0 && (hasRows || hasLinks) && <div className="mb-4 h-px bg-line" />}
       {hasRows && <EventPractical event={info} bare />}
-      {hasRows && hasLinks && <div className="h-px bg-line" />}
+      {hasRows && hasLinks && <div className="my-4 h-px bg-line" />}
       {hasLinks && <EventLinks event={info} bare />}
-    </section>
+    </TripSheet>
   );
-});
+}
