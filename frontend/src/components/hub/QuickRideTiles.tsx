@@ -35,7 +35,7 @@ function QuickTile({ icon, title, hint, onClick }: { icon: React.ReactNode; titl
       </span>
       <span>
         <span className="block text-[14px] font-semibold leading-tight text-ink">{title}</span>
-        <span className="mt-1 block font-mono text-[11px] uppercase leading-snug tracking-[0.06em] text-ink-3">{hint}</span>
+        <span className="mt-1 block text-[11px] leading-snug text-ink-3">{hint}</span>
       </span>
     </button>
   );

@@ -14,7 +14,7 @@ export type EventUrgency = "today" | "tomorrow" | "normal";
 function Chip({ children, tone = "plain" }: { children: React.ReactNode; tone?: "plain" | "live" }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-[3px] font-mono text-[10.5px] font-semibold uppercase tracking-[0.05em] ${
+      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-[3px] text-[10.5px] font-semibold ${
         tone === "live"
           ? "border-brand bg-brand text-brand-on"
           : "border-white/25 bg-white/10 text-[#E6F0F3]"
@@ -33,9 +33,9 @@ function Stub({ urgency, daysUntil, dayCount }: { urgency: EventUrgency; daysUnt
 
   return (
     <div className="flex items-center justify-center gap-3 border-t-2 border-dashed border-outline bg-brand px-4 py-2.5 text-brand-on sm:flex-col sm:gap-2 sm:border-l-2 sm:border-t-0 sm:px-4 sm:py-5 sm:text-center">
-      <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.12em]">{label}</span>
+      <span className="text-[11px] font-semibold">{label}</span>
       <span className="font-display text-[52px] font-black leading-[0.8] sm:text-[88px]">{big}</span>
-      <span className="font-mono text-[11px] leading-snug sm:w-full sm:border-t-1.5 sm:border-ink/35 sm:pt-2 dark:sm:border-[#0F1519]/35">
+      <span className="text-[11px] leading-snug sm:w-full sm:border-t-1.5 sm:border-ink/35 sm:pt-2 dark:sm:border-[#0F1519]/35">
         <b className="block text-[13px]">{unit}</b>
         {dayCount > 1 ? `${dayCount} dagen event` : "1 dag event"}
       </span>
@@ -165,7 +165,7 @@ export function UpcomingEventCard({
                       isTravelDay ? "bg-hatch-surface" : "bg-surface"
                     }`}
                   >
-                    <span className="block font-mono text-[10px] uppercase leading-none tracking-[0.08em] text-ink-3">
+                    <span className="block text-[10px] leading-none text-ink-3">
                       {dayShort(date)} {monthShort(date)}
                     </span>
                     <span className="block font-display text-[26px] font-extrabold leading-none text-ink">{date.getDate()}</span>
