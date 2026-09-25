@@ -113,7 +113,8 @@ authentication and keep the secret out of screenshots and chat.
   Cloudflare and the proxy the real IP is taken from `cf-connecting-ip`, but only when
   the request really comes from the proxy's private address, otherwise anyone could send
   a made-up IP with each request.
-- **Body size** at most 20 MB, and an upload must state its size up front.
+- **Body size** at most 20 MB (90 MB for the admin quick upload only), and an upload
+  must state its size up front.
 - **Errors** are Dutch JSON; no traceback ever reaches a client.
 - **API docs** are off unless `API_DOCS_ENABLED=true`.
 - **Browsers cannot reach the database or storage directly** (v2.22): RLS on, no
@@ -131,6 +132,15 @@ Nothing is stored as it was sent. The browser compresses photos first, and the b
 - re-encodes stills **without metadata**, so the EXIF GPS position a phone puts in a photo
   never reaches other members (GIFs are only checked, since re-encoding would drop frames);
 - writes it to MinIO under a random name with short timeouts, in a worker thread.
+
+**Quick upload (admin only).** Admin → CDN has an "Uploaden" button for putting an image
+or video in the bucket to embed somewhere, under `uploads/<random>.<ext>`. Only what the
+bytes really are is accepted: images (JPG, PNG, WebP, GIF, 10 MB) are re-encoded like
+every other image; videos (MP4, MOV, WebM, 80 MB) cannot be re-encoded, so their file
+header is checked instead (an MP4/MOV `ftyp` box with a video brand, or a WebM header)
+and they are stored as they are with the matching content type. HTML, SVG, PDF and
+anything else is refused, so a link to an upload can never run a script in a browser.
+Video metadata (such as a GPS position) is not stripped.
 
 Uploaded files are public to anyone who has the URL (the bucket allows `GetObject` only,
 and not listing). Admins can review everything in **Admin → CDN**.

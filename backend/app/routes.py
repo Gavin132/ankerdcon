@@ -125,6 +125,9 @@ class AdminRoutes:
     # straight from the browser to storage.
     UPLOAD_IMAGE = "/uploads/{kind}"
 
+    # Quick upload: any image or video, to embed somewhere. Admin only.
+    QUICK_UPLOAD = "/quick-upload"
+
     # Rides
     RIDES = "/rides"
     RIDE_DETAIL = "/rides/{ride_id}"

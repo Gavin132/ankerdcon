@@ -1,4 +1,4 @@
-import { apiClient } from "../lib/api/client";
+import { apiClient, VIDEO_UPLOAD_TIMEOUT_MS } from "../lib/api/client";
 import { apiRoutes } from "../config/api-routes";
 import type {
   AdminStats,
@@ -23,6 +23,27 @@ export async function getAdminStats(): Promise<AdminStats> {
 
 export async function getAdminCdn(params: { limit: number; offset: number; kind?: string }): Promise<CdnListing> {
   const { data } = await apiClient.get<CdnListing>(apiRoutes.admin.cdn, { params });
+  return data;
+}
+
+export interface QuickUploadResult {
+  url: string;
+  key: string;
+  media: "image" | "video";
+  size: number;
+}
+
+/** Store an image or video in the bucket (admin only) and get its public URL. */
+export async function quickUpload(file: File, onProgress?: (fraction: number) => void): Promise<QuickUploadResult> {
+  const form = new FormData();
+  form.append("file", file, file.name);
+  const { data } = await apiClient.post<QuickUploadResult>(apiRoutes.admin.quickUpload, form, {
+    headers: { "Content-Type": "multipart/form-data" },
+    timeout: VIDEO_UPLOAD_TIMEOUT_MS,
+    onUploadProgress: (e) => {
+      if (onProgress && e.total) onProgress(e.loaded / e.total);
+    },
+  });
   return data;
 }
 

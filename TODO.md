@@ -32,6 +32,9 @@ what has already been applied.
       the backend and frontend changes go live.
 - [ ] Make sure the backend's MinIO access key is allowed to *list* the bucket. The
       admin CDN page (Admin → CDN) shows an error until it can.
+- [ ] For the admin quick upload of videos: raise `client_max_body_size` to 100M in the
+      SWAG confs for the API (dev.ankerd.org) and cdn (see docs/minio-setup.md), and reload
+      nginx. Photos are fine without it; videos over 20 MB get a 413 until then.
 - [ ] Change the MinIO root password in Portainer, then test one upload. Only
       recreate the app's access key (`mc admin accesskey create`) if uploads
       fail afterwards. See [docs/minio-setup.md](docs/minio-setup.md).

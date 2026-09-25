@@ -99,6 +99,7 @@ export const apiRoutes = {
   admin: {
     stats: "/api/admin/stats",
     cdn:   "/api/admin/cdn",
+    quickUpload: "/api/admin/quick-upload",
     uploadImage: (kind: "event-cover" | "badge") => `/api/admin/uploads/${kind}`,
 
     users: {

@@ -137,7 +137,7 @@ server {
 
     include /config/nginx/ssl.conf;
 
-    client_max_body_size 20M;
+    client_max_body_size 100M;   # 20M is enough for photos; the admin quick upload takes videos up to 80 MB
 
     location / {
         include /config/nginx/proxy.conf;

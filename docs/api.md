@@ -41,6 +41,8 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
   and cosplay images 15 MB, admin images 10 MB, banners 8 MB. Images are decoded,
   stripped of metadata (EXIF, including GPS) and re-encoded; only JPG, PNG and WebP are
   accepted (banners also GIF).
+  The admin quick upload is the exception: it also takes videos (MP4, MOV, WebM) up to
+  80 MB, in a request of up to 90 MB.
 - **Who is "you":** the profile the token resolves to. Endpoints that take a name
   (RSVP, claim a seat, `paid_by`) pass it through `act_as`: members can only name
   themselves, admins anyone. See [acting-for-others.md](acting-for-others.md).
@@ -170,6 +172,7 @@ and description are left out. Only registered when the built frontend exists.
 | Expenses | update (its linked event), delete, `PUT /admin/expense-shares/{id}` to force a status. Refused with 409 while the expense or share is in an open settlement. |
 | Announcements, changelog | list, create, update, delete |
 | Images | `POST /admin/uploads/{kind}` for event covers and badge images |
+| Quick upload | `POST /admin/quick-upload` stores an image or video under `uploads/` and returns `{url, key, media, size}` |
 
 ## Interactive docs
 

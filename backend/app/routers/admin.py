@@ -13,7 +13,7 @@ from app.config import Settings, get_settings
 from app.constants import Tables
 from app.core import minio_client
 from app.core.logging import get_logger
-from app.core.uploads import clean_image, read_capped
+from app.core.uploads import clean_image, read_capped, sniff_video
 from app.dependencies import _unique_profile_name, get_admin_user
 from app.models.admin import (
     CdnListing,
@@ -66,6 +66,7 @@ _DB_ERROR = "Databasefout. Probeer het opnieuw."
 # Upload kind -> folder in the MinIO bucket
 _IMAGE_FOLDERS = {"event-cover": "event-covers", "badge": "badges"}
 _IMAGE_MAX_BYTES = 10 * 1024 * 1024  # 10 MB
+_VIDEO_MAX_BYTES = 80 * 1024 * 1024  # 80 MB (the request limit for this route is 90)
 
 
 def _build_updates(body, nullable_fields: set[str] | None = None) -> dict:
@@ -1224,9 +1225,58 @@ async def admin_upload_image(
     return await run_in_threadpool(_store_admin_image, kind, folder, content)
 
 
+def _store_quick_upload(content: bytes) -> dict:
+    video = sniff_video(content)
+    if video:
+        content_type, ext = video
+        media = "video"
+    else:
+        if len(content) > _IMAGE_MAX_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"Afbeelding te groot. Maximum is {_IMAGE_MAX_BYTES // (1024 * 1024)} MB.",
+            )
+        try:
+            content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP", "GIF"})
+        except HTTPException:
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail="Alleen afbeeldingen (JPG, PNG, WebP, GIF) en video's (MP4, MOV, WebM) zijn toegestaan.",
+            )
+        media = "image"
+    key = f"uploads/{uuid.uuid4().hex}.{ext}"
+    try:
+        url = minio_client.upload_bytes(key, content, content_type)
+    except RuntimeError as e:
+        logger.error("Quick upload failed (MinIO not configured): %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
+    except Exception as e:
+        logger.error("MinIO quick upload failed: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Uploaden mislukt. Probeer het opnieuw.")
+    return {"url": url, "key": key, "media": media, "size": len(content)}
+
+
+@router.post(AdminRoutes.QUICK_UPLOAD)
+async def admin_quick_upload(
+    file: UploadFile = File(...),
+    _: str = Depends(get_admin_user),
+) -> dict:
+    """Upload an image or video to embed somewhere, and get its public URL.
+
+    Only what the bytes really are is accepted: images are re-encoded (which
+    also strips their location data), videos are checked by their file header
+    and stored as they are. Nothing else — no HTML, SVG or PDF — can be stored
+    here, so a link to an upload can never run a script in someone's browser.
+    """
+    content = await read_capped(file, _VIDEO_MAX_BYTES)
+    return await run_in_threadpool(_store_quick_upload, content)
+
+
 # ── CDN (the whole photo bucket) ───────────────────────────────────────────────
 
-_CDN_FOLDER_KINDS = {"cosplay": "cosplay", "banners": "banner", "badges": "badge", "event-covers": "event-cover"}
+_CDN_FOLDER_KINDS = {
+    "cosplay": "cosplay", "banners": "banner", "badges": "badge", "event-covers": "event-cover", "uploads": "upload",
+}
 
 
 _STORY_KEY = re.compile(r"^[0-9a-f-]{36}/[0-9a-f-]{36}/[^/]+$")

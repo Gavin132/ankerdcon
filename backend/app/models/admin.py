@@ -193,7 +193,7 @@ class CdnObject(BaseModel):
     size: int
     last_modified: str
     # Which part of the app put it there, from the folder it sits in.
-    kind: str  # story | cosplay | banner | badge | event-cover | other
+    kind: str  # story | cosplay | banner | badge | event-cover | upload | other
     # Who, when the database still knows (story photos, banners, cosplay images).
     owner: Optional[str] = None
 

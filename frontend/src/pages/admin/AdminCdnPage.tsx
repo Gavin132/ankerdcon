@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, ExternalLink, HardDrive, X } from "lucide-react";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, ChevronLeft, ChevronRight, Copy, ExternalLink, HardDrive, Play, Plus, UploadCloud, X } from "lucide-react";
 import { AdminPageHeader } from "./components/AdminPageHeader";
-import { getAdminCdn } from "../../services/admin.service";
+import { getAdminCdn, quickUpload, type QuickUploadResult } from "../../services/admin.service";
 import { formatDateTime } from "../../utils/format";
 import type { CdnObject } from "../../types";
 
@@ -15,8 +15,16 @@ const KIND_LABEL: Record<string, string> = {
   banner: "Banners",
   badge: "Badges",
   "event-cover": "Event-covers",
+  upload: "Uploads",
   other: "Overig",
 };
+
+const isVideo = (key: string) => /\.(mp4|mov|webm)$/i.test(key);
+
+// Matches what the server accepts (see admin_quick_upload).
+const ACCEPT = "image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm";
+const IMAGE_MAX = 10 * 1024 * 1024;
+const VIDEO_MAX = 80 * 1024 * 1024;
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -30,6 +38,8 @@ export function AdminCdnPage() {
   const [kind, setKind] = useState<string | null>(null);
   const [limit, setLimit] = useState(PAGE);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const qc = useQueryClient();
 
   const { data, isLoading, isError, error, isFetching } = useQuery({
     queryKey: ["admin", "cdn", kind, limit],
@@ -52,7 +62,26 @@ export function AdminCdnPage() {
       <AdminPageHeader
         title="CDN"
         subtitle="Elk bestand in de foto-bucket, nieuwste eerst. Bekijk of er niets tussen staat dat er niet hoort."
+        action={
+          <button
+            type="button"
+            onClick={() => setUploading((v) => !v)}
+            aria-expanded={uploading}
+            className="btn-primary inline-flex items-center gap-1.5 px-4 py-2.5 text-sm"
+          >
+            {uploading ? <X size={16} /> : <Plus size={16} />}
+            {uploading ? "Sluiten" : "Uploaden"}
+          </button>
+        }
       />
+
+      {uploading && (
+        <QuickUpload
+          onUploaded={() => {
+            qc.invalidateQueries({ queryKey: ["admin", "cdn"] });
+          }}
+        />
+      )}
 
       {isError ? (
         <div className="card-surface p-5 text-sm text-rose-700 dark:text-rose-300">
@@ -101,7 +130,16 @@ export function AdminCdnPage() {
                   className="group relative aspect-square overflow-hidden rounded-xl border-1.5 border-line bg-sunken text-left"
                   title={o.key}
                 >
-                  <img src={o.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.04]" />
+                  {isVideo(o.key) ? (
+                    <>
+                      <video src={`${o.url}#t=0.1`} preload="metadata" muted playsInline className="h-full w-full object-cover" />
+                      <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white">
+                        <Play size={11} fill="currentColor" />
+                      </span>
+                    </>
+                  ) : (
+                    <img src={o.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.04]" />
+                  )}
                   <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-2 pb-1.5 pt-6 text-[11px] font-semibold leading-tight text-white">
                     <span className="block truncate">{o.owner ?? KIND_LABEL[o.kind] ?? o.kind}</span>
                     <span className="block truncate font-normal text-white/70">{formatSize(o.size)}</span>
@@ -166,11 +204,109 @@ function Viewer({ item, position, onClose, onPrev, onNext }: { item: CdnObject; 
         </div>
       </div>
       <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 pb-4">
-        <img src={item.url} alt="" className="max-h-full max-w-full object-contain" onClick={(e) => e.stopPropagation()} />
+        {isVideo(item.key) ? (
+          <video key={item.url} src={item.url} controls playsInline className="max-h-full max-w-full" onClick={(e) => e.stopPropagation()} />
+        ) : (
+          <img src={item.url} alt="" className="max-h-full max-w-full object-contain" onClick={(e) => e.stopPropagation()} />
+        )}
         {onPrev && <button type="button" aria-label="Vorige" className={`${arrow} left-3`} onClick={(e) => { e.stopPropagation(); onPrev(); }}><ChevronLeft size={22} /></button>}
         {onNext && <button type="button" aria-label="Volgende" className={`${arrow} right-3`} onClick={(e) => { e.stopPropagation(); onNext(); }}><ChevronRight size={22} /></button>}
       </div>
     </div>,
     document.body,
+  );
+}
+
+/** Pick an image or video, get a link to embed it. Anything else is refused by the server. */
+function QuickUpload({ onUploaded }: { onUploaded: () => void }) {
+  const input = useRef<HTMLInputElement>(null);
+  const [progress, setProgress] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<QuickUploadResult | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [dragging, setDragging] = useState(false);
+
+  async function send(file: File | undefined) {
+    if (!file) return;
+    setError(null);
+    setResult(null);
+    const video = file.type.startsWith("video/");
+    if (!video && !file.type.startsWith("image/")) {
+      setError("Kies een afbeelding (JPG, PNG, WebP, GIF) of video (MP4, MOV, WebM).");
+      return;
+    }
+    if (file.size > (video ? VIDEO_MAX : IMAGE_MAX)) {
+      setError(`Te groot: ${formatSize(file.size)}. Maximaal ${video ? "80" : "10"} MB voor ${video ? "video's" : "afbeeldingen"}.`);
+      return;
+    }
+    setProgress(0);
+    try {
+      const res = await quickUpload(file, setProgress);
+      setResult(res);
+      onUploaded();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Uploaden mislukt.");
+    } finally {
+      setProgress(null);
+      if (input.current) input.current.value = "";
+    }
+  }
+
+  function copy() {
+    if (!result) return;
+    navigator.clipboard.writeText(result.url).then(() => {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    });
+  }
+
+  const busy = progress !== null;
+  const pct = Math.round((progress ?? 0) * 100);
+  return (
+    <div className="card-surface space-y-3 p-4">
+      <input ref={input} id="quick-upload-file" type="file" accept={ACCEPT} className="sr-only" onChange={(e) => void send(e.target.files?.[0])} />
+      <label
+        htmlFor="quick-upload-file"
+        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => { e.preventDefault(); setDragging(false); if (!busy) void send(e.dataTransfer.files?.[0]); }}
+        className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-xl border-1.5 border-dashed px-4 py-6 text-center transition-colors ${
+          dragging ? "border-outline bg-sunken" : "border-line hover:border-ink-3"
+        } ${busy ? "pointer-events-none opacity-70" : ""}`}
+      >
+        <UploadCloud size={22} className="text-ink-3" />
+        <span className="text-sm font-semibold text-ink">{busy ? `Uploaden… ${pct}%` : "Kies een bestand of sleep het hierheen"}</span>
+        <span className="text-xs text-ink-3">Afbeelding (JPG, PNG, WebP, GIF, max 10 MB) of video (MP4, MOV, WebM, max 80 MB)</span>
+        {busy && (
+          <span className="mt-1 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-sunken">
+            <span className="block h-full rounded-full bg-brand transition-[width]" style={{ width: `${pct}%` }} />
+          </span>
+        )}
+      </label>
+
+      {error && <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{error}</p>}
+
+      {result && (
+        <div className="space-y-2">
+          <p className="text-xs text-ink-3">
+            {result.media === "video" ? "Video" : "Afbeelding"} geüpload · {formatSize(result.size)}
+          </p>
+          <div className="flex items-center gap-2">
+            <input
+              id="quick-upload-url"
+              readOnly
+              value={result.url}
+              onFocus={(e) => e.currentTarget.select()}
+              aria-label="Link naar het bestand"
+              className="min-w-0 flex-1 rounded-lg border-1.5 border-line bg-sunken px-3 py-2 font-mono text-[12px] text-ink"
+            />
+            <button type="button" onClick={copy} className="btn-secondary inline-flex shrink-0 items-center gap-1.5 px-3 py-2 text-sm">
+              {copied ? <Check size={15} /> : <Copy size={15} />}
+              {copied ? "Gekopieerd" : "Kopieer"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

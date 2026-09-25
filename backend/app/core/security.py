@@ -162,6 +162,10 @@ def rate_limit(settings: Settings):
 
 MAX_BODY_BYTES = 20 * 1024 * 1024
 
+# The one exception: the admin quick upload takes videos. Kept under the
+# 100 MB Cloudflare allows through in any case.
+LARGE_UPLOAD_PATHS = {"/api/admin/quick-upload": 90 * 1024 * 1024}
+
 
 def limit_body_size():
     async def middleware(request: Request, call_next) -> Response:
@@ -172,14 +176,15 @@ def limit_body_size():
             # (chunked) could otherwise stream past this check.
             return JSONResponse(status_code=411, content={"detail": "Upload zonder bestandsgrootte geweigerd."})
         if length is not None:
+            limit = LARGE_UPLOAD_PATHS.get(request.url.path.rstrip("/"), MAX_BODY_BYTES)
             try:
-                too_big = int(length) > MAX_BODY_BYTES
+                too_big = int(length) > limit
             except ValueError:
                 too_big = True
             if too_big:
                 return JSONResponse(
                     status_code=413,
-                    content={"detail": f"Bestand te groot. Maximum is {MAX_BODY_BYTES // (1024 * 1024)} MB."},
+                    content={"detail": f"Bestand te groot. Maximum is {limit // (1024 * 1024)} MB."},
                 )
         return await call_next(request)
 

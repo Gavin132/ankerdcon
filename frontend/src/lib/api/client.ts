@@ -38,6 +38,8 @@ export class ApiError extends Error {
 export const REQUEST_TIMEOUT_MS = 30_000;
 /** Uploads carry a photo over what may be a poor connection, so they get longer. */
 export const UPLOAD_TIMEOUT_MS = 60_000;
+/** A video from a phone can be tens of MB; Cloudflare itself allows a request 100 s. */
+export const VIDEO_UPLOAD_TIMEOUT_MS = 100_000;
 
 export const apiClient = axios.create({
   baseURL: env.API_BASE_URL,

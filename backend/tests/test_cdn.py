@@ -17,3 +17,7 @@ _UUID_B = "439ff250-2f3d-4f84-8f40-7498befa0b76"
 ])
 def test_cdn_kind(key, kind):
     assert _cdn_kind(key) == kind
+
+
+def test_uploads_folder_is_its_own_kind():
+    assert _cdn_kind("uploads/0a1b2c.mp4") == "upload"

@@ -106,6 +106,10 @@ below shipped together.
   and a viewer. Photos uploaded under a former name still count.
 - **Admin → CDN** shows every file in the photo bucket, newest first, with
   its uploader where known, so nothing unwanted goes unnoticed.
+- **Admin quick upload:** the CDN page has an "Uploaden" button that stores an
+  image or video (MP4, MOV, WebM up to 80 MB) and returns a link to copy. Files are
+  checked by what they really are, and land under `uploads/` (shown as its own
+  filter).
 - Admin → Schermen testen previews the crash, unreachable, forbidden, 404 and
   "waiting for connection" screens.
 - **Drivers can take a ride back:** "Ik rijd" becomes "Rit verwijderen" once
