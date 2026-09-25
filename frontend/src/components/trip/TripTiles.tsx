@@ -32,19 +32,34 @@ function dayTime(value: string): string {
   return date ? `${dayShort(date)} ${time}` : time;
 }
 
-/** Who on the trip isn't at a single one of its meals — what the "nergens bij" pill on the Eten tile counts. */
-function NotInAnyMealSheet({ open, onClose, trip, names }: { open: boolean; onClose: () => void; trip: Trip; names: string[] }) {
+/** The names behind a tile's "N zonder …" pill, each with what they still lack (a ride back, a meal). */
+function MissingPeopleSheet({
+  open,
+  onClose,
+  trip,
+  title,
+  intro,
+  people,
+}: {
+  open: boolean;
+  onClose: () => void;
+  trip: Trip;
+  title: string;
+  intro: string;
+  people: { name: string; detail?: string }[];
+}) {
   const { data: users = [] } = useUsers();
   return (
-    <TripSheet open={open} onClose={onClose} title="Nergens bij" subtitle={`${trip.title} · ${names.length} ${names.length === 1 ? "persoon" : "personen"}`}>
-      <p className="mb-3 text-[12.5px] text-ink-3">Deze mensen doen aan de trip mee, maar staan bij geen enkel etentje. Meld ze aan bij een etentje, of plan er een.</p>
+    <TripSheet open={open} onClose={onClose} title={title} subtitle={`${trip.title} · ${people.length} ${people.length === 1 ? "persoon" : "personen"}`}>
+      <p className="mb-3 text-[12.5px] text-ink-3">{intro}</p>
       <ul className="-mx-2 divide-y divide-line">
-        {names.map((name) => {
+        {people.map(({ name, detail }) => {
           const u = findUser(users, name);
           return (
             <li key={name} className="flex items-center gap-3 px-2 py-2.5">
               <UserAvatar name={u?.name ?? name} user={u} className="h-9 w-9 shrink-0 text-xs" />
               <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-ink">{u?.name ?? name}</span>
+              {detail && <span className="shrink-0 text-[11.5px] font-medium text-ink-3">{detail}</span>}
             </li>
           );
         })}
@@ -69,18 +84,50 @@ export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Tr
   const total = trip.participants.length;
   const missingBack = gaps.filter((g) => g.items.includes("Terug")).length;
   const missing = phase === "live" ? missingBack : gaps.length;
+  // Who the pill counts: once the trip is on, only the ones still without a ride back.
+  const missingPeople = (phase === "live" ? gaps.filter((g) => g.items.includes("Terug")) : gaps).map((g) => ({
+    name: g.name,
+    detail: phase === "live" ? "Terug" : g.items.join(" & "),
+  }));
+  const [missingOpen, setMissingOpen] = useState(false);
   const bars = phase === "live"
     ? [["Terug", total - missingBack] as const]
     : [["Heen", total - gaps.filter((g) => g.items.includes("Heen")).length] as const, ["Terug", total - missingBack] as const];
 
   return (
+    <>
     <TripTile
       icon={Car}
       label="Vervoer"
       to={routes.trip.view(trip.id, "transport")}
       sheet
       size={phase === "past" ? "small" : "wide"}
-      pill={phase !== "past" && missing > 0 && <TilePill>{missing} zonder rit</TilePill>}
+      pill={
+        phase !== "past" &&
+        missing > 0 && (
+          // The tile itself links to the transport sheet; the pill opens the names instead.
+          <span
+            role="button"
+            tabIndex={0}
+            aria-label={`Bekijk wie nog geen rit heeft (${missing})`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setMissingOpen(true);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                e.stopPropagation();
+                setMissingOpen(true);
+              }
+            }}
+            className="shrink-0 cursor-pointer rounded-full transition-opacity hover:opacity-80"
+          >
+            <TilePill>{missing} zonder rit</TilePill>
+          </span>
+        )
+      }
     >
       <TileValue>{tripRideList.length === 0 ? "Nog geen ritten" : `${tripRideList.length} ${tripRideList.length === 1 ? "rit" : "ritten"}`}</TileValue>
       {phase !== "past" && (
@@ -104,6 +151,16 @@ export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Tr
         </>
       )}
     </TripTile>
+    {/* Outside the tile: it is a link, and a click inside a portalled sheet still bubbles up to it. */}
+    <MissingPeopleSheet
+      open={missingOpen}
+      onClose={() => setMissingOpen(false)}
+      trip={trip}
+      title="Zonder rit"
+      intro={phase === "live" ? "Deze mensen hebben nog geen rit terug." : "Deze mensen doen aan de trip mee, maar hebben nog geen rit heen en/of terug."}
+      people={missingPeople}
+    />
+    </>
   );
 }
 
@@ -182,7 +239,14 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
         </ul>
       )}
       <TripMealSheet open={addOpen} onClose={() => setAddOpen(false)} trip={trip} />
-      <NotInAnyMealSheet open={missingOpen} onClose={() => setMissingOpen(false)} trip={trip} names={missingNames} />
+      <MissingPeopleSheet
+        open={missingOpen}
+        onClose={() => setMissingOpen(false)}
+        trip={trip}
+        title="Nergens bij"
+        intro="Deze mensen doen aan de trip mee, maar staan bij geen enkel etentje. Meld ze aan bij een etentje, of plan er een."
+        people={missingNames.map((name) => ({ name }))}
+      />
     </TripTile>
   );
 }
