@@ -516,6 +516,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
   const [modalRoom, setModalRoom] = useState<HotelRoom | null | "new">(null);
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [unassignedOpen, setUnassignedOpen] = useState(false);
 
   const userNames = users.map((u) => u.name);
 
@@ -617,31 +618,57 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
 
         {/* ── Unassigned strip ──────────────────────────────────────── */}
         {unassigned.length > 0 && (
-          <div className="flex items-start gap-3 rounded-xl border-1.5 border-amber-200 bg-amber-50 px-4 py-3.5 dark:border-amber-500/25 dark:bg-amber-500/10">
-            <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-700 dark:text-amber-300" />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold leading-tight text-amber-800 dark:text-amber-300">
-                {unassigned.length} {unassigned.length === 1 ? "deelnemer heeft" : "deelnemers hebben"} nog geen kamer
-              </p>
-              <div className="mt-1.5 flex -space-x-1.5">
-                {unassigned.slice(0, 10).map((name) => {
-                  const u = users.find((x) => x.name === name || x.discord_username === name || x.aliases?.includes(name));
-                  return (
-                    <UserAvatar
-                      key={name}
-                      name={u?.name ?? name}
-                      user={u}
-                      className="h-6 w-6 text-[8px] !border-amber-50 dark:!border-[#241d0e]"
-                    />
-                  );
-                })}
-                {unassigned.length > 10 && (
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-amber-50 bg-amber-200 font-mono text-[8px] font-semibold text-amber-800 dark:border-[#241d0e] dark:bg-amber-500/25 dark:text-amber-200">
-                    +{unassigned.length - 10}
+          <div className="rounded-xl border-1.5 border-amber-200 bg-amber-50 dark:border-amber-500/25 dark:bg-amber-500/10">
+            <button
+              type="button"
+              onClick={() => setUnassignedOpen((v) => !v)}
+              aria-expanded={unassignedOpen}
+              className="flex w-full items-start gap-3 px-4 py-3.5 text-left"
+            >
+              <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-700 dark:text-amber-300" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold leading-tight text-amber-800 dark:text-amber-300">
+                  {unassigned.length} {unassigned.length === 1 ? "deelnemer heeft" : "deelnemers hebben"} nog geen kamer
+                </p>
+                {!unassignedOpen && (
+                  <div className="mt-1.5 flex -space-x-1.5">
+                    {unassigned.slice(0, 10).map((name) => {
+                      const u = users.find((x) => x.name === name || x.discord_username === name || x.aliases?.includes(name));
+                      return (
+                        <UserAvatar
+                          key={name}
+                          name={u?.name ?? name}
+                          user={u}
+                          className="h-6 w-6 text-[8px] !border-amber-50 dark:!border-[#241d0e]"
+                        />
+                      );
+                    })}
+                    {unassigned.length > 10 && (
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-amber-50 bg-amber-200 font-mono text-[8px] font-semibold text-amber-800 dark:border-[#241d0e] dark:bg-amber-500/25 dark:text-amber-200">
+                        +{unassigned.length - 10}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            </div>
+              <ChevronDown
+                size={16}
+                className={`mt-0.5 shrink-0 text-amber-700 transition-transform dark:text-amber-300 ${unassignedOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+            {unassignedOpen && (
+              <ul className="space-y-2 border-t border-amber-200 px-4 py-3 dark:border-amber-500/25">
+                {unassigned.map((name) => {
+                  const u = users.find((x) => x.name === name || x.discord_username === name || x.aliases?.includes(name));
+                  return (
+                    <li key={name} className="flex items-center gap-2.5">
+                      <UserAvatar name={u?.name ?? name} user={u} className="h-6 w-6 shrink-0 text-[8px] !border-0" />
+                      <span className="truncate text-sm font-medium text-ink">{u?.name ?? name}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
         )}
 
