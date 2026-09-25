@@ -25,6 +25,43 @@ def _utcnow() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def expense_in_open_settlement(expense_id: str) -> bool:
+    """True while any share of this expense is part of a settlement that
+    isn't confirmed yet. Shared with the admin endpoints, so an admin can't
+    pull an expense out from under a payment in progress either."""
+    try:
+        rows = (
+            supabase.table(Tables.EXPENSE_SHARES)
+            .select("id")
+            .eq("expense_id", expense_id)
+            .neq("status", "confirmed")
+            .not_.is_("settlement_id", "null")
+            .execute()
+            .data
+        )
+    except Exception as e:
+        logger.error("Failed to check settlements for expense %s: %s", expense_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    return bool(rows)
+
+
+def share_in_open_settlement(share_id: str) -> bool:
+    """True while this share is part of a settlement that isn't confirmed yet."""
+    try:
+        row = (
+            supabase.table(Tables.EXPENSE_SHARES)
+            .select("status, settlement_id")
+            .eq("id", share_id)
+            .execute()
+            .data
+        )
+    except Exception as e:
+        logger.error("Failed to check settlement of share %s: %s", share_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    return bool(row) and bool(row[0].get("settlement_id")) and row[0].get("status") != "confirmed"
+
+
+
 @router.get(ExpenseRoutes.LIST, response_model=list[Expense])
 def list_expenses(_: str = Depends(get_current_user)):
     try:
@@ -147,20 +184,7 @@ def delete_expense(expense_id: str, current_user: str = Depends(get_current_user
 
     # A settlement under way was worked out including this expense; deleting
     # it now would leave that payment for the wrong amount.
-    try:
-        in_settlement = (
-            supabase.table(Tables.EXPENSE_SHARES)
-            .select("id")
-            .eq("expense_id", expense_id)
-            .neq("status", "confirmed")
-            .not_.is_("settlement_id", "null")
-            .execute()
-            .data
-        )
-    except Exception as e:
-        logger.error("Failed to check settlements for expense %s: %s", expense_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-    if in_settlement:
+    if expense_in_open_settlement(expense_id):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Deze uitgave zit in een lopende afrekening. Rond die eerst af of trek hem in.",

@@ -249,3 +249,83 @@ def test_uneven_split_to_the_cent_is_accepted(env):
         "shares": [{"participant": p, "amount": a} for p, a in [("Timo", 3.34), ("Bob", 3.33), ("Frekkel", 3.33)]],
     })
     assert r.status_code == 201, r.text
+
+
+# ── Admin overrides and races ─────────────────────────────────────────────────
+
+def _as_admin(monkeypatch, fake):
+    from app.dependencies import get_admin_user
+    from app.routers import admin as admin_router
+    monkeypatch.setattr(admin_router, "supabase", fake)
+    main.app.dependency_overrides[get_admin_user] = lambda: "Timo"
+
+
+def test_admin_cannot_delete_an_expense_in_an_open_settlement(env, monkeypatch):
+    fake, client, user, _ = env
+    _as_admin(monkeypatch, fake)
+    add_expense(client, user, "Timo", 20, ["Timo", "Bob"])
+    user["name"] = "Bob"
+    client.post("/api/settlements/", json={"counterparty_id": "t", "action": "paid"})
+    expense_id = fake.db["expenses"][0]["id"]
+    assert client.delete(f"/api/admin/expenses/{expense_id}").status_code == 409
+    assert len(fake.db["expenses"]) == 1
+
+
+def test_admin_can_delete_an_expense_that_is_not_in_a_settlement(env, monkeypatch):
+    fake, client, user, _ = env
+    _as_admin(monkeypatch, fake)
+    add_expense(client, user, "Timo", 20, ["Timo", "Bob"])
+    expense_id = fake.db["expenses"][0]["id"]
+    assert client.delete(f"/api/admin/expenses/{expense_id}").status_code == 204
+    assert fake.db["expenses"] == []
+
+
+def test_admin_cannot_change_a_share_status_inside_an_open_settlement(env, monkeypatch):
+    fake, client, user, _ = env
+    _as_admin(monkeypatch, fake)
+    add_expense(client, user, "Timo", 20, ["Timo", "Bob"])
+    user["name"] = "Bob"
+    client.post("/api/settlements/", json={"counterparty_id": "t", "action": "paid"})
+    share = shares(fake)[("Bob", 10.0)]
+    r = client.put(f"/api/admin/expense-shares/{share['id']}", json={"status": "pending"})
+    assert r.status_code == 409 and share["status"] == "claimed"
+    # A share outside any settlement stays editable.
+    add_expense(client, user, "Timo", 6, ["Timo", "Frekkel"])
+    free = shares(fake)[("Frekkel", 3.0)]
+    assert client.put(f"/api/admin/expense-shares/{free['id']}", json={"status": "claimed"}).status_code == 204
+
+
+def test_a_share_changing_underneath_a_new_settlement_undoes_it(env, monkeypatch):
+    fake, client, user, _ = env
+    add_expense(client, user, "Timo", 20, ["Timo", "Bob"])
+    user["name"] = "Bob"
+    real_update = expenses_router.supabase.table("expense_shares").__class__.update
+
+    def sneaky(self, payload):
+        # Someone confirms the share between working out the balance and attaching it.
+        if self.table == "expense_shares" and payload.get("settlement_id"):
+            for s in self.db["expense_shares"]:
+                s["status"] = "confirmed"
+        return real_update(self, payload)
+
+    monkeypatch.setattr(type(expenses_router.supabase.table("x")), "update", sneaky)
+    r = client.post("/api/settlements/", json={"counterparty_id": "t", "action": "paid"})
+    assert r.status_code == 409
+    assert fake.db["settlements"] == []
+
+
+def test_a_duplicate_open_settlement_is_a_conflict_not_a_server_error(env, monkeypatch):
+    fake, client, user, _ = env
+    add_expense(client, user, "Timo", 20, ["Timo", "Bob"])
+    user["name"] = "Bob"
+    query_cls = type(fake.table("x"))
+    real_insert = query_cls.insert
+
+    def failing(self, payload):
+        if self.table == "settlements":
+            raise Exception('duplicate key value violates unique constraint "settlements_one_open_per_pair_idx" (23505)')
+        return real_insert(self, payload)
+
+    monkeypatch.setattr(query_cls, "insert", failing)
+    r = client.post("/api/settlements/", json={"counterparty_id": "t", "action": "paid"})
+    assert r.status_code == 409

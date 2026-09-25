@@ -43,6 +43,7 @@ from app.models.changelog import ChangelogEntry, CreateChangelogEntryRequest, Up
 from app.models.badge import Badge, BadgeOrderItem, CreateBadgeRequest, UpdateBadgeRequest
 from app.models.calendar import Event, EventDay, HotelRoom
 from app.routers.calendar import _hotel_group_key
+from app.routers.expenses import expense_in_open_settlement, share_in_open_settlement
 from app.models.meal import Meal
 from app.models.rides import CreateRideRequest, Ride
 from app.models.user import User
@@ -587,6 +588,11 @@ def admin_update_expense(
 def admin_delete_expense(expense_id: str, _: str = Depends(get_admin_user)) -> None:
     """Admin override of the user-facing delete — bypasses the "only the payer
     can delete" restriction so admins can clean up any transaction."""
+    if expense_in_open_settlement(expense_id):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Deze uitgave zit in een lopende afrekening. Rond die eerst af of trek hem in.",
+        )
     try:
         supabase.table(Tables.EXPENSES).delete().eq("id", expense_id).execute()
     except Exception as e:
@@ -603,6 +609,11 @@ def admin_set_share_status(
     """Lets an admin directly set a share's status (including reverting it),
     unlike the user-facing claim/confirm endpoints which only move forward
     one step at a time."""
+    if share_in_open_settlement(share_id):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Dit aandeel zit in een lopende afrekening. Bevestig of trek die in onder Afrekenen.",
+        )
     now = datetime.now(timezone.utc).isoformat()
     updates: dict = {"status": body.status}
     if body.status == "pending":

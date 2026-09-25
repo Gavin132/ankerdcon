@@ -296,6 +296,13 @@ def create_settlement(
             "confirmed_at": now if new_status == "confirmed" else None,
         }).execute().data
     except Exception as e:
+        # Two requests for the same pair at once: the unique index on open
+        # settlements (migration v2.26) lets exactly one through.
+        if "23505" in str(e) or "duplicate key" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Er loopt al een afrekening tussen jullie. Rond die eerst af.",
+            )
         raise _db_error("create settlement", e)
     if not inserted:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
@@ -307,18 +314,29 @@ def create_settlement(
     elif new_status == "confirmed":
         share_updates |= {"status": "confirmed", "confirmed_at": now}
     try:
-        (
+        attached = (
             supabase.table(Tables.EXPENSE_SHARES)
             .update(share_updates)
             .in_("id", bal.share_ids)
             .is_("settlement_id", "null")
             .neq("status", "confirmed")
             .execute()
+            .data
+            or []
         )
     except Exception as e:
         # Don't leave a settlement behind that covers nothing.
         supabase.table(Tables.SETTLEMENTS).delete().eq("id", row["id"]).execute()
         raise _db_error(f"attach shares to settlement {row['id']}", e)
+    if len(attached) != len(bal.share_ids):
+        # A share was settled or changed by someone else in between, so the
+        # amount no longer matches what this settlement covers. Undo it.
+        _update_shares(row["id"], {"settlement_id": None, "status": "pending", "claimed_at": None, "confirmed_at": None})
+        supabase.table(Tables.SETTLEMENTS).delete().eq("id", row["id"]).execute()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Er is net iets veranderd aan jullie uitgaven. Probeer het opnieuw.",
+        )
 
     fmt = {"amount": float(row["amount"]), "currency": escape_markdown(row["currency"]), "ref": row["payment_ref"]}
     if bal.amount_cents > 0:
