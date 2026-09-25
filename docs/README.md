@@ -16,6 +16,8 @@ Start with the page that matches what you are doing.
 | find out why something is slow, down or wrong | [operations.md](operations.md) |
 | set up or repair the photo storage | [minio-setup.md](minio-setup.md) |
 
+Drafts of the member release notes that are not in the app yet: [release-notes-draft.md](release-notes-draft.md).
+
 Also in the repository root: [`README.md`](../README.md) (overview),
 [`CHANGELOG.md`](../CHANGELOG.md) (what changed per release),
 [`TODO.md`](../TODO.md) (what is still to do) and
