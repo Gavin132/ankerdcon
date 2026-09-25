@@ -187,6 +187,8 @@ npm run dev
 
 ## Environment variables
 
+For a Docker install, every value and where to get it is in [installation.md](installation.md).
+
 ### `frontend/.env`
 
 | Variable | Required | Where to find it |
@@ -226,13 +228,6 @@ Read by `frontend/vite.config.ts`, not exposed to the browser.
 The **app version** comes from `backend/VERSION`; bump it there only. Both the
 API and the frontend build read that file.
 
---- | --- | --- |
-| `SUPABASE_URL` | yes | Same project URL as the frontend |
-| `SUPABASE_SECRET_KEY` | yes | Supabase → Settings → API → secret key. Keep this out of the frontend. |
-| `SUPABASE_JWT_SECRET` | recommended | Signs and checks admin "log in as" tokens, and seeds the calendar feed link. Real logins don't need it: they're checked against the project's published ES256 key |
-| `CORS_ORIGINS` | no | Defaults to `http://localhost:5173` |
-| `DISCORD_WEBHOOK_URL`, `DISCORD_BOT_TOKEN`, `APP_URL` | no | Discord notifications and DMs |
-| `MINIO_*` | no | Story photo uploads; see `docs/minio-setup.md` |
 
 ---
 

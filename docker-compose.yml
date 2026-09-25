@@ -1,0 +1,43 @@
+# The whole app as one service. Used by the Portainer stack (see
+# docs/installation.md) and works the same with `docker compose up -d --build`.
+#
+# Every ${VARIABLE} below is filled from the stack's environment variables (in
+# Portainer) or from a `.env` file next to this file (with plain docker compose).
+# ${VAR:?message} makes compose stop with that message when a required one is missing.
+services:
+  ankerdcon:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Baked into the frontend bundle at build time.
+        VITE_SUPABASE_URL: ${SUPABASE_URL:?set SUPABASE_URL}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:?set SUPABASE_PUBLISHABLE_KEY}
+        APP_ENV: ${APP_ENV:-}
+    image: ankerdcon:${IMAGE_TAG:-latest}
+    container_name: ${CONTAINER_NAME:-ankerdcon}
+    restart: unless-stopped
+    ports:
+      # Host port -> the app's port 8000. SWAG proxies to this port.
+      - "${HOST_PORT:-8000}:8000"
+    environment:
+      # Supabase
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:?set SUPABASE_SECRET_KEY}
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-}
+      # The site itself
+      APP_URL: ${APP_URL:?set APP_URL, e.g. https://con.example.org}
+      CORS_ORIGINS: ${CORS_ORIGINS:-${APP_URL}}
+      CALENDAR_FEED_TOKEN: ${CALENDAR_FEED_TOKEN:-}
+      # Discord (optional)
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
+      # MinIO photo storage (optional)
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-}
+      MINIO_BUCKET: ${MINIO_BUCKET:-story-photos}
+      MINIO_SECURE: ${MINIO_SECURE:-true}
+      # Leave the API docs off anywhere that is reachable from the internet.
+      API_DOCS_ENABLED: "false"
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-600}

@@ -8,6 +8,10 @@ All notable changes to Ankerd Con are documented here.
 
 ### Added
 
+- **Installation guide** (`docs/installation.md`): every `.env` value and where to find it
+  (Supabase, Discord, Google, MinIO), running in Docker or Portainer, the reverse proxy, and the
+  first login. Comes with a root `Dockerfile` (frontend and backend in one image) and a
+  `docker-compose.yml`.
 - **Admins get a pencil on event pages** (next to Share) that opens the event's edit form
   right there.
 

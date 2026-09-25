@@ -2,7 +2,9 @@
 
 How a change gets from `development` to the running app. The infrastructure itself
 (Portainer stacks, SWAG, Cloudflare, DDNS) lives on the home server and is not in
-this repository; this page says what the repository needs from it.
+this repository; this page says what the repository needs from it. Setting up a new
+install from nothing is in [installation.md](installation.md), which also has a
+`docker-compose.yml` you can use as a Portainer stack.
 
 - [Environments](#environments)
 - [What gets built](#what-gets-built)

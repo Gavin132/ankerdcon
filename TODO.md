@@ -28,6 +28,9 @@ what has already been applied.
       per pair of members, enforced by the database.
 - [ ] `migration_v2.27_drop_payment_refs.sql` — **after** the new backend is
       running; the old backend still reads the column it drops.
+- [ ] Try the new root `Dockerfile` and `docker-compose.yml` (docs/installation.md) once on a
+      throwaway machine: they were written but never run. Then paste the real Portainer stack
+      into the "Your current stack" section of that page, secrets replaced by placeholders.
 - [ ] Redeploy dev.ankerd.org **with an image rebuild**, not just a restart, so
       the backend and frontend changes go live.
 - [ ] Make sure the backend's MinIO access key is allowed to *list* the bucket. The
