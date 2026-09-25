@@ -1,7 +1,7 @@
 -- ============================================================
 -- Migration v2.25 — Settling up between members
 -- ============================================================
--- Run in Supabase SQL Editor (or psql), after v2.24.
+-- Run in Supabase SQL Editor (or psql)
 -- ============================================================
 --
 -- Instead of paying back every expense share on its own, two members settle
