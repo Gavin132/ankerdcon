@@ -243,9 +243,10 @@ API and the frontend build read that file.
 | `backend/` | `python -m pytest` | 57 tests: settle-up maths and flow, admin guards, link handling, CDN classification. They run against an in-memory stand-in for Supabase and need no network. Install the tools with `pip install -r backend/requirements-dev.txt`. |
 | `frontend/` | `npx tsc --noEmit` | type-check |
 | `frontend/` | `npm run build` | type-check plus production build. Output goes to `backend/dist` (gitignored), which the backend then serves. |
+| `frontend/` | `npm test` | Vitest. One test file so far: the car-loading maths in `src/utils/carBalance.test.ts`. |
 | `frontend/` | `npm run lint` | ESLint |
 
-There are no frontend tests yet. To look at a component in isolation without
+There are hardly any frontend tests. To look at a component in isolation without
 logging in, render it from a throwaway page with its data preloaded into a
 `QueryClient` (`queryClient.setQueryData(QUERY_KEYS.users, [...])`) and delete
 the page afterwards.

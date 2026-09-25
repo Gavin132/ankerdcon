@@ -108,6 +108,6 @@ leaked signing secret. What to change:
 - [ ] Migration file names are inconsistent (`migration_v1.1.sql` is titled v2.2
       inside, there is no v2.24). Rename or index them; see the table in
       [docs/database.md](docs/database.md#migrations).
-- [ ] There are no frontend tests. `npm test` runs Vitest, but no test files exist.
-      The backend has 57 tests (settle-up maths and flow, admin guards, CDN
+- [ ] Frontend tests: `npm test` runs Vitest, but only the car-loading maths
+      (`utils/carBalance.test.ts`) is covered. The backend has 57 tests (settle-up maths and flow, admin guards, CDN
       classification, link handling).

@@ -8,6 +8,7 @@ import {
   Timer,
   AlertCircle,
   UserMinus,
+  Users,
 } from "lucide-react";
 import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
@@ -21,14 +22,44 @@ import { getRideStatus, formatCountdown, rideLocationLabel, rideVehicleIcon } fr
 import { toast } from "../../store/toast.store";
 import { listItem } from "../../utils/motion";
 import { routes } from "../../config/routes";
+import type { CarGuidance } from "../../utils/carBalance";
 import type { Ride } from "../../types";
 
 interface RideCardProps {
   ride: Ride;
   userNames: string[];
+  /** How full this car should leave (see utils/carBalance.ts); only passed on the trip's transport sheet. */
+  guidance?: CarGuidance;
 }
 
-export function RideCard({ ride, userNames }: RideCardProps) {
+const rangeText = (g: CarGuidance) => (g.low === g.high ? `${g.low}` : `${g.low}–${g.high}`);
+
+/** Says how many this car should leave with, and whether it is on course. Advice only. */
+function LoadPill({ guidance: g }: { guidance: CarGuidance }) {
+  const tone =
+    g.status === "short"
+      ? "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"
+      : g.status === "ok"
+        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+        : "bg-sunken text-ink-2";
+  const text =
+    g.status === "short"
+      ? `Nog ${g.low - g.load} nodig · doel ${rangeText(g)}`
+      : g.status === "ok"
+        ? `Op schema · doel ${rangeText(g)}`
+        : `Boven doel · ${rangeText(g)}`;
+  return (
+    <span
+      title="Zo vol moet deze auto vertrekken, zodat niemand achterblijft"
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${tone}`}
+    >
+      <Users size={11} className="shrink-0" />
+      {text}
+    </span>
+  );
+}
+
+export function RideCard({ ride, userNames, guidance }: RideCardProps) {
   const navigate = useNavigate();
   const [expandedAction, setExpandedAction] = useState<"claim" | "leave" | null>(null);
   const [claimNames, setClaimNames] = useState<string[]>([]);
@@ -156,7 +187,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
           </div>
 
           {/* ── Status / action required ── */}
-          {(statusBadge || (ride.action_required && !isPast)) && (
+          {(statusBadge || guidance || (ride.action_required && !isPast)) && (
             <div className="flex flex-wrap items-center gap-1.5">
               {statusBadge && (
                 <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${statusBadgeClass}`}>
@@ -166,6 +197,7 @@ export function RideCard({ ride, userNames }: RideCardProps) {
                   {status === "recent" && "Vertrokken"}
                 </span>
               )}
+              {guidance && canAct && !isPT && <LoadPill guidance={guidance} />}
               {ride.action_required && !isPast && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11.5px] font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
                   <AlertCircle size={11} className="shrink-0" />

@@ -30,6 +30,7 @@ import { useCalendar } from "../../hooks/useCalendar";
 import { useMeals } from "../../hooks/useMeals";
 import { toast } from "../../store/toast.store";
 import { getRideStatus } from "../../utils/rides";
+import { planDirection } from "../../utils/carBalance";
 import { toDateKey, todayKey, parseEventDate, splitDateTime } from "../../utils/date";
 import { useTimeStore } from "../../store/time.store";
 import { defaultTripDayId, isTripOver, tripGaps, tripRides } from "../../utils/trips";
@@ -118,6 +119,9 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
   const { data: events = [] } = useCalendar();
   const { data: meals = [] } = useMeals();
   const userNames = (users ?? []).map((u) => u.name);
+  /** One form of a name, so someone on a ride under a former name isn't counted twice. */
+  const canonicalName = (name: string) =>
+    ((users ?? []).find((u) => u.name === name || u.discord_username === name || u.aliases?.includes(name))?.name ?? name).toLowerCase();
   const createMutation = useCreateRide();
   const deleteMutation = useDeleteRide();
   const [confirmDeleteRideId, setConfirmDeleteRideId] = useState<string | null>(null);
@@ -285,6 +289,13 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
     // they've made one, "Ik rijd" would just be confusing (or invite a second,
     // duplicate ride), so it turns into a way to take that ride back instead.
     const myRide = active.find((r) => r.driver === currentUser?.name);
+
+    // How full each car should leave so nobody is left behind (Heen and Terug, per day).
+    const balanceDayId = targetDayId ?? dayId;
+    const plan =
+      direction !== "Restaurant" && balanceDayId && !isTripOver(trip)
+        ? planDirection(all, trip.days.find((d) => d.ev.id === balanceDayId)?.ev.participants ?? [], canonicalName)
+        : null;
     const myRideOtherPassengers = myRide ? myRide.passengers.filter((p) => p !== myRide.driver).length : 0;
 
     return (
@@ -339,6 +350,20 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
               : `Er zijn al ${myRideOtherPassengers} mensen bij deze rit ingedeeld — zij verliezen hun plek.`}
           </p>
         )}
+        {plan && (
+          <p className="mb-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px] text-ink-3">
+            <span>
+              {plan.people} {plan.people === 1 ? "persoon" : "mensen"} · {plan.cars.length} {plan.cars.length === 1 ? "auto" : "auto's"} · {plan.seats} plekken
+            </span>
+            {plan.seatShortage > 0 ? (
+              <span className="font-semibold text-rose-700 dark:text-rose-300">Nog {plan.seatShortage} {plan.seatShortage === 1 ? "plek" : "plekken"} tekort</span>
+            ) : plan.withoutSeat > 0 ? (
+              <span className="font-semibold text-amber-700 dark:text-amber-300">{plan.withoutSeat} nog zonder auto</span>
+            ) : (
+              <span className="font-semibold text-emerald-700 dark:text-emerald-300">Iedereen heeft een plek</span>
+            )}
+          </p>
+        )}
         {active.length === 0 && mealsWithoutRide.length === 0 ? (
           <p className="py-1 text-xs text-ink-3">
             Nog geen {direction === "Restaurant" ? "route" : "rit"}.
@@ -350,7 +375,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
               ride.direction === "Restaurant" ? (
                 <RestaurantRideGroup key={ride.id} ride={ride} userNames={userNames} />
               ) : (
-                <RideCard key={ride.id} ride={ride} userNames={userNames} />
+                <RideCard key={ride.id} ride={ride} userNames={userNames} guidance={plan?.cars.find((c) => c.rideId === ride.id)} />
               ),
             )}
           </motion.div>

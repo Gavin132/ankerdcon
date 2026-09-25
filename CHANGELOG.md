@@ -96,6 +96,9 @@ below shipped together.
   - Payment requests and payments to confirm show up in Voor jou.
   - An admin can no longer delete an expense, or change a share's status,
     while it's part of a settlement that isn't confirmed yet.
+- **Car loading advice** on Vervoer (Heen and Terug): every car shows how many people it
+  should leave with so nobody is left behind, and later cars compensate when an earlier
+  one leaves light. Advice only; it updates live with the sign-ups.
 - **Search** in the top bar: one search over trips, rides, meals, cosplays and
   crew, using what the app already has.
 - **Profiles list a member's photos**, newest first, with a filter per event

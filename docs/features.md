@@ -82,6 +82,16 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
   `DELETE /api/rides/{id}` is for the driver or an admin.
 - **Restaurant rides** are created from a meal that needs transport and can have
   several cars, each with its own seats (`RestaurantRideGroup.tsx`, `CarCard.tsx`).
+- **Car loading advice** (Heen and Terug, per day): from the number of people signed up for
+  that day and the cars offered, each car shows how many it should leave with so nobody is
+  left behind (`utils/carBalance.ts`). Cars go in departure order; whatever an early car
+  leaves without, the later ones have to take. With 11 people and three 5-seaters the first
+  should take 3–4; if it leaves with 2 the second needs 4–5; if that one leaves with 4 the
+  third has to be full. Each car has a pill ("Nog 1 nodig · doel 3–4", "Op schema"), and the
+  direction shows people, cars, seats and who has no car yet or how many seats are short.
+  It is live advice from today's sign-ups and never blocks anyone: cars rarely leave on
+  time, so nothing is locked in. Public transport and cars that left over two hours ago are
+  left out.
 - Ride cards change colour as departure nears and show a countdown; a ride stays
   visible for two hours after it leaves, then moves to the history
   (`utils/rides.ts` → `getRideStatus`).
