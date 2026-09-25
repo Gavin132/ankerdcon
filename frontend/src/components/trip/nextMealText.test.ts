@@ -15,7 +15,7 @@ describe("nextMealText", () => {
   });
 
   it("names the day for a meal on another day", () => {
-    expect(nextMealText("2026-09-27 21:45")).toMatch(/^Volgende: .+ 21:45$/);
+    expect(nextMealText("2026-09-27 21:45")).toMatch(/^\S+ 21:45$/);
     expect(nextMealText("2026-09-27 21:45")).not.toContain("Straks");
   });
 });

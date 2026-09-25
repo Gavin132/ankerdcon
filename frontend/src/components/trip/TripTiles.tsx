@@ -32,10 +32,10 @@ function dayTime(value: string): string {
   return date ? `${dayShort(date)} ${time}` : time;
 }
 
-/** "Straks 21:45" for a meal later today, otherwise which day it is ("Volgende: zo 21:45"). */
+/** "Straks 21:45" for a meal later today, otherwise just the day and time ("zo 21:45"). */
 export function nextMealText(value: string): string {
   const [dateKey, time] = splitDateTime(value);
-  return dateKey === toDateKey(getNow()) ? `Straks ${time}` : `Volgende: ${dayTime(value)}`;
+  return dateKey === toDateKey(getNow()) ? `Straks ${time}` : dayTime(value);
 }
 
 /** The names behind a tile's "N zonder …" pill, each with what they still lack (a ride back, a meal). */
