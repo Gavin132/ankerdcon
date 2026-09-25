@@ -6,6 +6,13 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+---
+
+## [2.0.0] - 2026-09-25
+
+The first release since 1.5.0. The versions in between were never cut, so everything
+below shipped together.
+
 ### Changed
 - New look, based on the Ankerd mascot: flat surfaces with ink outlines,
   anchor cyan for the main action, Poppins for text and a condensed display
@@ -54,6 +61,15 @@ All notable changes to Ankerd Con are documented here.
   one place: **Instellingen** in the avatar menu. The Meer tab is gone.
 - "Kamer X" labels now come from the room assignments on Event › Kamers
   instead of a separate free-text field.
+- Weer and Praktisch open as sheets like the other tiles, instead of unfolding
+  and pushing the page down. Uitgave toevoegen, expense details and the
+  settle-up screen are sheets too, and the floating add button is gone.
+- Small labels and subtexts are Poppins across the app (the big headlines and
+  numbers keep the condensed face), and the Hub's card subtexts are in normal
+  case.
+- A car with 4 seats or fewer gets a smaller icon; the truck now belongs to a
+  specific member's account instead of a name match.
+- Cosplays hold at most three images.
 - Event covers, badge images and profile banners are now stored in MinIO,
   next to story photos and cosplay images. Images uploaded earlier stay in
   Supabase Storage and keep working.
@@ -68,16 +84,40 @@ All notable changes to Ankerd Con are documented here.
   expense. What you and another member owe each other is netted over all
   expenses into a single amount (migration v2.25).
   - The one who's owed pastes a payment-request link from their bank app
-    (Tikkie, ING, Rabo, bunq, Wero, …) and/or an IBAN; the other gets a
-    Discord DM and pays with one tap, then taps "Ik heb betaald".
+    (Tikkie, bunq, PayPal, Revolut, Klarna, or ING, Rabobank, ABN AMRO, SNS,
+    ASN, RegioBank, Knab) and/or an IBAN; the other gets a Discord DM and
+    pays with one tap, then taps "Ik heb betaald". Links to other sites are
+    refused.
   - The receiver confirms it arrived, which settles every share it covered,
     or says it didn't, which reopens them. Cash can be marked as received
     straight away.
   - Bank details are only shown to the other person, are never stored on a
     profile, and are wiped once the payment is confirmed.
   - Payment requests and payments to confirm show up in Voor jou.
+  - An admin can no longer delete an expense, or change a share's status,
+    while it's part of a settlement that isn't confirmed yet.
+- **Search** in the top bar: one search over trips, rides, meals, cosplays and
+  crew, using what the app already has.
+- **Profiles list a member's photos**, newest first, with a filter per event
+  and a viewer. Photos uploaded under a former name still count.
+- **Admin → CDN** shows every file in the photo bucket, newest first, with
+  its uploader where known, so nothing unwanted goes unnoticed.
+- Admin → Schermen testen previews the crash, unreachable, forbidden, 404 and
+  "waiting for connection" screens.
+- **Drivers can take a ride back:** "Ik rijd" becomes "Rit verwijderen" once
+  you already drive that direction, with a warning if others have joined.
+- Story photos that can't be sent (no signal) are kept and sent automatically
+  when the connection returns, even after closing the app. Cosplay images are
+  retried while the form is open.
+- New expenses pre-select the event nearest to today, and the event list only
+  goes back two months.
+- Uploaded images are cached by browsers for a year, so a photo already seen
+  never downloads again.
+- Credits (ALFA, RG Digital, Ankerd) in Instellingen.
 
 ### Removed
+- The payment references ("ANKERD-014", "AFR-003"): nothing used them (migration
+  v2.27).
 - The Acties page, the Meer tab, the separate story archive and the admin
   "Hotelkamer" field on users. Old links redirect to the new pages.
 
@@ -140,6 +180,17 @@ All notable changes to Ankerd Con are documented here.
   link behind other text.
 
 ### Fixed
+- Saving an expense failed whenever the payer was among the people splitting it,
+  and a failed save left an empty bill behind.
+- Uploads no longer freeze the whole app when MinIO is slow: they run off the
+  main thread, MinIO calls time out, and the app gives up on a request after
+  30 seconds (uploads 60) instead of hanging.
+- Real logins are verified locally again, so a dropped connection to Supabase
+  no longer logs people out; it answers 503 and the app retries.
+- A profile popup taller than the screen (long bio, many events) scrolls
+  instead of running off the bottom.
+- A page that fails to load points to status.ankerd.org.
+- Shared trip links get a preview again (name, cover and date).
 - Financiën: the payer's own share of an expense counts as paid from the
   start, instead of showing up as money they owe themselves. It's shown as
   "Eigen deel".

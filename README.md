@@ -1,160 +1,157 @@
 <div align="center">
 
-<h1>⚓ Ankerd Con ⚓</h1>
-<p><em>Private event app for Ankerd</em></p>
+<h1>Ankerd Con</h1>
+<p><em>The private event app for the Ankerd group</em></p>
 
 <p>
-  <img src="https://img.shields.io/badge/version-1.4.0-6366f1?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/version-2.0-57B2F9?style=for-the-badge" />
   <img src="https://img.shields.io/badge/license-MIT-22c55e?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/PWA-ready-f59e0b?style=for-the-badge&logo=pwa&logoColor=white" />
+  <img src="https://img.shields.io/badge/PWA-installable-f59e0b?style=for-the-badge" />
 </p>
 
 <p>
   <img src="https://img.shields.io/badge/React-18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
   <img src="https://img.shields.io/badge/TypeScript-5-007ACC?style=for-the-badge&logo=typescript&logoColor=white" />
-  <img src="https://img.shields.io/badge/Vite-4-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
+  <img src="https://img.shields.io/badge/Vite-6-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
   <img src="https://img.shields.io/badge/Tailwind-3-0ea5e9?style=for-the-badge&logo=tailwindcss&logoColor=white" />
 </p>
 
 <p>
-  <img src="https://img.shields.io/badge/FastAPI-0.111-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
-  <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/FastAPI-0.141-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
+  <img src="https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white" />
   <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" />
-  <img src="https://img.shields.io/badge/Discord_OAuth-5865F2?style=for-the-badge&logo=discord&logoColor=white" />
+  <img src="https://img.shields.io/badge/MinIO-C72E49?style=for-the-badge&logo=minio&logoColor=white" />
 </p>
-
-<br />
-
-> A full-stack PWA that keeps the group organized at every con —
-> rides, meals, finances, hotel rooms, and events in one place.
 
 </div>
 
-<br />
+Ankerd Con keeps a group organised around conventions: who is going, who is
+driving, where everyone eats, who sleeps in which hotel room, who owes whom,
+and the photos afterwards. It is an installable web app (a PWA) built for phones
+in convention halls, so it is designed to keep working on poor reception.
 
----
+The interface is in Dutch. Access is invite-only: you log in with Discord or
+Google, and only accounts on the whitelist get in.
 
-## 🗂️ Features
+## What it does
 
-|     | Module          | Description                                                                  |
-| --- | --------------- | ---------------------------------------------------------------------------- |
-| 🏠  | **Hub**         | Active event overview, crew roster, hotel room grouping                      |
-| 🚗  | **Transport**   | Ride coordination — offer seats, join rides, restaurant runs, public transit |
-| 🍜  | **Food**        | Meal planning with cost tracking, dietary info, and transport links          |
-| 💸  | **Finance**     | Shared expense splitting with balance overview and payment history           |
-| 📅  | **Calendar**    | Event schedule with RSVP, weather forecast, tickets, and practical info      |
-| 🏨  | **Hotel Rooms** | Room assignments per event with occupant list                                |
-| 👥  | **Members**     | Crew directory with profiles, badges, and Discord avatars                    |
-| 🛠️  | **Admin Panel** | Full CRUD for users, rides, meals, events, badges, and event groups          |
+| Area | What you get |
+| --- | --- |
+| **Hub** | The nearest trip as a ticket with a countdown, quick "offer / join a ride" shortcuts, today's meals, "Voor jou" (everything you still need to arrange), story rings and a location ping. |
+| **Trip** (Event) | One page per trip with a tile per part of it: **Vervoer**, **Eten**, **Kamers**, **Cosplay**, **Foto's**, **Weer**, **Praktisch** and **Uitgaven**. Each tile shows the answer and opens a sheet to change things. Tap a day on the ticket to sign up. |
+| **Transport** | Offer seats, join a ride, restaurant runs with several cars, public transport, and a timeline. Drivers can take a ride back. |
+| **Food** | Meal plans with cost, dietary info and transport needs, and RSVPs. |
+| **Rooms** | Hotel rooms per trip, self-assignment, bulk creation and capacity. |
+| **Cosplay** | Who wears what on which day, with up to three reference images each. |
+| **Photos** | Instagram-style stories per event day, "unseen" tracking, and every member's photos on their profile. |
+| **Finance** | Shared expenses split between members, and **Afrekenen**: settle everything two members owe each other with one payment (payment-request link or IBAN, confirmed by the receiver). |
+| **Agenda** | Upcoming trips as tickets, past trips as a recap with photos, and a subscribable `.ics` feed. |
+| **Crew** | Member directory, profiles with badges, and "where is everyone" location pings on a map. |
+| **Search** | One search across trips, rides, meals, cosplays and crew. |
+| **Notifications** | Opt-in Discord DMs (new events, ticket sales, reminders, rides, meals, expenses, payment requests) plus a shared webhook channel. |
+| **Admin panel** | Users, whitelist, rides, meals, events and groups, badges, payments, announcements, changelog, "log in as", a screens preview, and a view of every file in the photo bucket (CDN). |
 
----
+A tour of each area, including how the pieces fit together, is in
+[docs/features.md](docs/features.md).
 
-## 🧱 Tech Stack
-
-```
-Frontend       React 18 · TypeScript · Vite · Tailwind CSS · Framer Motion
-Backend        Python 3.11 · FastAPI · Uvicorn
-Database       Supabase (PostgreSQL)
-Auth           Discord OAuth via Supabase Auth
-Server State   TanStack Query v5
-Client State   Zustand
-Forms          react-hook-form + Zod
-Charts         Recharts
-Icons          Lucide React
-```
-
----
-
-## 📁 Project Structure
+## Tech stack
 
 ```
-ankerdcon/
-├── 🎨 frontend/src/
-│   ├── pages/            Route-level components (Hub, Transport, Food, …)
-│   │   └── admin/        Admin panel pages
-│   ├── components/       Shared UI — Modal, Drawer, Badge, Button, …
-│   ├── hooks/            TanStack Query hooks per domain
-│   ├── lib/api/          Axios client + ApiError class
-│   ├── config/           env.ts · api-routes.ts · routes.ts
-│   ├── store/            Zustand stores (auth, theme)
-│   ├── types/            Global TypeScript types
-│   └── utils/            Date formatting, helpers
-│
-├── ⚙️  backend/app/
-│   ├── routers/          FastAPI routers (rides, meals, payments, …)
-│   ├── core/             Supabase client, config
-│   ├── services/         Discord bot, business logic
-│   └── dependencies.py   Auth middleware — JWT → profile → whitelist
-│
-└── 🗄️  db/
-    ├── schema.sql         Full schema for fresh projects
-    └── migrations/        Incremental migrations (v1.1 → v2.6)
+Frontend      React 18 · TypeScript · Vite · Tailwind CSS · Framer Motion
+              TanStack Query (persisted) · Zustand · react-hook-form + Zod
+              Leaflet (maps) · Recharts (admin charts) · a hand-written service worker
+Backend       Python 3.12 · FastAPI · Uvicorn · APScheduler
+Database      Supabase (PostgreSQL); the backend is the only thing that talks to it
+Auth          Supabase Auth with Discord and Google, checked against a whitelist
+Files         MinIO (S3-compatible, self-hosted) behind cdn.ankerd.org
+Integrations  Discord webhook + bot DMs · Open-Meteo weather · OpenStreetMap
 ```
 
----
+## Get it running
 
-## 🚀 Getting Started
-
-Full guide, covering fresh setup, existing installs, env variables and troubleshooting: **[docs/local-development.md](docs/local-development.md)**
-
-### Prerequisites
-
-- Node.js 18+ · **Python 3.12** (3.11 works; 3.13+ can't install the pinned dependencies) · A [Supabase](https://supabase.com) project with Discord OAuth enabled
-
-### Quick start
+You need Node.js 18+, **Python 3.12** and a Supabase project.
 
 ```bash
 git clone https://github.com/Gavin132/ankerdcon.git && cd ankerdcon
-
-# Env files — copy, then fill in (names must start with a dot)
-cp backend/.env.example backend/.env
+cp backend/.env.example backend/.env       # then fill in the values
 cp frontend/.env.example frontend/.env
 ```
 
 ```powershell
-# Windows: create .venv, install everything, start backend + frontend
-.\dev.ps1 -Install
+.\dev.ps1 -Install        # Windows: create .venv, install everything, start both
 ```
 
 ```bash
-# macOS / Linux
-./dev.sh --install
+./dev.sh --install        # macOS / Linux
 ```
 
-After that, `.\dev.ps1` (or `./dev.sh`) starts the backend on `http://localhost:8000` and the frontend on `http://localhost:5173`. Ctrl+C stops both.
+Afterwards `.\dev.ps1` or `./dev.sh` starts the backend on
+`http://localhost:8000` and the frontend on `http://localhost:5173`.
+The full guide, with env variables and troubleshooting, is
+**[docs/local-development.md](docs/local-development.md)**.
 
-### Database
-
-Run `db/schema.sql` in the Supabase SQL editor for a fresh project. For an existing database, apply `db/migrations/` in version order.
-
----
-
-## 🔐 Authentication
+## Repository layout
 
 ```
-Discord login  →  Supabase OAuth  →  JWT issued
-                                          ↓
-                               Backend validates JWT
-                                          ↓
-                          Check whitelist table by discord_id
-                                          ↓
-                    ✅ Whitelisted → auto-create profile + welcome DM
-                    ❌ Not found  → 403 Forbidden
+ankerdcon/
+├── frontend/            The React app
+│   ├── src/pages/       Screens (Hub, trip, finance, profile, admin/…)
+│   ├── src/components/  UI grouped by area (trip, finance, hub, story, …)
+│   ├── src/hooks/       TanStack Query hooks, one file per domain
+│   ├── src/services/    API calls, one file per domain
+│   ├── src/store/       Zustand stores (auth, theme, toasts, time, upload queue)
+│   ├── src/utils/       Pure helpers (dates, trips, rides, images, …)
+│   └── sw/              The service worker source
+├── backend/
+│   ├── main.py          App wiring: middleware, routers, scheduler, static files
+│   ├── app/routers/     One router per area
+│   ├── app/services/    Discord, notifications, reminders, weather, settle-up maths
+│   ├── app/core/        Supabase and MinIO clients, security, uploads
+│   ├── app/dependencies.py   Auth: token → profile → whitelist, act_as, admin check
+│   ├── tests/           pytest
+│   └── VERSION          The app version (the frontend reads it too)
+├── db/                  schema.sql, migrations/, check_schema.py
+├── docs/                Documentation (start at docs/README.md)
+├── dev.ps1 · dev.sh     Run backend and frontend together
+├── CHANGELOG.md         What changed per release
+└── TODO.md              What is still to do
 ```
 
-Access is **invite-only**. Grant entry by adding a Discord ID to the whitelist:
+In production the backend also serves the built frontend (`backend/dist`), so
+the whole app is one container.
 
-```sql
-INSERT INTO whitelist (discord_id) VALUES ('123456789012345678');
+## Documentation
+
+Everything lives in [`docs/`](docs/README.md):
+
+| | |
+| --- | --- |
+| [Architecture](docs/architecture.md) | How the pieces fit: request flow, data model, offline behaviour |
+| [Features](docs/features.md) | What each part of the app does, and where its code is |
+| [Local development](docs/local-development.md) | Set up, run, test, troubleshoot |
+| [Deployment](docs/deployment.md) | Environments, building, env vars, migrations |
+| [Database](docs/database.md) | Tables, relationships, migration history |
+| [API](docs/api.md) | Every endpoint, who may call it, and the conventions |
+| [Security](docs/security.md) | Login, permissions, impersonation, headers, uploads |
+| [Frontend](docs/frontend.md) | Structure, data layer, conventions |
+| [Design system](docs/design-system.md) | Tokens, type, components |
+| [Operations](docs/operations.md) | Monitoring, logs, and what to do when it misbehaves |
+| [MinIO setup](docs/minio-setup.md) | The photo storage stack |
+| [Acting for others](docs/acting-for-others.md) | Who may sign someone else up |
+
+## Contributing
+
+Work happens on `development`; `main` is the released state. Before you push:
+
+```bash
+cd backend && python -m pytest                 # backend tests
+cd frontend && npx tsc --noEmit && npm run build   # types and production build
 ```
 
----
+Backend and frontend changes go live only after the image is rebuilt, and new
+files in `db/migrations/` have to be run by hand. See
+[docs/deployment.md](docs/deployment.md).
 
-## 📱 PWA
+## License
 
-| Feature           | Detail                                                      |
-| ----------------- | ----------------------------------------------------------- |
-| Safe area support | Notch, home indicator, Android nav bar                      |
-| Modals            | Bottom sheet on mobile · standard dialog on desktop         |
-| Dark mode         | User-controlled toggle, persisted to `localStorage`         |
-| Keyboard          | `viewport-fit=cover` + `interactive-widget=resizes-content` |
+MIT. See [LICENSE](LICENSE).

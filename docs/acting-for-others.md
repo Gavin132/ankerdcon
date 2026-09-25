@@ -23,7 +23,11 @@ to switch.
   - Trip days: RSVP and leave.
   - Hotel rooms: assign and leave.
   - Cosplays: create.
-  - Expenses and payments: `paid_by`.
+  - Expenses: `paid_by`.
+  - Settle-up (`/api/settlements`) does **not** use `act_as` at all: a settlement is always
+    started, paid and confirmed as the signed-in member, because it involves their bank
+    details. An admin who needs to act there has to use "log in as"
+    ([security.md](security.md#log-in-as)).
   - Location pings.
 - **Frontend:** `useActingPermissions()` in `frontend/src/hooks/useUsers.ts`
   mirrors this, so name pickers only offer names the API accepts:
@@ -31,8 +35,9 @@ to switch.
   - `canActFor(name)` checks one name.
 
 These are separate from what anyone may do regardless of this rule. Deletes
-always require the creator or an admin (`require_owner_or_admin`). Expense
-shares are claimed by the person who owes them and confirmed by the payer.
+always require the creator or an admin (`require_owner_or_admin`), and a driver can
+remove their own ride. Expense shares are claimed by the person who owes them and
+confirmed by the payer; a settlement is confirmed by its receiver.
 
 ## Switching to "members may sign up others"
 
@@ -50,7 +55,6 @@ restricted: `paid_by`, location pings, cosplays and all deletes.
      `leave_hotel_room`
 3. Keep `act_as` in these endpoints:
    - `routers/expenses.py`: `create_expense`
-   - `routers/payments.py`: `create_payment`
    - `routers/users.py`: `ping_location`
    - `routers/cosplays.py`: `create_cosplay`
    - `routers/rides.py`: `create_ride` (the driver)

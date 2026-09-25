@@ -20,6 +20,22 @@ Event covers, badges and banners uploaded before they moved here still live
 in Supabase Storage (buckets `event-covers`, `badges`, `banners`) and keep
 working from there.
 
+## What the app expects of the bucket
+
+- **Public read of a known URL, no listing.** Anonymous visitors may `GetObject` and nothing
+  else (step 2). The backend's own access key does the writing, deleting and, for
+  **Admin → CDN**, *listing* (`ListBucket`). If that page shows an error, this key is
+  missing the list permission or MinIO is unreachable.
+- **Random, never-reused names.** Every object gets a fresh random name, so the backend
+  stores each with `Cache-Control: public, max-age=31536000, immutable` and browsers never
+  re-fetch a photo they have seen. Objects uploaded before that header existed are cached
+  by the browser's own rules until they are replaced.
+- **Short timeouts.** The backend gives MinIO 5 seconds to connect and 15 to answer, with
+  one retry, and runs uploads in a worker thread. A wedged MinIO fails an upload in about
+  half a minute instead of hanging the API (see [operations.md](operations.md#when-something-is-wrong)).
+- **One bucket.** Everything is in `story-photos`, one folder per kind (table above), so one
+  policy covers all of it.
+
 ## 1. Deploy MinIO as a Portainer stack
 
 ```yaml
