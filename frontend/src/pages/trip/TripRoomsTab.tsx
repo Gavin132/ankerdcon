@@ -12,7 +12,6 @@ import { useAdminUpdateHotelRoom, useAdminDeleteHotelRoom } from "../../hooks/us
 import { useUsers, useCurrentUser } from "../../hooks/useUsers";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { NamePicker } from "../../components/common/NamePicker";
-import { Modal } from "../../components/common/Modal";
 import { TripSheet } from "../../components/trip/TripSheet";
 import { Button } from "../../components/common/Button";
 import { toast } from "../../store/toast.store";
@@ -98,11 +97,12 @@ function RoomModal({
   }
 
   return (
-    <Modal
+    <TripSheet
       open={open}
       onClose={onClose}
+      stacked
       title={isEdit ? `${room?.room_number || "Kamer"} bewerken` : "Nieuwe kamer"}
-      description={isEdit ? "Pas de kamerdetails aan" : "Voeg een hotelkamer toe aan dit evenement"}
+      subtitle={isEdit ? "Pas de kamerdetails aan" : "Voeg een hotelkamer toe aan dit evenement"}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
@@ -180,7 +180,7 @@ function RoomModal({
           {isEdit ? "Opslaan" : "Kamer aanmaken"}
         </Button>
       </form>
-    </Modal>
+    </TripSheet>
   );
 }
 
@@ -234,13 +234,11 @@ function BulkRoomModal({
   }
 
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title="Kamers in bulk toevoegen"
-      description="Bijv. 10 kamers voor 2 personen, 2 kamers voor 3 personen. Kamernummers vul je later in, als je inchecked."
-    >
+    <TripSheet open={open} onClose={onClose} stacked title="Kamers in bulk toevoegen">
       <form onSubmit={handleSubmit} className="space-y-4">
+        <p className="text-sm text-ink-3">
+          Bijv. 10 kamers voor 2 personen, 2 kamers voor 3 personen. Kamernummers vul je later in, als je inchecked.
+        </p>
         <div className="space-y-2.5">
           {batches.map((batch, i) => (
             <div key={i} className="flex items-end gap-2">
@@ -297,7 +295,7 @@ function BulkRoomModal({
           {totalRooms === 0 ? "Vul minstens één groep in" : `${totalRooms} ${totalRooms === 1 ? "kamer" : "kamers"} aanmaken`}
         </Button>
       </form>
-    </Modal>
+    </TripSheet>
   );
 }
 

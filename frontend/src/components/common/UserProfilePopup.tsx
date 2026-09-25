@@ -134,7 +134,7 @@ export function UserProfilePopup({
           {/* Dimmed backdrop — no blur, list stays readable */}
           <motion.div
             key="popup-bg"
-            className="fixed inset-0 z-[100] bg-slate-950/50"
+            className="fixed inset-0 z-[230] bg-slate-950/50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -145,7 +145,7 @@ export function UserProfilePopup({
           {/* Card */}
           <motion.div
             key="popup-card"
-            className="fixed z-[101] flex flex-col pointer-events-auto"
+            className="fixed z-[231] flex flex-col pointer-events-auto"
             style={{ top, left, width: CARD_W, maxHeight: viewH - top - MARGIN }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
