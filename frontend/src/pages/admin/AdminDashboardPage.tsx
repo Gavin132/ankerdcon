@@ -242,7 +242,7 @@ export function AdminDashboardPage() {
     });
   }, [allUsers]);
 
-  const AXIS = { fill: "#74838A", fontSize: 11, fontFamily: "Spline Sans Mono, ui-monospace, monospace" };
+  const AXIS = { fill: "#74838A", fontSize: 11, fontFamily: "Poppins, system-ui, sans-serif" };
 
   const METRICS = [
     { label: "Gebruikers",  value: stats?.users,  icon: Users,           path: routes.admin.users  },

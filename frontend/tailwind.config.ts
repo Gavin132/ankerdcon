@@ -71,8 +71,10 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["Poppins", "Segoe UI", "system-ui", "-apple-system", "sans-serif"],
-        display: ["Big Shoulders Display", "Arial Narrow", "Roboto Condensed", "Impact", "sans-serif"],
-        mono: ["Spline Sans Mono", "ui-monospace", "Cascadia Mono", "Consolas", "monospace"],
+        // The whole app is Poppins. `display` (big headlines and numbers) and `mono` (small labels,
+        // chips, timestamps) keep their own class names so they can be told apart or changed again.
+        display: ["Poppins", "Segoe UI", "system-ui", "-apple-system", "sans-serif"],
+        mono: ["Poppins", "Segoe UI", "system-ui", "-apple-system", "sans-serif"],
       },
       fontWeight: {
         // Poppins at 900 is very heavy; the app's many `font-black` headings read
