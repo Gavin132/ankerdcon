@@ -25,6 +25,8 @@ const STATUS_CONFIG = {
   confirmed: { label: "Verrekend",            pill: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" },
 } as const;
 
+const OWN_PART_CONFIG = { label: "Eigen deel", pill: "bg-sunken text-ink-2" };
+
 function StatusIcon({ status }: { status: ExpenseShare["status"] }) {
   if (status === "confirmed") return <CheckCircle2 size={12} />;
   if (status === "claimed")   return <Clock        size={12} />;
@@ -136,10 +138,13 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
             </p>
             <div className="card-surface divide-y divide-line overflow-hidden">
               {expense.shares.map((share) => {
-                const cfg       = STATUS_CONFIG[share.status];
+                // The payer's own part of the bill — settled from the start, nothing to pay or confirm.
+                const isOwnPart = share.participant === expense.paid_by;
+                const cfg       = isOwnPart ? OWN_PART_CONFIG : STATUS_CONFIG[share.status];
                 const isMe      = share.participant === me;
-                const canClaim  = isMe && share.status === "pending";
-                const canConfirm = isPayer && share.status === "claimed";
+                const canClaim  = isMe && !isOwnPart && share.status === "pending";
+                // Straight from pending too, for cash handed over in person.
+                const canConfirm = isPayer && !isOwnPart && share.status !== "confirmed";
                 const isLoading = claimMutation.isPending || confirmMutation.isPending;
 
                 return (
@@ -169,7 +174,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
                         <StatusIcon status={share.status} />
                         {cfg.label}
                       </span>
-                      <CopyRef value={share.payment_ref} />
+                      {!isOwnPart && <CopyRef value={share.payment_ref} />}
 
                       {/* Action button */}
                       {canClaim && (

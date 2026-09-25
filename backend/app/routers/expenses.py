@@ -95,11 +95,15 @@ def create_expense(
 
     inserted_shares: list[dict] = []
     if body.shares:
+        # The amount is the whole bill, so the payer's own part of it is
+        # already paid — it's recorded as settled instead of owed to themselves.
+        now = _utcnow()
         try:
             inserted_shares = (
                 supabase.table(Tables.EXPENSE_SHARES)
                 .insert([
                     {"expense_id": expense_id, "participant": s.participant, "amount": s.amount}
+                    | ({"status": "confirmed", "confirmed_at": now} if s.participant == paid_by else {})
                     for s in body.shares
                 ])
                 .execute()
@@ -197,8 +201,10 @@ def confirm_share(share_id: str, current_user: str = Depends(get_current_user)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Aandeel niet gevonden.")
     payer = (row.data.get("expenses") or {}).get("paid_by")
     require_owner_or_admin(current_user, payer, "Alleen de betaler kan dit bevestigen.")
-    if row.data["status"] != "claimed":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Aandeel is nog niet geclaimd.")
+    # Straight from pending is fine too: cash handed over in person never gets
+    # an "Ik heb betaald" from the other side.
+    if row.data["status"] == "confirmed":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Aandeel is al bevestigd.")
 
     try:
         supabase.table(Tables.EXPENSE_SHARES).update({

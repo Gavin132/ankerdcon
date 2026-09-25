@@ -98,8 +98,15 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
   function buildShares(): CreateExpenseShareInput[] {
     if (splitMode === "gelijk") {
       if (splitParticipants.length === 0) return [];
-      const each = totalAmount / splitParticipants.length;
-      return splitParticipants.map((p) => ({ participant: p, amount: Math.round(each * 100) / 100 }));
+      // Split in whole cents so the shares add up to the total exactly; any
+      // leftover cents go to the payer first, so everyone else pays the even amount.
+      const cents = Math.round(totalAmount * 100);
+      const base  = Math.floor(cents / splitParticipants.length);
+      let extra   = cents - base * splitParticipants.length;
+      const payer = watch("paid_by");
+      const order = [...splitParticipants].sort((a, b) => Number(b === payer) - Number(a === payer));
+      const amountOf = new Map(order.map((p) => [p, base + (extra-- > 0 ? 1 : 0)]));
+      return splitParticipants.map((p) => ({ participant: p, amount: amountOf.get(p)! / 100 }));
     }
     if (splitMode === "vast") {
       const fixed = parseFloat(fixedAmountStr);
@@ -294,7 +301,10 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
                   <p className="font-mono text-[12px] tabular-nums text-ink-2">
                     {formatAmount(totalAmount, currency)} ÷ {splitParticipants.length} = {" "}
                     <span className="font-semibold text-ink">
-                      {formatAmount(Math.round((totalAmount / splitParticipants.length) * 100) / 100, currency)} per persoon
+                      {formatAmount(Math.floor(Math.round(totalAmount * 100) / splitParticipants.length) / 100, currency)}
+                      {Math.round(totalAmount * 100) % splitParticipants.length !== 0 &&
+                        ` of ${formatAmount((Math.floor(Math.round(totalAmount * 100) / splitParticipants.length) + 1) / 100, currency)}`}
+                      {" "}per persoon
                     </span>
                   </p>
                 </div>

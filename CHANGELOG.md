@@ -127,6 +127,15 @@ All notable changes to Ankerd Con are documented here.
   and text members write is shown literally in bot DMs, so it can't hide a
   link behind other text.
 
+### Fixed
+- Financiën: the payer's own share of an expense counts as paid from the
+  start, instead of showing up as money they owe themselves (existing
+  expenses are fixed by migration v2.24). It's shown as "Eigen deel".
+- An even split no longer loses cents: €10 over three people is 3,34 + 3,33
+  + 3,33, with the extra cent going to the payer first.
+- The payer can mark a share as received without waiting for an "Ik heb
+  betaald", for cash handed over in person.
+
 ---
 
 ## [1.5.0] - 2026-09-02
