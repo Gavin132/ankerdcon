@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { CalendarEvent } from "../../types";
 import { formatDate } from "../../utils/format";
 import { parseEventDate } from "../../utils/date";
+import { getNow } from "../../store/time.store";
 import { dayShort } from "../../utils/multiDay";
 
 /** "Vr 12 september 2026" — the two-letter day makes it much faster to
@@ -15,6 +16,9 @@ function formatDateWithDay(dateStr: string): string {
   const short = dayShort(date);
   return `${short.charAt(0).toUpperCase()}${short.slice(1)} ${formatted}`;
 }
+
+/** Events further back than this aren't offered — nobody links a new expense to something from last year. */
+const PICKABLE_MONTHS_BACK = 2;
 
 interface EventPickerProps {
   events: CalendarEvent[];
@@ -35,7 +39,16 @@ export function EventPicker({
 
   const selectedEvent = value ? events.find((e) => e.id === value) : undefined;
 
+  const cutoff = getNow();
+  cutoff.setMonth(cutoff.getMonth() - PICKABLE_MONTHS_BACK);
+
   const filtered = events
+    .filter((e) => {
+      // An event that's already picked stays listed, however old.
+      if (e.id === value) return true;
+      const date = parseEventDate(e.date);
+      return !date || date >= cutoff;
+    })
     .filter((e) => e.event_name.toLowerCase().includes(query.toLowerCase()))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 

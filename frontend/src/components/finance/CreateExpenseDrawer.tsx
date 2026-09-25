@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Equal, Tag, SlidersHorizontal, X, Plus } from "lucide-react";
-import { Drawer } from "../common/Drawer";
+import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
 import { EventPicker } from "../common/EventPicker";
@@ -184,7 +184,7 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
   );
 
   return (
-    <Drawer open={open} onClose={handleClose} title="Uitgave toevoegen" subtitle="Registreer een groepsuitgave" footer={footer}>
+    <TripSheet open={open} onClose={handleClose} title="Uitgave toevoegen" subtitle="Registreer een groepsuitgave" footer={footer}>
       <form id="create-expense-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
         {/* ── Betaler ───────────────────────────────────────── */}
@@ -441,6 +441,6 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
           )}
         </div>
       </form>
-    </Drawer>
+    </TripSheet>
   );
 }
