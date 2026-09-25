@@ -6,8 +6,15 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- **Admins get a pencil on event pages** (next to Share) that opens the event's edit form
+  right there.
+
 ### Changed
 
+- **The admin panel uses the same bottom sheets as the rest of the app** instead of a
+  right-hand drawer, including the "unsaved changes" confirmation.
 - **Anyone can sign others up** for meals, rides, restaurant cars, trip days and hotel
   rooms: "Iemand aanmelden" now works for every member, and the name pickers offer all
   names. Who paid, location pings and cosplays stay with their owner.

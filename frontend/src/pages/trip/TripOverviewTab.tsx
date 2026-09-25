@@ -14,6 +14,7 @@ import { routes } from "../../config/routes";
 import { TripTicket } from "../../components/trip/TripTicket";
 import { HeaderAction } from "../../components/layout/HeaderAction";
 import { ShareButton } from "../../components/common/ShareButton";
+import { TripEditButton } from "../../components/trip/TripEditButton";
 import { TripRsvpModal } from "../../components/calendar/TripRsvpModal";
 import { StoryViewer } from "../../components/story/StoryViewer";
 import {
@@ -107,6 +108,7 @@ export function TripOverviewTab() {
   return (
     <div className="space-y-4">
       <HeaderAction>
+        <TripEditButton trip={trip} />
         <ShareButton onClick={onShare} />
       </HeaderAction>
       <TripTicket

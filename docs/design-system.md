@@ -96,7 +96,8 @@ Page head pattern (see `TripLayout`, `HubPage`):
 - **Sheets** (`TripSheet`): the standard way to open something over a page. A bottom sheet with a
   title, optional back arrow and a footer for the main action; several views (list, form, filter) swap
   inside one sheet with `viewKey`. Used for trip parts, expenses, settle-up, and more. There is no
-  right-hand drawer any more.
+  right-hand drawer any more: the admin panel's edit panels (`AdminDrawer`) and its
+  unsaved-changes confirmation are `TripSheet`s too (`stacked` puts the confirmation above the form).
 - **Modals, menus, popovers:** `bg-surface border-1.5 border-line`, may keep
   `shadow-xl` (floating layers are the only thing with a shadow). Backdrop `bg-slate-950/50`, no blur.
 - **Empty states:** icon in an `h-12 w-12 rounded-xl bg-sunken text-ink-3` square, `text-sm font-semibold text-ink` title, `text-xs text-ink-3` body.

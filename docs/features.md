@@ -238,7 +238,7 @@ See [architecture.md](architecture.md#background-jobs-and-notifications) for the
 | Dashboard | counts and charts |
 | Gebruikers, Whitelist | members, deactivation, and who may log in at all |
 | Ritten, Maaltijden | fix or remove anything, remove single passengers |
-| Evenementen, Groepen | trips and their days, series labels, bulk RSVP |
+| Evenementen, Groepen | trips and their days, series labels, bulk RSVP. Admins also get a pencil on every event page that opens the same edit form |
 | Badges | badge images and who has them |
 | Betalingen | expenses and shares, including forcing a status |
 | Aankondigingen, Wijzigingslog | banners and release notes |

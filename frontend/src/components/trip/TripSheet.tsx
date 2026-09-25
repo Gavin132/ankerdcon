@@ -14,8 +14,13 @@ interface TripSheetProps {
   footer?: React.ReactNode;
   /** Change this when the sheet swaps to another internal view (list ↔ form): the old view fades out, the new one slides in and the sheet eases to its new height. */
   viewKey?: string;
+  /** For a sheet opened on top of another (a confirmation over a form): sits above it. */
+  stacked?: boolean;
   children: React.ReactNode;
 }
+
+/** How many sheets are open; the page behind stays locked until the last one closes. */
+let scrollLocks = 0;
 
 /**
  * A part of a trip (Vervoer, Cosplay, Kamers…), opened as a sheet from the
@@ -24,7 +29,7 @@ interface TripSheetProps {
  * than one internal view (e.g. a list and an add-form) without stacking a
  * second overlay on top — only the header's X fully closes it.
  */
-export function TripSheet({ open, onClose, title, subtitle, onBack, footer, viewKey, children }: TripSheetProps) {
+export function TripSheet({ open, onClose, title, subtitle, onBack, footer, viewKey, stacked, children }: TripSheetProps) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -35,16 +40,19 @@ export function TripSheet({ open, onClose, title, subtitle, onBack, footer, view
   }, [open, onClose]);
 
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
+    if (!open) return;
+    scrollLocks++;
+    document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = "";
+      scrollLocks--;
+      if (scrollLocks === 0) document.body.style.overflow = "";
     };
   }, [open]);
 
   return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[150]">
+        <div className={`fixed inset-0 ${stacked ? "z-[210]" : "z-[150]"}`}>
           {/* Backdrop */}
           <motion.div
             className="absolute inset-0 bg-slate-950/50"
