@@ -147,6 +147,10 @@ All notable changes to Ankerd Con are documented here.
   + 3,33, with the extra cent going to the payer first.
 - The payer can mark a share as received without waiting for an "Ik heb
   betaald", for cash handed over in person.
+- An expense can only be saved once it's split between people and the
+  shares add up to the bill exactly (Vast and Handmatig used to allow a
+  difference). The form says what's still missing, and "Verdeling" no
+  longer says "optioneel".
 
 ---
 

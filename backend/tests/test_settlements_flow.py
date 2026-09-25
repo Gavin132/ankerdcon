@@ -223,3 +223,29 @@ def test_expense_in_open_settlement_cannot_be_deleted(env):
     user["name"] = "Timo"
     expense_id = fake.db["expenses"][0]["id"]
     assert client.delete(f"/api/expenses/{expense_id}").status_code == 409
+
+
+@pytest.mark.parametrize("amount, shares", [
+    (10, []),                                                       # nobody to split with
+    (10, [{"participant": "Bob", "amount": 4}, {"participant": "Timo", "amount": 5}]),   # 9 of 10
+    (10, [{"participant": "Bob", "amount": 6}, {"participant": "Timo", "amount": 5}]),   # 11 of 10
+    (10, [{"participant": "Bob", "amount": 5}, {"participant": "Bob", "amount": 5}]),    # Bob twice
+    (10, [{"participant": "Bob", "amount": 10}, {"participant": "Timo", "amount": 0}]),  # zero share
+    (0, [{"participant": "Bob", "amount": 0}]),                                          # no amount
+])
+def test_expense_split_must_be_the_whole_bill(env, amount, shares):
+    fake, client, user, _ = env
+    r = client.post("/api/expenses/", json={
+        "paid_by": "Timo", "amount": amount, "description": "x", "date": "2026-09-25", "shares": shares,
+    })
+    assert r.status_code == 422
+    assert not fake.db.get("expenses")
+
+
+def test_uneven_split_to_the_cent_is_accepted(env):
+    fake, client, user, _ = env
+    r = client.post("/api/expenses/", json={
+        "paid_by": "Timo", "amount": 10, "description": "x", "date": "2026-09-25",
+        "shares": [{"participant": p, "amount": a} for p, a in [("Timo", 3.34), ("Bob", 3.33), ("Frekkel", 3.33)]],
+    })
+    assert r.status_code == 201, r.text
