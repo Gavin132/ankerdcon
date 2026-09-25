@@ -77,3 +77,23 @@ def test_iban_validation():
     assert normalize_iban("NL91ABNA0417164301") is None  # wrong check digits
     assert normalize_iban("NL91ABNA041716430") is None   # too short for NL
     assert normalize_iban("hello") is None
+
+
+import pytest
+from app.services.settle_up import is_allowed_payment_link_host
+
+
+@pytest.mark.parametrize("host", [
+    "tikkie.me", "www.tikkie.me", "bunq.me", "paypal.me", "revolut.me", "pay.klarna.com",
+    "ing.nl", "betaalverzoek.rabobank.nl", "abnamro.nl", "snsbank.nl", "knab.nl", "TIKKIE.ME",
+])
+def test_known_payment_hosts_are_allowed(host):
+    assert is_allowed_payment_link_host(host)
+
+
+@pytest.mark.parametrize("host", [
+    "", None, "evil.example", "tikkie.me.evil.example", "nottikkie.me", "tikkie-me.com",
+    "ing.nl.evil.example", "wero-wallet.eu", "google.com",
+])
+def test_other_hosts_are_refused(host):
+    assert not is_allowed_payment_link_host(host)

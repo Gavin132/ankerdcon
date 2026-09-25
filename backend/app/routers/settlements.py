@@ -37,6 +37,7 @@ from app.services.discord_bot import escape_markdown
 from app.services.settle_up import (
     balance_between,
     build_name_resolver,
+    is_allowed_payment_link_host,
     normalize_iban,
     pair_balances,
 )
@@ -151,6 +152,11 @@ def _valid_request_url(raw: Optional[str]) -> Optional[str]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="De betaallink moet een volledige https-link zijn.",
+        )
+    if not is_allowed_payment_link_host(parts.hostname):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Alleen betaallinks van Tikkie, bunq, PayPal, Revolut, Klarna en de grote Nederlandse banken zijn toegestaan.",
         )
     return url
 

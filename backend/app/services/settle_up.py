@@ -117,3 +117,24 @@ def normalize_iban(raw: str) -> Optional[str]:
     rearranged = iban[4:] + iban[:4]
     digits = "".join(str(int(c, 36)) for c in rearranged)
     return iban if int(digits) % 97 == 1 else None
+
+
+# Payment-request links may only point at a bank or payment app we know. A
+# link is what the payer taps to send money, so a look-alike site pasted by
+# someone else is the one way this feature could be abused; anything outside
+# this list is refused when the request is made.
+PAYMENT_LINK_DOMAINS = (
+    # Payment apps
+    "tikkie.me", "bunq.me", "bunq.com", "paypal.me", "paypal.com",
+    "revolut.me", "revolut.com", "klarna.com",
+    # The big Dutch banks (the Volksbank brands share one group)
+    "ing.nl", "rabobank.nl", "abnamro.nl", "snsbank.nl", "asnbank.nl", "regiobank.nl", "knab.nl",
+)
+
+
+def is_allowed_payment_link_host(host: Optional[str]) -> bool:
+    """True for exactly one of the known domains or a subdomain of one
+    (betaalverzoek.rabobank.nl). Matching on the host, not the text, so
+    `https://tikkie.me@evil.example` or `tikkie.me.evil.example` don't pass."""
+    host = (host or "").lower().rstrip(".")
+    return any(host == d or host.endswith("." + d) for d in PAYMENT_LINK_DOMAINS)

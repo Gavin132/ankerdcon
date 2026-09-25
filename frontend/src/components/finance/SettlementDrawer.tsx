@@ -21,19 +21,40 @@ interface Props {
   meId: string | undefined;
 }
 
-/** Recognisable name for a payment-request link; the host is always shown too. */
+/** The only places a payment-request link may point (the backend enforces the same list). The name is what the payer sees. */
 const PROVIDERS: [string, string][] = [
   ["tikkie.me", "Tikkie"],
   ["bunq.me", "bunq"],
+  ["bunq.com", "bunq"],
   ["paypal.me", "PayPal"],
+  ["paypal.com", "PayPal"],
+  ["revolut.me", "Revolut"],
+  ["revolut.com", "Revolut"],
+  ["klarna.com", "Klarna"],
   ["ing.nl", "ING"],
   ["rabobank.nl", "Rabobank"],
   ["abnamro.nl", "ABN AMRO"],
   ["snsbank.nl", "SNS"],
   ["asnbank.nl", "ASN"],
+  ["regiobank.nl", "RegioBank"],
   ["knab.nl", "Knab"],
-  ["wero-wallet.eu", "Wero"],
 ];
+
+/** Empty is fine (an IBAN alone works); otherwise it has to be an https link to one of the providers above. */
+function paymentLinkProblem(raw: string): string | null {
+  const url = raw.trim();
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    if (u.protocol !== "https:") return "De link moet met https beginnen.";
+    const host = u.hostname.toLowerCase();
+    return PROVIDERS.some(([d]) => host === d || host.endsWith(`.${d}`))
+      ? null
+      : "Deze link mag niet: alleen Tikkie, bunq, PayPal, Revolut, Klarna en de grote Nederlandse banken.";
+  } catch {
+    return "Dit is geen geldige link.";
+  }
+}
 
 function linkInfo(url: string): { host: string; provider?: string } | null {
   try {
@@ -183,7 +204,8 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
     } else {
       title = `Geld vragen aan ${otherName}`;
       subtitle = `Verrekent ${covers} in één keer`;
-      const canSend = requestUrl.trim() !== "" || iban.trim() !== "";
+      const linkProblem = paymentLinkProblem(requestUrl);
+      const canSend = (requestUrl.trim() !== "" || iban.trim() !== "") && !linkProblem;
       body = (
         <div className="space-y-4">
           <div className="card-surface divide-y divide-line overflow-hidden">
@@ -201,7 +223,11 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
               value={requestUrl}
               onChange={(e) => setRequestUrl(e.target.value)}
             />
-            <p className="mt-1.5 text-xs text-ink-3">Maak in je bank-app een betaalverzoek van {formatAmount(amount, currency)} (Tikkie, ING, Rabo, bunq, Wero…) en plak de link hier.</p>
+            {linkProblem ? (
+              <p className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">{linkProblem}</p>
+            ) : (
+              <p className="mt-1.5 text-xs text-ink-3">Maak in je bank-app een betaalverzoek van {formatAmount(amount, currency)} (Tikkie, bunq, PayPal, Revolut, Klarna, ING, Rabo, ABN AMRO, SNS, ASN, RegioBank, Knab) en plak de link hier.</p>
+            )}
           </div>
           <div className="flex items-center gap-3 text-[11.5px] font-semibold uppercase tracking-wide text-ink-3">
             <span className="h-px flex-1 bg-line" /> of <span className="h-px flex-1 bg-line" />

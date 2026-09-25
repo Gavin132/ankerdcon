@@ -362,3 +362,19 @@ def test_failed_share_insert_does_not_leave_a_bill_behind(env, monkeypatch):
     })
     assert r.status_code == 503
     assert fake.db.get("expenses", []) == []
+
+
+@pytest.mark.parametrize("url, ok", [
+    ("https://tikkie.me/pay/abc123", True),
+    ("https://betaalverzoek.rabobank.nl/x", True),
+    ("https://tikkie.me@evil.example/pay", False),   # the real host is evil.example
+    ("https://tikkie.me.evil.example/pay", False),
+    ("https://example.com/pay", False),
+    ("http://tikkie.me/pay", False),                  # not https
+])
+def test_request_link_must_be_a_known_payment_provider(env, url, ok):
+    fake, client, user, _ = env
+    add_expense(client, user, "Timo", 20, ["Timo", "Bob"])
+    user["name"] = "Timo"
+    r = client.post("/api/settlements/", json={"counterparty_id": "b", "action": "request", "request_url": url})
+    assert (r.status_code == 201) == ok, r.text
