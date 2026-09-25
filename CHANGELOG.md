@@ -17,6 +17,8 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- The Hotel sheet is ordered info, rooms, the "nog geen kamer" notice, then the room count with the
+  Bulk and Kamer buttons.
 - In the Hotel sheet, "N deelnemers hebben nog geen kamer" expands to show their names.
 - **Kamers is now Hotel.** The tile and sheet show the hotel's address, the stay (first to last
   night), who arrives late or leaves early, the hotel notes (check-in and check-out times,

@@ -583,94 +583,10 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
   return (
     <TripSheet open={open} onClose={onClose} title="Hotel" subtitle={trip.title} footer={deleteConfirmFooter}>
 
-      {/* ── Summary + actions ──────────────────────────────────────── */}
-      <div className="mb-5 flex flex-wrap items-center gap-2">
-        <span className="flex items-center gap-1.5 text-[13px] text-ink-2">
-          <BedDouble size={14} className="text-ink-3" />
-          <b className="font-mono font-semibold tabular-nums text-ink">{rooms.length}</b> {rooms.length === 1 ? "kamer" : "kamers"}
-        </span>
-        <span className="ml-3 flex items-center gap-1.5 text-[13px] text-ink-2">
-          <Users size={14} className="text-ink-3" />
-          <b className="font-mono font-semibold tabular-nums text-ink">{assignedNames.size}</b> van <span className="font-mono tabular-nums">{eventAttendees.length}</span> ingedeeld
-        </span>
-        <span className="flex-1" />
-        <button
-          type="button"
-          onClick={() => setBulkModalOpen(true)}
-          className="flex shrink-0 items-center gap-1.5 rounded-xl border-1.5 border-line bg-surface px-3 py-2 text-xs font-semibold text-ink transition-colors hover:border-ink-3"
-        >
-          <Layers size={14} />
-          Bulk
-        </button>
-        <button
-          type="button"
-          onClick={() => setModalRoom("new")}
-          className="btn-primary shrink-0 px-3 py-2 text-xs"
-        >
-          <Plus size={14} />
-          Kamer
-        </button>
-      </div>
-
       <div className="space-y-5">
 
         <HotelInfoCard event={info} trip={trip} />
 
-        {/* ── Unassigned strip ──────────────────────────────────────── */}
-        {unassigned.length > 0 && (
-          <div className="rounded-xl border-1.5 border-amber-200 bg-amber-50 dark:border-amber-500/25 dark:bg-amber-500/10">
-            <button
-              type="button"
-              onClick={() => setUnassignedOpen((v) => !v)}
-              aria-expanded={unassignedOpen}
-              className="flex w-full items-start gap-3 px-4 py-3.5 text-left"
-            >
-              <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-700 dark:text-amber-300" />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold leading-tight text-amber-800 dark:text-amber-300">
-                  {unassigned.length} {unassigned.length === 1 ? "deelnemer heeft" : "deelnemers hebben"} nog geen kamer
-                </p>
-                {!unassignedOpen && (
-                  <div className="mt-1.5 flex -space-x-1.5">
-                    {unassigned.slice(0, 10).map((name) => {
-                      const u = users.find((x) => x.name === name || x.discord_username === name || x.aliases?.includes(name));
-                      return (
-                        <UserAvatar
-                          key={name}
-                          name={u?.name ?? name}
-                          user={u}
-                          className="h-6 w-6 text-[8px] !border-amber-50 dark:!border-[#241d0e]"
-                        />
-                      );
-                    })}
-                    {unassigned.length > 10 && (
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-amber-50 bg-amber-200 font-mono text-[8px] font-semibold text-amber-800 dark:border-[#241d0e] dark:bg-amber-500/25 dark:text-amber-200">
-                        +{unassigned.length - 10}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-              <ChevronDown
-                size={16}
-                className={`mt-0.5 shrink-0 text-amber-700 transition-transform dark:text-amber-300 ${unassignedOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-            {unassignedOpen && (
-              <ul className="space-y-2 border-t border-amber-200 px-4 py-3 dark:border-amber-500/25">
-                {unassigned.map((name) => {
-                  const u = users.find((x) => x.name === name || x.discord_username === name || x.aliases?.includes(name));
-                  return (
-                    <li key={name} className="flex items-center gap-2.5">
-                      <UserAvatar name={u?.name ?? name} user={u} className="h-6 w-6 shrink-0 text-[8px] !border-0" />
-                      <span className="truncate text-sm font-medium text-ink">{u?.name ?? name}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        )}
 
         {/* ── Room grid ─────────────────────────────────────────────── */}
         {isLoading ? (
@@ -734,6 +650,91 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
             </AnimatePresence>
           </motion.div>
         )}
+
+        {/* ── Unassigned strip ──────────────────────────────────────── */}
+        {unassigned.length > 0 && (
+          <div className="rounded-xl border-1.5 border-amber-200 bg-amber-50 dark:border-amber-500/25 dark:bg-amber-500/10">
+            <button
+              type="button"
+              onClick={() => setUnassignedOpen((v) => !v)}
+              aria-expanded={unassignedOpen}
+              className="flex w-full items-start gap-3 px-4 py-3.5 text-left"
+            >
+              <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-700 dark:text-amber-300" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold leading-tight text-amber-800 dark:text-amber-300">
+                  {unassigned.length} {unassigned.length === 1 ? "deelnemer heeft" : "deelnemers hebben"} nog geen kamer
+                </p>
+                {!unassignedOpen && (
+                  <div className="mt-1.5 flex -space-x-1.5">
+                    {unassigned.slice(0, 10).map((name) => {
+                      const u = users.find((x) => x.name === name || x.discord_username === name || x.aliases?.includes(name));
+                      return (
+                        <UserAvatar
+                          key={name}
+                          name={u?.name ?? name}
+                          user={u}
+                          className="h-6 w-6 text-[8px] !border-amber-50 dark:!border-[#241d0e]"
+                        />
+                      );
+                    })}
+                    {unassigned.length > 10 && (
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-amber-50 bg-amber-200 font-mono text-[8px] font-semibold text-amber-800 dark:border-[#241d0e] dark:bg-amber-500/25 dark:text-amber-200">
+                        +{unassigned.length - 10}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <ChevronDown
+                size={16}
+                className={`mt-0.5 shrink-0 text-amber-700 transition-transform dark:text-amber-300 ${unassignedOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+            {unassignedOpen && (
+              <ul className="space-y-2 border-t border-amber-200 px-4 py-3 dark:border-amber-500/25">
+                {unassigned.map((name) => {
+                  const u = users.find((x) => x.name === name || x.discord_username === name || x.aliases?.includes(name));
+                  return (
+                    <li key={name} className="flex items-center gap-2.5">
+                      <UserAvatar name={u?.name ?? name} user={u} className="h-6 w-6 shrink-0 text-[8px] !border-0" />
+                      <span className="truncate text-sm font-medium text-ink">{u?.name ?? name}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {/* ── Summary + actions ──────────────────────────────────────── */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="flex items-center gap-1.5 text-[13px] text-ink-2">
+            <BedDouble size={14} className="text-ink-3" />
+            <b className="font-mono font-semibold tabular-nums text-ink">{rooms.length}</b> {rooms.length === 1 ? "kamer" : "kamers"}
+          </span>
+          <span className="ml-3 flex items-center gap-1.5 text-[13px] text-ink-2">
+            <Users size={14} className="text-ink-3" />
+            <b className="font-mono font-semibold tabular-nums text-ink">{assignedNames.size}</b> van <span className="font-mono tabular-nums">{eventAttendees.length}</span> ingedeeld
+          </span>
+          <span className="flex-1" />
+          <button
+            type="button"
+            onClick={() => setBulkModalOpen(true)}
+            className="flex shrink-0 items-center gap-1.5 rounded-xl border-1.5 border-line bg-surface px-3 py-2 text-xs font-semibold text-ink transition-colors hover:border-ink-3"
+          >
+            <Layers size={14} />
+            Bulk
+          </button>
+          <button
+            type="button"
+            onClick={() => setModalRoom("new")}
+            className="btn-primary shrink-0 px-3 py-2 text-xs"
+          >
+            <Plus size={14} />
+            Kamer
+          </button>
+        </div>
       </div>
 
       {/* ── Create / Edit modal ─────────────────────────────────────── */}
