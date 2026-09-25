@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,6 +12,7 @@ import { UserAvatar } from "../common/UserAvatar";
 import { useCreateExpense } from "../../hooks/useExpenses";
 import { useUsers, useActingPermissions } from "../../hooks/useUsers";
 import { formatAmount } from "../../utils/format";
+import { closestEventId } from "../../utils/closestEvent";
 import { toast } from "../../store/toast.store";
 import type { CreateExpenseShareInput, User } from "../../types";
 
@@ -56,6 +57,8 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
   const { actable } = useActingPermissions();
   const { data: events = [] } = useCalendar();
   const userNames = users.map((u: User) => u.name);
+  // What a new expense most likely belongs to, when the page isn't already filtered to a trip.
+  const closestEvent = useMemo(() => closestEventId(events), [events]);
 
   const createMutation = useCreateExpense();
 
@@ -86,10 +89,10 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
     },
   });
 
-  // The drawer stays mounted, so pick up the current trip filter each time it opens.
+  // The drawer stays mounted, so pick up the trip filter (or else the nearest event) each time it opens.
   useEffect(() => {
-    if (open) setValue("linked_event_id", defaultEventId ?? "");
-  }, [open, defaultEventId, setValue]);
+    if (open) setValue("linked_event_id", defaultEventId ?? closestEvent ?? "");
+  }, [open, defaultEventId, closestEvent, setValue]);
 
   const totalAmount = Number(watch("amount")) || 0;
   const currency    = watch("currency") || "EUR";

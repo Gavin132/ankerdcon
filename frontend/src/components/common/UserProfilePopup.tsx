@@ -145,14 +145,17 @@ export function UserProfilePopup({
           {/* Card */}
           <motion.div
             key="popup-card"
-            className="fixed z-[101] pointer-events-auto"
-            style={{ top, left, width: CARD_W }}
+            className="fixed z-[101] flex flex-col pointer-events-auto"
+            style={{ top, left, width: CARD_W, maxHeight: viewH - top - MARGIN }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.14 }}
           >
-            <div className="overflow-hidden rounded-xl border-1.5 border-line bg-surface shadow-xl">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border-1.5 border-line bg-surface shadow-xl">
+              {/* Banner and body scroll together when they don't fit (someone going
+                  to many events, a small phone); the profile button below stays put. */}
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
               {/* ── Banner ────────────────────────────────────────────────── */}
               <div className="h-[92px]" style={bannerStyle} />
 
@@ -343,24 +346,25 @@ export function UserProfilePopup({
                     </div>
                   )}
                 </div>
+              </div>
+              </div>
 
-                {/* Full profile — edit your own, view anyone else's */}
-                <div className="px-3 pb-3">
-                  <button
-                    onClick={() => {
-                      onClose();
-                      navigate(routes.profile.view(u?.id ?? u?.name ?? ""));
-                    }}
-                    className={
-                      isOwn
-                        ? "btn-primary w-full py-2.5 text-[13px]"
-                        : "flex w-full items-center justify-center gap-2 rounded-xl border-1.5 border-line bg-surface py-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
-                    }
-                  >
-                    {isOwn ? <Pencil size={13} /> : <UserIcon size={13} />}
-                    {isOwn ? "Profiel bewerken" : "Bekijk profiel"}
-                  </button>
-                </div>
+              {/* Full profile — edit your own, view anyone else's */}
+              <div className="shrink-0 px-3 pb-3 pt-2">
+                <button
+                  onClick={() => {
+                    onClose();
+                    navigate(routes.profile.view(u?.id ?? u?.name ?? ""));
+                  }}
+                  className={
+                    isOwn
+                      ? "btn-primary w-full py-2.5 text-[13px]"
+                      : "flex w-full items-center justify-center gap-2 rounded-xl border-1.5 border-line bg-surface py-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
+                  }
+                >
+                  {isOwn ? <Pencil size={13} /> : <UserIcon size={13} />}
+                  {isOwn ? "Profiel bewerken" : "Bekijk profiel"}
+                </button>
               </div>
             </div>
           </motion.div>

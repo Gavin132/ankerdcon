@@ -1,10 +1,9 @@
 import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Wallet, Plus, TrendingUp, ArrowDownLeft, ArrowUpRight, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Wallet, Plus, TrendingUp, ArrowDownLeft, ArrowUpRight, CheckCircle2 } from "lucide-react";
 import { Button } from "../components/common/Button";
 import { EmptyState } from "../components/common/EmptyState";
-import { HeaderAction } from "../components/layout/HeaderAction";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { ExpenseCard } from "../components/finance/ExpenseCard";
 import { CreateExpenseDrawer } from "../components/finance/CreateExpenseDrawer";
@@ -159,20 +158,8 @@ export function FinancePage() {
   return (
     <div className="space-y-5 pb-20 md:pb-0">
 
-      {/* ── Work-in-progress warning ─────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="flex items-start gap-3 rounded-xl border-1.5 border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-500/25 dark:bg-amber-500/10"
-      >
-        <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-700 dark:text-amber-300" />
-        <p className="text-[12.5px] leading-relaxed text-amber-900 dark:text-amber-200">
-          <span className="font-semibold">Nog in ontwikkeling.</span> Deze pagina werkt nog niet helemaal zoals bedoeld — vertrouw bedragen hier niet 100%.
-        </p>
-      </motion.div>
-
-      {/* ── Trip filter + add action (from md) ───────────────── */}
-      <div className={`items-center gap-3 ${tripOptions.length > 0 || selectedTrip ? "flex" : "hidden md:flex"}`}>
+      {/* ── Trip filter ──────────────────────────────────────── */}
+      <div className={`items-center gap-3 ${tripOptions.length > 0 || selectedTrip ? "flex" : "hidden"}`}>
         {(tripOptions.length > 0 || selectedTrip) && (
           <div
             role="group"
@@ -206,10 +193,6 @@ export function FinancePage() {
             })}
           </div>
         )}
-        <Button className="ml-auto hidden shrink-0 md:inline-flex" onClick={() => setCreateOpen(true)}>
-          <Plus size={16} />
-          Uitgave toevoegen
-        </Button>
       </div>
 
       <div className="space-y-5 xl:grid xl:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] xl:items-start xl:gap-[22px] xl:space-y-0">
@@ -314,6 +297,17 @@ export function FinancePage() {
         </div>
 
         {/* ── Expense list ─────────────────────────────────────── */}
+        <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="section-label flex items-center gap-2">
+            Uitgaven
+            {expenses.length > 0 && <span className="font-mono text-[11px] tabular-nums text-ink-3">{expenses.length}</span>}
+          </p>
+          <Button size="sm" onClick={() => setCreateOpen(true)}>
+            <Plus size={14} />
+            Uitgave toevoegen
+          </Button>
+        </div>
         {expenses.length === 0 ? (
           <div className="card-surface">
             <EmptyState
@@ -341,20 +335,8 @@ export function FinancePage() {
             ))}
           </motion.div>
         )}
+        </div>
       </div>
-
-      {/* ── Add expense (phones: a "+" in the top bar; from md it sits in the top row) ── */}
-      <HeaderAction>
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          title="Uitgave toevoegen"
-          aria-label="Uitgave toevoegen"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border-1.5 border-outline bg-brand text-brand-on transition-opacity hover:opacity-90 md:hidden"
-        >
-          <Plus size={17} strokeWidth={2.5} />
-        </button>
-      </HeaderAction>
 
       {/* ── Drawers ───────────────────────────────────────────── */}
       <CreateExpenseDrawer
