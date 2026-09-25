@@ -116,5 +116,6 @@ export const routes = {
     impersonate:       "/admin/impersonate",
     timeTravel:        "/admin/time-travel",
     screens:           "/admin/screens",
+    cdn:               "/admin/cdn",
   },
 } as const;

@@ -203,6 +203,35 @@ export interface StoryPhoto {
   created_at: string;
 }
 
+/** A photo on someone's profile, with the event it was taken at. */
+export interface UserStoryPhoto {
+  id: string;
+  image_url: string;
+  created_at: string;
+  event_day_id: string;
+  event_id?: string | null;
+  event_name?: string | null;
+  date?: string | null;
+}
+
+/** One file in the photo bucket (admin CDN view). */
+export interface CdnObject {
+  key: string;
+  url: string;
+  size: number;
+  last_modified: string;
+  kind: string;
+  owner?: string | null;
+}
+
+export interface CdnListing {
+  total: number;
+  total_size: number;
+  capped: boolean;
+  counts: Record<string, number>;
+  items: CdnObject[];
+}
+
 export interface StorySeenState {
   event_day_id: string;
   last_seen_seq: number;

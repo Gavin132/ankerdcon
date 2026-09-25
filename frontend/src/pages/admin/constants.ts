@@ -15,6 +15,7 @@ import {
   Clock,
   ListChecks,
   AlertTriangle,
+  HardDrive,
 } from "lucide-react";
 import { routes } from "../../config/routes";
 
@@ -50,6 +51,7 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: LayoutDashboard,
         end: true,
       },
+      { label: "CDN", path: routes.admin.cdn, icon: HardDrive },
     ],
   },
   {
@@ -102,6 +104,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [routes.admin.changelog]: "Wijzigingslog",
   [routes.admin.timeTravel]: "Tijdreis-widget",
   [routes.admin.screens]: "Schermen testen",
+  [routes.admin.cdn]: "CDN",
 };
 
 // Ride direction tags are told apart by their label, not by colour (flat design:

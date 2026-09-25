@@ -13,7 +13,7 @@ from app.core.database import supabase
 from app.core.logging import get_logger
 from app.core.uploads import clean_image, read_capped
 from app.dependencies import get_current_user
-from app.models.story import MarkStorySeenRequest, StoryDaySummary, StoryPhoto, StorySeenState
+from app.models.story import MarkStorySeenRequest, StoryDaySummary, StoryPhoto, StorySeenState, UserStoryPhoto
 from app.routes import StoryRoutes
 
 logger = get_logger(__name__)
@@ -93,6 +93,68 @@ def get_story_summary(
             preview_url=newest["image_url"],
         )
     return result
+
+
+# Also before LIST/{event_day_id} for the same reason as /summary.
+@router.get(StoryRoutes.BY_USER, response_model=list[UserStoryPhoto])
+def list_user_photos(identifier: str, _: str = Depends(get_current_user)):
+    """Every photo a member has put in a story, newest first, each with the
+    event it belongs to — for their profile. `identifier` is their id or name."""
+    try:
+        try:
+            uuid.UUID(identifier)
+            by = "id"
+        except ValueError:
+            by = "name"
+        profiles = supabase.table(Tables.PROFILES).select("id, name, aliases").execute().data or []
+    except Exception as e:
+        logger.error("Failed to load profiles for photos of %s: %s", identifier, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+    profile = next((p for p in profiles if p[by] == identifier), None)
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
+
+    # Photos carry the name the uploader had at the time, so a former name
+    # (alias) still counts — unless somebody else goes by it now.
+    current_names = {p["name"] for p in profiles}
+    names = [profile["name"]] + [a for a in (profile.get("aliases") or []) if a not in current_names]
+
+    try:
+        photos = (
+            supabase.table(Tables.STORY_PHOTOS)
+            .select("id, image_url, created_at, event_day_id")
+            .in_("uploaded_by", names)
+            .order("created_at", desc=True)
+            .execute()
+            .data
+            or []
+        )
+        day_ids = list({p["event_day_id"] for p in photos})
+        days = (
+            supabase.table(Tables.EVENT_DAYS).select("id, event_id, date").in_("id", day_ids).execute().data
+            if day_ids else []
+        ) or []
+        event_ids = list({d["event_id"] for d in days if d.get("event_id")})
+        events = (
+            supabase.table(Tables.EVENTS).select("id, event_name").in_("id", event_ids).execute().data
+            if event_ids else []
+        ) or []
+    except Exception as e:
+        logger.error("Failed to list photos of %s: %s", identifier, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+    day_by_id = {d["id"]: d for d in days}
+    name_by_event = {e["id"]: e["event_name"] for e in events}
+    out: list[UserStoryPhoto] = []
+    for p in photos:
+        day = day_by_id.get(p["event_day_id"], {})
+        event_id = day.get("event_id")
+        out.append(UserStoryPhoto(
+            id=p["id"], image_url=p["image_url"], created_at=p["created_at"], event_day_id=p["event_day_id"],
+            event_id=event_id, event_name=name_by_event.get(event_id), date=day.get("date"),
+        ))
+    return out
 
 
 @router.get(StoryRoutes.LIST, response_model=list[StoryPhoto])

@@ -185,3 +185,22 @@ class AdminSetShareStatusRequest(BaseModel):
         if v not in ("pending", "claimed", "confirmed"):
             raise ValueError("Status moet pending, claimed of confirmed zijn.")
         return v
+
+
+class CdnObject(BaseModel):
+    key: str
+    url: str
+    size: int
+    last_modified: str
+    # Which part of the app put it there, from the folder it sits in.
+    kind: str  # story | cosplay | banner | badge | event-cover | other
+    # Who, when the database still knows (story photos, banners, cosplay images).
+    owner: Optional[str] = None
+
+
+class CdnListing(BaseModel):
+    total: int
+    total_size: int
+    capped: bool = False
+    counts: dict[str, int] = {}
+    items: list[CdnObject]

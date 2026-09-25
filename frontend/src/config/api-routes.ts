@@ -28,6 +28,7 @@ export const apiRoutes = {
     photo:   (photoId: string) => `/api/stories/photos/${photoId}`,
     download: (photoId: string) => `/api/stories/photos/${photoId}/download`,
     seen:    (eventDayId: string) => `/api/stories/${eventDayId}/seen`,
+    byUser:  (identifier: string) => `/api/stories/user/${encodeURIComponent(identifier)}`,
     summary: (eventDayIds: string[]) => `/api/stories/summary?event_day_ids=${eventDayIds.map(encodeURIComponent).join(",")}`,
   },
 
@@ -97,6 +98,7 @@ export const apiRoutes = {
   // ── Admin ─────────────────────────────────────────────────────────
   admin: {
     stats: "/api/admin/stats",
+    cdn:   "/api/admin/cdn",
     uploadImage: (kind: "event-cover" | "badge") => `/api/admin/uploads/${kind}`,
 
     users: {

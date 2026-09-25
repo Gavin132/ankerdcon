@@ -6,6 +6,7 @@ import { useSmartBack, isFreshEntry } from "../hooks/useSmartBack";
 import { useCurrentTripRoomNumbers } from "../hooks/useTripRooms";
 import { useBadges } from "../hooks/useBadges";
 import { HomeLinkButton } from "../components/common/HomeLinkButton";
+import { UserPhotos } from "../components/profile/UserPhotos";
 import { UnsavedChangesModal } from "../components/common/UnsavedChangesModal";
 import {
   ArrowLeft,
@@ -428,7 +429,8 @@ export function ProfilePage() {
   const uploadBannerMutation = useUploadBanner();
   const deleteBannerMutation = useDeleteBanner();
 
-  const isOwn = currentUser === decodedName && !preview;
+  // The route may carry the member's id instead of their name, so compare with the loaded profile too.
+  const isOwn = (currentUser === decodedName || (!!user && currentUser === user.name)) && !preview;
   const roomNumbers = useCurrentTripRoomNumbers();
 
   const [draftName, setDraftName] = useState("");
@@ -655,6 +657,9 @@ export function ProfilePage() {
               nameStyle={nameStyle}
               badges={userBadges}
             />
+            <div className="mt-5">
+              <UserPhotos identifier={user.id ?? user.name} whose={user.name} />
+            </div>
           </motion.div>
         </div>
       </div>
@@ -1049,6 +1054,8 @@ export function ProfilePage() {
             </div>
           </div>
         </Card>
+
+        <UserPhotos identifier={user.id ?? user.name} />
       </motion.div>
 
       <BannerCropModal

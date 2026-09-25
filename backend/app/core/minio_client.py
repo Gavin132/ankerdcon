@@ -87,6 +87,36 @@ def upload_bytes(key: str, content: bytes, content_type: str) -> str:
     return f"{_public_base()}{key}"
 
 
+# A friend group's bucket is nowhere near this; the cap only stops a runaway
+# listing from being pulled into memory.
+_LIST_CAP = 20000
+
+
+def list_all_objects() -> tuple[list[dict], bool]:
+    """Every object in the bucket, newest first, as (objects, was_capped).
+
+    Each item: key, url, size (bytes), last_modified (ISO). Goes through the
+    backend's own credentials, so it works whatever the public bucket policy
+    allows (which is GetObject only — no listing)."""
+    settings = get_settings()
+    out: list[dict] = []
+    capped = False
+    for obj in _client().list_objects(settings.minio_bucket, recursive=True):
+        if obj.is_dir:
+            continue
+        if len(out) >= _LIST_CAP:
+            capped = True
+            break
+        out.append({
+            "key": obj.object_name,
+            "url": f"{_public_base()}{obj.object_name}",
+            "size": obj.size or 0,
+            "last_modified": obj.last_modified.isoformat() if obj.last_modified else "",
+        })
+    out.sort(key=lambda o: o["last_modified"], reverse=True)
+    return out, capped
+
+
 def key_from_url(url: str | None) -> str | None:
     """The object key behind a URL upload_bytes returned, or None when the URL
     points somewhere else (an older Supabase Storage file, a pasted link)."""

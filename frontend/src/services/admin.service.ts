@@ -2,6 +2,7 @@ import { apiClient } from "../lib/api/client";
 import { apiRoutes } from "../config/api-routes";
 import type {
   AdminStats,
+  CdnListing,
   Event,
   EventDay,
   CreateRideRequest,
@@ -15,6 +16,13 @@ import type {
 
 export async function getAdminStats(): Promise<AdminStats> {
   const { data } = await apiClient.get<AdminStats>(apiRoutes.admin.stats);
+  return data;
+}
+
+// ── CDN ───────────────────────────────────────────────────────────────────────
+
+export async function getAdminCdn(params: { limit: number; offset: number; kind?: string }): Promise<CdnListing> {
+  const { data } = await apiClient.get<CdnListing>(apiRoutes.admin.cdn, { params });
   return data;
 }
 

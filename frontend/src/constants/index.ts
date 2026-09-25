@@ -43,6 +43,7 @@ export const QUERY_KEYS = {
   storyDay: (eventDayId: string) => ["stories", eventDayId] as const,
   storySeen: (eventDayId: string) => ["stories", eventDayId, "seen"] as const,
   storySummary: (eventDayIds: string[]) => ["stories", "summary", ...eventDayIds] as const,
+  userPhotos: (identifier: string) => ["stories", "user", identifier] as const,
 
   hotelRooms:      (eventId: string) => ["hotel-rooms", eventId]       as const,
   adminHotelRooms: (eventId: string) => ["admin", "hotel-rooms", eventId] as const,

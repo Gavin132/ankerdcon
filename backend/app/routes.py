@@ -88,6 +88,7 @@ class StoryRoutes:
     DOWNLOAD = "/photos/{photo_id}/download"  # GET — original bytes, forced download
     SEEN = "/{event_day_id}/seen"     # GET / PUT
     SUMMARY = "/summary"              # GET ?event_day_ids=a,b,c
+    BY_USER = "/user/{identifier}"    # GET — every photo one member uploaded, with its event
 
 
 class BadgeRoutes:
@@ -108,6 +109,9 @@ class ChangelogRoutes:
 class AdminRoutes:
     PREFIX = "/admin"
     STATS = "/stats"
+
+    # CDN — everything in the photo bucket
+    CDN = "/cdn"
 
     # Users
     USERS = "/users"

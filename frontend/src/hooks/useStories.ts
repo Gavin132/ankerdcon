@@ -5,6 +5,7 @@ import {
   deleteStoryPhoto,
   markStorySeen,
   getStorySummary,
+  getUserPhotos,
 } from "../services/stories.service";
 import { QUERY_KEYS, STALE_TIME } from "../constants";
 import type { StoryDaySummary, StorySeenState } from "../types";
@@ -15,6 +16,16 @@ export function useStoryPhotos(eventDayId: string, options?: { enabled?: boolean
     queryFn: () => getStoryPhotos(eventDayId),
     staleTime: STALE_TIME,
     enabled: options?.enabled ?? !!eventDayId,
+  });
+}
+
+/** Every photo one member has uploaded, newest first (their profile). */
+export function useUserPhotos(identifier: string) {
+  return useQuery({
+    queryKey: QUERY_KEYS.userPhotos(identifier),
+    queryFn: () => getUserPhotos(identifier),
+    staleTime: STALE_TIME,
+    enabled: !!identifier,
   });
 }
 

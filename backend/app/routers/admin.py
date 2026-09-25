@@ -1,9 +1,12 @@
 from datetime import datetime, timezone
 
+import re
 import uuid
 
 from fastapi.concurrency import run_in_threadpool
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
+from typing import Optional
+
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, status
 import jwt
 
 from app.config import Settings, get_settings
@@ -13,6 +16,8 @@ from app.core.logging import get_logger
 from app.core.uploads import clean_image, read_capped
 from app.dependencies import _unique_profile_name, get_admin_user
 from app.models.admin import (
+    CdnListing,
+    CdnObject,
     AdminCreateEventRequest,
     AdminCreateMealRequest,
     AdminCreateUserRequest,
@@ -1217,3 +1222,93 @@ async def admin_upload_image(
 
     content = await read_capped(file, _IMAGE_MAX_BYTES)
     return await run_in_threadpool(_store_admin_image, kind, folder, content)
+
+
+# ── CDN (the whole photo bucket) ───────────────────────────────────────────────
+
+_CDN_FOLDER_KINDS = {"cosplay": "cosplay", "banners": "banner", "badges": "badge", "event-covers": "event-cover"}
+
+
+_STORY_KEY = re.compile(r"^[0-9a-f-]{36}/[0-9a-f-]{36}/[^/]+$")
+
+
+def _cdn_kind(key: str) -> str:
+    """Folders named after a feature are that feature's; story photos live
+    under <event id>/<day id>/; anything else is something we didn't put there."""
+    kind = _CDN_FOLDER_KINDS.get(key.split("/", 1)[0])
+    if kind:
+        return kind
+    return "story" if _STORY_KEY.match(key) else "other"
+
+
+def _cdn_owners(items: list[dict]) -> dict[str, str]:
+    """key -> who uploaded it, for what the database can tell us. Best effort:
+    a failed lookup just leaves those without an owner."""
+    owners: dict[str, str] = {}
+    urls = {i["url"]: i["key"] for i in items}
+    story_urls = [i["url"] for i in items if i["kind"] == "story"]
+    if story_urls:
+        try:
+            rows = supabase.table(Tables.STORY_PHOTOS).select("image_url, uploaded_by").in_("image_url", story_urls).execute().data or []
+            for r in rows:
+                owners[urls[r["image_url"]]] = r["uploaded_by"]
+        except Exception as e:
+            logger.error("CDN: story owner lookup failed: %s", e)
+    banner_items = [i for i in items if i["kind"] == "banner"]
+    if banner_items:
+        try:
+            names = {p["id"]: p["name"] for p in supabase.table(Tables.PROFILES).select("id, name").execute().data or []}
+            for i in banner_items:
+                parts = i["key"].split("/")  # banners/<user id>/<file>
+                if len(parts) >= 3 and parts[1] in names:
+                    owners[i["key"]] = names[parts[1]]
+        except Exception as e:
+            logger.error("CDN: banner owner lookup failed: %s", e)
+    cosplay_urls = [i["url"] for i in items if i["kind"] == "cosplay"]
+    if cosplay_urls:
+        try:
+            rows = supabase.table(Tables.COSPLAYS).select("user_name, inspo_images").overlaps("inspo_images", cosplay_urls).execute().data or []
+            for r in rows:
+                for u in r.get("inspo_images") or []:
+                    if u in urls:
+                        owners[urls[u]] = r["user_name"]
+        except Exception as e:
+            logger.error("CDN: cosplay owner lookup failed: %s", e)
+    return owners
+
+
+@router.get(AdminRoutes.CDN, response_model=CdnListing)
+def admin_cdn(
+    limit: int = Query(60, ge=1, le=300),
+    offset: int = Query(0, ge=0),
+    kind: Optional[str] = None,
+    _: str = Depends(get_admin_user),
+) -> CdnListing:
+    """Every file in the photo bucket, newest first — so an admin can look for
+    anything that shouldn't be there. `kind` narrows it to one feature."""
+    try:
+        objects, capped = minio_client.list_all_objects()
+    except RuntimeError as e:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
+    except Exception as e:
+        logger.error("CDN: listing the bucket failed: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="De bucket kon niet worden uitgelezen. Controleer of MinIO bereikbaar is en de sleutel mag lijsten.",
+        )
+
+    for o in objects:
+        o["kind"] = _cdn_kind(o["key"])
+    counts: dict[str, int] = {}
+    for o in objects:
+        counts[o["kind"]] = counts.get(o["kind"], 0) + 1
+    chosen = [o for o in objects if o["kind"] == kind] if kind else objects
+    page = chosen[offset:offset + limit]
+    owners = _cdn_owners(page)
+    return CdnListing(
+        total=len(chosen),
+        total_size=sum(o["size"] for o in chosen),
+        capped=capped,
+        counts=counts,
+        items=[CdnObject(**o, owner=owners.get(o["key"])) for o in page],
+    )

@@ -1,9 +1,14 @@
 import { apiClient, UPLOAD_TIMEOUT_MS } from "../lib/api/client";
 import { apiRoutes } from "../config/api-routes";
-import type { StoryPhoto, StoryDaySummary } from "../types";
+import type { StoryPhoto, StoryDaySummary, UserStoryPhoto } from "../types";
 
 export async function getStoryPhotos(eventDayId: string): Promise<StoryPhoto[]> {
   const { data } = await apiClient.get<StoryPhoto[]>(apiRoutes.stories.byDay(eventDayId));
+  return data;
+}
+
+export async function getUserPhotos(identifier: string): Promise<UserStoryPhoto[]> {
+  const { data } = await apiClient.get<UserStoryPhoto[]>(apiRoutes.stories.byUser(identifier));
   return data;
 }
 
