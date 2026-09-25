@@ -28,6 +28,8 @@ All notable changes to Ankerd Con are documented here.
 
 ### Fixed
 
+- Closing the Vervoer sheet while making a ride no longer leaves it on that form: it reopens on
+  the ride list.
 - The "add a room" and "rooms in bulk" forms opened behind the Hotel sheet. They are now sheets
   stacked on top of it, and profile popups opened from a sheet also appear above it.
 - The Eten tile no longer says "Straks 21:45" for a meal that is days away; it shows the day and

@@ -110,6 +110,14 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
   const location = useLocation();
   useTimeStore((s) => s.override); // re-render when the time-travel override changes
   const [view, setView] = useState<"list" | "form">("list");
+  // The sheet stays mounted when closed, so without this it reopened on the
+  // create form. Waits for the slide-out to finish so the content does not
+  // swap while it is still on screen.
+  useEffect(() => {
+    if (open) return;
+    const t = window.setTimeout(() => setView("list"), 400);
+    return () => window.clearTimeout(t);
+  }, [open]);
   const [showTimeline, setShowTimeline] = useState(false);
   const [openDayIds, setOpenDayIds] = useState<Set<string>>(() => new Set([defaultTripDayId(trip)]));
   const [historyOpenIds, setHistoryOpenIds] = useState<Set<string>>(new Set());
