@@ -104,8 +104,8 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
 `components/food/`, `components/meal/`, `backend/app/routers/meals.py`. A meal has a
 time, location, cost, dietary notes, links, whether it needs transport, and
 participants. Anyone can plan a meal for a trip (`TripMealSheet.tsx`); only its
-creator or an admin can delete it. The Eten tile lists the next meals and the
-members not yet in any meal.
+creator or an admin can delete it. The Eten tile lists the next meals, and its
+"nergens bij" pill opens the names of the members who are not at any meal yet.
 
 ## Hotel rooms
 

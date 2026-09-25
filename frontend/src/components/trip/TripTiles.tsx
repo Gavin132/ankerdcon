@@ -11,6 +11,7 @@ import { EventPractical } from "../event/EventPractical";
 import { EventLinks } from "../event/EventLinks";
 import { TileText, TilePill, TileValue, TripTile } from "./TripTile";
 import { useEventWeather } from "../../hooks/useEventWeather";
+import { useUsers } from "../../hooks/useUsers";
 import { routes } from "../../config/routes";
 import { getNow } from "../../store/time.store";
 import { parseEventDate, splitDateTime, toDateKey, todayKey } from "../../utils/date";
@@ -29,6 +30,27 @@ function dayTime(value: string): string {
   const [dateKey, time] = splitDateTime(value);
   const date = parseEventDate(dateKey);
   return date ? `${dayShort(date)} ${time}` : time;
+}
+
+/** Who on the trip isn't at a single one of its meals — what the "nergens bij" pill on the Eten tile counts. */
+function NotInAnyMealSheet({ open, onClose, trip, names }: { open: boolean; onClose: () => void; trip: Trip; names: string[] }) {
+  const { data: users = [] } = useUsers();
+  return (
+    <TripSheet open={open} onClose={onClose} title="Nergens bij" subtitle={`${trip.title} · ${names.length} ${names.length === 1 ? "persoon" : "personen"}`}>
+      <p className="mb-3 text-[12.5px] text-ink-3">Deze mensen doen aan de trip mee, maar staan bij geen enkel etentje. Meld ze aan bij een etentje, of plan er een.</p>
+      <ul className="-mx-2 divide-y divide-line">
+        {names.map((name) => {
+          const u = findUser(users, name);
+          return (
+            <li key={name} className="flex items-center gap-3 px-2 py-2.5">
+              <UserAvatar name={u?.name ?? name} user={u} className="h-9 w-9 shrink-0 text-xs" />
+              <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-ink">{u?.name ?? name}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </TripSheet>
+  );
 }
 
 /* ── Vervoer ─────────────────────────────────────────────────────────────── */
@@ -98,15 +120,29 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
   const now = toDateKey(getNow()) + "T" + getNow().toTimeString().slice(0, 5);
   const ahead = all.filter((m) => m.time.replace(" ", "T") >= now);
   const shown = (phase === "live" && ahead.length > 0 ? ahead : all).slice(0, 3);
-  const missing = phase === "upcoming" ? tripGaps(trip, [], meals).food.length : 0;
+  const missingNames = phase === "upcoming" ? tripGaps(trip, [], meals).food : [];
+  const missing = missingNames.length;
   const [addOpen, setAddOpen] = useState(false);
+  const [missingOpen, setMissingOpen] = useState(false);
 
   return (
     <TripTile
       icon={Utensils}
       label="Eten"
       size={phase === "past" ? "small" : "wide"}
-      pill={missing > 0 && <TilePill>{missing} nergens bij</TilePill>}
+      pill={
+        missing > 0 && (
+          // The count alone doesn't say who, so it opens the names.
+          <button
+            type="button"
+            onClick={() => setMissingOpen(true)}
+            aria-label={`Bekijk wie nergens bij zit (${missing})`}
+            className="shrink-0 rounded-full transition-opacity hover:opacity-80"
+          >
+            <TilePill>{missing} nergens bij</TilePill>
+          </button>
+        )
+      }
       action={
         phase !== "past" && (
           <button
@@ -146,6 +182,7 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
         </ul>
       )}
       <TripMealSheet open={addOpen} onClose={() => setAddOpen(false)} trip={trip} />
+      <NotInAnyMealSheet open={missingOpen} onClose={() => setMissingOpen(false)} trip={trip} names={missingNames} />
     </TripTile>
   );
 }

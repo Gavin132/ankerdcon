@@ -77,7 +77,8 @@ below shipped together.
 ### Added
 - **Voor jou** on the Hub lists everything you still need to arrange, and
   each item opens the place where you fix it. It replaces the Acties page.
-- Vervoer and Eten show who on the trip still has no ride or meal.
+- Vervoer and Eten show who on the trip still has no ride or meal; tap the
+  "nergens bij" pill on Eten to see who.
 - Expenses can be linked to an event, and Financiën can be filtered per trip.
 - Anyone's full profile can be opened from their profile popup.
 - **Afrekenen** in Financiën: one payment per person instead of one per
