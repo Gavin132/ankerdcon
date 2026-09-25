@@ -26,6 +26,11 @@ export async function getAdminCdn(params: { limit: number; offset: number; kind?
   return data;
 }
 
+/** Delete a file from the bucket, whoever uploaded it (admin only). */
+export async function deleteCdnFile(key: string): Promise<void> {
+  await apiClient.delete(apiRoutes.admin.cdn, { params: { key } });
+}
+
 export interface QuickUploadResult {
   url: string;
   key: string;

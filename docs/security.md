@@ -143,7 +143,10 @@ anything else is refused, so a link to an upload can never run a script in a bro
 Video metadata (such as a GPS position) is not stripped.
 
 Uploaded files are public to anyone who has the URL (the bucket allows `GetObject` only,
-and not listing). Admins can review everything in **Admin → CDN**.
+and not listing). Admins can review everything in **Admin → CDN**, and delete any file there
+whoever uploaded it: the references to it (story photo, cosplay image, banner, event cover) are
+cleared first and the delete is logged as a `WARNING`. A badge's own image cannot be deleted while
+the badge uses it.
 
 ## Money and links
 

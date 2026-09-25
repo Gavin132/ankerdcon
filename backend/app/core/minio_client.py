@@ -117,6 +117,11 @@ def list_all_objects() -> tuple[list[dict], bool]:
     return out, capped
 
 
+def public_url(key: str) -> str:
+    """The public URL an object of this key is served from."""
+    return f"{_public_base()}{key}"
+
+
 def key_from_url(url: str | None) -> str | None:
     """The object key behind a URL upload_bytes returned, or None when the URL
     points somewhere else (an older Supabase Storage file, a pasted link)."""

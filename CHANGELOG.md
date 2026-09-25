@@ -8,6 +8,8 @@ All notable changes to Ankerd Con are documented here.
 
 ### Added
 
+- **Admins can delete files from Admin → CDN**, whoever uploaded them. Open a file and use the
+  bin; the story photo, cosplay image, banner or event cover that used it loses it too.
 - **Installation guide** (`docs/installation.md`): every `.env` value and where to find it
   (Supabase, Discord, Google, MinIO), running in Docker or Portainer, the reverse proxy, and the
   first login. Comes with a root `Dockerfile` (frontend and backend in one image) and a

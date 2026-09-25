@@ -1362,3 +1362,50 @@ def admin_cdn(
         counts=counts,
         items=[CdnObject(**o, owner=owners.get(o["key"])) for o in page],
     )
+
+
+def _forget_file(key: str, url: str) -> None:
+    """Take every reference to a file out of the database before it is deleted,
+    so nothing is left pointing at an image that is gone. A badge cannot do
+    without its image, so a file a badge still uses is refused instead."""
+    badge = supabase.table(Tables.BADGES).select("name").eq("image_url", url).execute().data or []
+    if badge:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Deze afbeelding is het plaatje van de badge \"{badge[0]['name']}\". Vervang eerst de afbeelding van de badge.",
+        )
+    supabase.table(Tables.STORY_PHOTOS).delete().eq("image_url", url).execute()
+    supabase.table(Tables.EVENTS).update({"image_url": None}).eq("image_url", url).execute()
+    supabase.table(Tables.PROFILES).update({"banner_url": None, "banner_position": None}).eq("banner_url", url).execute()
+    for row in supabase.table(Tables.COSPLAYS).select("id, inspo_images").overlaps("inspo_images", [url]).execute().data or []:
+        kept = [u for u in (row.get("inspo_images") or []) if u != url]
+        supabase.table(Tables.COSPLAYS).update({"inspo_images": kept}).eq("id", row["id"]).execute()
+
+
+@router.delete(AdminRoutes.CDN, status_code=status.HTTP_204_NO_CONTENT)
+def admin_delete_cdn_file(
+    key: str = Query(..., min_length=1, max_length=512),
+    admin: str = Depends(get_admin_user),
+) -> None:
+    """Delete any file in the bucket, whoever uploaded it. The story photo,
+    cosplay image, banner or event cover that used it loses it too."""
+    if ".." in key or key.startswith("/"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ongeldige bestandsnaam.")
+    try:
+        url = minio_client.public_url(key)
+    except Exception as e:
+        logger.error("CDN delete: MinIO not configured: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Opslag is niet ingesteld.")
+    try:
+        _forget_file(key, url)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("CDN delete: cleaning up references to %s failed: %s", key, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    try:
+        minio_client.delete_object(key)
+    except Exception as e:
+        logger.error("CDN delete of %s failed: %s", key, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Verwijderen mislukt. Probeer het opnieuw.")
+    logger.warning("CDN: admin %s deleted %s", admin, key)

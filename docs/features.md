@@ -242,7 +242,7 @@ See [architecture.md](architecture.md#background-jobs-and-notifications) for the
 | Badges | badge images and who has them |
 | Betalingen | expenses and shares, including forcing a status |
 | Aankondigingen, Wijzigingslog | banners and release notes |
-| CDN | every file in the photo bucket, newest first, with its uploader; the "Uploaden" button puts an image or video there and gives a link to embed |
+| CDN | every file in the photo bucket, newest first, with its uploader; the "Uploaden" button puts an image or video there and gives a link to embed; the viewer's bin deletes a file, whoever uploaded it |
 | Inloggen als gebruiker | act as a member for two hours ([security.md](security.md#log-in-as)) |
 | Tijdreis-widget | set the app's clock to test live or finished trips |
 | Schermen testen | preview the crash, unreachable, forbidden, 404 and queued-upload screens |

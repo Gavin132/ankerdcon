@@ -89,9 +89,6 @@ leaked signing secret. What to change:
       subscription feed (Agenda → Abonneren). Needs OAuth and a sync strategy.
 - [ ] **Automatic expense import** from a bank or payment app, optional per
       member. Needs research first.
-- [ ] **Delete from the admin CDN page**, removing the file and the database row
-      that points at it together. The page is view-only today, and an admin cannot
-      delete a story photo through the app either (only its uploader can).
 - [ ] Ticket-sale overview for admins in the calendar: when tickets open, who
       has one.
 - [ ] Offline queue for the other uploads (cosplay images, banners). Story

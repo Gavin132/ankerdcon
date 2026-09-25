@@ -172,6 +172,7 @@ and description are left out. Only registered when the built frontend exists.
 | Expenses | update (its linked event), delete, `PUT /admin/expense-shares/{id}` to force a status. Refused with 409 while the expense or share is in an open settlement. |
 | Announcements, changelog | list, create, update, delete |
 | Images | `POST /admin/uploads/{kind}` for event covers and badge images |
+| Delete a file | `DELETE /admin/cdn?key=<object key>` removes any file in the bucket and clears what pointed at it (story photo row, cosplay image, banner, event cover). Refuses a file a badge still uses (409). |
 | Quick upload | `POST /admin/quick-upload` stores an image or video under `uploads/` and returns `{url, key, media, size}` |
 
 ## Interactive docs

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronLeft, ChevronRight, Copy, ExternalLink, HardDrive, Play, Plus, UploadCloud, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Copy, ExternalLink, HardDrive, Play, Plus, Trash2, UploadCloud, X } from "lucide-react";
 import { AdminPageHeader } from "./components/AdminPageHeader";
-import { getAdminCdn, quickUpload, type QuickUploadResult } from "../../services/admin.service";
+import { deleteCdnFile, getAdminCdn, quickUpload, type QuickUploadResult } from "../../services/admin.service";
+import { toast } from "../../store/toast.store";
 import { formatDateTime } from "../../utils/format";
 import type { CdnObject } from "../../types";
 
@@ -166,13 +167,28 @@ export function AdminCdnPage() {
           onClose={() => setOpenIndex(null)}
           onPrev={openIndex > 0 ? () => setOpenIndex(openIndex - 1) : undefined}
           onNext={openIndex < items.length - 1 ? () => setOpenIndex(openIndex + 1) : undefined}
+          onDelete={async () => {
+            try {
+              await deleteCdnFile(active.key);
+              toast("success", "Bestand verwijderd.");
+              setOpenIndex(null);
+              await qc.invalidateQueries({ queryKey: ["admin", "cdn"] });
+            } catch (e) {
+              toast("error", e instanceof Error ? e.message : "Verwijderen mislukt.");
+            }
+          }}
         />
       )}
     </div>
   );
 }
 
-function Viewer({ item, position, onClose, onPrev, onNext }: { item: CdnObject; position: string; onClose: () => void; onPrev?: () => void; onNext?: () => void }) {
+function Viewer({ item, position, onClose, onPrev, onNext, onDelete }: { item: CdnObject; position: string; onClose: () => void; onPrev?: () => void; onNext?: () => void; onDelete: () => Promise<void> }) {
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  // A new file starts unconfirmed, so one tap never deletes the next one.
+  useEffect(() => setConfirming(false), [item.key]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -195,6 +211,30 @@ function Viewer({ item, position, onClose, onPrev, onNext }: { item: CdnObject; 
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          {confirming ? (
+            <>
+              <button type="button" onClick={() => setConfirming(false)} className="h-9 rounded-full bg-white/10 px-3 text-xs font-semibold hover:bg-white/20">
+                Annuleer
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={async () => {
+                  setDeleting(true);
+                  await onDelete();
+                  setDeleting(false);
+                  setConfirming(false);
+                }}
+                className="h-9 rounded-full bg-rose-600 px-3 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
+              >
+                {deleting ? "Bezig…" : "Definitief verwijderen"}
+              </button>
+            </>
+          ) : (
+            <button type="button" onClick={() => setConfirming(true)} aria-label="Verwijderen" title="Verwijderen" className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 hover:bg-rose-600">
+              <Trash2 size={16} />
+            </button>
+          )}
           <a href={item.url} target="_blank" rel="noopener noreferrer" aria-label="Open in nieuw tabblad" className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 hover:bg-white/20">
             <ExternalLink size={16} />
           </a>
