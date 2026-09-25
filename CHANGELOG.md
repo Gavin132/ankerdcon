@@ -64,6 +64,18 @@ All notable changes to Ankerd Con are documented here.
 - Vervoer and Eten show who on the trip still has no ride or meal.
 - Expenses can be linked to an event, and Financiën can be filtered per trip.
 - Anyone's full profile can be opened from their profile popup.
+- **Afrekenen** in Financiën: one payment per person instead of one per
+  expense. What you and another member owe each other is netted over all
+  expenses into a single amount (migration v2.25).
+  - The one who's owed pastes a payment-request link from their bank app
+    (Tikkie, ING, Rabo, bunq, Wero, …) and/or an IBAN; the other gets a
+    Discord DM and pays with one tap, then taps "Ik heb betaald".
+  - The receiver confirms it arrived, which settles every share it covered,
+    or says it didn't, which reopens them. Cash can be marked as received
+    straight away.
+  - Bank details are only shown to the other person, are never stored on a
+    profile, and are wiped once the payment is confirmed.
+  - Payment requests and payments to confirm show up in Voor jou.
 
 ### Removed
 - The Acties page, the Meer tab, the separate story archive and the admin
@@ -126,6 +138,19 @@ All notable changes to Ankerd Con are documented here.
   trusts forwarded IP addresses from the proxy (and covers link previews),
   and text members write is shown literally in bot DMs, so it can't hide a
   link behind other text.
+
+### Fixed
+- Financiën: the payer's own share of an expense counts as paid from the
+  start, instead of showing up as money they owe themselves. It's shown as
+  "Eigen deel".
+- An even split no longer loses cents: €10 over three people is 3,34 + 3,33
+  + 3,33, with the extra cent going to the payer first.
+- The payer can mark a share as received without waiting for an "Ik heb
+  betaald", for cash handed over in person.
+- An expense can only be saved once it's split between people and the
+  shares add up to the bill exactly (Vast and Handmatig used to allow a
+  difference). The form says what's still missing, and "Verdeling" no
+  longer says "optioneel".
 
 ---
 

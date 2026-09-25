@@ -98,8 +98,15 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
   function buildShares(): CreateExpenseShareInput[] {
     if (splitMode === "gelijk") {
       if (splitParticipants.length === 0) return [];
-      const each = totalAmount / splitParticipants.length;
-      return splitParticipants.map((p) => ({ participant: p, amount: Math.round(each * 100) / 100 }));
+      // Split in whole cents so the shares add up to the total exactly; any
+      // leftover cents go to the payer first, so everyone else pays the even amount.
+      const cents = Math.round(totalAmount * 100);
+      const base  = Math.floor(cents / splitParticipants.length);
+      let extra   = cents - base * splitParticipants.length;
+      const payer = watch("paid_by");
+      const order = [...splitParticipants].sort((a, b) => Number(b === payer) - Number(a === payer));
+      const amountOf = new Map(order.map((p) => [p, base + (extra-- > 0 ? 1 : 0)]));
+      return splitParticipants.map((p) => ({ participant: p, amount: amountOf.get(p)! / 100 }));
     }
     if (splitMode === "vast") {
       const fixed = parseFloat(fixedAmountStr);
@@ -112,7 +119,14 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
   const shares     = buildShares();
   const sharesSum  = shares.reduce((s, r) => s + r.amount, 0);
   const remaining  = Math.round((totalAmount - sharesSum) * 100) / 100;
-  const splitValid = shares.length > 0;
+  // The shares have to be the whole bill, to the cent — settling up works from them.
+  const splitMatches = Math.round(sharesSum * 100) === Math.round(totalAmount * 100);
+  const splitValid   = totalAmount > 0 && shares.length > 0 && splitMatches;
+  const splitHint =
+    totalAmount <= 0     ? "Vul eerst het bedrag in." :
+    shares.length === 0  ? "Kies wie er meebetalen." :
+    !splitMatches        ? `De verdeling (${formatAmount(sharesSum, currency)}) moet precies ${formatAmount(totalAmount, currency)} zijn.` :
+    null;
 
   // ── Actions ───────────────────────────────────────────────────
   function addManualRow() {
@@ -161,9 +175,12 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
   const manualAvailable = userNames.filter((n) => !manualUsedNames.has(n));
 
   const footer = (
-    <Button type="submit" form="create-expense-form" loading={isSubmitting} disabled={!splitValid} className="w-full">
-      Uitgave opslaan
-    </Button>
+    <div className="space-y-2">
+      {splitHint && <p className="text-center text-xs text-ink-3">{splitHint}</p>}
+      <Button type="submit" form="create-expense-form" loading={isSubmitting} disabled={!splitValid} className="w-full">
+        Uitgave opslaan
+      </Button>
+    </div>
   );
 
   return (
@@ -253,7 +270,7 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
 
         {/* ── Verdeling ─────────────────────────────────────── */}
         <div className={SF}>
-          <p className={ST}>Verdeling (optioneel)</p>
+          <p className={ST}>Verdeling</p>
 
           {/* Mode tabs */}
           <div className="flex gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]">
@@ -294,7 +311,10 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
                   <p className="font-mono text-[12px] tabular-nums text-ink-2">
                     {formatAmount(totalAmount, currency)} ÷ {splitParticipants.length} = {" "}
                     <span className="font-semibold text-ink">
-                      {formatAmount(Math.round((totalAmount / splitParticipants.length) * 100) / 100, currency)} per persoon
+                      {formatAmount(Math.floor(Math.round(totalAmount * 100) / splitParticipants.length) / 100, currency)}
+                      {Math.round(totalAmount * 100) % splitParticipants.length !== 0 &&
+                        ` of ${formatAmount((Math.floor(Math.round(totalAmount * 100) / splitParticipants.length) + 1) / 100, currency)}`}
+                      {" "}per persoon
                     </span>
                   </p>
                 </div>

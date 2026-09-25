@@ -25,6 +25,9 @@ const STATUS_CONFIG = {
   confirmed: { label: "Verrekend",            pill: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" },
 } as const;
 
+const OWN_PART_CONFIG = { label: "Eigen deel", pill: "bg-sunken text-ink-2" };
+const IN_SETTLEMENT_CONFIG = { label: "In afrekening", pill: "bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300" };
+
 function StatusIcon({ status }: { status: ExpenseShare["status"] }) {
   if (status === "confirmed") return <CheckCircle2 size={12} />;
   if (status === "claimed")   return <Clock        size={12} />;
@@ -136,10 +139,15 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
             </p>
             <div className="card-surface divide-y divide-line overflow-hidden">
               {expense.shares.map((share) => {
-                const cfg       = STATUS_CONFIG[share.status];
+                // The payer's own part of the bill — settled from the start, nothing to pay or confirm.
+                const isOwnPart = share.participant === expense.paid_by;
+                // Being paid as part of a settle-up payment (Afrekenen) — handled there.
+                const inSettlement = !!share.settlement_id && share.status !== "confirmed";
+                const cfg       = isOwnPart ? OWN_PART_CONFIG : inSettlement ? IN_SETTLEMENT_CONFIG : STATUS_CONFIG[share.status];
                 const isMe      = share.participant === me;
-                const canClaim  = isMe && share.status === "pending";
-                const canConfirm = isPayer && share.status === "claimed";
+                const canClaim  = isMe && !isOwnPart && !inSettlement && share.status === "pending";
+                // Straight from pending too, for cash handed over in person.
+                const canConfirm = isPayer && !isOwnPart && !inSettlement && share.status !== "confirmed";
                 const isLoading = claimMutation.isPending || confirmMutation.isPending;
 
                 return (
@@ -169,7 +177,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
                         <StatusIcon status={share.status} />
                         {cfg.label}
                       </span>
-                      <CopyRef value={share.payment_ref} />
+                      {!isOwnPart && <CopyRef value={share.payment_ref} />}
 
                       {/* Action button */}
                       {canClaim && (

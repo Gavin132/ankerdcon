@@ -36,7 +36,7 @@ export function computeAllActions({ rides, meals, expenses, myName }: ComputeInp
     for (const expense of expenses) {
       // Participant: I still need to pay (one action per expense I owe)
       for (const share of expense.shares) {
-        if (share.participant === myName && share.status === "pending") {
+        if (share.participant === myName && share.status === "pending" && !share.settlement_id) {
           items.push({ kind: "payment_due", share, expense });
         }
       }
@@ -44,7 +44,7 @@ export function computeAllActions({ rides, meals, expenses, myName }: ComputeInp
       // Payer: grouped — one action per expense with any outstanding shares
       if (expense.paid_by === myName) {
         const outstanding = expense.shares.filter(
-          s => s.participant !== myName && (s.status === "pending" || s.status === "claimed"),
+          s => s.participant !== myName && !s.settlement_id && (s.status === "pending" || s.status === "claimed"),
         );
         if (outstanding.length > 0) {
           items.push({ kind: "payment_confirm", shares: outstanding, expense });

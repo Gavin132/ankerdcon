@@ -66,6 +66,14 @@ class ExpenseRoutes:
     SHARE_CONFIRM = "/shares/{share_id}/confirm"
 
 
+class SettlementRoutes:
+    PREFIX = "/settlements"
+    LIST = "/"
+    DETAIL = "/{settlement_id}"
+    PAID = "/{settlement_id}/paid"
+    CONFIRM = "/{settlement_id}/confirm"
+
+
 class CosplayRoutes:
     PREFIX = "/cosplays"
     LIST = "/"

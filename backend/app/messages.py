@@ -60,6 +60,14 @@ DM_RIDE_CREATED = "🚗 **{driver} heeft een nieuwe rit aangemaakt**\n🕐 Vertr
 DM_EXPENSE_CREATED = "💸 **{paid_by} heeft een nieuwe uitgave toegevoegd**\n💰 {amount:.2f} {currency} — {description}\n\nOpen de app om je aandeel te verrekenen."
 DM_MEAL_CREATED = "🍽️ **Nieuwe maaltijd: {meal_name}**\n🕐 {time}{location_line}\n\nOpen de app om je aan te melden."
 
+# Settling up — personal DMs to the other member of a settlement (not an
+# opt-in category; only the master "DM's toestaan" switch applies).
+DM_SETTLEMENT_REQUESTED = "💸 **{creditor} vraagt {amount:.2f} {currency} om jullie uitgaven te verrekenen**\n🔖 Kenmerk: {ref}\n\nOpen de app om te betalen.{link_line}"
+DM_SETTLEMENT_PAID = "💸 **{debtor} zegt {amount:.2f} {currency} aan je betaald te hebben**\n🔖 Kenmerk: {ref}\n\nKijk of het binnen is en bevestig het in de app.{link_line}"
+DM_SETTLEMENT_CONFIRMED = "✅ **{creditor} heeft je betaling van {amount:.2f} {currency} ontvangen**\nJullie staan weer quitte."
+DM_SETTLEMENT_CANCELLED = "↩️ **{name} heeft de afrekening van {amount:.2f} {currency} ingetrokken**\nWat openstond, staat weer open in de app.{link_line}"
+DM_SETTLEMENT_NOT_RECEIVED = "⚠️ **{creditor} heeft je betaling van {amount:.2f} {currency} nog niet ontvangen**\n🔖 Kenmerk: {ref}\n\nHet bedrag staat weer open in de app.{link_line}"
+
 # ══════════════════════════════════════════════════════════════════════════════
 # Webhook embed titles
 # ══════════════════════════════════════════════════════════════════════════════

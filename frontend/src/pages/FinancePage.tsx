@@ -9,6 +9,9 @@ import { UserAvatar } from "../components/common/UserAvatar";
 import { ExpenseCard } from "../components/finance/ExpenseCard";
 import { CreateExpenseDrawer } from "../components/finance/CreateExpenseDrawer";
 import { ExpenseDetailDrawer } from "../components/finance/ExpenseDetailDrawer";
+import { SettleUpCard, type SettleTarget } from "../components/finance/SettleUpCard";
+import { SettlementDrawer } from "../components/finance/SettlementDrawer";
+import { useSettleUp } from "../hooks/useSettlements";
 import { useExpenses } from "../hooks/useExpenses";
 import { useUsers } from "../hooks/useUsers";
 import { useCurrentUser } from "../hooks/useUsers";
@@ -30,6 +33,9 @@ export function FinancePage() {
   const linkedExpenseId = searchParams.get("expense");
   // `?trip=<tripId>` limits everything below to one trip; `?trip=none` to unlinked expenses.
   const tripFilter = searchParams.get("trip");
+  // `?settle=<id>` (from a Discord DM or the Hub) opens that settlement.
+  const linkedSettlementId = searchParams.get("settle");
+  const [settleTarget, setSettleTarget] = useState<SettleTarget | null>(null);
 
   const { data: allExpenses = [], isLoading } = useExpenses();
   const { data: events = [] } = useCalendar();
@@ -82,6 +88,20 @@ export function FinancePage() {
   }
   const { data: users    = [] }            = useUsers();
   const { data: me }                       = useCurrentUser();
+  const { data: settleUp }                 = useSettleUp();
+
+  const linkedSettlement = settleUp?.settlements.find((s) => s.id === linkedSettlementId);
+  const openSettleTarget: SettleTarget | null =
+    settleTarget ?? (linkedSettlement ? { kind: "settlement", settlement: linkedSettlement } : null);
+
+  function closeSettlement() {
+    setSettleTarget(null);
+    if (linkedSettlementId) {
+      const params = new URLSearchParams(searchParams);
+      params.delete("settle");
+      setSearchParams(params, { replace: true });
+    }
+  }
 
   const myName = me?.name;
 
@@ -243,6 +263,9 @@ export function FinancePage() {
             )}
           </motion.section>
 
+          {/* ── Settle up (across all trips) ─────────────────── */}
+          <SettleUpCard overview={settleUp} users={users} meId={me?.id} onOpen={setSettleTarget} />
+
           {/* ── Group overview ───────────────────────────────── */}
           {expenses.length > 0 && (
             <motion.section
@@ -342,6 +365,12 @@ export function FinancePage() {
         onClose={closeExpense}
         users={users}
         me={myName}
+      />
+      <SettlementDrawer
+        target={openSettleTarget}
+        onClose={closeSettlement}
+        users={users}
+        meId={me?.id}
       />
     </div>
   );

@@ -22,6 +22,7 @@ export const QUERY_KEYS = {
   badges: ["badges"] as const,
   announcements: ["announcements"] as const,
   changelog: ["changelog"] as const,
+  settlements: ["settlements"] as const,
 
   // Admin
   adminStats:  ["admin", "stats"]  as const,

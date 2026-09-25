@@ -48,6 +48,12 @@ export const apiRoutes = {
     claimShare:   (shareId: string) => `/api/expenses/shares/${shareId}/claim`,
     confirmShare: (shareId: string) => `/api/expenses/shares/${shareId}/confirm`,
   },
+  settlements: {
+    base:    "/api/settlements/",
+    byId:    (id: string) => `/api/settlements/${id}`,
+    paid:    (id: string) => `/api/settlements/${id}/paid`,
+    confirm: (id: string) => `/api/settlements/${id}/confirm`,
+  },
 
   // ── Calendar ─────────────────────────────────────────────────────
   calendar: {
