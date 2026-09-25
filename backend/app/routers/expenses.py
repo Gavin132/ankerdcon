@@ -18,6 +18,7 @@ logger = get_logger(__name__)
 router = APIRouter(prefix=ExpenseRoutes.PREFIX, tags=["expenses"])
 
 _DB_ERROR = "Databasefout. Probeer het opnieuw."
+_IN_SETTLEMENT = "Dit aandeel zit in een afrekening; rond die af onder Afrekenen."
 
 
 def _utcnow() -> str:
@@ -144,6 +145,27 @@ def delete_expense(expense_id: str, current_user: str = Depends(get_current_user
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Uitgave niet gevonden.")
     require_owner_or_admin(current_user, row.data["paid_by"], "Alleen de betaler kan deze uitgave verwijderen.")
 
+    # A settlement under way was worked out including this expense; deleting
+    # it now would leave that payment for the wrong amount.
+    try:
+        in_settlement = (
+            supabase.table(Tables.EXPENSE_SHARES)
+            .select("id")
+            .eq("expense_id", expense_id)
+            .neq("status", "confirmed")
+            .not_.is_("settlement_id", "null")
+            .execute()
+            .data
+        )
+    except Exception as e:
+        logger.error("Failed to check settlements for expense %s: %s", expense_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if in_settlement:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Deze uitgave zit in een lopende afrekening. Rond die eerst af of trek hem in.",
+        )
+
     try:
         supabase.table(Tables.EXPENSES).delete().eq("id", expense_id).execute()
     except Exception as e:
@@ -156,7 +178,7 @@ def claim_share(share_id: str, current_user: str = Depends(get_current_user)):
     try:
         row = (
             supabase.table(Tables.EXPENSE_SHARES)
-            .select("status, participant")
+            .select("status, participant, settlement_id")
             .eq("id", share_id)
             .single()
             .execute()
@@ -168,6 +190,8 @@ def claim_share(share_id: str, current_user: str = Depends(get_current_user)):
     if not row.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Aandeel niet gevonden.")
     require_owner_or_admin(current_user, row.data["participant"], "Je kunt alleen je eigen aandeel als betaald melden.")
+    if row.data.get("settlement_id"):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=_IN_SETTLEMENT)
     if row.data["status"] != "pending":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Aandeel is al geclaimd of bevestigd.")
 
@@ -188,7 +212,7 @@ def confirm_share(share_id: str, current_user: str = Depends(get_current_user)):
     try:
         row = (
             supabase.table(Tables.EXPENSE_SHARES)
-            .select("status, expenses(paid_by)")
+            .select("status, settlement_id, expenses(paid_by)")
             .eq("id", share_id)
             .single()
             .execute()
@@ -201,6 +225,8 @@ def confirm_share(share_id: str, current_user: str = Depends(get_current_user)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Aandeel niet gevonden.")
     payer = (row.data.get("expenses") or {}).get("paid_by")
     require_owner_or_admin(current_user, payer, "Alleen de betaler kan dit bevestigen.")
+    if row.data.get("settlement_id"):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=_IN_SETTLEMENT)
     # Straight from pending is fine too: cash handed over in person never gets
     # an "Ik heb betaald" from the other side.
     if row.data["status"] == "confirmed":

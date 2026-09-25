@@ -404,6 +404,8 @@ export interface ExpenseShare {
   status: "pending" | "claimed" | "confirmed";
   claimed_at?: string;
   confirmed_at?: string;
+  /** Set while (or since) the share is covered by a settle-up payment. */
+  settlement_id?: string | null;
 }
 
 export interface Expense {
@@ -416,6 +418,51 @@ export interface Expense {
   created_at?: string;
   linked_event_id?: string;
   shares: ExpenseShare[];
+}
+
+/** One payment settling everything open between two members (see Afrekenen). */
+export interface Settlement {
+  id: string;
+  from_user_id: string;
+  to_user_id: string;
+  from_user: string;
+  to_user: string;
+  amount: number;
+  currency: string;
+  status: "requested" | "claimed" | "confirmed";
+  payment_ref: string;
+  /** How to pay — only on an open request, cleared once confirmed. */
+  request_url?: string | null;
+  iban?: string | null;
+  account_name?: string | null;
+  created_at?: string;
+  claimed_at?: string | null;
+  confirmed_at?: string | null;
+}
+
+/** What's open between you and one other member, netted over all expenses. */
+export interface SettleUpItem {
+  counterparty_id: string;
+  counterparty: string;
+  direction: "i_owe" | "owes_me" | "even";
+  amount: number;
+  currency: string;
+  share_count: number;
+  blocked_by_settlement: boolean;
+}
+
+export interface SettleUpOverview {
+  items: SettleUpItem[];
+  settlements: Settlement[];
+}
+
+export interface CreateSettlementRequest {
+  counterparty_id: string;
+  currency?: string;
+  action: "paid" | "request" | "received";
+  request_url?: string;
+  iban?: string;
+  account_name?: string;
 }
 
 export interface CreateExpenseShareInput {

@@ -22,6 +22,11 @@ export const routes = {
     view: (id: string) => `/finance?expense=${encodeURIComponent(id)}`,
   },
 
+  /** Financiën with one settlement (Afrekenen) already open. */
+  settlement: {
+    view: (id: string) => `/finance?settle=${encodeURIComponent(id)}`,
+  },
+
   /** Financiën showing only one trip's expenses. */
   tripExpenses: {
     view: (tripId: string) => `/finance?trip=${encodeURIComponent(tripId)}`,

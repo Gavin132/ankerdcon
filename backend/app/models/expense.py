@@ -11,6 +11,8 @@ class ExpenseShare(BaseModel):
     status: str  # pending | claimed | confirmed
     claimed_at: Optional[str] = None
     confirmed_at: Optional[str] = None
+    # Set while (or since) the share is covered by a settle-up payment.
+    settlement_id: Optional[str] = None
 
 
 class Expense(BaseModel):

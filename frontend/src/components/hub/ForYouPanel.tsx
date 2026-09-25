@@ -5,6 +5,8 @@ import { Bus, CheckCheck, CheckCircle2, ChevronDown, ChevronRight, UtensilsCross
 import { listItem } from "../../utils/motion";
 import { routes } from "../../config/routes";
 import { computeAllActions } from "../../utils/actionItems";
+import { useSettleUp } from "../../hooks/useSettlements";
+import { useCurrentUser } from "../../hooks/useUsers";
 import { buildTrip, currentTripId, isTripOver, tripGaps } from "../../utils/trips";
 import { formatAmount, formatTime } from "../../utils/format";
 import type { CalendarEvent, Expense, Meal, Ride } from "../../types";
@@ -47,6 +49,8 @@ function people(n: number) {
 export function ForYouPanel({ events, rides, meals, expenses, myName }: ForYouPanelProps) {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
+  const { data: settleUp } = useSettleUp();
+  const { data: me } = useCurrentUser();
   const items: ForYouItem[] = [];
 
   // ── The current trip's sign-up gaps ────────────────────────────────────────
@@ -124,6 +128,29 @@ export function ForYouPanel({ events, rides, meals, expenses, myName }: ForYouPa
         title: `Bevestig ${n} ${n === 1 ? "betaling" : "betalingen"}`,
         where: `${action.expense.description} · Financiën`,
         go: () => navigate(routes.expense.view(action.expense.id)),
+      });
+    }
+  }
+
+  // ── Settle-up payments waiting on me ──────────────────────────────────────
+  for (const s of settleUp?.settlements ?? []) {
+    if (s.status === "requested" && s.from_user_id === me?.id) {
+      items.push({
+        key: `settle-pay-${s.id}`,
+        tone: "warn",
+        icon: <Wallet size={15} />,
+        title: `${s.to_user} vraagt ${formatAmount(s.amount, s.currency)}`,
+        where: "Financiën › Afrekenen",
+        go: () => navigate(routes.settlement.view(s.id)),
+      });
+    } else if (s.status === "claimed" && s.to_user_id === me?.id) {
+      items.push({
+        key: `settle-confirm-${s.id}`,
+        tone: "info",
+        icon: <CheckCheck size={15} />,
+        title: `Bevestig ${formatAmount(s.amount, s.currency)} van ${s.from_user}`,
+        where: "Financiën › Afrekenen",
+        go: () => navigate(routes.settlement.view(s.id)),
       });
     }
   }
