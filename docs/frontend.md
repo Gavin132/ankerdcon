@@ -126,7 +126,7 @@ Forms in a sheet put their submit button in the sheet's `footer` and tie it to t
   over a page: a bottom sheet that grows with its content up to 85 % of the screen, with a
   title, optional back arrow (`onBack`) and footer. A sheet with several views (a list, a
   form, a filter) swaps them with `viewKey` inside **one** sheet instead of stacking
-  another on top. It is used for Vervoer, Kamers, Cosplay, Weer, Praktisch, adding a meal,
+  another on top. It is used for Vervoer, Hotel, Cosplay, Weer, Praktisch, adding a meal,
   and the three finance screens.
 - **`Modal`** is for small confirmations and pickers. **`UserProfilePopup`** anchors to what
   was tapped and scrolls inside itself.

@@ -13,6 +13,9 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **Kamers is now Hotel.** The tile and sheet show the hotel's address, the stay (first to last
+  night), who arrives late or leaves early, the hotel notes (check-in and check-out times,
+  breakfast…) and then the rooms. The tile shows the address too.
 - **The admin panel uses the same bottom sheets as the rest of the app** instead of a
   right-hand drawer, including the "unsaved changes" confirmation.
 - **Anyone can sign others up** for meals, rides, restaurant cars, trip days and hotel

@@ -17,7 +17,7 @@ import { getNow } from "../../store/time.store";
 import { parseEventDate, splitDateTime, toDateKey, todayKey } from "../../utils/date";
 import { dayShort } from "../../utils/multiDay";
 import { formatCurrency } from "../../utils/format";
-import { defaultTripDayId, tripGaps, tripMeals, tripRides, tripOutliers, tripRoomGaps, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
+import { defaultTripDayId, tripGaps, tripInfo, tripMeals, tripRides, tripOutliers, tripRoomGaps, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
 import type { CalendarEvent, Cosplay, Expense, HotelRoom, Meal, Ride, StoryDaySummary, User } from "../../types";
 
 const sameName = (names: string[]) => (n: string) => names.some((m) => m.toLowerCase() === n.toLowerCase());
@@ -257,7 +257,7 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
   );
 }
 
-/* ── Kamers ──────────────────────────────────────────────────────────────── */
+/* ── Hotel ──────────────────────────────────────────────────────────────── */
 
 export function RoomsTile({ trip, phase, rooms, users, myNames }: { trip: Trip; phase: TripPhase; rooms: HotelRoom[]; users: User[]; myNames: string[] }) {
   const isMine = sameName(myNames);
@@ -269,7 +269,7 @@ export function RoomsTile({ trip, phase, rooms, users, myNames }: { trip: Trip; 
   return (
     <TripTile
       icon={BedDouble}
-      label="Kamers"
+      label="Hotel"
       to={routes.trip.view(trip.id, "rooms")}
       sheet
       size={phase === "past" ? "small" : "wide"}
@@ -296,6 +296,9 @@ export function RoomsTile({ trip, phase, rooms, users, myNames }: { trip: Trip; 
           ))}
           {rooms.length > 5 && <span className="self-center font-mono text-[11px] text-ink-3">+{rooms.length - 5}</span>}
         </div>
+      )}
+      {phase !== "past" && tripInfo(trip).hotel_location && (
+        <TileText><span className="line-clamp-1">{tripInfo(trip).hotel_location}</span></TileText>
       )}
       {phase !== "past" && (
         <TileText>

@@ -35,7 +35,7 @@ export const TRIP_TABS: { id: TripTabId; label: string }[] = [
   { id: "overview",  label: "Overzicht" },
   { id: "transport", label: "Vervoer" },
   { id: "food",      label: "Eten" },
-  { id: "rooms",     label: "Kamers" },
+  { id: "rooms",     label: "Hotel" },
   { id: "cosplay",   label: "Cosplay" },
   { id: "photos",    label: "Foto's" },
 ];

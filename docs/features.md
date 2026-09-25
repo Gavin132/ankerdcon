@@ -60,11 +60,11 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
   is going and a countdown. Tap a day to sign up or off. Tap the avatars to see
   everyone by name (`TripParticipants.tsx`).
 - Below it, a **tile** per part of the trip (`TripTiles.tsx`): Vervoer, Eten,
-  Kamers (hotel trips only), Foto's, Cosplay (trips with a convention), Weer,
+  Hotel (hotel trips only: address, stay, arrivals and departures, rooms), Foto's, Cosplay (trips with a convention), Weer,
   Praktisch and Uitgaven. Tiles show the answer ("6 rides, 3 people without a ride
   back") and their order changes before, during and after the trip. The amber "zonder rit" and
   "nergens bij" pills open the names of who is missing (a sheet, `MissingPeopleSheet`).
-- Tiles open as **sheets** over the page (`TripSheet.tsx`). Vervoer, Kamers and
+- Tiles open as **sheets** over the page (`TripSheet.tsx`). Vervoer, Hotel and
   Cosplay are routed with `?sheet=transport|rooms|cosplay` so they can be linked;
   Weer, Praktisch and Eten's "add meal" open from local state.
 - Multi-day trips get **day chips** to filter by day.

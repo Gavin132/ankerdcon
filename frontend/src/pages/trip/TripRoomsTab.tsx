@@ -497,7 +497,7 @@ const container = {
 };
 
 /**
- * Event › Kamers, opened as a bottom sheet over Overzicht. Rooms belong to
+ * Event › Hotel (the address, stay and rooms), opened as a bottom sheet over Overzicht. Rooms belong to
  * the whole trip — the backend keys them by the trip's multi-day group — so
  * any hotel day's id reaches the same set.
  */
@@ -529,7 +529,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
 
   if (!event) {
     return (
-      <TripSheet open={open} onClose={onClose} title="Kamers">
+      <TripSheet open={open} onClose={onClose} title="Hotel">
         <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
           <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
             <BedDouble size={22} />
@@ -582,7 +582,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
   ) : undefined;
 
   return (
-    <TripSheet open={open} onClose={onClose} title="Kamers" footer={deleteConfirmFooter}>
+    <TripSheet open={open} onClose={onClose} title="Hotel" subtitle={trip.title} footer={deleteConfirmFooter}>
 
       {/* ── Summary + actions ──────────────────────────────────────── */}
       <div className="mb-5 flex flex-wrap items-center gap-2">
@@ -615,7 +615,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
 
       <div className="space-y-5">
 
-        {(info.hotel_location || info.hotel_info) && <HotelInfoCard event={info} />}
+        <HotelInfoCard event={info} trip={trip} />
 
         {/* ── Unassigned strip ──────────────────────────────────────── */}
         {unassigned.length > 0 && (

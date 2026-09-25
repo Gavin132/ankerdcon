@@ -38,7 +38,7 @@ Google, and only accounts on the whitelist get in.
 | Area | What you get |
 | --- | --- |
 | **Hub** | The nearest trip as a ticket with a countdown, quick "offer / join a ride" shortcuts, today's meals, "Voor jou" (everything you still need to arrange), story rings and a location ping. |
-| **Trip** (Event) | One page per trip with a tile per part of it: **Vervoer**, **Eten**, **Kamers**, **Cosplay**, **Foto's**, **Weer**, **Praktisch** and **Uitgaven**. Each tile shows the answer and opens a sheet to change things. Tap a day on the ticket to sign up. |
+| **Trip** (Event) | One page per trip with a tile per part of it: **Vervoer**, **Eten**, **Hotel**, **Cosplay**, **Foto's**, **Weer**, **Praktisch** and **Uitgaven**. Each tile shows the answer and opens a sheet to change things. Tap a day on the ticket to sign up. |
 | **Transport** | Offer seats, join a ride, restaurant runs with several cars, public transport, and a timeline. Drivers can take a ride back. |
 | **Food** | Meal plans with cost, dietary info and transport needs, and RSVPs. |
 | **Rooms** | Hotel rooms per trip, self-assignment, bulk creation and capacity. |

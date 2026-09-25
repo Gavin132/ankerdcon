@@ -420,7 +420,7 @@ export function EventEditDrawer({
                 placeholder="Bijv. inchecktijd vanaf 15:00, code voor de kluisjes, ontbijt inbegrepen..."
               />
               <p className="mt-1 text-xs text-ink-3">
-                Verschijnt op de hoofdpagina van het evenement, bij "Hotel &amp; overnachting".
+                Verschijnt op de hoteltegel van het evenement, onder "Hotel &amp; overnachting".
               </p>
             </div>
           )}
