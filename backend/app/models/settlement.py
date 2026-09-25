@@ -12,7 +12,6 @@ class Settlement(BaseModel):
     amount: float
     currency: str
     status: str  # requested | claimed | confirmed
-    payment_ref: str
     # How to pay, added by the receiver for this one request only; cleared
     # once the payment is confirmed. Never stored on a profile.
     request_url: Optional[str] = None

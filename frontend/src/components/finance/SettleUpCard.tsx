@@ -97,7 +97,7 @@ export function SettleUpCard({ overview, users, meId, onOpen }: Props) {
                 user={resolveUser(d.otherId, users)}
                 name={d.other}
                 title={d.title}
-                sub={`Kenmerk ${s.payment_ref}`}
+                sub={s.created_at ? `Sinds ${formatDate(s.created_at)}` : "Afrekening"}
                 amount={s.amount}
                 currency={s.currency}
                 pill={d.pill}

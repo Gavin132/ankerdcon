@@ -7,7 +7,6 @@ class ExpenseShare(BaseModel):
     expense_id: str
     participant: str
     amount: float
-    payment_ref: str
     status: str  # pending | claimed | confirmed
     claimed_at: Optional[str] = None
     confirmed_at: Optional[str] = None

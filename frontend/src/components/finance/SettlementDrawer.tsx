@@ -245,8 +245,7 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
     const link = s.request_url ? linkInfo(s.request_url) : null;
     const d = describeSettlement(s, meId);
     title = d.title;
-    subtitle = `Kenmerk ${s.payment_ref}`;
-    const refField = <CopyField label="Kenmerk" value={s.payment_ref} />;
+    subtitle = formatAmount(s.amount, s.currency);
 
     const howToPay = (
       <div className="space-y-3">
@@ -266,7 +265,6 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
           {s.iban && <CopyField label="IBAN" value={s.iban} display={formatIban(s.iban)} />}
           {s.iban && s.account_name && <CopyField label="Op naam van" value={s.account_name} />}
           <CopyField label="Bedrag" value={s.amount.toFixed(2).replace(".", ",")} display={formatAmount(s.amount, s.currency)} />
-          {refField}
         </div>
       </div>
     );
@@ -293,7 +291,6 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
             {d.other} heeft je verzoek{link ? ` (${link.provider ?? link.host})` : ""}{s.iban ? `${link ? " en" : ""} je IBAN` : ""} gekregen.
             Zodra het geld binnen is, bevestig je het hier.
           </Note>
-          <div className="card-surface overflow-hidden">{refField}</div>
         </div>
       );
       footer = (
@@ -312,7 +309,6 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
       body = (
         <div className="space-y-4">
           <Note>Kijk in je bank-app of {formatAmount(s.amount, s.currency)} van {d.other} binnen is, en bevestig het dan.</Note>
-          <div className="card-surface overflow-hidden">{refField}</div>
         </div>
       );
       footer = (

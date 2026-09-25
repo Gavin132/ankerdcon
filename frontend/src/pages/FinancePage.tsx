@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Wallet, Plus, TrendingUp, ArrowDownLeft, ArrowUpRight, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Button } from "../components/common/Button";
 import { EmptyState } from "../components/common/EmptyState";
-import { StickyActionBar } from "../components/common/StickyActionBar";
+import { HeaderAction } from "../components/layout/HeaderAction";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { ExpenseCard } from "../components/finance/ExpenseCard";
 import { CreateExpenseDrawer } from "../components/finance/CreateExpenseDrawer";
@@ -343,15 +343,18 @@ export function FinancePage() {
         )}
       </div>
 
-      {/* ── Add expense button (phones; from md it sits in the top row) ── */}
-      <div className="md:hidden">
-        <StickyActionBar>
-          <Button className="w-full" onClick={() => setCreateOpen(true)}>
-            <Plus size={16} />
-            Uitgave toevoegen
-          </Button>
-        </StickyActionBar>
-      </div>
+      {/* ── Add expense (phones: a "+" in the top bar; from md it sits in the top row) ── */}
+      <HeaderAction>
+        <button
+          type="button"
+          onClick={() => setCreateOpen(true)}
+          title="Uitgave toevoegen"
+          aria-label="Uitgave toevoegen"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border-1.5 border-outline bg-brand text-brand-on transition-opacity hover:opacity-90 md:hidden"
+        >
+          <Plus size={17} strokeWidth={2.5} />
+        </button>
+      </HeaderAction>
 
       {/* ── Drawers ───────────────────────────────────────────── */}
       <CreateExpenseDrawer

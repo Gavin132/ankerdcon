@@ -400,7 +400,6 @@ export interface ExpenseShare {
   expense_id: string;
   participant: string;
   amount: number;
-  payment_ref: string;
   status: "pending" | "claimed" | "confirmed";
   claimed_at?: string;
   confirmed_at?: string;
@@ -430,7 +429,6 @@ export interface Settlement {
   amount: number;
   currency: string;
   status: "requested" | "claimed" | "confirmed";
-  payment_ref: string;
   /** How to pay — only on an open request, cleared once confirmed. */
   request_url?: string | null;
   iban?: string | null;

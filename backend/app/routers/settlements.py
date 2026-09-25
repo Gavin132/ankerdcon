@@ -338,7 +338,7 @@ def create_settlement(
             detail="Er is net iets veranderd aan jullie uitgaven. Probeer het opnieuw.",
         )
 
-    fmt = {"amount": float(row["amount"]), "currency": escape_markdown(row["currency"]), "ref": row["payment_ref"]}
+    fmt = {"amount": float(row["amount"]), "currency": escape_markdown(row["currency"])}
     if bal.amount_cents > 0:
         if new_status == "requested":
             _dm(background_tasks, settings, other, M.DM_SETTLEMENT_REQUESTED.format(
@@ -379,7 +379,7 @@ def mark_paid(
     names = {p["id"]: p["name"] for p in profiles}
     _dm(background_tasks, settings, row["to_user_id"], M.DM_SETTLEMENT_PAID.format(
         debtor=escape_markdown(names.get(row["from_user_id"], "Iemand")),
-        amount=float(row["amount"]), currency=escape_markdown(row["currency"]), ref=row["payment_ref"],
+        amount=float(row["amount"]), currency=escape_markdown(row["currency"]),
         link_line=_link_line(settings, settlement_id),
     ))
     return {"status": "claimed"}
@@ -453,7 +453,7 @@ def withdraw(
     receiver_rejects = me["id"] == row["to_user_id"] and row["status"] == "claimed"
     if receiver_rejects:
         _dm(background_tasks, settings, row["from_user_id"], M.DM_SETTLEMENT_NOT_RECEIVED.format(
-            creditor=escape_markdown(names.get(row["to_user_id"], "Iemand")), ref=row["payment_ref"],
+            creditor=escape_markdown(names.get(row["to_user_id"], "Iemand")),
             link_line=_link_line(settings), **fmt))
     else:
         other = row["to_user_id"] if me["id"] == row["from_user_id"] else row["from_user_id"]

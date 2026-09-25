@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle2, Clock, Circle, Trash2, Copy, Check } from "lucide-react";
+import { CheckCircle2, Clock, Circle, Trash2, Check } from "lucide-react";
 import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
 import { UserAvatar } from "../common/UserAvatar";
@@ -32,27 +32,6 @@ function StatusIcon({ status }: { status: ExpenseShare["status"] }) {
   if (status === "confirmed") return <CheckCircle2 size={12} />;
   if (status === "claimed")   return <Clock        size={12} />;
   return                             <Circle       size={12} />;
-}
-
-function CopyRef({ value }: { value: string }) {
-  const [copied, setCopied] = useState(false);
-  function copy() {
-    navigator.clipboard.writeText(value).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
-  }
-  return (
-    <button
-      type="button"
-      onClick={copy}
-      className="inline-flex items-center gap-1 rounded-md border border-line px-1.5 py-0.5 font-mono text-[10.5px] font-medium uppercase tracking-[0.05em] text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
-      title="Kopieer referentie"
-    >
-      {copied ? <Check size={10} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={10} />}
-      {value}
-    </button>
-  );
 }
 
 export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
@@ -171,13 +150,12 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
                       </span>
                     </div>
 
-                    {/* Status + ref + action */}
+                    {/* Status + action */}
                     <div className="mt-2 flex items-center gap-2 flex-wrap">
                       <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${cfg.pill}`}>
                         <StatusIcon status={share.status} />
                         {cfg.label}
                       </span>
-                      {!isOwnPart && <CopyRef value={share.payment_ref} />}
 
                       {/* Action button */}
                       {canClaim && (

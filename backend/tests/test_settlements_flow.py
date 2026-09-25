@@ -87,8 +87,6 @@ class _Query:
             keys = {k for item in items for k in item}
             for item in items:
                 row = {"id": f"id{next(_ids)}", **{k: None for k in keys}, **item}
-                if self.table == "settlements":
-                    row.setdefault("payment_ref", f"AFR-{len(rows) + 1:03d}")
                 if self.table == "expense_shares":
                     row.setdefault("status", "pending")
                     row.setdefault("settlement_id", None)
