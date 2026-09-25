@@ -21,6 +21,8 @@ All notable changes to Ankerd Con are documented here.
 
 ### Fixed
 
+- The Eten tile no longer says "Straks 21:45" for a meal that is days away; it names the day
+  unless the meal is later today.
 - On the trip ticket, the "Je gaat mee" stamp no longer sits on top of "Iemand aanmelden".
 
 ---

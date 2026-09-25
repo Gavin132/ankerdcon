@@ -32,6 +32,12 @@ function dayTime(value: string): string {
   return date ? `${dayShort(date)} ${time}` : time;
 }
 
+/** "Straks 21:45" for a meal later today, otherwise which day it is ("Volgende: zo 21:45"). */
+export function nextMealText(value: string): string {
+  const [dateKey, time] = splitDateTime(value);
+  return dateKey === toDateKey(getNow()) ? `Straks ${time}` : `Volgende: ${dayTime(value)}`;
+}
+
 /** The names behind a tile's "N zonder …" pill, each with what they still lack (a ride back, a meal). */
 function MissingPeopleSheet({
   open,
@@ -215,7 +221,7 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
       }
     >
       <TileValue>
-        {all.length === 0 ? "Nog niks gepland" : phase === "live" && ahead[0] ? `Straks ${splitDateTime(ahead[0].time)[1]}` : `${all.length} ${all.length === 1 ? "etentje" : "etentjes"}`}
+        {all.length === 0 ? "Nog niks gepland" : phase === "live" && ahead[0] ? nextMealText(ahead[0].time) : `${all.length} ${all.length === 1 ? "etentje" : "etentjes"}`}
       </TileValue>
       {phase !== "past" && shown.length > 0 && (
         <ul className="-mx-1.5 divide-y divide-line">
