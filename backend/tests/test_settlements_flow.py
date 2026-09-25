@@ -81,13 +81,18 @@ class _Query:
         match = [r for r in rows if all(f(r) for f in self.filters)]
         if self.op == "insert":
             new = []
-            for item in self.payload if isinstance(self.payload, list) else [self.payload]:
-                row = {"id": f"id{next(_ids)}", **item}
+            items = self.payload if isinstance(self.payload, list) else [self.payload]
+            # Like PostgREST: a field some rows of a bulk insert leave out is sent as NULL
+            # for the others, not defaulted.
+            keys = {k for item in items for k in item}
+            for item in items:
+                row = {"id": f"id{next(_ids)}", **{k: None for k in keys}, **item}
                 if self.table == "settlements":
                     row.setdefault("payment_ref", f"AFR-{len(rows) + 1:03d}")
                 if self.table == "expense_shares":
                     row.setdefault("status", "pending")
                     row.setdefault("settlement_id", None)
+                    assert row["status"] is not None, "null value in column status violates not-null constraint"
                 rows.append(row)
                 new.append(row)
             return _Result(new)
@@ -329,3 +334,33 @@ def test_a_duplicate_open_settlement_is_a_conflict_not_a_server_error(env, monke
     monkeypatch.setattr(query_cls, "insert", failing)
     r = client.post("/api/settlements/", json={"counterparty_id": "t", "action": "paid"})
     assert r.status_code == 409
+
+
+def test_expense_with_payer_among_the_participants_saves_every_share(env):
+    """Regression: the payer's share used to carry a status the others lacked,
+    so the bulk insert left the others' status NULL and the database refused it."""
+    fake, client, user, _ = env
+    add_expense(client, user, "Timo", 30, ["Timo", "Bob", "Frekkel"])
+    by_person = {s["participant"]: s for s in fake.db["expense_shares"]}
+    assert by_person["Timo"]["status"] == "confirmed"
+    assert by_person["Bob"]["status"] == "pending" and by_person["Frekkel"]["status"] == "pending"
+
+
+def test_failed_share_insert_does_not_leave_a_bill_behind(env, monkeypatch):
+    fake, client, user, _ = env
+    user["name"] = "Timo"
+    query_cls = type(fake.table("x"))
+    real_insert = query_cls.insert
+
+    def failing(self, payload):
+        if self.table == "expense_shares":
+            raise Exception("boom")
+        return real_insert(self, payload)
+
+    monkeypatch.setattr(query_cls, "insert", failing)
+    r = client.post("/api/expenses/", json={
+        "paid_by": "Timo", "amount": 10, "description": "x", "date": "2026-09-25",
+        "shares": [{"participant": "Bob", "amount": 10}],
+    })
+    assert r.status_code == 503
+    assert fake.db.get("expenses", []) == []

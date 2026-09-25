@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Copy, Check, ExternalLink, Info } from "lucide-react";
-import { Drawer } from "../common/Drawer";
+import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
 import { UserAvatar } from "../common/UserAvatar";
 import {
@@ -339,11 +339,11 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
   }
 
   return (
-    <Drawer open={!!target} onClose={onClose} title={title} subtitle={subtitle || undefined} footer={footer ?? undefined}>
+    <TripSheet open={!!target} onClose={onClose} title={title} subtitle={subtitle || undefined} footer={footer ?? undefined}>
       <div className="space-y-5">
         {hero}
         {body}
       </div>
-    </Drawer>
+    </TripSheet>
   );
 }

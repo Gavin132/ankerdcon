@@ -140,8 +140,16 @@ def create_expense(
             inserted_shares = (
                 supabase.table(Tables.EXPENSE_SHARES)
                 .insert([
-                    {"expense_id": expense_id, "participant": s.participant, "amount": s.amount}
-                    | ({"status": "confirmed", "confirmed_at": now} if s.participant == paid_by else {})
+                    # Every row gets the same fields: with a bulk insert, Supabase
+                    # fills a field some rows leave out with NULL rather than the
+                    # column default, which the not-null status column rejects.
+                    {
+                        "expense_id": expense_id,
+                        "participant": s.participant,
+                        "amount": s.amount,
+                        "status": "confirmed" if s.participant == paid_by else "pending",
+                        "confirmed_at": now if s.participant == paid_by else None,
+                    }
                     for s in body.shares
                 ])
                 .execute()
@@ -149,6 +157,12 @@ def create_expense(
             )
         except Exception as e:
             logger.error("Failed to insert expense shares for expense %s: %s", expense_id, e)
+            # Don't leave a bill behind with nobody owing anything on it —
+            # trying again would just make a second one.
+            try:
+                supabase.table(Tables.EXPENSES).delete().eq("id", expense_id).execute()
+            except Exception as cleanup_error:
+                logger.error("Failed to remove expense %s after its shares failed: %s", expense_id, cleanup_error)
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
     background_tasks.add_task(

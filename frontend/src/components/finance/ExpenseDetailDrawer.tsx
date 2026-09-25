@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CheckCircle2, Clock, Circle, Trash2, Copy, Check } from "lucide-react";
-import { Drawer } from "../common/Drawer";
+import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
 import { UserAvatar } from "../common/UserAvatar";
 import { useClaimShare, useConfirmShare, useDeleteExpense } from "../../hooks/useExpenses";
@@ -100,7 +100,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
   const totalShares    = expense.shares.length;
 
   return (
-    <Drawer
+    <TripSheet
       open={!!expense}
       onClose={() => { onClose(); setConfirmDelete(false); }}
       title={expense.description}
@@ -248,6 +248,6 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
           </div>
         )}
       </div>
-    </Drawer>
+    </TripSheet>
   );
 }
