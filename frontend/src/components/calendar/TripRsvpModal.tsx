@@ -3,7 +3,6 @@ import { Check } from "lucide-react";
 import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
-import { useActingPermissions } from "../../hooks/useUsers";
 import { dayShort, monthShort } from "../../utils/multiDay";
 import type { Trip } from "../../utils/trips";
 import type { User } from "../../types";
@@ -38,10 +37,9 @@ export function TripRsvpModal({ trip: openTrip, users, onClose, onConfirm }: Tri
   }, [openId]);
 
   const days = trip?.days.filter((d) => dayIds.includes(d.ev.id)) ?? [];
-  const { actable } = useActingPermissions();
-  const options = actable(mode === "join"
+  const options = mode === "join"
     ? users.map((u) => u.name)
-    : [...new Set(days.flatMap((d) => d.ev.participants))]);
+    : [...new Set(days.flatMap((d) => d.ev.participants))];
   const multiDay = (trip?.days.length ?? 0) > 1;
 
   function toggleDay(id: string) {

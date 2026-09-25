@@ -641,6 +641,14 @@ def act_as(current_user: str, requested: str | None) -> str:
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_NOT_YOURSELF)
 
 
+def act_for_anyone(current_user: str, requested: str | None) -> str:
+    """The name an action is performed for, where members may sign up anyone:
+    meals, ride seats, restaurant cars, trip days and hotel rooms. Things that
+    belong to one person (who paid, location pings, cosplays) still go through
+    act_as. See docs/acting-for-others.md."""
+    return (requested or "").strip() or current_user
+
+
 def _is_own_former_name(current_user: str, name: str) -> bool:
     """Older RSVPs and seats still carry someone's name from before a rename,
     which lives on in their aliases — leaving a trip clears those too. Members

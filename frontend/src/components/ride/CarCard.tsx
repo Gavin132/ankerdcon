@@ -7,7 +7,7 @@ import { UserAvatar } from "../common/UserAvatar";
 import { Collapse } from "../common/Collapse";
 import { rideVehicleIcon } from "../../utils/rides";
 import type { RestaurantDriver } from "../../types";
-import { useActingPermissions, useUsers } from "../../hooks/useUsers";
+import { useUsers } from "../../hooks/useUsers";
 
 interface CarCardProps {
   driver: RestaurantDriver;
@@ -25,7 +25,6 @@ interface CarCardProps {
  * "Uitstappen" expanding in place instead of opening a popup.
  */
 export function CarCard({ driver, canAct, userNames, onJoin, onUnassign, isPending }: CarCardProps) {
-  const { actable } = useActingPermissions();
   const { data: users = [] } = useUsers();
   const [action, setAction] = useState<"join" | "leave" | null>(null);
   const [joinNames, setJoinNames] = useState<string[]>([]);
@@ -151,9 +150,9 @@ export function CarCard({ driver, canAct, userNames, onJoin, onUnassign, isPendi
           >
             <div className="space-y-2.5 border-t border-dashed border-line pt-2.5">
               {action === "join" ? (
-                <NamePicker multiple options={actable(available)} value={joinNames} onChange={setJoinNames} maxSelect={spotsLeft} color="sky" />
+                <NamePicker multiple options={available} value={joinNames} onChange={setJoinNames} maxSelect={spotsLeft} color="sky" />
               ) : (
-                <NamePicker multiple options={actable(driver.passengers)} value={leaveNames} onChange={setLeaveNames} color="rose" />
+                <NamePicker multiple options={driver.passengers} value={leaveNames} onChange={setLeaveNames} color="rose" />
               )}
               <Button
                 variant={action === "leave" ? "danger" : "primary"}

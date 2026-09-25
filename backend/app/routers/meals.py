@@ -3,7 +3,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from app.config import Settings, get_settings
 from app.constants import Tables
 from app.core.logging import get_logger
-from app.dependencies import act_as, get_current_user, require_owner_or_admin
+from app.dependencies import act_for_anyone, get_current_user, require_owner_or_admin
 from app.models.meal import CreateMealRequest, Meal, RsvpRequest
 from app.routes import MealRoutes
 from app.services import notification_service
@@ -69,7 +69,7 @@ def create_meal(
 
 @router.post(MealRoutes.RSVP, status_code=status.HTTP_204_NO_CONTENT)
 def rsvp(meal_id: str, body: RsvpRequest, current_user: str = Depends(get_current_user)) -> None:
-    user_name = act_as(current_user, body.user_name)
+    user_name = act_for_anyone(current_user, body.user_name)
     try:
         meal = supabase.table(Tables.MEALS).select("participants").eq("id", meal_id).single().execute()
     except Exception as e:
@@ -91,7 +91,7 @@ def rsvp(meal_id: str, body: RsvpRequest, current_user: str = Depends(get_curren
 
 @router.post(MealRoutes.CANCEL_RSVP, status_code=status.HTTP_204_NO_CONTENT)
 def cancel_rsvp(meal_id: str, body: RsvpRequest, current_user: str = Depends(get_current_user)) -> None:
-    user_name = act_as(current_user, body.user_name)
+    user_name = act_for_anyone(current_user, body.user_name)
     try:
         meal = supabase.table(Tables.MEALS).select("participants").eq("id", meal_id).single().execute()
     except Exception as e:

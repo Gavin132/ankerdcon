@@ -44,8 +44,8 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
   The admin quick upload is the exception: it also takes videos (MP4, MOV, WebM) up to
   80 MB, in a request of up to 90 MB.
 - **Who is "you":** the profile the token resolves to. Endpoints that take a name
-  (RSVP, claim a seat, `paid_by`) pass it through `act_as`: members can only name
-  themselves, admins anyone. See [acting-for-others.md](acting-for-others.md).
+  (RSVP, claim a seat, `paid_by`) pass it through `act_for_anyone` (members may sign anyone up) or, for
+  things that belong to one person such as `paid_by`, `act_as` (only yourself, admins anyone). See [acting-for-others.md](acting-for-others.md).
 - **Health:** `GET /health` (public) returns `{"status": "ok"}`. Use it for
   monitoring.
 

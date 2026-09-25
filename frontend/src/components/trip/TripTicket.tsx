@@ -165,7 +165,7 @@ export function TripTicket({
             initial={justJoined ? { scale: 1.8, rotate: -24, opacity: 0 } : false}
             animate={{ scale: 1, rotate: -12, opacity: 1 }}
             transition={{ type: "spring", stiffness: 520, damping: 22 }}
-            className={`pointer-events-none shrink-0 rounded-lg border-[2.5px] bg-surface/80 px-2 pb-0.5 pt-1 text-center font-display text-[18px] font-black uppercase leading-[0.9] md:absolute md:right-4 md:top-[130px] md:text-[22px] ${
+            className={`pointer-events-none shrink-0 rounded-lg border-[2.5px] bg-surface/80 px-2 pb-0.5 pt-1 text-center font-display text-[18px] font-black uppercase leading-[0.9] md:mr-1 md:mt-auto md:self-end md:text-[22px] ${
               going ? "border-brand-text text-brand-text" : "border-ink-3 text-ink-3"
             }`}
           >

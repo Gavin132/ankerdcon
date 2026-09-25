@@ -6,7 +6,7 @@ import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
 import { UserAvatar } from "../common/UserAvatar";
 import { useRides, useClaimSeat } from "../../hooks/useRides";
-import { useUsers, useActingPermissions } from "../../hooks/useUsers";
+import { useUsers } from "../../hooks/useUsers";
 import { useCalendar } from "../../hooks/useCalendar";
 import { toast } from "../../store/toast.store";
 import { rideLocationLabel, groupRidesByDay } from "../../utils/rides";
@@ -27,7 +27,6 @@ interface JoinRideModalProps {
 export function JoinRideModal({ open, onClose, event, initialDirection, onOfferInstead }: JoinRideModalProps) {
   const { data: rides = [] } = useRides();
   const { data: users = [] } = useUsers();
-  const { actable } = useActingPermissions();
   const { data: allEvents = [] } = useCalendar();
   const claimMutation = useClaimSeat();
 
@@ -222,7 +221,7 @@ export function JoinRideModal({ open, onClose, event, initialDirection, onOfferI
                                   <div className="space-y-2.5 border-t border-line px-3.5 pb-3.5 pt-3">
                                     <NamePicker
                                       multiple
-                                      options={actable(availableToJoin)}
+                                      options={availableToJoin}
                                       value={joinNames}
                                       onChange={setJoinNames}
                                       maxSelect={ride.seats_left}

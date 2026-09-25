@@ -77,7 +77,7 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
   driver, seats, a departure time, a start and end location and optional parking
   info. Public transport has no seats.
 - The driver counts as a passenger; "seats" are the seats for others. Claiming and
-  leaving a seat use [`act_as`](acting-for-others.md).
+  leaving a seat work for anyone, see [acting-for-others.md](acting-for-others.md).
 - **"Ik rijd"** on Heen/Terug becomes **"Rit verwijderen"** once you already drive
   that direction that day. It asks to confirm and warns when others have joined.
   `DELETE /api/rides/{id}` is for the driver or an admin.

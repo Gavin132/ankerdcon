@@ -4,7 +4,7 @@ import { Car, UserCheck, UserMinus, UtensilsCrossed } from "lucide-react";
 import { useMeals, useRsvpMeal, useCancelRsvp } from "../hooks/useMeals";
 import { useCalendar } from "../hooks/useCalendar";
 import { useRides } from "../hooks/useRides";
-import { useUsers, useActingPermissions } from "../hooks/useUsers";
+import { useUsers } from "../hooks/useUsers";
 import { useSmartBack } from "../hooks/useSmartBack";
 import { toast } from "../store/toast.store";
 import { routes } from "../config/routes";
@@ -28,7 +28,6 @@ export function MealDetailPage() {
   const { data: events = [] } = useCalendar();
   const { data: rides = [] } = useRides();
   const { data: users = [] } = useUsers();
-  const { actable } = useActingPermissions();
 
   const [rsvpOpen, setRsvpOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -194,7 +193,7 @@ export function MealDetailPage() {
         <div className="space-y-3">
           <NamePicker
             multiple
-            options={actable(userNames.filter((n) => !participants.includes(n)))}
+            options={userNames.filter((n) => !participants.includes(n))}
             value={rsvpNames}
             onChange={setRsvpNames}
             color="green"
@@ -226,7 +225,7 @@ export function MealDetailPage() {
         <div className="space-y-3">
           <NamePicker
             multiple
-            options={actable(participants)}
+            options={participants}
             value={cancelNames}
             onChange={setCancelNames}
             color="rose"

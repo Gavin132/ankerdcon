@@ -27,7 +27,6 @@ import { exportRideToIcs } from "../../utils/ics";
 import { getRideStatus } from "../../utils/rides";
 import { toast } from "../../store/toast.store";
 import type { Meal, Ride, User } from "../../types";
-import { useActingPermissions } from "../../hooks/useUsers";
 
 interface Props {
   ride: Ride;
@@ -43,7 +42,6 @@ export function RestaurantDetailActions({
   linkedMeal,
 }: Props) {
   const [driverOpen, setDriverOpen] = useState(false);
-  const { actable, canActFor } = useActingPermissions();
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [assignPersonOpen, setAssignPersonOpen] = useState(false);
   const [driverName, setDriverName] = useState("");
@@ -304,7 +302,7 @@ export function RestaurantDetailActions({
                     <UserAvatar name={name} className="h-6 w-6 shrink-0 text-[8px] !border-0" />
                     <span className="truncate text-sm font-semibold text-ink">{name}</span>
                   </div>
-                  {canAct && drivers.length > 0 && canActFor(name) && (
+                  {canAct && drivers.length > 0 && (
                     <button
                       type="button"
                       onClick={() => {
@@ -355,7 +353,7 @@ export function RestaurantDetailActions({
         }
       >
         <div className="space-y-4">
-          <NamePicker options={actable(userNames)} value={driverName} onChange={setDriverName} color="sky" />
+          <NamePicker options={userNames} value={driverName} onChange={setDriverName} color="sky" />
           <div>
             <label className="section-label mb-2 block">Totaal aantal plekken in je auto</label>
             <div className="flex gap-2">
@@ -397,7 +395,7 @@ export function RestaurantDetailActions({
           </Button>
         }
       >
-        <NamePicker options={actable(allParticipants)} value={leaveName} onChange={setLeaveName} color="rose" />
+        <NamePicker options={allParticipants} value={leaveName} onChange={setLeaveName} color="rose" />
       </TripSheet>
 
       {/* Wijs toe */}

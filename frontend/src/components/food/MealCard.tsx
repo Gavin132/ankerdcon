@@ -21,7 +21,7 @@ import { NamePicker } from "../common/NamePicker";
 import { UserAvatar } from "../common/UserAvatar";
 import { UserProfilePopup, type AnchorRect } from "../common/UserProfilePopup";
 import { useRsvpMeal, useCancelRsvp } from "../../hooks/useMeals";
-import { useUsers, useActingPermissions } from "../../hooks/useUsers";
+import { useUsers } from "../../hooks/useUsers";
 import { useCalendar } from "../../hooks/useCalendar";
 import { useAuthStore } from "../../store/auth.store";
 import { formatDate, formatTime } from "../../utils/format";
@@ -37,7 +37,6 @@ interface MealCardProps {
 }
 
 export function MealCard({ meal, userNames }: MealCardProps) {
-  const { actable } = useActingPermissions();
   const navigate = useNavigate();
   const [rsvpOpen, setRsvpOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -265,7 +264,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
         <div className="space-y-3">
           <NamePicker
             multiple
-            options={actable(userNames.filter((n) => !safeParticipants.includes(n)))}
+            options={userNames.filter((n) => !safeParticipants.includes(n))}
             value={rsvpNames}
             onChange={setRsvpNames}
             color="green"
@@ -285,7 +284,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
         description={meal.meal_name}
       >
         <div className="space-y-3">
-          <NamePicker multiple options={actable(safeParticipants)} value={cancelNames} onChange={setCancelNames} color="rose" />
+          <NamePicker multiple options={safeParticipants} value={cancelNames} onChange={setCancelNames} color="rose" />
           <Button variant="danger" onClick={onCancel} loading={cancelMutation.isPending} className="w-full" disabled={cancelNames.length === 0}>
             <UserMinus size={15} />
             {cancelNames.length === 0 ? "Selecteer een naam" : cancelNames.length === 1 ? `${cancelNames[0]} afmelden` : `${cancelNames.length} personen afmelden`}

@@ -64,7 +64,7 @@ Everything that is not "any signed-in member may do this" is a line in a router.
 | --- | --- | --- |
 | member | `get_current_user` | any whitelisted, active member |
 | admin | `get_admin_user` | additionally `profiles.is_admin`, read from the database (never from the token) |
-| acting for someone | `act_as(current_user, name)` | members may only name themselves (or a former name of theirs); admins may name anyone. See [acting-for-others.md](acting-for-others.md). |
+| acting for someone | `act_as` / `act_for_anyone` | sign-ups (meals, seats, trip days, hotel rooms) may name anyone; `paid_by`, location pings and cosplays only yourself (admins anyone). See [acting-for-others.md](acting-for-others.md). |
 | creator or admin | `require_owner_or_admin` | deleting things you made |
 | involved party | in the router | a settlement can be confirmed by its receiver, withdrawn by either side |
 

@@ -26,7 +26,8 @@ export function useCurrentUser(options?: { enabled?: boolean }) {
 
 /** Who the signed-in user may act for: everyone for an admin, only
  * themselves otherwise. Mirrors act_as() on the backend, so a name picker
- * never offers a name the API would refuse. */
+ * never offers a name the API would refuse. Only for what belongs to one
+ * person (paid by, location pings, cosplays); sign-ups accept anyone. */
 export function useActingPermissions() {
   const { data: me } = useCurrentUser();
   const canActFor = (name: string) => !!me && (me.is_admin || name === me.name);

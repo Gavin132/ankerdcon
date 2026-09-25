@@ -6,6 +6,16 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- **Anyone can sign others up** for meals, rides, restaurant cars, trip days and hotel
+  rooms: "Iemand aanmelden" now works for every member, and the name pickers offer all
+  names. Who paid, location pings and cosplays stay with their owner.
+
+### Fixed
+
+- On the trip ticket, the "Je gaat mee" stamp no longer sits on top of "Iemand aanmelden".
+
 ---
 
 ## [2.0.0] - 2026-09-25
