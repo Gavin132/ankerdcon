@@ -69,7 +69,7 @@ def create_meal(
 
 @router.post(MealRoutes.RSVP, status_code=status.HTTP_204_NO_CONTENT)
 def rsvp(meal_id: str, body: RsvpRequest, current_user: str = Depends(get_current_user)) -> None:
-    user_name = act_for_anyone(current_user, body.user_name)
+    user_name = act_for_anyone(current_user, body.user_name, adding=True)
     try:
         meal = supabase.table(Tables.MEALS).select("participants").eq("id", meal_id).single().execute()
     except Exception as e:

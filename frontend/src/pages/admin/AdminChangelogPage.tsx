@@ -7,6 +7,7 @@ import {
   useDeleteChangelogEntry,
 } from "../../hooks/useChangelog";
 import { AdminDrawer } from "./AdminDrawer";
+import { toDateKey } from "../../utils/date";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
@@ -17,7 +18,7 @@ import { toast } from "../../store/toast.store";
 import type { ChangelogEntry } from "../../types";
 
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return toDateKey(new Date());
 }
 
 // ── Drawer (create / edit) ──────────────────────────────────────────────────────

@@ -181,7 +181,7 @@ def list_events(_: str = Depends(get_current_user)) -> list[CalendarEvent]:
 def rsvp_event(event_id: str, body: CalendarRsvpRequest, current_user: str = Depends(get_current_user)) -> None:
     """Add a user to the participants array for this specific day only.
     `event_id` is an event_days id (see _load_calendar_rows)."""
-    user_name = act_for_anyone(current_user, body.user_name)
+    user_name = act_for_anyone(current_user, body.user_name, adding=True)
     try:
         resp = supabase.table(Tables.EVENT_DAYS).select("participants").eq("id", event_id).execute()
     except Exception as e:
@@ -272,7 +272,7 @@ def create_hotel_room(
     data = {k: v for k, v in body.model_dump().items() if v is not None}
     data["event_id"] = group_key
     # Same rule as assigning people to a room: anyone may be put in.
-    data["occupants"] = [act_for_anyone(current_user, name) for name in body.occupants]
+    data["occupants"] = [act_for_anyone(current_user, name, adding=True) for name in body.occupants]
     try:
         resp = supabase.table(Tables.HOTEL_ROOMS).insert(data).execute()
         return resp.data[0]
@@ -314,7 +314,7 @@ def assign_hotel_room(
     body: HotelRoomAssignRequest,
     current_user: str = Depends(get_current_user),
 ) -> None:
-    user_names = [act_for_anyone(current_user, name) for name in body.user_names]
+    user_names = [act_for_anyone(current_user, name, adding=True) for name in body.user_names]
     try:
         resp = supabase.table(Tables.HOTEL_ROOMS).select("occupants, capacity").eq("id", room_id).execute()
     except Exception as e:

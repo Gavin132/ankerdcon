@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { UpcomingEventCard, type EventUrgency } from "./UpcomingEventCard";
 import { parseEventDate } from "../../utils/date";
+import { getNow } from "../../store/time.store";
 import { formatDateRange, type CalendarItem } from "../../utils/multiDay";
 import type { CalendarEvent, Meal, User } from "../../types";
 import type { AnchorRect } from "../common/UserProfilePopup";
@@ -18,7 +19,7 @@ interface UpcomingEventsCarouselProps {
 }
 
 function daysUntil(date: Date): number {
-  return Math.max(0, Math.ceil((date.getTime() - Date.now()) / 86_400_000));
+  return Math.max(0, Math.ceil((date.getTime() - getNow().getTime()) / 86_400_000));
 }
 
 function urgencyFor(days: number): EventUrgency {

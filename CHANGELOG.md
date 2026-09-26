@@ -33,6 +33,14 @@ All notable changes to Ankerd Con are documented here.
 
 ### Fixed
 
+- **Event reminders (a week before, the day before, the day itself) were never sent**: the daily
+  job crashed on every event. They work again, and they and the ticket-sale reminders now go by
+  Dutch time instead of the server's (UTC), so a ticket sale is announced when it opens and not two
+  hours late. A sale that opened long ago is no longer announced.
+- Signing someone up (meal, ride, restaurant car, trip day, hotel room) now needs a name that
+  belongs to a member, so a made-up name can no longer fill a ride or a room.
+- A new expense's default date no longer flips to yesterday between midnight and 02:00, and
+  the Hub's countdown and the changelog's default date follow the app's clock and Dutch date.
 - Closing the Vervoer sheet while making a ride no longer leaves it on that form: it reopens on
   the ride list.
 - The "add a room" and "rooms in bulk" forms opened behind the Hotel sheet. They are now sheets

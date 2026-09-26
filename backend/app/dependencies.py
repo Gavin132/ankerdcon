@@ -641,12 +641,28 @@ def act_as(current_user: str, requested: str | None) -> str:
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_NOT_YOURSELF)
 
 
-def act_for_anyone(current_user: str, requested: str | None) -> str:
+def act_for_anyone(current_user: str, requested: str | None, *, adding: bool = False) -> str:
     """The name an action is performed for, where members may sign up anyone:
     meals, ride seats, restaurant cars, trip days and hotel rooms. Things that
     belong to one person (who paid, location pings, cosplays) still go through
-    act_as. See docs/acting-for-others.md."""
-    return (requested or "").strip() or current_user
+    act_as. See docs/acting-for-others.md.
+
+    `adding` is for actions that put a name on a list: it has to be a member,
+    so nobody can fill a ride or a room with made-up names. Taking a name off
+    a list accepts any name, so an entry left by someone who was renamed or
+    removed can still be cleared."""
+    name = (requested or "").strip() or current_user
+    if adding and name != current_user and not _profile_exists(name):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Onbekend lid. Kies een naam uit de lijst.")
+    return name
+
+
+def _profile_exists(name: str) -> bool:
+    try:
+        return bool(supabase.table("profiles").select("id").eq("name", name).limit(1).execute().data)
+    except Exception as e:
+        logger.error("Member lookup failed for %r: %s", name, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Databasefout. Probeer het opnieuw.")
 
 
 def _is_own_former_name(current_user: str, name: str) -> bool:

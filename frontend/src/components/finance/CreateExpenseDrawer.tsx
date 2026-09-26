@@ -11,6 +11,7 @@ import { useCalendar } from "../../hooks/useCalendar";
 import { UserAvatar } from "../common/UserAvatar";
 import { useCreateExpense } from "../../hooks/useExpenses";
 import { useUsers, useActingPermissions } from "../../hooks/useUsers";
+import { todayKey } from "../../utils/date";
 import { formatAmount } from "../../utils/format";
 import { closestEventId } from "../../utils/closestEvent";
 import { toast } from "../../store/toast.store";
@@ -82,7 +83,7 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      date:     new Date().toISOString().split("T")[0],
+      date:     todayKey(),
       currency: "EUR",
       paid_by:  me ?? "",
       linked_event_id: defaultEventId ?? "",
@@ -146,7 +147,7 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
 
   function handleClose() {
     onClose();
-    reset({ date: new Date().toISOString().split("T")[0], currency: "EUR", paid_by: me ?? "", linked_event_id: "" });
+    reset({ date: todayKey(), currency: "EUR", paid_by: me ?? "", linked_event_id: "" });
     setSplitMode("gelijk");
     setSplitParticipants([]);
     setFixedAmountStr("");

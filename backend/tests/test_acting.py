@@ -21,3 +21,17 @@ def test_things_that_belong_to_one_person_stay_restricted(monkeypatch):
     with pytest.raises(HTTPException) as e:
         act_as("Sam", "Alex")
     assert e.value.status_code == 403
+
+
+def test_adding_someone_needs_a_real_member(monkeypatch):
+    monkeypatch.setattr(dependencies, "_profile_exists", lambda name: name == "Alex")
+    assert act_for_anyone("Sam", "Alex", adding=True) == "Alex"
+    assert act_for_anyone("Sam", None, adding=True) == "Sam"  # yourself needs no lookup
+    with pytest.raises(HTTPException) as e:
+        act_for_anyone("Sam", "Nobody Real", adding=True)
+    assert e.value.status_code == 400
+
+
+def test_taking_a_name_off_accepts_any_name(monkeypatch):
+    monkeypatch.setattr(dependencies, "_profile_exists", lambda name: False)
+    assert act_for_anyone("Sam", "Renamed Person") == "Renamed Person"

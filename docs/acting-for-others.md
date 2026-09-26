@@ -18,6 +18,8 @@ is described at the bottom, in case it needs to come back.
     when none is given. Used for the sign-ups above: meals (RSVP, cancel), rides (claim or
     leave a seat, restaurant drivers and assignments), trip days (RSVP, leave) and hotel
     rooms (create with occupants, assign, leave).
+  Adding a name (as opposed to taking one off) must be a member's name, checked against the
+    profiles, so nobody can fill a ride or a room with made-up names.
   - `act_as(current_user, requested)` is the strict one: your own name (or a former name
     of yours that no other profile uses), or anyone for an admin. Used for `paid_by` on an
     expense, location pings, creating a cosplay and the driver of a new ride.

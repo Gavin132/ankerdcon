@@ -103,7 +103,7 @@ def delete_ride(ride_id: str, current_user: str = Depends(get_current_user)) -> 
 
 @router.post(RideRoutes.CLAIM, response_model=Ride)
 def claim_seat(ride_id: str, body: ClaimSeatRequest, current_user: str = Depends(get_current_user)) -> Ride:
-    user_name = act_for_anyone(current_user, body.user_name)
+    user_name = act_for_anyone(current_user, body.user_name, adding=True)
     row = _get_ride_or_404(ride_id, "passengers, total_seats")
     passengers = row.get("passengers") or []
 
@@ -153,7 +153,7 @@ def leave_seat(ride_id: str, body: ClaimSeatRequest, current_user: str = Depends
 
 @router.post(RideRoutes.RESTAURANT_DRIVER, status_code=status.HTTP_204_NO_CONTENT)
 def add_restaurant_driver(ride_id: str, body: RestaurantDriverRequest, current_user: str = Depends(get_current_user)) -> None:
-    user_name = act_for_anyone(current_user, body.user_name)
+    user_name = act_for_anyone(current_user, body.user_name, adding=True)
     row = _get_ride_or_404(ride_id, "restaurant_drivers")
     drivers = row.get("restaurant_drivers") or []
 
@@ -182,7 +182,7 @@ def leave_restaurant_driver(ride_id: str, body: LeaveRestaurantDriverRequest, cu
 
 @router.post(RideRoutes.RESTAURANT_DRIVER_ASSIGN, status_code=status.HTTP_204_NO_CONTENT)
 def assign_to_driver(ride_id: str, body: RestaurantAssignRequest, current_user: str = Depends(get_current_user)) -> None:
-    user_name = act_for_anyone(current_user, body.user_name)
+    user_name = act_for_anyone(current_user, body.user_name, adding=True)
     row = _get_ride_or_404(ride_id, "restaurant_drivers")
     drivers = row.get("restaurant_drivers") or []
 

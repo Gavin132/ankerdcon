@@ -78,7 +78,7 @@ Levels to know:
 
 ## Routine chores
 
-- Keep an eye on the reminder DMs around trips (daily 08:00, ticket checks every 15 minutes).
+- Keep an eye on the reminder DMs around trips (daily 08:00 Dutch time, ticket checks every 15 minutes; both use Europe/Amsterdam, not the container's UTC).
 - After a trip, glance at Admin → CDN for files that should not be there.
 - When a member leaves: deactivate or delete them under Admin → Gebruikers and remove them from
   the whitelist.
