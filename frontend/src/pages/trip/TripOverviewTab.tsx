@@ -1,6 +1,7 @@
-import { Fragment, useState, type ReactNode } from "react";
+import { Fragment, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { useHotelRooms } from "../../hooks/useCalendar";
+import { useCalendar, useHotelRooms } from "../../hooks/useCalendar";
+import { useSwipe } from "../../hooks/useSwipe";
 import { useUsers } from "../../hooks/useUsers";
 import { useMeals } from "../../hooks/useMeals";
 import { useRides } from "../../hooks/useRides";
@@ -15,13 +16,14 @@ import { TripTicket } from "../../components/trip/TripTicket";
 import { HeaderAction } from "../../components/layout/HeaderAction";
 import { ShareButton } from "../../components/common/ShareButton";
 import { TripEditButton } from "../../components/trip/TripEditButton";
+import { TripSwitcher, TripSwitcherButton } from "../../components/trip/TripSwitcher";
 import { TripRsvpModal } from "../../components/calendar/TripRsvpModal";
 import { StoryViewer } from "../../components/story/StoryViewer";
 import {
   CosplayTile, ExpensesTile, FoodTile, PhotosTile, PracticalSheet, PracticalTile, RoomsTile, TransportTile, WeatherSheet, WeatherTile,
   hasPracticalInfo,
 } from "../../components/trip/TripTiles";
-import { tripInfo, tripOutliers, tripPhase, tripUploadDay, type TripDay, type TripPhase } from "../../utils/trips";
+import { buildTrips, tripInfo, tripOutliers, tripPhase, tripUploadDay, type TripDay, type TripPhase } from "../../utils/trips";
 import { useTrip } from "./tripContext";
 import { TripTransportSheet } from "./TripTransportTab";
 import { TripCosplaySheet } from "./TripCosplayTab";
@@ -61,6 +63,24 @@ export function TripOverviewTab() {
   const [weatherOpen, setWeatherOpen] = useState(false);
   const [practicalOpen, setPracticalOpen] = useState(false);
   const [viewDayId, setViewDayId] = useState<string | null>(null);
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+
+  // Swipe sideways to the next or previous trip (chronological, like the switcher's list).
+  const pageRef = useRef<HTMLDivElement>(null);
+  const { data: calendar = [] } = useCalendar();
+  const allTrips = buildTrips(calendar);
+  const at = allTrips.findIndex((t) => t.id === trip.id);
+  const goToTrip = (index: number) => {
+    const target = allTrips[index];
+    if (!target) return;
+    navigate(routes.trip.view(target.id));
+    window.scrollTo(0, 0);
+  };
+  useSwipe(pageRef, {
+    enabled: at >= 0 && activeTab === "overview",
+    onLeft: () => goToTrip(at + 1),
+    onRight: () => goToTrip(at - 1),
+  });
 
   /** Closes whichever sheet the URL currently has open, back to plain Overzicht. */
   const closeSheet = () => navigate(routes.trip.view(trip.id, "overview", dayId ?? undefined), { replace: true });
@@ -106,8 +126,9 @@ export function TripOverviewTab() {
   };
 
   return (
-    <div className="space-y-4">
+    <div ref={pageRef} className="space-y-4">
       <HeaderAction>
+        <TripSwitcherButton iconOnly onClick={() => setSwitcherOpen(true)} />
         <TripEditButton trip={trip} />
         <ShareButton onClick={onShare} />
       </HeaderAction>
@@ -135,6 +156,9 @@ export function TripOverviewTab() {
       <div className="grid grid-flow-dense grid-cols-2 gap-3 lg:grid-cols-4">
         {TILE_ORDER[phase].map((id) => tiles[id] && <Fragment key={id}>{tiles[id]}</Fragment>)}
       </div>
+
+      <TripSwitcherButton onClick={() => setSwitcherOpen(true)} />
+      <TripSwitcher open={switcherOpen} onClose={() => setSwitcherOpen(false)} currentId={trip.id} myNames={myNames} />
 
       <TripRsvpModal
         trip={manageOpen ? trip : null}

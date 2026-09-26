@@ -41,6 +41,12 @@ export const UPLOAD_TIMEOUT_MS = 60_000;
 /** A video from a phone can be tens of MB; Cloudflare itself allows a request 100 s. */
 export const VIDEO_UPLOAD_TIMEOUT_MS = 100_000;
 
+/** The backend's "this account may not use the app" 403 (not on the whitelist, deactivated),
+ * as opposed to a 403 about one action. See `_no_access` in backend/app/dependencies.py. */
+function isAccessDenied(error: unknown): boolean {
+  return axios.isAxiosError(error) && error.response?.status === 403 && error.response.headers?.["x-access"] === "denied";
+}
+
 export const apiClient = axios.create({
   baseURL: env.API_BASE_URL,
   timeout: REQUEST_TIMEOUT_MS,
@@ -112,11 +118,14 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // 2. On 403, retry once after a short delay before treating as forbidden.
+    // 2. On an access-denied 403, retry once after a short delay before treating as forbidden.
     //    Guards against transient backend/DB blips that briefly fail the allowlist check.
+    //    Only the backend's "this account may not use the app" 403 counts (marked with
+    //    X-Access: denied); a 403 that says "not your meal" or "admins only" is an
+    //    ordinary error and must not sign anyone out.
     if (
       axios.isAxiosError(error) &&
-      error.response?.status === 403 &&
+      isAccessDenied(error) &&
       !originalRequest._retry403 &&
       useAuthStore.getState().isAuthenticated
     ) {
@@ -137,7 +146,7 @@ apiClient.interceptors.response.use(
         error.response?.data?.message ??
         error.message;
 
-      if (status === 403 && useAuthStore.getState().isAuthenticated) {
+      if (isAccessDenied(error) && useAuthStore.getState().isAuthenticated) {
         useAuthStore.getState().setForbidden();
       }
 

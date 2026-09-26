@@ -45,6 +45,15 @@ _CLOCK_LEEWAY_SECONDS = 30
 _AUTH_FAILED = "Authenticatie mislukt."
 _ACCESS_DENIED = "Toegang geweigerd. Neem contact op met een beheerder."
 _DEACTIVATED = "Je account is gedeactiveerd. Neem contact op met een beheerder."
+
+# Sent with the 403 that means "this account may not use the app at all" (not on
+# the whitelist, deactivated). The frontend shows its "Geen toegang" screen only
+# for these; any other 403 ("not your meal", "admins only") is an ordinary error.
+ACCESS_DENIED_HEADER = {"X-Access": "denied"}
+
+
+def _no_access(detail: str) -> HTTPException:
+    return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail, headers=ACCESS_DENIED_HEADER)
 _TRY_AGAIN = "Kon niet controleren of je toegang hebt. Probeer het opnieuw."
 _NOT_YOURSELF = "Je kunt dit alleen voor jezelf doen."
 
@@ -346,7 +355,7 @@ def _finalize_returning_user(profile_row: dict, user_id: str, settings: Settings
     profile_name = profile_row["name"]
 
     if profile_row.get("is_active") is False:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_DEACTIVATED)
+        raise _no_access(_DEACTIVATED)
 
     if profile_row.get("is_first_login"):
         try:
@@ -439,7 +448,7 @@ def _resolve_discord_user(identity: VerifiedIdentity, user_id: str, settings: Se
         # Not linked to any profile yet — only allowlisted Discord accounts get in.
         if not _is_whitelisted("discord_id", discord_id):
             logger.info("Auth: discord_id %s not in whitelist", discord_id)
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_ACCESS_DENIED)
+            raise _no_access(_ACCESS_DENIED)
 
         # An admin may have created a placeholder profile for this person ahead
         # of time (Admin › Gebruikers). It's only linked to a whitelisted
@@ -466,7 +475,7 @@ def _resolve_discord_user(identity: VerifiedIdentity, user_id: str, settings: Se
             profile_name = profile_row["name"]
 
     if profile_row.get("is_active") is False:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_DEACTIVATED)
+        raise _no_access(_DEACTIVATED)
 
     if profile_row.get("is_first_login"):
         try:
@@ -582,7 +591,7 @@ def _resolve_email_user(identity: VerifiedIdentity, user_id: str, settings: Sett
     if profile_name is None:
         if not _is_whitelisted("email", email):
             logger.info("Auth: email %s not in whitelist", email)
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_ACCESS_DENIED)
+            raise _no_access(_ACCESS_DENIED)
         profile_row = _create_profile({
             "id": user_id,
             "name": _unique_profile_name(identity.email_display_name or email.split("@")[0]),
@@ -592,7 +601,7 @@ def _resolve_email_user(identity: VerifiedIdentity, user_id: str, settings: Sett
         profile_name = profile_row["name"]
 
     if profile_row.get("is_active") is False:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_DEACTIVATED)
+        raise _no_access(_DEACTIVATED)
 
     # No discord_id to send a welcome DM to — just clear the flag.
     if profile_row.get("is_first_login"):
@@ -614,8 +623,10 @@ def _is_admin(name: str) -> bool:
     try:
         resp = supabase.table("profiles").select("is_admin").eq("name", name).execute()
     except Exception as e:
+        # Not "not an admin": a database hiccup must not turn an admin's request
+        # into a refusal (which used to bounce them to the "Geen toegang" screen).
         logger.error("Admin check failed for %s: %s", name, e)
-        return False
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Databasefout. Probeer het opnieuw.")
     return bool(resp.data and resp.data[0].get("is_admin"))
 
 

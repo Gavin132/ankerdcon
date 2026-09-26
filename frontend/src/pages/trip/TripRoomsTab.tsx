@@ -358,13 +358,13 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className={`flex flex-col gap-3 rounded-[12px] bg-surface p-4 ${isMine ? "border-2 border-outline" : "border-1.5 border-line"}`}
+      className={`flex min-w-0 flex-col gap-3 rounded-[12px] bg-surface p-4 ${isMine ? "border-2 border-outline" : "border-1.5 border-line"}`}
     >
       {/* Header row: the room number, big */}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           {room.room_number ? (
-            <span className="block font-display text-[34px] font-extrabold uppercase leading-[0.95] text-ink">
+            <span className="block break-words font-display text-[34px] font-extrabold uppercase leading-[0.95] text-ink">
               {room.room_number}
             </span>
           ) : (
@@ -423,7 +423,7 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
 
       {/* Occupants: names below the number */}
       {room.occupants.length > 0 && (
-        <p className="text-[13px] leading-snug text-ink-2">
+        <p className="break-words text-[13px] leading-snug text-ink-2">
           {room.occupants.map((name, i) => {
             const displayName = resolveUser(name)?.name ?? name;
             return (
@@ -439,7 +439,7 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
       {/* Instructions */}
       {room.instructions && (
         <div className="rounded-lg bg-sunken px-3 py-2">
-          <p className={`text-xs leading-relaxed text-ink-2 ${!expanded ? "line-clamp-2" : ""}`}>
+          <p className={`break-words text-xs leading-relaxed text-ink-2 ${!expanded ? "line-clamp-2" : ""}`}>
             {room.instructions}
           </p>
           {room.instructions.length > 80 && (
@@ -590,7 +590,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
 
         {/* ── Room grid ─────────────────────────────────────────────── */}
         {isLoading ? (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="card-surface animate-pulse p-4">
                 <div className="mb-2 h-8 w-16 rounded bg-sunken" />
@@ -629,7 +629,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
           </div>
         ) : (
           <motion.div
-            className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-3"
+            className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2"
             variants={container}
             initial="hidden"
             animate="show"

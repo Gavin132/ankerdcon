@@ -118,7 +118,7 @@ export function TripTicket({
         )}
 
         <div className="mt-auto flex flex-wrap items-center gap-2.5">
-          <TripParticipants trip={trip} users={users} myNames={myNames} phase={phase}>
+          <TripParticipants trip={trip} users={users} myNames={myNames} phase={phase} onManage={onManage}>
           {participants.length > 0 && (
             <span className="flex -space-x-1.5">
               {participants.slice(0, 6).map((p) => {

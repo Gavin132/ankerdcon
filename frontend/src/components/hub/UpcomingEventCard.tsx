@@ -103,7 +103,9 @@ export function UpcomingEventCard({
   }
 
   return (
-    <div className="grid h-full overflow-hidden rounded-[14px] border-2 border-outline bg-surface sm:grid-cols-[minmax(0,1fr)_152px]">
+    // `relative`: the title link stretches over the whole card (its ::after), so tapping anywhere
+    // opens the event; the buttons inside sit above it (`relative z-10`) and keep their own action.
+    <div className="relative grid h-full overflow-hidden rounded-[14px] border-2 border-outline bg-surface sm:grid-cols-[minmax(0,1fr)_152px]">
       <div className="flex min-w-0 flex-col">
         {/* ── Cover ── */}
         <button
@@ -136,7 +138,11 @@ export function UpcomingEventCard({
 
         {/* ── Body ── */}
         <div className="flex flex-1 flex-col gap-4 p-4 sm:px-6 sm:py-5">
-          <button type="button" onClick={() => onNavigate(event.id)} className="group text-left">
+          <button
+            type="button"
+            onClick={() => onNavigate(event.id)}
+            className="group text-left after:absolute after:inset-0 after:z-0 after:content-['']"
+          >
             <h2 className="font-display text-[30px] font-black uppercase leading-[0.92] tracking-[0.01em] text-ink group-hover:underline decoration-2 underline-offset-4 sm:text-[38px]">
               {title}
             </h2>
@@ -161,7 +167,7 @@ export function UpcomingEventCard({
                     type="button"
                     onClick={() => onNavigate(dayEv.id)}
                     title={dayEv.event_name}
-                    className={`min-w-0 rounded-[10px] border-1.5 border-line px-1.5 py-2 text-center transition-colors hover:border-ink-3 ${
+                    className={`relative z-10 min-w-0 rounded-[10px] border-1.5 border-line px-1.5 py-2 text-center transition-colors hover:border-ink-3 ${
                       isTravelDay ? "bg-hatch-surface" : "bg-surface"
                     }`}
                   >
@@ -186,7 +192,7 @@ export function UpcomingEventCard({
               <button
                 type="button"
                 onClick={() => setParticipantsExpanded((v) => !v)}
-                className="flex items-center gap-2 text-left"
+                className="relative z-10 inline-flex items-center gap-2 text-left"
                 aria-expanded={participantsExpanded}
               >
                 <span className="flex -space-x-1.5">
@@ -209,7 +215,7 @@ export function UpcomingEventCard({
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
+                    className="pointer-events-none relative z-10 overflow-hidden"
                   >
                     <div className="flex flex-wrap gap-1.5 pt-2.5">
                       {participants.map((p) => {
@@ -224,7 +230,7 @@ export function UpcomingEventCard({
                               const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
                               onParticipantClick(u, { top: rect.top, left: rect.left, right: rect.right, height: rect.height });
                             }}
-                            className="inline-flex items-center gap-1.5 rounded-full border-1.5 border-line px-2 py-1 text-[12px] font-medium text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
+                            className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border-1.5 border-line px-2 py-1 text-[12px] font-medium text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
                           >
                             <UserAvatar name={name} user={u} className="h-4 w-4 text-[7px] !border-0" />
                             {name}
