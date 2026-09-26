@@ -58,6 +58,11 @@ Supabase account, because anyone can create one.
 
 ## Authorization
 
+A 403 that means **this account may not use the app** (not on the whitelist, deactivated) carries the
+header `X-Access: denied`; the frontend shows its "Geen toegang" screen only for that. Every other 403
+("admins only", "not yours") is an ordinary error, and a failed database lookup while checking admin
+rights answers 503, never 403.
+
 Everything that is not "any signed-in member may do this" is a line in a router.
 
 | Rule | Where | Meaning |

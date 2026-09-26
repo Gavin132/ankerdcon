@@ -33,6 +33,12 @@ All notable changes to Ankerd Con are documented here.
 
 ### Fixed
 
+- **An admin could be thrown out to the "Geen toegang" screen by a database hiccup**, for example
+  when opening the whitelist. The admin check treated a failed lookup as "not an admin", and the app
+  showed that screen for *any* 403, including "this is not your meal" or "admins only". Now a failed
+  lookup is a 503 (try again), and only the real "account not allowed" answers (not on the whitelist,
+  deactivated), which carry an `X-Access: denied` header, show that screen. Other refusals are just an
+  error message.
 - Signing up at the same moment as someone else (a meal, a ride seat, a trip day, a hotel room, a
   restaurant car) can no longer wipe out the other person's sign-up, or let two people take the
   last seat. The change is retried on the latest list instead (`app/core/atomic.py`).
