@@ -405,7 +405,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
 
     return (
       <div className="space-y-4">
-        <div className={`grid gap-4 ${directions.length === 3 ? "xl:grid-cols-3" : "xl:grid-cols-2"}`}>
+        <div className="grid gap-4">
           {directions.map((d) => renderDirectionGroup(d, dayRides, targetDayId))}
         </div>
         {past.length > 0 && (

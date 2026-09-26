@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight, Users } from "lucide-react";
+import { ChevronRight, UserPlus, Users } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { TripSheet } from "./TripSheet";
 import { routes } from "../../config/routes";
@@ -18,6 +18,8 @@ interface TripParticipantsProps {
   myNames: string[];
   /** A trip that's over lists who *were* there. */
   phase?: TripPhase;
+  /** Adds an "Iemand aanmelden" button to the list, which opens the sign-up form for other members. */
+  onManage?: () => void;
   /** What to show as the tap target — normally the avatar stack and "Jij en 3 anderen". */
   children: ReactNode;
 }
@@ -27,7 +29,7 @@ interface TripParticipantsProps {
  * trip, by name. A trip can have twenty people, and a face alone doesn't say
  * who someone is — especially a profile picture you don't recognise.
  */
-export function TripParticipants({ trip, users, myNames, phase, children }: TripParticipantsProps) {
+export function TripParticipants({ trip, users, myNames, phase, onManage, children }: TripParticipantsProps) {
   const [open, setOpen] = useState(false);
   const count = trip.participants.length;
 
@@ -45,7 +47,7 @@ export function TripParticipants({ trip, users, myNames, phase, children }: Trip
         {children}
         <ChevronRight size={14} className="shrink-0 text-ink-3" aria-hidden />
       </button>
-      <ParticipantsSheet open={open} onClose={() => setOpen(false)} trip={trip} users={users} myNames={myNames} phase={phase} />
+      <ParticipantsSheet open={open} onClose={() => setOpen(false)} trip={trip} users={users} myNames={myNames} phase={phase} onManage={onManage} />
     </>
   );
 }
@@ -57,6 +59,7 @@ function ParticipantsSheet({
   users,
   myNames,
   phase,
+  onManage,
 }: Omit<TripParticipantsProps, "children"> & { open: boolean; onClose: () => void }) {
   const isMine = (name: string) => myNames.includes(name);
   const multiDay = trip.days.length > 1;
@@ -78,6 +81,22 @@ function ParticipantsSheet({
       onClose={onClose}
       title={phase === "past" ? "Wie waren er" : "Wie gaan er mee"}
       subtitle={`${trip.title} · ${people.length} ${people.length === 1 ? "persoon" : "personen"}`}
+      footer={
+        onManage && (
+          <button
+            type="button"
+            onClick={() => {
+              // One sheet at a time: close this list, then open the sign-up form.
+              onClose();
+              onManage();
+            }}
+            className="btn-secondary flex w-full items-center justify-center gap-2 px-4 py-3 text-sm"
+          >
+            <UserPlus size={16} />
+            {phase === "past" ? "Aanmeldingen aanpassen" : "Iemand aanmelden"}
+          </button>
+        )
+      }
     >
       {people.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-12 text-center">

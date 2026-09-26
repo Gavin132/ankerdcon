@@ -15,6 +15,7 @@ import { TripTicket } from "../../components/trip/TripTicket";
 import { HeaderAction } from "../../components/layout/HeaderAction";
 import { ShareButton } from "../../components/common/ShareButton";
 import { TripEditButton } from "../../components/trip/TripEditButton";
+import { TripSwitcher, TripSwitcherButton } from "../../components/trip/TripSwitcher";
 import { TripRsvpModal } from "../../components/calendar/TripRsvpModal";
 import { StoryViewer } from "../../components/story/StoryViewer";
 import {
@@ -61,6 +62,7 @@ export function TripOverviewTab() {
   const [weatherOpen, setWeatherOpen] = useState(false);
   const [practicalOpen, setPracticalOpen] = useState(false);
   const [viewDayId, setViewDayId] = useState<string | null>(null);
+  const [switcherOpen, setSwitcherOpen] = useState(false);
 
   /** Closes whichever sheet the URL currently has open, back to plain Overzicht. */
   const closeSheet = () => navigate(routes.trip.view(trip.id, "overview", dayId ?? undefined), { replace: true });
@@ -108,6 +110,7 @@ export function TripOverviewTab() {
   return (
     <div className="space-y-4">
       <HeaderAction>
+        <TripSwitcherButton iconOnly onClick={() => setSwitcherOpen(true)} />
         <TripEditButton trip={trip} />
         <ShareButton onClick={onShare} />
       </HeaderAction>
@@ -135,6 +138,9 @@ export function TripOverviewTab() {
       <div className="grid grid-flow-dense grid-cols-2 gap-3 lg:grid-cols-4">
         {TILE_ORDER[phase].map((id) => tiles[id] && <Fragment key={id}>{tiles[id]}</Fragment>)}
       </div>
+
+      <TripSwitcherButton onClick={() => setSwitcherOpen(true)} />
+      <TripSwitcher open={switcherOpen} onClose={() => setSwitcherOpen(false)} currentId={trip.id} myNames={myNames} />
 
       <TripRsvpModal
         trip={manageOpen ? trip : null}

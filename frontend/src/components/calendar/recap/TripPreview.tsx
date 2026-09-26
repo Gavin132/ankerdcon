@@ -96,7 +96,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
         )}
 
         <div className="flex items-center gap-2.5">
-          <TripParticipants trip={trip} users={users} myNames={myNames}>
+          <TripParticipants trip={trip} users={users} myNames={myNames} onManage={onManage}>
           {names.length > 0 && (
             <span className="flex -space-x-1.5">
               {names.slice(0, 6).map((p) => {

@@ -6,30 +6,22 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+---
+
+## [2.0.1] - 2026-09-27
+
+Hotfixes after 2.0.
+
 ### Added
 
-- **Admins can delete files from Admin → CDN**, whoever uploaded them. Open a file and use the
-  bin; the story photo, cosplay image, banner or event cover that used it loses it too.
-- **Installation guide** (`docs/installation.md`): every `.env` value and where to find it
-  (Supabase, Discord, Google, MinIO), running in Docker or Portainer, the reverse proxy, and the
-  first login. Comes with a root `Dockerfile` (frontend and backend in one image) and a
-  `docker-compose.yml`.
-- **Admins get a pencil on event pages** (next to Share) that opens the event's edit form
-  right there.
+- **Other events from an event page:** a calendar button in the top bar and an "Andere evenementen"
+  button under the tiles open a list of every trip (current and upcoming first, then past ones), to
+  jump to another one without going through the Agenda.
+- "Iemand aanmelden" (or "Aanmeldingen aanpassen" after the trip) is also in the list of who is going.
 
 ### Changed
 
-- The Hotel sheet is ordered info, rooms, the "nog geen kamer" notice, then the room count with the
-  Bulk and Kamer buttons.
-- In the Hotel sheet, "N deelnemers hebben nog geen kamer" expands to show their names.
-- **Kamers is now Hotel.** The tile and sheet show the hotel's address, the stay (first to last
-  night), who arrives late or leaves early, the hotel notes (check-in and check-out times,
-  breakfast…) and then the rooms. The tile shows the address too.
-- **The admin panel uses the same bottom sheets as the rest of the app** instead of a
-  right-hand drawer, including the "unsaved changes" confirmation.
-- **Anyone can sign others up** for meals, rides, restaurant cars, trip days and hotel
-  rooms: "Iemand aanmelden" now works for every member, and the name pickers offer all
-  names. Who paid, location pings and cosplays stay with their owner.
+- On the Hub, the whole event card opens the event, not just its title and cover.
 
 ### Fixed
 
@@ -39,28 +31,15 @@ All notable changes to Ankerd Con are documented here.
   lookup is a 503 (try again), and only the real "account not allowed" answers (not on the whitelist,
   deactivated), which carry an `X-Access: denied` header, show that screen. Other refusals are just an
   error message.
-- Signing up at the same moment as someone else (a meal, a ride seat, a trip day, a hotel room, a
-  restaurant car) can no longer wipe out the other person's sign-up, or let two people take the
-  last seat. The change is retried on the latest list instead (`app/core/atomic.py`).
-- **Event reminders (a week before, the day before, the day itself) were never sent**: the daily
-  job crashed on every event. They work again, and they and the ticket-sale reminders now go by
-  Dutch time instead of the server's (UTC), so a ticket sale is announced when it opens and not two
-  hours late. A sale that opened long ago is no longer announced.
-- Signing someone up (meal, ride, restaurant car, trip day, hotel room) now needs a name that
-  belongs to a member, so a made-up name can no longer fill a ride or a room.
-- A new expense's default date no longer flips to yesterday between midnight and 02:00, and
-  the Hub's countdown and the changelog's default date follow the app's clock and Dutch date.
-- Closing the Vervoer sheet while making a ride no longer leaves it on that form: it reopens on
-  the ride list.
-- The "add a room" and "rooms in bulk" forms opened behind the Hotel sheet. They are now sheets
-  stacked on top of it, and profile popups opened from a sheet also appear above it.
-- The Eten tile no longer says "Straks 21:45" for a meal that is days away; it shows the day and
-  time (e.g. "zo 21:45") unless the meal is later today.
-- On the trip ticket, the "Je gaat mee" stamp no longer sits on top of "Iemand aanmelden".
+- The Hotel sheet's room cards no longer run out of the card on wide windows: the sheet is a fixed
+  width, but its grid used to switch to three columns from a wide *window*, so on a big screen the
+  cards were too narrow for their text (Edge, on a smaller window, was unaffected). Long names and
+  instructions also wrap. The Vervoer sheet had the same problem with its three columns; its
+  directions now stack.
 
 ---
 
-## [2.0.0] - 2026-09-25
+## [2.0.0] - 2026-09-27
 
 The first release since 1.5.0. The versions in between were never cut, so everything
 below shipped together.
@@ -125,6 +104,17 @@ below shipped together.
 - Event covers, badge images and profile banners are now stored in MinIO,
   next to story photos and cosplay images. Images uploaded earlier stay in
   Supabase Storage and keep working.
+- The Hotel sheet is ordered info, rooms, the "nog geen kamer" notice, then the room count with the
+  Bulk and Kamer buttons.
+- In the Hotel sheet, "N deelnemers hebben nog geen kamer" expands to show their names.
+- **Kamers is now Hotel.** The tile and sheet show the hotel's address, the stay (first to last
+  night), who arrives late or leaves early, the hotel notes (check-in and check-out times,
+  breakfast…) and then the rooms. The tile shows the address too.
+- **The admin panel uses the same bottom sheets as the rest of the app** instead of a
+  right-hand drawer, including the "unsaved changes" confirmation.
+- **Anyone can sign others up** for meals, rides, restaurant cars, trip days and hotel
+  rooms: "Iemand aanmelden" now works for every member, and the name pickers offer all
+  names. Who paid, location pings and cosplays stay with their owner.
 
 ### Added
 - **Voor jou** on the Hub lists everything you still need to arrange, and
@@ -174,6 +164,14 @@ below shipped together.
 - Uploaded images are cached by browsers for a year, so a photo already seen
   never downloads again.
 - Credits (ALFA, RG Digital, Ankerd) in Instellingen.
+- **Admins can delete files from Admin → CDN**, whoever uploaded them. Open a file and use the
+  bin; the story photo, cosplay image, banner or event cover that used it loses it too.
+- **Installation guide** (`docs/installation.md`): every `.env` value and where to find it
+  (Supabase, Discord, Google, MinIO), running in Docker or Portainer, the reverse proxy, and the
+  first login. Comes with a root `Dockerfile` (frontend and backend in one image) and a
+  `docker-compose.yml`.
+- **Admins get a pencil on event pages** (next to Share) that opens the event's edit form
+  right there.
 
 ### Removed
 - The payment references ("ANKERD-014", "AFR-003"): nothing used them (migration
@@ -265,6 +263,24 @@ below shipped together.
   longer says "optioneel".
 
 ---
+- Signing up at the same moment as someone else (a meal, a ride seat, a trip day, a hotel room, a
+  restaurant car) can no longer wipe out the other person's sign-up, or let two people take the
+  last seat. The change is retried on the latest list instead (`app/core/atomic.py`).
+- **Event reminders (a week before, the day before, the day itself) were never sent**: the daily
+  job crashed on every event. They work again, and they and the ticket-sale reminders now go by
+  Dutch time instead of the server's (UTC), so a ticket sale is announced when it opens and not two
+  hours late. A sale that opened long ago is no longer announced.
+- Signing someone up (meal, ride, restaurant car, trip day, hotel room) now needs a name that
+  belongs to a member, so a made-up name can no longer fill a ride or a room.
+- A new expense's default date no longer flips to yesterday between midnight and 02:00, and
+  the Hub's countdown and the changelog's default date follow the app's clock and Dutch date.
+- Closing the Vervoer sheet while making a ride no longer leaves it on that form: it reopens on
+  the ride list.
+- The "add a room" and "rooms in bulk" forms opened behind the Hotel sheet. They are now sheets
+  stacked on top of it, and profile popups opened from a sheet also appear above it.
+- The Eten tile no longer says "Straks 21:45" for a meal that is days away; it shows the day and
+  time (e.g. "zo 21:45") unless the meal is later today.
+- On the trip ticket, the "Je gaat mee" stamp no longer sits on top of "Iemand aanmelden".
 
 ## [1.5.0] - 2026-09-02
 
