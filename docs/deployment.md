@@ -70,8 +70,11 @@ because the frontend is served from the same origin as the API.
 
 ## Deploying
 
-A code change only goes live after the **image is rebuilt**. Restarting the container starts
-the old image again. The usual flow with the clone step in Portainer:
+The full stacks are in [portainer-stacks.md](portainer-stacks.md). A code change only goes live
+when the **whole stack is updated** (Portainer → the stack → *Update the stack*), because that re-runs the
+clone step and the frontend build. Restarting only the backend container starts `uvicorn` on what is already
+built. (With the root `Dockerfile` instead of the three-container stack, it is the image that has to be
+rebuilt.) The clone step in the beta stack:
 
 ```yaml
 services:
@@ -92,14 +95,14 @@ services:
   checkout match GitHub; untracked files such as a `.env` are left alone. Do not edit tracked
   files in the volume.
 - Set `GIT_BRANCH` to `development` for the beta stack and `main` for live. The default is `main`.
-- After the clone step, the stack has to **build the frontend and the image** from that checkout
-  (see [What gets built](#what-gets-built)) and start the app container.
+- After the clone step, the stack builds the frontend from that checkout and starts the backend
+  from it (see [portainer-stacks.md](portainer-stacks.md#how-a-stack-works)).
 
 Steps for a normal change:
 
 1. Merge or push to the branch the stack follows.
 2. Run any new migrations that must go *before* the code (see below).
-3. Redeploy the stack **with a rebuild**.
+3. Update the stack (re-runs the clone and the frontend build; a plain restart does not).
 4. Run any migrations that must go *after* the code.
 5. Open the site, log in, and look at the thing you changed. A hard refresh drops a stale service
    worker.

@@ -60,7 +60,7 @@ Levels to know:
 | Half the app loads, the rest 404s; or the app will not start after a deploy | a stale `index.html` naming chunks the new build no longer has | it is `no-cache`, so a reload fixes it; if a service worker keeps the old shell, unregister it. Check the backend really serves the new `dist`. |
 | Uploads spin, then fail; many 401 then 524 | an upload hung and blocked the API, or MinIO is unreachable | check MinIO first. The API times MinIO calls out after 5 and 15 seconds and runs uploads in a worker thread, so one hung upload can no longer freeze the rest. |
 | Saving something fails with a foreign-key or not-null error in the log | a migration has not been run, or an old backend is still answering | check [database.md](database.md#checking-what-has-been-applied), and that only one backend runs |
-| A change is deployed but behaves like the old version | the container was restarted without a rebuild | rebuild the image ([deployment.md](deployment.md#deploying)) |
+| A change is deployed but behaves like the old version | the backend container was only restarted, so the clone and the frontend build did not run again | update the whole stack ([deployment.md](deployment.md#deploying), [portainer-stacks.md](portainer-stacks.md)) |
 | Discord messages arrive twice | two backends share one database (each runs the scheduler) | stop the extra one, often a local one pointed at production |
 | Everyone gets logged out, or "Kan de server niet bereiken" | Supabase or the connection to it is down | the backend answers 503, not 401, and the app retries. Check the Supabase status page. |
 | `/api/admin/cdn` shows an error | MinIO is down, or its key may not list the bucket | see [minio-setup.md](minio-setup.md) |

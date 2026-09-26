@@ -29,10 +29,14 @@ what has already been applied.
 - [ ] `migration_v2.27_drop_payment_refs.sql` — **after** the new backend is
       running; the old backend still reads the column it drops.
 - [ ] Try the new root `Dockerfile` and `docker-compose.yml` (docs/installation.md) once on a
-      throwaway machine: they were written but never run. Then paste the real Portainer stack
-      into the "Your current stack" section of that page, secrets replaced by placeholders.
-- [ ] Redeploy dev.ankerd.org **with an image rebuild**, not just a restart, so
-      the backend and frontend changes go live.
+      throwaway machine: they were written but never run.
+- [ ] Update the beta stack (Portainer → *Update the stack*; a restart of the backend alone does
+      not rebuild anything) so the backend and frontend changes go live. Try the stack changes from
+      [docs/portainer-stacks.md](docs/portainer-stacks.md) there first (Node 20, `npm ci`, restart
+      policy, health check).
+- [ ] Before the live stack goes to 2.0: give it the beta's `git fetch` + `reset --hard` clone step
+      (the live one still uses `git pull`, which stops on a rewritten lockfile and would leave the
+      site down), then apply the rest of the recommended stack in that document.
 - [ ] Make sure the backend's MinIO access key is allowed to *list* the bucket. The
       admin CDN page (Admin → CDN) shows an error until it can.
 - [ ] For the admin quick upload of videos: raise `client_max_body_size` to 100M in the

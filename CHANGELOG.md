@@ -225,7 +225,8 @@ below shipped together.
 - Login uses the PKCE flow, so tokens no longer appear in the URL.
 - Updated FastAPI, Starlette, python-multipart and Vite to versions without
   known denial-of-service bugs, and replaced python-jose with PyJWT.
-- The backend image leaves out `.env` and runs as a normal user instead of root.
+- The backend `Dockerfile` leaves out `.env` and runs as a normal user instead of root (the
+  Portainer stacks use the stock Python image and still run as root).
 - Link previews (Discord, WhatsApp, …) of an event show only its name, date
   and cover image; the location and description stay behind the login.
 - Oversized uploads are refused before they're received, the rate limit only

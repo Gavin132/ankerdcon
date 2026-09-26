@@ -9,6 +9,7 @@ Start with the page that matches what you are doing.
 | install it from scratch: every `.env` value, Docker, Portainer | [installation.md](installation.md) |
 | run it on my machine, run the tests | [local-development.md](local-development.md) |
 | ship a change, run a migration, set env variables | [deployment.md](deployment.md) |
+| see the Portainer stacks (live and beta) and what to change in them | [portainer-stacks.md](portainer-stacks.md) |
 | look up a table or a migration | [database.md](database.md) |
 | look up an endpoint | [api.md](api.md) |
 | check who may do what, and how logins are protected | [security.md](security.md), [acting-for-others.md](acting-for-others.md) |

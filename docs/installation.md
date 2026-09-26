@@ -309,11 +309,11 @@ names. Give them separate Supabase projects if you want them apart (see
 
 ### Your current stack
 
-The live installation runs on a home server from a Portainer stack that clones the branch into a
-volume before building; that stack is not in the repository yet. Its clone step is documented in
-[deployment.md](deployment.md#deploying). To put the full stack here, paste it into this section
-**with every secret replaced by a placeholder** (or a `${VARIABLE}`), and mention which ports and
-networks it uses.
+The live installation runs on a home server from a Portainer stack of three containers: one clones the
+branch into a volume, one builds the frontend there, and one installs the Python packages and runs the app,
+with no image build in between. Both stacks (live and beta), how they differ, and a corrected version of the
+live one are in [portainer-stacks.md](portainer-stacks.md). Use those if you want to copy the existing setup
+rather than build an image.
 
 ---
 
