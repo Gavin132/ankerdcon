@@ -60,7 +60,8 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
   is going and a countdown. Tap a day to sign up or off. Tap the avatars to see
   everyone by name (`TripParticipants.tsx`); that list has an "Iemand aanmelden" button too.
 - A calendar button in the top bar, and "Andere evenementen" under the tiles, open a list of every
-  trip to jump to another one (`TripSwitcher.tsx`). Admins also get a pencil to edit the event.
+  trip to jump to another one (`TripSwitcher.tsx`); on a phone you can also swipe sideways to the
+  next or previous trip (`hooks/useSwipe.ts`). Admins also get a pencil to edit the event.
 - Below it, a **tile** per part of the trip (`TripTiles.tsx`): Vervoer, Eten,
   Hotel (hotel trips only: address, stay, arrivals and departures, rooms), Foto's, Cosplay (trips with a convention), Weer,
   Praktisch and Uitgaven. Tiles show the answer ("6 rides, 3 people without a ride

@@ -21,6 +21,10 @@ Hotfixes after 2.0.
 
 ### Changed
 
+- **Swipe between events** on the event page: swipe left for the next trip, right for the previous
+  one (in date order, like the list under "Andere evenementen"). It ignores swipes on rows that
+  scroll sideways, in text fields, from the screen edge (the browser's back gesture) and anything
+  open on top of the page.
 - On the Hub, the whole event card opens the event, not just its title and cover.
 
 ### Fixed
