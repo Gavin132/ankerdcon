@@ -3,13 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Car,
   Plus,
+  UserMinus,
   AlertCircle,
   CheckCircle2,
   CalendarPlus,
   ArrowRight,
 } from "lucide-react";
 import { Button } from "../common/Button";
-import { Modal } from "../common/Modal";
+import { TripSheet } from "../trip/TripSheet";
 import { NamePicker } from "../common/NamePicker";
 import { UserAvatar } from "../common/UserAvatar";
 import { CarCard } from "./CarCard";
@@ -21,6 +22,7 @@ import {
   useAssignToDriver,
   useUnassignFromDriver,
 } from "../../hooks/useRides";
+import { useRestaurantCars } from "../../hooks/useRestaurantCars";
 import { exportRideToIcs } from "../../utils/ics";
 import { getRideStatus } from "../../utils/rides";
 import { toast } from "../../store/toast.store";
@@ -40,13 +42,10 @@ export function RestaurantDetailActions({
   linkedMeal,
 }: Props) {
   const [driverOpen, setDriverOpen] = useState(false);
-  const [joinOpen, setJoinOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [assignPersonOpen, setAssignPersonOpen] = useState(false);
-  const [joinTarget, setJoinTarget] = useState("");
   const [driverName, setDriverName] = useState("");
   const [driverSeats, setDriverSeats] = useState(5);
-  const [joinNames, setJoinNames] = useState<string[]>([]);
   const [leaveName, setLeaveName] = useState("");
   const [assignPersonName, setAssignPersonName] = useState("");
   const [assignPersonDriver, setAssignPersonDriver] = useState("");
@@ -57,6 +56,7 @@ export function RestaurantDetailActions({
   const leaveSeatMutation = useLeaveSeat();
   const assignMutation = useAssignToDriver();
   const unassignMutation = useUnassignFromDriver();
+  const cars = useRestaurantCars(ride, linkedMeal);
 
   const { status } = getRideStatus(ride.departure_time);
   const canAct = status !== "past" && status !== "recent";
@@ -72,11 +72,6 @@ export function RestaurantDetailActions({
     new Set([...attendees, ...drivers.map((d) => d.name)]),
   );
 
-  const targetDriver = drivers.find((d) => d.name === joinTarget);
-  const spotsInTarget = targetDriver
-    ? targetDriver.seats - targetDriver.passengers.length
-    : 0;
-
   const isMutating =
     addDriverMutation.isPending ||
     leaveDriverMutation.isPending ||
@@ -87,6 +82,7 @@ export function RestaurantDetailActions({
   async function handleAddDriver() {
     if (!driverName.trim()) return;
     try {
+      await cars.ensureOnMeal(driverName.trim());
       await addDriverMutation.mutateAsync({
         id: ride.id,
         payload: { user_name: driverName.trim(), seats: driverSeats },
@@ -108,49 +104,10 @@ export function RestaurantDetailActions({
     }
   }
 
-  async function handleJoin() {
-    if (joinNames.length === 0 || !joinTarget) return;
-    try {
-      for (const name of joinNames) {
-        if (!attendees.includes(name)) {
-          await claimMutation.mutateAsync({
-            id: ride.id,
-            payload: { user_name: name },
-          });
-        }
-        await assignMutation.mutateAsync({
-          id: ride.id,
-          payload: { user_name: name, driver_name: joinTarget },
-        });
-      }
-      toast(
-        "success",
-        joinNames.length === 1
-          ? `${joinNames[0]} rijdt mee met ${joinTarget}`
-          : `${joinNames.length} personen rijden mee met ${joinTarget}`,
-      );
-      setJoinNames([]);
-      setJoinOpen(false);
-    } catch {
-      toast("error", "Kon niet toewijzen.");
-    }
-  }
-
-  async function handleUnassign(userName: string) {
-    try {
-      await unassignMutation.mutateAsync({
-        id: ride.id,
-        payload: { user_name: userName },
-      });
-      toast("info", `${userName} verwijderd uit auto`);
-    } catch {
-      toast("error", "Kon niet verwijderen.");
-    }
-  }
-
   async function handleAssignPerson() {
     if (!assignPersonName || !assignPersonDriver) return;
     try {
+      await cars.ensureOnMeal(assignPersonName);
       if (!attendees.includes(assignPersonName)) {
         await claimMutation.mutateAsync({ id: ride.id, payload: { user_name: assignPersonName } });
       }
@@ -205,7 +162,7 @@ export function RestaurantDetailActions({
       <div className="space-y-4">
         {/* Status strip */}
         {hasGap && canAct && (
-          <div className="flex items-center gap-2 rounded-2xl border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-700 dark:text-rose-300">
+          <div className="flex items-center gap-2 rounded-xl border-1.5 border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-300">
             <AlertCircle size={15} className="shrink-0" />
             {unassigned.length}{" "}
             {unassigned.length === 1 ? "persoon heeft" : "personen hebben"} nog
@@ -213,51 +170,52 @@ export function RestaurantDetailActions({
           </div>
         )}
         {allClear && canAct && (
-          <div className="flex items-center gap-2 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+          <div className="flex items-center gap-2 rounded-xl border-1.5 border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-300">
             <CheckCircle2 size={15} className="shrink-0" />
             Iedereen heeft een rit — alles geregeld!
           </div>
         )}
 
         {/* Cars section */}
-        <div className="card-surface rounded-2xl overflow-hidden">
-          <div className="h-[3px] bg-gradient-to-r from-amber-400 to-orange-400" />
-          <div className="px-4 py-4 space-y-4">
+        <div className="card-surface overflow-hidden">
+          <div className="space-y-4 px-4 py-4">
             {/* Header */}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="whitespace-nowrap">
-                <h2 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                <h2 className="section-label">
                   Auto's
                 </h2>
-                <p className="text-lg font-black text-slate-900 dark:text-white mt-0.5 whitespace-nowrap">
+                <p className="mt-0.5 whitespace-nowrap font-display text-[26px] font-extrabold leading-none text-ink">
                   {drivers.length}{" "}
-                  <span className="text-sm font-semibold text-slate-400">
+                  <span className="font-sans text-sm font-semibold text-ink-3">
                     {drivers.length === 1 ? "auto" : "auto's"} beschikbaar
                   </span>
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0 ml-auto">
                 {canAct && allParticipants.length > 0 && (
-                  <Button
-                    variant="ghost"
+                  <button
+                    type="button"
                     onClick={() => {
                       setLeaveName("");
                       setLeaveOpen(true);
                     }}
+                    className="flex h-9 items-center gap-1.5 rounded-xl border-1.5 border-line px-3 text-xs font-semibold text-ink transition-colors hover:border-ink-3"
                   >
-                    Afmelden
-                  </Button>
+                    <UserMinus size={13} /> Afmelden
+                  </button>
                 )}
                 {canAct && (
-                  <Button
+                  <button
+                    type="button"
                     onClick={() => {
                       setDriverName("");
                       setDriverOpen(true);
                     }}
+                    className="btn-primary h-9 px-3.5 text-xs"
                   >
-                    <Car size={14} />
-                    Ik rijd
-                  </Button>
+                    <Car size={13} /> Ik rijd
+                  </button>
                 )}
               </div>
             </div>
@@ -265,14 +223,14 @@ export function RestaurantDetailActions({
             {/* Car cards */}
             {drivers.length === 0 ? (
               <div className="flex flex-col items-center gap-4 py-10 text-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-900/30">
-                  <Car size={26} className="text-amber-500" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
+                  <Car size={22} />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+                  <p className="text-sm font-semibold text-ink">
                     Nog geen auto's aangemeld
                   </p>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="mt-1 text-xs text-ink-3">
                     Wie rijdt er mee naar {ride.start_location}?
                   </p>
                 </div>
@@ -289,36 +247,30 @@ export function RestaurantDetailActions({
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <AnimatePresence mode="popLayout">
                   {drivers.map((d) => (
                     <CarCard
                       key={d.name}
                       driver={d}
                       canAct={canAct}
-                      onJoin={(name) => {
-                        setJoinTarget(name);
-                        setJoinNames([]);
-                        setJoinOpen(true);
-                      }}
-                      onUnassign={handleUnassign}
+                      userNames={userNames}
+                      onJoin={cars.join}
+                      onUnassign={cars.unassign}
                       isPending={isMutating}
                     />
                   ))}
                   {canAct && (
                     <motion.button
                       key="add-car"
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
                       onClick={() => {
                         setDriverName("");
                         setDriverOpen(true);
                       }}
-                      className="rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700
-                                 flex flex-col items-center justify-center gap-2 py-8
-                                 text-slate-400 hover:border-amber-400 hover:text-amber-500
-                                 dark:hover:border-amber-500 dark:hover:text-amber-400
-                                 transition-colors cursor-pointer min-h-[100px]"
+                      className="flex min-h-[100px] cursor-pointer flex-col items-center justify-center gap-2 rounded-[12px] border-1.5 border-dashed border-line py-8
+                                 text-ink-3 transition-colors hover:border-ink-3 hover:text-ink"
                     >
                       <Plus size={20} />
                       <span className="text-xs font-semibold">
@@ -334,10 +286,10 @@ export function RestaurantDetailActions({
 
         {/* Zonder rit strip */}
         {unassigned.length > 0 && (
-          <div className="rounded-2xl border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 px-4 py-3.5 space-y-3">
+          <div className="space-y-3 rounded-xl border-1.5 border-dashed border-rose-300 bg-rose-50 px-4 py-3.5 dark:border-rose-400/40 dark:bg-rose-500/10">
             <div className="flex items-center gap-2">
-              <AlertCircle size={16} className="text-rose-500 shrink-0" />
-              <p className="text-sm font-bold text-rose-800 dark:text-rose-300 leading-tight">
+              <AlertCircle size={16} className="shrink-0 text-rose-700 dark:text-rose-300" />
+              <p className="text-sm font-semibold leading-tight text-rose-800 dark:text-rose-300">
                 {unassigned.length}{" "}
                 {unassigned.length === 1 ? "persoon heeft" : "personen hebben"}{" "}
                 nog geen auto
@@ -347,8 +299,8 @@ export function RestaurantDetailActions({
               {unassigned.map((name) => (
                 <div key={name} className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 min-w-0">
-                    <UserAvatar name={name} className="h-6 w-6 text-[8px] ring-2 ring-white dark:ring-slate-900 shrink-0" />
-                    <span className="text-sm font-semibold text-rose-800 dark:text-rose-300 truncate">{name}</span>
+                    <UserAvatar name={name} className="h-6 w-6 shrink-0 text-[8px] !border-0" />
+                    <span className="truncate text-sm font-semibold text-ink">{name}</span>
                   </div>
                   {canAct && drivers.length > 0 && (
                     <button
@@ -358,7 +310,7 @@ export function RestaurantDetailActions({
                         setAssignPersonDriver("");
                         setAssignPersonOpen(true);
                       }}
-                      className="shrink-0 rounded-lg border border-rose-300 dark:border-rose-600 bg-white dark:bg-rose-900/30 px-2.5 py-1 text-xs font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors"
+                      className="shrink-0 rounded-lg border-1.5 border-rose-300 bg-surface px-2.5 py-1 text-xs font-semibold text-rose-700 transition-colors hover:border-rose-500 dark:border-rose-400/40 dark:text-rose-300 dark:hover:border-rose-400"
                     >
                       Wijs toe
                     </button>
@@ -372,48 +324,23 @@ export function RestaurantDetailActions({
         {/* Calendar export */}
         <button
           onClick={() => exportRideToIcs(ride)}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 px-4 py-3 text-xs font-semibold text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border-1.5 border-line bg-surface px-4 py-3 text-xs font-semibold text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
         >
           <CalendarPlus size={14} />
           Toevoegen aan kalender
         </button>
       </div>
 
-      {/* Ik rijd modal */}
-      <Modal
+      {/* Ik rijd */}
+      <TripSheet
         open={driverOpen}
         onClose={() => {
           setDriverOpen(false);
           setDriverName("");
         }}
         title="Ik rijd"
-        description="Hoeveel mensen kun je meenemen?"
-      >
-        <div className="space-y-4">
-          <NamePicker
-            options={userNames}
-            value={driverName}
-            onChange={setDriverName}
-            color="sky"
-          />
-          <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
-              Totaal aantal plekken in je auto
-            </label>
-            <div className="flex gap-2">
-              {[2, 3, 4, 5, 6, 7].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setDriverSeats(n)}
-                  className={`flex h-10 flex-1 items-center justify-center rounded-xl text-sm font-bold transition-all ${driverSeats === n ? "gradient-brand text-white shadow-sm" : "border border-slate-200 text-slate-600 hover:border-sky-300 dark:border-slate-700 dark:text-slate-300"}`}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
-            <p className="mt-1.5 text-xs text-slate-400">Incl. de chauffeur</p>
-          </div>
+        subtitle="Hoeveel mensen kun je meenemen?"
+        footer={
           <Button
             onClick={handleAddDriver}
             loading={addDriverMutation.isPending || claimMutation.isPending}
@@ -421,91 +348,73 @@ export function RestaurantDetailActions({
             disabled={!driverName.trim()}
           >
             <Car size={15} />
-            {driverName.trim()
-              ? `${driverName} rijdt met ${driverSeats} plaatsen`
-              : "Selecteer een naam"}
+            {driverName.trim() ? `${driverName} rijdt met ${driverSeats} plaatsen` : "Selecteer een naam"}
           </Button>
-        </div>
-      </Modal>
-
-      {/* Stap in modal */}
-      <Modal
-        open={joinOpen}
-        onClose={() => {
-          setJoinOpen(false);
-          setJoinNames([]);
-        }}
-        title={`Stap in bij ${joinTarget}`}
-        description={
-          spotsInTarget > 0
-            ? `${spotsInTarget} ${spotsInTarget === 1 ? "plek" : "plekken"} beschikbaar`
-            : ""
         }
       >
         <div className="space-y-4">
-          <NamePicker
-            multiple
-            options={userNames}
-            value={joinNames}
-            onChange={setJoinNames}
-            maxSelect={spotsInTarget}
-            color="sky"
-          />
-          <Button
-            onClick={handleJoin}
-            loading={assignMutation.isPending || claimMutation.isPending}
-            className="w-full"
-            disabled={joinNames.length === 0}
-          >
-            <ArrowRight size={15} />
-            {joinNames.length === 0
-              ? "Selecteer een naam"
-              : joinNames.length === 1
-                ? `${joinNames[0]} stap in bij ${joinTarget}`
-                : `${joinNames.length} personen stap in bij ${joinTarget}`}
-          </Button>
+          <NamePicker options={userNames} value={driverName} onChange={setDriverName} color="sky" />
+          <div>
+            <label className="section-label mb-2 block">Totaal aantal plekken in je auto</label>
+            <div className="flex gap-2">
+              {[2, 3, 4, 5, 6, 7].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setDriverSeats(n)}
+                  aria-pressed={driverSeats === n}
+                  className={`flex h-10 flex-1 items-center justify-center rounded-xl font-mono text-sm font-semibold tabular-nums transition-colors ${driverSeats === n ? "border-2 border-outline bg-brand text-brand-on" : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"}`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1.5 text-xs text-ink-3">Incl. de chauffeur</p>
+          </div>
         </div>
-      </Modal>
+      </TripSheet>
 
-      {/* Afmelden modal */}
-      <Modal
+      {/* Afmelden */}
+      <TripSheet
         open={leaveOpen}
         onClose={() => {
           setLeaveOpen(false);
           setLeaveName("");
         }}
         title="Afmelden"
-        description="Verwijder jezelf van de lijst"
-      >
-        <div className="space-y-4">
-          <NamePicker
-            options={allParticipants}
-            value={leaveName}
-            onChange={setLeaveName}
-            color="rose"
-          />
+        subtitle="Verwijder jezelf van de lijst"
+        footer={
           <Button
             onClick={handleLeave}
             variant="danger"
-            loading={
-              leaveDriverMutation.isPending ||
-              leaveSeatMutation.isPending ||
-              unassignMutation.isPending
-            }
+            loading={leaveDriverMutation.isPending || leaveSeatMutation.isPending || unassignMutation.isPending}
             className="w-full"
             disabled={!leaveName.trim()}
           >
             {leaveName ? `${leaveName} afmelden` : "Selecteer een naam"}
           </Button>
-        </div>
-      </Modal>
+        }
+      >
+        <NamePicker options={allParticipants} value={leaveName} onChange={setLeaveName} color="rose" />
+      </TripSheet>
 
-      {/* Wijs toe modal */}
-      <Modal
+      {/* Wijs toe */}
+      <TripSheet
         open={assignPersonOpen}
         onClose={() => { setAssignPersonOpen(false); setAssignPersonName(""); setAssignPersonDriver(""); }}
         title={`${assignPersonName} toewijzen`}
-        description="Kies een auto om deze persoon in te plaatsen"
+        subtitle="Kies een auto om deze persoon in te plaatsen"
+        footer={
+          <Button
+            onClick={handleAssignPerson}
+            loading={assignMutation.isPending || claimMutation.isPending}
+            className="w-full"
+            disabled={!assignPersonDriver}
+          >
+            <ArrowRight size={15} />
+            {assignPersonDriver ? `${assignPersonName} → ${assignPersonDriver}` : "Selecteer een auto"}
+          </Button>
+        }
       >
         <div className="space-y-3">
           {drivers.map((d) => {
@@ -517,37 +426,27 @@ export function RestaurantDetailActions({
                 type="button"
                 disabled={isFull}
                 onClick={() => setAssignPersonDriver(d.name)}
-                className={`w-full flex items-center justify-between rounded-xl border px-4 py-3 transition-colors text-left ${
+                aria-pressed={isSelected}
+                className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-left transition-colors ${
                   isSelected
-                    ? "border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+                    ? "border-1.5 border-outline bg-sunken"
                     : isFull
-                    ? "border-slate-200 dark:border-slate-700 opacity-50 cursor-not-allowed"
-                    : "border-slate-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-600 cursor-pointer"
+                    ? "cursor-not-allowed border-1.5 border-line opacity-50"
+                    : "cursor-pointer border-1.5 border-line hover:border-ink-3"
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <Car size={14} className={isSelected ? "text-amber-500" : "text-slate-400"} />
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">{d.name}</span>
+                  <Car size={14} className={isSelected ? "text-ink" : "text-ink-3"} />
+                  <span className="font-semibold text-ink">{d.name}</span>
                 </div>
-                <span className={`text-xs font-bold ${isFull ? "text-rose-500" : "text-emerald-500"}`}>
+                <span className={`font-mono text-xs font-semibold tabular-nums ${isFull ? "text-rose-700 dark:text-rose-300" : "text-emerald-700 dark:text-emerald-300"}`}>
                   {d.passengers.length}/{d.seats} {isFull ? "vol" : "vrij"}
                 </span>
               </button>
             );
           })}
-          <Button
-            onClick={handleAssignPerson}
-            loading={assignMutation.isPending || claimMutation.isPending}
-            className="w-full"
-            disabled={!assignPersonDriver}
-          >
-            <ArrowRight size={15} />
-            {assignPersonDriver
-              ? `${assignPersonName} → ${assignPersonDriver}`
-              : "Selecteer een auto"}
-          </Button>
         </div>
-      </Modal>
+      </TripSheet>
     </>
   );
 }

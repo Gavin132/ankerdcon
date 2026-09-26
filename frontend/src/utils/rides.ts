@@ -1,6 +1,37 @@
+import type { LucideIcon } from "lucide-react";
+import { Car, Train, Truck } from "lucide-react";
 import { getNow } from "../store/time.store";
 import { toDateKey, todayKey } from "./date";
-import type { CalendarEvent, RestaurantDriver, Ride } from "../types";
+import type { CalendarEvent, Ride, User } from "../types";
+
+// telegy's own long-running truck-icon joke. Tied to his account rather than
+// a name match on `driver` — a name prefix broke the moment he renamed (or
+// would've misfired for anyone else it happened to match), a UUID doesn't.
+const TELEGY_USER_ID = "f5abce39-3b78-418a-a05a-db8f05cd284f";
+
+function resolveDriverUser(driverName: string, users: User[]): User | undefined {
+  return users.find(
+    (u) => u.name === driverName || u.discord_username === driverName || u.aliases?.includes(driverName),
+  );
+}
+
+/**
+ * Which icon a ride's vehicle gets, and whether it should render a size
+ * down. Public transport always gets the train, telegy always gets his
+ * truck regardless of seats, and otherwise a car — full size for a 5-seater,
+ * a size smaller for anything with 4 seats or fewer so a compact car reads
+ * as visibly smaller than a full one at a glance.
+ */
+export function rideVehicleIcon(
+  driverName: string,
+  users: User[],
+  totalSeats: number,
+  isPublicTransport = false,
+): { Icon: LucideIcon; small: boolean } {
+  if (isPublicTransport) return { Icon: Train, small: false };
+  if (resolveDriverUser(driverName, users)?.id === TELEGY_USER_ID) return { Icon: Truck, small: false };
+  return { Icon: Car, small: totalSeats <= 4 };
+}
 
 export type RideStatus = "upcoming" | "soon" | "urgent" | "recent" | "past";
 
@@ -45,8 +76,8 @@ export function rideLocationLabel(
   return location;
 }
 
-/** "Vandaag" / "Morgen" / a Dutch weekday+date, for grouping rides by day. */
-export function rideDayLabel(date: Date): string {
+/** "Vandaag" / "Morgen" / "zaterdag 25 september", for a group heading. */
+function rideDayLabel(date: Date): string {
   const key = toDateKey(date);
   if (key === todayKey()) return "Vandaag";
   const tomorrow = new Date(getNow());
@@ -68,20 +99,3 @@ export function groupRidesByDay(rides: Ride[]): { label: string; rides: Ride[] }
   return groups;
 }
 
-export function parseRestaurantDrivers(
-  parkingInfo: string,
-): RestaurantDriver[] {
-  if (!parkingInfo || parkingInfo.trim() === "") return [];
-  try {
-    const parsed = JSON.parse(parkingInfo);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter((d) => typeof d.name === "string" && typeof d.seats === "number")
-      .map((d) => ({
-        ...d,
-        passengers: Array.isArray(d.passengers) ? d.passengers : [],
-      }));
-  } catch {
-    return [];
-  }
-}

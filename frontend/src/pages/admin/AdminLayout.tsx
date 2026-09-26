@@ -9,7 +9,7 @@ import { AdminTopbar } from "./components/AdminTopbar";
 function AdminTabFallback() {
   return (
     <div className="flex items-center justify-center py-24">
-      <div className="h-8 w-8 rounded-full border-2 border-sky-500 border-t-transparent animate-spin" />
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-text border-t-transparent" />
     </div>
   );
 }
@@ -19,11 +19,11 @@ export function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-100 dark:bg-[#080c14]">
+    <div className="flex h-screen overflow-hidden bg-paper text-ink">
       {/* Desktop sidebar */}
       <aside
-        className={`hidden lg:flex shrink-0 flex-col bg-[#0d1117] border-r border-white/[0.06] transition-all duration-300 ease-in-out ${
-          collapsed ? "w-[60px]" : "w-[240px]"
+        className={`hidden shrink-0 flex-col border-r-1.5 border-line bg-surface transition-[width] duration-300 ease-in-out lg:flex ${
+          collapsed ? "w-[68px]" : "w-60"
         }`}
       >
         <AdminSidebar collapsed={collapsed} />
@@ -32,14 +32,14 @@ export function AdminLayout() {
       {/* Mobile drawer backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-slate-950/50 lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Mobile drawer */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[240px] flex-col bg-[#0d1117] border-r border-white/[0.06] transition-transform duration-300 ease-in-out lg:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r-1.5 border-line bg-surface shadow-xl transition-transform duration-300 ease-in-out lg:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -47,7 +47,7 @@ export function AdminLayout() {
       </aside>
 
       {/* Content area */}
-      <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <AdminTopbar
           onToggleDesktop={() => setCollapsed((v) => !v)}
           onToggleMobile={() => setMobileOpen(true)}

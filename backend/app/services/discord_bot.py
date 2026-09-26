@@ -18,7 +18,20 @@ import httpx
 from app import messages
 
 _DISCORD_API = "https://discord.com/api/v10"
+
 _TIMEOUT = 5.0
+
+_MARKDOWN_SPECIALS = set("\\*_~`|>#-[]()<")
+
+
+def escape_markdown(text: object) -> str:
+    """Member-written text for a bot message, shown literally.
+
+    Without this, "[Tickets](https://phishing.example)" in a meal name turns
+    into a disguised link in a DM from the bot, sent to everyone who follows
+    new meals. Mentions are already off (allowed_mentions) either way.
+    """
+    return "".join("\\" + c if c in _MARKDOWN_SPECIALS else c for c in str(text))
 
 
 def _headers(bot_token: str) -> dict[str, str]:
@@ -54,7 +67,8 @@ def _send_dm(bot_token: str, discord_id: str, content: str) -> None:
             r = client.post(
                 f"{_DISCORD_API}/channels/{channel_id}/messages",
                 headers=_headers(bot_token),
-                json={"content": content},
+                # Content includes text members typed — never let it ping anyone.
+                json={"content": content, "allowed_mentions": {"parse": []}},
             )
             if r.status_code not in (200, 201):
                 print(f"[discord_bot] send_message failed ({r.status_code}): {r.text}")

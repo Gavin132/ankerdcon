@@ -23,9 +23,9 @@ const SEVERITY_LABEL: Record<AnnouncementSeverity, string> = {
 };
 
 const SEVERITY_CHIP: Record<AnnouncementSeverity, string> = {
-  info: "bg-sky-100 dark:bg-sky-500/10 text-sky-700 dark:text-sky-400",
-  warning: "bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400",
-  urgent: "bg-rose-100 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400",
+  info: "bg-sunken text-ink-2",
+  warning: "bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300",
+  urgent: "bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300",
 };
 
 const SEVERITY_ICON: Record<AnnouncementSeverity, typeof Info> = {
@@ -110,13 +110,13 @@ function AnnouncementDrawer({
           <button
             onClick={handleSave}
             disabled={!isValid || isSaving}
-            className="flex-1 rounded-xl bg-sky-600 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="btn-primary flex-1 py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? "Opslaan..." : isEdit ? "Bijwerken" : "Plaatsen"}
           </button>
           <button
             onClick={requestClose}
-            className="rounded-xl border border-white/[0.08] px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/[0.05] transition-colors"
+            className="rounded-xl border-1.5 border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-3"
           >
             Annuleren
           </button>
@@ -147,7 +147,7 @@ function AnnouncementDrawer({
             <option value="urgent">Urgent (rood)</option>
           </select>
         </div>
-        <label className="flex items-center gap-2.5 text-sm text-slate-300 cursor-pointer">
+        <label className="flex items-center gap-2.5 text-sm text-ink-2 cursor-pointer">
           <input
             type="checkbox"
             className="cb"
@@ -156,7 +156,7 @@ function AnnouncementDrawer({
           />
           Gebruikers kunnen dit sluiten
         </label>
-        <label className="flex items-center gap-2.5 text-sm text-slate-300 cursor-pointer">
+        <label className="flex items-center gap-2.5 text-sm text-ink-2 cursor-pointer">
           <input
             type="checkbox"
             className="cb"
@@ -166,7 +166,7 @@ function AnnouncementDrawer({
           Ook naar het Discord-kanaal sturen
         </label>
         {isEdit && (
-          <label className="flex items-center gap-2.5 text-sm text-slate-300 cursor-pointer">
+          <label className="flex items-center gap-2.5 text-sm text-ink-2 cursor-pointer">
             <input
               type="checkbox"
               className="cb"
@@ -213,14 +213,14 @@ export function AdminAnnouncementsPage() {
   }
 
   return (
-    <div className="p-5 lg:p-8 max-w-6xl mx-auto space-y-5">
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
       <AdminPageHeader
         title="Aankondigingen"
         subtitle={`${announcements.length} aankondiging${announcements.length !== 1 ? "en" : ""}`}
         action={
           <button
             onClick={() => setDrawer("new")}
-            className="flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 transition-colors shadow-sm"
+            className="btn-primary gap-2 px-4 py-2.5 text-sm"
           >
             <Plus size={16} />
             Nieuwe aankondiging
@@ -228,36 +228,36 @@ export function AdminAnnouncementsPage() {
         }
       />
 
-      <div className="rounded-2xl border border-slate-200/80 dark:border-white/[0.06] bg-white dark:bg-slate-800/60 overflow-hidden shadow-sm">
+      <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <tr className="border-b-1.5 border-line">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Status
                 </th>
-                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Bericht
                 </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Type
                 </th>
-                <th className="hidden sm:table-cell px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="hidden sm:table-cell px-5 py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Geplaatst door
                 </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Acties
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+            <tbody className="divide-y divide-line">
               {isLoading ? (
                 <AdminTableSkeleton cols={5} />
               ) : announcements.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-5 py-12 text-center">
-                    <div className="flex flex-col items-center gap-2 text-slate-400">
-                      <Megaphone size={28} className="opacity-30" />
+                    <div className="flex flex-col items-center gap-2 text-ink-3">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3"><Megaphone size={22} /></span>
                       <p className="text-sm">Nog geen aankondigingen geplaatst.</p>
                     </div>
                   </td>
@@ -266,37 +266,37 @@ export function AdminAnnouncementsPage() {
                 announcements.map((a) => {
                   const Icon = SEVERITY_ICON[a.severity];
                   return (
-                    <tr key={a.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors">
+                    <tr key={a.id} className="hover:bg-sunken transition-colors">
                       <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
                         <button
                           onClick={() => toggleActive(a)}
                           title={a.active ? "Actief" : "Inactief"}
-                          className={`inline-flex items-center gap-1.5 rounded-full p-1.5 sm:px-2.5 sm:py-1 text-xs font-semibold transition-colors ${
+                          className={`inline-flex items-center gap-1.5 rounded-full p-1.5 sm:px-2 sm:py-0.5 text-[11.5px] font-semibold transition-colors ${
                             a.active
-                              ? "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-500/20"
-                              : "bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                              ? "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/25"
+                              : "bg-sunken text-ink-2 hover:text-ink"
                           }`}
                         >
-                          <span className={`h-1.5 w-1.5 rounded-full ${a.active ? "bg-emerald-500" : "bg-slate-400"}`} />
+                          <span className={`h-1.5 w-1.5 rounded-full ${a.active ? "bg-emerald-500" : "bg-ink-3"}`} />
                           <span className="hidden sm:inline">{a.active ? "Actief" : "Inactief"}</span>
                         </button>
                       </td>
                       <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
-                        <p className="text-sm text-slate-900 dark:text-white max-w-[160px] sm:max-w-md truncate">
+                        <p className="text-sm text-ink max-w-[160px] sm:max-w-md truncate">
                           {a.message}
                         </p>
                       </td>
                       <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
                         <span
                           title={SEVERITY_LABEL[a.severity]}
-                          className={`inline-flex items-center gap-1.5 rounded-full p-1.5 sm:px-2.5 sm:py-1 text-xs font-semibold ${SEVERITY_CHIP[a.severity]}`}
+                          className={`inline-flex items-center gap-1.5 rounded-full p-1.5 sm:px-2 sm:py-0.5 text-[11.5px] font-semibold ${SEVERITY_CHIP[a.severity]}`}
                         >
                           <Icon size={11} />
                           <span className="hidden sm:inline">{SEVERITY_LABEL[a.severity]}</span>
                         </span>
                       </td>
                       <td className="hidden sm:table-cell px-5 py-3.5">
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                        <p className="text-sm text-ink-3">
                           {a.created_by ?? "—"}
                         </p>
                       </td>

@@ -61,9 +61,9 @@ export function LoginForm() {
 
   return (
     <div className="space-y-4">
-      <div className="text-center mb-6">
-        <h2 className="text-lg font-semibold text-white">Welkom bij Ankerd Con</h2>
-        <p className="text-sm text-slate-400 mt-1">Koppel je account om verder te gaan</p>
+      <div className="mb-6 text-center">
+        <h2 className="text-lg font-semibold text-ink">Welkom bij Ankerd Con</h2>
+        <p className="mt-1 text-sm text-ink-3">Koppel je account om verder te gaan</p>
       </div>
 
       <div className="relative">
@@ -73,12 +73,12 @@ export function LoginForm() {
           onClick={() => handleOAuthLogin("discord")}
           loading={loading === "discord"}
           disabled={loading !== null}
-          className="w-full bg-[#5865F2] hover:bg-[#4752C4] border-transparent text-white"
+          className="w-full"
         >
           Inloggen met Discord
           {loading !== "discord" && <LogIn size={18} className="ml-2" />}
         </Button>
-        <span className="pointer-events-none absolute -top-2 right-3 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+        <span className="pointer-events-none absolute -top-2.5 right-3 rounded-md border-1.5 border-outline bg-surface px-1.5 py-px font-mono text-[10px] font-semibold uppercase tracking-[0.05em] text-ink">
           Aanbevolen
         </span>
       </div>
@@ -86,16 +86,17 @@ export function LoginForm() {
       <Button
         type="button"
         size="lg"
+        variant="secondary"
         onClick={() => handleOAuthLogin("google")}
         loading={loading === "google"}
         disabled={loading !== null}
-        className="w-full bg-slate-700 hover:bg-slate-600 border-transparent text-white"
+        className="w-full"
       >
         Inloggen met Google
         {loading !== "google" && <GoogleIcon />}
       </Button>
 
-      <p className="text-center text-xs text-slate-400 px-2">
+      <p className="px-2 text-center text-xs leading-relaxed text-ink-3">
         Met Discord ontvang je automatisch herinneringen via DM. Log je liever in met Google? Dat kan, maar koppel dan ook je Discord om berichten te blijven ontvangen.
       </p>
 

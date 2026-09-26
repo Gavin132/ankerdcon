@@ -20,7 +20,7 @@ import { NamePicker } from "../components/common/NamePicker";
 
 export function RideDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const goBack = useSmartBack(routes.transport);
+  const goBack = useSmartBack(routes.currentTrip.tab("transport"));
 
   const { data: rides = [], isLoading } = useRides();
   const { data: events = [] } = useCalendar();
@@ -107,10 +107,10 @@ export function RideDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <div className="min-h-screen bg-paper">
         <DetailTopbar title="Laden…" onBack={goBack} />
         <div className="flex items-center justify-center py-24">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-ink border-t-transparent" />
         </div>
       </div>
     );
@@ -118,10 +118,12 @@ export function RideDetailPage() {
 
   if (!ride) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4 text-slate-400">
-        <Car size={40} className="opacity-30" />
-        <p className="text-sm">Rit niet gevonden</p>
-        <button onClick={goBack} className="text-xs text-sky-500 underline">Terug</button>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-paper px-4 text-center">
+        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
+          <Car size={22} />
+        </span>
+        <p className="text-sm font-semibold text-ink">Rit niet gevonden</p>
+        <button onClick={goBack} className="text-xs font-semibold text-brand-text hover:underline">Terug</button>
       </div>
     );
   }
@@ -129,34 +131,28 @@ export function RideDetailPage() {
   const isPT = ride.is_public_transport;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-paper">
       <DetailTopbar
-        title={isRestaurant ? `Restaurant · ${ride.start_location}` : `${ride.direction} · ${ride.driver}`}
+        title={isRestaurant ? `Restaurant · ${ride.start_location}` : `${ride.direction === "Inbound" ? "Heen" : "Terug"} · ${ride.driver}`}
         onBack={goBack}
         onShare={onShare}
       />
-      <RideHero
-        ride={ride}
-        linkedEvent={linkedEvent}
-        linkedMeal={linkedMeal}
-        users={users}
-        onClaimClick={isRestaurant ? undefined : () => { setClaimNames([]); setClaimOpen(true); }}
-        onLeaveClick={isRestaurant ? undefined : () => { setLeaveNames([]); setLeaveOpen(true); }}
-      />
+      <div className="mx-auto max-w-3xl space-y-5 px-4 pb-10 pt-4 sm:pt-6">
+        <RideHero
+          ride={ride}
+          linkedEvent={linkedEvent}
+          linkedMeal={linkedMeal}
+          users={users}
+          onClaimClick={isRestaurant ? undefined : () => { setClaimNames([]); setClaimOpen(true); }}
+          onLeaveClick={isRestaurant ? undefined : () => { setLeaveNames([]); setLeaveOpen(true); }}
+        />
 
-      <div className="max-w-4xl mx-auto px-4 py-7">
-        <div className={`grid gap-5 items-start ${linkedCard ? "grid-cols-1 lg:grid-cols-3" : ""}`}>
-          <div className={linkedCard ? "lg:col-span-2" : ""}>
-            {isRestaurant ? (
-              <RestaurantDetailActions ride={ride} userNames={userNames} users={users} linkedMeal={linkedMeal} />
-            ) : (
-              <RideActions ride={ride} />
-            )}
-          </div>
-          {linkedCard && (
-            <div>{linkedCard}</div>
-          )}
-        </div>
+        {isRestaurant ? (
+          <RestaurantDetailActions ride={ride} userNames={userNames} users={users} linkedMeal={linkedMeal} />
+        ) : (
+          <RideActions ride={ride} />
+        )}
+        {linkedCard}
       </div>
 
       {!isRestaurant && (
@@ -167,7 +163,7 @@ export function RideDetailPage() {
             onClose={() => { setClaimOpen(false); setClaimNames([]); }}
             title="Stap in"
             description={`${ride.start_location} → ${ride.end_location || "Bestemming"}${isPT ? "" : ` · ${ride.seats_left} ${ride.seats_left === 1 ? "plek" : "plekken"} vrij`}`}
-            accent="from-sky-400 to-blue-500"
+            accent="from-sky-400"
           >
             <div className="space-y-3">
               <NamePicker
@@ -200,7 +196,7 @@ export function RideDetailPage() {
             onClose={() => { setLeaveOpen(false); setLeaveNames([]); }}
             title="Uitstappen"
             description="Wie stappen er uit?"
-            accent="from-rose-400 to-red-500"
+            accent="from-rose-500"
           >
             <div className="space-y-3">
               <NamePicker

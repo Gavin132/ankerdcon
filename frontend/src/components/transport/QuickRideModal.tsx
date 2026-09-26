@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ChevronDown, Users } from "lucide-react";
-import { Modal } from "../common/Modal";
+import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
 import { useCurrentUser } from "../../hooks/useUsers";
 import { useCreateRide } from "../../hooks/useRides";
 import { toast } from "../../store/toast.store";
+import { quickDepartureOptions, splitDateTime } from "../../utils/date";
 import type { CalendarEvent, Direction, VehicleType } from "../../types";
 
 interface QuickRideModalProps {
@@ -13,14 +14,8 @@ interface QuickRideModalProps {
   onClose: () => void;
   event: CalendarEvent;
   initialDirection: Direction;
-}
-
-/** Rounds up to the next 5 minutes and formats for a datetime-local input. */
-function defaultDepartureTime(): string {
-  const d = new Date();
-  d.setMinutes(Math.ceil(d.getMinutes() / 5) * 5, 0, 0);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  /** Pre-selected departure (`datetime-local`); defaults to "now". */
+  initialDeparture?: string;
 }
 
 /** Best-guess start/end for a direction — event.location on the con side,
@@ -34,7 +29,7 @@ function defaultLocationsFor(direction: Direction, event: CalendarEvent): { star
   };
 }
 
-export function QuickRideModal({ open, onClose, event, initialDirection }: QuickRideModalProps) {
+export function QuickRideModal({ open, onClose, event, initialDirection, initialDeparture }: QuickRideModalProps) {
   const { data: me } = useCurrentUser();
   const driver = me?.name ?? "";
   const createMutation = useCreateRide();
@@ -42,7 +37,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
   const [direction, setDirection] = useState<Direction>(initialDirection);
   const [startLocation, setStartLocation] = useState("");
   const [endLocation, setEndLocation] = useState("");
-  const [departureTime, setDepartureTime] = useState(defaultDepartureTime);
+  const [departureTime, setDepartureTime] = useState(() => initialDeparture ?? quickDepartureOptions()[0].value);
   const [seats, setSeats] = useState(5);
   const [vehicleType, setVehicleType] = useState<VehicleType>("Car");
   const [parkingInfo, setParkingInfo] = useState("");
@@ -55,7 +50,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
       const defaults = defaultLocationsFor(initialDirection, event);
       setStartLocation(defaults.start);
       setEndLocation(defaults.end);
-      setDepartureTime(defaultDepartureTime());
+      setDepartureTime(initialDeparture ?? quickDepartureOptions()[0].value);
       setSeats(5);
       setVehicleType("Car");
       setParkingInfo("");
@@ -94,106 +89,140 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
     }
   }
 
+  const footer = (
+    <Button onClick={onSubmit} loading={createMutation.isPending} className="w-full">
+      Rit plaatsen
+    </Button>
+  );
+
   return (
-    <Modal
+    <TripSheet
       open={open}
       onClose={onClose}
-      title={event.is_hotel ? (toHotel ? "Rit naar hotel aanbieden" : "Rit naar congres aanbieden") : "Rit aanbieden"}
-      description="Alleen de vertrektijd en het aantal plekken zijn nodig."
+      title={event.is_hotel ? (toHotel ? "Rit naar hotel aanbieden" : "Rit naar evenement aanbieden") : "Rit aanbieden"}
+      subtitle="Alleen de vertrektijd en het aantal plekken zijn nodig."
+      footer={footer}
     >
       <div className="space-y-5">
         {/* Direction toggle */}
-        <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-800 p-1">
+        <div className="flex gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]">
           {(["Inbound", "Outbound"] as const).map((d) => (
             <button
               key={d}
               type="button"
               onClick={() => switchDirection(d)}
-              className={`flex-1 rounded-xl py-2.5 text-xs font-semibold transition-all ${
+              aria-pressed={direction === d}
+              className={`flex-1 rounded-[7px] px-3 py-2 text-[13px] font-semibold transition-colors ${
                 direction === d
-                  ? "bg-white text-slate-900 shadow-card dark:bg-slate-700 dark:text-slate-100"
-                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                  ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]"
+                  : "text-ink-2 hover:text-ink"
               }`}
             >
-              {event.is_hotel ? (d === "Inbound" ? "Naar congres" : "Naar hotel") : (d === "Inbound" ? "Heen" : "Terug")}
+              {event.is_hotel ? (d === "Inbound" ? "Naar evenement" : "Naar hotel") : (d === "Inbound" ? "Heen" : "Terug")}
             </button>
           ))}
         </div>
 
         {/* Route summary — editable, so a missing location (e.g. a non-hotel
             event's "home" end) can just be typed in right here. */}
-        <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-4 py-3">
+        <div className="flex items-center gap-2.5 rounded-xl border-1.5 border-line bg-sunken px-4 py-3">
           <input
             type="text"
             value={startLocation}
             onChange={(e) => setStartLocation(e.target.value)}
             placeholder="Onbekende locatie"
-            className="flex-1 min-w-0 bg-transparent text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder:font-normal placeholder:text-slate-400 outline-none"
+            className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-3"
           />
-          <ArrowRight size={14} className="shrink-0 text-slate-400" />
+          <ArrowRight size={14} className="shrink-0 text-ink-3" />
           <input
             type="text"
             value={endLocation}
             onChange={(e) => setEndLocation(e.target.value)}
             placeholder="Onbekende locatie"
-            className="flex-1 min-w-0 bg-transparent text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder:font-normal placeholder:text-slate-400 outline-none text-right"
+            className="min-w-0 flex-1 bg-transparent text-right text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-3"
           />
         </div>
         {missingLocation && (
-          <p className="-mt-3 text-xs text-amber-500">
+          <p className="-mt-3 text-xs font-medium text-amber-700 dark:text-amber-300">
             Vul de ontbrekende locatie hierboven in.
           </p>
         )}
 
-        {/* Time + seats */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
-              Vertrektijd
-            </label>
+        {/* Vertrektijd — quick presets plus separate date/time fields, so
+            "when" is never hidden behind a single fiddly datetime-local
+            control (its time portion is easy to miss/mistap on mobile). */}
+        <div>
+          <label className="section-label mb-1.5 block">
+            Vertrektijd
+          </label>
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {quickDepartureOptions().map((opt) => (
+              <button
+                key={opt.label}
+                type="button"
+                onClick={() => setDepartureTime(opt.value)}
+                aria-pressed={departureTime === opt.value}
+                className={`rounded-full border-1.5 px-3 py-1.5 text-[12.5px] font-semibold transition-colors ${
+                  departureTime === opt.value
+                    ? "border-outline bg-brand text-brand-on"
+                    : "border-line bg-surface text-ink-2 hover:border-ink-3"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
             <input
-              type="datetime-local"
+              type="date"
               className="input-field"
-              value={departureTime}
-              onChange={(e) => setDepartureTime(e.target.value)}
+              value={splitDateTime(departureTime)[0]}
+              onChange={(e) => setDepartureTime(`${e.target.value}T${splitDateTime(departureTime)[1] || "09:00"}`)}
+            />
+            <input
+              type="time"
+              className="input-field"
+              value={splitDateTime(departureTime)[1]}
+              onChange={(e) => setDepartureTime(`${splitDateTime(departureTime)[0]}T${e.target.value}`)}
             />
           </div>
-          {vehicleType !== "Public Transport" && (
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
-                Totaal aantal plekken in je auto
-              </label>
-              <div className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-1">
-                <button
-                  type="button"
-                  onClick={() => setSeats((s) => Math.max(1, s - 1))}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                >
-                  −
-                </button>
-                <div className="flex-1 flex items-center justify-center gap-1.5 text-sm font-bold text-slate-900 dark:text-white tabular-nums">
-                  <Users size={13} className="text-slate-400" />
-                  {seats}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSeats((s) => Math.min(99, s + 1))}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                >
-                  +
-                </button>
-              </div>
-              <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">Incl. jezelf</p>
-            </div>
-          )}
         </div>
+
+        {vehicleType !== "Public Transport" && (
+          <div>
+            <label className="section-label mb-1.5 block">
+              Totaal aantal plekken in je auto
+            </label>
+            <div className="flex items-center gap-2 rounded-xl border-1.5 border-line bg-surface px-1">
+              <button
+                type="button"
+                onClick={() => setSeats((s) => Math.max(1, s - 1))}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+              >
+                −
+              </button>
+              <div className="flex flex-1 items-center justify-center gap-1.5 font-mono text-sm font-semibold tabular-nums text-ink">
+                <Users size={13} className="text-ink-3" />
+                {seats}
+              </div>
+              <button
+                type="button"
+                onClick={() => setSeats((s) => Math.min(99, s + 1))}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+              >
+                +
+              </button>
+            </div>
+            <p className="mt-1.5 text-xs text-ink-3">Incl. jezelf</p>
+          </div>
+        )}
 
         {/* Advanced options */}
         <div>
           <button
             type="button"
             onClick={() => setAdvancedOpen((v) => !v)}
-            className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-sky-500 transition-colors"
+            className="flex items-center gap-1.5 text-xs font-semibold text-ink-3 transition-colors hover:text-ink"
           >
             <motion.span animate={{ rotate: advancedOpen ? 180 : 0 }} transition={{ duration: 0.18 }}>
               <ChevronDown size={13} />
@@ -212,7 +241,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
               >
                 <div className="mt-3 space-y-3">
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
+                    <label className="section-label mb-1.5 block">
                       Type vervoer
                     </label>
                     <select
@@ -225,7 +254,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
+                    <label className="section-label mb-1.5 block">
                       Parkeerinfo
                     </label>
                     <input
@@ -240,11 +269,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection }: Quick
             )}
           </AnimatePresence>
         </div>
-
-        <Button onClick={onSubmit} loading={createMutation.isPending} className="w-full">
-          Rit plaatsen
-        </Button>
       </div>
-    </Modal>
+    </TripSheet>
   );
 }

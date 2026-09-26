@@ -17,6 +17,7 @@ class Tables:
     COSPLAYS       = "cosplays"
     EXPENSES       = "expenses"
     EXPENSE_SHARES = "expense_shares"
+    SETTLEMENTS    = "settlements"
     ANNOUNCEMENTS  = "announcements"
     CHANGELOG_ENTRIES = "changelog_entries"
     WHITELIST      = "whitelist"

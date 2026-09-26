@@ -1,0 +1,1796 @@
+<title>Ankerd Con Navigation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Poppins:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap">
+<style>
+/* ── Tokens ─────────────────────────────────────────────────────────── */
+:root, .frame[data-mode="light"] {
+  --ground: #E6ECEE;
+  --paper: #F5F8F9;
+  --surface: #FFFFFF;
+  --sunken: #EBF1F3;
+  --ink: #0F1519;
+  --ink-2: #4A5A63;
+  --ink-3: #74838A;
+  --line: #D5DEE2;
+  --outline: #0F1519;
+  --lift: #0F1519;
+  --cyan: #3FD8EE;
+  --cyan-soft: #D5F5FA;
+  --cyan-text: #00768A;
+  --on-cyan: #0F1519;
+  --amber: #E89B0C;
+  --amber-soft: #FCEFD2;
+  --amber-text: #875500;
+  --coral: #E5484D;
+  --coral-soft: #FBE2E2;
+  --coral-text: #B3252B;
+  --green: #1FA971;
+  --green-soft: #DAF3E8;
+  --green-text: #0C7A4E;
+  --nav-active-bg: #0F1519;
+  --nav-active-fg: #F5F8F9;
+  --hatch: rgba(15, 21, 25, 0.07);
+  --edge: #BCC8CE;
+  --edge-soft: rgba(15, 21, 25, 0.06);
+  --nav-edge: #000000;
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-line: rgba(255, 255, 255, 0.8);
+  --glass-shade: rgba(15, 21, 25, 0.16);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #06090B;
+    --paper: #0D1216;
+    --surface: #141B20;
+    --sunken: #10161A;
+    --ink: #E6F0F3;
+    --ink-2: #A0B0B8;
+    --ink-3: #6E7E86;
+    --line: #243039;
+    --outline: #BFD3DA;
+    --lift: #3FD8EE;
+    --cyan: #3FD8EE;
+    --cyan-soft: #0E353D;
+    --cyan-text: #62E2F4;
+    --on-cyan: #0F1519;
+    --amber: #F2A516;
+    --amber-soft: #35270A;
+    --amber-text: #F5C15A;
+    --coral: #F0565B;
+    --coral-soft: #3A1517;
+    --coral-text: #FF8F92;
+    --green: #2BBF82;
+    --green-soft: #0B2F22;
+    --green-text: #5BD39E;
+    --nav-active-bg: #3FD8EE;
+    --nav-active-fg: #0F1519;
+    --hatch: rgba(230, 240, 243, 0.07);
+    --edge: #040709;
+    --edge-soft: rgba(0, 0, 0, 0.35);
+    --nav-edge: #178FA1;
+    --glass-bg: rgba(20, 27, 32, 0.55);
+    --glass-line: rgba(255, 255, 255, 0.14);
+    --glass-shade: rgba(0, 0, 0, 0.55);
+  }
+}
+:root[data-theme="dark"], .frame[data-mode="dark"] {
+  --ground: #06090B;
+  --paper: #0D1216;
+  --surface: #141B20;
+  --sunken: #10161A;
+  --ink: #E6F0F3;
+  --ink-2: #A0B0B8;
+  --ink-3: #6E7E86;
+  --line: #243039;
+  --outline: #BFD3DA;
+  --lift: #3FD8EE;
+  --cyan: #3FD8EE;
+  --cyan-soft: #0E353D;
+  --cyan-text: #62E2F4;
+  --on-cyan: #0F1519;
+  --amber: #F2A516;
+  --amber-soft: #35270A;
+  --amber-text: #F5C15A;
+  --coral: #F0565B;
+  --coral-soft: #3A1517;
+  --coral-text: #FF8F92;
+  --green: #2BBF82;
+  --green-soft: #0B2F22;
+  --green-text: #5BD39E;
+  --nav-active-bg: #3FD8EE;
+  --nav-active-fg: #0F1519;
+  --hatch: rgba(230, 240, 243, 0.07);
+  --edge: #040709;
+  --edge-soft: rgba(0, 0, 0, 0.35);
+  --nav-edge: #178FA1;
+  --glass-bg: rgba(20, 27, 32, 0.55);
+  --glass-line: rgba(255, 255, 255, 0.14);
+  --glass-shade: rgba(0, 0, 0, 0.55);
+}
+
+:root {
+  --display: "Big Shoulders Display", "Arial Narrow", "Roboto Condensed", Impact, sans-serif;
+  --body: "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "Spline Sans Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+/* ── Depth ──────────────────────────────────────────────────────────
+   Flat, decided 2026-09-14. Hard diagonal ink shadow only on the one
+   lifted element per screen; nothing moves on hover, buttons press in. */
+body, .frame, .phone {
+  --sh-frame: 8px 8px 0 var(--lift);
+  --sh-frame-sm: 6px 6px 0 var(--lift);
+  --sh-lift: 0 0 0 transparent;
+  --sh-lift-sm: 0 0 0 transparent;
+  --sh-btn: 3px 3px 0 var(--lift);
+  --sh-btn-hover: 3px 3px 0 var(--lift);
+  --sh-btn-press: 1px 1px 0 var(--lift);
+  --t-btn-hover: none;
+  --t-btn-press: translate(2px, 2px);
+  --sh-card: 0 0 0 transparent;
+  --sh-card-hover: 0 0 0 transparent;
+  --sh-card-press: 0 0 0 transparent;
+  --t-card-hover: none;
+  --t-card-press: none;
+  --sh-seg: 0 0 0 1.5px var(--outline);
+  --sh-sunken: none;
+  --sh-nav: none;
+  --gloss: none;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--cyan-text); outline-offset: 2px; }
+.lucide { width: 16px; height: 16px; stroke-width: 2; flex-shrink: 0; }
+
+/* ── Proposal page ─────────────────────────────────────────────────── */
+.wrap {
+  max-width: 1380px;
+  margin: 0 auto;
+  padding-inline: clamp(16px, 4vw, 48px);
+  padding-block: 40px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 72px;
+}
+.masthead { display: flex; flex-direction: column; gap: 20px; }
+.masthead-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.masthead-top img { width: 44px; height: 44px; }
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+h1.hero {
+  font-family: var(--display);
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: clamp(48px, 8.5vw, 112px);
+  line-height: 0.88;
+  letter-spacing: 0.005em;
+  margin: 0;
+  text-wrap: balance;
+  max-width: 14ch;
+}
+h1.hero em { font-style: normal; color: var(--cyan-text); }
+.lede { font-size: 19px; max-width: 62ch; margin: 0; color: var(--ink-2); text-wrap: pretty; }
+.lede strong { color: var(--ink); font-weight: 600; }
+
+h2.sec {
+  font-family: var(--display);
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: clamp(30px, 4vw, 44px);
+  line-height: 0.95;
+  margin: 0;
+  text-wrap: balance;
+}
+.sec-head { display: flex; flex-direction: column; gap: 10px; max-width: 70ch; }
+.sec-head p { margin: 0; color: var(--ink-2); }
+section { display: flex; flex-direction: column; gap: 28px; }
+
+/* Current state diagnosis */
+.diag { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; align-items: start; }
+@media (max-width: 860px) { .diag { grid-template-columns: 1fr; } }
+.now-fig { display: flex; flex-direction: column; gap: 10px; margin: 0; }
+.now-screen {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  max-width: 100%;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: repeating-linear-gradient(135deg, var(--hatch) 0 6px, transparent 6px 12px), var(--sunken);
+}
+.now-col {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 26.7%; width: 46.6%;
+  background: #F1F5F9;
+  display: flex; flex-direction: column; gap: 5%;
+  padding: 3% 3% 0;
+}
+.now-col .bar { height: 7%; background: #fff; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+.now-col .hero-blk { height: 30%; border-radius: 8px; background: linear-gradient(145deg, #0C2A3E, #075985); }
+.now-col .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 6%; height: 14%; }
+.now-col .tiles div, .now-col .blk { background: #F8FAFF; border: 1px solid #E2E8F0; border-radius: 8px; }
+.now-col .blk { height: 12%; }
+.now-nav {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 9%;
+  background: rgba(255,255,255,.92); border-top: 1px solid #E2E8F0;
+}
+.now-nav::after {
+  content: ""; position: absolute; left: 27.2%; top: 14%; height: 72%; width: 9%;
+  border-radius: 8px; background: #334155;
+}
+.now-gap {
+  position: absolute; top: 44%;
+  font-family: var(--mono); font-size: clamp(9px, 1.3vw, 12px);
+  color: var(--ink-2);
+  display: flex; align-items: center; justify-content: center;
+  width: 26.7%;
+}
+.now-gap::before, .now-gap::after { content: ""; flex: 1; height: 1px; background: var(--ink-3); margin-inline: 6%; }
+.now-gap.l { left: 0; } .now-gap.r { right: 0; }
+.now-fig figcaption { font-size: 14px; color: var(--ink-3); }
+
+.problems { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 22px; }
+.problems li { display: grid; grid-template-columns: 28px 1fr; gap: 12px; }
+.problems .lucide { width: 22px; height: 22px; color: var(--coral-text); margin-top: 2px; }
+.problems h3 { margin: 0 0 4px; font-size: 17px; font-weight: 600; }
+.problems p { margin: 0; color: var(--ink-2); font-size: 15px; max-width: 58ch; }
+code {
+  font-family: var(--mono); font-size: 0.86em;
+  background: var(--sunken); border: 1px solid var(--line);
+  padding: 1px 5px; border-radius: 4px;
+}
+
+/* Mock caption row */
+.mock-caption { display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; }
+.hint { font-size: 14px; color: var(--ink-3); display: flex; gap: 8px; align-items: center; }
+.sample-tag {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+  border: 1px dashed var(--ink-3); color: var(--ink-2); padding: 3px 8px; border-radius: 99px;
+}
+
+/* ── The app mock ───────────────────────────────────────────────────── */
+.frame {
+  container: app / inline-size;
+  background: var(--paper);
+  color: var(--ink);
+  border: 2px solid var(--outline);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--sh-frame);
+  font-size: 14px;
+  line-height: 1.45;
+  position: relative;
+}
+.app { display: grid; grid-template-columns: 236px minmax(0, 1fr); min-height: 780px; }
+
+/* Sidebar */
+.side {
+  border-right: 1.5px solid var(--line);
+  background: var(--surface);
+  padding: 18px 14px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 6px; }
+.brand img { width: 38px; height: 38px; }
+.brand b { font-family: var(--display); font-weight: 900; font-size: 24px; letter-spacing: .02em; text-transform: uppercase; line-height: 1; }
+.wristband {
+  background: var(--cyan);
+  color: var(--on-cyan);
+  border: 2px solid var(--outline);
+  border-radius: 10px;
+  padding: 9px 12px;
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 10px;
+  text-align: left; cursor: pointer;
+  background-image: radial-gradient(circle at 100% 50%, var(--paper) 0 5px, transparent 5.5px), radial-gradient(circle at 0 50%, var(--paper) 0 5px, transparent 5.5px);
+}
+.wristband .wb-k { font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
+.wristband .wb-n { font-family: var(--display); font-weight: 800; font-size: 19px; text-transform: uppercase; line-height: 1; }
+.wristband .wb-d { grid-row: 1 / span 2; grid-column: 2; font-family: var(--display); font-weight: 900; font-size: 30px; line-height: .9; text-align: right; }
+.wristband .wb-d small { display: block; font-family: var(--mono); font-size: 9px; font-weight: 500; letter-spacing: .06em; }
+
+.nav { display: flex; flex-direction: column; gap: 2px; }
+.nav-label { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); padding: 12px 10px 6px; }
+.nav button, .nav a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 8px; border: 0; background: none;
+  text-align: left; cursor: pointer; font-weight: 500; color: var(--ink-2);
+  text-decoration: none;
+}
+.nav button:hover { background: var(--sunken); color: var(--ink); }
+.nav button[aria-current="page"] { background: var(--nav-active-bg); color: var(--nav-active-fg); box-shadow: var(--sh-nav); }
+.nav button[aria-current="page"] .lucide { color: var(--cyan); }
+.frame[data-mode="dark"] .nav button[aria-current="page"] .lucide,
+.nav button[aria-current="page"] .lucide { stroke-width: 2.4; }
+.nav .count {
+  margin-left: auto; font-family: var(--mono); font-size: 11px; font-weight: 600;
+  background: var(--coral); color: #fff; border-radius: 99px; padding: 0 7px; line-height: 18px;
+}
+.side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 4px; border-top: 1.5px solid var(--line); padding-top: 12px; }
+.me { display: flex; align-items: center; gap: 10px; padding: 6px 8px; }
+.me div { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.me small { color: var(--ink-3); font-size: 12px; }
+
+/* Top bar */
+.main { display: flex; flex-direction: column; min-width: 0; }
+.topbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 28px; border-bottom: 1.5px solid var(--line); background: var(--paper);
+}
+.search {
+  flex: 1; max-width: 460px; display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: 9px; padding: 7px 10px; color: var(--ink-3);
+  box-shadow: var(--sh-sunken);
+}
+.search input { flex: 1; border: 0; background: transparent; font: inherit; color: var(--ink); min-width: 0; }
+.search input::placeholder { color: var(--ink-3); }
+.search input:focus { outline: none; }
+.search:focus-within { border-color: var(--cyan-text); }
+kbd { font-family: var(--mono); font-size: 11px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; color: var(--ink-3); }
+.spacer { flex: 1; }
+.icon-btn {
+  width: 36px; height: 36px; display: grid; place-items: center;
+  border-radius: 9px; border: 1.5px solid transparent; background: none; cursor: pointer; color: var(--ink-2); position: relative;
+}
+.icon-btn:hover { background: var(--sunken); color: var(--ink); }
+.icon-btn .dot { position: absolute; top: 7px; right: 8px; width: 7px; height: 7px; background: var(--coral); border-radius: 50%; border: 1.5px solid var(--paper); }
+.btn {
+  display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+  font-weight: 600; font-size: 13.5px; padding: 8px 14px; border-radius: 9px;
+  border: 1.5px solid var(--line); background: var(--surface); color: var(--ink);
+  white-space: nowrap;
+}
+.btn { box-shadow: var(--sh-card); transition: transform .08s, box-shadow .08s, border-color .12s; }
+.btn:hover { border-color: var(--ink-3); transform: var(--t-card-hover); box-shadow: var(--sh-card-hover); }
+.btn:active { transform: var(--t-card-press); box-shadow: var(--sh-card-press); }
+.btn-primary {
+  background: var(--cyan); color: var(--on-cyan); border: 2px solid var(--outline);
+  box-shadow: var(--sh-btn); background-image: var(--gloss);
+}
+.btn-primary:hover { border-color: var(--outline); transform: var(--t-btn-hover); box-shadow: var(--sh-btn-hover); }
+.btn-primary:active { transform: var(--t-btn-press); box-shadow: var(--sh-btn-press); }
+.btn-sm { padding: 5px 10px; font-size: 12.5px; }
+
+/* Avatars */
+.av {
+  --c: #5A6B75;
+  width: 28px; height: 28px; border-radius: 50%; background: var(--c); color: #fff;
+  display: inline-grid; place-items: center; font-weight: 700; font-size: 11px; flex-shrink: 0;
+}
+.av.lg { width: 34px; height: 34px; font-size: 13px; }
+.av.sm { width: 22px; height: 22px; font-size: 9.5px; }
+.av.dark-text { color: #0F1519; }
+.pile { display: flex; }
+.pile .av { box-shadow: 0 0 0 2px var(--surface); }
+.pile .av + .av { margin-left: -7px; }
+
+/* Content */
+.view { padding: 32px 40px 48px; display: flex; flex-direction: column; gap: 32px; }
+.view[hidden] { display: none !important; }
+.page-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.page-head .kicker { font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.page-head h2 { font-family: var(--display); font-weight: 800; font-size: 42px; line-height: .95; margin: 2px 0 0; letter-spacing: .005em; }
+.head-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.hub-grid { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: 32px; align-items: start; }
+.col { display: flex; flex-direction: column; gap: 32px; min-width: 0; }
+
+.panel { background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; box-shadow: var(--sh-card); }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px 10px; }
+.panel-title { font-family: var(--mono); font-size: 11.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
+.panel-link { font-size: 12.5px; font-weight: 600; color: var(--cyan-text); text-decoration: none; display: inline-flex; gap: 4px; align-items: center; background: none; border: 0; cursor: pointer; padding: 0; }
+.panel-link .lucide { width: 14px; height: 14px; }
+.tally { font-family: var(--mono); font-size: 11px; font-weight: 600; background: var(--coral-soft); color: var(--coral-text); border-radius: 99px; padding: 1px 8px; }
+
+/* Ticket */
+.ticket {
+  display: grid; grid-template-columns: minmax(0, 1fr) 168px;
+  background: var(--surface); border: 2px solid var(--outline); border-radius: 14px;
+  box-shadow: var(--sh-lift); overflow: hidden;
+}
+.ticket-cover {
+  height: 80px; background-color: #0F1519; position: relative; overflow: hidden;
+  background-image: radial-gradient(circle, rgba(63, 216, 238, .55) 1.5px, transparent 1.9px);
+  background-size: 9px 9px;
+}
+.ticket-cover::before {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, #0F1519 0%, rgba(15,21,25,.2) 45%, rgba(15,21,25,.85) 100%);
+}
+.ticket-cover span {
+  position: absolute; right: 18px; bottom: -22px;
+  font-family: var(--display); font-weight: 900; font-size: 118px; line-height: 1;
+  color: transparent; -webkit-text-stroke: 1.5px #3FD8EE; letter-spacing: .02em;
+}
+.ticket-cover .chips { position: absolute; left: 20px; top: 16px; }
+.ticket-body { padding: 20px 24px 20px; display: flex; flex-direction: column; gap: 18px; }
+.ticket-title { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 40px; line-height: .92; margin: 0; letter-spacing: .01em; }
+.ticket-where { color: var(--ink-2); display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.ticket-where .lucide { width: 14px; height: 14px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600;
+  font-family: var(--mono); letter-spacing: .05em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,.1); color: #E6F0F3; border: 1px solid rgba(255,255,255,.22);
+}
+.chip .lucide { width: 12px; height: 12px; }
+.days { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.day {
+  display: grid; grid-template-columns: auto 1fr; gap: 0 10px; align-items: center; text-align: left;
+  border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--surface); cursor: pointer;
+}
+.day:hover { border-color: var(--ink-3); }
+.day.travel { background: repeating-linear-gradient(135deg, var(--hatch) 0 6px, transparent 6px 12px), var(--surface); }
+.day .dd { grid-row: span 2; text-align: center; line-height: 1; min-width: 30px; }
+.day .dow { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .08em; color: var(--ink-3); }
+.day .dnum { display: block; font-family: var(--display); font-weight: 800; font-size: 26px; }
+.day .dt { font-weight: 600; font-size: 13px; }
+.day .ds { font-size: 12px; color: var(--ink-3); display: flex; align-items: center; gap: 4px; min-width: 0; }
+.day .ds .lucide { width: 12px; height: 12px; }
+.ticket-foot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ticket-foot .who { color: var(--ink-2); font-size: 13px; }
+.ticket-foot .spacer { min-width: 8px; }
+.stub {
+  background: var(--cyan); background-image: var(--gloss); color: var(--on-cyan);
+  border-left: 2px dashed var(--outline);
+  padding: 18px 16px; display: flex; flex-direction: column; justify-content: center; gap: 8px; text-align: center;
+}
+.stub .k { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; }
+.stub .big { font-family: var(--display); font-weight: 900; font-size: 104px; line-height: .8; letter-spacing: -.01em; }
+.stub .meta { font-family: var(--mono); font-size: 11px; line-height: 1.5; border-top: 1.5px solid rgba(15,21,25,.35); padding-top: 10px; }
+.stub .meta b { display: block; font-size: 13px; }
+
+/* Quick rides */
+.quick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.q {
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; padding: 13px 14px;
+  display: flex; flex-direction: column; gap: 8px; text-align: left; cursor: pointer;
+}
+.q, .day, button.ride { box-shadow: var(--sh-card); transition: transform .08s, box-shadow .08s, border-color .12s; }
+.q:hover, .day:hover, button.ride:hover { transform: var(--t-card-hover); box-shadow: var(--sh-card-hover); }
+.q:active, .day:active, button.ride:active { transform: var(--t-card-press); box-shadow: var(--sh-card-press); }
+.q:hover { border-color: var(--ink-3); }
+.q-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.q-ico { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; background: var(--sunken); color: var(--ink); }
+.q-name { font-weight: 600; font-size: 14.5px; }
+.q-when { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pill.ok { background: var(--green-soft); color: var(--green-text); }
+.pill.warn { background: var(--amber-soft); color: var(--amber-text); }
+.pill.bad { background: var(--coral-soft); color: var(--coral-text); }
+.pill.info { background: var(--cyan-soft); color: var(--cyan-text); }
+
+/* Upcoming list */
+.rows { display: flex; flex-direction: column; }
+.row {
+  display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 16px; align-items: center;
+  padding: 13px 18px; border-top: 1px solid var(--line); cursor: pointer; background: none; border-left: 0; border-right: 0; border-bottom: 0; text-align: left; width: 100%;
+}
+.row:hover { background: var(--sunken); }
+.row:last-child { border-radius: 0 0 11px 11px; }
+.row .date { font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
+.row .date small { display: block; font-weight: 400; color: var(--ink-3); font-size: 11px; }
+.row .name { font-weight: 600; font-size: 14px; }
+.row .loc { font-size: 12.5px; color: var(--ink-3); }
+.status-text, td.muted { font-size: 12.5px; color: var(--ink-3); }
+.tag { font-family: var(--mono); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); border: 1px solid var(--line); padding: 1px 6px; border-radius: 5px; }
+.row-tags { display: flex; gap: 5px; margin-top: 3px; flex-wrap: wrap; }
+
+/* Actions */
+.acts { list-style: none; margin: 0; padding: 0 8px 8px; display: flex; flex-direction: column; gap: 2px; }
+.act { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 8px; border-radius: 9px; width: 100%; border: 0; background: none; text-align: left; cursor: pointer; }
+.act > .lucide { color: var(--ink-3); }
+.act:hover { background: var(--sunken); }
+.act-ico { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; }
+.act-ico.bad { background: var(--coral-soft); color: var(--coral-text); }
+.act-ico.warn { background: var(--amber-soft); color: var(--amber-text); }
+.act-ico.info { background: var(--cyan-soft); color: var(--cyan-text); }
+.act-t { font-weight: 600; font-size: 13.5px; line-height: 1.3; }
+.act-s { font-size: 12px; color: var(--ink-3); }
+
+/* Balance */
+.bal { padding: 2px 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+.bal-num { font-family: var(--mono); font-weight: 600; font-size: 32px; letter-spacing: -.02em; color: var(--green-text); line-height: 1; font-variant-numeric: tabular-nums; }
+.bal-sub { font-size: 13px; color: var(--ink-2); }
+.splitbar { display: flex; height: 10px; border-radius: 99px; overflow: hidden; gap: 3px; }
+.splitbar .in { background: var(--green); }
+.splitbar .out { background: var(--coral); }
+.legend { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; gap: 10px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i.sw { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+
+/* Rooms */
+.rooms { display: flex; flex-direction: column; padding: 0 8px 8px; }
+.room { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px; border-radius: 9px; }
+.room + .room { border-top: 1px dashed var(--line); border-radius: 0; }
+.room-no { font-family: var(--display); font-weight: 800; font-size: 26px; line-height: 1; }
+.room-no small { display: block; font-family: var(--mono); font-size: 9.5px; font-weight: 500; letter-spacing: .08em; color: var(--ink-3); }
+.room-names { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; }
+.me-hl { color: var(--ink); font-weight: 600; }
+
+/* Transport board */
+.subnav { box-shadow: var(--sh-sunken); display: flex; gap: 4px; background: var(--sunken); border: 1.5px solid var(--line); border-radius: 10px; padding: 3px; flex-wrap: wrap; }
+.subnav button { border: 0; background: none; padding: 5px 12px; border-radius: 7px; cursor: pointer; font-weight: 600; font-size: 13px; color: var(--ink-2); }
+.subnav button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--sh-seg); }
+.summary { display: flex; gap: 22px; flex-wrap: wrap; color: var(--ink-2); font-size: 13.5px; align-items: center; }
+.summary b { font-family: var(--mono); color: var(--ink); font-weight: 600; margin-right: 4px; }
+.board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) 220px; gap: 24px; align-items: start; }
+.lane { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.lane-head { display: flex; align-items: center; gap: 8px; padding: 0 2px 4px; border-bottom: 2px solid var(--outline); }
+.lane-head h3 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 22px; text-transform: uppercase; letter-spacing: .02em; }
+.lane-head .n { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+.lane-head .when { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink-3); text-transform: uppercase; }
+.ride { background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; align-items: stretch; gap: 8px; width: 100%; text-align: left; }
+button.ride { cursor: pointer; }
+button.ride:hover { border-color: var(--ink-3); }
+.route-line { font-size: 13px; color: var(--ink-2); }
+.seats-text { font-size: 12px; color: var(--ink-3); }
+.ride.needs .btn { align-self: flex-start; }
+.ride-top { display: flex; align-items: center; gap: 9px; }
+.ride-top .who { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.ride-top .who small { color: var(--ink-3); font-size: 11.5px; display: flex; align-items: center; gap: 4px; }
+.ride-top .who small .lucide { width: 12px; height: 12px; }
+.ride-top .t { margin-left: auto; font-family: var(--mono); font-weight: 600; font-size: 15px; }
+.route { display: grid; grid-template-columns: 10px 1fr; gap: 2px 9px; font-size: 12.5px; }
+.route i.stop { width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--ink); margin-top: 4px; }
+.route i.stop.end { background: var(--ink); }
+.route i.leg { width: 2px; height: 10px; background: var(--line); margin-left: 3.5px; }
+.route span.leg-gap { height: 10px; }
+.ride-foot { display: flex; align-items: center; gap: 8px; justify-content: space-between; flex-wrap: wrap; border-top: 1px dashed var(--line); padding-top: 9px; }
+.seats { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--ink-2); }
+.seats i.s { width: 11px; height: 11px; border-radius: 3px; background: var(--ink); display: inline-block; }
+.seats i.s.free { background: none; box-shadow: inset 0 0 0 1.5px var(--ink-3); }
+.seats em { font-style: normal; margin-left: 6px; }
+.ride.needs { border-style: dashed; border-color: var(--coral); background: var(--coral-soft); }
+.ride.needs .hl { color: var(--coral-text); font-weight: 600; }
+.missing { background: var(--amber-soft); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.missing h3 { margin: 0; font-family: var(--display); font-size: 22px; font-weight: 800; text-transform: uppercase; color: var(--amber-text); display: flex; align-items: center; gap: 8px; }
+.missing p { margin: 0; font-size: 12.5px; color: var(--ink-2); }
+.miss-row { display: flex; align-items: center; gap: 9px; background: var(--surface); border-radius: 9px; padding: 8px 9px; }
+.miss-row .nm { font-weight: 600; font-size: 13px; }
+.miss-row .gaps { margin-left: auto; font-size: 12px; color: var(--ink-3); }
+
+/* Finance */
+.fin-grid { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 22px; align-items: start; }
+.owe { list-style: none; margin: 0; padding: 0 8px 8px; }
+.owe li { display: flex; align-items: center; gap: 10px; padding: 9px 8px; border-radius: 9px; border-top: 1px solid var(--line); }
+.owe li:hover { background: var(--sunken); }
+.owe .nm { font-weight: 600; font-size: 13.5px; }
+.owe .nm small { display: block; font-weight: 400; color: var(--ink-3); font-size: 12px; }
+.owe .amt { margin-left: auto; font-family: var(--mono); font-weight: 600; font-variant-numeric: tabular-nums; }
+.amt.pos { color: var(--green-text); } .amt.neg { color: var(--coral-text); }
+.owe-sub { font-family: var(--mono); font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); padding: 10px 16px 2px; }
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 640px; }
+th { font-family: var(--mono); font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; text-align: left; padding: 8px 16px; border-bottom: 1.5px solid var(--line); white-space: nowrap; }
+td { padding: 11px 16px; border-bottom: 1px solid var(--line); vertical-align: middle; font-size: 13.5px; }
+tr:last-child td { border-bottom: 0; }
+tbody tr:hover td { background: var(--sunken); }
+td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+td .d { font-family: var(--mono); font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+td .desc { font-weight: 600; }
+td .desc small { display: block; font-weight: 400; color: var(--ink-3); font-size: 12px; }
+.payer { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.progress { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.progress .track { width: 56px; height: 6px; border-radius: 99px; background: var(--sunken); box-shadow: inset 0 0 0 1px var(--line); overflow: hidden; }
+.progress .fill { height: 100%; background: var(--green); }
+
+/* Bottom nav (mobile fallback inside the mock) */
+.bottomnav { display: none; }
+
+/* Toast */
+.toast {
+  position: absolute; left: 50%; bottom: 20px; transform: translate(-50%, 12px);
+  background: var(--ink); color: var(--paper); padding: 9px 14px; border-radius: 9px; font-size: 13px; font-weight: 500;
+  opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s; white-space: nowrap; z-index: 5;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ── Mock responsiveness (container-based) ─────────────────────────── */
+@container app (max-width: 1180px) {
+  .board { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .missing { grid-column: 1 / -1; }
+  .fin-grid { grid-template-columns: 1fr; }
+}
+@container app (max-width: 1040px) {
+  .hub-grid { grid-template-columns: 1fr; }
+  .app { grid-template-columns: 76px minmax(0, 1fr); }
+  .side { padding: 16px 10px; align-items: center; }
+  .brand b, .nav-label, .nav button span, .wristband, .me div, .nav .count { display: none; }
+  .nav button { justify-content: center; padding: 10px; }
+  .nav button .lucide { width: 19px; height: 19px; }
+  .brand { padding: 0; }
+}
+@container app (max-width: 760px) {
+  .app { grid-template-columns: 1fr; min-height: 0; }
+  .side { display: none; }
+  .topbar { padding: 10px 16px; }
+  .search { display: none; }
+  .topbar .mobile-brand { display: flex; }
+  .topbar .new-btn span { display: none; }
+  .view { padding: 18px 16px 24px; }
+  .page-head h2 { font-size: 34px; }
+  .ticket { grid-template-columns: 1fr; }
+  .stub { border-left: 0; border-top: 2px dashed var(--outline); flex-direction: row; align-items: center; justify-content: center; gap: 12px; text-align: left; padding: 10px 16px; }
+  .stub .big { font-size: 56px; }
+  .stub .meta { border-top: 0; padding-top: 0; text-align: right; }
+  .days { grid-template-columns: 1fr; }
+  .quick { grid-template-columns: 1fr; }
+  .row { grid-template-columns: 76px minmax(0, 1fr) auto; }
+  .board { grid-template-columns: 1fr; }
+  .bottomnav {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px;
+    border-top: 1.5px solid var(--line); background: var(--surface); padding: 6px;
+  }
+  .bottomnav button { border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10.5px; font-weight: 600; color: var(--ink-3); padding: 6px 2px; border-radius: 9px; cursor: pointer; }
+  .bottomnav button[aria-current="page"] { background: var(--nav-active-bg); color: var(--nav-active-fg); box-shadow: var(--sh-nav); }
+  .bottomnav .lucide { width: 19px; height: 19px; }
+}
+.topbar .mobile-brand { display: none; align-items: center; gap: 8px; font-family: var(--display); font-weight: 900; font-size: 20px; text-transform: uppercase; }
+.topbar .mobile-brand img { width: 30px; height: 30px; }
+
+/* ── Phones ────────────────────────────────────────────────────────── */
+.phones { display: flex; flex-wrap: wrap; justify-content: center; gap: 48px 36px; }
+.phone-wrap { margin: 0; display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 360px; }
+.phone {
+  container: app / inline-size;
+  position: relative;
+  height: 740px;
+  display: flex; flex-direction: column;
+  background: var(--paper); color: var(--ink);
+  border: 2px solid var(--outline); border-radius: 36px;
+  box-shadow: var(--sh-frame-sm);
+  overflow: hidden;
+  font-size: 14px; line-height: 1.45;
+}
+.phone-status { display: flex; justify-content: space-between; align-items: center; padding: 12px 26px 4px; font-family: var(--mono); font-size: 12px; font-weight: 600; }
+.phone-status .icons { display: flex; gap: 5px; }
+.phone-status .lucide { width: 14px; height: 14px; }
+.phone-top { display: flex; align-items: center; gap: 8px; padding: 6px 16px 10px; border-bottom: 1.5px solid var(--line); }
+.phone-top img { width: 30px; height: 30px; }
+.phone-top b { font-family: var(--display); font-weight: 900; font-size: 21px; text-transform: uppercase; line-height: 1; }
+.phone-top .icon-btn { margin-left: auto; cursor: default; }
+.phone-body { flex: 1; overflow-y: auto; scrollbar-width: none; }
+.phone-body::-webkit-scrollbar { display: none; }
+.phone .view { padding: 18px 16px 88px; gap: 22px; }
+.phone .page-head h2 { font-size: 32px; }
+.phone .ticket { box-shadow: var(--sh-lift-sm); }
+.phone .ticket-cover { height: 60px; }
+.phone .ticket-cover span { font-size: 84px; bottom: -16px; }
+.phone .ticket-body { padding: 16px; gap: 14px; }
+.phone .ticket-title { font-size: 30px; }
+.phone .days { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.phone .day { grid-template-columns: 1fr; text-align: center; padding: 8px 4px; cursor: default; }
+.phone .day .dd { grid-row: auto; }
+.phone .day .dt { font-size: 11.5px; font-weight: 500; color: var(--ink-2); }
+.phone .act { cursor: default; }
+.phone .seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.phone .lane { gap: 12px; }
+.notice { background: var(--amber-soft); color: var(--ink-2); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
+.notice b { color: var(--amber-text); }
+.xlist { list-style: none; margin: 0; padding: 0 16px 6px; }
+.xlist li { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-top: 1px solid var(--line); }
+.x-main { display: flex; flex-direction: column; min-width: 0; }
+.x-main b { font-weight: 600; font-size: 13.5px; }
+.x-main small { color: var(--ink-3); font-size: 12px; }
+.x-side { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.x-amt { font-family: var(--mono); font-weight: 600; font-variant-numeric: tabular-nums; }
+.fab {
+  position: absolute; right: 16px; bottom: 86px;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--cyan); color: var(--on-cyan);
+  border: 2px solid var(--outline); border-radius: 14px;
+  box-shadow: var(--sh-btn); background-image: var(--gloss);
+  padding: 10px 16px 10px 12px; font-weight: 700; font-size: 14px;
+}
+.phone-nav { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; padding: 6px 6px 16px; border-top: 1.5px solid var(--line); background: var(--surface); }
+.phone-nav span { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10.5px; font-weight: 600; color: var(--ink-3); padding: 6px 2px; border-radius: 10px; }
+.phone-nav span[aria-current] { background: var(--nav-active-bg); color: var(--nav-active-fg); box-shadow: var(--sh-nav); }
+.phone-nav span[aria-current] .lucide { color: var(--cyan); }
+.phone-nav .lucide { width: 19px; height: 19px; }
+.phone-cap { font-size: 14px; color: var(--ink-2); padding-inline: 4px; }
+.phone-cap b { display: block; color: var(--ink); font-weight: 600; margin-bottom: 2px; }
+
+/* ── Decisions ─────────────────────────────────────────────────────── */
+.decisions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-top: 2px solid var(--ink); }
+.decision { padding: 22px 28px 26px 0; border-bottom: 1.5px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.decision:nth-child(even) { padding: 22px 0 26px 28px; border-left: 1.5px solid var(--line); }
+.decision:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.decision h3 { margin: 0; font-size: 19px; font-weight: 600; text-wrap: balance; }
+.decision p { margin: 0; color: var(--ink-2); font-size: 15px; max-width: 60ch; }
+.decision .was { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+.decision .was s { text-decoration-color: var(--coral); }
+@media (max-width: 760px) {
+  .decisions { grid-template-columns: 1fr; }
+  .decision, .decision:nth-child(even) { padding: 20px 0; border-left: 0; }
+}
+
+/* ── Tokens ────────────────────────────────────────────────────────── */
+.tok-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; }
+@media (max-width: 860px) { .tok-grid { grid-template-columns: 1fr; } }
+.swatches { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 480px) { .swatches { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.sw-card { display: flex; flex-direction: column; gap: 6px; }
+.sw-chip { height: 64px; border-radius: 8px; border: 1.5px solid var(--line); box-shadow: var(--sh-card); }
+.sw-name { font-weight: 600; font-size: 14px; }
+.sw-hex { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+.sw-role { font-size: 12.5px; color: var(--ink-2); line-height: 1.35; }
+.type-specs { display: flex; flex-direction: column; gap: 0; border-top: 1.5px solid var(--line); }
+.spec { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 16px; padding: 16px 0; border-bottom: 1.5px solid var(--line); align-items: baseline; }
+.spec-meta { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); line-height: 1.5; }
+.spec-meta b { display: block; color: var(--ink); font-weight: 600; font-size: 12px; }
+.spec .s-display { font-family: var(--display); font-weight: 900; font-size: 46px; line-height: .92; text-transform: uppercase; overflow-wrap: anywhere; }
+.spec .s-body { font-family: var(--body); font-size: 16px; }
+.spec .s-mono { font-family: var(--mono); font-size: 15px; font-variant-numeric: tabular-nums; }
+@media (max-width: 480px) { .spec { grid-template-columns: 1fr; gap: 6px; } }
+
+/* ── Rollout ───────────────────────────────────────────────────────── */
+.steps { list-style: none; margin: 0; padding: 0; counter-reset: step; display: flex; flex-direction: column; }
+.steps li { counter-increment: step; display: grid; grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1fr); gap: 20px; padding: 20px 0; border-top: 1.5px solid var(--line); }
+.steps li::before { content: counter(step, decimal-leading-zero); font-family: var(--display); font-weight: 900; font-size: 44px; line-height: .9; color: var(--cyan-text); }
+.steps h3 { margin: 0 0 4px; font-size: 17px; font-weight: 600; }
+.steps p { margin: 0; color: var(--ink-2); font-size: 15px; }
+.files { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); display: flex; flex-direction: column; gap: 4px; }
+.files span { overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  .steps li { grid-template-columns: 48px minmax(0, 1fr); }
+  .steps li::before { font-size: 34px; grid-row: span 2; }
+}
+.foot { font-size: 13px; color: var(--ink-3); border-top: 1.5px solid var(--line); padding-top: 18px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .toast, .btn-primary { transition: none; }
+}
+/* ── Depth options section ──────────────────────────────────────── */
+.depth-opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: stretch; }
+@media (max-width: 900px) { .depth-opts { grid-template-columns: 1fr; } }
+.depth-opt { background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--sh-card); }
+.depth-opt.chosen { border: 2px solid var(--outline); }
+.depth-opt h3 { margin: 0; font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.depth-opt .rec { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; background: var(--cyan); color: var(--on-cyan); border-radius: 99px; padding: 2px 9px; font-weight: 600; }
+.depth-opt p { margin: 0; font-size: 14.5px; color: var(--ink-2); }
+.depth-opt ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; font-size: 14px; color: var(--ink-2); }
+.depth-opt li { display: grid; grid-template-columns: 16px 1fr; gap: 6px; }
+.depth-opt li::before { font-family: var(--mono); font-weight: 600; }
+.depth-opt li.pro::before { content: "+"; color: var(--green-text); }
+.depth-opt li.con::before { content: "\2212"; color: var(--coral-text); }
+.depth-sample { height: 76px; border-radius: 10px; background: var(--sunken); display: grid; place-items: center; position: relative; overflow: hidden; }
+.depth-sample .btn-primary { pointer-events: none; }
+.sample-flat .btn-primary { box-shadow: 3px 3px 0 var(--lift); background-image: none; }
+.sample-3d .btn-primary { box-shadow: 0 3px 0 var(--lift); background-image: linear-gradient(180deg, rgba(255,255,255,.38), rgba(255,255,255,0) 58%); }
+.sample-glass { background: repeating-linear-gradient(135deg, var(--cyan) 0 10px, var(--sunken) 10px 22px); }
+.sample-glass .glass-pill {
+  padding: 10px 18px; border-radius: 99px; font-weight: 600; font-size: 13.5px; color: var(--ink);
+  background: var(--glass-bg); -webkit-backdrop-filter: blur(10px) saturate(1.8); backdrop-filter: blur(10px) saturate(1.8);
+  border: 1px solid var(--glass-line);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 8px 20px var(--glass-shade);
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn, .q, .day, button.ride { transition: none; }
+}
+
+
+/* ── Navigation doc additions ─────────────────────────────────────── */
+.nav .item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; font-weight: 500; color: var(--ink-2); }
+.nav .item[aria-current] { background: var(--nav-active-bg); color: var(--nav-active-fg); }
+.nav .item[aria-current] .lucide { color: var(--cyan); stroke-width: 2.4; }
+.nav .item .two { display: flex; flex-direction: column; line-height: 1.2; }
+.nav .item .two small { font-family: var(--mono); font-size: 10.5px; opacity: .7; font-weight: 400; }
+.search span { flex: 1; color: var(--ink-3); }
+@container app (max-width: 1040px) {
+  .nav .item span, .nav .item .count { display: none; }
+  .nav .item { justify-content: center; padding: 10px; }
+}
+.trip-head { display: flex; flex-direction: column; gap: 14px; }
+.trip-title { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 42px; line-height: .92; margin: 2px 0 0; text-wrap: balance; }
+.phone .trip-title { font-size: 30px; }
+.daychips { display: flex; gap: 6px; flex-wrap: wrap; }
+.daychip { font-family: var(--mono); font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; border: 1.5px solid var(--line); border-radius: 99px; padding: 3px 10px; color: var(--ink-2); white-space: nowrap; }
+.daychip.on { border-color: var(--outline); color: var(--ink); background: var(--surface); }
+.subtabs { display: flex; gap: 2px; border-bottom: 1.5px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.subtabs::-webkit-scrollbar { display: none; }
+.subtabs span { padding: 10px 12px; font-weight: 600; font-size: 13.5px; color: var(--ink-3); border-bottom: 2.5px solid transparent; margin-bottom: -1.5px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+.subtabs span.on { color: var(--ink); border-bottom-color: var(--ink); }
+.subtabs .n { font-style: normal; font-family: var(--mono); font-size: 10.5px; background: var(--amber-soft); color: var(--amber-text); border-radius: 99px; padding: 0 6px; line-height: 17px; }
+.act-s.dest { font-family: var(--mono); font-size: 11px; color: var(--cyan-text); }
+
+table.idx td { vertical-align: top; }
+.rt { font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+.scope { font-family: var(--mono); font-size: 11px; letter-spacing: .03em; border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; white-space: nowrap; color: var(--ink-2); }
+.scope.mix { background: var(--amber-soft); border-color: transparent; color: var(--amber-text); }
+.only { color: var(--coral-text); font-weight: 600; }
+.issue { color: var(--ink-2); font-size: 13px; }
+td.muted, .muted { color: var(--ink-3); font-size: 13px; }
+
+.doors-wrap { display: flex; flex-direction: column; gap: 10px; }
+.doors-title { margin: 0; font-family: var(--mono); font-size: 11.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-2); }
+.doors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; }
+@media (max-width: 520px) { .doors { grid-template-columns: 1fr; } }
+.door { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 12px 0; border-top: 1.5px solid var(--line); align-items: center; }
+.door b { font-weight: 600; font-size: 14.5px; }
+.door small { grid-column: 1 / -1; color: var(--ink-3); font-size: 12.5px; }
+.door .dots { display: flex; gap: 4px; }
+.door .dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--coral); display: block; }
+
+.map { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; align-items: start; }
+@media (max-width: 1100px) { .map { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tabcard.key { grid-column: 1 / -1; order: -1; } }
+@media (max-width: 560px) { .map { grid-template-columns: 1fr; } }
+.tabcard { background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; display: flex; flex-direction: column; box-shadow: var(--sh-card); }
+.tabcard header { padding: 14px 16px 12px; border-bottom: 1.5px solid var(--line); display: flex; flex-direction: column; gap: 2px; }
+.tabcard h3 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 28px; text-transform: uppercase; line-height: 1; display: flex; align-items: center; gap: 8px; }
+.tabcard h3 .lucide { width: 20px; height: 20px; }
+.tabcard header p { margin: 0; font-size: 14px; color: var(--ink-2); }
+.tabcard ul { list-style: none; margin: 0; padding: 6px 16px 12px; display: flex; flex-direction: column; }
+.tabcard li { padding: 8px 0; border-top: 1px dashed var(--line); font-weight: 600; font-size: 14px; }
+.tabcard li:first-child { border-top: 0; }
+.tabcard li small { display: block; font-weight: 400; font-size: 12.5px; color: var(--ink-3); line-height: 1.35; }
+.tabcard.key { border: 2px solid var(--outline); box-shadow: var(--sh-lift); }
+.tabcard.key header { background: var(--cyan); color: var(--on-cyan); border-bottom: 2px solid var(--outline); border-radius: 10px 10px 0 0; }
+.tabcard.key header p { color: var(--on-cyan); }
+.always { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; padding: 14px 18px; border: 1.5px dashed var(--ink-3); border-radius: 12px; font-size: 14px; color: var(--ink-2); }
+.always > span:first-child { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); }
+.muted-inline { color: var(--ink-3); }
+
+.sheet-backdrop { position: absolute; inset: 0; background: rgba(6, 9, 11, .5); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 2px solid var(--outline); border-radius: 22px 22px 0 0; padding: 10px 12px 22px; display: flex; flex-direction: column; }
+.sheet .grab { width: 40px; height: 4px; border-radius: 99px; background: var(--line); align-self: center; margin-bottom: 10px; }
+.sheet-user { display: flex; gap: 10px; align-items: center; padding: 4px 8px 12px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.sheet .item { display: flex; align-items: center; gap: 12px; padding: 11px 8px; font-weight: 500; font-size: 14.5px; }
+.sheet .item small { margin-left: auto; color: var(--ink-3); font-size: 11.5px; text-align: right; }
+.sheet .item.danger { color: var(--coral-text); }
+.sheet hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+
+table.moves td { vertical-align: top; }
+table.moves td:first-child { color: var(--ink-2); }
+td.arr { font-family: var(--mono); color: var(--ink-3); width: 24px; }
+
+.options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .options { grid-template-columns: 1fr; } }
+.option { border: 1.5px solid var(--line); border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; background: var(--surface); box-shadow: var(--sh-card); }
+.option.chosen { border: 2px solid var(--outline); }
+.option h3 { margin: 0; font-size: 18px; font-weight: 600; }
+.opt-tag { align-self: flex-start; font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; background: var(--cyan); color: var(--on-cyan); border-radius: 99px; padding: 2px 9px; font-weight: 600; }
+.option ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14.5px; color: var(--ink-2); }
+.option li { display: grid; grid-template-columns: 18px 1fr; gap: 6px; }
+.option li::before { font-family: var(--mono); font-weight: 600; }
+.option li.pro::before { content: "+"; color: var(--green-text); }
+.option li.con::before { content: "\2212"; color: var(--coral-text); }
+
+.fixes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; }
+@media (max-width: 860px) { .fixes { grid-template-columns: 1fr; } }
+.fixes li { padding: 14px 0; border-top: 1.5px solid var(--line); font-size: 15px; color: var(--ink-2); display: flex; flex-direction: column; gap: 4px; }
+.fixes li:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.fixes b { color: var(--ink); font-weight: 600; }
+.fixes .files { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+
+/* ── Old vs new comparison ─────────────────────────────────────────── */
+.deltas { display: flex; flex-wrap: wrap; border-top: 2px solid var(--ink); }
+.delta { flex: 1 1 180px; padding: 14px 20px 16px 0; display: flex; flex-direction: column; gap: 4px; border-bottom: 1.5px solid var(--line); }
+.delta-n { font-family: var(--mono); font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; display: flex; align-items: baseline; gap: 8px; line-height: 1.1; }
+.delta-n s { color: var(--ink-3); font-weight: 500; text-decoration-color: var(--coral); text-decoration-thickness: 2px; }
+.delta-n .to { color: var(--ink-3); font-size: 16px; }
+.delta small { font-size: 13.5px; color: var(--ink-2); max-width: 30ch; }
+
+.legend-row { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 13px; color: var(--ink-2); align-items: center; }
+.legend-row > span { display: inline-flex; align-items: center; gap: 6px; }
+.tabdemo { font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--surface); box-shadow: 0 0 0 1.5px var(--outline); color: var(--ink); }
+
+.cmp { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: var(--sh-card); }
+.cmp-col { padding: 20px 22px 24px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.cmp-col + .cmp-col { border-left: 1.5px solid var(--line); }
+@media (max-width: 860px) {
+  .cmp { grid-template-columns: 1fr; }
+  .cmp-col + .cmp-col { border-left: 0; border-top: 1.5px solid var(--line); }
+}
+.cmp-head { display: flex; flex-direction: column; gap: 10px; padding-bottom: 14px; border-bottom: 2px solid var(--outline); }
+.cmp-label { font-family: var(--display); font-weight: 900; font-size: 32px; text-transform: uppercase; line-height: 1; }
+.minibar { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; background: var(--sunken); border-radius: 10px; padding: 3px; }
+.minibar span { font-size: 11.5px; font-weight: 600; text-align: center; padding: 6px 2px; border-radius: 7px; color: var(--ink-3); display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.minibar .lucide { width: 15px; height: 15px; }
+.minibar span.changed { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1.5px var(--outline); }
+
+.grp { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 8px 14px; align-items: start; padding-top: 12px; border-top: 1px solid var(--line); }
+.cmp-head + .grp { border-top: 0; padding-top: 2px; }
+@media (max-width: 480px) { .grp { grid-template-columns: 1fr; gap: 6px; } }
+.grp-name { font-weight: 600; font-size: 13.5px; display: flex; align-items: flex-start; gap: 6px; padding-top: 4px; }
+.grp-name .lucide { width: 15px; height: 15px; margin-top: 2px; color: var(--ink-3); }
+.grp-name small { display: block; font-weight: 400; font-size: 11.5px; color: var(--ink-3); }
+.grp.key .grp-name { color: var(--cyan-text); }
+.grp.key .grp-name .lucide { color: var(--cyan-text); }
+.chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.it {
+  font: inherit; font-size: 13px; font-weight: 500; line-height: 1.3;
+  border: 1.5px solid var(--line); background: var(--paper); color: var(--ink);
+  border-radius: 8px; padding: 4px 9px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; text-align: left;
+  transition: opacity .15s, background-color .15s, border-color .15s, box-shadow .15s;
+}
+.it:hover { border-color: var(--ink-3); }
+.grp.off .it, .it.off-demo { border-style: dashed; }
+.it.demo { cursor: default; font-size: 11.5px; padding: 1px 7px; }
+.dead-lbl { color: var(--ink-3); text-decoration: line-through; text-decoration-color: var(--coral); }
+.flag { font-style: normal; font-family: var(--mono); font-size: 10px; letter-spacing: .03em; border-radius: 4px; padding: 0 4px; line-height: 16px; white-space: nowrap; }
+.flag.dup, .flag.dead { background: var(--coral-soft); color: var(--coral-text); }
+.flag.mix { background: var(--amber-soft); color: var(--amber-text); }
+.flag.new { background: var(--cyan-soft); color: var(--cyan-text); }
+
+.cmp.focusing .it { opacity: .28; }
+.cmp.focusing .it.hit { opacity: 1; background: var(--cyan); color: var(--on-cyan); border: 1.5px solid var(--outline); }
+.cmp.focusing .it.hit .dead-lbl { color: var(--on-cyan); }
+.cmp.focusing .it.hit .flag { background: rgba(255, 255, 255, .6); color: #0F1519; }
+.cmp.focusing .it.src { box-shadow: var(--sh-btn); }
+
+.cmp-read {
+  position: sticky; bottom: 14px; z-index: 3; align-self: center; margin: 0;
+  max-width: min(100%, 880px);
+  background: #0F1519; color: #E6F0F3;
+  border-radius: 10px; padding: 10px 16px; font-size: 14px; line-height: 1.45;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .22);
+}
+.cmp-read b { color: #3FD8EE; font-weight: 600; }
+
+.sub-h { margin: 0; font-family: var(--display); font-weight: 800; font-size: 28px; text-transform: uppercase; line-height: 1; }
+.tasks-intro { margin-top: 12px; }
+.tasks { display: flex; flex-direction: column; }
+.tasks-head, .task { display: grid; grid-template-columns: minmax(0, .7fr) minmax(0, 1.15fr) minmax(0, 1.15fr); gap: 10px 32px; }
+.tasks-head { font-family: var(--mono); font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); padding-bottom: 8px; border-bottom: 2px solid var(--ink); }
+.task { padding: 16px 0 18px; border-bottom: 1.5px solid var(--line); }
+.task h4 { margin: 0; font-size: 16px; font-weight: 600; text-wrap: balance; }
+.path { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.step { font-size: 12.5px; font-weight: 600; border: 1.5px solid var(--line); border-radius: 6px; padding: 2px 8px; background: var(--surface); white-space: nowrap; }
+.after .step { border-color: var(--ink-3); }
+.step.none { border-style: dashed; color: var(--ink-3); font-weight: 500; }
+.path .sep { color: var(--ink-3); font-size: 13px; }
+.taps { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); margin-left: 6px; white-space: nowrap; }
+.path-note { font-size: 13.5px; color: var(--ink-2); margin: 7px 0 0; display: flex; gap: 8px; max-width: 52ch; }
+.path-note::before { content: ""; width: 7px; height: 7px; border-radius: 50%; margin-top: 7px; flex-shrink: 0; }
+.before .path-note::before { background: var(--coral); }
+.after .path-note::before { background: var(--green); }
+@media (max-width: 860px) {
+  .tasks-head { display: none; }
+  .task { grid-template-columns: 1fr; gap: 12px; }
+  .before::before, .after::before { content: attr(data-label); display: block; font-family: var(--mono); font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 5px; }
+}
+
+.moves-details { border-top: 1.5px solid var(--line); padding-top: 14px; }
+.moves-details summary { cursor: pointer; font-weight: 600; font-size: 15px; padding: 4px 0 12px; }
+.moves-details summary:focus-visible { outline: 2px solid var(--cyan-text); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .it { transition: none; } }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="masthead-top">
+      <img src="mascot.png" alt="Ankerd mascot">
+      <span class="eyebrow">Ankerd Con · UI proposal · navigation · Sep 2026</span>
+    </div>
+    <h1 class="hero">Everything belongs to <em>a trip</em></h1>
+    <p class="lede">Rides, meals, hotel rooms, cosplays and photos all belong to one event, but the app spreads them across tabs that show every event mixed together. This page lists every page the app has today, shows where it goes wrong, and proposes a structure built around the trip, with <strong>five tabs and one menu for everything personal</strong>.</p>
+  </header>
+
+  <!-- ── Index ─────────────────────────────────────────────── -->
+  <section aria-labelledby="idx-h">
+    <div class="sec-head">
+      <span class="eyebrow">Index</span>
+      <h2 class="sec" id="idx-h">Every page today</h2>
+      <p>16 pages for regular users, plus the admin portal. "Reached from" lists every place in the code that links to the page. "Shows" is which events the page includes.</p>
+    </div>
+    <div class="panel table-scroll">
+      <table class="idx">
+        <thead>
+          <tr><th>Page</th><th>Route</th><th>Reached from</th><th>Shows</th><th>Problem</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><b>Hub</b></td><td><span class="rt">/</span></td><td>Tab</td><td><span class="scope">Next trip</span></td><td><span class="issue">Meal tile counts every event; hotel room rows have an arrow but do nothing</span></td></tr>
+          <tr><td><b>Transport</b></td><td><span class="rt">/transport</span></td><td>Tab, Hub ride tiles</td><td><span class="scope mix">All events mixed</span></td><td><span class="issue">No way to pick an event</span></td></tr>
+          <tr><td><b>Eten</b></td><td><span class="rt">/food</span></td><td>Tab, Hub meal tile</td><td><span class="scope mix">All events mixed</span></td><td><span class="issue">No way to pick an event, no sorting</span></td></tr>
+          <tr><td><b>Financiën</b></td><td><span class="rt">/finance</span></td><td>Tab</td><td><span class="scope mix">All expenses</span></td><td><span class="issue">Marked "Nog in ontwikkeling"; paying also lives in Acties</span></td></tr>
+          <tr><td><b>Meer</b></td><td><span class="rt">/more</span></td><td>Tab</td><td><span class="scope mix">Everything</span></td><td><span class="issue">Calendar, members, photos, links and settings on one page, titled "Instellingen"</span></td></tr>
+          <tr><td><b>Evenement</b></td><td><span class="rt">/events/:id</span></td><td>Hub, calendar, ride, meal, cosplay, admin</td><td><span class="scope">One day</span></td><td><span class="issue">Participants, rides and meals per day, but cosplays per trip</span></td></tr>
+          <tr><td><b>Hotelkamers</b></td><td><span class="rt">/events/:id/hotel</span></td><td><span class="only">Event page only</span></td><td><span class="scope">Trip</span></td><td><span class="issue">"Kamer X" elsewhere comes from a separate user field</span></td></tr>
+          <tr><td><b>Cosplays</b></td><td><span class="rt">/events/:id/cosplays</span></td><td><span class="only">Event page only</span></td><td><span class="scope">Trip</span></td><td><span class="issue">Only on con days</span></td></tr>
+          <tr><td><b>Rit</b></td><td><span class="rt">/rides/:id</span></td><td>Transport, event, Hub</td><td><span class="scope">One ride</span></td><td><span class="issue">Title says "Inbound/Outbound"</span></td></tr>
+          <tr><td><b>Maaltijd</b></td><td><span class="rt">/meals/:id</span></td><td>Eten, event, ride, Acties</td><td><span class="scope">One meal</span></td><td><span class="issue">Linked event shown twice</span></td></tr>
+          <tr><td><b>Acties</b></td><td><span class="rt">/acties</span></td><td><span class="only">Hub banner only, which hides at 0</span></td><td><span class="scope mix">Next trip + all payments</span></td><td><span class="issue">Missing-ride cards don't link anywhere</span></td></tr>
+          <tr><td><b>Leden</b></td><td><span class="rt">/members</span></td><td><span class="only">Meer only</span></td><td><span class="scope">Everyone</span></td><td><span class="issue">Also a separate member list on the Hub</span></td></tr>
+          <tr><td><b>Story archief</b></td><td><span class="rt">/stories</span></td><td><span class="only">Meer only</span></td><td><span class="scope">All trips</span></td><td><span class="issue">Photos don't link back to their event</span></td></tr>
+          <tr><td><b>Profiel</b></td><td><span class="rt">/profile/:name</span></td><td>Avatar menu, profile popup</td><td><span class="scope">You</span></td><td><span class="issue">Other people's profiles can't be opened; the route is named :name but takes an id</span></td></tr>
+          <tr><td><b>Notificaties</b></td><td><span class="rt">/notifications</span></td><td>Avatar menu, Meer</td><td><span class="scope">You</span></td><td><span class="issue">Two entry points</span></td></tr>
+          <tr><td><b>Wat is nieuw</b></td><td><span class="rt">/changelog</span></td><td>Meer, banner</td><td><span class="scope">App</span></td><td><span class="issue">Called "Wijzigingslog" in admin</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── Findings ─────────────────────────────────────────── -->
+  <section aria-labelledby="find-h">
+    <div class="sec-head">
+      <span class="eyebrow">What the index shows</span>
+      <h2 class="sec" id="find-h">Why it feels disorganised</h2>
+    </div>
+    <div class="diag">
+      <ul class="problems">
+        <li>
+          <i data-lucide="layers"></i>
+          <div>
+            <h3>Three tabs mix every event</h3>
+            <p>Transport, Eten and Financiën list everything from every event. Only the Hub knows which trip is next. Right before HDCC, the Transport list still shows last month's rides and the Halloween party's rides, all in one list.</p>
+          </div>
+        </li>
+        <li>
+          <i data-lucide="eye-off"></i>
+          <div>
+            <h3>Trip pages are hidden two levels deep</h3>
+            <p>Hotelkamers and Cosplays can only be opened from an event page. Photos of a past trip are in "Meer › Story archief". Acties can only be reached from a banner that disappears when there's nothing left to do.</p>
+          </div>
+        </li>
+        <li>
+          <i data-lucide="archive"></i>
+          <div>
+            <h3>"Meer" holds everything that didn't fit elsewhere</h3>
+            <p>The only full calendar (the most important list in the app) sits next to a QR code, the YouTube link and the greeting toggle, under a page subtitle that says "Instellingen".</p>
+          </div>
+        </li>
+        <li>
+          <i data-lucide="split"></i>
+          <div>
+            <h3>Things lead nowhere, or exist twice</h3>
+            <p>Missing-ride actions don't link to Transport. Hotel room rows on the Hub have an arrow but do nothing. "Kamer 214" comes from a user field that can disagree with the actual room assignments.</p>
+          </div>
+        </li>
+      </ul>
+      <div class="doors-wrap">
+        <p class="doors-title">Same thing, several places</p>
+        <div class="doors">
+          <div class="door"><b>Evenementen &amp; aanmelden</b><span class="dots"><i></i><i></i><i></i></span><small>Hub carousel, Meer calendar, event page</small></div>
+          <div class="door"><b>Foto's / stories</b><span class="dots"><i></i><i></i><i></i></span><small>Hub rings, event page, Story archief</small></div>
+          <div class="door"><b>Discord koppelen</b><span class="dots"><i></i><i></i><i></i></span><small>Meer, Profiel, Notificaties</small></div>
+          <div class="door"><b>Betalen &amp; bevestigen</b><span class="dots"><i></i><i></i></span><small>Financiën, Acties</small></div>
+          <div class="door"><b>Leden</b><span class="dots"><i></i><i></i></span><small>Hub list, Meer › Leden</small></div>
+          <div class="door"><b>Notificaties</b><span class="dots"><i></i><i></i></span><small>Avatar menu, Meer</small></div>
+          <div class="door"><b>Begroeting tonen</b><span class="dots"><i></i><i></i></span><small>Meer, Profiel</small></div>
+          <div class="door"><b>Uitloggen</b><span class="dots"><i></i><i></i></span><small>Avatar menu, Meer</small></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Proposed structure ───────────────────────────────── -->
+  <section aria-labelledby="map-h">
+    <div class="sec-head">
+      <span class="eyebrow">Proposal</span>
+      <h2 class="sec" id="map-h">Five tabs, one personal menu</h2>
+      <p>Each tab answers one question. The <b>Event</b> tab is new: it's the trip's own space, and pages that are hard to find today become its sub-tabs. The grey text under each item shows where it lives now. The Event tab reopens the sub-tab you used last.</p>
+    </div>
+
+    <div class="map">
+      <article class="tabcard">
+        <header><h3><i data-lucide="house"></i>Hub</h3><p>What's next for me?</p></header>
+        <ul>
+          <li><span>Next trip<small>was: event carousel</small></span></li>
+          <li><span>Voor jou<small>was: Acties banner + /acties</small></span></li>
+          <li><span>Snel: rit, locatie, foto<small>was: Hub tiles, only shown during a trip</small></span></li>
+        </ul>
+      </article>
+
+      <article class="tabcard key">
+        <header><h3><i data-lucide="ticket"></i>Event</h3><p>Everything for one trip</p></header>
+        <ul>
+          <li><span>Overzicht<small>was: event page (per day)</small></span></li>
+          <li><span>Vervoer<small>was: Transport tab</small></span></li>
+          <li><span>Eten<small>was: Eten tab</small></span></li>
+          <li><span>Kamers<small>was: event page › Hotelkamers</small></span></li>
+          <li><span>Cosplay<small>was: event page › Cosplays</small></span></li>
+          <li><span>Foto's<small>was: Story archief + Hub rings</small></span></li>
+        </ul>
+      </article>
+
+      <article class="tabcard">
+        <header><h3><i data-lucide="calendar-days"></i>Agenda</h3><p>Which events are there?</p></header>
+        <ul>
+          <li><span>Lijst &amp; maand<small>was: Meer › Con Kalender</small></span></li>
+          <li><span>Aanmelden<small>was: 3 separate places</small></span></li>
+          <li><span>Geweest<small>was: Geschiedenis; each past trip shows its photo rings</small></span></li>
+          <li><span>Abonneren (.ics)<small>was: small button in Meer</small></span></li>
+        </ul>
+      </article>
+
+      <article class="tabcard">
+        <header><h3><i data-lucide="wallet"></i>Financiën</h3><p>Who owes whom?</p></header>
+        <ul>
+          <li><span>Saldo<small>unchanged</small></span></li>
+          <li><span>Te betalen / bevestigen<small>was: Acties</small></span></li>
+          <li><span>Uitgaven per trip<small>new: uses the existing <code>linked_event_id</code> field</small></span></li>
+        </ul>
+      </article>
+
+      <article class="tabcard">
+        <header><h3><i data-lucide="users"></i>Crew</h3><p>Who's who, and where?</p></header>
+        <ul>
+          <li><span>Leden<small>was: Meer › Leden + Hub list</small></span></li>
+          <li><span>Waar is iedereen<small>was: Hub › Locatie pingen</small></span></li>
+          <li><span>Profielen<small>new: others' profiles can be opened</small></span></li>
+        </ul>
+      </article>
+    </div>
+
+    <div class="always">
+      <span><i data-lucide="circle-user-round"></i> <b>Avatar menu</b>, the same on every screen:</span>
+      <span>Mijn profiel</span><span>Instellingen <small class="muted-inline">(notificaties, Discord, thema, begroeting)</small></span><span>Wat is nieuw</span><span>Delen &amp; links</span><span>Admin</span><span>Uitloggen</span>
+    </div>
+  </section>
+
+  <!-- ── Mocks ────────────────────────────────────────────── -->
+  <section aria-labelledby="mock-h">
+    <div class="mock-caption">
+      <div class="sec-head">
+        <span class="eyebrow">What it looks like</span>
+        <h2 class="sec" id="mock-h">Event › Vervoer on desktop</h2>
+        <p>The sidebar holds only the five tabs. The Event tab always opens the next trip, and the sub-tabs are the same on desktop and phone. The amber numbers replace the Acties page: the problem is counted in the place where you fix it.</p>
+      </div>
+      <span class="sample-tag">Sample data · static</span>
+    </div>
+
+    <div class="frame" aria-hidden="true">
+      <div class="app">
+        <aside class="side">
+          <div class="brand"><img src="mascot.png" alt=""><b>Ankerd Con</b></div>
+          <nav class="nav">
+            <div class="item"><i data-lucide="house"></i><span>Hub</span></div>
+            <div class="item" aria-current="page"><i data-lucide="ticket"></i><span class="two">Event<small>HDCC · 25–27 sep</small></span></div>
+            <div class="item"><i data-lucide="calendar-days"></i><span>Agenda</span></div>
+            <div class="item"><i data-lucide="wallet"></i><span>Financiën</span><em class="count">1</em></div>
+            <div class="item"><i data-lucide="users"></i><span>Crew</span></div>
+          </nav>
+          <div class="side-foot">
+            <div class="me">
+              <span class="av lg dark-text" style="--c:#F2A516">G</span>
+              <div><b>Gavin</b><small>Profiel &amp; instellingen</small></div>
+            </div>
+          </div>
+        </aside>
+
+        <div class="main">
+          <div class="topbar">
+            <div class="mobile-brand"><img src="mascot.png" alt="">Ankerd</div>
+            <div class="search"><i data-lucide="search"></i><span>Zoek events, ritten, mensen…</span><kbd>Ctrl K</kbd></div>
+            <span class="spacer"></span>
+            <span class="icon-btn"><i data-lucide="bell"></i><span class="dot"></span></span>
+          </div>
+
+          <div class="view">
+            <div class="trip-head">
+              <div class="page-head">
+                <div>
+                  <div class="kicker">Nog 11 dagen · Jaarbeurs Utrecht</div>
+                  <h2 class="trip-title">Heroes Dutch Comic Con</h2>
+                </div>
+                <div class="daychips">
+                  <span class="daychip on">Alle dagen</span><span class="daychip">Vr 25</span><span class="daychip">Za 26</span><span class="daychip">Zo 27</span>
+                </div>
+              </div>
+              <div class="subtabs">
+                <span>Overzicht</span>
+                <span class="on">Vervoer <em class="n">2</em></span>
+                <span>Eten <em class="n">2</em></span>
+                <span>Kamers</span>
+                <span>Cosplay</span>
+                <span>Foto's</span>
+              </div>
+            </div>
+
+            <div class="board">
+              <div class="lane">
+                <div class="lane-head"><h3>Heen</h3><span class="when">vr 25 sep</span></div>
+                <div class="ride">
+                  <span class="ride-top"><span class="av dark-text" style="--c:#F2A516">G</span><span class="who"><b>Gavin</b><small>Auto</small></span><span class="t">16:30</span></span>
+                  <span class="route-line">Rotterdam CS → NH Utrecht</span><span class="seats-text">1 plek vrij</span>
+                </div>
+                <div class="ride">
+                  <span class="ride-top"><span class="av" style="--c:#2F78D9">T</span><span class="who"><b>Thijs</b><small>Auto</small></span><span class="t">18:00</span></span>
+                  <span class="route-line">Eindhoven → NH Utrecht</span><span class="seats-text">3 plekken vrij</span>
+                </div>
+              </div>
+              <div class="lane">
+                <div class="lane-head"><h3>Restaurant</h3><span class="when">za 26 sep</span></div>
+                <div class="ride needs">
+                  <span class="ride-top"><span class="who"><b class="hl">Nog geen chauffeur</b><small>Naar Vapiano, 6 mensen</small></span><span class="t">19:00</span></span>
+                  <span class="btn btn-primary btn-sm">Ik rijd</span>
+                </div>
+              </div>
+              <div class="lane">
+                <div class="lane-head"><h3>Terug</h3><span class="when">zo 27 sep</span></div>
+                <div class="ride">
+                  <span class="ride-top"><span class="av dark-text" style="--c:#F2A516">G</span><span class="who"><b>Gavin</b><small>Auto</small></span><span class="t">18:00</span></span>
+                  <span class="route-line">Jaarbeurs → Rotterdam CS</span><span class="seats-text">Vol</span>
+                </div>
+              </div>
+              <div class="missing">
+                <h3>Geen vervoer</h3>
+                <div class="miss-row"><span class="nm">Noor</span><span class="gaps">Heen, terug</span></div>
+                <div class="miss-row"><span class="nm">Bram</span><span class="gaps">Heen</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="mob-h">
+    <div class="sec-head">
+      <span class="eyebrow">Phones</span>
+      <h2 class="sec" id="mob-h">Same five tabs, same sub-tabs</h2>
+    </div>
+    <div class="phones" aria-hidden="true">
+
+      <figure class="phone-wrap">
+        <div class="phone">
+          <div class="phone-status"><span>14:32</span><span class="icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></span></div>
+          <div class="phone-top"><img src="mascot.png" alt=""><b>Ankerd</b><span class="icon-btn"><i data-lucide="bell"></i><span class="dot"></span></span><span class="av dark-text" style="--c:#F2A516">G</span></div>
+          <div class="phone-body">
+            <div class="view">
+              <div class="page-head"><div><div class="kicker">Maandag 14 september</div><h2>Goedemiddag, Gavin</h2></div></div>
+              <article class="ticket">
+                <div>
+                  <div class="ticket-cover"><span>HDCC</span></div>
+                  <div class="ticket-body">
+                    <div><h3 class="ticket-title">Heroes Dutch Comic Con</h3><div class="ticket-where">Jaarbeurs Utrecht · 3 dagen</div></div>
+                  </div>
+                </div>
+                <div class="stub"><span class="k">Nog</span><span class="big">11</span><span class="k">dagen</span></div>
+              </article>
+              <div class="panel">
+                <div class="panel-head"><span class="panel-title">Voor jou <span class="tally">3</span></span></div>
+                <ul class="acts">
+                  <li><div class="act"><span class="act-ico bad"><i data-lucide="bus"></i></span><span><span class="act-t">Noor en Bram hebben geen heenrit</span><br><span class="act-s dest">Event › Vervoer</span></span><i data-lucide="chevron-right"></i></div></li>
+                  <li><div class="act"><span class="act-ico warn"><i data-lucide="utensils"></i></span><span><span class="act-t">2 mensen missen bij het eten</span><br><span class="act-s dest">Event › Eten</span></span><i data-lucide="chevron-right"></i></div></li>
+                  <li><div class="act"><span class="act-ico warn"><i data-lucide="wallet"></i></span><span><span class="act-t">Betaal €18,50 aan Joris</span><br><span class="act-s dest">Financiën › Te betalen</span></span><i data-lucide="chevron-right"></i></div></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="phone-nav">
+            <span aria-current="page"><i data-lucide="house"></i>Hub</span><span><i data-lucide="ticket"></i>Event</span><span><i data-lucide="calendar-days"></i>Agenda</span><span><i data-lucide="wallet"></i>Financiën</span><span><i data-lucide="users"></i>Crew</span>
+          </div>
+        </div>
+        <figcaption class="phone-cap"><b>Hub › Voor jou</b>Replaces the Acties page. Each item says where it's fixed and opens that place directly.</figcaption>
+      </figure>
+
+      <figure class="phone-wrap">
+        <div class="phone">
+          <div class="phone-status"><span>14:32</span><span class="icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></span></div>
+          <div class="phone-top"><img src="mascot.png" alt=""><b>Ankerd</b><span class="icon-btn"><i data-lucide="bell"></i><span class="dot"></span></span><span class="av dark-text" style="--c:#F2A516">G</span></div>
+          <div class="phone-body">
+            <div class="view">
+              <div class="trip-head">
+                <div><div class="kicker">Nog 11 dagen · 25–27 sep</div><h2 class="trip-title">Heroes Dutch Comic Con</h2></div>
+                <div class="subtabs">
+                  <span>Overzicht</span><span class="on">Vervoer <em class="n">2</em></span><span>Eten <em class="n">2</em></span><span>Kamers</span><span>Cosplay</span><span>Foto's</span>
+                </div>
+                <div class="daychips"><span class="daychip on">Alle</span><span class="daychip">Vr 25</span><span class="daychip">Za 26</span><span class="daychip">Zo 27</span></div>
+              </div>
+              <div class="notice"><b>Noor en Bram</b> hebben nog geen heenrit</div>
+              <div class="ride">
+                <span class="ride-top"><span class="av dark-text" style="--c:#F2A516">G</span><span class="who"><b>Gavin</b><small>Heen · vr 25</small></span><span class="t">16:30</span></span>
+                <span class="route-line">Rotterdam CS → NH Utrecht</span><span class="seats-text">1 plek vrij</span>
+              </div>
+              <div class="ride">
+                <span class="ride-top"><span class="av" style="--c:#2F78D9">T</span><span class="who"><b>Thijs</b><small>Heen · vr 25</small></span><span class="t">18:00</span></span>
+                <span class="route-line">Eindhoven → NH Utrecht</span><span class="seats-text">3 plekken vrij</span>
+              </div>
+              <div class="ride needs">
+                <span class="ride-top"><span class="who"><b class="hl">Restaurant: nog geen chauffeur</b><small>Za 26 · naar Vapiano</small></span><span class="t">19:00</span></span>
+              </div>
+            </div>
+          </div>
+          <span class="fab"><i data-lucide="plus"></i>Rit</span>
+          <div class="phone-nav">
+            <span><i data-lucide="house"></i>Hub</span><span aria-current="page"><i data-lucide="ticket"></i>Event</span><span><i data-lucide="calendar-days"></i>Agenda</span><span><i data-lucide="wallet"></i>Financiën</span><span><i data-lucide="users"></i>Crew</span>
+          </div>
+        </div>
+        <figcaption class="phone-cap"><b>Event › Vervoer</b>The sub-tabs scroll sideways. The day chips filter within the trip instead of opening a different page per day.</figcaption>
+      </figure>
+
+      <figure class="phone-wrap">
+        <div class="phone">
+          <div class="phone-status"><span>14:32</span><span class="icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></span></div>
+          <div class="phone-top"><img src="mascot.png" alt=""><b>Ankerd</b><span class="icon-btn"><i data-lucide="bell"></i></span><span class="av dark-text" style="--c:#F2A516">G</span></div>
+          <div class="phone-body">
+            <div class="view"><div class="page-head"><div><div class="kicker">Maandag 14 september</div><h2>Goedemiddag, Gavin</h2></div></div></div>
+          </div>
+          <div class="sheet-backdrop"></div>
+          <div class="sheet">
+            <span class="grab"></span>
+            <div class="sheet-user"><span class="av lg dark-text" style="--c:#F2A516">G</span><span class="x-main"><b>Gavin</b><small>hij/hem · Organisator</small></span></div>
+            <div class="item"><i data-lucide="user"></i>Mijn profiel</div>
+            <div class="item"><i data-lucide="settings"></i>Instellingen<small>Notificaties, Discord, thema</small></div>
+            <div class="item"><i data-lucide="sparkles"></i>Wat is nieuw<small>v1.8</small></div>
+            <div class="item"><i data-lucide="share-2"></i>Delen &amp; links<small>QR, GitHub, YouTube</small></div>
+            <hr>
+            <div class="item"><i data-lucide="shield"></i>Admin portal</div>
+            <div class="item danger"><i data-lucide="log-out"></i>Uitloggen</div>
+          </div>
+        </div>
+        <figcaption class="phone-cap"><b>Avatar menu</b>Tap the avatar on any screen. Every personal setting has exactly one place, and the "Meer" tab is gone.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ── Compare ──────────────────────────────────────────── -->
+  <section aria-labelledby="cmp-h">
+    <div class="sec-head">
+      <span class="eyebrow">Old vs new</span>
+      <h2 class="sec" id="cmp-h">Side by side</h2>
+      <p>Both structures, with every item that appears in them. <b>Hover or tap an item</b> to see where it lives on the other side. Tap again to keep it highlighted.</p>
+    </div>
+
+    <div class="deltas">
+      <div class="delta"><span class="delta-n"><s>3</s><span class="to">→</span>0</span><small>tabs that mix every event</small></div>
+      <div class="delta"><span class="delta-n"><s>5</s><span class="to">→</span>0</span><small>pages with only one way in</small></div>
+      <div class="delta"><span class="delta-n"><s>10</s><span class="to">→</span>1</span><small>items in two or more places (the one left is the Hub shortcuts, kept on purpose)</small></div>
+      <div class="delta"><span class="delta-n"><s>3</s><span class="to">→</span>1</span><small>places for personal settings</small></div>
+      <div class="delta"><span class="delta-n"><s>1</s><span class="to">→</span>0</span><small>pages you can't reach (other people's profiles)</small></div>
+    </div>
+
+    <div class="legend-row">
+      <span><em class="flag dup">×2</em> in more than one place</span>
+      <span><em class="flag mix">alle events</em> mixes every event</span>
+      <span><span class="it demo off-demo">dashed</span> not in the nav</span>
+      <span><em class="flag new">nieuw</em> new</span>
+      <span><span class="tabdemo">Tab</span> tab that changed</span>
+    </div>
+
+    <div class="cmp" id="cmp">
+      <div class="cmp-col" data-side="old">
+        <div class="cmp-head">
+          <span class="cmp-label">Today</span>
+          <div class="minibar">
+            <span><i data-lucide="house"></i>Hub</span>
+            <span class="changed"><i data-lucide="bus"></i>Transport</span>
+            <span class="changed"><i data-lucide="utensils-crossed"></i>Eten</span>
+            <span><i data-lucide="wallet"></i>Financiën</span>
+            <span class="changed"><i data-lucide="ellipsis"></i>Meer</span>
+          </div>
+        </div>
+
+        <div class="grp"><div class="grp-name" data-name="Hub"><i data-lucide="house"></i>Hub</div><div class="chips-wrap">
+          <button type="button" class="it" data-k="next"><span class="lbl">Volgende events</span></button>
+          <button type="button" class="it" data-k="stories"><span class="lbl">Story-ringen</span></button>
+          <button type="button" class="it" data-k="ride"><span class="lbl">Rit-tegels</span></button>
+          <button type="button" class="it" data-k="food"><span class="lbl">Maaltijden-tegel</span><em class="flag mix">alle events</em></button>
+          <button type="button" class="it" data-k="ping"><span class="lbl">Locatie pingen</span></button>
+          <button type="button" class="it" data-k="actions" data-nodup><span class="lbl">Acties-banner</span></button>
+          <button type="button" class="it" data-k="rooms"><span class="lbl">Hotelkamers</span></button>
+          <button type="button" class="it" data-k="members"><span class="lbl">Leden</span></button>
+        </div></div>
+
+        <div class="grp"><div class="grp-name" data-name="Transport"><i data-lucide="bus"></i>Transport</div><div class="chips-wrap">
+          <button type="button" class="it" data-k="ride"><span class="lbl">Heen · Terug · Restaurant · Tijdlijn</span><em class="flag mix">alle events</em></button>
+        </div></div>
+
+        <div class="grp"><div class="grp-name" data-name="Eten"><i data-lucide="utensils-crossed"></i>Eten</div><div class="chips-wrap">
+          <button type="button" class="it" data-k="food"><span class="lbl">Maaltijden</span><em class="flag mix">alle events</em></button>
+        </div></div>
+
+        <div class="grp"><div class="grp-name" data-name="Financiën"><i data-lucide="wallet"></i>Financiën</div><div class="chips-wrap">
+          <button type="button" class="it" data-k="balance"><span class="lbl">Saldo</span></button>
+          <button type="button" class="it" data-k="pay expenses"><span class="lbl">Uitgaven &amp; betalen</span><em class="flag mix">alle events</em></button>
+        </div></div>
+
+        <div class="grp"><div class="grp-name" data-name="Meer"><i data-lucide="ellipsis"></i>Meer</div><div class="chips-wrap">
+          <button type="button" class="it" data-k="calendar"><span class="lbl">Con Kalender</span></button>
+          <button type="button" class="it" data-k="members"><span class="lbl">Leden</span></button>
+          <button type="button" class="it" data-k="stories"><span class="lbl">Story archief</span></button>
+          <button type="button" class="it" data-k="links"><span class="lbl">QR · GitHub · YouTube</span></button>
+          <button type="button" class="it" data-k="notif"><span class="lbl">Notificaties</span></button>
+          <button type="button" class="it" data-k="greeting"><span class="lbl">Begroeting tonen</span></button>
+          <button type="button" class="it" data-k="discord"><span class="lbl">Discord koppelen</span></button>
+          <button type="button" class="it" data-k="changelog"><span class="lbl">Wat is nieuw</span></button>
+          <button type="button" class="it" data-k="logout"><span class="lbl">Uitloggen</span></button>
+        </div></div>
+
+        <div class="grp"><div class="grp-name" data-name="Header"><i data-lucide="circle-user-round"></i>Header</div><div class="chips-wrap">
+          <button type="button" class="it" data-k="profile greeting discord"><span class="lbl">Mijn profiel</span></button>
+          <button type="button" class="it" data-k="notif"><span class="lbl">Notificaties</span></button>
+          <button type="button" class="it" data-k="theme"><span class="lbl">Thema-knop</span></button>
+          <button type="button" class="it" data-k="admin"><span class="lbl">Admin portal</span></button>
+          <button type="button" class="it" data-k="logout"><span class="lbl">Uitloggen</span></button>
+        </div></div>
+
+        <div class="grp off"><div class="grp-name" data-name="Not in the nav"><i data-lucide="eye-off"></i><span>Not in the nav<small>only via other pages</small></span></div><div class="chips-wrap">
+          <button type="button" class="it" data-k="event"><span class="lbl">Evenement (per dag)</span></button>
+          <button type="button" class="it" data-k="rooms"><span class="lbl">Hotelkamers</span></button>
+          <button type="button" class="it" data-k="cosplay"><span class="lbl">Cosplays</span></button>
+          <button type="button" class="it" data-k="pay actions"><span class="lbl">Acties-pagina</span></button>
+          <button type="button" class="it" data-k="details"><span class="lbl">Rit / Maaltijd</span></button>
+          <button type="button" class="it" data-k="others"><span class="lbl dead-lbl">Andermans profiel</span><em class="flag dead">onbereikbaar</em></button>
+        </div></div>
+      </div>
+
+      <div class="cmp-col" data-side="new">
+        <div class="cmp-head">
+          <span class="cmp-label">Proposed</span>
+          <div class="minibar">
+            <span><i data-lucide="house"></i>Hub</span>
+            <span class="changed"><i data-lucide="ticket"></i>Event</span>
+            <span class="changed"><i data-lucide="calendar-days"></i>Agenda</span>
+            <span><i data-lucide="wallet"></i>Financiën</span>
+            <span class="changed"><i data-lucide="users"></i>Crew</span>
+          </div>
+        </div>
+
+        <div class="grp"><div class="grp-name" data-name="Hub"><i data-lucide="house"></i>Hub</div><div class="chips-wrap">
+          <button type="button" class="it" data-k="next"><span class="lbl">Volgende trip</span></button>
+          <button type="button" class="it" data-k="actions"><span class="lbl">Voor jou</span></button>
+          <button type="button" class="it" data-k="ride ping stories"><span class="lbl">Snel: rit · locatie · foto</span></button>
+        </div></div>
+
+        <div class="grp key"><div class="grp-name" data-name="Event"><i data-lucide="ticket"></i>Event</div><div class="chips-wrap">
+          <button type="button" class="it" data-k="event"><span class="lbl">Overzicht</span></button>
+          <button type="button" class="it" data-k="ride"><span class="lbl">Vervoer</span></button>
+          <button type="button" class="it" data-k="food"><span class="lbl">Eten</span></button>
+          <button type="button" class="it" data-k="rooms"><span class="lbl">Kamers</span></button>
+          <button type="button" class="it" data-k="cosplay"><span class="lbl">Cosplay</span></button>
+          <button type="button" class="it" data-k="stories"><span class="lbl">Foto's</span></button>
+        </div></div>
+
+        <div class="grp"><div class="grp-name" data-name="Agenda"><i data-lucide="calendar-days"></i>Agenda</div><div class="chips-wrap">
+          <button type="button" class="it" data-k="calendar"><span class="lbl">Lijst &amp; maand</span></button>
+          <button type="button" class="it" data-k="calendar stories"><span class="lbl">Geweest + foto's</span></button>
+          <button type="button" class="it" data-k="calendar"><span class="lbl">Abonneren (.ics)</span></button>
+        </div></div>
+
+        <div class="grp"><div class="grp-name" data-name="Financiën"><i data-lucide="wallet"></i>Financiën</div><div class="chips-wrap">
+          <button type="button" class="it" data-k="balance"><span class="lbl">Saldo</span></button>
+          <button type="button" class="it" data-k="pay"><span class="lbl">Te betalen</span></button>
+          <button type="button" class="it" data-k="expenses"><span class="lbl">Uitgaven per trip</span><em class="flag new">nieuw</em></button>
+        </div></div>
+
+        <div class="grp"><div class="grp-name" data-name="Crew"><i data-lucide="users"></i>Crew</div><div class="chips-wrap">
+          <button type="button" class="it" data-k="members"><span class="lbl">Leden</span></button>
+          <button type="button" class="it" data-k="ping"><span class="lbl">Waar is iedereen</span></button>
+          <button type="button" class="it" data-k="others"><span class="lbl">Profielen</span><em class="flag new">nieuw</em></button>
+        </div></div>
+
+        <div class="grp"><div class="grp-name" data-name="Avatar menu"><i data-lucide="circle-user-round"></i>Avatar menu</div><div class="chips-wrap">
+          <button type="button" class="it" data-k="profile"><span class="lbl">Mijn profiel</span></button>
+          <button type="button" class="it" data-k="notif greeting discord theme"><span class="lbl">Instellingen</span></button>
+          <button type="button" class="it" data-k="changelog"><span class="lbl">Wat is nieuw</span></button>
+          <button type="button" class="it" data-k="links"><span class="lbl">Delen &amp; links</span></button>
+          <button type="button" class="it" data-k="admin"><span class="lbl">Admin portal</span></button>
+          <button type="button" class="it" data-k="logout"><span class="lbl">Uitloggen</span></button>
+        </div></div>
+
+        <div class="grp off"><div class="grp-name" data-name="Not in the nav"><i data-lucide="eye-off"></i><span>Not in the nav<small>detail pages</small></span></div><div class="chips-wrap">
+          <button type="button" class="it" data-k="details"><span class="lbl">Rit / Maaltijd</span></button>
+        </div></div>
+      </div>
+    </div>
+
+    <p class="cmp-read" id="cmp-read" aria-live="polite">Hover or tap any item to see where it moves.</p>
+
+    <div class="sec-head tasks-intro">
+      <h3 class="sub-h">Common tasks, before and after</h3>
+      <p>Taps counted from any tab. Most tasks take about as many taps as before. What changes is that you start on the right trip, and nothing is hidden or in two places.</p>
+    </div>
+
+    <div class="tasks">
+      <div class="tasks-head"><span>Task</span><span>Today</span><span>Proposed</span></div>
+
+      <div class="task">
+        <h4>Join a ride to HDCC</h4>
+        <div class="before" data-label="Today">
+          <div class="path"><span class="step">Transport</span><span class="sep">›</span><span class="step">rit</span><span class="taps">2 taps</span></div>
+          <p class="path-note">The list includes every event's rides, so you have to find HDCC's yourself.</p>
+        </div>
+        <div class="after" data-label="Proposed">
+          <div class="path"><span class="step">Event</span><span class="sep">›</span><span class="step">Vervoer</span><span class="sep">›</span><span class="step">rit</span><span class="taps">2–3 taps</span></div>
+          <p class="path-note">Only HDCC's rides. The Event tab reopens the sub-tab you used last, and Hub › Snel does it in 1.</p>
+        </div>
+      </div>
+
+      <div class="task">
+        <h4>See who has no ride back</h4>
+        <div class="before" data-label="Today">
+          <div class="path"><span class="step">Hub</span><span class="sep">›</span><span class="step">Acties-banner</span><span class="sep">›</span><span class="step">kaart openklappen</span><span class="taps">2 taps</span></div>
+          <p class="path-note">Only while the banner is showing. The card doesn't link to Transport to fix it.</p>
+        </div>
+        <div class="after" data-label="Proposed">
+          <div class="path"><span class="step">Event</span><span class="sep">›</span><span class="step">Vervoer</span><span class="taps">2 taps</span></div>
+          <p class="path-note">The "Geen vervoer" list sits next to the rides, where you fix it.</p>
+        </div>
+      </div>
+
+      <div class="task">
+        <h4>Find your hotel room</h4>
+        <div class="before" data-label="Today">
+          <div class="path"><span class="step">Hub</span><span class="sep">›</span><span class="step">event-kaart</span><span class="sep">›</span><span class="step">Bekijk hotelkamers</span><span class="taps">2 taps + scroll</span></div>
+          <p class="path-note">The Hub also shows "Kamer X" from a separate field that can disagree with the actual assignments.</p>
+        </div>
+        <div class="after" data-label="Proposed">
+          <div class="path"><span class="step">Event</span><span class="sep">›</span><span class="step">Kamers</span><span class="taps">2 taps</span></div>
+          <p class="path-note">One source of truth: the room assignments.</p>
+        </div>
+      </div>
+
+      <div class="task">
+        <h4>Look at last year's HDCC photos</h4>
+        <div class="before" data-label="Today">
+          <div class="path"><span class="step">Meer</span><span class="sep">›</span><span class="step">Story archief</span><span class="sep">›</span><span class="step">ring</span><span class="taps">3 taps</span></div>
+          <p class="path-note">Buried under "Meer", and the photos don't link back to the event.</p>
+        </div>
+        <div class="after" data-label="Proposed">
+          <div class="path"><span class="step">Agenda</span><span class="sep">›</span><span class="step">Geweest</span><span class="sep">›</span><span class="step">ring</span><span class="taps">3 taps</span></div>
+          <p class="path-note">Next to the trip itself; tap its name for the rest of that trip.</p>
+        </div>
+      </div>
+
+      <div class="task">
+        <h4>Open a friend's profile</h4>
+        <div class="before" data-label="Today">
+          <div class="path"><span class="step none">not possible</span></div>
+          <p class="path-note">The popup has no link to the full profile.</p>
+        </div>
+        <div class="after" data-label="Proposed">
+          <div class="path"><span class="step">Crew</span><span class="sep">›</span><span class="step">persoon</span><span class="taps">2 taps</span></div>
+          <p class="path-note">Also from any avatar via "Bekijk profiel".</p>
+        </div>
+      </div>
+
+      <div class="task">
+        <h4>Change your Discord notifications</h4>
+        <div class="before" data-label="Today">
+          <div class="path"><span class="step">avatar</span><span class="sep">›</span><span class="step">Notificaties</span><span class="taps">2 taps</span></div>
+          <p class="path-note">The same page is also under Meer, and "Discord koppelen" is in three different places.</p>
+        </div>
+        <div class="after" data-label="Proposed">
+          <div class="path"><span class="step">avatar</span><span class="sep">›</span><span class="step">Instellingen</span><span class="taps">2 taps</span></div>
+          <p class="path-note">Notifications, Discord, theme and greeting on one page.</p>
+        </div>
+      </div>
+    </div>
+
+    <details class="moves-details">
+      <summary>Full list: old place → new place</summary>
+      <div class="panel table-scroll">
+<table class="moves">
+        <thead><tr><th>Today</th><th></th><th>In the new structure</th></tr></thead>
+        <tbody>
+          <tr><td>Transport tab</td><td class="arr">→</td><td><b>Event › Vervoer</b> for the next trip</td></tr>
+          <tr><td>Eten tab</td><td class="arr">→</td><td><b>Event › Eten</b></td></tr>
+          <tr><td>Evenement page (one day)</td><td class="arr">→</td><td><b>Event › Overzicht</b>, with day chips as a filter</td></tr>
+          <tr><td>Evenement › Hotelkamers, Hub › Hotelkamers</td><td class="arr">→</td><td><b>Event › Kamers</b></td></tr>
+          <tr><td>Evenement › Cosplays</td><td class="arr">→</td><td><b>Event › Cosplay</b></td></tr>
+          <tr><td>Meer › Story archief, Hub story rings</td><td class="arr">→</td><td><b>Event › Foto's</b>; past trips via Agenda › Geweest. Rings stay on Hub during a trip</td></tr>
+          <tr><td>Meer › Con Kalender</td><td class="arr">→</td><td><b>Agenda</b> tab</td></tr>
+          <tr><td>Acties page + Hub banner</td><td class="arr">→</td><td><b>Hub › Voor jou</b>, plus counts on Vervoer, Eten and Financiën</td></tr>
+          <tr><td>Acties › Te betalen / Te bevestigen</td><td class="arr">→</td><td><b>Financiën › Te betalen</b></td></tr>
+          <tr><td>Meer › Leden, Hub › Leden</td><td class="arr">→</td><td><b>Crew</b> tab</td></tr>
+          <tr><td>Hub › Locatie pingen</td><td class="arr">→</td><td><b>Crew › Waar is iedereen</b>, plus a quick action on Hub during a trip</td></tr>
+          <tr><td>Hub › Maaltijden tile</td><td class="arr">→</td><td>Removed; covered by <b>Event › Eten</b></td></tr>
+          <tr><td>Meer › Notificaties, Discord, Begroeting; Profiel › Begroeting, Discord; header theme toggle</td><td class="arr">→</td><td><b>Avatar › Instellingen</b></td></tr>
+          <tr><td>Meer › QR, GitHub, YouTube, Wat is nieuw</td><td class="arr">→</td><td><b>Avatar › Delen &amp; links</b> and <b>Wat is nieuw</b></td></tr>
+        </tbody>
+      </table>
+      </div>
+    </details>
+  </section>
+
+  <!-- ── Alternative ──────────────────────────────────────── -->
+  <section aria-labelledby="alt-h">
+    <div class="sec-head">
+      <span class="eyebrow">Considered</span>
+      <h2 class="sec" id="alt-h">Why not keep the Transport and Eten tabs?</h2>
+    </div>
+    <div class="options">
+      <div class="option chosen">
+        <span class="opt-tag">Recommended</span>
+        <h3>A · Event tab with sub-tabs</h3>
+        <ul>
+          <li class="pro">Transport, meals, rooms, cosplays and photos all appear for the same trip, in one place</li>
+          <li class="pro">Hidden pages become one tap from the tab bar</li>
+          <li class="pro">One event picker instead of one per tab</li>
+          <li class="con">People need to learn that Transport is now inside Event</li>
+          <li class="con">More route changes (with redirects)</li>
+        </ul>
+      </div>
+      <div class="option">
+        <h3>B · Keep the tabs, add a trip filter to each</h3>
+        <ul>
+          <li class="pro">Smallest change; nobody has to look for Transport</li>
+          <li class="con">Kamers, Cosplay and Foto's still have no place in the nav</li>
+          <li class="con">Every tab needs its own trip filter, and they can get out of sync</li>
+          <li class="con">"Meer" stays, because the calendar still has nowhere else to go</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Routes ───────────────────────────────────────────── -->
+  <section aria-labelledby="routes-h">
+    <div class="sec-head">
+      <span class="eyebrow">For the code</span>
+      <h2 class="sec" id="routes-h">Routes</h2>
+      <p>A trip is identified by <code>multi_day_id</code> for multi-day events, or by the event id for a single day. This is the same grouping the backend already uses for hotel rooms (<code>_hotel_group_key</code>). It is not <code>event_group_id</code>: HDCC editions stay separate trips and can become a filter in Agenda. All paths stay in English, and <code>/acties</code> (the only Dutch path) goes away.</p>
+    </div>
+    <div class="panel table-scroll">
+      <table>
+        <thead><tr><th>New route</th><th>Replaces</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><span class="rt">/</span></td><td><span class="rt">/</span></td><td class="muted">Hub without the member list, hotel rooms and meal tile</td></tr>
+          <tr><td><span class="rt">/trips/:tripId</span></td><td><span class="rt">/events/:id</span></td><td class="muted">Old link redirects to the trip, with <code>?day=</code> set to that day</td></tr>
+          <tr><td><span class="rt">/trips/:tripId/transport</span></td><td><span class="rt">/transport</span></td><td class="muted"><code>/transport</code> redirects to the next trip</td></tr>
+          <tr><td><span class="rt">/trips/:tripId/food</span></td><td><span class="rt">/food</span></td><td class="muted">Same redirect</td></tr>
+          <tr><td><span class="rt">/trips/:tripId/rooms</span></td><td><span class="rt">/events/:id/hotel</span></td><td class="muted">Tab hidden on trips without a hotel</td></tr>
+          <tr><td><span class="rt">/trips/:tripId/cosplay</span></td><td><span class="rt">/events/:id/cosplays</span></td><td class="muted">Tab hidden on trips without con days</td></tr>
+          <tr><td><span class="rt">/trips/:tripId/photos</span></td><td><span class="rt">/stories</span></td><td class="muted">Archive = Agenda › Geweest</td></tr>
+          <tr><td><span class="rt">/calendar</span></td><td><span class="rt">/more</span></td><td class="muted">List and month view via <code>?view=</code></td></tr>
+          <tr><td><span class="rt">/finance/:tab?</span></td><td><span class="rt">/finance</span>, <span class="rt">/acties</span></td><td class="muted">Tabs: overzicht, te-betalen, uitgaven</td></tr>
+          <tr><td><span class="rt">/crew</span></td><td><span class="rt">/members</span></td><td class="muted">Includes location pings</td></tr>
+          <tr><td><span class="rt">/settings</span></td><td><span class="rt">/notifications</span>, <span class="rt">/changelog</span></td><td class="muted">Changelog becomes <code>/settings/changelog</code></td></tr>
+          <tr><td><span class="rt">/profile/:userId</span></td><td><span class="rt">/profile/:name</span></td><td class="muted">The parameter already carries an id; rename it</td></tr>
+          <tr><td><span class="rt">/rides/:id</span>, <span class="rt">/meals/:id</span></td><td class="muted">unchanged</td><td class="muted">Back button falls back to the trip's tab, not the old global list</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── Quick fixes ──────────────────────────────────────── -->
+  <section aria-labelledby="fix-h">
+    <div class="sec-head">
+      <span class="eyebrow">Before the rework</span>
+      <h2 class="sec" id="fix-h">Fixes that can ship now</h2>
+      <p>These don't depend on the new structure.</p>
+    </div>
+    <ul class="fixes">
+      <li><b>Hub hotel room rows</b> show an arrow but do nothing. Remove the arrow or link the rows to the rooms page.<span class="files">pages/HubPage.tsx</span></li>
+      <li><b>Acties missing-ride cards</b> don't link anywhere. Link them to Transport or the event.<span class="files">pages/acties/components/ActionCard.tsx</span></li>
+      <li><b>Other people's profiles</b> can't be opened. Add "Bekijk profiel" to the popup, and fix your own "Bekijk profiel" button, which links to the page you're already on.<span class="files">components/common/UserProfilePopup.tsx · pages/ProfilePage.tsx</span></li>
+      <li><b>Duplicate settings:</b> remove Notificaties and Uitloggen from Meer, and keep Begroeting and Discord in one place.<span class="files">pages/MorePage.tsx · pages/ProfilePage.tsx</span></li>
+      <li><b>Ride title</b> shows "Inbound/Outbound". Use Heen/Terug.<span class="files">pages/RideDetailPage.tsx</span></li>
+      <li><b>One source for hotel rooms:</b> "Kamer X" should come from room assignments, not the free-text <code>user.hotel_room</code>.<span class="files">CrewSection · MembersPage · UserProfilePopup · AdminUsersPage</span></li>
+      <li><b><code>/test-error</code> is public.</b> Move it behind the admin route.<span class="files">router.tsx</span></li>
+      <li><b>Unused code:</b> CosplayDetailPage (no route), EventAttendees, CrewList, 6 unused Hub components and 2 unused finance components.<span class="files">components/hub · components/finance · components/more</span></li>
+      <li><b>Tab icons are matched to tabs by position</b> in the array, so reordering the tabs breaks them. Store each icon on its nav item.<span class="files">components/layout/BottomNav.tsx · constants/index.ts</span></li>
+    </ul>
+  </section>
+
+  <!-- ── Rollout ──────────────────────────────────────────── -->
+  <section aria-labelledby="roll-h">
+    <div class="sec-head">
+      <span class="eyebrow">Order of work</span>
+      <h2 class="sec" id="roll-h">Rollout</h2>
+    </div>
+    <ol class="steps">
+      <li>
+        <div><h3>Quick fixes</h3><p>The list above. Nothing moves yet.</p></div>
+        <div class="files"><span>see list</span></div>
+      </li>
+      <li>
+        <div><h3>Trip page with sub-tabs</h3><p>Build <code>/trips/:tripId</code> from EventDetailPage's sections as Overzicht, and move the hotel rooms and cosplays pages in as tabs. Old event links redirect.</p></div>
+        <div class="files"><span>pages/EventDetailPage.tsx</span><span>pages/HotelRoomsPage.tsx</span><span>pages/EventCosplaysPage.tsx</span><span>utils/multiDay.ts</span></div>
+      </li>
+      <li>
+        <div><h3>Vervoer and Eten inside the trip</h3><p>TransportPage and FoodPage take a trip id and filter on <code>linked_event_id</code>. The old tabs redirect to the next trip.</p></div>
+        <div class="files"><span>pages/TransportPage.tsx</span><span>pages/FoodPage.tsx</span></div>
+      </li>
+      <li>
+        <div><h3>New tabs and avatar menu</h3><p>Change the five nav items. Agenda comes from Meer's calendar, Crew from MembersPage, and Instellingen from Meer, Notificaties and the profile toggles. Delete MorePage.</p></div>
+        <div class="files"><span>constants/index.ts</span><span>components/layout/*</span><span>components/more/Calendar*.tsx</span><span>pages/MembersPage.tsx</span></div>
+      </li>
+      <li>
+        <div><h3>Voor jou and payments</h3><p>Hub › Voor jou replaces DailyActionCheck and <code>/acties</code>. Financiën gets a Te betalen tab and a trip field on new expenses.</p></div>
+        <div class="files"><span>utils/actionItems.ts</span><span>pages/HubPage.tsx</span><span>pages/FinancePage.tsx</span><span>components/finance/CreateExpenseDrawer.tsx</span></div>
+      </li>
+      <li>
+        <div><h3>Onboarding text</h3><p>The onboarding tour still describes "Agenda &amp; Meer" and never mentions rooms, cosplay or photos. Update it to the new tabs.</p></div>
+        <div class="files"><span>pages/onboarding/constants.ts</span></div>
+      </li>
+    </ol>
+    <p class="foot">Open question: when there's no upcoming trip, the Event tab shows the most recent past trip, or an empty state that links to Agenda. All names, rides and amounts in the mocks are sample data.</p>
+  </section>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>
+  try { if (window.lucide) window.lucide.createIcons(); } catch (e) {}
+</script>
+
+<script>
+(function () {
+  var cmp = document.getElementById('cmp');
+  var read = document.getElementById('cmp-read');
+  if (!cmp || !read) return;
+  var items = Array.prototype.slice.call(cmp.querySelectorAll('.it'));
+  var restText = read.textContent;
+  var pinned = null;
+
+  function keys(el) { return el.dataset.k.split(' '); }
+  function isOld(el) { return !!el.closest('[data-side="old"]'); }
+  function label(el) {
+    var g = el.closest('.grp').querySelector('.grp-name').dataset.name;
+    return g + ' › ' + el.querySelector('.lbl').textContent;
+  }
+
+  // "×n" badges: how many places today hold the same thing
+  items.filter(isOld).forEach(function (el) {
+    if (el.hasAttribute('data-nodup')) return;
+    var k = keys(el)[0];
+    var n = items.filter(function (j) { return isOld(j) && keys(j).indexOf(k) !== -1; }).length;
+    if (n > 1) {
+      var em = document.createElement('em');
+      em.className = 'flag dup';
+      em.textContent = '×' + n;
+      el.appendChild(em);
+    }
+  });
+
+  function show(el) {
+    var ks = keys(el);
+    var olds = [], news = [];
+    cmp.classList.add('focusing');
+    items.forEach(function (i) {
+      var hit = keys(i).some(function (k) { return ks.indexOf(k) !== -1; });
+      i.classList.toggle('hit', hit);
+      i.classList.toggle('src', i === el);
+      if (hit) (isOld(i) ? olds : news).push(label(i));
+    });
+    read.textContent = '';
+    var b1 = document.createElement('b'); b1.textContent = 'Today: ';
+    var b2 = document.createElement('b'); b2.textContent = 'Proposed: ';
+    read.appendChild(b1);
+    read.appendChild(document.createTextNode((olds.join(', ') || 'not there') + '   →   '));
+    read.appendChild(b2);
+    read.appendChild(document.createTextNode(news.join(', ') || 'removed'));
+  }
+
+  function clear() {
+    if (pinned) { show(pinned); return; }
+    cmp.classList.remove('focusing');
+    items.forEach(function (i) { i.classList.remove('hit', 'src'); });
+    read.textContent = restText;
+  }
+
+  items.forEach(function (el) {
+    el.setAttribute('aria-pressed', 'false');
+    el.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') show(el); });
+    el.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') clear(); });
+    el.addEventListener('focus', function () { show(el); });
+    el.addEventListener('blur', clear);
+    el.addEventListener('click', function () {
+      if (pinned) pinned.setAttribute('aria-pressed', 'false');
+      pinned = pinned === el ? null : el;
+      if (pinned) { pinned.setAttribute('aria-pressed', 'true'); show(pinned); }
+      else clear();
+    });
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && pinned) {
+      pinned.setAttribute('aria-pressed', 'false');
+      pinned = null;
+      clear();
+    }
+  });
+})();
+</script>

@@ -43,7 +43,7 @@ export function PullToRefresh() {
           : "transform 0.38s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s",
       }}
     >
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-md border border-slate-100 dark:bg-slate-800 dark:border-slate-700">
+      <div className="flex h-9 w-9 items-center justify-center rounded-full border-1.5 border-line bg-surface">
         <motion.div
           animate={{ rotate: isRefreshing ? 360 : progress * 270 }}
           transition={
@@ -55,7 +55,7 @@ export function PullToRefresh() {
           <RefreshCw
             size={15}
             className={`transition-colors duration-150 ${
-              progress >= 1 || isRefreshing ? "text-sky-500" : "text-slate-400"
+              progress >= 1 || isRefreshing ? "text-ink" : "text-ink-3"
             }`}
           />
         </motion.div>

@@ -26,15 +26,15 @@ export function ParticipantList({
         {participants.map((p) => (
           <div
             key={p}
-            className="flex items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2"
+            className="flex items-center gap-2.5 rounded-lg border border-line bg-paper px-3 py-2"
           >
             <UserAvatar name={p} className="h-6 w-6 text-[8px]" />
-            <span className="flex-1 text-sm text-slate-300">{p}</span>
+            <span className="flex-1 text-sm text-ink">{p}</span>
             <button
               type="button"
               onClick={() => onRemove(p)}
               disabled={isPending}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-40 transition-colors"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 disabled:opacity-40 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
             >
               <UserX size={13} />
             </button>

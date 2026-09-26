@@ -100,6 +100,10 @@ export interface LocationPingRequest {
   user_name: string;
   zone: string;
   text: string;
+  /** GPS fix from the browser, when the user shared it. */
+  lat?: number;
+  lng?: number;
+  accuracy?: number;
 }
 
 // Rides
@@ -186,6 +190,7 @@ export interface Meal {
   dietary_options?: string;
   parking_info?: string;
   extra_notes?: string;
+  created_by?: string | null;
 }
 
 // Event-day photo stories
@@ -196,6 +201,35 @@ export interface StoryPhoto {
   uploaded_by: string;
   image_url: string;
   created_at: string;
+}
+
+/** A photo on someone's profile, with the event it was taken at. */
+export interface UserStoryPhoto {
+  id: string;
+  image_url: string;
+  created_at: string;
+  event_day_id: string;
+  event_id?: string | null;
+  event_name?: string | null;
+  date?: string | null;
+}
+
+/** One file in the photo bucket (admin CDN view). */
+export interface CdnObject {
+  key: string;
+  url: string;
+  size: number;
+  last_modified: string;
+  kind: string;
+  owner?: string | null;
+}
+
+export interface CdnListing {
+  total: number;
+  total_size: number;
+  capped: boolean;
+  counts: Record<string, number>;
+  items: CdnObject[];
 }
 
 export interface StorySeenState {
@@ -251,28 +285,6 @@ export interface RsvpRequest {
 }
 
 // Payments
-export interface Split {
-  name: string;
-  amount: number;
-}
-
-export interface Payment {
-  id: string;
-  paid_by: string;
-  amount: number;
-  description: string;
-  date: string;
-  splits: Split[];
-}
-
-export interface CreatePaymentRequest {
-  paid_by: string;
-  amount: number;
-  description: string;
-  date: string;
-  splits?: Split[];
-}
-
 export interface TicketType {
   title: string;
   price: number;
@@ -376,7 +388,7 @@ export interface CalendarRsvpRequest {
 }
 
 // UI helpers
-export type TabId = "hub" | "transport" | "food" | "finance" | "more";
+export type TabId = "hub" | "trip" | "calendar" | "finance" | "crew";
 
 export type BaseProps = {
   options: string[];
@@ -417,10 +429,11 @@ export interface ExpenseShare {
   expense_id: string;
   participant: string;
   amount: number;
-  payment_ref: string;
   status: "pending" | "claimed" | "confirmed";
   claimed_at?: string;
   confirmed_at?: string;
+  /** Set while (or since) the share is covered by a settle-up payment. */
+  settlement_id?: string | null;
 }
 
 export interface Expense {
@@ -435,6 +448,50 @@ export interface Expense {
   shares: ExpenseShare[];
 }
 
+/** One payment settling everything open between two members (see Afrekenen). */
+export interface Settlement {
+  id: string;
+  from_user_id: string;
+  to_user_id: string;
+  from_user: string;
+  to_user: string;
+  amount: number;
+  currency: string;
+  status: "requested" | "claimed" | "confirmed";
+  /** How to pay — only on an open request, cleared once confirmed. */
+  request_url?: string | null;
+  iban?: string | null;
+  account_name?: string | null;
+  created_at?: string;
+  claimed_at?: string | null;
+  confirmed_at?: string | null;
+}
+
+/** What's open between you and one other member, netted over all expenses. */
+export interface SettleUpItem {
+  counterparty_id: string;
+  counterparty: string;
+  direction: "i_owe" | "owes_me" | "even";
+  amount: number;
+  currency: string;
+  share_count: number;
+  blocked_by_settlement: boolean;
+}
+
+export interface SettleUpOverview {
+  items: SettleUpItem[];
+  settlements: Settlement[];
+}
+
+export interface CreateSettlementRequest {
+  counterparty_id: string;
+  currency?: string;
+  action: "paid" | "request" | "received";
+  request_url?: string;
+  iban?: string;
+  account_name?: string;
+}
+
 export interface CreateExpenseShareInput {
   participant: string;
   amount: number;
@@ -446,6 +503,8 @@ export interface CreateExpenseRequest {
   currency?: string;
   description: string;
   date: string;
+  /** Any day of the trip this expense belongs to. */
+  linked_event_id?: string;
   shares: CreateExpenseShareInput[];
 }
 

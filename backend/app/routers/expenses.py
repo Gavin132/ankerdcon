@@ -6,21 +6,60 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from app.config import Settings, get_settings
 from app.constants import Tables
 from app.core.logging import get_logger
-from app.dependencies import get_current_user
+from app.dependencies import act_as, get_current_user, require_owner_or_admin
 from app.models.expense import CreateExpenseRequest, Expense
 from app.routes import ExpenseRoutes
 from app.core.database import supabase
 from app.services import notification_service
+from app.services.discord_bot import escape_markdown
 from app import messages as M
 
 logger = get_logger(__name__)
 router = APIRouter(prefix=ExpenseRoutes.PREFIX, tags=["expenses"])
 
 _DB_ERROR = "Databasefout. Probeer het opnieuw."
+_IN_SETTLEMENT = "Dit aandeel zit in een afrekening; rond die af onder Afrekenen."
 
 
 def _utcnow() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def expense_in_open_settlement(expense_id: str) -> bool:
+    """True while any share of this expense is part of a settlement that
+    isn't confirmed yet. Shared with the admin endpoints, so an admin can't
+    pull an expense out from under a payment in progress either."""
+    try:
+        rows = (
+            supabase.table(Tables.EXPENSE_SHARES)
+            .select("id")
+            .eq("expense_id", expense_id)
+            .neq("status", "confirmed")
+            .not_.is_("settlement_id", "null")
+            .execute()
+            .data
+        )
+    except Exception as e:
+        logger.error("Failed to check settlements for expense %s: %s", expense_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    return bool(rows)
+
+
+def share_in_open_settlement(share_id: str) -> bool:
+    """True while this share is part of a settlement that isn't confirmed yet."""
+    try:
+        row = (
+            supabase.table(Tables.EXPENSE_SHARES)
+            .select("status, settlement_id")
+            .eq("id", share_id)
+            .execute()
+            .data
+        )
+    except Exception as e:
+        logger.error("Failed to check settlement of share %s: %s", share_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    return bool(row) and bool(row[0].get("settlement_id")) and row[0].get("status") != "confirmed"
+
 
 
 @router.get(ExpenseRoutes.LIST, response_model=list[Expense])
@@ -69,16 +108,18 @@ def list_expenses(_: str = Depends(get_current_user)):
 def create_expense(
     body: CreateExpenseRequest,
     background_tasks: BackgroundTasks,
-    _: str = Depends(get_current_user),
+    current_user: str = Depends(get_current_user),
     settings: Settings = Depends(get_settings),
 ):
+    paid_by = act_as(current_user, body.paid_by)
     try:
         result = supabase.table(Tables.EXPENSES).insert({
-            "paid_by":      body.paid_by,
-            "amount":       body.amount,
-            "currency":     body.currency,
-            "description":  body.description,
-            "date":         body.date,
+            "paid_by":         paid_by,
+            "amount":          body.amount,
+            "currency":        body.currency,
+            "description":     body.description,
+            "date":            body.date,
+            "linked_event_id": body.linked_event_id or None,
         }).execute()
     except Exception as e:
         logger.error("Failed to create expense: %s", e)
@@ -92,11 +133,23 @@ def create_expense(
 
     inserted_shares: list[dict] = []
     if body.shares:
+        # The amount is the whole bill, so the payer's own part of it is
+        # already paid — it's recorded as settled instead of owed to themselves.
+        now = _utcnow()
         try:
             inserted_shares = (
                 supabase.table(Tables.EXPENSE_SHARES)
                 .insert([
-                    {"expense_id": expense_id, "participant": s.participant, "amount": s.amount}
+                    # Every row gets the same fields: with a bulk insert, Supabase
+                    # fills a field some rows leave out with NULL rather than the
+                    # column default, which the not-null status column rejects.
+                    {
+                        "expense_id": expense_id,
+                        "participant": s.participant,
+                        "amount": s.amount,
+                        "status": "confirmed" if s.participant == paid_by else "pending",
+                        "confirmed_at": now if s.participant == paid_by else None,
+                    }
                     for s in body.shares
                 ])
                 .execute()
@@ -104,6 +157,12 @@ def create_expense(
             )
         except Exception as e:
             logger.error("Failed to insert expense shares for expense %s: %s", expense_id, e)
+            # Don't leave a bill behind with nobody owing anything on it —
+            # trying again would just make a second one.
+            try:
+                supabase.table(Tables.EXPENSES).delete().eq("id", expense_id).execute()
+            except Exception as cleanup_error:
+                logger.error("Failed to remove expense %s after its shares failed: %s", expense_id, cleanup_error)
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
     background_tasks.add_task(
@@ -111,16 +170,16 @@ def create_expense(
         settings.discord_bot_token,
         notification_service.NotificationCategory.EXPENSE_CREATED,
         M.DM_EXPENSE_CREATED.format(
-            paid_by=body.paid_by,
+            paid_by=escape_markdown(paid_by),
             amount=body.amount,
-            currency=body.currency,
-            description=body.description,
+            currency=escape_markdown(body.currency),
+            description=escape_markdown(body.description),
         ),
     )
 
 
 @router.delete(ExpenseRoutes.DETAIL, status_code=status.HTTP_204_NO_CONTENT)
-def delete_expense(expense_id: str, user_name: str, _: str = Depends(get_current_user)):
+def delete_expense(expense_id: str, current_user: str = Depends(get_current_user)):
     try:
         row = (
             supabase.table(Tables.EXPENSES)
@@ -135,10 +194,14 @@ def delete_expense(expense_id: str, user_name: str, _: str = Depends(get_current
 
     if not row.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Uitgave niet gevonden.")
-    if row.data["paid_by"] != user_name:
+    require_owner_or_admin(current_user, row.data["paid_by"], "Alleen de betaler kan deze uitgave verwijderen.")
+
+    # A settlement under way was worked out including this expense; deleting
+    # it now would leave that payment for the wrong amount.
+    if expense_in_open_settlement(expense_id):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Alleen de betaler kan deze uitgave verwijderen.",
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Deze uitgave zit in een lopende afrekening. Rond die eerst af of trek hem in.",
         )
 
     try:
@@ -149,11 +212,11 @@ def delete_expense(expense_id: str, user_name: str, _: str = Depends(get_current
 
 
 @router.post(ExpenseRoutes.SHARE_CLAIM)
-def claim_share(share_id: str, _: str = Depends(get_current_user)):
+def claim_share(share_id: str, current_user: str = Depends(get_current_user)):
     try:
         row = (
             supabase.table(Tables.EXPENSE_SHARES)
-            .select("status")
+            .select("status, participant, settlement_id")
             .eq("id", share_id)
             .single()
             .execute()
@@ -164,6 +227,9 @@ def claim_share(share_id: str, _: str = Depends(get_current_user)):
 
     if not row.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Aandeel niet gevonden.")
+    require_owner_or_admin(current_user, row.data["participant"], "Je kunt alleen je eigen aandeel als betaald melden.")
+    if row.data.get("settlement_id"):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=_IN_SETTLEMENT)
     if row.data["status"] != "pending":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Aandeel is al geclaimd of bevestigd.")
 
@@ -180,11 +246,11 @@ def claim_share(share_id: str, _: str = Depends(get_current_user)):
 
 
 @router.post(ExpenseRoutes.SHARE_CONFIRM)
-def confirm_share(share_id: str, _: str = Depends(get_current_user)):
+def confirm_share(share_id: str, current_user: str = Depends(get_current_user)):
     try:
         row = (
             supabase.table(Tables.EXPENSE_SHARES)
-            .select("status")
+            .select("status, settlement_id, expenses(paid_by)")
             .eq("id", share_id)
             .single()
             .execute()
@@ -195,8 +261,14 @@ def confirm_share(share_id: str, _: str = Depends(get_current_user)):
 
     if not row.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Aandeel niet gevonden.")
-    if row.data["status"] != "claimed":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Aandeel is nog niet geclaimd.")
+    payer = (row.data.get("expenses") or {}).get("paid_by")
+    require_owner_or_admin(current_user, payer, "Alleen de betaler kan dit bevestigen.")
+    if row.data.get("settlement_id"):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=_IN_SETTLEMENT)
+    # Straight from pending is fine too: cash handed over in person never gets
+    # an "Ik heb betaald" from the other side.
+    if row.data["status"] == "confirmed":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Aandeel is al bevestigd.")
 
     try:
         supabase.table(Tables.EXPENSE_SHARES).update({

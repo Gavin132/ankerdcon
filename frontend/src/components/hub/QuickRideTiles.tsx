@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Car, Users } from "lucide-react";
+import { Car, ChevronRight, Users } from "lucide-react";
 import { routes } from "../../config/routes";
-import { guessQuickRideDirection } from "../../utils/quickRide";
+import { useCalendar } from "../../hooks/useCalendar";
+import { parseEventDate } from "../../utils/date";
+import { planQuickRide } from "../../utils/quickRide";
+import { tripIdOf } from "../../utils/trips";
 import { QuickRideModal } from "../transport/QuickRideModal";
 import { JoinRideModal } from "../transport/JoinRideModal";
 import { RestaurantQuickDriverModal } from "../transport/RestaurantQuickDriverModal";
@@ -20,25 +22,48 @@ interface QuickRideTilesProps {
   rides?: Ride[];
 }
 
-/** Two hub shortcuts for getting to/from the event, relabeled by time of day
- * — "naar hotel"/"naar congres" when the trip has a hotel leg, "naar
- * evenement"/"naar huis" when it doesn't, or "naar restaurant" in the
- * evening when there's a meal still needing a ride. */
+function QuickTile({ icon, title, hint, onClick }: { icon: React.ReactNode; title: string; hint: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex flex-col gap-3 rounded-xl border-1.5 border-line bg-surface p-3.5 text-left transition-colors hover:border-ink-3"
+    >
+      <span className="flex w-full items-start justify-between">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sunken text-ink">{icon}</span>
+        <ChevronRight size={15} className="text-ink-3" />
+      </span>
+      <span>
+        <span className="block text-[14px] font-semibold leading-tight text-ink">{title}</span>
+        <span className="mt-1 block text-[11px] leading-snug text-ink-3">{hint}</span>
+      </span>
+    </button>
+  );
+}
+
+/** Two hub shortcuts for getting to/from the event. The titles are fixed;
+ * the grey line says what the sheet will open on — which direction and when
+ * (see `planQuickRide`), or "naar restaurant" in the evening when there's a
+ * meal still needing a ride. */
 export function QuickRideTiles({ event, restaurantMeal, rides = [] }: QuickRideTilesProps) {
   const navigate = useNavigate();
   const [offerOpen, setOfferOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
   const [restaurantOfferOpen, setRestaurantOfferOpen] = useState(false);
 
-  const direction = guessQuickRideDirection();
+  const { data: allEvents = [] } = useCalendar();
+  const groupDays = (event.multi_day_id ? allEvents.filter((e) => e.multi_day_id === event.multi_day_id) : [event])
+    .map((e) => parseEventDate(e.date))
+    .filter((d): d is Date => d !== null);
+  const plan = planQuickRide(groupDays);
+  const direction = plan.direction;
   const toHotel = direction === "Outbound";
   const isRestaurantLeg = toHotel && !!restaurantMeal;
 
-  const label = isRestaurantLeg
-    ? "naar restaurant"
-    : event.is_hotel
-      ? (toHotel ? "naar hotel" : "naar congres")
-      : (toHotel ? "naar huis" : "naar evenement");
+  const where = event.is_hotel
+    ? (toHotel ? "Naar hotel" : "Naar evenement")
+    : (toHotel ? "Naar huis" : "Naar evenement");
+  const hint = isRestaurantLeg ? "Naar restaurant" : `${where} · ${plan.when}`;
 
   const existingRestaurantRide = isRestaurantLeg
     ? rides.find((r) => r.direction === "Restaurant" && r.linked_meal_id === restaurantMeal!.id)
@@ -52,45 +77,14 @@ export function QuickRideTiles({ event, restaurantMeal, rides = [] }: QuickRideT
   function handleJoinClick() {
     if (!isRestaurantLeg) { setJoinOpen(true); return; }
     if (existingRestaurantRide) navigate(routes.ride.view(existingRestaurantRide.id));
-    else navigate(routes.transport, { state: { tab: "Restaurant" } });
+    else navigate(routes.trip.view(tripIdOf(event), "transport"), { state: { tab: "Restaurant" } });
   }
 
   return (
     <>
       <div className="grid grid-cols-2 gap-3">
-        <motion.button
-          onClick={handleOfferClick}
-          className="relative gradient-hero shadow-hero rounded-2xl overflow-hidden p-4 text-left flex flex-col gap-4 transition-colors duration-150 hover:bg-white/[0.04]"
-          whileHover={{ y: -1 }}
-          whileTap={{ scale: 0.98 }}
-          transition={{ duration: 0.12 }}
-        >
-          <div className="pointer-events-none absolute -top-6 -right-6 h-20 w-20 rounded-full bg-sky-400/10" />
-          <div className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-sky-400/15 border border-sky-400/25">
-            <Car size={15} className="text-sky-300" />
-          </div>
-          <div className="relative">
-            <p className="text-sm font-black text-white leading-tight">Rit {label}</p>
-            <p className="text-xs font-semibold text-sky-300/60 mt-1">Aanbieden</p>
-          </div>
-        </motion.button>
-
-        <motion.button
-          onClick={handleJoinClick}
-          className="relative gradient-hero shadow-hero rounded-2xl overflow-hidden p-4 text-left flex flex-col gap-4 transition-colors duration-150 hover:bg-white/[0.04]"
-          whileHover={{ y: -1 }}
-          whileTap={{ scale: 0.98 }}
-          transition={{ duration: 0.12 }}
-        >
-          <div className="pointer-events-none absolute -top-6 -right-6 h-20 w-20 rounded-full bg-sky-400/10" />
-          <div className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-sky-400/15 border border-sky-400/25">
-            <Users size={15} className="text-sky-300" />
-          </div>
-          <div className="relative">
-            <p className="text-sm font-black text-white leading-tight">Meerijden {label}</p>
-            <p className="text-xs font-semibold text-sky-300/60 mt-1">Zoeken</p>
-          </div>
-        </motion.button>
+        <QuickTile icon={<Car size={16} />} title="Rit aanbieden" hint={hint} onClick={handleOfferClick} />
+        <QuickTile icon={<Users size={16} />} title="Meerijden" hint={hint} onClick={handleJoinClick} />
       </div>
 
       {isRestaurantLeg ? (
@@ -108,6 +102,7 @@ export function QuickRideTiles({ event, restaurantMeal, rides = [] }: QuickRideT
             onClose={() => setOfferOpen(false)}
             event={event}
             initialDirection={direction}
+            initialDeparture={plan.departure}
           />
 
           <JoinRideModal

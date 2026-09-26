@@ -29,8 +29,21 @@ export class ApiError extends Error {
 
 // ── HTTP client ────────────────────────────────────────────────────
 
+/**
+ * How long any request may take before it is given up on. axios has no limit
+ * of its own, so on a bad connection — or when the server is stuck — a button
+ * would sit on its spinner indefinitely. Cloudflare in front of the server
+ * gives up after 100 s anyway (a 524), so waiting longer than this never helps.
+ */
+export const REQUEST_TIMEOUT_MS = 30_000;
+/** Uploads carry a photo over what may be a poor connection, so they get longer. */
+export const UPLOAD_TIMEOUT_MS = 60_000;
+/** A video from a phone can be tens of MB; Cloudflare itself allows a request 100 s. */
+export const VIDEO_UPLOAD_TIMEOUT_MS = 100_000;
+
 export const apiClient = axios.create({
   baseURL: env.API_BASE_URL,
+  timeout: REQUEST_TIMEOUT_MS,
 });
 
 apiClient.interceptors.request.use((config) => {
@@ -79,20 +92,20 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const newAccessToken = await useAuthStore.getState().refreshAccessToken();
+        const outcome = await useAuthStore.getState().refreshAccessToken();
 
-        if (newAccessToken) {
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          processQueue(null, newAccessToken);
+        if ("token" in outcome) {
+          originalRequest.headers.Authorization = `Bearer ${outcome.token}`;
+          processQueue(null, outcome.token);
           return apiClient(originalRequest);
-        } else {
-          // If Supabase returns null, the session is completely dead. 
-          // Trigger the logout and redirect.
-          useAuthStore.getState().clearAuth();
-          processQueue(new Error("Session expired"), null);
         }
+        // `dead` already signed the user out inside the store. `retry` means we
+        // simply couldn't reach the auth server — the session stands, so this
+        // one request fails and the next attempt (a refetch, or the user
+        // pulling the screen again) picks up where it left off. Signing out
+        // here is what used to boot people off the app on bad reception.
+        processQueue(new Error("retry" in outcome ? "Kon niet vernieuwen" : "Session expired"), null);
       } catch (refreshError) {
-        useAuthStore.getState().clearAuth();
         processQueue(refreshError, null);
       } finally {
         isRefreshing = false;

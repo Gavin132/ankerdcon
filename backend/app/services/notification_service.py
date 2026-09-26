@@ -91,3 +91,32 @@ def broadcast_category_dm(bot_token: str, category: str, content: str) -> None:
 
     if sent:
         logger.info("Notification broadcast (%s): sent to %d user(s)", category, sent)
+
+
+def send_personal_dm(bot_token: str, profile_id: str, content: str) -> None:
+    """DM one member about something that needs *them* — a payment request
+    to them, or a payment to confirm. Not a broadcast category, so only the
+    master `allow_dm` switch applies.
+
+    Fire-and-forget like `broadcast_category_dm`; never raises.
+    """
+    if not bot_token or not profile_id:
+        return
+    try:
+        rows = (
+            supabase.table(Tables.PROFILES)
+            .select("discord_id, is_active, allow_dm")
+            .eq("id", profile_id)
+            .execute()
+            .data
+        )
+    except Exception as e:
+        logger.error("Personal DM: failed to fetch profile %s: %s", profile_id, e)
+        return
+    if not rows:
+        return
+    profile = rows[0]
+    if not profile.get("is_active", True) or not profile.get("allow_dm", True):
+        return
+    if profile.get("discord_id"):
+        discord_bot.send_dm(bot_token, profile["discord_id"], content)

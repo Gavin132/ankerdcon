@@ -28,8 +28,8 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h2 className="text-xl font-black text-slate-900 dark:text-white">Stel je profiel in</h2>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <h2 className="font-display text-[34px] font-extrabold uppercase leading-[0.95] tracking-[0.01em] text-ink">Stel je profiel in</h2>
+        <p className="mt-2 text-sm leading-relaxed text-ink-2">
           Alle velden zijn optioneel — je kunt dit later altijd aanpassen.
         </p>
       </div>
@@ -37,7 +37,7 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
       <div className="space-y-5">
         {/* Pronouns */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1.5">
+          <label className="section-label mb-1.5 block">
             Voornaamwoorden
           </label>
           <input
@@ -52,33 +52,33 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
 
         {/* Phone */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1.5">
+          <label className="section-label mb-1.5 block">
             Telefoonnummer
           </label>
           <div className="relative">
-            <Smartphone size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Smartphone size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
             <input
               type="tel"
               maxLength={20}
               placeholder="+31 6 12345678"
-              className={`input-field pl-9 ${phoneError && state.phone ? "border-rose-400 dark:border-rose-700" : ""}`}
+              className={`input-field pl-9 ${phoneError && state.phone ? "!border-rose-500 dark:!border-rose-400" : ""}`}
               value={state.phone}
               onChange={(e) => onChange({ phone: e.target.value })}
             />
           </div>
           {phoneError && state.phone && (
-            <p className="mt-1.5 flex items-center gap-1 text-xs text-rose-500">
+            <p className="mt-1.5 flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400">
               <AlertTriangle size={11} /> {phoneError}
             </p>
           )}
-          <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">
+          <p className="mt-1.5 text-xs text-ink-3">
             Zichtbaar voor andere deelnemers.
           </p>
         </div>
 
         {/* Bio */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1.5">
+          <label className="section-label mb-1.5 block">
             Bio
           </label>
           <div className="relative">
@@ -90,7 +90,7 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
               value={state.bio}
               onChange={(e) => onChange({ bio: e.target.value })}
             />
-            <span className="absolute bottom-3 right-3 text-[11px] text-slate-300 dark:text-slate-600 pointer-events-none select-none">
+            <span className="pointer-events-none absolute bottom-3 right-3 select-none font-mono text-[11px] text-ink-3">
               {200 - state.bio.length}
             </span>
           </div>
@@ -98,13 +98,13 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
 
         {/* Name color */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-2">
+          <label className="section-label mb-2 block">
             Naamkleur
           </label>
           <ColorSwatch value={state.color} onChange={(v) => onChange({ color: v })} presets={NAME_COLORS} />
           {state.color && (
-            <div className="mt-2.5 inline-flex items-center rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5">
-              <span className="text-sm font-black" style={{ color: state.color }}>
+            <div className="mt-2.5 inline-flex items-center rounded-lg bg-sunken px-3 py-1.5">
+              <span className="text-sm font-bold" style={{ color: state.color }}>
                 Voorbeeld naam
               </span>
             </div>
@@ -113,22 +113,22 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
 
         {/* Banner color */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-2">
+          <label className="section-label mb-2 block">
             Profielbanner
           </label>
           <div
-            className="h-10 w-full rounded-xl mb-3 border border-slate-100 dark:border-slate-800 transition-colors"
-            style={state.bannerColor ? { backgroundColor: state.bannerColor } : { background: "linear-gradient(135deg, #0ea5e9, #6366f1)" }}
+            className="mb-3 h-10 w-full rounded-xl border-1.5 border-line transition-colors"
+            style={{ backgroundColor: state.bannerColor || "#0F1519" }}
           />
           <ColorSwatch value={state.bannerColor} onChange={(v) => onChange({ bannerColor: v })} presets={BANNER_COLORS} />
         </div>
 
         {/* Aliases */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1.5">
+          <label className="section-label mb-1.5 block">
             Aliassen
           </label>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">
+          <p className="mb-2 text-xs leading-relaxed text-ink-3">
             Bijnamen waaronder andere leden jou kennen (max. 10). Dit maakt het zoeken naar jou makkelijker voor andere leden. Je kunt dit later altijd aanpassen in je profiel.
           </p>
           <div className="flex gap-2">
@@ -145,7 +145,7 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
               type="button"
               onClick={addAlias}
               disabled={!aliasInput.trim() || state.aliases.length >= 10}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-40 transition-colors"
+              className="flex w-[50px] shrink-0 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink transition-colors hover:border-ink-3 disabled:opacity-40"
             >
               <Plus size={15} />
             </button>
@@ -155,13 +155,13 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
               {state.aliases.map((alias) => (
                 <span
                   key={alias}
-                  className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-300"
+                  className="inline-flex items-center gap-1 rounded-full border-1.5 border-line bg-surface px-2.5 py-1 text-xs font-medium text-ink-2"
                 >
                   {alias}
                   <button
                     type="button"
                     onClick={() => removeAlias(alias)}
-                    className="ml-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                    className="ml-0.5 text-ink-3 transition-colors hover:text-ink"
                   >
                     <X size={11} />
                   </button>

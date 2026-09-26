@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getCalendar,
+  getCalendarFeedPath,
   rsvpCalendarEvent,
   leaveCalendarEvent,
   getHotelRooms,
@@ -17,6 +18,16 @@ export function useCalendar() {
     queryKey: QUERY_KEYS.calendar,
     queryFn: getCalendar,
     staleTime: STALE_TIME,
+  });
+}
+
+/** Only fetched once someone opens "Abonneren": the link carries a secret. */
+export function useCalendarFeedPath(enabled: boolean) {
+  return useQuery({
+    queryKey: ["calendarFeedPath"],
+    queryFn: getCalendarFeedPath,
+    staleTime: Infinity,
+    enabled,
   });
 }
 

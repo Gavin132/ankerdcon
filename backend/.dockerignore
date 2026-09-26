@@ -1,0 +1,12 @@
+# Secrets are passed to the container at runtime, never baked into the image.
+.env
+.env.*
+!.env.example
+
+# Local build and tool leftovers
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/

@@ -1,11 +1,14 @@
+import { Home, Ticket, CalendarDays, Wallet, Users, type LucideIcon } from "lucide-react";
 import type { TabId } from "../types";
 
 export const APP_NAME = "Ankerd Con";
 
+/** Public uptime page — on its own host, so it stays up when this app is down. */
+export const STATUS_PAGE_URL = "https://status.ankerd.org/";
+
 export const QUERY_KEYS = {
   rides:     ["rides"]     as const,
   meals:     ["meals"]     as const,
-  payments:  ["payments"]  as const,
   calendar:  ["calendar"]  as const,
   users:     ["users"]     as const,
   userNames: ["userNames"] as const,
@@ -19,6 +22,7 @@ export const QUERY_KEYS = {
   badges: ["badges"] as const,
   announcements: ["announcements"] as const,
   changelog: ["changelog"] as const,
+  settlements: ["settlements"] as const,
 
   // Admin
   adminStats:  ["admin", "stats"]  as const,
@@ -39,6 +43,7 @@ export const QUERY_KEYS = {
   storyDay: (eventDayId: string) => ["stories", eventDayId] as const,
   storySeen: (eventDayId: string) => ["stories", eventDayId, "seen"] as const,
   storySummary: (eventDayIds: string[]) => ["stories", "summary", ...eventDayIds] as const,
+  userPhotos: (identifier: string) => ["stories", "user", identifier] as const,
 
   hotelRooms:      (eventId: string) => ["hotel-rooms", eventId]       as const,
   adminHotelRooms: (eventId: string) => ["admin", "hotel-rooms", eventId] as const,
@@ -50,15 +55,25 @@ export interface NavItem {
   id: TabId;
   label: string;
   path: string;
+  icon: LucideIcon;
+  /** Other path prefixes that belong to this tab (e.g. every `/trips/…` page is the Event tab). */
+  activeFor?: string[];
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { id: "hub", label: "Hub", path: "/" },
-  { id: "transport", label: "Transport", path: "/transport" },
-  { id: "food", label: "Eten", path: "/food" },
-  { id: "finance", label: "Financiën", path: "/finance" },
-  { id: "more", label: "Meer", path: "/more" },
+  { id: "hub",      label: "Hub",       path: "/",         icon: Home },
+  { id: "trip",     label: "Event",     path: "/trip",     icon: Ticket, activeFor: ["/trips/"] },
+  { id: "calendar", label: "Agenda",    path: "/calendar", icon: CalendarDays },
+  { id: "finance",  label: "Financiën", path: "/finance",  icon: Wallet },
+  { id: "crew",     label: "Crew",      path: "/crew",     icon: Users },
 ];
+
+/** Whether `pathname` belongs to a bottom-nav / sidebar tab. */
+export function isNavItemActive(item: NavItem, pathname: string): boolean {
+  if (item.path === "/") return pathname === "/";
+  if (pathname === item.path || pathname.startsWith(`${item.path}/`)) return true;
+  return (item.activeFor ?? []).some((prefix) => pathname.startsWith(prefix));
+}
 
 export const DIRECTIONS = ["Inbound", "Outbound", "Restaurant"] as const;
 export const VEHICLE_TYPES = ["Car", "Public Transport"] as const;

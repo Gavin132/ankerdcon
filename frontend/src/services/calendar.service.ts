@@ -7,6 +7,12 @@ export async function getCalendar(): Promise<CalendarEvent[]> {
   return data;
 }
 
+/** Path of the calendar subscription feed, including its secret token. */
+export async function getCalendarFeedPath(): Promise<string> {
+  const { data } = await apiClient.get<{ path: string }>(apiRoutes.calendar.feedUrl);
+  return data.path;
+}
+
 export async function rsvpCalendarEvent(id: string, userName: string): Promise<void> {
   await apiClient.post(apiRoutes.calendar.rsvp(id), { user_name: userName });
 }

@@ -1,16 +1,18 @@
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { RouterProvider } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { QUERY_CACHE_MAX_AGE, clearPersistedQueries, queryPersister, shouldPersistQuery } from "./lib/queryPersist";
 import { AnimatePresence } from "framer-motion";
 import { router } from "./router";
 import { ToastContainer } from "./components/common/Toast";
 import { SplashScreen } from "./components/splash/SplashScreen";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
-import { TimeTravelWidget } from "./components/common/TimeTravelWidget";
 import { ImpersonationBanner } from "./components/common/ImpersonationBanner";
+import { UpdateBanner } from "./components/layout/UpdateBanner";
 import { useThemeStore } from "./store/theme.store";
-import { useTimeStore } from "./store/time.store";
 import { useSplash } from "./hooks/useSplash";
+import { usePendingStoryUploadsFlusher } from "./hooks/usePendingStoryUploads";
 
 // Add these two imports!
 import { supabase } from "./services/supabase";
@@ -33,14 +35,17 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: true,
       refetchOnReconnect: true,
       staleTime: 30_000,
-      gcTime: 5 * 60_000, // keep cached data for 5 min so tab switches are instant
+      // Must outlive the persisted cache: anything garbage-collected here is
+      // dropped from localStorage too, and then there's nothing to show on the
+      // next cold start.
+      gcTime: QUERY_CACHE_MAX_AGE,
     },
   },
 });
 
-// Matches Header.tsx's actual background: bg-white in light, slate-900 in dark.
-const THEME_COLOR_LIGHT = "#ffffff";
-const THEME_COLOR_DARK = "#0f172a";
+// Matches the top bar's background: --surface in light and dark (index.css).
+const THEME_COLOR_LIGHT = "#FFFFFF";
+const THEME_COLOR_DARK = "#141B20";
 
 function ThemeSync() {
   const isDark = useThemeStore((s) => s.isDark);
@@ -116,6 +121,10 @@ function AuthSync() {
         }
       } else {
         setAccessToken(null);
+        // Signed out elsewhere (another tab, a revoked session): the saved
+        // query cache still holds this account's data, phone numbers and
+        // location pings included.
+        if (event === "SIGNED_OUT") clearPersistedQueries();
       }
       // INITIAL_SESSION fires once on subscription, after Supabase has processed
       // any OAuth hash/PKCE code in the URL — safe to mark as initialized here.
@@ -146,7 +155,14 @@ function StaleResumeGuard() {
         hiddenAt.current = Date.now();
         return;
       }
-      if (hiddenAt.current !== null && Date.now() - hiddenAt.current > STALE_HIDDEN_MS) {
+      // Never reload while offline: without a network the reload can only end
+      // on a browser error page, and the app the user was just looking at is
+      // gone. Coming back online is handled by the queries refetching.
+      if (
+        hiddenAt.current !== null &&
+        Date.now() - hiddenAt.current > STALE_HIDDEN_MS &&
+        navigator.onLine !== false
+      ) {
         window.location.reload();
       }
       hiddenAt.current = null;
@@ -168,7 +184,34 @@ function SplashController() {
   );
 }
 
+/**
+ * Purely decorative (a few percent opacity), so it must never compete with
+ * the real content for first paint — as the biggest image on the page it was
+ * being picked as the LCP element. It mounts on the first interaction (which
+ * also freezes the LCP measurement) or after a long fallback delay.
+ */
+function useAfterFirstInteraction(fallbackMs = 8000): boolean {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const events = ["pointerdown", "keydown", "scroll", "touchstart"] as const;
+    const go = () => {
+      setReady(true);
+      events.forEach((e) => window.removeEventListener(e, go));
+      clearTimeout(timer);
+    };
+    const timer = setTimeout(go, fallbackMs);
+    events.forEach((e) => window.addEventListener(e, go, { once: true, passive: true }));
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, go));
+      clearTimeout(timer);
+    };
+  }, [fallbackMs]);
+  return ready;
+}
+
 function AppBackdrop() {
+  const ready = useAfterFirstInteraction();
+  if (!ready) return null;
   return (
     <div
       className="pointer-events-none fixed inset-0 overflow-hidden"
@@ -177,16 +220,24 @@ function AppBackdrop() {
     >
       {/* Mascot — large, bottom-right, partially clipped */}
       <img
-        src="/assets/images/ankerd-mascotte.png"
+        src="/assets/images/ankerd-mascotte.webp"
         alt=""
+        width={760}
+        height={771}
+
+        decoding="async"
         draggable={false}
         className="absolute -bottom-12 -right-12 w-[380px] select-none opacity-[0.045] dark:opacity-[0.055]"
         style={{ transform: "rotate(6deg)" }}
       />
       {/* Nerd logo — smaller, top-left, softly rotated */}
       <img
-        src="/assets/images/ankerd-nerd-logo.png"
+        src="/assets/images/ankerd-nerd-logo.webp"
         alt=""
+        width={400}
+        height={400}
+
+        decoding="async"
         draggable={false}
         className="absolute -top-10 -left-10 w-[200px] select-none opacity-[0.035] dark:opacity-[0.045]"
         style={{ transform: "rotate(-8deg)" }}
@@ -195,37 +246,50 @@ function AppBackdrop() {
   );
 }
 
-function RouteFallback() {
-  return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-slate-50 dark:bg-slate-950">
-      <div className="h-8 w-8 rounded-full border-2 border-sky-500 border-t-transparent animate-spin" />
-    </div>
-  );
+/** Retries any story photos still queued from a previous, network-starved
+ * upload attempt — see usePendingStoryUploads.ts. */
+function PendingUploadsSync() {
+  usePendingStoryUploadsFlusher();
+  return null;
 }
 
-function TimeTravelGate() {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const widgetEnabled = useTimeStore((s) => s.widgetEnabled);
-  if (!isAuthenticated || !widgetEnabled) return null;
-  return <TimeTravelWidget />;
+function RouteFallback() {
+  return (
+    <div className="flex min-h-[100dvh] items-center justify-center bg-paper">
+      <div className="h-8 w-8 rounded-full border-2 border-ink-3 border-t-transparent animate-spin" />
+    </div>
+  );
 }
 
 export function App() {
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
+      {/* Restores the last known data from localStorage before the first paint,
+          so the app opens on real content and revalidates behind it instead of
+          showing skeletons until the network answers. `buster` is the app
+          version: a new release never reads a cache shaped by the old one. */}
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{
+          persister: queryPersister,
+          maxAge: QUERY_CACHE_MAX_AGE,
+          buster: __APP_VERSION__,
+          dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
+        }}
+      >
         <ThemeSync />
         <AuthSync /> {/* <- Dropped it right here! */}
         <StaleResumeGuard />
+        <PendingUploadsSync />
         <AppBackdrop />
         <ImpersonationBanner />
         <Suspense fallback={<RouteFallback />}>
           <RouterProvider router={router} />
         </Suspense>
         <ToastContainer />
+        <UpdateBanner />
         <SplashController />
-        <TimeTravelGate />
-      </QueryClientProvider>
+      </PersistQueryClientProvider>
     </ErrorBoundary>
   );
 }

@@ -6,6 +6,7 @@ export const apiRoutes = {
   // ── Rides ───────────────────────────────────────────────────────
   rides: {
     base:                     "/api/rides/",
+    byId:                     (id: string | number) => `/api/rides/${id}`,
     claim:                    (id: string | number) => `/api/rides/${id}/claim`,
     leave:                    (id: string | number) => `/api/rides/${id}/leave`,
     restaurantDriver:         (id: string | number) => `/api/rides/${id}/restaurant-driver`,
@@ -18,6 +19,7 @@ export const apiRoutes = {
   cosplays: {
     base:  "/api/cosplays/",
     byId:  (id: string) => `/api/cosplays/${id}`,
+    image: "/api/cosplays/images",
   },
 
   // ── Event-day photo stories ─────────────────────────────────────
@@ -26,6 +28,7 @@ export const apiRoutes = {
     photo:   (photoId: string) => `/api/stories/photos/${photoId}`,
     download: (photoId: string) => `/api/stories/photos/${photoId}/download`,
     seen:    (eventDayId: string) => `/api/stories/${eventDayId}/seen`,
+    byUser:  (identifier: string) => `/api/stories/user/${encodeURIComponent(identifier)}`,
     summary: (eventDayIds: string[]) => `/api/stories/summary?event_day_ids=${eventDayIds.map(encodeURIComponent).join(",")}`,
   },
 
@@ -38,10 +41,6 @@ export const apiRoutes = {
   },
 
   // ── Payments ─────────────────────────────────────────────────────
-  payments: {
-    base: "/api/payments/",
-    byId: (id: string) => `/api/payments/${id}`,
-  },
 
   // ── Expenses ──────────────────────────────────────────────────────
   expenses: {
@@ -50,10 +49,17 @@ export const apiRoutes = {
     claimShare:   (shareId: string) => `/api/expenses/shares/${shareId}/claim`,
     confirmShare: (shareId: string) => `/api/expenses/shares/${shareId}/confirm`,
   },
+  settlements: {
+    base:    "/api/settlements/",
+    byId:    (id: string) => `/api/settlements/${id}`,
+    paid:    (id: string) => `/api/settlements/${id}/paid`,
+    confirm: (id: string) => `/api/settlements/${id}/confirm`,
+  },
 
   // ── Calendar ─────────────────────────────────────────────────────
   calendar: {
     base:         "/api/calendar/",
+    feedUrl:      "/api/calendar/feed-url",
     rsvp:         (id: string) => `/api/calendar/${id}/rsvp`,
     leave:        (id: string) => `/api/calendar/${id}/leave`,
     hotelRooms:   (eventId: string) => `/api/calendar/${eventId}/hotel-rooms`,
@@ -67,7 +73,6 @@ export const apiRoutes = {
     base:        "/api/users/",
     me:          "/api/users/me",
     onboarding:  "/api/users/me/onboarding",
-    names:       "/api/users/names",
     preferences: "/api/users/preferences",
     name:        "/api/users/name",
     banner:      "/api/users/banner",
@@ -93,6 +98,9 @@ export const apiRoutes = {
   // ── Admin ─────────────────────────────────────────────────────────
   admin: {
     stats: "/api/admin/stats",
+    cdn:   "/api/admin/cdn",
+    quickUpload: "/api/admin/quick-upload",
+    uploadImage: (kind: "event-cover" | "badge") => `/api/admin/uploads/${kind}`,
 
     users: {
       base:             "/api/admin/users",

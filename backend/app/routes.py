@@ -9,6 +9,7 @@ Import the relevant class instead of writing magic strings in route decorators.
 class RideRoutes:
     PREFIX = "/rides"
     LIST = "/"
+    DETAIL = "/{ride_id}"
     CLAIM = "/{ride_id}/claim"
     LEAVE = "/{ride_id}/leave"
     RESTAURANT_DRIVER = "/{ride_id}/restaurant-driver"
@@ -20,6 +21,7 @@ class RideRoutes:
 class CalendarRoutes:
     PREFIX = "/calendar"
     FEED = "/feed.ics"
+    FEED_URL = "/feed-url"
     LIST = "/"
     RSVP = "/{event_id}/rsvp"
     LEAVE = "/{event_id}/leave"
@@ -31,7 +33,6 @@ class CalendarRoutes:
 
 class UserRoutes:
     PREFIX = "/users"
-    NAMES = "/names"
     LIST = "/"
     PREFERENCES = "/preferences"
     NAME = "/name"
@@ -65,10 +66,19 @@ class ExpenseRoutes:
     SHARE_CONFIRM = "/shares/{share_id}/confirm"
 
 
+class SettlementRoutes:
+    PREFIX = "/settlements"
+    LIST = "/"
+    DETAIL = "/{settlement_id}"
+    PAID = "/{settlement_id}/paid"
+    CONFIRM = "/{settlement_id}/confirm"
+
+
 class CosplayRoutes:
     PREFIX = "/cosplays"
     LIST = "/"
     DETAIL = "/{cosplay_id}"
+    IMAGE = "/images"  # POST — upload an inspiration image, returns its URL
 
 
 class StoryRoutes:
@@ -78,6 +88,7 @@ class StoryRoutes:
     DOWNLOAD = "/photos/{photo_id}/download"  # GET — original bytes, forced download
     SEEN = "/{event_day_id}/seen"     # GET / PUT
     SUMMARY = "/summary"              # GET ?event_day_ids=a,b,c
+    BY_USER = "/user/{identifier}"    # GET — every photo one member uploaded, with its event
 
 
 class BadgeRoutes:
@@ -99,6 +110,9 @@ class AdminRoutes:
     PREFIX = "/admin"
     STATS = "/stats"
 
+    # CDN — everything in the photo bucket
+    CDN = "/cdn"
+
     # Users
     USERS = "/users"
     USER_DETAIL = "/users/{user_id}"
@@ -106,6 +120,13 @@ class AdminRoutes:
     USERS_BULK_DEACTIVATE = "/users/bulk-deactivate"
     USER_BADGE = "/users/{user_id}/badges/{badge_id}"
     IMPERSONATE = "/impersonate/{user_id}"
+
+    # Images (event covers, badges) — uploaded through the backend, never
+    # straight from the browser to storage.
+    UPLOAD_IMAGE = "/uploads/{kind}"
+
+    # Quick upload: any image or video, to embed somewhere. Admin only.
+    QUICK_UPLOAD = "/quick-upload"
 
     # Rides
     RIDES = "/rides"

@@ -157,7 +157,7 @@ function MealDrawer({
             placeholder="Pizzeria Roma"
           />
           {errors.meal_name && (
-            <p className="text-xs text-rose-400 mt-1">
+            <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
               {errors.meal_name.message}
             </p>
           )}
@@ -168,7 +168,7 @@ function MealDrawer({
             <label className={L}>Datum & tijd *</label>
             <input {...register("time")} type="datetime-local" className={F} />
             {errors.time && (
-              <p className="text-xs text-rose-400 mt-1">
+              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
                 {errors.time.message}
               </p>
             )}
@@ -199,19 +199,19 @@ function MealDrawer({
               />
             )}
           />
-          <p className="text-[10px] text-slate-500 mt-1.5">
+          <p className="text-[10px] text-ink-3 mt-1.5">
             Zoek een naam of adres — selecteer een resultaat om de locatie te
             bevestigen met een kaartpreview.
           </p>
         </div>
 
-        <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 hover:bg-white/[0.06] transition-colors">
+        <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-line bg-paper px-3 py-2.5 hover:bg-sunken transition-colors">
           <input
             type="checkbox"
             {...register("transport_needed")}
             className="cb"
           />
-          <span className="text-sm text-slate-300">Transport nodig</span>
+          <span className="text-sm text-ink-2">Transport nodig</span>
         </label>
 
         {/* ── Extended info ─────────────────────────────────────────── */}
@@ -222,7 +222,7 @@ function MealDrawer({
             <label className={L}>Koppel aan evenement</label>
             <select
               {...register("linked_event_id")}
-              className={`${F} [color-scheme:dark]`}
+              className={F}
             >
               <option value="">— Geen evenement —</option>
               {allEvents.map((ev) => (
@@ -373,14 +373,14 @@ export function AdminMealsPage() {
   }
 
   return (
-    <div className="p-5 lg:p-8 max-w-6xl mx-auto space-y-5">
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
       <AdminPageHeader
         title="Maaltijden"
         subtitle={`${meals.length} food events`}
         action={
           <button
             onClick={() => setDrawer("new")}
-            className="flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 transition-colors shadow-sm"
+            className="btn-primary gap-2 px-4 py-2.5 text-sm"
           >
             <Plus size={16} />
             Nieuwe maaltijd
@@ -394,11 +394,11 @@ export function AdminMealsPage() {
         placeholder="Zoek op naam of locatie..."
       />
 
-      <div className="rounded-2xl border border-slate-200/80 dark:border-white/[0.06] bg-white dark:bg-slate-800/60 overflow-hidden shadow-sm">
+      <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
+              <tr className="border-b-1.5 border-line">
                 <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
                   <input
                     type="checkbox"
@@ -410,31 +410,31 @@ export function AdminMealsPage() {
                     className="cb"
                   />
                 </th>
-                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Maaltijd
                 </th>
-                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Tijd
                 </th>
-                <th className="hidden sm:table-cell px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="hidden sm:table-cell px-5 py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Kosten
                 </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Deelnemers
                 </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Acties
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+            <tbody className="divide-y divide-line">
               {isLoading ? (
                 <AdminTableSkeleton cols={6} rows={3} />
               ) : filtered.length === 0 ? (
                 <tr>
                   <td
                     colSpan={6}
-                    className="px-5 py-10 text-center text-sm text-slate-400"
+                    className="px-5 py-10 text-center text-sm text-ink-3"
                   >
                     Geen maaltijden gevonden.
                   </td>
@@ -443,7 +443,7 @@ export function AdminMealsPage() {
                 paginated.map((meal) => (
                   <tr
                     key={meal.id}
-                    className={`transition-colors ${selectedIds.has(meal.id) ? "bg-sky-500/[0.06] hover:bg-sky-500/[0.08]" : "hover:bg-slate-50 dark:hover:bg-white/[0.03]"}`}
+                    className={`transition-colors ${selectedIds.has(meal.id) ? "bg-brand-soft/50 hover:bg-brand-soft/70" : "hover:bg-sunken"}`}
                   >
                     <td
                       className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3.5"
@@ -461,13 +461,13 @@ export function AdminMealsPage() {
                       />
                     </td>
                     <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate max-w-[160px] sm:max-w-none">
+                      <p className="text-sm font-semibold text-ink truncate max-w-[160px] sm:max-w-none">
                         {meal.meal_name}
                       </p>
                       {meal.location && (
                         <div className="flex items-center gap-1 mt-0.5">
-                          <MapPin size={10} className="text-slate-400 shrink-0" />
-                          <span className="text-xs text-slate-400 truncate max-w-[140px] sm:max-w-none">
+                          <MapPin size={10} className="text-ink-3 shrink-0" />
+                          <span className="text-xs text-ink-3 truncate max-w-[140px] sm:max-w-none">
                             {meal.location}
                           </span>
                         </div>
@@ -475,23 +475,23 @@ export function AdminMealsPage() {
                     </td>
                     <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                       <div className="flex items-center gap-1.5">
-                        <Clock size={12} className="text-slate-400 shrink-0" />
-                        <span className="text-sm font-mono text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                        <Clock size={12} className="text-ink-3 shrink-0" />
+                        <span className="text-sm font-mono text-ink-2 whitespace-nowrap">
                           {formatDateTime(meal.time)}
                         </span>
                       </div>
                     </td>
                     <td className="hidden sm:table-cell px-5 py-3.5">
                       <div className="flex items-center gap-1">
-                        <Euro size={12} className="text-slate-400" />
-                        <span className="text-sm text-slate-700 dark:text-slate-300">
+                        <Euro size={12} className="text-ink-3" />
+                        <span className="font-mono text-sm tabular-nums text-ink-2">
                           {meal.cost.toFixed(2)}
                         </span>
                       </div>
                       {meal.transport_needed && (
                         <div className="flex items-center gap-1 mt-0.5">
-                          <Bus size={10} className="text-amber-500" />
-                          <span className="text-[10px] text-amber-600 dark:text-amber-400">
+                          <Bus size={10} className="text-ink-3" />
+                          <span className="text-[10.5px] text-ink-3">
                             Transport
                           </span>
                         </div>
@@ -500,18 +500,18 @@ export function AdminMealsPage() {
                     <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
                       <div className="flex -space-x-1.5">
                         {meal.participants.length === 0 ? (
-                          <span className="text-xs text-slate-400">—</span>
+                          <span className="text-xs text-ink-3">—</span>
                         ) : (
                           <>
                             {meal.participants.slice(0, 4).map((p) => (
                               <UserAvatar
                                 key={p}
                                 name={p}
-                                className="h-5 w-5 sm:h-6 sm:w-6 text-[7px] sm:text-[8px] ring-2 ring-slate-800"
+                                className="h-5 w-5 sm:h-6 sm:w-6 text-[7px] sm:text-[8px] ring-2 ring-surface"
                               />
                             ))}
                             {meal.participants.length > 4 && (
-                              <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full ring-2 ring-slate-800 bg-slate-700 text-[8px] sm:text-[9px] font-bold text-slate-300">
+                              <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full ring-2 ring-surface bg-sunken text-[8px] sm:text-[9px] font-bold text-ink-2">
                                 +{meal.participants.length - 4}
                               </span>
                             )}

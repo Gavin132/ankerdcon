@@ -110,25 +110,20 @@ export function OnboardingPage() {
   const showProgress = step === 1 || step === 2 || step === 3;
 
   return (
-    <div className="relative flex min-h-[100dvh] flex-col bg-slate-50 dark:bg-slate-950 pt-[env(safe-area-inset-top,0px)]">
-      {/* Background decoration */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-sky-400/10 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-violet-600/8 blur-3xl" />
-      </div>
+    <div className="relative flex min-h-[100dvh] flex-col bg-paper pt-[env(safe-area-inset-top,0px)]">
 
       {/* Progress bar */}
       {showProgress && (
         <div className="relative z-10 px-5 pt-5 pb-2">
           <div className="mx-auto max-w-sm">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-600">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.09em] text-ink-3">
                 Stap {step} van {TOTAL_STEPS - 1}
               </span>
             </div>
-            <div className="h-1 w-full rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-line">
               <motion.div
-                className="h-full rounded-full bg-sky-500"
+                className="h-full rounded-full bg-ink"
                 animate={{ width: `${(step / (TOTAL_STEPS - 1)) * 100}%` }}
                 transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
               />
@@ -157,7 +152,7 @@ export function OnboardingPage() {
 
         {/* Navigation */}
         <div
-          className="relative z-10 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/90 dark:bg-slate-950/90 backdrop-blur-sm px-5 py-4"
+          className="relative z-10 border-t-1.5 border-line bg-paper px-5 py-4"
           style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom,0px))" }}
         >
           <div className="mx-auto max-w-sm space-y-2">
@@ -166,7 +161,7 @@ export function OnboardingPage() {
                 <button
                   type="button"
                   onClick={() => goTo(step - 1)}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
                 >
                   <ArrowLeft size={17} />
                 </button>
@@ -175,10 +170,10 @@ export function OnboardingPage() {
               {isDoneStep ? (
                 <motion.button
                   type="button"
-                  className="flex w-full h-12 items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-bold text-sm transition-colors shadow-lg shadow-emerald-500/30"
+                  className="btn-primary h-12 w-full text-sm"
                   onClick={() => navigate(routes.hub, { replace: true })}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   transition={{ delay: 0.6 }}
                 >
                   Begin
@@ -189,10 +184,10 @@ export function OnboardingPage() {
                   type="button"
                   disabled={!canSave || submitting}
                   onClick={() => handleFinish(false)}
-                  className="flex flex-1 h-11 items-center justify-center gap-2 rounded-xl bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-white font-bold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-primary h-11 flex-1 text-sm disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {submitting ? (
-                    <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                    <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
                   ) : (
                     <>Opslaan & afronden <Check size={15} /></>
                   )}
@@ -201,7 +196,7 @@ export function OnboardingPage() {
                 <button
                   type="button"
                   onClick={() => goTo(step + 1)}
-                  className="flex flex-1 h-11 items-center justify-center gap-2 rounded-xl bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-white font-bold text-sm transition-colors"
+                  className="btn-primary h-11 flex-1 text-sm"
                 >
                   Volgende <ArrowRight size={15} />
                 </button>
@@ -214,7 +209,7 @@ export function OnboardingPage() {
                   type="button"
                   disabled={submitting}
                   onClick={() => handleFinish(true)}
-                  className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors disabled:opacity-50 py-1"
+                  className="py-1 text-xs text-ink-3 transition-colors hover:text-ink disabled:opacity-50"
                 >
                   Sla over voor nu
                 </button>

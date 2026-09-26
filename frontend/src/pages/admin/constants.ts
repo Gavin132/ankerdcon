@@ -15,6 +15,7 @@ import {
   Clock,
   ListChecks,
   AlertTriangle,
+  HardDrive,
 } from "lucide-react";
 import { routes } from "../../config/routes";
 
@@ -50,6 +51,7 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: LayoutDashboard,
         end: true,
       },
+      { label: "CDN", path: routes.admin.cdn, icon: HardDrive },
     ],
   },
   {
@@ -82,7 +84,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Preview: Onboarding", path: routes.admin.previewOnboarding, icon: FlaskConical },
       { label: "Inloggen als gebruiker", path: routes.admin.impersonate, icon: UserCog },
       { label: "Tijdreis-widget", path: routes.admin.timeTravel, icon: Clock },
-      { label: "Foutpagina testen", path: routes.testError, icon: AlertTriangle },
+      { label: "Schermen testen", path: routes.admin.screens, icon: AlertTriangle },
     ],
   },
 ];
@@ -101,10 +103,14 @@ export const PAGE_TITLES: Record<string, string> = {
   [routes.admin.impersonate]: "Inloggen als gebruiker",
   [routes.admin.changelog]: "Wijzigingslog",
   [routes.admin.timeTravel]: "Tijdreis-widget",
+  [routes.admin.screens]: "Schermen testen",
+  [routes.admin.cdn]: "CDN",
 };
 
+// Ride direction tags are told apart by their label, not by colour (flat design:
+// no decorative colours).
 export const DIRECTION_COLORS: Record<string, string> = {
-  Inbound:    "bg-sky-100 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400",
-  Outbound:   "bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400",
-  Restaurant: "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
+  Inbound:    "text-ink-2",
+  Outbound:   "text-ink-2",
+  Restaurant: "text-ink-2",
 };

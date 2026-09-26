@@ -4,8 +4,9 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 
 from app.config import Settings, get_settings
 from app.constants import Tables
+from app.core.atomic import update_list
 from app.core.logging import get_logger
-from app.dependencies import get_current_user
+from app.dependencies import act_as, act_for_anyone, get_current_user, require_owner_or_admin
 from app.models.rides import (
     ClaimSeatRequest,
     CreateRideRequest,
@@ -17,6 +18,7 @@ from app.models.rides import (
 )
 from app.routes import RideRoutes
 from app.services import notification_service
+from app.services.discord_bot import escape_markdown
 from app import messages as M
 from app.core.database import supabase
 
@@ -57,11 +59,12 @@ def list_rides(
 def create_ride(
     body: CreateRideRequest,
     background_tasks: BackgroundTasks,
-    _: str = Depends(get_current_user),
+    current_user: str = Depends(get_current_user),
     settings: Settings = Depends(get_settings),
 ) -> Ride:
-    new_ride = body.model_dump()
-    new_ride["passengers"] = [body.driver] if body.vehicle_type == "Car" else []
+    driver = act_as(current_user, body.driver)
+    new_ride = {**body.model_dump(), "driver": driver}
+    new_ride["passengers"] = [driver] if body.vehicle_type == "Car" else []
     new_ride["restaurant_drivers"] = []
 
     try:
@@ -77,122 +80,106 @@ def create_ride(
         settings.discord_bot_token,
         notification_service.NotificationCategory.RIDE_CREATED,
         M.DM_RIDE_CREATED.format(
-            driver=body.driver,
-            departure_time=body.departure_time,
-            start_location=body.start_location,
+            driver=escape_markdown(driver),
+            departure_time=escape_markdown(body.departure_time),
+            start_location=escape_markdown(body.start_location),
         ),
     )
     return ride
 
 
-@router.post(RideRoutes.CLAIM, response_model=Ride)
-def claim_seat(ride_id: str, body: ClaimSeatRequest, _: str = Depends(get_current_user)) -> Ride:
-    row = _get_ride_or_404(ride_id, "passengers, total_seats")
-    passengers = row.get("passengers") or []
-
-    if body.user_name not in passengers:
-        if len(passengers) >= row.get("total_seats", 0):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Rit is vol.")
-        passengers.append(body.user_name)
-        try:
-            resp = supabase.table(Tables.RIDES).update({"passengers": passengers}).eq("id", ride_id).execute()
-        except Exception as e:
-            logger.error("Failed to claim seat on ride %s: %s", ride_id, e)
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-        return resp.data[0]
-
+@router.delete(RideRoutes.DETAIL, status_code=status.HTTP_204_NO_CONTENT)
+def delete_ride(ride_id: str, current_user: str = Depends(get_current_user)) -> None:
+    """Lets a driver take back their own ride — e.g. the "Ik rijd" button on
+    a direction that already has their ride now offers to remove it instead
+    of letting them create a second one. Admins may remove anyone's."""
+    row = _get_ride_or_404(ride_id, "driver")
+    require_owner_or_admin(current_user, row.get("driver"), "Je kunt alleen je eigen rit verwijderen.")
     try:
-        resp = supabase.table(Tables.RIDES).select("*").eq("id", ride_id).execute()
-        return resp.data[0]
+        supabase.table(Tables.RIDES).delete().eq("id", ride_id).execute()
     except Exception as e:
-        logger.error("Failed to fetch ride %s after claim: %s", ride_id, e)
+        logger.error("Failed to delete ride %s: %s", ride_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+
+@router.post(RideRoutes.CLAIM, response_model=Ride)
+def claim_seat(ride_id: str, body: ClaimSeatRequest, current_user: str = Depends(get_current_user)) -> Ride:
+    user_name = act_for_anyone(current_user, body.user_name, adding=True)
+
+    def take(passengers: list, row: dict) -> list | None:
+        if user_name in passengers:
+            return None
+        # Checked again on every retry, so two people cannot both take the last seat.
+        if len(passengers) >= (row.get("total_seats") or 0):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Rit is vol.")
+        return passengers + [user_name]
+
+    update_list(Tables.RIDES, ride_id, "passengers", take, select="passengers, total_seats", not_found="Rit niet gevonden.")
+    return _get_ride_or_404(ride_id)
 
 
 @router.post(RideRoutes.LEAVE, response_model=Ride)
-def leave_seat(ride_id: str, body: ClaimSeatRequest, _: str = Depends(get_current_user)) -> Ride:
-    row = _get_ride_or_404(ride_id, "passengers")
-    passengers = row.get("passengers") or []
-
-    if body.user_name in passengers:
-        passengers.remove(body.user_name)
-        try:
-            resp = supabase.table(Tables.RIDES).update({"passengers": passengers}).eq("id", ride_id).execute()
-            return resp.data[0]
-        except Exception as e:
-            logger.error("Failed to leave ride %s: %s", ride_id, e)
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-
-    try:
-        resp = supabase.table(Tables.RIDES).select("*").eq("id", ride_id).execute()
-        return resp.data[0]
-    except Exception as e:
-        logger.error("Failed to fetch ride %s after leave: %s", ride_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+def leave_seat(ride_id: str, body: ClaimSeatRequest, current_user: str = Depends(get_current_user)) -> Ride:
+    user_name = act_for_anyone(current_user, body.user_name)
+    update_list(
+        Tables.RIDES, ride_id, "passengers",
+        lambda passengers, _row: [p for p in passengers if p != user_name] if user_name in passengers else None,
+        not_found="Rit niet gevonden.",
+    )
+    return _get_ride_or_404(ride_id)
 
 
 # ── Restaurant driver endpoints ────────────────────────────────────
 
 @router.post(RideRoutes.RESTAURANT_DRIVER, status_code=status.HTTP_204_NO_CONTENT)
-def add_restaurant_driver(ride_id: str, body: RestaurantDriverRequest, _: str = Depends(get_current_user)) -> None:
-    row = _get_ride_or_404(ride_id, "restaurant_drivers")
-    drivers = row.get("restaurant_drivers") or []
+def add_restaurant_driver(ride_id: str, body: RestaurantDriverRequest, current_user: str = Depends(get_current_user)) -> None:
+    user_name = act_for_anyone(current_user, body.user_name, adding=True)
 
-    if not any(d.get("name") == body.user_name for d in drivers):
+    def add(drivers: list, _row: dict) -> list | None:
+        if any(d.get("name") == user_name for d in drivers):
+            return None
         # The driver counts as one of their own seats, so a new car with 5
         # seats starts at 1/5 rather than 0/5.
-        drivers.append({"name": body.user_name, "seats": body.seats, "passengers": [body.user_name]})
-        try:
-            supabase.table(Tables.RIDES).update({"restaurant_drivers": drivers}).eq("id", ride_id).execute()
-        except Exception as e:
-            logger.error("Failed to add restaurant driver to ride %s: %s", ride_id, e)
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+        return drivers + [{"name": user_name, "seats": body.seats, "passengers": [user_name]}]
+
+    update_list(Tables.RIDES, ride_id, "restaurant_drivers", add, jsonb=True, not_found="Rit niet gevonden.")
 
 
 @router.post(RideRoutes.RESTAURANT_DRIVER_LEAVE, status_code=status.HTTP_204_NO_CONTENT)
-def leave_restaurant_driver(ride_id: str, body: LeaveRestaurantDriverRequest, _: str = Depends(get_current_user)) -> None:
-    row = _get_ride_or_404(ride_id, "restaurant_drivers")
-    drivers = [d for d in (row.get("restaurant_drivers") or []) if d.get("name") != body.user_name]
-    try:
-        supabase.table(Tables.RIDES).update({"restaurant_drivers": drivers}).eq("id", ride_id).execute()
-    except Exception as e:
-        logger.error("Failed to remove restaurant driver from ride %s: %s", ride_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+def leave_restaurant_driver(ride_id: str, body: LeaveRestaurantDriverRequest, current_user: str = Depends(get_current_user)) -> None:
+    user_name = act_for_anyone(current_user, body.user_name)
+    update_list(
+        Tables.RIDES, ride_id, "restaurant_drivers",
+        lambda drivers, _row: [d for d in drivers if d.get("name") != user_name],
+        jsonb=True, not_found="Rit niet gevonden.",
+    )
 
 
 @router.post(RideRoutes.RESTAURANT_DRIVER_ASSIGN, status_code=status.HTTP_204_NO_CONTENT)
-def assign_to_driver(ride_id: str, body: RestaurantAssignRequest, _: str = Depends(get_current_user)) -> None:
-    row = _get_ride_or_404(ride_id, "restaurant_drivers")
-    drivers = row.get("restaurant_drivers") or []
+def assign_to_driver(ride_id: str, body: RestaurantAssignRequest, current_user: str = Depends(get_current_user)) -> None:
+    user_name = act_for_anyone(current_user, body.user_name, adding=True)
 
-    target_driver = next((d for d in drivers if d.get("name") == body.driver_name), None)
-    if not target_driver:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chauffeur niet gevonden.")
+    def assign(drivers: list, _row: dict) -> list | None:
+        target_driver = next((d for d in drivers if d.get("name") == body.driver_name), None)
+        if not target_driver:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chauffeur niet gevonden.")
+        for d in drivers:
+            if user_name in d.get("passengers", []):
+                d["passengers"].remove(user_name)
+        target_driver.setdefault("passengers", []).append(user_name)
+        return drivers
 
-    for d in drivers:
-        if body.user_name in d.get("passengers", []):
-            d["passengers"].remove(body.user_name)
-
-    target_driver.setdefault("passengers", []).append(body.user_name)
-
-    try:
-        supabase.table(Tables.RIDES).update({"restaurant_drivers": drivers}).eq("id", ride_id).execute()
-    except Exception as e:
-        logger.error("Failed to assign passenger to driver in ride %s: %s", ride_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    update_list(Tables.RIDES, ride_id, "restaurant_drivers", assign, jsonb=True, not_found="Rit niet gevonden.")
 
 
 @router.post(RideRoutes.RESTAURANT_DRIVER_UNASSIGN, status_code=status.HTTP_204_NO_CONTENT)
-def unassign_from_driver(ride_id: str, body: RestaurantUnassignRequest, _: str = Depends(get_current_user)) -> None:
-    row = _get_ride_or_404(ride_id, "restaurant_drivers")
-    drivers = row.get("restaurant_drivers") or []
+def unassign_from_driver(ride_id: str, body: RestaurantUnassignRequest, current_user: str = Depends(get_current_user)) -> None:
+    user_name = act_for_anyone(current_user, body.user_name)
 
-    for d in drivers:
-        if body.user_name in d.get("passengers", []):
-            d["passengers"].remove(body.user_name)
+    def unassign(drivers: list, _row: dict) -> list | None:
+        for d in drivers:
+            if user_name in d.get("passengers", []):
+                d["passengers"].remove(user_name)
+        return drivers
 
-    try:
-        supabase.table(Tables.RIDES).update({"restaurant_drivers": drivers}).eq("id", ride_id).execute()
-    except Exception as e:
-        logger.error("Failed to unassign passenger from driver in ride %s: %s", ride_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    update_list(Tables.RIDES, ride_id, "restaurant_drivers", unassign, jsonb=True, not_found="Rit niet gevonden.")

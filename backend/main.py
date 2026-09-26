@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncGenerator
@@ -16,7 +17,8 @@ from app.config import get_settings
 from app.constants import API_PREFIX, Tables
 from app.core.database import supabase
 from app.core.logging import configure_logging, get_logger
-from app.routers import admin, announcements, badges, calendar, changelog, cosplays, expenses, link_preview, meals, payments, rides, stories, users
+from app.core.security import add_security_headers, limit_body_size, rate_limit
+from app.routers import admin, announcements, badges, calendar, changelog, cosplays, expenses, link_preview, meals, rides, settlements, stories, users
 from app.services.reminder_scheduler import check_and_send_reminders, check_and_send_ticket_reminders
 
 configure_logging()
@@ -59,11 +61,17 @@ settings = get_settings()
 app = FastAPI(
     title="Ankerd Con API",
     version=APP_VERSION,
-    docs_url=f"{API_PREFIX}/docs",
-    redoc_url=f"{API_PREFIX}/redoc",
-    openapi_url=f"{API_PREFIX}/openapi.json",
+    docs_url=f"{API_PREFIX}/docs" if settings.api_docs_enabled else None,
+    redoc_url=f"{API_PREFIX}/redoc" if settings.api_docs_enabled else None,
+    openapi_url=f"{API_PREFIX}/openapi.json" if settings.api_docs_enabled else None,
     lifespan=lifespan,
 )
+
+# Order matters: the last one added runs first. The headers middleware wraps
+# the others, so even a 413 or 429 gets the security headers.
+app.middleware("http")(rate_limit(settings))
+app.middleware("http")(limit_body_size())
+app.middleware("http")(add_security_headers(settings))
 
 app.add_middleware(
     CORSMiddleware,
@@ -74,17 +82,36 @@ app.add_middleware(
 )
 
 
+# Vite names its build output like `index-8998340c.js` — the hash is the file's
+# content, so such a URL can never mean anything else. Files we ship by hand
+# (public/assets/images/…, public/icons/…) keep their name across builds and
+# must NOT be treated that way.
+_HASHED_ASSET = re.compile(r"-[0-9a-f]{8,}\.[a-z0-9]+$")
+
+
 @app.middleware("http")
-async def cache_hashed_assets(request: Request, call_next):
-    """Vite's build gives every JS/CSS/image under /assets a content hash in
-    its filename, so a build never reuses a URL for different content — the
-    browser can cache these forever instead of revalidating on every visit.
-    Without this, StaticFiles serves them with no explicit Cache-Control,
-    so a returning visitor (or the app resuming from background) re-fetches
-    the whole bundle instead of reading it straight from disk cache."""
+async def cache_static_assets(request: Request, call_next):
+    """Tells browsers what they may keep and for how long.
+
+    Content-hashed build output is immutable and cached for a year: a returning
+    visitor reads the bundle from disk instead of the network.
+
+    Everything else gets `no-cache`, which still allows a cached copy but forces
+    a revalidation first. That matters most for index.html: it is the one file
+    that names the current bundle, and without a Cache-Control header browsers
+    fall back to heuristic caching and may hold on to it for hours. After a
+    deploy, such a stale index.html asks for chunk filenames the new build no
+    longer has, and the app fails to start until its storage is cleared — which
+    is exactly what a returning visitor is least equipped to do.
+    """
     response = await call_next(request)
-    if request.url.path.startswith("/assets/"):
+    path = request.url.path
+    if path.startswith(API_PREFIX):
+        return response
+    if path.startswith("/assets/") and _HASHED_ASSET.search(path):
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    else:
+        response.headers.setdefault("Cache-Control", "no-cache")
     return response
 
 
@@ -147,13 +174,18 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 app.include_router(users.router,    prefix=API_PREFIX)
 app.include_router(rides.router,    prefix=API_PREFIX)
 app.include_router(meals.router,    prefix=API_PREFIX)
-app.include_router(payments.router, prefix=API_PREFIX)
+# payments.router is deliberately NOT mounted — superseded by the expenses
+# router (Financiën / "Betalingen" in admin) before any client ever called
+# it. The code stays in app/routers/payments.py and app/models/payment.py in
+# case it's ever worth reusing, but it shouldn't be a live, reachable API
+# with nothing on the other end of it.
 app.include_router(calendar.router, prefix=API_PREFIX)
 app.include_router(badges.router,    prefix=API_PREFIX)
 app.include_router(announcements.router, prefix=API_PREFIX)
 app.include_router(changelog.router,    prefix=API_PREFIX)
 app.include_router(cosplays.router,  prefix=API_PREFIX)
 app.include_router(expenses.router,  prefix=API_PREFIX)
+app.include_router(settlements.router, prefix=API_PREFIX)
 app.include_router(stories.router,   prefix=API_PREFIX)
 app.include_router(admin.router,     prefix=API_PREFIX)
 

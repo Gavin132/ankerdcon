@@ -13,12 +13,11 @@ export function ColorSwatch({ value, onChange, presets }: ColorSwatchProps) {
         type="button"
         onClick={() => onChange("")}
         title="Automatisch"
-        className={`h-7 w-7 rounded-full transition-all hover:scale-110 ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 ${
-          value === "" ? "ring-sky-500 scale-110" : "ring-transparent"
+        className={`flex h-7 w-7 items-center justify-center rounded-full border-1.5 border-line bg-sunken ring-2 ring-offset-2 ring-offset-paper transition-shadow ${
+          value === "" ? "ring-outline" : "ring-transparent hover:ring-line"
         }`}
-        style={{ background: "linear-gradient(135deg, #cbd5e1, #94a3b8)" }}
       >
-        {value === "" && <Check size={9} className="m-auto text-white drop-shadow" />}
+        {value === "" && <Check size={10} strokeWidth={3} className="text-ink" />}
       </button>
       {presets.map((c) => (
         <button
@@ -26,12 +25,12 @@ export function ColorSwatch({ value, onChange, presets }: ColorSwatchProps) {
           type="button"
           onClick={() => onChange(value === c ? "" : c)}
           title={c}
-          className={`h-7 w-7 rounded-full transition-all hover:scale-110 ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 ${
-            value === c ? "ring-sky-500 scale-110" : "ring-transparent"
+          className={`flex h-7 w-7 items-center justify-center rounded-full ring-2 ring-offset-2 ring-offset-paper transition-shadow ${
+            value === c ? "ring-outline" : "ring-transparent hover:ring-line"
           }`}
           style={{ backgroundColor: c }}
         >
-          {value === c && <Check size={9} className="m-auto text-white drop-shadow" />}
+          {value === c && <Check size={10} strokeWidth={3} className="text-white" />}
         </button>
       ))}
     </div>

@@ -13,7 +13,7 @@ export function ImpersonationBanner() {
   if (!impersonating) return null;
 
   return (
-    <div className="sticky top-0 z-[100] bg-amber-500 text-white">
+    <div className="sticky top-0 z-[100] border-b-1.5 border-outline bg-amber-400 text-slate-900">
       {/* Safe-area spacer — kept separate from the content row below so the
           row itself always stays vertically centered regardless of notch height. */}
       <div style={{ height: "env(safe-area-inset-top, 0px)" }} />
@@ -25,7 +25,7 @@ export function ImpersonationBanner() {
         <button
           type="button"
           onClick={stopImpersonation}
-          className="shrink-0 rounded-lg bg-white/20 px-3 py-1 text-xs font-bold hover:bg-white/30 transition-colors"
+          className="shrink-0 rounded-md border-1.5 border-slate-900 bg-white/40 px-3 py-1 text-xs font-bold hover:bg-white/60 transition-colors"
         >
           Terug naar mijn account
         </button>

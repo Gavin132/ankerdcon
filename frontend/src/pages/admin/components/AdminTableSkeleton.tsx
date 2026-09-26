@@ -8,8 +8,8 @@ export function AdminTableSkeleton({ cols, rows = 4 }: Props) {
     <>
       {Array.from({ length: rows }).map((_, i) => (
         <tr key={i}>
-          <td colSpan={cols} className="px-5 py-3">
-            <div className="h-8 rounded-lg bg-slate-100 dark:bg-white/[0.05] animate-pulse" />
+          <td colSpan={cols} className="border-b border-line px-4 py-3">
+            <div className="h-8 animate-pulse rounded-lg bg-sunken" />
           </td>
         </tr>
       ))}

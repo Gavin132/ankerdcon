@@ -10,18 +10,17 @@ export function Card({
 }: CardProps) {
   const base =
     variant === "flat"
-      ? "bg-white rounded-2xl border border-slate-100 overflow-hidden"
+      ? "bg-surface rounded-2xl border-1.5 border-line overflow-hidden"
       : variant === "featured"
-        ? "rounded-3xl overflow-hidden shadow-hero"
+        ? "rounded-2xl overflow-hidden border-2 border-outline"
         : "card-surface rounded-2xl overflow-hidden";
 
   if (animate || onClick) {
     return (
       <motion.div
-        className={`${base} ${onClick ? "cursor-pointer" : ""} ${className}`}
+        className={`${base} ${onClick ? "cursor-pointer transition-colors hover:border-ink-3" : ""} ${className}`}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        whileHover={onClick ? { y: -2 } : undefined}
         transition={{ duration: 0.15 }}
         onClick={onClick}
       >

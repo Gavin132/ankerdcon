@@ -106,106 +106,114 @@ export function MealCard({ meal, userNames }: MealCardProps) {
 
   return (
     <>
-      <motion.div variants={listItem} whileHover={{ y: -2 }} whileTap={{ scale: 0.985 }} transition={{ duration: 0.12 }}>
-        {/* card-surface provides correct bg + border + shadow in both light and dark */}
+      <motion.div variants={listItem} className="h-full">
         <div
           onClick={() => navigate(routes.meal.view(meal.id))}
-          className="card-surface rounded-2xl overflow-hidden cursor-pointer transition-shadow hover:shadow-md"
+          className="card-surface-hover flex h-full cursor-pointer flex-col gap-2.5 p-3.5"
         >
-
-          {/* Amber accent line */}
-          <div className="h-[3px] bg-gradient-to-r from-amber-400 via-orange-400 to-amber-300" />
-
           {/* ── Header ──────────────────────────────────────────── */}
-          <div className="flex items-start gap-3 px-4 pt-4 pb-3">
-            <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-sm">
-              <UtensilsCrossed size={17} className="text-white" strokeWidth={2} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="font-bold text-slate-900 text-sm leading-snug">{meal.meal_name}</h3>
-                <div className="shrink-0 text-right">
-                  <p className="text-xs font-bold text-slate-700">{formatDate(meal.time)}</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">{formatTime(meal.time)}</p>
-                </div>
-              </div>
+          <div className="flex items-start gap-2.5">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+              <UtensilsCrossed size={15} strokeWidth={2} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-[14.5px] font-semibold leading-snug text-ink">{meal.meal_name}</h3>
               {meal.description && (
-                <p className="mt-0.5 text-[12px] text-slate-400 line-clamp-1">{meal.description}</p>
+                <p className="mt-0.5 line-clamp-1 text-[12px] text-ink-3">{meal.description}</p>
               )}
-              {(meal.location || meal.cost || meal.transport_needed) && (
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                  {meal.location && (
-                    <span className="flex items-center gap-1 text-[12px] font-medium text-slate-500">
-                      <MapPin size={10} className="text-slate-400 shrink-0" />
-                      {meal.location}
-                    </span>
-                  )}
-                  {meal.cost ? (
-                    <span className="flex items-center gap-1 text-[12px] font-semibold text-emerald-600 dark:text-emerald-400">
-                      <Banknote size={10} className="shrink-0" />
-                      {meal.cost} p.p.
-                    </span>
-                  ) : null}
-                  {meal.transport_needed && (
-                    <span className="flex items-center gap-1 rounded-full bg-sky-100 dark:bg-sky-900/40 px-2 py-0.5 text-[11px] font-semibold text-sky-700 dark:text-sky-300">
-                      <Bus size={9} />
-                      Vervoer nodig
-                    </span>
-                  )}
-                </div>
-              )}
+            </div>
+            <div className="shrink-0 text-right leading-tight">
+              <p className="font-mono text-[15px] font-semibold tabular-nums text-ink">{formatTime(meal.time)}</p>
+              <p className="font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-3">{formatDate(meal.time)}</p>
             </div>
           </div>
 
-          {/* ── Participants + linked event ──────────────────────── */}
-          <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-t border-slate-200 dark:border-slate-700">
+          {(meal.location || meal.cost || meal.transport_needed) && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12.5px] text-ink-2">
+              {meal.location && (
+                <span className="flex min-w-0 items-center gap-1">
+                  <MapPin size={12} className="shrink-0 text-ink-3" />
+                  <span className="truncate">{meal.location}</span>
+                </span>
+              )}
+              {meal.cost ? (
+                <span className="flex items-center gap-1">
+                  <Banknote size={12} className="shrink-0 text-ink-3" />
+                  <span className="font-mono tabular-nums text-ink">{meal.cost}</span> p.p.
+                </span>
+              ) : null}
+              {meal.transport_needed && (
+                <span className="inline-flex items-center gap-1 rounded-md border border-line px-1.5 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2">
+                  <Bus size={11} />
+                  Vervoer nodig
+                </span>
+              )}
+            </div>
+          )}
+
+          {linkedEvent && (
+            <Link
+              to={routes.event.view(linkedEvent.id)}
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex max-w-full items-center gap-1 self-start rounded-md border border-line px-1.5 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
+            >
+              <Link2 size={10} className="shrink-0" />
+              <span className="truncate">{linkedEvent.event_name}</span>
+            </Link>
+          )}
+
+          {/* ── Footer: participants + actions ──────────────────── */}
+          <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t border-dashed border-line pt-2.5">
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); if (safeParticipants.length > 0) setParticipantsOpen((v) => !v); }}
-              className={`flex items-center gap-2 min-w-0 ${safeParticipants.length > 0 ? "hover:opacity-75 transition-opacity" : "cursor-default"}`}
+              className={`flex min-w-0 items-center gap-1 text-[12px] text-ink-2 ${safeParticipants.length > 0 ? "hover:text-ink" : "cursor-default"}`}
+              aria-expanded={safeParticipants.length > 0 ? participantsOpen : undefined}
             >
               {safeParticipants.length > 0 ? (
                 <>
-                  <div className="flex -space-x-2">
-                    {safeParticipants.slice(0, 4).map((p) => (
-                      <UserAvatar
-                        key={p}
-                        name={p}
-                        user={resolveUser(p)}
-                        className="h-6 w-6 text-[9px] ring-2 ring-white dark:ring-[#1e293b]"
-                      />
-                    ))}
-                    {safeParticipants.length > 4 && (
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full ring-2 ring-white dark:ring-[#1e293b] bg-slate-200 dark:bg-slate-600 text-[9px] font-bold text-slate-600 dark:text-slate-200">
-                        +{safeParticipants.length - 4}
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                    <span className="font-bold text-slate-700 dark:text-slate-200">{safeParticipants.length}</span> aangemeld
+                  <Users size={12} className="shrink-0 text-ink-3" />
+                  <span>
+                    <span className="font-mono font-semibold tabular-nums text-ink">{safeParticipants.length}</span> aangemeld
                   </span>
-                  <motion.div animate={{ rotate: participantsOpen ? 180 : 0 }} transition={{ duration: 0.18 }}>
-                    <ChevronDown size={11} className="text-slate-400" />
-                  </motion.div>
+                  <ChevronDown size={12} className={`shrink-0 text-ink-3 transition-transform ${participantsOpen ? "rotate-180" : ""}`} />
                 </>
               ) : (
-                <span className="flex items-center gap-1.5 text-[11px] text-slate-400 italic">
-                  <Users size={11} />
+                <span className="flex items-center gap-1 text-ink-3">
+                  <Users size={12} />
                   Nog niemand aangemeld
                 </span>
               )}
             </button>
 
-            {linkedEvent && (
-              <Link
-                to={routes.event.view(linkedEvent.id)}
-                onClick={(e) => e.stopPropagation()}
-                className="shrink-0 flex items-center gap-1.5 rounded-lg border border-sky-200 dark:border-sky-700/60 bg-sky-50 dark:bg-sky-900/30 px-2 py-1 text-[11px] font-semibold text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition-colors max-w-[140px]"
+            <div className="ml-auto flex items-center gap-1">
+              {safeParticipants.length > 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setCancelOpen(true); }}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
+                  title="Afmelden"
+                >
+                  <UserMinus size={14} />
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); exportMealToIcs(meal); }}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+                title="Exporteer naar kalender"
               >
-                <Link2 size={10} className="shrink-0" />
-                <span className="truncate">{linkedEvent.event_name}</span>
-              </Link>
-            )}
+                <CalendarPlus size={14} />
+              </button>
+
+              <Button size="sm" variant="primary" className="ml-1 !min-h-[36px] !py-1.5" onClick={(e) => { e.stopPropagation(); setRsvpOpen(true); }}>
+                <UserCheck size={13} />
+                Aanmelden
+              </Button>
+
+              <ChevronRight size={14} className="ml-0.5 shrink-0 text-ink-3" />
+            </div>
           </div>
 
           {/* Expanded participants */}
@@ -216,9 +224,9 @@ export function MealCard({ meal, userNames }: MealCardProps) {
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.18 }}
-                className="overflow-hidden"
+                className="-mt-1 overflow-hidden"
               >
-                <div className="px-4 pb-3 flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1.5 pt-1">
                   {safeParticipants.map((p) => {
                     const u = resolveUser(p);
                     return (
@@ -232,7 +240,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
                           setPopupAnchorRect({ top: rect.top, left: rect.left, right: rect.right, height: rect.height });
                           setPopupUser(u);
                         }}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-600 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                        className="inline-flex items-center gap-1.5 rounded-full border-1.5 border-line px-2 py-1 text-[12px] font-medium text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
                       >
                         <UserAvatar name={p} user={u} className="h-4 w-4 text-[8px] !border-0" />
                         {u?.name ?? p}
@@ -243,36 +251,6 @@ export function MealCard({ meal, userNames }: MealCardProps) {
               </motion.div>
             )}
           </AnimatePresence>
-
-          {/* ── Action bar ──────────────────────────────────────── */}
-          <div className="flex items-center gap-1.5 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-black/20 px-3 py-2">
-            {safeParticipants.length > 0 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); setCancelOpen(true); }}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-rose-500 transition-colors"
-                title="Afmelden"
-              >
-                <UserMinus size={14} />
-              </button>
-            )}
-
-            <button
-              onClick={(e) => { e.stopPropagation(); exportMealToIcs(meal); }}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-sky-500 transition-colors"
-              title="Exporteer naar kalender"
-            >
-              <CalendarPlus size={14} />
-            </button>
-
-            <div className="flex-1" />
-
-            <Button size="sm" variant="primary" onClick={(e) => { e.stopPropagation(); setRsvpOpen(true); }}>
-              <UserCheck size={13} />
-              Aanmelden
-            </Button>
-
-            <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0 ml-1" />
-          </div>
         </div>
       </motion.div>
 

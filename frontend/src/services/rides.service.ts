@@ -21,6 +21,10 @@ export async function createRide(payload: CreateRideRequest): Promise<Ride> {
   return data;
 }
 
+export async function deleteRide(id: string): Promise<void> {
+  await apiClient.delete(apiRoutes.rides.byId(id));
+}
+
 export async function claimSeat(id: string, payload: { user_name: string }): Promise<void> {
   await apiClient.post(apiRoutes.rides.claim(id), payload);
 }

@@ -2,9 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Design tokens ──────────────────────────────────────────────────────────
+   Flat, mascot-based design (docs/ui-proposal/ui-rework-proposal.html).
+   Channels without rgb() so Tailwind can add opacity: `bg-ink/10`.
+   Ink outline from the mascot, one brand blue; status colours are only
+   for status. The brand tokens keep their old `--cyan` names so existing
+   `rgb(var(--cyan))` references keep working. Nothing lifts on hover, and
+   buttons are flat — no offset shadow, just a slight opacity dip on click. */
+:root {
+  --paper: 245 248 249;      /* #F5F8F9  page background */
+  --surface: 255 255 255;    /* #FFFFFF  cards, panels */
+  --sunken: 235 241 243;     /* #EBF1F3  wells, hover rows */
+  --ink: 15 21 25;           /* #0F1519  text, outlines */
+  --ink-2: 74 90 99;         /* #4A5A63  secondary text */
+  --ink-3: 116 131 138;      /* #74838A  muted text */
+  --line: 213 222 226;       /* #D5DEE2  borders */
+  --outline: 15 21 25;       /* #0F1519  bold outline */
+  --cyan: 87 178 249;        /* #57B2F9  the one brand fill (brand blue, +18 saturation) */
+  --cyan-soft: 220 238 251;  /* #DCEEFB */
+  --cyan-text: 13 117 209;   /* #0D75D1  brand as text on light (4.7:1 on white) */
+  --on-cyan: 15 21 25;
+  --nav-active-bg: 15 21 25;
+  --nav-active-fg: 245 248 249;
+}
+
+.dark {
+  --paper: 13 18 22;         /* #0D1216 */
+  --surface: 20 27 32;       /* #141B20 */
+  --sunken: 16 22 26;        /* #10161A */
+  --ink: 230 240 243;        /* #E6F0F3 */
+  --ink-2: 160 176 184;      /* #A0B0B8 */
+  --ink-3: 110 126 134;      /* #6E7E86 */
+  --line: 36 48 57;          /* #243039 */
+  --outline: 191 211 218;    /* #BFD3DA */
+  --cyan-soft: 15 42 64;     /* #0F2A40 */
+  --cyan-text: 137 202 254;  /* #89CAFE */
+  --nav-active-bg: 87 178 249; /* #57B2F9 — matches the light-mode --cyan */
+  --nav-active-fg: 15 21 25;
+}
+
 @layer base {
   html {
-    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -13,13 +52,10 @@
   }
 
   body {
-    @apply bg-slate-50 text-slate-900;
+    background-color: rgb(var(--paper));
+    color: rgb(var(--ink));
     min-height: 100%;
     overscroll-behavior: none;
-    background-image:
-      radial-gradient(circle at 20% 10%, rgba(56, 189, 248, 0.08) 0%, transparent 50%),
-      radial-gradient(circle at 80% 80%, rgba(14, 165, 233, 0.06) 0%, transparent 50%);
-    background-attachment: fixed;
   }
 
   #root {
@@ -28,6 +64,8 @@
   }
 
   * { box-sizing: border-box; }
+
+  :focus-visible { outline-color: rgb(var(--cyan-text)); }
 
   /* Eliminate 300ms tap delay on all interactive elements */
   button, a, [role="button"], input, select, textarea, label {
@@ -39,8 +77,8 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  ::-webkit-scrollbar { width: 3px; }
-  ::-webkit-scrollbar-thumb { @apply rounded-full bg-sky-200; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { border-radius: 9999px; background-color: rgb(var(--line)); }
   ::-webkit-scrollbar-track { background: transparent; }
 }
 
@@ -52,209 +90,225 @@
     height: 1rem;
     flex-shrink: 0;
     border-radius: 4px;
-    border: 1.5px solid rgb(148 163 184); /* slate-400 */
-    background-color: #fff;
+    border: 1.5px solid rgb(var(--ink-3));
+    background-color: rgb(var(--surface));
     cursor: pointer;
     transition: background-color 0.1s ease, border-color 0.1s ease;
   }
 
-  .dark input[type="checkbox"].cb {
-    border-color: rgb(71 85 105); /* slate-600 */
-    background-color: rgb(30 41 59 / 0.7); /* slate-800 */
-  }
-
   input[type="checkbox"].cb:hover {
-    border-color: rgb(56 189 248); /* sky-400 */
+    border-color: rgb(var(--ink));
   }
 
   input[type="checkbox"].cb:checked,
   input[type="checkbox"].cb:indeterminate {
-    background-color: rgb(14 165 233); /* sky-500 */
-    border-color: rgb(14 165 233);
+    background-color: rgb(var(--cyan));
+    border-color: rgb(var(--outline));
     background-position: center;
     background-repeat: no-repeat;
     background-size: 75%;
   }
 
   input[type="checkbox"].cb:checked {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3e%3cpath d='M2.5 6.5l2.5 2.5 4.5-5.5' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3e%3cpath d='M2.5 6.5l2.5 2.5 4.5-5.5' stroke='%230F1519' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
   }
 
   input[type="checkbox"].cb:indeterminate {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3e%3cpath d='M2.5 6h7' stroke='white' stroke-width='1.5' stroke-linecap='round'/%3e%3c/svg%3e");
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3e%3cpath d='M2.5 6h7' stroke='%230F1519' stroke-width='1.8' stroke-linecap='round'/%3e%3c/svg%3e");
   }
 
+  /* Former frosted-glass surfaces are solid now (glass was tried and rejected). */
   .glass {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.6);
+    background: rgb(var(--surface));
+    border: 1.5px solid rgb(var(--line));
   }
 
   .glass-dark {
-    background: rgba(12, 42, 62, 0.75);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #0F1519;
+    border: 1.5px solid rgb(255 255 255 / 0.12);
   }
 
+  /* The old blue gradients, flattened. Brand = brand blue with ink text;
+     hero = the dark ink block used behind a trip's headline. */
   .gradient-brand {
-    background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 50%, #075985 100%);
+    background: #2A84CC;
   }
 
   .gradient-hero {
-    background: linear-gradient(145deg, #0C2A3E 0%, #0F3D5A 40%, #075985 100%);
+    background-color: #0F1519;
   }
 
-  .gradient-card-blue {
-    background: linear-gradient(135deg, #38BDF8 0%, #0EA5E9 100%);
-  }
-
-  .gradient-card-green {
-    background: linear-gradient(135deg, #34D399 0%, #059669 100%);
-  }
-
-  .gradient-card-amber {
-    background: linear-gradient(135deg, #FBBF24 0%, #D97706 100%);
-  }
-
-  .gradient-card-violet {
-    background: linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%);
-  }
+  .gradient-card-blue { background: #2A84CC; }
+  .gradient-card-green { background: #1FA971; }
+  .gradient-card-amber { background: #E89B0C; }
+  .gradient-card-violet { background: #7C3AED; }
 
   .card-surface {
-    @apply rounded-2xl;
-    background-color: #F8FAFF;
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.04),
-      0 4px 16px rgba(14, 165, 233, 0.06),
-      inset 0 1px 0 rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    border-radius: 12px;
+    background-color: rgb(var(--surface));
+    border: 1.5px solid rgb(var(--line));
   }
 
   .card-surface-hover {
-    @apply card-surface transition-all duration-200;
+    @apply card-surface transition-[colors,transform] duration-150;
+  }
+
+  .card-surface-hover:active {
+    transform: scale(0.985);
   }
 
   .card-surface-hover:hover {
-    box-shadow:
-      0 2px 4px rgba(0, 0, 0, 0.06),
-      0 8px 32px rgba(14, 165, 233, 0.12);
-    transform: translateY(-1px);
-    border-color: rgba(186, 230, 253, 0.8);
+    border-color: rgb(var(--ink-3));
   }
 
+  /* Small uppercase mono label above a group ("Voor jou", "Deze week"). */
   .section-label {
-    @apply text-xs font-bold uppercase tracking-widest text-slate-400;
+    @apply font-mono text-[11px] font-semibold uppercase tracking-[0.09em] text-ink-3;
   }
 
   .input-field {
     /* text-base (16px) prevents iOS from auto-zooming on focus */
-    @apply w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 placeholder-slate-400 transition-all duration-150;
-    @apply focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-3 focus:ring-sky-100;
+    @apply w-full rounded-xl border-1.5 border-line bg-surface px-4 py-3 text-base text-ink placeholder-ink-3 transition-colors duration-150;
+    @apply focus:border-brand-text focus:outline-none;
   }
 
   .avatar {
     @apply flex items-center justify-center rounded-full font-bold text-white;
   }
+
+  /* Agenda ticket: two punched notches where the stub tears off. On phones the
+     stub is the bottom 118px (incl. the 2px outline); from md it's the right
+     column, 170px wide and 190px from lg. */
+  .ticket-notch {
+    -webkit-mask:
+      radial-gradient(circle 11px at 0 calc(100% - 118px), transparent 97%, #000) left / 51% 100% no-repeat,
+      radial-gradient(circle 11px at 100% calc(100% - 118px), transparent 97%, #000) right / 51% 100% no-repeat;
+    mask:
+      radial-gradient(circle 11px at 0 calc(100% - 118px), transparent 97%, #000) left / 51% 100% no-repeat,
+      radial-gradient(circle 11px at 100% calc(100% - 118px), transparent 97%, #000) right / 51% 100% no-repeat;
+  }
+  @media (min-width: 768px) {
+    .ticket-notch {
+      --stub: 170px;
+      -webkit-mask:
+        radial-gradient(circle 11px at calc(100% - var(--stub)) 0, transparent 97%, #000) top / 100% 51% no-repeat,
+        radial-gradient(circle 11px at calc(100% - var(--stub)) 100%, transparent 97%, #000) bottom / 100% 51% no-repeat;
+      mask:
+        radial-gradient(circle 11px at calc(100% - var(--stub)) 0, transparent 97%, #000) top / 100% 51% no-repeat,
+        radial-gradient(circle 11px at calc(100% - var(--stub)) 100%, transparent 97%, #000) bottom / 100% 51% no-repeat;
+    }
+  }
+  @media (min-width: 1024px) {
+    .ticket-notch { --stub: 190px; }
+  }
+
+  /* A collected stub on Agenda › Geweest: small notches at the perforation. */
+  .stub-notch {
+    -webkit-mask:
+      radial-gradient(circle 7px at 0 36px, transparent 97%, #000) left / 51% 100% no-repeat,
+      radial-gradient(circle 7px at 100% 36px, transparent 97%, #000) right / 51% 100% no-repeat;
+    mask:
+      radial-gradient(circle 7px at 0 36px, transparent 97%, #000) left / 51% 100% no-repeat,
+      radial-gradient(circle 7px at 100% 36px, transparent 97%, #000) right / 51% 100% no-repeat;
+  }
+
+  /* The one bold call to action on a screen: brand blue, ink outline, flat.
+     Nothing moves on hover; a light opacity dip on click is the only feedback. */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border-2 border-outline bg-brand font-semibold text-brand-on transition-opacity duration-75;
+  }
+  .btn-primary:active:not(:disabled) {
+    opacity: 0.9;
+  }
 }
 
 @layer utilities {
   .text-gradient {
-    background: linear-gradient(135deg, #0EA5E9, #0284C7);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: rgb(var(--cyan-text));
   }
 
-  .shadow-card {
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.04),
-      0 4px 16px rgba(14, 165, 233, 0.06);
-  }
-
-  .shadow-elevated {
-    box-shadow:
-      0 4px 24px rgba(0, 0, 0, 0.08),
-      0 1px 4px rgba(0, 0, 0, 0.04);
-  }
-
+  .shadow-card,
+  .shadow-elevated,
   .shadow-hero {
-    box-shadow: 0 12px 48px rgba(12, 42, 62, 0.24);
+    box-shadow: none;
   }
 
   .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2;
   }
 
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
+
+  /* Diagonal stripes, used for travel days. */
+  .bg-hatch-surface {
+    background-color: rgb(var(--surface));
+    background-image: repeating-linear-gradient(135deg, rgb(var(--ink) / 0.07) 0 6px, transparent 6px 12px);
+  }
 }
 
 /* ─── Dark mode (class-based, toggled via .dark on <html>) ───────────────── */
 
-/* Page background */
-.dark body {
-  background-color: #0f172a;
-  color: #f1f5f9;
-  background-image:
-    radial-gradient(circle at 20% 10%, rgba(14, 165, 233, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(2, 132, 199, 0.04) 0%, transparent 50%);
-}
-
-/* Card surface */
-.dark .card-surface {
-  background-color: #1A2740;
-  border-color: rgba(51, 65, 85, 0.8);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.25),
-    0 4px 16px rgba(14, 165, 233, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-/* Frosted glass */
-.dark .glass {
-  background: rgba(15, 23, 42, 0.85);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-/* Form inputs — also set color-scheme so native controls (select, date) render in dark */
+/* Form inputs — set color-scheme so native controls (select, date) render in dark */
 .dark .input-field {
-  background-color: #1e293b;
-  border-color: #475569;
-  color: #f1f5f9;
   color-scheme: dark;
 }
-.dark .input-field::placeholder {
-  color: #64748b;
-}
-.dark .input-field:focus {
-  background-color: #0f172a;
-  border-color: #38bdf8;
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+
+.dark .gradient-brand,
+.dark .gradient-card-blue {
+  background: #1F6CB0;
 }
 
 /* ── Global Tailwind utility overrides in dark mode ─────────────────────── */
 /* Specificity: 2 selectors (.dark + .class) beats single-class Tailwind utilities */
 
 /* Text */
-.dark .text-slate-900 { color: #f1f5f9; }
-.dark .text-slate-800 { color: #e2e8f0; }
-.dark .text-slate-700 { color: #cbd5e1; }
+.dark .text-slate-900 { color: #E6F0F3; }
+.dark .text-slate-800 { color: #D5E2E7; }
+.dark .text-slate-700 { color: #BCC8CE; }
 
 /* Backgrounds */
-.dark .bg-slate-50  { background-color: #1e293b; }
-.dark .bg-slate-100 { background-color: #334155; }
+.dark .bg-slate-50  { background-color: #141B20; }
+.dark .bg-slate-100 { background-color: #1E2A31; }
 
 /* Borders */
-.dark .border-slate-100 { border-color: rgba(51, 65, 85, 0.8); }
-.dark .border-slate-200 { border-color: rgba(71, 85, 105, 0.8); }
+.dark .border-slate-100 { border-color: #1E2A31; }
+.dark .border-slate-200 { border-color: #243039; }
 
 /* Dividers */
 .dark .divide-slate-50 > :not([hidden]) ~ :not([hidden]) {
-  border-color: rgba(30, 41, 59, 0.8);
+  border-color: #1E2A31;
 }
 
-/* Scrollbar */
-.dark ::-webkit-scrollbar-thumb { background-color: #334155; }
+/* `truncate` clips on all sides, which shears the descenders (g, j, y) off
+   text with a tight line-height — the display font and every `leading-none`
+   label. Clip sideways only so the ellipsis still works but nothing below the
+   line box is cut. Must stay after the Tailwind utilities to win.
+   `min-width: 0` because a flex/grid item only gets its automatic zero
+   minimum from overflow: hidden/auto — not from clip — and without it the
+   text refuses to shrink and spills out of its container. */
+.truncate {
+  overflow-x: clip;
+  overflow-y: visible;
+  min-width: 0;
+}
+
+/* Crew map, dark theme: OpenStreetMap only ships a light style, so its tiles
+   are inverted (hue-rotated back so water stays blue). Pins and controls are
+   outside the tile pane and keep their own colours. */
+.crew-map-dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9) saturate(0.7);
+}
+.crew-map-dark .leaflet-container {
+  background: #1b2227;
+}
+.crew-pin {
+  background: none;
+  border: none;
+}
+
+/* Leaflet gives popup paragraphs a big margin; the crew map's popups are compact lists. */
+.leaflet-container .leaflet-popup-content p {
+  margin: 0;
+}

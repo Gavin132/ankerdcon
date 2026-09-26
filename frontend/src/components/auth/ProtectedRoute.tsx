@@ -3,12 +3,13 @@ import { useAuthStore } from "../../store/auth.store";
 import { ForbiddenPage } from "../../pages/ForbiddenPage";
 import { routes } from "../../config/routes";
 import { useCurrentUser } from "../../hooks/useUsers";
+import { ServerUnreachable } from "../common/ServerUnreachable";
 
 export function ProtectedRoute() {
   const { accessToken, forbidden, initializing } = useAuthStore();
   const location = useLocation();
 
-  const { data: me, isLoading: meLoading } = useCurrentUser({
+  const { data: me, isLoading: meLoading, isError: meError, refetch: retryMe } = useCurrentUser({
     enabled: !!accessToken && !forbidden && !initializing,
   });
 
@@ -22,6 +23,13 @@ export function ProtectedRoute() {
   }
 
   if (forbidden) return <ForbiddenPage />;
+
+  // The profile couldn't be loaded (backend down, 5xx). Don't render the app
+  // underneath: its own current-user queries would refetch on mount, flip this
+  // query back to loading, unmount the app again and loop forever.
+  if (accessToken && meError && !me) {
+    return <ServerUnreachable onRetry={() => retryMe()} />;
+  }
 
   if (!accessToken) {
     return <Navigate to={routes.login} state={{ from: location.pathname }} replace />;

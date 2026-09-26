@@ -1,11 +1,15 @@
+import hashlib
+import hmac
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import PlainTextResponse
 
-from app.constants import Tables
+from app.config import Settings, get_settings
+from app.constants import API_PREFIX, Tables
+from app.core.atomic import update_list
 from app.core.logging import get_logger
-from app.dependencies import get_current_user
+from app.dependencies import act_for_anyone, get_current_user
 from app.models.calendar import (
     BulkCreateHotelRoomsRequest,
     CalendarEvent,
@@ -34,7 +38,18 @@ def _parse_event_date(date_str: str) -> datetime | None:
 
 
 def _ics_escape(s: str) -> str:
+    s = s.replace("\r\n", "\n").replace("\r", "\n")
     return s.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
+
+
+def _feed_token(settings: Settings) -> str:
+    """The secret that makes a calendar subscription link work. A calendar app
+    can't log in, so the link itself is the credential; without it the feed
+    would show every event's name, place and description to anyone."""
+    if settings.calendar_feed_token:
+        return settings.calendar_feed_token
+    key = (settings.supabase_jwt_secret or settings.supabase_secret_key).encode()
+    return hmac.new(key, b"ankerd-calendar-feed", hashlib.sha256).hexdigest()[:32]
 
 
 def _load_calendar_rows() -> list[dict]:
@@ -90,8 +105,11 @@ def _load_calendar_rows() -> list[dict]:
 
 
 @router.get(CalendarRoutes.FEED, response_class=PlainTextResponse, include_in_schema=False)
-def calendar_feed() -> PlainTextResponse:
-    """Public ICS subscription feed — no auth required, compatible with Google Calendar."""
+def calendar_feed(token: str = "", settings: Settings = Depends(get_settings)) -> PlainTextResponse:
+    """ICS subscription feed for Google Calendar and the like. Calendar apps
+    can't log in, so access is by the secret token in the link (see FEED_URL)."""
+    if not hmac.compare_digest(token, _feed_token(settings)):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Niet gevonden.")
     try:
         events = _load_calendar_rows()
     except Exception as e:
@@ -130,7 +148,7 @@ def calendar_feed() -> PlainTextResponse:
         if ev.get("description"):
             lines.append(f"DESCRIPTION:{_ics_escape(ev['description'])}")
         if ev.get("website"):
-            lines.append(f"URL:{ev['website']}")
+            lines.append(f"URL:{_ics_escape(ev['website'])}")
         lines.append("END:VEVENT")
 
     lines.append("END:VCALENDAR")
@@ -140,6 +158,15 @@ def calendar_feed() -> PlainTextResponse:
         media_type="text/calendar; charset=utf-8",
         headers={"Content-Disposition": "inline; filename=ankerd-con.ics"},
     )
+
+
+@router.get(CalendarRoutes.FEED_URL)
+def calendar_feed_url(
+    _: str = Depends(get_current_user),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    """The subscription link, with its secret — only for signed-in members."""
+    return {"path": f"{API_PREFIX}{CalendarRoutes.PREFIX}{CalendarRoutes.FEED}?token={_feed_token(settings)}"}
 
 
 @router.get(CalendarRoutes.LIST, response_model=list[CalendarEvent])
@@ -152,48 +179,26 @@ def list_events(_: str = Depends(get_current_user)) -> list[CalendarEvent]:
 
 
 @router.post(CalendarRoutes.RSVP, status_code=status.HTTP_204_NO_CONTENT)
-def rsvp_event(event_id: str, body: CalendarRsvpRequest, _: str = Depends(get_current_user)) -> None:
+def rsvp_event(event_id: str, body: CalendarRsvpRequest, current_user: str = Depends(get_current_user)) -> None:
     """Add a user to the participants array for this specific day only.
     `event_id` is an event_days id (see _load_calendar_rows)."""
-    try:
-        resp = supabase.table(Tables.EVENT_DAYS).select("participants").eq("id", event_id).execute()
-    except Exception as e:
-        logger.error("Failed to fetch event day %s for RSVP: %s", event_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-
-    if not resp.data:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenement niet gevonden.")
-
-    participants = resp.data[0].get("participants") or []
-    if body.user_name not in participants:
-        participants.append(body.user_name)
-        try:
-            supabase.table(Tables.EVENT_DAYS).update({"participants": participants}).eq("id", event_id).execute()
-        except Exception as e:
-            logger.error("Failed to update participants for event day %s: %s", event_id, e)
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    user_name = act_for_anyone(current_user, body.user_name, adding=True)
+    update_list(
+        Tables.EVENT_DAYS, event_id, "participants",
+        lambda names, _row: None if user_name in names else names + [user_name],
+        not_found="Evenement niet gevonden.",
+    )
 
 
 @router.post(CalendarRoutes.LEAVE, status_code=status.HTTP_204_NO_CONTENT)
-def leave_event(event_id: str, body: CalendarRsvpRequest, _: str = Depends(get_current_user)) -> None:
+def leave_event(event_id: str, body: CalendarRsvpRequest, current_user: str = Depends(get_current_user)) -> None:
     """Remove a user from the participants array for this specific day only."""
-    try:
-        resp = supabase.table(Tables.EVENT_DAYS).select("participants").eq("id", event_id).execute()
-    except Exception as e:
-        logger.error("Failed to fetch event day %s for leave: %s", event_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-
-    if not resp.data:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenement niet gevonden.")
-
-    participants = resp.data[0].get("participants") or []
-    if body.user_name in participants:
-        participants.remove(body.user_name)
-        try:
-            supabase.table(Tables.EVENT_DAYS).update({"participants": participants}).eq("id", event_id).execute()
-        except Exception as e:
-            logger.error("Failed to update participants for event day %s: %s", event_id, e)
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    user_name = act_for_anyone(current_user, body.user_name)
+    update_list(
+        Tables.EVENT_DAYS, event_id, "participants",
+        lambda names, _row: [n for n in names if n != user_name] if user_name in names else None,
+        not_found="Evenement niet gevonden.",
+    )
 
 
 # ── Hotel Rooms ────────────────────────────────────────────────────────────────
@@ -236,14 +241,15 @@ def list_hotel_rooms(event_id: str, _: str = Depends(get_current_user)) -> list[
 def create_hotel_room(
     event_id: str,
     body: CreateHotelRoomRequest,
-    _: str = Depends(get_current_user),
+    current_user: str = Depends(get_current_user),
 ) -> HotelRoom:
     group_key, is_hotel = _hotel_group_key(event_id)
     if not is_hotel:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Dit evenement heeft geen hotel.")
     data = {k: v for k, v in body.model_dump().items() if v is not None}
     data["event_id"] = group_key
-    data.setdefault("occupants", [])
+    # Same rule as assigning people to a room: anyone may be put in.
+    data["occupants"] = [act_for_anyone(current_user, name, adding=True) for name in body.occupants]
     try:
         resp = supabase.table(Tables.HOTEL_ROOMS).insert(data).execute()
         return resp.data[0]
@@ -283,33 +289,21 @@ def assign_hotel_room(
     event_id: str,
     room_id: str,
     body: HotelRoomAssignRequest,
-    _: str = Depends(get_current_user),
+    current_user: str = Depends(get_current_user),
 ) -> None:
-    try:
-        resp = supabase.table(Tables.HOTEL_ROOMS).select("occupants, capacity").eq("id", room_id).execute()
-    except Exception as e:
-        logger.error("Failed to fetch hotel room %s: %s", room_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    user_names = [act_for_anyone(current_user, name, adding=True) for name in body.user_names]
 
-    if not resp.data:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kamer niet gevonden.")
+    def add(occupants: list, room: dict) -> list | None:
+        merged = list(dict.fromkeys(occupants + user_names))
+        capacity = room.get("capacity")
+        if capacity is not None and len(merged) > capacity:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Deze kamer zit vol (max {capacity} personen).",
+            )
+        return merged
 
-    room = resp.data[0]
-    current = room.get("occupants") or []
-    merged = list(dict.fromkeys(current + body.user_names))
-
-    capacity = room.get("capacity")
-    if capacity is not None and len(merged) > capacity:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Deze kamer zit vol (max {capacity} personen).",
-        )
-
-    try:
-        supabase.table(Tables.HOTEL_ROOMS).update({"occupants": merged}).eq("id", room_id).execute()
-    except Exception as e:
-        logger.error("Failed to assign occupants to hotel room %s: %s", room_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    update_list(Tables.HOTEL_ROOMS, room_id, "occupants", add, select="occupants, capacity", not_found="Kamer niet gevonden.")
 
 
 @router.post(CalendarRoutes.HOTEL_ROOM_LEAVE, status_code=status.HTTP_204_NO_CONTENT)
@@ -317,20 +311,11 @@ def leave_hotel_room(
     event_id: str,
     room_id: str,
     body: HotelRoomLeaveRequest,
-    _: str = Depends(get_current_user),
+    current_user: str = Depends(get_current_user),
 ) -> None:
-    try:
-        resp = supabase.table(Tables.HOTEL_ROOMS).select("occupants").eq("id", room_id).execute()
-    except Exception as e:
-        logger.error("Failed to fetch hotel room %s: %s", room_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-
-    if not resp.data:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kamer niet gevonden.")
-
-    occupants = [o for o in (resp.data[0].get("occupants") or []) if o != body.user_name]
-    try:
-        supabase.table(Tables.HOTEL_ROOMS).update({"occupants": occupants}).eq("id", room_id).execute()
-    except Exception as e:
-        logger.error("Failed to update occupants for hotel room %s: %s", room_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    user_name = act_for_anyone(current_user, body.user_name)
+    update_list(
+        Tables.HOTEL_ROOMS, room_id, "occupants",
+        lambda occupants, _row: [o for o in occupants if o != user_name] if user_name in occupants else None,
+        not_found="Kamer niet gevonden.",
+    )

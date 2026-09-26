@@ -3,9 +3,9 @@ import {
   getStoryPhotos,
   uploadStoryPhoto,
   deleteStoryPhoto,
-  getStorySeen,
   markStorySeen,
   getStorySummary,
+  getUserPhotos,
 } from "../services/stories.service";
 import { QUERY_KEYS, STALE_TIME } from "../constants";
 import type { StoryDaySummary, StorySeenState } from "../types";
@@ -16,6 +16,16 @@ export function useStoryPhotos(eventDayId: string, options?: { enabled?: boolean
     queryFn: () => getStoryPhotos(eventDayId),
     staleTime: STALE_TIME,
     enabled: options?.enabled ?? !!eventDayId,
+  });
+}
+
+/** Every photo one member has uploaded, newest first (their profile). */
+export function useUserPhotos(identifier: string) {
+  return useQuery({
+    queryKey: QUERY_KEYS.userPhotos(identifier),
+    queryFn: () => getUserPhotos(identifier),
+    staleTime: STALE_TIME,
+    enabled: !!identifier,
   });
 }
 
@@ -38,15 +48,6 @@ export function useDeleteStoryPhoto(eventDayId: string) {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.storyDay(eventDayId) });
       qc.invalidateQueries({ queryKey: ["stories", "summary"] });
     },
-  });
-}
-
-export function useStorySeen(eventDayId: string, options?: { enabled?: boolean }) {
-  return useQuery({
-    queryKey: QUERY_KEYS.storySeen(eventDayId),
-    queryFn: () => getStorySeen(eventDayId),
-    staleTime: STALE_TIME,
-    enabled: options?.enabled ?? !!eventDayId,
   });
 }
 

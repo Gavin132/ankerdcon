@@ -15,8 +15,8 @@ interface EventPracticalProps {
   users?: User[];
   isAdmin?: boolean;
   onHotelClick?: () => void;
-  /** When true, renders only the row content — no card surface, gradient bar
-   * or "Praktische info" label — for embedding inside a parent card. */
+  /** When true, renders only the row content — no card surface or
+   * "Praktische info" label — for embedding inside a parent card. */
   bare?: boolean;
 }
 
@@ -53,22 +53,22 @@ export function EventPractical({
   const hotelOccupantCount = new Set(hotelRooms.flatMap((r) => r.occupants)).size;
 
   const content = (
-      <div className="divide-y divide-slate-100 dark:divide-slate-800/70">
+      <div className="divide-y divide-line">
         {rows.map((row, i) =>
           row.accent ? (
             /* Special instructions — amber accent row */
             <div
               key={i}
-              className="flex items-start gap-4 px-5 py-4 bg-amber-50/60 dark:bg-amber-500/[0.06]"
+              className="flex items-start gap-4 bg-amber-50 px-5 py-4 dark:bg-amber-500/10"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/15 mt-0.5">
-                <row.icon size={14} className="text-amber-600 dark:text-amber-400" />
+              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+                <row.icon size={14} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600/70 dark:text-amber-400/60 mb-1">
+                <p className="mb-1 font-mono text-[11px] font-semibold uppercase tracking-[0.09em] text-amber-800 dark:text-amber-300">
                   {row.label}
                 </p>
-                <p className="text-sm font-medium text-amber-900 dark:text-amber-300 leading-relaxed whitespace-pre-line">
+                <p className="whitespace-pre-line text-sm font-medium leading-relaxed text-amber-900 dark:text-amber-200">
                   {row.content}
                 </p>
               </div>
@@ -76,14 +76,14 @@ export function EventPractical({
           ) : (
             /* Standard row */
             <div key={i} className="flex items-start gap-4 px-5 py-4">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 mt-0.5">
-                <row.icon size={14} className="text-slate-500 dark:text-slate-400" />
+              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                <row.icon size={14} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">
+                <p className="section-label mb-1">
                   {row.label}
                 </p>
-                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">
+                <p className="whitespace-pre-line text-sm leading-relaxed text-ink">
                   {row.content}
                 </p>
               </div>
@@ -96,20 +96,20 @@ export function EventPractical({
           <button
             type="button"
             onClick={onHotelClick}
-            className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-slate-50 dark:hover:bg-white/[0.02] active:bg-slate-100 dark:active:bg-white/[0.04] transition-colors group"
+            className="group flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-sunken"
           >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-100 dark:bg-sky-500/10">
-              <BedDouble size={14} className="text-sky-600 dark:text-sky-400" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink group-hover:bg-surface">
+              <BedDouble size={14} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-0.5">
+              <p className="section-label mb-0.5">
                 Hotelkamers
               </p>
               {hotelRooms.length === 0 ? (
-                <p className="text-sm text-slate-500 dark:text-slate-400">Nog geen kamers aangemaakt</p>
+                <p className="text-sm text-ink-3">Nog geen kamers aangemaakt</p>
               ) : (
                 <div className="flex items-center gap-3">
-                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                  <p className="text-sm text-ink-2">
                     {hotelRooms.length} {hotelRooms.length === 1 ? "kamer" : "kamers"}
                     {hotelOccupantCount > 0 && ` · ${hotelOccupantCount} van ${participantCount} ingedeeld`}
                   </p>
@@ -128,7 +128,7 @@ export function EventPractical({
                               key={`${name}-${i}`}
                               name={u?.name ?? name}
                               user={u}
-                              className="h-5 w-5 text-[7px] ring-[1.5px] ring-white dark:ring-slate-900"
+                              className="h-5 w-5 text-[7px] !border-[1.5px] !border-surface"
                             />
                           );
                         })}
@@ -139,7 +139,7 @@ export function EventPractical({
             </div>
             <ChevronRight
               size={15}
-              className="shrink-0 text-slate-300 dark:text-slate-600 group-hover:text-slate-400 dark:group-hover:text-slate-500 transition-colors"
+              className="shrink-0 text-ink-3 transition-colors group-hover:text-ink"
             />
           </button>
         )}
@@ -149,11 +149,9 @@ export function EventPractical({
   if (bare) return content;
 
   return (
-    <div className="card-surface rounded-2xl overflow-hidden">
-      <div className="h-[3px] bg-gradient-to-r from-sky-400 via-violet-400 to-emerald-400" />
-
-      <div className="px-5 pt-4 pb-1">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+    <div className="card-surface overflow-hidden">
+      <div className="px-5 pb-1 pt-4">
+        <p className="section-label">
           Praktische info
         </p>
       </div>

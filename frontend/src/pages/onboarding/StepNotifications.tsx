@@ -20,22 +20,22 @@ export function StepNotifications({ state, onChange, hasDiscord }: StepNotificat
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h2 className="text-xl font-black text-slate-900 dark:text-white">Kies je notificaties</h2>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <h2 className="font-display text-[34px] font-extrabold uppercase leading-[0.95] tracking-[0.01em] text-ink">Kies je notificaties</h2>
+        <p className="mt-2 text-sm leading-relaxed text-ink-2">
           Alles staat standaard uit — zet aan waar je een DM van de bot voor wilt. Je kunt dit later altijd aanpassen.
         </p>
       </div>
 
       {!hasDiscord && (
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/60 dark:bg-amber-500/[0.06] p-4">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-500/10">
-            <MessageSquareOff size={16} className="text-amber-500" />
+        <div className="flex items-start gap-3 rounded-xl border-1.5 border-amber-300 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+            <MessageSquareOff size={16} />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-bold text-slate-900 dark:text-white">
+            <p className="text-sm font-semibold text-ink">
               Je ontvangt nog geen Discord DM's
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="mt-0.5 text-xs leading-relaxed text-ink-2">
               Je bent ingelogd met Google, dus de bot heeft geen Discord-account om naartoe te sturen.
               Je kunt dit hierna alsnog koppelen via je profiel — de keuzes hieronder blijven bewaard voor als je dat doet.
             </p>
@@ -43,17 +43,17 @@ export function StepNotifications({ state, onChange, hasDiscord }: StepNotificat
         </div>
       )}
 
-      <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+      <div className="card-surface p-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${state.allowDm ? "bg-sky-500/10" : "bg-slate-100 dark:bg-slate-800"}`}>
+            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${state.allowDm ? "bg-brand-soft text-brand-text" : "bg-sunken text-ink-3"}`}>
               {state.allowDm
-                ? <Bell size={16} className="text-sky-500" />
-                : <BellOff size={16} className="text-slate-400" />}
+                ? <Bell size={16} />
+                : <BellOff size={16} />}
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-900 dark:text-white">Discord DM's</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+              <p className="text-sm font-semibold text-ink">Discord DM's</p>
+              <p className="mt-0.5 text-xs text-ink-3">
                 {state.allowDm
                   ? "Aan — kies hieronder waarvoor je een bericht wilt."
                   : "Uit — je krijgt geen DM's, ongeacht wat je hieronder aanvinkt."}
@@ -65,12 +65,12 @@ export function StepNotifications({ state, onChange, hasDiscord }: StepNotificat
             role="switch"
             aria-checked={state.allowDm}
             onClick={() => onChange({ allowDm: !state.allowDm })}
-            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
-              state.allowDm ? "bg-sky-500" : "bg-slate-200 dark:bg-slate-700"
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
+              state.allowDm ? "bg-brand-text" : "bg-line"
             }`}
           >
             <span
-              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
+              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white transform transition-transform duration-200 ${
                 state.allowDm ? "translate-x-5" : "translate-x-0"
               }`}
             />
@@ -78,13 +78,13 @@ export function StepNotifications({ state, onChange, hasDiscord }: StepNotificat
         </div>
       </div>
 
-      <div className={`space-y-1 transition-opacity ${state.allowDm ? "" : "opacity-40 pointer-events-none"}`}>
+      <div className={`card-surface divide-y divide-line overflow-hidden transition-opacity ${state.allowDm ? "" : "opacity-40 pointer-events-none"}`}>
         {NOTIFICATION_CATEGORIES.map((cat) => {
           const checked = state.notificationCategories.includes(cat.id);
           return (
             <label
               key={cat.id}
-              className="flex items-start gap-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
+              className="flex cursor-pointer items-start gap-3 px-3.5 py-3 transition-colors hover:bg-sunken"
             >
               <input
                 type="checkbox"
@@ -93,8 +93,8 @@ export function StepNotifications({ state, onChange, hasDiscord }: StepNotificat
                 onChange={() => toggleCategory(cat.id)}
               />
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{cat.label}</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{cat.description}</p>
+                <p className="text-sm font-semibold text-ink">{cat.label}</p>
+                <p className="mt-0.5 text-xs text-ink-3">{cat.description}</p>
               </div>
             </label>
           );

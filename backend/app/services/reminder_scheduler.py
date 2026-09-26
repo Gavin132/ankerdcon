@@ -21,6 +21,7 @@ Sent reminders are recorded on the events row (`reminders_sent` /
 from __future__ import annotations
 
 from datetime import datetime, date, timedelta
+from zoneinfo import ZoneInfo
 
 from app import messages as M
 from app.config import get_settings
@@ -31,6 +32,19 @@ from app.services import notification_service
 from app.services.notification_service import NotificationCategory
 
 logger = get_logger(__name__)
+
+# Events and ticket sales are entered in Dutch local time, but the server (a
+# container) runs on UTC, so "today" and "now" have to be Dutch ones explicitly.
+LOCAL_TZ = ZoneInfo("Europe/Amsterdam")
+
+
+# A ticket sale that opened this long ago is not announced any more.
+_STALE_AFTER = timedelta(hours=12)
+
+
+def _local_now() -> datetime:
+    """The current Dutch wall-clock time, without a timezone (like the dates it is compared to)."""
+    return datetime.now(LOCAL_TZ).replace(tzinfo=None)
 
 # Intervals checked each run: label → days before event
 _INTERVALS: dict[str, int] = {
@@ -70,7 +84,7 @@ async def check_and_send_reminders() -> None:
     if not settings.discord_bot_token:
         return
 
-    today = date.today()
+    today = _local_now().date()
 
     try:
         events = supabase.table(Tables.EVENTS).select(
@@ -98,7 +112,7 @@ async def check_and_send_reminders() -> None:
         parsed = [dt for d in candidates if (dt := _parse_date(d["date"]))]
         if not parsed:
             continue
-        event_date = min(parsed).date()
+        event_date = min(parsed)
 
         already_sent: list[str] = event.get("reminders_sent") or []
 
@@ -139,7 +153,7 @@ async def check_and_send_ticket_reminders() -> None:
     if not settings.discord_bot_token:
         return
 
-    now = datetime.now()
+    now = _local_now()
 
     try:
         resp = supabase.table(Tables.EVENTS).select(
@@ -157,6 +171,8 @@ async def check_and_send_ticket_reminders() -> None:
             sale_at = datetime.fromisoformat(raw)
         except ValueError:
             continue
+        if sale_at.tzinfo is not None:
+            sale_at = sale_at.astimezone(LOCAL_TZ).replace(tzinfo=None)
 
         already_sent: list[str] = event.get("ticket_reminders_sent") or []
         to_send: list[str] = []
@@ -165,6 +181,20 @@ async def check_and_send_ticket_reminders() -> None:
             to_send.append("24h")
         if "open" not in already_sent and now >= sale_at:
             to_send.append("open")
+
+        if now >= sale_at + _STALE_AFTER:
+            # A sale that opened long ago (a past event, or a date entered
+            # after the fact): nobody wants "tickets are open!" now. Record it
+            # as handled so it is not looked at again, without sending.
+            missing = [p for p in ("24h", "open") if p not in already_sent]
+            if missing:
+                try:
+                    supabase.table(Tables.EVENTS).update(
+                        {"ticket_reminders_sent": already_sent + missing}
+                    ).eq("id", event["id"]).execute()
+                except Exception as e:
+                    logger.error("Ticket reminders: failed to mark stale '%s': %s", event["event_name"], e)
+            continue
 
         if not to_send:
             continue

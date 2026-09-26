@@ -1,6 +1,6 @@
 import re
 from typing import Literal, Optional
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class User(BaseModel):
@@ -46,8 +46,12 @@ class UpdateNameRequest(BaseModel):
 
 
 class LocationPingRequest(BaseModel):
-    zone: str
-    text: str
+    zone: str = Field(..., min_length=1, max_length=40)
+    text: str = Field("", max_length=120)
+    # Optional GPS fix from the browser; both or neither.
+    lat: Optional[float] = Field(None, ge=-90, le=90)
+    lng: Optional[float] = Field(None, ge=-180, le=180)
+    accuracy: Optional[float] = Field(None, ge=0, le=100_000)
 
 
 class UpdatePreferencesRequest(BaseModel):

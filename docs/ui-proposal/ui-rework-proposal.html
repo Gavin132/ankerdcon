@@ -1,0 +1,1634 @@
+<title>Ankerd Con Desktop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Poppins:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap">
+<style>
+/* ── Tokens ─────────────────────────────────────────────────────────── */
+:root, .frame[data-mode="light"] {
+  --ground: #E6ECEE;
+  --paper: #F5F8F9;
+  --surface: #FFFFFF;
+  --sunken: #EBF1F3;
+  --ink: #0F1519;
+  --ink-2: #4A5A63;
+  --ink-3: #74838A;
+  --line: #D5DEE2;
+  --outline: #0F1519;
+  --lift: #0F1519;
+  --cyan: #3FD8EE;
+  --cyan-soft: #D5F5FA;
+  --cyan-text: #00768A;
+  --on-cyan: #0F1519;
+  --amber: #E89B0C;
+  --amber-soft: #FCEFD2;
+  --amber-text: #875500;
+  --coral: #E5484D;
+  --coral-soft: #FBE2E2;
+  --coral-text: #B3252B;
+  --green: #1FA971;
+  --green-soft: #DAF3E8;
+  --green-text: #0C7A4E;
+  --nav-active-bg: #0F1519;
+  --nav-active-fg: #F5F8F9;
+  --hatch: rgba(15, 21, 25, 0.07);
+  --edge: #BCC8CE;
+  --edge-soft: rgba(15, 21, 25, 0.06);
+  --nav-edge: #000000;
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-line: rgba(255, 255, 255, 0.8);
+  --glass-shade: rgba(15, 21, 25, 0.16);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #06090B;
+    --paper: #0D1216;
+    --surface: #141B20;
+    --sunken: #10161A;
+    --ink: #E6F0F3;
+    --ink-2: #A0B0B8;
+    --ink-3: #6E7E86;
+    --line: #243039;
+    --outline: #BFD3DA;
+    --lift: #3FD8EE;
+    --cyan: #3FD8EE;
+    --cyan-soft: #0E353D;
+    --cyan-text: #62E2F4;
+    --on-cyan: #0F1519;
+    --amber: #F2A516;
+    --amber-soft: #35270A;
+    --amber-text: #F5C15A;
+    --coral: #F0565B;
+    --coral-soft: #3A1517;
+    --coral-text: #FF8F92;
+    --green: #2BBF82;
+    --green-soft: #0B2F22;
+    --green-text: #5BD39E;
+    --nav-active-bg: #3FD8EE;
+    --nav-active-fg: #0F1519;
+    --hatch: rgba(230, 240, 243, 0.07);
+    --edge: #040709;
+    --edge-soft: rgba(0, 0, 0, 0.35);
+    --nav-edge: #178FA1;
+    --glass-bg: rgba(20, 27, 32, 0.55);
+    --glass-line: rgba(255, 255, 255, 0.14);
+    --glass-shade: rgba(0, 0, 0, 0.55);
+  }
+}
+:root[data-theme="dark"], .frame[data-mode="dark"] {
+  --ground: #06090B;
+  --paper: #0D1216;
+  --surface: #141B20;
+  --sunken: #10161A;
+  --ink: #E6F0F3;
+  --ink-2: #A0B0B8;
+  --ink-3: #6E7E86;
+  --line: #243039;
+  --outline: #BFD3DA;
+  --lift: #3FD8EE;
+  --cyan: #3FD8EE;
+  --cyan-soft: #0E353D;
+  --cyan-text: #62E2F4;
+  --on-cyan: #0F1519;
+  --amber: #F2A516;
+  --amber-soft: #35270A;
+  --amber-text: #F5C15A;
+  --coral: #F0565B;
+  --coral-soft: #3A1517;
+  --coral-text: #FF8F92;
+  --green: #2BBF82;
+  --green-soft: #0B2F22;
+  --green-text: #5BD39E;
+  --nav-active-bg: #3FD8EE;
+  --nav-active-fg: #0F1519;
+  --hatch: rgba(230, 240, 243, 0.07);
+  --edge: #040709;
+  --edge-soft: rgba(0, 0, 0, 0.35);
+  --nav-edge: #178FA1;
+  --glass-bg: rgba(20, 27, 32, 0.55);
+  --glass-line: rgba(255, 255, 255, 0.14);
+  --glass-shade: rgba(0, 0, 0, 0.55);
+}
+
+:root {
+  --display: "Big Shoulders Display", "Arial Narrow", "Roboto Condensed", Impact, sans-serif;
+  --body: "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "Spline Sans Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+/* ── Depth ──────────────────────────────────────────────────────────
+   Flat, decided 2026-09-14. Hard diagonal ink shadow only on the one
+   lifted element per screen; nothing moves on hover, buttons press in. */
+body, .frame, .phone {
+  --sh-frame: 8px 8px 0 var(--lift);
+  --sh-frame-sm: 6px 6px 0 var(--lift);
+  --sh-lift: 0 0 0 transparent;
+  --sh-lift-sm: 0 0 0 transparent;
+  --sh-btn: 3px 3px 0 var(--lift);
+  --sh-btn-hover: 3px 3px 0 var(--lift);
+  --sh-btn-press: 1px 1px 0 var(--lift);
+  --t-btn-hover: none;
+  --t-btn-press: translate(2px, 2px);
+  --sh-card: 0 0 0 transparent;
+  --sh-card-hover: 0 0 0 transparent;
+  --sh-card-press: 0 0 0 transparent;
+  --t-card-hover: none;
+  --t-card-press: none;
+  --sh-seg: 0 0 0 1.5px var(--outline);
+  --sh-sunken: none;
+  --sh-nav: none;
+  --gloss: none;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--cyan-text); outline-offset: 2px; }
+.lucide { width: 16px; height: 16px; stroke-width: 2; flex-shrink: 0; }
+
+/* ── Proposal page ─────────────────────────────────────────────────── */
+.wrap {
+  max-width: 1380px;
+  margin: 0 auto;
+  padding-inline: clamp(16px, 4vw, 48px);
+  padding-block: 40px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 72px;
+}
+.masthead { display: flex; flex-direction: column; gap: 20px; }
+.masthead-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.masthead-top img { width: 44px; height: 44px; }
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+h1.hero {
+  font-family: var(--display);
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: clamp(48px, 8.5vw, 112px);
+  line-height: 0.88;
+  letter-spacing: 0.005em;
+  margin: 0;
+  text-wrap: balance;
+  max-width: 14ch;
+}
+h1.hero em { font-style: normal; color: var(--cyan-text); }
+.lede { font-size: 19px; max-width: 62ch; margin: 0; color: var(--ink-2); text-wrap: pretty; }
+.lede strong { color: var(--ink); font-weight: 600; }
+
+h2.sec {
+  font-family: var(--display);
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: clamp(30px, 4vw, 44px);
+  line-height: 0.95;
+  margin: 0;
+  text-wrap: balance;
+}
+.sec-head { display: flex; flex-direction: column; gap: 10px; max-width: 70ch; }
+.sec-head p { margin: 0; color: var(--ink-2); }
+section { display: flex; flex-direction: column; gap: 28px; }
+
+/* Current state diagnosis */
+.diag { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; align-items: start; }
+@media (max-width: 860px) { .diag { grid-template-columns: 1fr; } }
+.now-fig { display: flex; flex-direction: column; gap: 10px; margin: 0; }
+.now-screen {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  max-width: 100%;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: repeating-linear-gradient(135deg, var(--hatch) 0 6px, transparent 6px 12px), var(--sunken);
+}
+.now-col {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 26.7%; width: 46.6%;
+  background: #F1F5F9;
+  display: flex; flex-direction: column; gap: 5%;
+  padding: 3% 3% 0;
+}
+.now-col .bar { height: 7%; background: #fff; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+.now-col .hero-blk { height: 30%; border-radius: 8px; background: linear-gradient(145deg, #0C2A3E, #075985); }
+.now-col .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 6%; height: 14%; }
+.now-col .tiles div, .now-col .blk { background: #F8FAFF; border: 1px solid #E2E8F0; border-radius: 8px; }
+.now-col .blk { height: 12%; }
+.now-nav {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 9%;
+  background: rgba(255,255,255,.92); border-top: 1px solid #E2E8F0;
+}
+.now-nav::after {
+  content: ""; position: absolute; left: 27.2%; top: 14%; height: 72%; width: 9%;
+  border-radius: 8px; background: #334155;
+}
+.now-gap {
+  position: absolute; top: 44%;
+  font-family: var(--mono); font-size: clamp(9px, 1.3vw, 12px);
+  color: var(--ink-2);
+  display: flex; align-items: center; justify-content: center;
+  width: 26.7%;
+}
+.now-gap::before, .now-gap::after { content: ""; flex: 1; height: 1px; background: var(--ink-3); margin-inline: 6%; }
+.now-gap.l { left: 0; } .now-gap.r { right: 0; }
+.now-fig figcaption { font-size: 14px; color: var(--ink-3); }
+
+.problems { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 22px; }
+.problems li { display: grid; grid-template-columns: 28px 1fr; gap: 12px; }
+.problems .lucide { width: 22px; height: 22px; color: var(--coral-text); margin-top: 2px; }
+.problems h3 { margin: 0 0 4px; font-size: 17px; font-weight: 600; }
+.problems p { margin: 0; color: var(--ink-2); font-size: 15px; max-width: 58ch; }
+code {
+  font-family: var(--mono); font-size: 0.86em;
+  background: var(--sunken); border: 1px solid var(--line);
+  padding: 1px 5px; border-radius: 4px;
+}
+
+/* Mock caption row */
+.mock-caption { display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; }
+.hint { font-size: 14px; color: var(--ink-3); display: flex; gap: 8px; align-items: center; }
+.sample-tag {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+  border: 1px dashed var(--ink-3); color: var(--ink-2); padding: 3px 8px; border-radius: 99px;
+}
+
+/* ── The app mock ───────────────────────────────────────────────────── */
+.frame {
+  container: app / inline-size;
+  background: var(--paper);
+  color: var(--ink);
+  border: 2px solid var(--outline);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--sh-frame);
+  font-size: 14px;
+  line-height: 1.45;
+  position: relative;
+}
+.app { display: grid; grid-template-columns: 236px minmax(0, 1fr); min-height: 780px; }
+
+/* Sidebar */
+.side {
+  border-right: 1.5px solid var(--line);
+  background: var(--surface);
+  padding: 18px 14px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 6px; }
+.brand img { width: 38px; height: 38px; }
+.brand b { font-family: var(--display); font-weight: 900; font-size: 24px; letter-spacing: .02em; text-transform: uppercase; line-height: 1; }
+.wristband {
+  background: var(--cyan);
+  color: var(--on-cyan);
+  border: 2px solid var(--outline);
+  border-radius: 10px;
+  padding: 9px 12px;
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 10px;
+  text-align: left; cursor: pointer;
+  background-image: radial-gradient(circle at 100% 50%, var(--paper) 0 5px, transparent 5.5px), radial-gradient(circle at 0 50%, var(--paper) 0 5px, transparent 5.5px);
+}
+.wristband .wb-k { font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
+.wristband .wb-n { font-family: var(--display); font-weight: 800; font-size: 19px; text-transform: uppercase; line-height: 1; }
+.wristband .wb-d { grid-row: 1 / span 2; grid-column: 2; font-family: var(--display); font-weight: 900; font-size: 30px; line-height: .9; text-align: right; }
+.wristband .wb-d small { display: block; font-family: var(--mono); font-size: 9px; font-weight: 500; letter-spacing: .06em; }
+
+.nav { display: flex; flex-direction: column; gap: 2px; }
+.nav-label { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); padding: 12px 10px 6px; }
+.nav button, .nav a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 8px; border: 0; background: none;
+  text-align: left; cursor: pointer; font-weight: 500; color: var(--ink-2);
+  text-decoration: none;
+}
+.nav button:hover { background: var(--sunken); color: var(--ink); }
+.nav button[aria-current="page"] { background: var(--nav-active-bg); color: var(--nav-active-fg); box-shadow: var(--sh-nav); }
+.nav button[aria-current="page"] .lucide { color: var(--cyan); }
+.frame[data-mode="dark"] .nav button[aria-current="page"] .lucide,
+.nav button[aria-current="page"] .lucide { stroke-width: 2.4; }
+.nav .count {
+  margin-left: auto; font-family: var(--mono); font-size: 11px; font-weight: 600;
+  background: var(--coral); color: #fff; border-radius: 99px; padding: 0 7px; line-height: 18px;
+}
+.side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 4px; border-top: 1.5px solid var(--line); padding-top: 12px; }
+.me { display: flex; align-items: center; gap: 10px; padding: 6px 8px; }
+.me div { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.me small { color: var(--ink-3); font-size: 12px; }
+
+/* Top bar */
+.main { display: flex; flex-direction: column; min-width: 0; }
+.topbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 28px; border-bottom: 1.5px solid var(--line); background: var(--paper);
+}
+.search {
+  flex: 1; max-width: 460px; display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: 9px; padding: 7px 10px; color: var(--ink-3);
+  box-shadow: var(--sh-sunken);
+}
+.search input { flex: 1; border: 0; background: transparent; font: inherit; color: var(--ink); min-width: 0; }
+.search input::placeholder { color: var(--ink-3); }
+.search input:focus { outline: none; }
+.search:focus-within { border-color: var(--cyan-text); }
+kbd { font-family: var(--mono); font-size: 11px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; color: var(--ink-3); }
+.spacer { flex: 1; }
+.icon-btn {
+  width: 36px; height: 36px; display: grid; place-items: center;
+  border-radius: 9px; border: 1.5px solid transparent; background: none; cursor: pointer; color: var(--ink-2); position: relative;
+}
+.icon-btn:hover { background: var(--sunken); color: var(--ink); }
+.icon-btn .dot { position: absolute; top: 7px; right: 8px; width: 7px; height: 7px; background: var(--coral); border-radius: 50%; border: 1.5px solid var(--paper); }
+.btn {
+  display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+  font-weight: 600; font-size: 13.5px; padding: 8px 14px; border-radius: 9px;
+  border: 1.5px solid var(--line); background: var(--surface); color: var(--ink);
+  white-space: nowrap;
+}
+.btn { box-shadow: var(--sh-card); transition: transform .08s, box-shadow .08s, border-color .12s; }
+.btn:hover { border-color: var(--ink-3); transform: var(--t-card-hover); box-shadow: var(--sh-card-hover); }
+.btn:active { transform: var(--t-card-press); box-shadow: var(--sh-card-press); }
+.btn-primary {
+  background: var(--cyan); color: var(--on-cyan); border: 2px solid var(--outline);
+  box-shadow: var(--sh-btn); background-image: var(--gloss);
+}
+.btn-primary:hover { border-color: var(--outline); transform: var(--t-btn-hover); box-shadow: var(--sh-btn-hover); }
+.btn-primary:active { transform: var(--t-btn-press); box-shadow: var(--sh-btn-press); }
+.btn-sm { padding: 5px 10px; font-size: 12.5px; }
+
+/* Avatars */
+.av {
+  --c: #5A6B75;
+  width: 28px; height: 28px; border-radius: 50%; background: var(--c); color: #fff;
+  display: inline-grid; place-items: center; font-weight: 700; font-size: 11px; flex-shrink: 0;
+}
+.av.lg { width: 34px; height: 34px; font-size: 13px; }
+.av.sm { width: 22px; height: 22px; font-size: 9.5px; }
+.av.dark-text { color: #0F1519; }
+.pile { display: flex; }
+.pile .av { box-shadow: 0 0 0 2px var(--surface); }
+.pile .av + .av { margin-left: -7px; }
+
+/* Content */
+.view { padding: 32px 40px 48px; display: flex; flex-direction: column; gap: 32px; }
+.view[hidden] { display: none !important; }
+.page-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.page-head .kicker { font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.page-head h2 { font-family: var(--display); font-weight: 800; font-size: 42px; line-height: .95; margin: 2px 0 0; letter-spacing: .005em; }
+.head-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.hub-grid { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: 32px; align-items: start; }
+.col { display: flex; flex-direction: column; gap: 32px; min-width: 0; }
+
+.panel { background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; box-shadow: var(--sh-card); }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px 10px; }
+.panel-title { font-family: var(--mono); font-size: 11.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
+.panel-link { font-size: 12.5px; font-weight: 600; color: var(--cyan-text); text-decoration: none; display: inline-flex; gap: 4px; align-items: center; background: none; border: 0; cursor: pointer; padding: 0; }
+.panel-link .lucide { width: 14px; height: 14px; }
+.tally { font-family: var(--mono); font-size: 11px; font-weight: 600; background: var(--coral-soft); color: var(--coral-text); border-radius: 99px; padding: 1px 8px; }
+
+/* Ticket */
+.ticket {
+  display: grid; grid-template-columns: minmax(0, 1fr) 168px;
+  background: var(--surface); border: 2px solid var(--outline); border-radius: 14px;
+  box-shadow: var(--sh-lift); overflow: hidden;
+}
+.ticket-cover {
+  height: 80px; background-color: #0F1519; position: relative; overflow: hidden;
+  background-image: radial-gradient(circle, rgba(63, 216, 238, .55) 1.5px, transparent 1.9px);
+  background-size: 9px 9px;
+}
+.ticket-cover::before {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, #0F1519 0%, rgba(15,21,25,.2) 45%, rgba(15,21,25,.85) 100%);
+}
+.ticket-cover span {
+  position: absolute; right: 18px; bottom: -22px;
+  font-family: var(--display); font-weight: 900; font-size: 118px; line-height: 1;
+  color: transparent; -webkit-text-stroke: 1.5px #3FD8EE; letter-spacing: .02em;
+}
+.ticket-cover .chips { position: absolute; left: 20px; top: 16px; }
+.ticket-body { padding: 20px 24px 20px; display: flex; flex-direction: column; gap: 18px; }
+.ticket-title { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 40px; line-height: .92; margin: 0; letter-spacing: .01em; }
+.ticket-where { color: var(--ink-2); display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.ticket-where .lucide { width: 14px; height: 14px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600;
+  font-family: var(--mono); letter-spacing: .05em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,.1); color: #E6F0F3; border: 1px solid rgba(255,255,255,.22);
+}
+.chip .lucide { width: 12px; height: 12px; }
+.days { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.day {
+  display: grid; grid-template-columns: auto 1fr; gap: 0 10px; align-items: center; text-align: left;
+  border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--surface); cursor: pointer;
+}
+.day:hover { border-color: var(--ink-3); }
+.day.travel { background: repeating-linear-gradient(135deg, var(--hatch) 0 6px, transparent 6px 12px), var(--surface); }
+.day .dd { grid-row: span 2; text-align: center; line-height: 1; min-width: 30px; }
+.day .dow { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .08em; color: var(--ink-3); }
+.day .dnum { display: block; font-family: var(--display); font-weight: 800; font-size: 26px; }
+.day .dt { font-weight: 600; font-size: 13px; }
+.day .ds { font-size: 12px; color: var(--ink-3); display: flex; align-items: center; gap: 4px; min-width: 0; }
+.day .ds .lucide { width: 12px; height: 12px; }
+.ticket-foot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ticket-foot .who { color: var(--ink-2); font-size: 13px; }
+.ticket-foot .spacer { min-width: 8px; }
+.stub {
+  background: var(--cyan); background-image: var(--gloss); color: var(--on-cyan);
+  border-left: 2px dashed var(--outline);
+  padding: 18px 16px; display: flex; flex-direction: column; justify-content: center; gap: 8px; text-align: center;
+}
+.stub .k { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; }
+.stub .big { font-family: var(--display); font-weight: 900; font-size: 104px; line-height: .8; letter-spacing: -.01em; }
+.stub .meta { font-family: var(--mono); font-size: 11px; line-height: 1.5; border-top: 1.5px solid rgba(15,21,25,.35); padding-top: 10px; }
+.stub .meta b { display: block; font-size: 13px; }
+
+/* Quick rides */
+.quick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.q {
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; padding: 13px 14px;
+  display: flex; flex-direction: column; gap: 8px; text-align: left; cursor: pointer;
+}
+.q, .day, button.ride { box-shadow: var(--sh-card); transition: transform .08s, box-shadow .08s, border-color .12s; }
+.q:hover, .day:hover, button.ride:hover { transform: var(--t-card-hover); box-shadow: var(--sh-card-hover); }
+.q:active, .day:active, button.ride:active { transform: var(--t-card-press); box-shadow: var(--sh-card-press); }
+.q:hover { border-color: var(--ink-3); }
+.q-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.q-ico { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; background: var(--sunken); color: var(--ink); }
+.q-name { font-weight: 600; font-size: 14.5px; }
+.q-when { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pill.ok { background: var(--green-soft); color: var(--green-text); }
+.pill.warn { background: var(--amber-soft); color: var(--amber-text); }
+.pill.bad { background: var(--coral-soft); color: var(--coral-text); }
+.pill.info { background: var(--cyan-soft); color: var(--cyan-text); }
+
+/* Upcoming list */
+.rows { display: flex; flex-direction: column; }
+.row {
+  display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 16px; align-items: center;
+  padding: 13px 18px; border-top: 1px solid var(--line); cursor: pointer; background: none; border-left: 0; border-right: 0; border-bottom: 0; text-align: left; width: 100%;
+}
+.row:hover { background: var(--sunken); }
+.row:last-child { border-radius: 0 0 11px 11px; }
+.row .date { font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
+.row .date small { display: block; font-weight: 400; color: var(--ink-3); font-size: 11px; }
+.row .name { font-weight: 600; font-size: 14px; }
+.row .loc { font-size: 12.5px; color: var(--ink-3); }
+.status-text, td.muted { font-size: 12.5px; color: var(--ink-3); }
+.tag { font-family: var(--mono); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); border: 1px solid var(--line); padding: 1px 6px; border-radius: 5px; }
+.row-tags { display: flex; gap: 5px; margin-top: 3px; flex-wrap: wrap; }
+
+/* Actions */
+.acts { list-style: none; margin: 0; padding: 0 8px 8px; display: flex; flex-direction: column; gap: 2px; }
+.act { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 8px; border-radius: 9px; width: 100%; border: 0; background: none; text-align: left; cursor: pointer; }
+.act > .lucide { color: var(--ink-3); }
+.act:hover { background: var(--sunken); }
+.act-ico { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; }
+.act-ico.bad { background: var(--coral-soft); color: var(--coral-text); }
+.act-ico.warn { background: var(--amber-soft); color: var(--amber-text); }
+.act-ico.info { background: var(--cyan-soft); color: var(--cyan-text); }
+.act-t { font-weight: 600; font-size: 13.5px; line-height: 1.3; }
+.act-s { font-size: 12px; color: var(--ink-3); }
+
+/* Balance */
+.bal { padding: 2px 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+.bal-num { font-family: var(--mono); font-weight: 600; font-size: 32px; letter-spacing: -.02em; color: var(--green-text); line-height: 1; font-variant-numeric: tabular-nums; }
+.bal-sub { font-size: 13px; color: var(--ink-2); }
+.splitbar { display: flex; height: 10px; border-radius: 99px; overflow: hidden; gap: 3px; }
+.splitbar .in { background: var(--green); }
+.splitbar .out { background: var(--coral); }
+.legend { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; gap: 10px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i.sw { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+
+/* Rooms */
+.rooms { display: flex; flex-direction: column; padding: 0 8px 8px; }
+.room { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px; border-radius: 9px; }
+.room + .room { border-top: 1px dashed var(--line); border-radius: 0; }
+.room-no { font-family: var(--display); font-weight: 800; font-size: 26px; line-height: 1; }
+.room-no small { display: block; font-family: var(--mono); font-size: 9.5px; font-weight: 500; letter-spacing: .08em; color: var(--ink-3); }
+.room-names { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; }
+.me-hl { color: var(--ink); font-weight: 600; }
+
+/* Transport board */
+.subnav { box-shadow: var(--sh-sunken); display: flex; gap: 4px; background: var(--sunken); border: 1.5px solid var(--line); border-radius: 10px; padding: 3px; flex-wrap: wrap; }
+.subnav button { border: 0; background: none; padding: 5px 12px; border-radius: 7px; cursor: pointer; font-weight: 600; font-size: 13px; color: var(--ink-2); }
+.subnav button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--sh-seg); }
+.summary { display: flex; gap: 22px; flex-wrap: wrap; color: var(--ink-2); font-size: 13.5px; align-items: center; }
+.summary b { font-family: var(--mono); color: var(--ink); font-weight: 600; margin-right: 4px; }
+.board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) 220px; gap: 24px; align-items: start; }
+.lane { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.lane-head { display: flex; align-items: center; gap: 8px; padding: 0 2px 4px; border-bottom: 2px solid var(--outline); }
+.lane-head h3 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 22px; text-transform: uppercase; letter-spacing: .02em; }
+.lane-head .n { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+.lane-head .when { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink-3); text-transform: uppercase; }
+.ride { background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; align-items: stretch; gap: 8px; width: 100%; text-align: left; }
+button.ride { cursor: pointer; }
+button.ride:hover { border-color: var(--ink-3); }
+.route-line { font-size: 13px; color: var(--ink-2); }
+.seats-text { font-size: 12px; color: var(--ink-3); }
+.ride.needs .btn { align-self: flex-start; }
+.ride-top { display: flex; align-items: center; gap: 9px; }
+.ride-top .who { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.ride-top .who small { color: var(--ink-3); font-size: 11.5px; display: flex; align-items: center; gap: 4px; }
+.ride-top .who small .lucide { width: 12px; height: 12px; }
+.ride-top .t { margin-left: auto; font-family: var(--mono); font-weight: 600; font-size: 15px; }
+.route { display: grid; grid-template-columns: 10px 1fr; gap: 2px 9px; font-size: 12.5px; }
+.route i.stop { width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--ink); margin-top: 4px; }
+.route i.stop.end { background: var(--ink); }
+.route i.leg { width: 2px; height: 10px; background: var(--line); margin-left: 3.5px; }
+.route span.leg-gap { height: 10px; }
+.ride-foot { display: flex; align-items: center; gap: 8px; justify-content: space-between; flex-wrap: wrap; border-top: 1px dashed var(--line); padding-top: 9px; }
+.seats { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--ink-2); }
+.seats i.s { width: 11px; height: 11px; border-radius: 3px; background: var(--ink); display: inline-block; }
+.seats i.s.free { background: none; box-shadow: inset 0 0 0 1.5px var(--ink-3); }
+.seats em { font-style: normal; margin-left: 6px; }
+.ride.needs { border-style: dashed; border-color: var(--coral); background: var(--coral-soft); }
+.ride.needs .hl { color: var(--coral-text); font-weight: 600; }
+.missing { background: var(--amber-soft); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.missing h3 { margin: 0; font-family: var(--display); font-size: 22px; font-weight: 800; text-transform: uppercase; color: var(--amber-text); display: flex; align-items: center; gap: 8px; }
+.missing p { margin: 0; font-size: 12.5px; color: var(--ink-2); }
+.miss-row { display: flex; align-items: center; gap: 9px; background: var(--surface); border-radius: 9px; padding: 8px 9px; }
+.miss-row .nm { font-weight: 600; font-size: 13px; }
+.miss-row .gaps { margin-left: auto; font-size: 12px; color: var(--ink-3); }
+
+/* Finance */
+.fin-grid { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 22px; align-items: start; }
+.owe { list-style: none; margin: 0; padding: 0 8px 8px; }
+.owe li { display: flex; align-items: center; gap: 10px; padding: 9px 8px; border-radius: 9px; border-top: 1px solid var(--line); }
+.owe li:hover { background: var(--sunken); }
+.owe .nm { font-weight: 600; font-size: 13.5px; }
+.owe .nm small { display: block; font-weight: 400; color: var(--ink-3); font-size: 12px; }
+.owe .amt { margin-left: auto; font-family: var(--mono); font-weight: 600; font-variant-numeric: tabular-nums; }
+.amt.pos { color: var(--green-text); } .amt.neg { color: var(--coral-text); }
+.owe-sub { font-family: var(--mono); font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); padding: 10px 16px 2px; }
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 640px; }
+th { font-family: var(--mono); font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; text-align: left; padding: 8px 16px; border-bottom: 1.5px solid var(--line); white-space: nowrap; }
+td { padding: 11px 16px; border-bottom: 1px solid var(--line); vertical-align: middle; font-size: 13.5px; }
+tr:last-child td { border-bottom: 0; }
+tbody tr:hover td { background: var(--sunken); }
+td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+td .d { font-family: var(--mono); font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+td .desc { font-weight: 600; }
+td .desc small { display: block; font-weight: 400; color: var(--ink-3); font-size: 12px; }
+.payer { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.progress { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.progress .track { width: 56px; height: 6px; border-radius: 99px; background: var(--sunken); box-shadow: inset 0 0 0 1px var(--line); overflow: hidden; }
+.progress .fill { height: 100%; background: var(--green); }
+
+/* Bottom nav (mobile fallback inside the mock) */
+.bottomnav { display: none; }
+
+/* Toast */
+.toast {
+  position: absolute; left: 50%; bottom: 20px; transform: translate(-50%, 12px);
+  background: var(--ink); color: var(--paper); padding: 9px 14px; border-radius: 9px; font-size: 13px; font-weight: 500;
+  opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s; white-space: nowrap; z-index: 5;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ── Mock responsiveness (container-based) ─────────────────────────── */
+@container app (max-width: 1180px) {
+  .board { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .missing { grid-column: 1 / -1; }
+  .fin-grid { grid-template-columns: 1fr; }
+}
+@container app (max-width: 1040px) {
+  .hub-grid { grid-template-columns: 1fr; }
+  .app { grid-template-columns: 76px minmax(0, 1fr); }
+  .side { padding: 16px 10px; align-items: center; }
+  .brand b, .nav-label, .nav button span, .wristband, .me div, .nav .count { display: none; }
+  .nav button { justify-content: center; padding: 10px; }
+  .nav button .lucide { width: 19px; height: 19px; }
+  .brand { padding: 0; }
+}
+@container app (max-width: 760px) {
+  .app { grid-template-columns: 1fr; min-height: 0; }
+  .side { display: none; }
+  .topbar { padding: 10px 16px; }
+  .search { display: none; }
+  .topbar .mobile-brand { display: flex; }
+  .topbar .new-btn span { display: none; }
+  .view { padding: 18px 16px 24px; }
+  .page-head h2 { font-size: 34px; }
+  .ticket { grid-template-columns: 1fr; }
+  .stub { border-left: 0; border-top: 2px dashed var(--outline); flex-direction: row; align-items: center; justify-content: center; gap: 12px; text-align: left; padding: 10px 16px; }
+  .stub .big { font-size: 56px; }
+  .stub .meta { border-top: 0; padding-top: 0; text-align: right; }
+  .days { grid-template-columns: 1fr; }
+  .quick { grid-template-columns: 1fr; }
+  .row { grid-template-columns: 76px minmax(0, 1fr) auto; }
+  .board { grid-template-columns: 1fr; }
+  .bottomnav {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px;
+    border-top: 1.5px solid var(--line); background: var(--surface); padding: 6px;
+  }
+  .bottomnav button { border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10.5px; font-weight: 600; color: var(--ink-3); padding: 6px 2px; border-radius: 9px; cursor: pointer; }
+  .bottomnav button[aria-current="page"] { background: var(--nav-active-bg); color: var(--nav-active-fg); box-shadow: var(--sh-nav); }
+  .bottomnav .lucide { width: 19px; height: 19px; }
+}
+.topbar .mobile-brand { display: none; align-items: center; gap: 8px; font-family: var(--display); font-weight: 900; font-size: 20px; text-transform: uppercase; }
+.topbar .mobile-brand img { width: 30px; height: 30px; }
+
+/* ── Phones ────────────────────────────────────────────────────────── */
+.phones { display: flex; flex-wrap: wrap; justify-content: center; gap: 48px 36px; }
+.phone-wrap { margin: 0; display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 360px; }
+.phone {
+  container: app / inline-size;
+  position: relative;
+  height: 740px;
+  display: flex; flex-direction: column;
+  background: var(--paper); color: var(--ink);
+  border: 2px solid var(--outline); border-radius: 36px;
+  box-shadow: var(--sh-frame-sm);
+  overflow: hidden;
+  font-size: 14px; line-height: 1.45;
+}
+.phone-status { display: flex; justify-content: space-between; align-items: center; padding: 12px 26px 4px; font-family: var(--mono); font-size: 12px; font-weight: 600; }
+.phone-status .icons { display: flex; gap: 5px; }
+.phone-status .lucide { width: 14px; height: 14px; }
+.phone-top { display: flex; align-items: center; gap: 8px; padding: 6px 16px 10px; border-bottom: 1.5px solid var(--line); }
+.phone-top img { width: 30px; height: 30px; }
+.phone-top b { font-family: var(--display); font-weight: 900; font-size: 21px; text-transform: uppercase; line-height: 1; }
+.phone-top .icon-btn { margin-left: auto; cursor: default; }
+.phone-body { flex: 1; overflow-y: auto; scrollbar-width: none; }
+.phone-body::-webkit-scrollbar { display: none; }
+.phone .view { padding: 18px 16px 88px; gap: 22px; }
+.phone .page-head h2 { font-size: 32px; }
+.phone .ticket { box-shadow: var(--sh-lift-sm); }
+.phone .ticket-cover { height: 60px; }
+.phone .ticket-cover span { font-size: 84px; bottom: -16px; }
+.phone .ticket-body { padding: 16px; gap: 14px; }
+.phone .ticket-title { font-size: 30px; }
+.phone .days { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.phone .day { grid-template-columns: 1fr; text-align: center; padding: 8px 4px; cursor: default; }
+.phone .day .dd { grid-row: auto; }
+.phone .day .dt { font-size: 11.5px; font-weight: 500; color: var(--ink-2); }
+.phone .act { cursor: default; }
+.phone .seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.phone .lane { gap: 12px; }
+.notice { background: var(--amber-soft); color: var(--ink-2); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
+.notice b { color: var(--amber-text); }
+.xlist { list-style: none; margin: 0; padding: 0 16px 6px; }
+.xlist li { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-top: 1px solid var(--line); }
+.x-main { display: flex; flex-direction: column; min-width: 0; }
+.x-main b { font-weight: 600; font-size: 13.5px; }
+.x-main small { color: var(--ink-3); font-size: 12px; }
+.x-side { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.x-amt { font-family: var(--mono); font-weight: 600; font-variant-numeric: tabular-nums; }
+.fab {
+  position: absolute; right: 16px; bottom: 86px;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--cyan); color: var(--on-cyan);
+  border: 2px solid var(--outline); border-radius: 14px;
+  box-shadow: var(--sh-btn); background-image: var(--gloss);
+  padding: 10px 16px 10px 12px; font-weight: 700; font-size: 14px;
+}
+.phone-nav { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; padding: 6px 6px 16px; border-top: 1.5px solid var(--line); background: var(--surface); }
+.phone-nav span { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10.5px; font-weight: 600; color: var(--ink-3); padding: 6px 2px; border-radius: 10px; }
+.phone-nav span[aria-current] { background: var(--nav-active-bg); color: var(--nav-active-fg); box-shadow: var(--sh-nav); }
+.phone-nav span[aria-current] .lucide { color: var(--cyan); }
+.phone-nav .lucide { width: 19px; height: 19px; }
+.phone-cap { font-size: 14px; color: var(--ink-2); padding-inline: 4px; }
+.phone-cap b { display: block; color: var(--ink); font-weight: 600; margin-bottom: 2px; }
+
+/* ── Decisions ─────────────────────────────────────────────────────── */
+.decisions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-top: 2px solid var(--ink); }
+.decision { padding: 22px 28px 26px 0; border-bottom: 1.5px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.decision:nth-child(even) { padding: 22px 0 26px 28px; border-left: 1.5px solid var(--line); }
+.decision:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.decision h3 { margin: 0; font-size: 19px; font-weight: 600; text-wrap: balance; }
+.decision p { margin: 0; color: var(--ink-2); font-size: 15px; max-width: 60ch; }
+.decision .was { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+.decision .was s { text-decoration-color: var(--coral); }
+@media (max-width: 760px) {
+  .decisions { grid-template-columns: 1fr; }
+  .decision, .decision:nth-child(even) { padding: 20px 0; border-left: 0; }
+}
+
+/* ── Tokens ────────────────────────────────────────────────────────── */
+.tok-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; }
+@media (max-width: 860px) { .tok-grid { grid-template-columns: 1fr; } }
+.swatches { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 480px) { .swatches { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.sw-card { display: flex; flex-direction: column; gap: 6px; }
+.sw-chip { height: 64px; border-radius: 8px; border: 1.5px solid var(--line); box-shadow: var(--sh-card); }
+.sw-name { font-weight: 600; font-size: 14px; }
+.sw-hex { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+.sw-role { font-size: 12.5px; color: var(--ink-2); line-height: 1.35; }
+.type-specs { display: flex; flex-direction: column; gap: 0; border-top: 1.5px solid var(--line); }
+.spec { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 16px; padding: 16px 0; border-bottom: 1.5px solid var(--line); align-items: baseline; }
+.spec-meta { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); line-height: 1.5; }
+.spec-meta b { display: block; color: var(--ink); font-weight: 600; font-size: 12px; }
+.spec .s-display { font-family: var(--display); font-weight: 900; font-size: 46px; line-height: .92; text-transform: uppercase; overflow-wrap: anywhere; }
+.spec .s-body { font-family: var(--body); font-size: 16px; }
+.spec .s-mono { font-family: var(--mono); font-size: 15px; font-variant-numeric: tabular-nums; }
+@media (max-width: 480px) { .spec { grid-template-columns: 1fr; gap: 6px; } }
+
+/* ── Rollout ───────────────────────────────────────────────────────── */
+.steps { list-style: none; margin: 0; padding: 0; counter-reset: step; display: flex; flex-direction: column; }
+.steps li { counter-increment: step; display: grid; grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1fr); gap: 20px; padding: 20px 0; border-top: 1.5px solid var(--line); }
+.steps li::before { content: counter(step, decimal-leading-zero); font-family: var(--display); font-weight: 900; font-size: 44px; line-height: .9; color: var(--cyan-text); }
+.steps h3 { margin: 0 0 4px; font-size: 17px; font-weight: 600; }
+.steps p { margin: 0; color: var(--ink-2); font-size: 15px; }
+.files { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); display: flex; flex-direction: column; gap: 4px; }
+.files span { overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  .steps li { grid-template-columns: 48px minmax(0, 1fr); }
+  .steps li::before { font-size: 34px; grid-row: span 2; }
+}
+.foot { font-size: 13px; color: var(--ink-3); border-top: 1.5px solid var(--line); padding-top: 18px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .toast, .btn-primary { transition: none; }
+}
+/* ── Depth options section ──────────────────────────────────────── */
+.depth-opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: stretch; }
+@media (max-width: 900px) { .depth-opts { grid-template-columns: 1fr; } }
+.depth-opt { background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--sh-card); }
+.depth-opt.chosen { border: 2px solid var(--outline); }
+.depth-opt h3 { margin: 0; font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.depth-opt .rec { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; background: var(--cyan); color: var(--on-cyan); border-radius: 99px; padding: 2px 9px; font-weight: 600; }
+.depth-opt p { margin: 0; font-size: 14.5px; color: var(--ink-2); }
+.depth-opt ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; font-size: 14px; color: var(--ink-2); }
+.depth-opt li { display: grid; grid-template-columns: 16px 1fr; gap: 6px; }
+.depth-opt li::before { font-family: var(--mono); font-weight: 600; }
+.depth-opt li.pro::before { content: "+"; color: var(--green-text); }
+.depth-opt li.con::before { content: "\2212"; color: var(--coral-text); }
+.depth-sample { height: 76px; border-radius: 10px; background: var(--sunken); display: grid; place-items: center; position: relative; overflow: hidden; }
+.depth-sample .btn-primary { pointer-events: none; }
+.sample-flat .btn-primary { box-shadow: 3px 3px 0 var(--lift); background-image: none; }
+.sample-3d .btn-primary { box-shadow: 0 3px 0 var(--lift); background-image: linear-gradient(180deg, rgba(255,255,255,.38), rgba(255,255,255,0) 58%); }
+.sample-glass { background: repeating-linear-gradient(135deg, var(--cyan) 0 10px, var(--sunken) 10px 22px); }
+.sample-glass .glass-pill {
+  padding: 10px 18px; border-radius: 99px; font-weight: 600; font-size: 13.5px; color: var(--ink);
+  background: var(--glass-bg); -webkit-backdrop-filter: blur(10px) saturate(1.8); backdrop-filter: blur(10px) saturate(1.8);
+  border: 1px solid var(--glass-line);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 8px 20px var(--glass-shade);
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn, .q, .day, button.ride { transition: none; }
+}
+
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="masthead-top">
+      <img src="mascot.png" alt="Ankerd mascot">
+      <span class="eyebrow">Ankerd Con · UI proposal · desktop rework · Sep 2026</span>
+    </div>
+    <h1 class="hero">A desktop app that looks like <em>Ankerd</em></h1>
+    <p class="lede">On a phone the app works well. On a laptop it's that same phone layout sitting in the middle of the screen, in the soft slate-and-sky style every AI chat app uses. This proposal adds a real desktop layout, <strong>keeps the phone structure people already know</strong>, and gives both a look based on our own mascot.</p>
+  </header>
+
+  <!-- ── Diagnosis ─────────────────────────────────────────────── -->
+  <section aria-labelledby="now-h">
+    <div class="sec-head">
+      <span class="eyebrow">What Gavin is seeing</span>
+      <h2 class="sec" id="now-h">Why it looks off on desktop</h2>
+    </div>
+    <div class="diag">
+      <figure class="now-fig">
+        <div class="now-screen" role="img" aria-label="Wireframe of the current app on a 1440 pixel wide screen: a 672 pixel content column in the middle, empty margins on both sides, and a tab bar across the bottom">
+          <div class="now-col">
+            <div class="bar"></div>
+            <div class="hero-blk"></div>
+            <div class="tiles"><div></div><div></div></div>
+            <div class="blk"></div>
+            <div class="blk"></div>
+          </div>
+          <span class="now-gap l">384 px empty</span>
+          <span class="now-gap r">384 px empty</span>
+          <div class="now-nav"></div>
+        </div>
+        <figcaption>Today at 1440 px wide: <code>max-w-2xl</code> column, tab bar pinned to the bottom of the screen.</figcaption>
+      </figure>
+      <ul class="problems">
+        <li>
+          <i data-lucide="smartphone"></i>
+          <div>
+            <h3>It's the phone layout, just centered</h3>
+            <p><code>AppShell</code> limits every page to 672 px and <code>BottomNav</code> stays pinned to the bottom. More than half of a laptop screen is empty, and the tab bar is far from where a mouse usually is.</p>
+          </div>
+        </li>
+        <li>
+          <i data-lucide="sparkles"></i>
+          <div>
+            <h3>It uses the same look as every AI app</h3>
+            <p>Slate greys, sky-blue gradients, frosted glass, Inter, soft blue shadows, and <code>rounded-2xl</code> on everything. That's the default Tailwind SaaS style, so it reads as "chat app", not "con crew".</p>
+          </div>
+        </li>
+        <li>
+          <i data-lucide="anchor"></i>
+          <div>
+            <h3>The mascot isn't used anywhere</h3>
+            <p>The goofy cyan anchor with the thick black outline is the most recognisable thing we have. Right now it's a 24 px icon in the header.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ── Mock ─────────────────────────────────────────────────── -->
+  <section aria-labelledby="mock-h">
+    <div class="mock-caption">
+      <div class="sec-head">
+        <span class="eyebrow">Proposal</span>
+        <h2 class="sec" id="mock-h">The new desktop layout</h2>
+        <p>Click <b>Hub</b>, <b>Transport</b> and <b>Financiën</b> in the sidebar, or use the sun/moon button. At tablet width the sidebar shrinks to icons, and at phone width the tab bar comes back.</p>
+      </div>
+      <span class="sample-tag">Sample data</span>
+    </div>
+
+    <div class="frame" id="frame">
+      <div class="app">
+
+        <!-- Sidebar -->
+        <aside class="side" aria-label="Hoofdnavigatie">
+          <div class="brand"><img src="mascot.png" alt=""><b>Ankerd Con</b></div>
+
+          <nav class="nav">
+            <button type="button" data-view-go="hub" aria-current="page"><i data-lucide="house"></i><span>Hub</span></button>
+            <button type="button" data-demo><i data-lucide="list-checks"></i><span>Acties</span><em class="count">3</em></button>
+            <button type="button" data-view-go="transport"><i data-lucide="bus"></i><span>Transport</span></button>
+            <button type="button" data-demo><i data-lucide="utensils-crossed"></i><span>Eten</span></button>
+            <button type="button" data-view-go="finance"><i data-lucide="wallet"></i><span>Financiën</span></button>
+            <div class="nav-label">Groep</div>
+            <button type="button" data-demo><i data-lucide="calendar-days"></i><span>Kalender</span></button>
+            <button type="button" data-demo><i data-lucide="bed-double"></i><span>Hotelkamers</span></button>
+            <button type="button" data-demo><i data-lucide="venetian-mask"></i><span>Cosplays</span></button>
+            <button type="button" data-demo><i data-lucide="users"></i><span>Crew</span></button>
+          </nav>
+
+          <div class="side-foot">
+            <div class="me">
+              <span class="av lg dark-text" style="--c:#F2A516">G</span>
+              <div><b>Gavin</b><small>Organisator</small></div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="main">
+          <div class="topbar">
+            <div class="mobile-brand"><img src="mascot.png" alt="">Ankerd</div>
+            <label class="search">
+              <i data-lucide="search"></i>
+              <input id="mock-search" type="search" placeholder="Zoek events, ritten, mensen…">
+              <kbd>Ctrl K</kbd>
+            </label>
+            <span class="spacer"></span>
+            <button class="icon-btn" type="button" data-demo aria-label="Notificaties"><i data-lucide="bell"></i><span class="dot"></span></button>
+            <button class="icon-btn" type="button" id="mock-theme" aria-label="Thema van het voorbeeld wisselen"><i data-lucide="sun-moon"></i></button>
+          </div>
+
+          <!-- ── HUB ── -->
+          <div class="view" data-view="hub">
+            <div class="page-head">
+              <div>
+                <div class="kicker">Maandag 14 september</div>
+                <h2>Goedemiddag, Gavin</h2>
+              </div>
+            </div>
+
+            <div class="hub-grid">
+              <div class="col">
+
+                <article class="ticket">
+                  <div>
+                    <div class="ticket-cover"><span aria-hidden="true">HDCC</span></div>
+                    <div class="ticket-body">
+                      <div>
+                        <h3 class="ticket-title">Heroes Dutch Comic Con</h3>
+                        <div class="ticket-where">Jaarbeurs Utrecht · 3 dagen · hotel NH Utrecht</div>
+                      </div>
+                      <div class="days">
+                        <button class="day travel" type="button" data-demo>
+                          <span class="dd"><span class="dow">VR</span><span class="dnum">25</span></span>
+                          <span class="dt">Reisdag</span>
+                          <span class="ds">Inchecken 15:00</span>
+                        </button>
+                        <button class="day" type="button" data-demo>
+                          <span class="dd"><span class="dow">ZA</span><span class="dnum">26</span></span>
+                          <span class="dt">Con-dag 1</span>
+                          <span class="ds">Vapiano 19:30</span>
+                        </button>
+                        <button class="day" type="button" data-demo>
+                          <span class="dd"><span class="dow">ZO</span><span class="dnum">27</span></span>
+                          <span class="dt">Con-dag 2</span>
+                          <span class="ds">Terug 18:00</span>
+                        </button>
+                      </div>
+                      <div class="ticket-foot">
+                        <span class="who">8 gaan mee, jij ook</span>
+                        <span class="spacer"></span>
+                        <button class="panel-link" type="button" data-demo>Bekijk event<i data-lucide="arrow-right"></i></button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="stub">
+                    <span class="k">Nog</span>
+                    <span class="big">11</span>
+                    <span class="k">dagen</span>
+                  </div>
+                </article>
+
+                <div class="panel">
+                  <div class="panel-head">
+                    <span class="panel-title">Komende events</span>
+                    <button class="panel-link" type="button" data-demo>Kalender<i data-lucide="arrow-right"></i></button>
+                  </div>
+                  <div class="rows">
+                    <button class="row" type="button" data-demo>
+                      <span class="date">31 okt</span>
+                      <span class="name">Halloween-feest</span>
+                      <span class="pill warn">Nog reageren</span>
+                    </button>
+                    <button class="row" type="button" data-demo>
+                      <span class="date">12–13 dec</span>
+                      <span class="name">Dutch Comic Con Winter</span>
+                      <span class="status-text">Je gaat</span>
+                    </button>
+                    <button class="row" type="button" data-demo>
+                      <span class="date">20 dec</span>
+                      <span class="name">Kerstdiner Ankerd</span>
+                      <span class="status-text">Je gaat</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col">
+                <div class="panel">
+                  <div class="panel-head">
+                    <span class="panel-title">Actie nodig <span class="tally">3</span></span>
+                  </div>
+                  <ul class="acts">
+                    <li>
+                      <button class="act" type="button" data-view-go="transport">
+                        <span class="act-ico bad"><i data-lucide="bus"></i></span>
+                        <span><span class="act-t">Noor en Bram hebben geen heenrit</span><br><span class="act-s">HDCC · vr 25 sep</span></span>
+                        <i data-lucide="chevron-right"></i>
+                      </button>
+                    </li>
+                    <li>
+                      <button class="act" type="button" data-view-go="finance">
+                        <span class="act-ico warn"><i data-lucide="wallet"></i></span>
+                        <span><span class="act-t">Betaal €18,50 aan Joris</span><br><span class="act-s">Parkeren Jaarbeurs</span></span>
+                        <i data-lucide="chevron-right"></i>
+                      </button>
+                    </li>
+                    <li>
+                      <button class="act" type="button" data-view-go="finance">
+                        <span class="act-ico info"><i data-lucide="check-check"></i></span>
+                        <span><span class="act-t">Bevestig 3 betalingen</span><br><span class="act-s">Dagtickets zaterdag</span></span>
+                        <i data-lucide="chevron-right"></i>
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="panel">
+                  <div class="panel-head">
+                    <span class="panel-title">Jouw saldo</span>
+                  </div>
+                  <div class="bal">
+                    <div class="bal-num">+€42,10</div>
+                    <div class="bal-sub">€60,60 te ontvangen · €18,50 te betalen</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── TRANSPORT ── -->
+          <div class="view" data-view="transport" hidden>
+            <div class="page-head">
+              <div>
+                <div class="kicker">Heroes Dutch Comic Con · 25–27 sep</div>
+                <h2>Transport</h2>
+              </div>
+              <div class="head-actions">
+                <button class="btn btn-primary" type="button" data-demo><i data-lucide="plus"></i>Rit toevoegen</button>
+              </div>
+            </div>
+
+            <div class="board">
+              <div class="lane">
+                <div class="lane-head"><h3>Heen</h3><span class="when">vr 25 sep</span></div>
+                <button class="ride" type="button" data-demo>
+                  <span class="ride-top">
+                    <span class="av dark-text" style="--c:#F2A516">G</span>
+                    <span class="who"><b>Gavin</b><small>Auto</small></span>
+                    <span class="t">16:30</span>
+                  </span>
+                  <span class="route-line">Rotterdam CS → NH Utrecht</span>
+                  <span class="seats-text">1 plek vrij</span>
+                </button>
+                <button class="ride" type="button" data-demo>
+                  <span class="ride-top">
+                    <span class="av" style="--c:#D93F44">S</span>
+                    <span class="who"><b>Sanne</b><small>Trein</small></span>
+                    <span class="t">17:05</span>
+                  </span>
+                  <span class="route-line">Amsterdam CS → Utrecht CS</span>
+                  <span class="seats-text">Met Mila</span>
+                </button>
+                <button class="ride" type="button" data-demo>
+                  <span class="ride-top">
+                    <span class="av" style="--c:#2F78D9">T</span>
+                    <span class="who"><b>Thijs</b><small>Auto</small></span>
+                    <span class="t">18:00</span>
+                  </span>
+                  <span class="route-line">Eindhoven → NH Utrecht</span>
+                  <span class="seats-text">3 plekken vrij</span>
+                </button>
+              </div>
+
+              <div class="lane">
+                <div class="lane-head"><h3>Restaurant</h3><span class="when">za 26 sep</span></div>
+                <div class="ride needs">
+                  <span class="ride-top">
+                    <span class="who"><b class="hl">Nog geen chauffeur</b><small>Naar Vapiano, 6 mensen</small></span>
+                    <span class="t">19:00</span>
+                  </span>
+                  <button class="btn btn-primary btn-sm" type="button" data-demo>Ik rijd</button>
+                </div>
+              </div>
+
+              <div class="lane">
+                <div class="lane-head"><h3>Terug</h3><span class="when">zo 27 sep</span></div>
+                <button class="ride" type="button" data-demo>
+                  <span class="ride-top">
+                    <span class="av dark-text" style="--c:#F2A516">G</span>
+                    <span class="who"><b>Gavin</b><small>Auto</small></span>
+                    <span class="t">18:00</span>
+                  </span>
+                  <span class="route-line">Jaarbeurs → Rotterdam CS</span>
+                  <span class="seats-text">Vol</span>
+                </button>
+                <button class="ride" type="button" data-demo>
+                  <span class="ride-top">
+                    <span class="av" style="--c:#D93F44">S</span>
+                    <span class="who"><b>Sanne</b><small>Trein</small></span>
+                    <span class="t">18:15</span>
+                  </span>
+                  <span class="route-line">Utrecht CS → Amsterdam CS</span>
+                  <span class="seats-text">Met Mila</span>
+                </button>
+                <button class="ride" type="button" data-demo>
+                  <span class="ride-top">
+                    <span class="av" style="--c:#2F78D9">T</span>
+                    <span class="who"><b>Thijs</b><small>Auto</small></span>
+                    <span class="t">17:30</span>
+                  </span>
+                  <span class="route-line">Jaarbeurs → Eindhoven</span>
+                  <span class="seats-text">3 plekken vrij</span>
+                </button>
+              </div>
+
+              <div class="missing">
+                <h3>Geen vervoer</h3>
+                <div class="miss-row"><span class="nm">Noor</span><span class="gaps">Heen, terug</span></div>
+                <div class="miss-row"><span class="nm">Bram</span><span class="gaps">Heen</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── FINANCE ── -->
+          <div class="view" data-view="finance" hidden>
+            <div class="page-head">
+              <div>
+                <div class="kicker">Groepskas</div>
+                <h2>Financiën</h2>
+              </div>
+              <div class="head-actions">
+                <button class="btn btn-primary" type="button" data-demo><i data-lucide="plus"></i>Uitgave toevoegen</button>
+              </div>
+            </div>
+
+            <div class="fin-grid">
+              <div class="panel">
+                <div class="panel-head"><span class="panel-title">Jouw saldo</span></div>
+                <div class="bal"><div class="bal-num">+€42,10</div></div>
+                <ul class="owe">
+                  <li><span class="nm">Joris<small>Parkeren Jaarbeurs</small></span><span class="amt neg">−€18,50</span></li>
+                  <li><span class="nm">Sanne<small>Dagtickets zaterdag</small></span><span class="amt pos">+€20,20</span></li>
+                  <li><span class="nm">Mila<small>Dagtickets zaterdag</small></span><span class="amt pos">+€20,20</span></li>
+                  <li><span class="nm">Thijs<small>Dagtickets zaterdag</small></span><span class="amt pos">+€20,20</span></li>
+                </ul>
+              </div>
+
+              <div class="panel">
+                <div class="panel-head"><span class="panel-title">Uitgaven</span></div>
+                <div class="table-scroll">
+                  <table>
+                    <thead>
+                      <tr><th>Datum</th><th>Omschrijving</th><th>Betaald door</th><th>Status</th><th class="num">Bedrag</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><span class="d">12 sep</span></td>
+                        <td><span class="desc">Hotel NH Utrecht</span></td>
+                        <td>Dimitri</td>
+                        <td class="muted">6 van 7 betaald</td>
+                        <td class="num">€612,00</td>
+                      </tr>
+                      <tr>
+                        <td><span class="d">10 sep</span></td>
+                        <td><span class="desc">Dagtickets zaterdag</span></td>
+                        <td>Jij</td>
+                        <td><span class="pill warn">Bevestig 3</span></td>
+                        <td class="num">€80,80</td>
+                      </tr>
+                      <tr>
+                        <td><span class="d">08 sep</span></td>
+                        <td><span class="desc">Parkeren Jaarbeurs</span></td>
+                        <td>Joris</td>
+                        <td><span class="pill bad">Jij moet nog</span></td>
+                        <td class="num">€37,00</td>
+                      </tr>
+                      <tr>
+                        <td><span class="d">01 sep</span></td>
+                        <td><span class="desc">Pizza-avond</span></td>
+                        <td>Mila</td>
+                        <td class="muted">Afgerond</td>
+                        <td class="num">€54,00</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <nav class="bottomnav" aria-label="Mobiele navigatie">
+            <button type="button" data-view-go="hub" aria-current="page"><i data-lucide="house"></i>Hub</button>
+            <button type="button" data-view-go="transport"><i data-lucide="bus"></i>Transport</button>
+            <button type="button" data-demo><i data-lucide="utensils-crossed"></i>Eten</button>
+            <button type="button" data-view-go="finance"><i data-lucide="wallet"></i>Financiën</button>
+            <button type="button" data-demo><i data-lucide="ellipsis"></i>Meer</button>
+          </nav>
+        </div>
+      </div>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- ── Mobile ─────────────────────────────────────────────── -->
+  <section aria-labelledby="mob-h">
+    <div class="mock-caption">
+      <div class="sec-head">
+        <span class="eyebrow">Mobile</span>
+        <h2 class="sec" id="mob-h">The same style on phones</h2>
+        <p>Phones keep what already works: the tab bar at the bottom, the same five tabs and the same screens. They get the same outlines, cyan, fonts and calmer screens as desktop. These screens scroll, and the tabs on Transport work.</p>
+      </div>
+      <span class="sample-tag">Sample data</span>
+    </div>
+
+    <div class="phones">
+
+      <!-- Hub -->
+      <figure class="phone-wrap">
+        <div class="phone">
+          <div class="phone-status"><span>14:32</span><span class="icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></span></div>
+          <div class="phone-top">
+            <img src="mascot.png" alt=""><b>Ankerd</b>
+            <span class="icon-btn" aria-hidden="true"><i data-lucide="bell"></i><span class="dot"></span></span>
+            <span class="av dark-text" style="--c:#F2A516">G</span>
+          </div>
+          <div class="phone-body">
+            <div class="view">
+              <div class="page-head">
+                <div>
+                  <div class="kicker">Maandag 14 september</div>
+                  <h2>Goedemiddag, Gavin</h2>
+                </div>
+              </div>
+
+              <article class="ticket">
+                <div>
+                  <div class="ticket-cover"><span aria-hidden="true">HDCC</span></div>
+                  <div class="ticket-body">
+                    <div>
+                      <h3 class="ticket-title">Heroes Dutch Comic Con</h3>
+                      <div class="ticket-where">Jaarbeurs Utrecht · 3 dagen · hotel</div>
+                    </div>
+                    <div class="days">
+                      <div class="day travel"><span class="dd"><span class="dow">VR</span><span class="dnum">25</span></span><span class="dt">Reisdag</span></div>
+                      <div class="day"><span class="dd"><span class="dow">ZA</span><span class="dnum">26</span></span><span class="dt">Con-dag 1</span></div>
+                      <div class="day"><span class="dd"><span class="dow">ZO</span><span class="dnum">27</span></span><span class="dt">Con-dag 2</span></div>
+                    </div>
+                    <div class="ticket-foot">
+                      <span class="who">8 gaan mee, jij ook</span>
+                      <span class="spacer"></span>
+                      <span class="panel-link">Bekijk<i data-lucide="arrow-right"></i></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="stub">
+                  <span class="k">Nog</span>
+                  <span class="big">11</span>
+                  <span class="k">dagen</span>
+                </div>
+              </article>
+
+              <div class="panel">
+                <div class="panel-head"><span class="panel-title">Actie nodig <span class="tally">3</span></span></div>
+                <ul class="acts">
+                  <li><div class="act"><span class="act-ico bad"><i data-lucide="bus"></i></span><span><span class="act-t">Noor en Bram hebben geen heenrit</span><br><span class="act-s">HDCC · vr 25 sep</span></span><i data-lucide="chevron-right"></i></div></li>
+                  <li><div class="act"><span class="act-ico warn"><i data-lucide="wallet"></i></span><span><span class="act-t">Betaal €18,50 aan Joris</span><br><span class="act-s">Parkeren Jaarbeurs</span></span><i data-lucide="chevron-right"></i></div></li>
+                  <li><div class="act"><span class="act-ico info"><i data-lucide="check-check"></i></span><span><span class="act-t">Bevestig 3 betalingen</span><br><span class="act-s">Dagtickets zaterdag</span></span><i data-lucide="chevron-right"></i></div></li>
+                </ul>
+              </div>
+
+              <div class="panel">
+                <div class="panel-head"><span class="panel-title">Jouw saldo</span></div>
+                <div class="bal">
+                  <div class="bal-num">+€42,10</div>
+                  <div class="bal-sub">€60,60 te ontvangen · €18,50 te betalen</div>
+                </div>
+              </div>
+
+              <div class="panel">
+                <div class="panel-head"><span class="panel-title">Komende events</span></div>
+                <div class="rows">
+                  <div class="row"><span class="date">31 okt</span><span class="name">Halloween-feest</span><span class="pill warn">Reageren</span></div>
+                  <div class="row"><span class="date">12–13 dec</span><span class="name">DCC Winter</span><span class="status-text">Je gaat</span></div>
+                  <div class="row"><span class="date">20 dec</span><span class="name">Kerstdiner</span><span class="status-text">Je gaat</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-nav" aria-hidden="true">
+            <span aria-current="page"><i data-lucide="house"></i>Hub</span>
+            <span><i data-lucide="bus"></i>Transport</span>
+            <span><i data-lucide="utensils-crossed"></i>Eten</span>
+            <span><i data-lucide="wallet"></i>Financiën</span>
+            <span><i data-lucide="ellipsis"></i>Meer</span>
+          </div>
+        </div>
+        <figcaption class="phone-cap"><b>Hub</b>On phones the ticket's countdown moves to a strip along the bottom. Actions come right after it, above everything else.</figcaption>
+      </figure>
+
+      <!-- Transport -->
+      <figure class="phone-wrap">
+        <div class="phone">
+          <div class="phone-status"><span>14:32</span><span class="icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></span></div>
+          <div class="phone-top">
+            <img src="mascot.png" alt=""><b>Ankerd</b>
+            <span class="icon-btn" aria-hidden="true"><i data-lucide="bell"></i><span class="dot"></span></span>
+            <span class="av dark-text" style="--c:#F2A516">G</span>
+          </div>
+          <div class="phone-body">
+            <div class="view">
+              <div class="page-head">
+                <div>
+                  <div class="kicker">HDCC · 25–27 sep</div>
+                  <h2>Transport</h2>
+                </div>
+              </div>
+
+              <div class="subnav seg" role="group" aria-label="Richting" data-lanes>
+                <button type="button" aria-pressed="true" data-lane-go="heen">Heen</button>
+                <button type="button" aria-pressed="false" data-lane-go="restaurant">Restaurant</button>
+                <button type="button" aria-pressed="false" data-lane-go="terug">Terug</button>
+              </div>
+
+              <div class="lane" data-lane="heen">
+                <div class="notice"><b>Noor en Bram</b> hebben nog geen heenrit</div>
+                <div class="ride">
+                  <span class="ride-top"><span class="av dark-text" style="--c:#F2A516">G</span><span class="who"><b>Gavin</b><small>Auto · vr 25</small></span><span class="t">16:30</span></span>
+                  <span class="route-line">Rotterdam CS → NH Utrecht</span>
+                  <span class="seats-text">1 plek vrij</span>
+                </div>
+                <div class="ride">
+                  <span class="ride-top"><span class="av" style="--c:#D93F44">S</span><span class="who"><b>Sanne</b><small>Trein · vr 25</small></span><span class="t">17:05</span></span>
+                  <span class="route-line">Amsterdam CS → Utrecht CS</span>
+                  <span class="seats-text">Met Mila</span>
+                </div>
+                <div class="ride">
+                  <span class="ride-top"><span class="av" style="--c:#2F78D9">T</span><span class="who"><b>Thijs</b><small>Auto · vr 25</small></span><span class="t">18:00</span></span>
+                  <span class="route-line">Eindhoven → NH Utrecht</span>
+                  <span class="seats-text">3 plekken vrij</span>
+                </div>
+              </div>
+
+              <div class="lane" data-lane="restaurant" hidden>
+                <div class="ride needs">
+                  <span class="ride-top"><span class="who"><b class="hl">Nog geen chauffeur</b><small>Naar Vapiano · za 26, 6 mensen</small></span><span class="t">19:00</span></span>
+                  <span class="btn btn-primary btn-sm">Ik rijd</span>
+                </div>
+              </div>
+
+              <div class="lane" data-lane="terug" hidden>
+                <div class="notice"><b>Noor</b> heeft nog geen terugrit</div>
+                <div class="ride">
+                  <span class="ride-top"><span class="av dark-text" style="--c:#F2A516">G</span><span class="who"><b>Gavin</b><small>Auto · zo 27</small></span><span class="t">18:00</span></span>
+                  <span class="route-line">Jaarbeurs → Rotterdam CS</span>
+                  <span class="seats-text">Vol</span>
+                </div>
+                <div class="ride">
+                  <span class="ride-top"><span class="av" style="--c:#D93F44">S</span><span class="who"><b>Sanne</b><small>Trein · zo 27</small></span><span class="t">18:15</span></span>
+                  <span class="route-line">Utrecht CS → Amsterdam CS</span>
+                  <span class="seats-text">Met Mila</span>
+                </div>
+                <div class="ride">
+                  <span class="ride-top"><span class="av" style="--c:#2F78D9">T</span><span class="who"><b>Thijs</b><small>Auto · zo 27</small></span><span class="t">17:30</span></span>
+                  <span class="route-line">Jaarbeurs → Eindhoven</span>
+                  <span class="seats-text">3 plekken vrij</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <span class="fab" aria-hidden="true"><i data-lucide="plus"></i>Rit</span>
+          <div class="phone-nav" aria-hidden="true">
+            <span><i data-lucide="house"></i>Hub</span>
+            <span aria-current="page"><i data-lucide="bus"></i>Transport</span>
+            <span><i data-lucide="utensils-crossed"></i>Eten</span>
+            <span><i data-lucide="wallet"></i>Financiën</span>
+            <span><i data-lucide="ellipsis"></i>Meer</span>
+          </div>
+        </div>
+        <figcaption class="phone-cap"><b>Transport</b>The desktop board's columns become tabs. The "add ride" action moves to a floating cyan button above the tab bar.</figcaption>
+      </figure>
+
+      <!-- Finance -->
+      <figure class="phone-wrap">
+        <div class="phone">
+          <div class="phone-status"><span>14:32</span><span class="icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></span></div>
+          <div class="phone-top">
+            <img src="mascot.png" alt=""><b>Ankerd</b>
+            <span class="icon-btn" aria-hidden="true"><i data-lucide="bell"></i><span class="dot"></span></span>
+            <span class="av dark-text" style="--c:#F2A516">G</span>
+          </div>
+          <div class="phone-body">
+            <div class="view">
+              <div class="page-head">
+                <div>
+                  <div class="kicker">Groepskas</div>
+                  <h2>Financiën</h2>
+                </div>
+              </div>
+
+              <div class="panel">
+                <div class="panel-head"><span class="panel-title">Jouw saldo</span></div>
+                <div class="bal"><div class="bal-num">+€42,10</div></div>
+                <ul class="owe">
+                  <li><span class="nm">Joris<small>Parkeren Jaarbeurs</small></span><span class="amt neg">−€18,50</span></li>
+                  <li><span class="nm">Sanne<small>Dagtickets zaterdag</small></span><span class="amt pos">+€20,20</span></li>
+                  <li><span class="nm">Mila<small>Dagtickets zaterdag</small></span><span class="amt pos">+€20,20</span></li>
+                  <li><span class="nm">Thijs<small>Dagtickets zaterdag</small></span><span class="amt pos">+€20,20</span></li>
+                </ul>
+              </div>
+
+              <div class="panel">
+                <div class="panel-head"><span class="panel-title">Uitgaven</span></div>
+                <ul class="xlist">
+                  <li><span class="x-main"><b>Hotel NH Utrecht</b><small>12 sep · Dimitri</small></span><span class="x-side"><span class="x-amt">€612,00</span><span class="status-text">6 van 7</span></span></li>
+                  <li><span class="x-main"><b>Dagtickets zaterdag</b><small>10 sep · jij</small></span><span class="x-side"><span class="x-amt">€80,80</span><span class="pill warn">Bevestig 3</span></span></li>
+                  <li><span class="x-main"><b>Parkeren Jaarbeurs</b><small>08 sep · Joris</small></span><span class="x-side"><span class="x-amt">€37,00</span><span class="pill bad">Jij moet nog</span></span></li>
+                  <li><span class="x-main"><b>Pizza-avond</b><small>01 sep · Mila</small></span><span class="x-side"><span class="x-amt">€54,00</span><span class="status-text">Afgerond</span></span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <span class="fab" aria-hidden="true"><i data-lucide="plus"></i>Uitgave</span>
+          <div class="phone-nav" aria-hidden="true">
+            <span><i data-lucide="house"></i>Hub</span>
+            <span><i data-lucide="bus"></i>Transport</span>
+            <span><i data-lucide="utensils-crossed"></i>Eten</span>
+            <span aria-current="page"><i data-lucide="wallet"></i>Financiën</span>
+            <span><i data-lucide="ellipsis"></i>Meer</span>
+          </div>
+        </div>
+        <figcaption class="phone-cap"><b>Financiën</b>The expenses table becomes a list: amount and status on the right, date and who paid underneath the name.</figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <!-- ── Decisions ─────────────────────────────────────────────── -->
+  <section aria-labelledby="dec-h">
+    <div class="sec-head">
+      <span class="eyebrow">What changes</span>
+      <h2 class="sec" id="dec-h">Five decisions</h2>
+    </div>
+    <div class="decisions">
+      <div class="decision">
+        <span class="was"><s>Bottom tab bar on every screen size</s></span>
+        <h3>A sidebar from 1024 px up, the same tab bar below that</h3>
+        <p>On desktop, navigation moves to a left sidebar that also has room for Kalender, Hotelkamers, Cosplays and Stories, which are hidden behind "Meer" today. It works like the admin portal already does. On tablets the sidebar shrinks to icons, and phones keep the tab bar, restyled with the ink pill for the active tab.</p>
+      </div>
+      <div class="decision">
+        <span class="was"><s>One 672 px column</s></span>
+        <h3>Use the screen width: main content plus a side column</h3>
+        <p>The Hub gets an 8/4 split: the trip on the left, and your actions and balance on the right. Transport becomes a board with Heen / Restaurant / Terug columns and a short list of who has no ride. Financiën becomes a real table. Each page puts the content that needs the space in the wide column.</p>
+      </div>
+      <div class="decision">
+        <span class="was"><s>Slate, sky gradients, glass, soft blue shadows</s></span>
+        <h3>A look based on the mascot: ink outlines and anchor cyan</h3>
+        <p>The mascot's thick black outline becomes the 2px outline for the few things that matter most: the next-trip ticket, primary buttons and the active nav item. Only primary buttons keep a small hard shadow so they read as pressable. Everything else stays flat with thin hairlines. Cyan is the single brand color, and red, amber and green are only used for status.</p>
+      </div>
+      <div class="decision">
+        <span class="was"><s>Inter for everything</s></span>
+        <h3>Poster type for events, a mono font for times and money</h3>
+        <p>Event names, countdowns and room numbers use a condensed display font, like a con wristband or badge. The UI text uses Poppins. Departure times, amounts and dates use a monospace font so they line up.</p>
+      </div>
+      <div class="decision">
+        <span class="was"><s>Every feature on the home screen</s></span>
+        <h3>Fewer things per screen, and one bold element each</h3>
+        <p>Each page leads with one outlined element (the ticket on the Hub, the "Rit toevoegen" button on Transport) and keeps the rest quiet: no avatar stacks on every row, no button on every card, and status colors only where something needs doing. Details stay one click away.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Depth ─────────────────────────────────────────────── -->
+  <section aria-labelledby="depth-h">
+    <div class="sec-head">
+      <span class="eyebrow">Depth</span>
+      <h2 class="sec" id="depth-h">Depth: flat</h2>
+      <p>We compared three levels of depth and chose flat. It fits the mascot drawing best and keeps the screens calm. The other two are kept here for reference.</p>
+    </div>
+    <div class="depth-opts">
+      <div class="depth-opt chosen">
+        <div class="depth-sample sample-flat" aria-hidden="true"><span class="btn btn-primary">Ik rijd</span></div>
+        <h3>Flat <span class="rec">Chosen</span></h3>
+        <p>The key element per screen, like the Hub ticket, stands out with a thick ink outline and cyan, not a shadow. Only primary buttons keep a small hard shadow. Nothing moves on hover.</p>
+        <ul>
+          <li class="pro">Calmest; looks like the mascot drawing</li>
+          <li class="pro">Primary buttons still press in when tapped</li>
+        </ul>
+      </div>
+      <div class="depth-opt">
+        <div class="depth-sample sample-3d" aria-hidden="true"><span class="btn btn-primary">Ik rijd</span></div>
+        <h3>3D</h3>
+        <p>Cards and buttons get a solid bottom edge, like a keycap or an enamel pin. Buttons sink when you tap them, and cyan gets a slight shine like the mascot.</p>
+        <ul>
+          <li class="pro">Feels tactile, which suits a phone-first app</li>
+          <li class="pro">Same visual language as the ink outline</li>
+          <li class="pro">No blur, so it's cheap to render on older phones</li>
+          <li class="con">Every card gets an edge, and cards lift on hover, which looked odd</li>
+        </ul>
+      </div>
+      <div class="depth-opt">
+        <div class="depth-sample sample-glass" aria-hidden="true"><span class="glass-pill">Hub · Event · Agenda</span></div>
+        <h3>3D + liquid glass</h3>
+        <p>Same as 3D, plus a translucent, blurred tab bar and sidebar that float over the content, like iOS 26.</p>
+        <ul>
+          <li class="pro">Looks current, especially the floating tab bar</li>
+          <li class="con">Glass only works with something colorful moving behind it; over calm screens it looks like a plain white panel</li>
+          <li class="con">Blur is heavy on older Android phones, which matters for a PWA</li>
+          <li class="con">Closest to the frosted glass the app already has (<code>.glass</code> in <code>index.css</code>), which is part of what looks generic</li>
+        </ul>
+      </div>
+    </div>
+      </section>
+
+  <!-- ── Tokens ─────────────────────────────────────────────── -->
+  <section aria-labelledby="tok-h">
+    <div class="sec-head">
+      <span class="eyebrow">Design tokens</span>
+      <h2 class="sec" id="tok-h">Palette &amp; type</h2>
+      <p>These become CSS variables in <code>index.css</code>, with a light and dark value each, and replace the <code>ankerd</code> sky scale, the <code>gradient-*</code> helpers and <code>.glass</code> in <code>tailwind.config.ts</code>.</p>
+    </div>
+    <div class="tok-grid">
+      <div class="swatches">
+        <div class="sw-card"><div class="sw-chip" style="background:#3FD8EE"></div><span class="sw-name">Anker cyan</span><span class="sw-hex">#3FD8EE</span><span class="sw-role">Brand fill: ticket stub, primary button. Always with ink text on top.</span></div>
+        <div class="sw-card"><div class="sw-chip" style="background:#0F1519"></div><span class="sw-name">Ink</span><span class="sw-hex">#0F1519</span><span class="sw-role">Text, outlines and hard shadows. Taken from the mascot's outline.</span></div>
+        <div class="sw-card"><div class="sw-chip" style="background:#F5F8F9"></div><span class="sw-name">Paper</span><span class="sw-hex">#F5F8F9 · dark #0D1216</span><span class="sw-role">App background, with a slight cyan tint instead of slate.</span></div>
+        <div class="sw-card"><div class="sw-chip" style="background:#00768A"></div><span class="sw-name">Cyan text</span><span class="sw-hex">#00768A · dark #62E2F4</span><span class="sw-role">Links and small accents. Readable on paper.</span></div>
+        <div class="sw-card"><div class="sw-chip" style="background:linear-gradient(90deg,#1FA971 0 33.3%,#E89B0C 33.3% 66.6%,#E5484D 66.6%)"></div><span class="sw-name">Status</span><span class="sw-hex">#1FA971 · #E89B0C · #E5484D</span><span class="sw-role">Settled / needs attention / missing. Only for status, never decoration.</span></div>
+        <div class="sw-card"><div class="sw-chip" style="background:repeating-linear-gradient(135deg, rgba(15,21,25,.1) 0 6px, #fff 6px 12px)"></div><span class="sw-name">Hatch</span><span class="sw-hex">7% ink, 135°</span><span class="sw-role">Marks travel/hotel-only days (<code>has_con = false</code>) by pattern, not color.</span></div>
+      </div>
+      <div class="type-specs">
+        <div class="spec">
+          <span class="spec-meta"><b>Big Shoulders Display</b>800–900 · event names, countdown, room numbers</span>
+          <span class="s-display">Heroes Dutch Comic Con</span>
+        </div>
+        <div class="spec">
+          <span class="spec-meta"><b>Poppins</b>400–700 · interface &amp; body</span>
+          <span class="s-body">Noor en Bram hebben nog geen heenrit. Regel het voor vrijdag 16:30.</span>
+        </div>
+        <div class="spec">
+          <span class="spec-meta"><b>Spline Sans Mono</b>400–600 · times, amounts, labels</span>
+          <span class="s-mono">VR 25.09 · 16:30 · −€18,50</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Rollout ─────────────────────────────────────────────── -->
+  <section aria-labelledby="roll-h">
+    <div class="sec-head">
+      <span class="eyebrow">How we'd build it</span>
+      <h2 class="sec" id="roll-h">Rollout order</h2>
+      <p>Each step can ship on its own. Only the sidebar in step 2 is desktop-only. Every other step changes phones too, the way the mobile screens above show.</p>
+    </div>
+    <ol class="steps">
+      <li>
+        <div><h3>Tokens and fonts</h3><p>Swap the palette and fonts app-wide first. This alone removes most of the "AI app" feel, on every screen size.</p></div>
+        <div class="files"><span>tailwind.config.ts</span><span>src/index.css</span><span>index.html (Poppins + Big Shoulders + Spline Sans Mono)</span></div>
+      </li>
+      <li>
+        <div><h3>Desktop shell</h3><p>Add a new sidebar, hide the tab bar from <code>lg</code> up, remove the 672 px limit and move search into the header.</p></div>
+        <div class="files"><span>components/layout/Sidebar.tsx (new)</span><span>components/layout/AppShell.tsx</span><span>components/layout/BottomNav.tsx</span><span>components/layout/Header.tsx</span></div>
+      </li>
+      <li>
+        <div><h3>Hub</h3><p>Make the 8/4 grid, turn the upcoming-event card into the ticket, and move actions and balance into the side column. Hotel rooms and quick rides get their own pages instead of sitting on the Hub.</p></div>
+        <div class="files"><span>pages/HubPage.tsx</span><span>components/hub/UpcomingEventCard.tsx</span><span>components/hub/DailyActionCheck.tsx</span></div>
+      </li>
+      <li>
+        <div><h3>Transport and Financiën</h3><p>Turn Transport into a board grouped by direction on desktop, with Heen / Restaurant / Terug tabs on phones. Show expenses as a table on desktop and a list on phones. The main action goes in a floating cyan button on mobile.</p></div>
+        <div class="files"><span>pages/TransportPage.tsx</span><span>components/transport/RideCard.tsx</span><span>pages/FinancePage.tsx</span></div>
+      </li>
+      <li>
+        <div><h3>Detail pages and drawers</h3><p>Event, meal and ride pages get two columns with key info that stays visible while you scroll. On desktop, drawers open as side panels instead of bottom sheets.</p></div>
+        <div class="files"><span>pages/EventDetailPage.tsx</span><span>components/common/Drawer.tsx</span><span>components/detail/DetailTopbar.tsx</span></div>
+      </li>
+    </ol>
+    <p class="foot">All names, rides, rooms and amounts in the mock are sample data to show the layout.</p>
+  </section>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>
+(function () {
+  try { if (window.lucide) window.lucide.createIcons(); } catch (e) {}
+
+  var frame = document.getElementById('frame');
+  var toast = document.getElementById('toast');
+  var toastTimer;
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 1800);
+  }
+
+  function go(view) {
+    frame.querySelectorAll('[data-view]').forEach(function (v) { v.hidden = v.dataset.view !== view; });
+    frame.querySelectorAll('[data-view-go]').forEach(function (b) {
+      if (!b.closest('.nav, .bottomnav')) return;
+      if (b.dataset.viewGo === view) b.setAttribute('aria-current', 'page');
+      else b.removeAttribute('aria-current');
+    });
+  }
+
+  frame.addEventListener('click', function (e) {
+    var t = e.target.closest('button');
+    if (!t || !frame.contains(t)) return;
+    if (t.dataset.viewGo) { go(t.dataset.viewGo); return; }
+    if (t.id === 'mock-theme') {
+      var root = document.documentElement;
+      var current = frame.dataset.mode ||
+        root.dataset.theme ||
+        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      frame.dataset.mode = current === 'dark' ? 'light' : 'dark';
+      return;
+    }
+    if (t.closest('.subnav')) {
+      t.parentElement.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b === t)); });
+      return;
+    }
+    if (t.hasAttribute('data-demo')) showToast('Alleen voorbeeld: dit scherm zit niet in het voorstel');
+  });
+
+  document.querySelectorAll('.phone [data-lanes]').forEach(function (group) {
+    group.addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (!b) return;
+      group.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      group.closest('.view').querySelectorAll('[data-lane]').forEach(function (l) { l.hidden = l.dataset.lane !== b.dataset.laneGo; });
+    });
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      var s = document.getElementById('mock-search');
+      if (s && s.offsetParent !== null) { e.preventDefault(); s.focus(); }
+    }
+  });
+})();
+</script>
+

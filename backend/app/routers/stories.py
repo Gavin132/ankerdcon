@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from collections import defaultdict
 
+from fastapi.concurrency import run_in_threadpool
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
 
 from app.config import get_settings
@@ -10,9 +11,9 @@ from app.constants import Tables
 from app.core import minio_client
 from app.core.database import supabase
 from app.core.logging import get_logger
-from app.core.uploads import read_capped
+from app.core.uploads import clean_image, read_capped
 from app.dependencies import get_current_user
-from app.models.story import MarkStorySeenRequest, StoryDaySummary, StoryPhoto, StorySeenState
+from app.models.story import MarkStorySeenRequest, StoryDaySummary, StoryPhoto, StorySeenState, UserStoryPhoto
 from app.routes import StoryRoutes
 
 logger = get_logger(__name__)
@@ -94,6 +95,68 @@ def get_story_summary(
     return result
 
 
+# Also before LIST/{event_day_id} for the same reason as /summary.
+@router.get(StoryRoutes.BY_USER, response_model=list[UserStoryPhoto])
+def list_user_photos(identifier: str, _: str = Depends(get_current_user)):
+    """Every photo a member has put in a story, newest first, each with the
+    event it belongs to — for their profile. `identifier` is their id or name."""
+    try:
+        try:
+            uuid.UUID(identifier)
+            by = "id"
+        except ValueError:
+            by = "name"
+        profiles = supabase.table(Tables.PROFILES).select("id, name, aliases").execute().data or []
+    except Exception as e:
+        logger.error("Failed to load profiles for photos of %s: %s", identifier, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+    profile = next((p for p in profiles if p[by] == identifier), None)
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
+
+    # Photos carry the name the uploader had at the time, so a former name
+    # (alias) still counts — unless somebody else goes by it now.
+    current_names = {p["name"] for p in profiles}
+    names = [profile["name"]] + [a for a in (profile.get("aliases") or []) if a not in current_names]
+
+    try:
+        photos = (
+            supabase.table(Tables.STORY_PHOTOS)
+            .select("id, image_url, created_at, event_day_id")
+            .in_("uploaded_by", names)
+            .order("created_at", desc=True)
+            .execute()
+            .data
+            or []
+        )
+        day_ids = list({p["event_day_id"] for p in photos})
+        days = (
+            supabase.table(Tables.EVENT_DAYS).select("id, event_id, date").in_("id", day_ids).execute().data
+            if day_ids else []
+        ) or []
+        event_ids = list({d["event_id"] for d in days if d.get("event_id")})
+        events = (
+            supabase.table(Tables.EVENTS).select("id, event_name").in_("id", event_ids).execute().data
+            if event_ids else []
+        ) or []
+    except Exception as e:
+        logger.error("Failed to list photos of %s: %s", identifier, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+    day_by_id = {d["id"]: d for d in days}
+    name_by_event = {e["id"]: e["event_name"] for e in events}
+    out: list[UserStoryPhoto] = []
+    for p in photos:
+        day = day_by_id.get(p["event_day_id"], {})
+        event_id = day.get("event_id")
+        out.append(UserStoryPhoto(
+            id=p["id"], image_url=p["image_url"], created_at=p["created_at"], event_day_id=p["event_day_id"],
+            event_id=event_id, event_name=name_by_event.get(event_id), date=day.get("date"),
+        ))
+    return out
+
+
 @router.get(StoryRoutes.LIST, response_model=list[StoryPhoto])
 def list_story_photos(event_day_id: str, _: str = Depends(get_current_user)):
     _require_day_id(event_day_id)
@@ -111,20 +174,8 @@ def list_story_photos(event_day_id: str, _: str = Depends(get_current_user)):
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
-@router.post(StoryRoutes.LIST, status_code=status.HTTP_201_CREATED, response_model=StoryPhoto)
-async def upload_story_photo(
-    event_day_id: str,
-    file: UploadFile = File(...),
-    current_user: str = Depends(get_current_user),
-):
-    _require_day_id(event_day_id)
-    if file.content_type not in _ALLOWED_TYPES:
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail="Bestandstype niet toegestaan. Gebruik JPG, PNG of WebP.",
-        )
-
-    content = await read_capped(file, _MAX_BYTES)
+def _store_story_photo(event_day_id: str, current_user: str, content: bytes) -> dict:
+    content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP"})
 
     # Nest under the parent event too (not just the day) so MinIO's own
     # browser groups a multi-day con's photos together instead of scattering
@@ -143,11 +194,10 @@ async def upload_story_photo(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenementdag niet gevonden.")
     event_id = day_row.data[0]["event_id"]
 
-    ext = _EXT.get(file.content_type, "jpg")
     key = f"{event_id}/{event_day_id}/{uuid.uuid4().hex}.{ext}"
 
     try:
-        image_url = minio_client.upload_bytes(key, content, file.content_type)
+        image_url = minio_client.upload_bytes(key, content, content_type)
     except RuntimeError as e:
         # MinIO not configured yet — a clear message instead of a generic 503.
         logger.error("Story photo upload failed (MinIO not configured): %s", e)
@@ -179,6 +229,23 @@ async def upload_story_photo(
         except Exception:
             pass
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+
+@router.post(StoryRoutes.LIST, status_code=status.HTTP_201_CREATED, response_model=StoryPhoto)
+async def upload_story_photo(
+    event_day_id: str,
+    file: UploadFile = File(...),
+    current_user: str = Depends(get_current_user),
+):
+    _require_day_id(event_day_id)
+    if file.content_type not in _ALLOWED_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Bestandstype niet toegestaan. Gebruik JPG, PNG of WebP.",
+        )
+
+    content = await read_capped(file, _MAX_BYTES)
+    return await run_in_threadpool(_store_story_photo, event_day_id, current_user, content)
 
 
 @router.delete(StoryRoutes.DETAIL, status_code=status.HTTP_204_NO_CONTENT)

@@ -1,9 +1,14 @@
-import { apiClient } from "../lib/api/client";
+import { apiClient, UPLOAD_TIMEOUT_MS } from "../lib/api/client";
 import { apiRoutes } from "../config/api-routes";
-import type { StoryPhoto, StorySeenState, StoryDaySummary } from "../types";
+import type { StoryPhoto, StoryDaySummary, UserStoryPhoto } from "../types";
 
 export async function getStoryPhotos(eventDayId: string): Promise<StoryPhoto[]> {
   const { data } = await apiClient.get<StoryPhoto[]>(apiRoutes.stories.byDay(eventDayId));
+  return data;
+}
+
+export async function getUserPhotos(identifier: string): Promise<UserStoryPhoto[]> {
+  const { data } = await apiClient.get<UserStoryPhoto[]>(apiRoutes.stories.byUser(identifier));
   return data;
 }
 
@@ -12,6 +17,7 @@ export async function uploadStoryPhoto(eventDayId: string, blob: Blob): Promise<
   form.append("file", blob, "photo.jpg");
   const { data } = await apiClient.post<StoryPhoto>(apiRoutes.stories.byDay(eventDayId), form, {
     headers: { "Content-Type": "multipart/form-data" },
+    timeout: UPLOAD_TIMEOUT_MS,
   });
   return data;
 }
@@ -24,11 +30,6 @@ export async function downloadStoryPhoto(photoId: string): Promise<Blob> {
   const { data } = await apiClient.get<Blob>(apiRoutes.stories.download(photoId), {
     responseType: "blob",
   });
-  return data;
-}
-
-export async function getStorySeen(eventDayId: string): Promise<StorySeenState> {
-  const { data } = await apiClient.get<StorySeenState>(apiRoutes.stories.seen(eventDayId));
   return data;
 }
 

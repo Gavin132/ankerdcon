@@ -1,14 +1,9 @@
-import { apiClient } from "../lib/api/client";
+import { apiClient, UPLOAD_TIMEOUT_MS } from "../lib/api/client";
 import { apiRoutes } from "../config/api-routes";
 import type { UpdateNameRequest, UpdatePreferencesRequest, User, LocationPingRequest } from "../types";
 
 export async function getCurrentUser(): Promise<User> {
   const { data } = await apiClient.get<User>(apiRoutes.users.me);
-  return data;
-}
-
-export async function getPublicUserNames(): Promise<string[]> {
-  const { data } = await apiClient.get<string[]>(apiRoutes.users.names);
   return data;
 }
 
@@ -36,6 +31,7 @@ export async function uploadBanner(blob: Blob, mimeType: string, position?: stri
   if (position) form.append("position", position);
   const { data } = await apiClient.post<{ url: string }>(apiRoutes.users.banner, form, {
     headers: { "Content-Type": "multipart/form-data" },
+    timeout: UPLOAD_TIMEOUT_MS,
   });
   return data;
 }
@@ -65,9 +61,6 @@ export async function completeOnboarding(payload: CompleteOnboardingPayload): Pr
 }
 
 export async function pingLocation(payload: LocationPingRequest): Promise<void> {
-  const { user_name, zone, text } = payload;
-  await apiClient.put(
-    apiRoutes.users.location(encodeURIComponent(user_name)),
-    { zone, text },
-  );
+  const { user_name, ...body } = payload;
+  await apiClient.put(apiRoutes.users.location(encodeURIComponent(user_name)), body);
 }

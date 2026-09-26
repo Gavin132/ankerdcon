@@ -1,13 +1,23 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from jose import jwt as jose_jwt
+import re
+import uuid
+
+from fastapi.concurrency import run_in_threadpool
+from typing import Optional
+
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, status
+import jwt
 
 from app.config import Settings, get_settings
 from app.constants import Tables
+from app.core import minio_client
 from app.core.logging import get_logger
-from app.dependencies import get_admin_user
+from app.core.uploads import clean_image, read_capped, sniff_video
+from app.dependencies import _unique_profile_name, get_admin_user
 from app.models.admin import (
+    CdnListing,
+    CdnObject,
     AdminCreateEventRequest,
     AdminCreateMealRequest,
     AdminCreateUserRequest,
@@ -38,6 +48,7 @@ from app.models.changelog import ChangelogEntry, CreateChangelogEntryRequest, Up
 from app.models.badge import Badge, BadgeOrderItem, CreateBadgeRequest, UpdateBadgeRequest
 from app.models.calendar import Event, EventDay, HotelRoom
 from app.routers.calendar import _hotel_group_key
+from app.routers.expenses import expense_in_open_settlement, share_in_open_settlement
 from app.models.meal import Meal
 from app.models.rides import CreateRideRequest, Ride
 from app.models.user import User
@@ -51,6 +62,11 @@ logger = get_logger(__name__)
 router = APIRouter(prefix=AdminRoutes.PREFIX, tags=["admin"])
 
 _DB_ERROR = "Databasefout. Probeer het opnieuw."
+
+# Upload kind -> folder in the MinIO bucket
+_IMAGE_FOLDERS = {"event-cover": "event-covers", "badge": "badges"}
+_IMAGE_MAX_BYTES = 10 * 1024 * 1024  # 10 MB
+_VIDEO_MAX_BYTES = 80 * 1024 * 1024  # 80 MB (the request limit for this route is 90)
 
 
 def _build_updates(body, nullable_fields: set[str] | None = None) -> dict:
@@ -107,6 +123,11 @@ def admin_list_users(_: str = Depends(get_admin_user)) -> list[User]:
 @router.post(AdminRoutes.USERS, response_model=User, status_code=status.HTTP_201_CREATED)
 def admin_create_user(body: AdminCreateUserRequest, _: str = Depends(get_admin_user)) -> User:
     """Create a stub profile to allowlist a new user before they log in with Discord."""
+    if _unique_profile_name(body.name) != body.name:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Deze naam is al in gebruik (of was de naam van iemand anders).",
+        )
     data: dict = {"name": body.name, "is_admin": body.is_admin, "is_active": True, "is_first_login": True}
     if body.discord_id:
         data["discord_id"] = body.discord_id
@@ -123,7 +144,7 @@ def admin_create_user(body: AdminCreateUserRequest, _: str = Depends(get_admin_u
 @router.post(AdminRoutes.IMPERSONATE)
 def admin_impersonate_user(
     user_id: str,
-    _: str = Depends(get_admin_user),
+    admin: str = Depends(get_admin_user),
     settings: Settings = Depends(get_settings),
 ) -> dict:
     """Mints a short-lived session token for another profile, so an admin can
@@ -138,7 +159,7 @@ def admin_impersonate_user(
     try:
         resp = (
             supabase.table(Tables.PROFILES)
-            .select("id, name, discord_id, discord_username, avatar_url, email, is_active")
+            .select("id, name, discord_id, discord_username, avatar_url, email, is_active, is_admin")
             .eq("id", user_id)
             .execute()
         )
@@ -151,14 +172,15 @@ def admin_impersonate_user(
     profile = resp.data[0]
     if profile.get("is_active") is False:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Deze gebruiker is gedeactiveerd.")
+    # Acting as another admin would let one admin use (and hide behind)
+    # another's account, so impersonation stops at regular members.
+    if profile.get("is_admin") and profile["name"] != admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Je kunt niet inloggen als een andere admin.")
+    logger.warning("Impersonation: admin %s signed in as %s (%s)", admin, profile["name"], profile["id"])
 
-    # Mirror the real token shape for however this profile actually authenticates —
-    # get_current_user branches on app_metadata.provider to decide whether to
-    # resolve identity by discord_id or by email. A guest/dummy profile (neither
-    # discord_id nor email, e.g. for someone without a Discord account) still
-    # goes through the discord path, which already falls back to a name-based
-    # lookup when discord_id is empty — that's the path that's always found
-    # these profiles, since they were never given an email identity either.
+    # get_current_user resolves this token by `sub` alone (profiles.id), so it
+    # works for guest profiles without any linked login too. The metadata only
+    # mirrors a real token's shape; nothing on the backend reads it.
     is_discord = bool(profile.get("discord_id")) or not profile.get("email")
     now = int(datetime.now(timezone.utc).timestamp())
     payload: dict = {
@@ -181,7 +203,7 @@ def admin_impersonate_user(
     }
     if profile.get("email"):
         payload["email"] = profile["email"]
-    token = jose_jwt.encode(payload, settings.supabase_jwt_secret, algorithm="HS256")
+    token = jwt.encode(payload, settings.supabase_jwt_secret, algorithm="HS256")
     return {"access_token": token, "name": profile["name"]}
 
 
@@ -200,6 +222,19 @@ def _remove_user_from_all_events(name: str) -> None:
                     supabase.table(table).update({field: [m for m in members if m != name]}).eq("id", row["id"]).execute()
         except Exception as e:
             logger.error("Cleanup %s.%s failed for %r: %s", table, field, name, e)
+
+
+def _revoke_whitelist(row: dict) -> None:
+    """Deleting someone must also take away their way back in: without this,
+    their next login passes the whitelist and gets a brand-new profile."""
+    for column in ("discord_id", "email"):
+        value = row.get(column)
+        if not value:
+            continue
+        try:
+            supabase.table(Tables.WHITELIST).delete().eq(column, value.lower() if column == "email" else value).execute()
+        except Exception as e:
+            logger.error("Failed to remove %s from the whitelist for %s: %s", column, row.get("name"), e)
 
 
 @router.put(AdminRoutes.USER_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
@@ -250,7 +285,7 @@ def admin_delete_user(
     settings: Settings = Depends(get_settings),
 ) -> None:
     try:
-        current = supabase.table(Tables.PROFILES).select("name, discord_id, allow_dm").eq("id", user_id).execute()
+        current = supabase.table(Tables.PROFILES).select("name, discord_id, email, allow_dm").eq("id", user_id).execute()
     except Exception as e:
         logger.error("Failed to fetch user %s for deletion: %s", user_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
@@ -267,6 +302,7 @@ def admin_delete_user(
     except Exception as e:
         logger.error("Failed to delete user %s: %s", user_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    _revoke_whitelist(row)
 
     if row.get("allow_dm", True) and row.get("discord_id"):
         try:
@@ -283,7 +319,7 @@ def admin_bulk_delete_users(
 ) -> None:
     for user_id in body.user_ids:
         try:
-            current = supabase.table(Tables.PROFILES).select("name, discord_id, allow_dm").eq("id", user_id).execute()
+            current = supabase.table(Tables.PROFILES).select("name, discord_id, email, allow_dm").eq("id", user_id).execute()
         except Exception as e:
             logger.error("Failed to fetch user %s during bulk delete: %s", user_id, e)
             continue
@@ -297,6 +333,7 @@ def admin_bulk_delete_users(
         except Exception as e:
             logger.error("Failed to delete user %s during bulk delete: %s", user_id, e)
             continue
+        _revoke_whitelist(row)
         if row.get("allow_dm", True) and row.get("discord_id"):
             try:
                 discord_bot.send_removed_dm(settings.discord_bot_token, row["discord_id"])
@@ -557,6 +594,11 @@ def admin_update_expense(
 def admin_delete_expense(expense_id: str, _: str = Depends(get_admin_user)) -> None:
     """Admin override of the user-facing delete — bypasses the "only the payer
     can delete" restriction so admins can clean up any transaction."""
+    if expense_in_open_settlement(expense_id):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Deze uitgave zit in een lopende afrekening. Rond die eerst af of trek hem in.",
+        )
     try:
         supabase.table(Tables.EXPENSES).delete().eq("id", expense_id).execute()
     except Exception as e:
@@ -573,6 +615,11 @@ def admin_set_share_status(
     """Lets an admin directly set a share's status (including reverting it),
     unlike the user-facing claim/confirm endpoints which only move forward
     one step at a time."""
+    if share_in_open_settlement(share_id):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Dit aandeel zit in een lopende afrekening. Bevestig of trek die in onder Afrekenen.",
+        )
     now = datetime.now(timezone.utc).isoformat()
     updates: dict = {"status": body.status}
     if body.status == "pending":
@@ -1140,3 +1187,225 @@ def admin_delete_changelog_entry(entry_id: str, _: str = Depends(get_admin_user)
     except Exception as e:
         logger.error("Failed to delete changelog entry %s: %s", entry_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+
+# ── Image uploads ──────────────────────────────────────────────────────────────
+
+def _store_admin_image(kind: str, folder: str, content: bytes) -> dict:
+    content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP"})
+    key = f"{folder}/{uuid.uuid4().hex}.{ext}"
+    try:
+        return {"url": minio_client.upload_bytes(key, content, content_type)}
+    except RuntimeError as e:
+        logger.error("%s upload failed (MinIO not configured): %s", kind, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
+    except Exception as e:
+        logger.error("MinIO upload of a %s failed: %s", kind, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Uploaden mislukt. Probeer het opnieuw.")
+
+
+@router.post(AdminRoutes.UPLOAD_IMAGE)
+async def admin_upload_image(
+    kind: str,
+    file: UploadFile = File(...),
+    _: str = Depends(get_admin_user),
+) -> dict:
+    """Store an event cover or badge image in MinIO and return its public URL.
+
+    These used to be uploaded from the browser straight into Supabase Storage,
+    which meant storage had to accept writes from any signed-in Supabase user —
+    including people who aren't on the whitelist. Now only the backend (and so
+    only admins) can write them, next to the rest of the app's images.
+    """
+    folder = _IMAGE_FOLDERS.get(kind)
+    if not folder:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Onbekend soort afbeelding.")
+
+    content = await read_capped(file, _IMAGE_MAX_BYTES)
+    return await run_in_threadpool(_store_admin_image, kind, folder, content)
+
+
+def _store_quick_upload(content: bytes) -> dict:
+    video = sniff_video(content)
+    if video:
+        content_type, ext = video
+        media = "video"
+    else:
+        if len(content) > _IMAGE_MAX_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"Afbeelding te groot. Maximum is {_IMAGE_MAX_BYTES // (1024 * 1024)} MB.",
+            )
+        try:
+            content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP", "GIF"})
+        except HTTPException:
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail="Alleen afbeeldingen (JPG, PNG, WebP, GIF) en video's (MP4, MOV, WebM) zijn toegestaan.",
+            )
+        media = "image"
+    key = f"uploads/{uuid.uuid4().hex}.{ext}"
+    try:
+        url = minio_client.upload_bytes(key, content, content_type)
+    except RuntimeError as e:
+        logger.error("Quick upload failed (MinIO not configured): %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
+    except Exception as e:
+        logger.error("MinIO quick upload failed: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Uploaden mislukt. Probeer het opnieuw.")
+    return {"url": url, "key": key, "media": media, "size": len(content)}
+
+
+@router.post(AdminRoutes.QUICK_UPLOAD)
+async def admin_quick_upload(
+    file: UploadFile = File(...),
+    _: str = Depends(get_admin_user),
+) -> dict:
+    """Upload an image or video to embed somewhere, and get its public URL.
+
+    Only what the bytes really are is accepted: images are re-encoded (which
+    also strips their location data), videos are checked by their file header
+    and stored as they are. Nothing else — no HTML, SVG or PDF — can be stored
+    here, so a link to an upload can never run a script in someone's browser.
+    """
+    content = await read_capped(file, _VIDEO_MAX_BYTES)
+    return await run_in_threadpool(_store_quick_upload, content)
+
+
+# ── CDN (the whole photo bucket) ───────────────────────────────────────────────
+
+_CDN_FOLDER_KINDS = {
+    "cosplay": "cosplay", "banners": "banner", "badges": "badge", "event-covers": "event-cover", "uploads": "upload",
+}
+
+
+_STORY_KEY = re.compile(r"^[0-9a-f-]{36}/[0-9a-f-]{36}/[^/]+$")
+
+
+def _cdn_kind(key: str) -> str:
+    """Folders named after a feature are that feature's; story photos live
+    under <event id>/<day id>/; anything else is something we didn't put there."""
+    kind = _CDN_FOLDER_KINDS.get(key.split("/", 1)[0])
+    if kind:
+        return kind
+    return "story" if _STORY_KEY.match(key) else "other"
+
+
+def _cdn_owners(items: list[dict]) -> dict[str, str]:
+    """key -> who uploaded it, for what the database can tell us. Best effort:
+    a failed lookup just leaves those without an owner."""
+    owners: dict[str, str] = {}
+    urls = {i["url"]: i["key"] for i in items}
+    story_urls = [i["url"] for i in items if i["kind"] == "story"]
+    if story_urls:
+        try:
+            rows = supabase.table(Tables.STORY_PHOTOS).select("image_url, uploaded_by").in_("image_url", story_urls).execute().data or []
+            for r in rows:
+                owners[urls[r["image_url"]]] = r["uploaded_by"]
+        except Exception as e:
+            logger.error("CDN: story owner lookup failed: %s", e)
+    banner_items = [i for i in items if i["kind"] == "banner"]
+    if banner_items:
+        try:
+            names = {p["id"]: p["name"] for p in supabase.table(Tables.PROFILES).select("id, name").execute().data or []}
+            for i in banner_items:
+                parts = i["key"].split("/")  # banners/<user id>/<file>
+                if len(parts) >= 3 and parts[1] in names:
+                    owners[i["key"]] = names[parts[1]]
+        except Exception as e:
+            logger.error("CDN: banner owner lookup failed: %s", e)
+    cosplay_urls = [i["url"] for i in items if i["kind"] == "cosplay"]
+    if cosplay_urls:
+        try:
+            rows = supabase.table(Tables.COSPLAYS).select("user_name, inspo_images").overlaps("inspo_images", cosplay_urls).execute().data or []
+            for r in rows:
+                for u in r.get("inspo_images") or []:
+                    if u in urls:
+                        owners[urls[u]] = r["user_name"]
+        except Exception as e:
+            logger.error("CDN: cosplay owner lookup failed: %s", e)
+    return owners
+
+
+@router.get(AdminRoutes.CDN, response_model=CdnListing)
+def admin_cdn(
+    limit: int = Query(60, ge=1, le=300),
+    offset: int = Query(0, ge=0),
+    kind: Optional[str] = None,
+    _: str = Depends(get_admin_user),
+) -> CdnListing:
+    """Every file in the photo bucket, newest first — so an admin can look for
+    anything that shouldn't be there. `kind` narrows it to one feature."""
+    try:
+        objects, capped = minio_client.list_all_objects()
+    except RuntimeError as e:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
+    except Exception as e:
+        logger.error("CDN: listing the bucket failed: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="De bucket kon niet worden uitgelezen. Controleer of MinIO bereikbaar is en de sleutel mag lijsten.",
+        )
+
+    for o in objects:
+        o["kind"] = _cdn_kind(o["key"])
+    counts: dict[str, int] = {}
+    for o in objects:
+        counts[o["kind"]] = counts.get(o["kind"], 0) + 1
+    chosen = [o for o in objects if o["kind"] == kind] if kind else objects
+    page = chosen[offset:offset + limit]
+    owners = _cdn_owners(page)
+    return CdnListing(
+        total=len(chosen),
+        total_size=sum(o["size"] for o in chosen),
+        capped=capped,
+        counts=counts,
+        items=[CdnObject(**o, owner=owners.get(o["key"])) for o in page],
+    )
+
+
+def _forget_file(key: str, url: str) -> None:
+    """Take every reference to a file out of the database before it is deleted,
+    so nothing is left pointing at an image that is gone. A badge cannot do
+    without its image, so a file a badge still uses is refused instead."""
+    badge = supabase.table(Tables.BADGES).select("name").eq("image_url", url).execute().data or []
+    if badge:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Deze afbeelding is het plaatje van de badge \"{badge[0]['name']}\". Vervang eerst de afbeelding van de badge.",
+        )
+    supabase.table(Tables.STORY_PHOTOS).delete().eq("image_url", url).execute()
+    supabase.table(Tables.EVENTS).update({"image_url": None}).eq("image_url", url).execute()
+    supabase.table(Tables.PROFILES).update({"banner_url": None, "banner_position": None}).eq("banner_url", url).execute()
+    for row in supabase.table(Tables.COSPLAYS).select("id, inspo_images").overlaps("inspo_images", [url]).execute().data or []:
+        kept = [u for u in (row.get("inspo_images") or []) if u != url]
+        supabase.table(Tables.COSPLAYS).update({"inspo_images": kept}).eq("id", row["id"]).execute()
+
+
+@router.delete(AdminRoutes.CDN, status_code=status.HTTP_204_NO_CONTENT)
+def admin_delete_cdn_file(
+    key: str = Query(..., min_length=1, max_length=512),
+    admin: str = Depends(get_admin_user),
+) -> None:
+    """Delete any file in the bucket, whoever uploaded it. The story photo,
+    cosplay image, banner or event cover that used it loses it too."""
+    if ".." in key or key.startswith("/"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ongeldige bestandsnaam.")
+    try:
+        url = minio_client.public_url(key)
+    except Exception as e:
+        logger.error("CDN delete: MinIO not configured: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Opslag is niet ingesteld.")
+    try:
+        _forget_file(key, url)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("CDN delete: cleaning up references to %s failed: %s", key, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    try:
+        minio_client.delete_object(key)
+    except Exception as e:
+        logger.error("CDN delete of %s failed: %s", key, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Verwijderen mislukt. Probeer het opnieuw.")
+    logger.warning("CDN: admin %s deleted %s", admin, key)

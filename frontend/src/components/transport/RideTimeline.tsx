@@ -11,9 +11,9 @@ interface RideTimelineProps {
 }
 
 const DIRECTION = {
-  Inbound:    { Icon: ArrowRight, label: "Heen",       dot: "bg-sky-400",    badge: "bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400"       },
-  Outbound:   { Icon: ArrowLeft,  label: "Terug",      dot: "bg-orange-400", badge: "bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" },
-  Restaurant: { Icon: Utensils,   label: "Restaurant", dot: "bg-amber-400",  badge: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"  },
+  Inbound:    { Icon: ArrowRight, label: "Heen",       dot: "border-2 border-ink bg-surface" },
+  Outbound:   { Icon: ArrowLeft,  label: "Terug",      dot: "border-2 border-ink bg-ink" },
+  Restaurant: { Icon: Utensils,   label: "Restaurant", dot: "border-2 border-ink bg-surface" },
 } as const;
 
 function parseTime(dt: string): { time: string; date: string } {
@@ -51,7 +51,7 @@ export function RideTimeline({ rides }: RideTimelineProps) {
       animate="show"
     >
       {sorted.map((ride, index) => {
-        const { Icon, label, dot, badge } = DIRECTION[ride.direction];
+        const { Icon, label, dot } = DIRECTION[ride.direction];
         const { time, date } = parseTime(ride.departure_time);
         const takenSeats = ride.total_seats - ride.seats_left;
         const isPT = ride.is_public_transport;
@@ -61,32 +61,32 @@ export function RideTimeline({ rides }: RideTimelineProps) {
           <motion.div key={ride.id} variants={listItem} className="flex gap-3">
             {/* Time column */}
             <div className="w-14 shrink-0 text-right pt-2">
-              <p className="text-sm font-black text-slate-900 dark:text-white leading-tight">
+              <p className="font-mono text-sm font-semibold leading-tight tabular-nums text-ink">
                 {time}
               </p>
-              <p className="text-[10px] font-medium text-slate-400 leading-tight mt-0.5">
+              <p className="mt-0.5 font-mono text-[10px] uppercase leading-tight tracking-[0.04em] text-ink-3">
                 {date}
               </p>
             </div>
 
             {/* Connector */}
             <div className="flex flex-col items-center pt-2.5">
-              <div className={`h-3 w-3 rounded-full shrink-0 ${dot} ring-2 ring-white dark:ring-slate-900`} />
+              <div className={`h-3 w-3 shrink-0 rounded-full ${dot}`} />
               {!isLast && (
-                <div className="flex-1 w-px bg-slate-200 dark:bg-slate-700 my-1.5" />
+                <div className="my-1.5 w-0.5 flex-1 bg-line" />
               )}
             </div>
 
             {/* Card */}
             <div className="flex-1 min-w-0 pb-3">
-              <div className="card-surface rounded-xl px-3 py-2.5 space-y-2">
+              <div className="card-surface space-y-2 px-3 py-2.5">
                 {/* Top row: direction badge + route */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-bold ${badge}`}>
+                  <span className="inline-flex items-center gap-1 rounded-md border border-line px-1.5 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2">
                     <Icon size={10} />
                     {label}
                   </span>
-                  <p className="text-sm font-black text-slate-900 dark:text-white truncate">
+                  <p className="min-w-0 truncate text-sm font-semibold text-ink">
                     {ride.start_location}
                   </p>
                 </div>
@@ -95,16 +95,16 @@ export function RideTimeline({ rides }: RideTimelineProps) {
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <UserAvatar name={ride.driver} className="h-6 w-6 text-[10px]" />
-                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 truncate">
+                    <span className="truncate text-xs font-medium text-ink-2">
                       {ride.driver}
                     </span>
                   </div>
 
                   {!isPT && ride.total_seats < 99 && (
-                    <div className={`shrink-0 flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-bold ${
+                    <div className={`flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[11px] font-semibold tabular-nums ${
                       ride.is_full
-                        ? "bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400"
-                        : "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
+                        ? "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300"
+                        : "bg-sunken text-ink-2"
                     }`}>
                       <Users size={10} />
                       {ride.is_full
@@ -116,9 +116,9 @@ export function RideTimeline({ rides }: RideTimelineProps) {
 
                 {/* Seat progress bar */}
                 {!isPT && ride.total_seats < 99 && (
-                  <div className="h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+                  <div className="h-1 overflow-hidden rounded-full bg-sunken">
                     <motion.div
-                      className={`h-full rounded-full ${ride.is_full ? "bg-rose-400" : "bg-sky-400"}`}
+                      className={`h-full rounded-full ${ride.is_full ? "bg-rose-500" : "bg-ink"}`}
                       initial={{ scaleX: 0 }}
                       animate={{ scaleX: takenSeats / ride.total_seats }}
                       style={{ transformOrigin: "left" }}

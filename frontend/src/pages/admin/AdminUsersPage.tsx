@@ -95,9 +95,9 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
             autoFocus
           />
           {errors.name && (
-            <p className="text-xs text-rose-400 mt-1">{errors.name.message}</p>
+            <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.name.message}</p>
           )}
-          <p className="mt-1.5 text-[11px] text-slate-500">
+          <p className="mt-1.5 text-[11px] text-ink-3">
             Zichtbaar voor de hele groep bij ritten, maaltijden, kamers en uitgaven.
           </p>
         </div>
@@ -109,26 +109,26 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
             className={`${F} font-mono`}
             placeholder="123456789012345678"
           />
-          <p className="mt-1.5 text-[11px] text-slate-500">
+          <p className="mt-1.5 text-[11px] text-ink-3">
             Alleen nodig als deze persoon zelf met Discord gaat inloggen — voor een stabielere koppeling na naamwijzigingen. Laat dit leeg voor iemand zonder eigen account (bijv. iemand die niet mee wil doen aan de app); je kunt ze dan nog steeds overal aan toevoegen.
           </p>
         </div>
 
-        <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3">
+        <div className="flex items-center justify-between rounded-xl border-1.5 border-line bg-paper px-4 py-3">
           <div className="flex items-center gap-2">
-            <Shield size={15} className="text-sky-500" />
-            <span className="text-sm font-medium text-slate-300">Admin-rechten</span>
+            <Shield size={15} className="text-ink-2" />
+            <span className="text-sm font-medium text-ink">Admin-rechten</span>
           </div>
           <button
             type="button"
             onClick={() => setValue("is_admin", !isAdmin)}
             className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${
-              isAdmin ? "bg-sky-500" : "bg-white/20"
+              isAdmin ? "bg-ink dark:bg-brand" : "bg-line"
             }`}
           >
             <span
-              className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                isAdmin ? "translate-x-4" : ""
+              className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition-transform ${
+                isAdmin ? "translate-x-4 bg-paper" : "bg-white dark:bg-ink-3"
               }`}
             />
           </button>
@@ -143,7 +143,6 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
 // ── Edit drawer ───────────────────────────────────────────────────────────────
 
 const editSchema = z.object({
-  hotel_room: z.string().optional(),
   phone_number: z.string().optional(),
   pronouns: z.string().max(40, "Max 40 tekens").optional(),
   bio: z.string().max(200, "Max 200 tekens").optional(),
@@ -176,7 +175,6 @@ function UserEditDrawer({
   } = useForm<EditForm>({
     resolver: zodResolver(editSchema),
     defaultValues: {
-      hotel_room: user?.hotel_room ?? "",
       phone_number: user?.phone_number ?? "",
       pronouns: user?.pronouns ?? "",
       bio: user?.bio ?? "",
@@ -235,36 +233,26 @@ function UserEditDrawer({
           className="space-y-4"
         >
           {/* Identity */}
-          <div className="flex items-center gap-3 pb-4 border-b border-white/[0.06]">
+          <div className="flex items-center gap-3 pb-4 border-b border-line">
             <UserAvatar
               name={user.name}
               className="h-12 w-12 text-sm shrink-0"
             />
             <div className="min-w-0">
-              <p className="text-sm font-bold text-white">{user.name}</p>
-              <p className="text-xs text-slate-400 mt-0.5 font-mono truncate">
+              <p className="text-sm font-semibold text-ink">{user.name}</p>
+              <p className="text-xs text-ink-3 mt-0.5 font-mono truncate">
                 {user.discord_id ?? "Geen Discord ID"}
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={L}>Hotelkamer</label>
-              <input
-                {...register("hotel_room")}
-                className={F}
-                placeholder="101"
-              />
-            </div>
-            <div>
-              <label className={L}>Telefoonnummer</label>
-              <input
-                {...register("phone_number")}
-                className={F}
-                placeholder="+31 6..."
-              />
-            </div>
+          <div>
+            <label className={L}>Telefoonnummer</label>
+            <input
+              {...register("phone_number")}
+              className={F}
+              placeholder="+31 6..."
+            />
           </div>
 
           <div>
@@ -275,7 +263,7 @@ function UserEditDrawer({
               placeholder="hij/hem"
             />
             {errors.pronouns && (
-              <p className="text-xs text-rose-400 mt-1">
+              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
                 {errors.pronouns.message}
               </p>
             )}
@@ -290,7 +278,7 @@ function UserEditDrawer({
               placeholder="Over mij..."
             />
             {errors.bio && (
-              <p className="text-xs text-rose-400 mt-1">{errors.bio.message}</p>
+              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.bio.message}</p>
             )}
           </div>
 
@@ -302,7 +290,7 @@ function UserEditDrawer({
               placeholder="#3b82f6"
             />
             {errors.color && (
-              <p className="text-xs text-rose-400 mt-1">
+              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
                 {errors.color.message}
               </p>
             )}
@@ -334,7 +322,7 @@ function UserEditDrawer({
                   aliases.includes(aliasInput.trim()) ||
                   aliases.length >= 10
                 }
-                className="flex h-[42px] w-10 shrink-0 items-center justify-center rounded-xl bg-sky-600 text-white disabled:opacity-30 hover:bg-sky-700 transition-colors"
+                className="btn-primary h-[42px] w-10 shrink-0 disabled:opacity-50"
               >
                 <Plus size={14} />
               </button>
@@ -344,13 +332,13 @@ function UserEditDrawer({
                 {aliases.map((a) => (
                   <span
                     key={a}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.07] border border-white/10 px-2.5 py-1 text-xs font-semibold text-slate-300"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-line bg-sunken px-2.5 py-1 text-xs font-semibold text-ink-2"
                   >
                     {a}
                     <button
                       type="button"
                       onClick={() => setAliases(aliases.filter((x) => x !== a))}
-                      className="text-slate-500 hover:text-rose-400 transition-colors"
+                      className="text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                     >
                       <X size={11} />
                     </button>
@@ -358,16 +346,16 @@ function UserEditDrawer({
                 ))}
               </div>
             )}
-            <p className="mt-1.5 text-[11px] text-slate-500">
+            <p className="mt-1.5 text-[11px] text-ink-3">
               Zoekopdrachten in aanmeldformulieren herkennen deze namen ook.
             </p>
           </div>
 
           {/* Admin toggle */}
-          <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3">
+          <div className="flex items-center justify-between rounded-xl border-1.5 border-line bg-paper px-4 py-3">
             <div className="flex items-center gap-2">
-              <Shield size={15} className="text-sky-500" />
-              <span className="text-sm font-medium text-slate-300">
+              <Shield size={15} className="text-ink-2" />
+              <span className="text-sm font-medium text-ink">
                 Admin-rechten
               </span>
             </div>
@@ -375,12 +363,12 @@ function UserEditDrawer({
               type="button"
               onClick={() => setValue("is_admin", !isAdmin)}
               className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${
-                isAdmin ? "bg-sky-500" : "bg-white/20"
+                isAdmin ? "bg-ink dark:bg-brand" : "bg-line"
               }`}
             >
               <span
-                className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                  isAdmin ? "translate-x-4" : ""
+                className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition-transform ${
+                  isAdmin ? "translate-x-4 bg-paper" : "bg-white dark:bg-ink-3"
                 }`}
               />
             </button>
@@ -496,14 +484,14 @@ export function AdminUsersPage() {
   const activeCount = users.filter((u) => u.is_active !== false).length;
 
   return (
-    <div className="p-5 lg:p-8 max-w-6xl mx-auto space-y-5">
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
       <AdminPageHeader
         title="Gebruikers"
         subtitle={`${activeCount} actief · ${users.length} totaal`}
         action={
           <button
             onClick={() => setCreating(true)}
-            className="flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 transition-colors"
+            className="btn-primary px-4 py-2 text-sm"
           >
             <UserPlus size={15} />
             Nieuwe gebruiker
@@ -517,11 +505,11 @@ export function AdminUsersPage() {
         placeholder="Zoek op naam, Discord of alias..."
       />
 
-      <div className="rounded-2xl border border-slate-200/80 dark:border-white/[0.06] bg-white dark:bg-slate-800/60 overflow-hidden shadow-sm">
+      <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/[0.06] bg-slate-50/80 dark:bg-slate-900/40">
+              <tr className="border-b-1.5 border-line text-left">
                 <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
                   <input
                     type="checkbox"
@@ -531,31 +519,31 @@ export function AdminUsersPage() {
                     className="cb"
                   />
                 </th>
-                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Gebruiker
                 </th>
-                <th className="hidden sm:table-cell px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="hidden sm:table-cell px-5 py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Discord ID
                 </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Status
                 </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Rol
                 </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Acties
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+            <tbody className="divide-y divide-line">
               {isLoading ? (
                 <AdminTableSkeleton cols={6} />
               ) : filtered.length === 0 ? (
                 <tr>
                   <td
                     colSpan={6}
-                    className="px-5 py-10 text-center text-sm text-slate-400"
+                    className="px-5 py-10 text-center text-sm text-ink-3"
                   >
                     Geen gebruikers gevonden.
                   </td>
@@ -566,7 +554,7 @@ export function AdminUsersPage() {
                   return (
                     <tr
                       key={user.id}
-                      className={`group transition-colors ${selectedIds.has(user.id!) ? "bg-sky-500/[0.06] hover:bg-sky-500/[0.08]" : "hover:bg-slate-50 dark:hover:bg-white/[0.03]"} ${!isActive ? "opacity-50" : ""}`}
+                      className={`group transition-colors ${selectedIds.has(user.id!) ? "bg-brand-soft/50 hover:bg-brand-soft/70" : "hover:bg-sunken"} ${!isActive ? "opacity-50" : ""}`}
                     >
                       <td
                         className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3.5"
@@ -587,11 +575,11 @@ export function AdminUsersPage() {
                             className="h-7 w-7 sm:h-8 sm:w-8 text-[9px] sm:text-[10px] shrink-0"
                           />
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                            <p className="text-sm font-semibold text-ink truncate">
                               {user.name}
                             </p>
                             {user.discord_username && (
-                              <p className="text-xs text-slate-400 truncate">
+                              <p className="text-xs text-ink-3 truncate">
                                 @{user.discord_username}
                               </p>
                             )}
@@ -600,19 +588,19 @@ export function AdminUsersPage() {
                       </td>
                       <td className="hidden sm:table-cell px-5 py-3.5">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">
+                          <span className="text-xs text-ink-3 font-mono">
                             {user.discord_id ?? (
-                              <span className="text-slate-300 dark:text-slate-600">—</span>
+                              <span className="text-ink-3">—</span>
                             )}
                           </span>
                           {user.discord_id && (
                             <button
                               onClick={() => handleCopyDiscordId(user.discord_id!, user.id!)}
-                              className="opacity-0 group-hover:opacity-100 flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-white/[0.08] hover:text-slate-200 transition-all"
+                              className="opacity-0 group-hover:opacity-100 flex h-6 w-6 items-center justify-center rounded-md text-ink-3 hover:bg-sunken hover:text-ink transition-all"
                               title="Kopieer Discord ID"
                             >
                               {copiedId === user.id ? (
-                                <Check size={11} className="text-emerald-400" />
+                                <Check size={11} className="text-emerald-600 dark:text-emerald-400" />
                               ) : (
                                 <Copy size={11} />
                               )}
@@ -624,7 +612,7 @@ export function AdminUsersPage() {
                         {isActive ? (
                           <span
                             title="Actief"
-                            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-500/10 p-1.5 sm:px-2.5 sm:py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 p-1.5 text-[11.5px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 sm:px-2 sm:py-0.5"
                           >
                             <CheckCircle size={10} />
                             <span className="hidden sm:inline">Actief</span>
@@ -632,7 +620,7 @@ export function AdminUsersPage() {
                         ) : (
                           <span
                             title="Inactief"
-                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] p-1.5 sm:px-2.5 sm:py-1 text-xs font-semibold text-slate-500 dark:text-slate-400"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-sunken p-1.5 text-[11.5px] font-semibold text-ink-2 sm:px-2 sm:py-0.5"
                           >
                             <Ban size={10} />
                             <span className="hidden sm:inline">Inactief</span>
@@ -643,7 +631,7 @@ export function AdminUsersPage() {
                         {user.is_admin ? (
                           <span
                             title="Admin"
-                            className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 dark:bg-sky-500/10 p-1.5 sm:px-2.5 sm:py-1 text-xs font-semibold text-sky-700 dark:text-sky-400"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface p-1.5 text-[11.5px] font-semibold text-ink sm:px-2 sm:py-0.5"
                           >
                             <Shield size={10} />
                             <span className="hidden sm:inline">Admin</span>
@@ -651,7 +639,7 @@ export function AdminUsersPage() {
                         ) : (
                           <span
                             title="Gebruiker"
-                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] p-1.5 sm:px-2.5 sm:py-1 text-xs font-semibold text-slate-500 dark:text-slate-400"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-sunken p-1.5 text-[11.5px] font-semibold text-ink-2 sm:px-2 sm:py-0.5"
                           >
                             <ShieldOff size={10} />
                             <span className="hidden sm:inline">Gebruiker</span>
@@ -663,17 +651,17 @@ export function AdminUsersPage() {
                           {/* Deactivate confirmation inline */}
                           {confirmDeactivateId === user.id ? (
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-slate-500">Deactiveren?</span>
+                              <span className="text-xs text-ink-3">Deactiveren?</span>
                               <button
                                 onClick={() => handleDeactivate(user)}
                                 disabled={updateMutation.isPending}
-                                className="rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 disabled:opacity-50 transition-colors"
+                                className="rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:hover:bg-amber-500/25 disabled:opacity-50 transition-colors"
                               >
                                 {updateMutation.isPending ? "..." : "Ja"}
                               </button>
                               <button
                                 onClick={() => setConfirmDeactivateId(null)}
-                                className="rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-white/[0.06] text-slate-400 hover:bg-white/[0.1] transition-colors"
+                                className="rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-sunken text-ink-2 hover:text-ink transition-colors"
                               >
                                 Nee
                               </button>
@@ -689,8 +677,8 @@ export function AdminUsersPage() {
                               title={isActive ? "Deactiveren" : "Activeren"}
                               className={`flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg transition-colors disabled:opacity-40 ${
                                 isActive
-                                  ? "text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10"
-                                  : "text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
+                                  ? "text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-500/15"
+                                  : "text-emerald-700 hover:bg-emerald-100 dark:text-emerald-300 dark:hover:bg-emerald-500/15"
                               }`}
                             >
                               {isActive ? <Ban size={14} /> : <CheckCircle size={14} />}
@@ -744,7 +732,7 @@ export function AdminUsersPage() {
           <button
             onClick={handleBulkDeactivate}
             disabled={bulkIsPending}
-            className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium text-amber-400 hover:bg-amber-500/10 hover:text-amber-300 transition-colors disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-100 disabled:opacity-40 dark:text-amber-300 dark:hover:bg-amber-500/15"
           >
             <Ban size={14} />
             Deactiveer

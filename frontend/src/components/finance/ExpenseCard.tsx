@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { Calendar, CheckCircle2, Clock, Circle } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { formatAmount, formatDate } from "../../utils/format";
 import { listItem } from "../../utils/motion";
@@ -10,19 +9,24 @@ interface Props {
   users: User[];
   me: string | undefined;
   onClick: () => void;
+  /** Name of the trip the expense is linked to, if any. */
+  tripTitle?: string;
 }
 
 function resolveUser(name: string, users: User[]) {
   return users.find((u) => u.name === name || u.discord_username === name || u.aliases?.includes(name));
 }
 
-const STATUS_ICON = {
-  confirmed: <CheckCircle2 size={11} className="text-emerald-500" />,
-  claimed:   <Clock        size={11} className="text-amber-500" />,
-  pending:   <Circle       size={11} className="text-slate-300 dark:text-slate-600" />,
+const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-[11.5px] font-semibold before:h-1.5 before:w-1.5 before:rounded-full before:bg-current before:content-['']";
+
+const STATUS_PILL = {
+  confirmed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+  claimed:   "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
+  pending:   "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
 } as const;
 
-export function ExpenseCard({ expense, users, me, onClick }: Props) {
+/** One expense as a row in the Financiën list panel. */
+export function ExpenseCard({ expense, users, me, onClick, tripTitle }: Props) {
   const confirmedCount = expense.shares.filter((s) => s.status === "confirmed").length;
   const totalShares    = expense.shares.length;
   const allConfirmed   = totalShares > 0 && confirmedCount === totalShares;
@@ -35,76 +39,63 @@ export function ExpenseCard({ expense, users, me, onClick }: Props) {
       <button
         type="button"
         onClick={onClick}
-        className="w-full text-left card-surface rounded-2xl overflow-hidden hover:shadow-md active:scale-[0.99] transition-all duration-150"
+        className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-sunken"
       >
-        {/* Accent bar */}
-        <div className={`h-[3px] ${allConfirmed ? "bg-gradient-to-r from-emerald-400 to-teal-400" : "bg-gradient-to-r from-sky-400 to-indigo-500"}`} />
+        {/* Payer avatar */}
+        <UserAvatar
+          name={expense.paid_by}
+          user={resolveUser(expense.paid_by, users)}
+          className="h-9 w-9 shrink-0 text-xs"
+        />
 
-        <div className="px-4 pt-4 pb-3 flex items-start gap-3">
-          {/* Payer avatar */}
-          <UserAvatar
-            name={expense.paid_by}
-            user={resolveUser(expense.paid_by, users)}
-            className="h-9 w-9 text-xs rounded-xl shrink-0 mt-0.5"
-          />
-
-          {/* Main info */}
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-slate-900 dark:text-white truncate leading-snug">
-              {expense.description}
-            </p>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="flex items-center gap-1 text-[11px] text-slate-400 font-medium">
-                <Calendar size={10} className="shrink-0" />
-                {formatDate(expense.date)}
-              </span>
-              <span className="text-slate-200 dark:text-slate-700">·</span>
-              <span className="text-[11px] text-slate-400 truncate">{expense.paid_by}</span>
-            </div>
-          </div>
-
-          {/* Amount */}
-          <div className="shrink-0 text-right">
-            <p className="text-base font-black text-slate-900 dark:text-white leading-none">
-              {formatAmount(expense.amount, expense.currency)}
-            </p>
-            {totalShares > 0 && (
-              <p className={`text-[10px] font-semibold mt-0.5 ${allConfirmed ? "text-emerald-500" : "text-slate-400"}`}>
-                {allConfirmed ? "Verrekend" : `${confirmedCount}/${totalShares} verrekend`}
-              </p>
+        {/* Main info */}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[14px] font-semibold leading-snug text-ink">
+            {expense.description}
+          </p>
+          <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[12px] text-ink-3">
+            <span className="shrink-0 font-mono text-ink-2">{formatDate(expense.date)}</span>
+            <span aria-hidden>·</span>
+            <span className="truncate">{expense.paid_by}</span>
+            {tripTitle && (
+              <>
+                <span aria-hidden>·</span>
+                <span className="truncate">{tripTitle}</span>
+              </>
             )}
-          </div>
+          </p>
+          {myShare && !iAm && totalShares > 0 && (
+            <span className={`mt-1.5 ${PILL} ${STATUS_PILL[myShare.status]}`}>
+              {myShare.status === "confirmed"
+                ? "Betaald"
+                : myShare.status === "claimed"
+                ? "In afwachting"
+                : `Jij: ${formatAmount(myShare.amount, expense.currency)}`}
+            </span>
+          )}
         </div>
 
-        {/* Share status strip */}
-        {totalShares > 0 && (
-          <div className="px-4 pb-3 flex items-center gap-3">
-            {/* Status pill for current user */}
-            {myShare && !iAm && (
-              <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold border ${
-                myShare.status === "confirmed"
-                  ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400"
-                  : myShare.status === "claimed"
-                  ? "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-700 dark:text-amber-400"
-                  : "bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400"
-              }`}>
-                {STATUS_ICON[myShare.status]}
-                {myShare.status === "confirmed"
-                  ? "Betaald"
-                  : myShare.status === "claimed"
-                  ? "In afwachting"
-                  : `Jij: ${formatAmount(myShare.amount, expense.currency)}`}
+        {/* Amount + settle progress */}
+        <div className="shrink-0 text-right">
+          <p className="font-mono text-[15px] font-semibold leading-none tabular-nums text-ink">
+            {formatAmount(expense.amount, expense.currency)}
+          </p>
+          {totalShares > 0 && (
+            allConfirmed ? (
+              <span className={`mt-1.5 ${PILL} ${STATUS_PILL.confirmed}`}>Verrekend</span>
+            ) : (
+              <span className="mt-1.5 flex items-center justify-end gap-2 whitespace-nowrap">
+                <span className="hidden h-1.5 w-12 overflow-hidden rounded-full sm:block bg-sunken shadow-[inset_0_0_0_1px_rgb(var(--line))]" aria-hidden>
+                  <span
+                    className="block h-full bg-emerald-500"
+                    style={{ width: `${(confirmedCount / totalShares) * 100}%` }}
+                  />
+                </span>
+                <span className="font-mono text-[11.5px] tabular-nums text-ink-3">{confirmedCount}/{totalShares} verrekend</span>
               </span>
-            )}
-
-            {/* Per-share dots (compact) */}
-            <div className="flex items-center gap-1 ml-auto">
-              {expense.shares.map((s) => (
-                <span key={s.id}>{STATUS_ICON[s.status]}</span>
-              ))}
-            </div>
-          </div>
-        )}
+            )
+          )}
+        </div>
       </button>
     </motion.div>
   );

@@ -11,8 +11,8 @@ export async function createExpense(payload: CreateExpenseRequest): Promise<void
   await apiClient.post(apiRoutes.expenses.base, payload);
 }
 
-export async function deleteExpense(id: string, userName: string): Promise<void> {
-  await apiClient.delete(apiRoutes.expenses.byId(id), { params: { user_name: userName } });
+export async function deleteExpense(id: string): Promise<void> {
+  await apiClient.delete(apiRoutes.expenses.byId(id));
 }
 
 export async function claimShare(shareId: string): Promise<void> {
