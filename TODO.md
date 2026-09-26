@@ -13,30 +13,19 @@ ticked off — `CHANGELOG.md` and git history are the record.
 
 ## Before the next deploy
 
-Run these in the Supabase SQL editor, **in this order**, and only when the
-matching code is (or is about to be) live. See
-[docs/deployment.md](docs/deployment.md#database-migrations) for how to check
-what has already been applied.
+Open items before or around the next deploy. New migrations go here until they are run, in
+the order they must be run, with the Supabase SQL editor; see
+[docs/deployment.md](docs/deployment.md#database-migrations) for how to check what has already
+been applied. (Migrations v2.19, v2.25, v2.26 and v2.27 are done.)
 
-- [ ] `migration_v2.19_drop_legacy_calendar.sql` — repoints
-      `expenses.linked_event_id` at `event_days`. Without it, saving an expense
-      linked to an event fails with `expenses_linked_event_id_fkey`. Its last
-      line drops the old `calendar` table; run only the two `ALTER TABLE`
-      statements if you want to keep that table around for now.
-- [ ] `migration_v2.25_settlements.sql` — the settle-up ("Afrekenen") tables.
-- [ ] `migration_v2.26_settlements_one_open_per_pair.sql` — one open settlement
-      per pair of members, enforced by the database.
-- [ ] `migration_v2.27_drop_payment_refs.sql` — **after** the new backend is
-      running; the old backend still reads the column it drops.
+- [ ] The old `calendar` table still exists: v2.19's two `ALTER TABLE` statements were run but
+      not its last line, which drops it. Drop it (`DROP TABLE calendar;`) when you are sure nothing
+      needs it, ideally after a backup.
 - [ ] Try the new root `Dockerfile` and `docker-compose.yml` (docs/installation.md) once on a
       throwaway machine: they were written but never run.
-- [ ] Update the beta stack (Portainer → *Update the stack*; a restart of the backend alone does
-      not rebuild anything) so the backend and frontend changes go live. Try the stack changes from
-      [docs/portainer-stacks.md](docs/portainer-stacks.md) there first (Node 20, `npm ci`, restart
-      policy, health check).
-- [ ] Before the live stack goes to 2.0: give it the beta's `git fetch` + `reset --hard` clone step
-      (the live one still uses `git pull`, which stops on a rewritten lockfile and would leave the
-      site down), then apply the rest of the recommended stack in that document.
+- [ ] Apply the rest of the recommended stack from [docs/portainer-stacks.md](docs/portainer-stacks.md)
+      (Node 20, `npm ci`, restart policy on the backend, health check), on the beta stack first. The
+      live stack already has the `git fetch` + `reset --hard` clone step.
 - [ ] Make sure the backend's MinIO access key is allowed to *list* the bucket. The
       admin CDN page (Admin → CDN) shows an error until it can.
 - [ ] For the admin quick upload of videos: raise `client_max_body_size` to 100M in the
@@ -45,7 +34,6 @@ what has already been applied.
 - [ ] Change the MinIO root password in Portainer, then test one upload. Only
       recreate the app's access key (`mc admin accesskey create`) if uploads
       fail afterwards. See [docs/minio-setup.md](docs/minio-setup.md).
-- [ ] `main` is far behind `development`; open the PR when the above is done.
 
 ## Security
 
