@@ -29,6 +29,11 @@ Postgres on Supabase. Only the backend talks to it (see
 - **People are stored by name** in most arrays (`participants`, `passengers`,
   `occupants`, `paid_by`, `uploaded_by`), which is why a profile keeps its former
   names in `aliases`. Newer tables key on `profiles.id` instead (settlements).
+- **Changing a list column safely.** A sign-up edits a whole list (`participants`, `passengers`,
+  `occupants`, `restaurant_drivers`). `app/core/atomic.py` → `update_list` writes the new list only
+  while the column still holds what was read, and otherwise reads again and redoes the change,
+  so two people signing up at once both stay in and nobody takes a seat that was just filled.
+  Use it for any new endpoint that edits such a list; do not read, edit and write it back by hand.
 - **Array columns** (`text[]`) hold participants, passengers, occupants and
   notification categories; `jsonb` holds ticket types, restaurant cars and
   changelog items.

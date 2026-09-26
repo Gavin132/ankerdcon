@@ -7,6 +7,7 @@ from fastapi.responses import PlainTextResponse
 
 from app.config import Settings, get_settings
 from app.constants import API_PREFIX, Tables
+from app.core.atomic import update_list
 from app.core.logging import get_logger
 from app.dependencies import act_for_anyone, get_current_user
 from app.models.calendar import (
@@ -182,46 +183,22 @@ def rsvp_event(event_id: str, body: CalendarRsvpRequest, current_user: str = Dep
     """Add a user to the participants array for this specific day only.
     `event_id` is an event_days id (see _load_calendar_rows)."""
     user_name = act_for_anyone(current_user, body.user_name, adding=True)
-    try:
-        resp = supabase.table(Tables.EVENT_DAYS).select("participants").eq("id", event_id).execute()
-    except Exception as e:
-        logger.error("Failed to fetch event day %s for RSVP: %s", event_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-
-    if not resp.data:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenement niet gevonden.")
-
-    participants = resp.data[0].get("participants") or []
-    if user_name not in participants:
-        participants.append(user_name)
-        try:
-            supabase.table(Tables.EVENT_DAYS).update({"participants": participants}).eq("id", event_id).execute()
-        except Exception as e:
-            logger.error("Failed to update participants for event day %s: %s", event_id, e)
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    update_list(
+        Tables.EVENT_DAYS, event_id, "participants",
+        lambda names, _row: None if user_name in names else names + [user_name],
+        not_found="Evenement niet gevonden.",
+    )
 
 
 @router.post(CalendarRoutes.LEAVE, status_code=status.HTTP_204_NO_CONTENT)
 def leave_event(event_id: str, body: CalendarRsvpRequest, current_user: str = Depends(get_current_user)) -> None:
     """Remove a user from the participants array for this specific day only."""
     user_name = act_for_anyone(current_user, body.user_name)
-    try:
-        resp = supabase.table(Tables.EVENT_DAYS).select("participants").eq("id", event_id).execute()
-    except Exception as e:
-        logger.error("Failed to fetch event day %s for leave: %s", event_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-
-    if not resp.data:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenement niet gevonden.")
-
-    participants = resp.data[0].get("participants") or []
-    if user_name in participants:
-        participants.remove(user_name)
-        try:
-            supabase.table(Tables.EVENT_DAYS).update({"participants": participants}).eq("id", event_id).execute()
-        except Exception as e:
-            logger.error("Failed to update participants for event day %s: %s", event_id, e)
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    update_list(
+        Tables.EVENT_DAYS, event_id, "participants",
+        lambda names, _row: [n for n in names if n != user_name] if user_name in names else None,
+        not_found="Evenement niet gevonden.",
+    )
 
 
 # ── Hotel Rooms ────────────────────────────────────────────────────────────────
@@ -315,31 +292,18 @@ def assign_hotel_room(
     current_user: str = Depends(get_current_user),
 ) -> None:
     user_names = [act_for_anyone(current_user, name, adding=True) for name in body.user_names]
-    try:
-        resp = supabase.table(Tables.HOTEL_ROOMS).select("occupants, capacity").eq("id", room_id).execute()
-    except Exception as e:
-        logger.error("Failed to fetch hotel room %s: %s", room_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
-    if not resp.data:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kamer niet gevonden.")
+    def add(occupants: list, room: dict) -> list | None:
+        merged = list(dict.fromkeys(occupants + user_names))
+        capacity = room.get("capacity")
+        if capacity is not None and len(merged) > capacity:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Deze kamer zit vol (max {capacity} personen).",
+            )
+        return merged
 
-    room = resp.data[0]
-    current = room.get("occupants") or []
-    merged = list(dict.fromkeys(current + user_names))
-
-    capacity = room.get("capacity")
-    if capacity is not None and len(merged) > capacity:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Deze kamer zit vol (max {capacity} personen).",
-        )
-
-    try:
-        supabase.table(Tables.HOTEL_ROOMS).update({"occupants": merged}).eq("id", room_id).execute()
-    except Exception as e:
-        logger.error("Failed to assign occupants to hotel room %s: %s", room_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    update_list(Tables.HOTEL_ROOMS, room_id, "occupants", add, select="occupants, capacity", not_found="Kamer niet gevonden.")
 
 
 @router.post(CalendarRoutes.HOTEL_ROOM_LEAVE, status_code=status.HTTP_204_NO_CONTENT)
@@ -350,18 +314,8 @@ def leave_hotel_room(
     current_user: str = Depends(get_current_user),
 ) -> None:
     user_name = act_for_anyone(current_user, body.user_name)
-    try:
-        resp = supabase.table(Tables.HOTEL_ROOMS).select("occupants").eq("id", room_id).execute()
-    except Exception as e:
-        logger.error("Failed to fetch hotel room %s: %s", room_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-
-    if not resp.data:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kamer niet gevonden.")
-
-    occupants = [o for o in (resp.data[0].get("occupants") or []) if o != user_name]
-    try:
-        supabase.table(Tables.HOTEL_ROOMS).update({"occupants": occupants}).eq("id", room_id).execute()
-    except Exception as e:
-        logger.error("Failed to update occupants for hotel room %s: %s", room_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    update_list(
+        Tables.HOTEL_ROOMS, room_id, "occupants",
+        lambda occupants, _row: [o for o in occupants if o != user_name] if user_name in occupants else None,
+        not_found="Kamer niet gevonden.",
+    )

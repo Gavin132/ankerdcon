@@ -33,6 +33,9 @@ All notable changes to Ankerd Con are documented here.
 
 ### Fixed
 
+- Signing up at the same moment as someone else (a meal, a ride seat, a trip day, a hotel room, a
+  restaurant car) can no longer wipe out the other person's sign-up, or let two people take the
+  last seat. The change is retried on the latest list instead (`app/core/atomic.py`).
 - **Event reminders (a week before, the day before, the day itself) were never sent**: the daily
   job crashed on every event. They work again, and they and the ticket-sale reminders now go by
   Dutch time instead of the server's (UTC), so a ticket sale is announced when it opens and not two
