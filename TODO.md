@@ -45,9 +45,6 @@ what has already been applied.
 - [ ] Change the MinIO root password in Portainer, then test one upload. Only
       recreate the app's access key (`mc admin accesskey create`) if uploads
       fail afterwards. See [docs/minio-setup.md](docs/minio-setup.md).
-- [ ] Enter the v1.9 and v2.0 release notes in Admin → Wijzigingslog once 2.0 is live (v1.9
-      first); members see those, not `CHANGELOG.md`. The texts are drafted in
-      [docs/release-notes-draft.md](docs/release-notes-draft.md); delete that file afterwards.
 - [ ] `main` is far behind `development`; open the PR when the above is done.
 
 ## Security

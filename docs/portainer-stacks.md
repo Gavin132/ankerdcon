@@ -317,5 +317,5 @@ The `python:3.11-slim` image should work: the backend's syntax was checked again
 4. **Live stack:** replace it with the recommended one above and *Update the stack* (with `GIT_BRANCH=main`).
    Open the site, hard-refresh, log in.
 5. Migrations that must run **after** the new code (v2.27).
-6. Enter the release notes in Admin → Wijzigingslog ([release-notes-draft.md](release-notes-draft.md)).
+6. Enter the release notes in Admin → Wijzigingslog (members see those, not `CHANGELOG.md`).
 7. Add `client_max_body_size 100M;` to the SWAG confs for the app and the CDN, and reload nginx.
