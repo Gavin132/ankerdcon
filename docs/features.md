@@ -41,7 +41,10 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
 
 - **Story row**: an "add" tile and a ring per day with photos, unseen ones highlighted.
 - **Upcoming trip ticket** (`components/hub/UpcomingEventCard.tsx`): the nearest
-  trip with a countdown, its days and who is going.
+  trip with a countdown, its days and who is going. More than one upcoming trip becomes a
+  carousel (`UpcomingEventsCarousel.tsx`) that advances itself every 10 seconds — paused while
+  the tab is in the background, skipped entirely under "reduce motion", and the countdown
+  restarts whenever someone swipes or taps a dot/arrow themselves.
 - **Today's meals** (`MealTodayCard.tsx`) and **quick ride tiles**
   (`QuickRideTiles.tsx`): offer or join a ride to/from the event or hotel. The
   direction and time are guessed from the clock (`utils/quickRide.ts`).

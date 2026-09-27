@@ -11,6 +11,12 @@ All notable changes to Ankerd Con are documented here.
 - **Mijn ticket** on the event page: save a photo or PDF of your own event ticket, kept only in
   this browser (IndexedDB) — never uploaded, never visible to anyone else, not even admins.
 
+### Changed
+
+- The Hub's upcoming-trips carousel now advances itself every 10 seconds when there's more than
+  one. Pauses in a background tab, is skipped under "reduce motion", and any manual swipe/dot/arrow
+  restarts the countdown instead of fighting it.
+
 ---
 
 ## [2.0.1] - 2026-09-27
