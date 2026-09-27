@@ -10,6 +10,8 @@ All notable changes to Ankerd Con are documented here.
 
 - **Mijn ticket** on the event page: save a photo or PDF of your own event ticket, kept only in
   this browser (IndexedDB) — never uploaded, never visible to anyone else, not even admins.
+- **A Hub shortcut for it**: a card next to "Locatie pingen" that jumps straight to the current
+  trip's ticket sheet, and says whether you've saved one yet.
 
 ### Changed
 

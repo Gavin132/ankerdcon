@@ -1,5 +1,5 @@
-import { Fragment, useRef, useState, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useCalendar, useHotelRooms } from "../../hooks/useCalendar";
 import { useSwipe } from "../../hooks/useSwipe";
 import { useUsers } from "../../hooks/useUsers";
@@ -63,6 +63,19 @@ export function TripOverviewTab() {
   const [weatherOpen, setWeatherOpen] = useState(false);
   const [practicalOpen, setPracticalOpen] = useState(false);
   const [ticketOpen, setTicketOpen] = useState(false);
+  // A Hub shortcut can link straight here with ?openTicket=1 (the sheet itself
+  // isn't part of the ?sheet= routing, since it's purely local/per-device —
+  // this is a one-shot flag, not a real deep link anyone else could open).
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    if (!searchParams.get("openTicket")) return;
+    setTicketOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("openTicket");
+    setSearchParams(next, { replace: true });
+    // Runs once, right after mount — not on every searchParams change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [viewDayId, setViewDayId] = useState<string | null>(null);
   const [switcherOpen, setSwitcherOpen] = useState(false);
 

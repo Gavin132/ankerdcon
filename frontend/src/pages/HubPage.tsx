@@ -17,6 +17,7 @@ import { groupCalendarEntries, dayShort } from "../utils/multiDay";
 import { UpcomingEventsCarousel } from "../components/hub/UpcomingEventsCarousel";
 import { QuickRideTiles } from "../components/hub/QuickRideTiles";
 import { MealTodayCard } from "../components/hub/MealTodayCard";
+import { TicketShortcutCard } from "../components/hub/TicketShortcutCard";
 import { LocationPingModal } from "../components/hub/LocationPingModal";
 import { StoryRing } from "../components/story/StoryRing";
 import { StoryViewer } from "../components/story/StoryViewer";
@@ -220,6 +221,9 @@ export function HubPage() {
             expenses={expenses}
             myName={me?.name}
           />
+
+          {/* ── Mijn ticket shortcut ─────────────────────────────────────── */}
+          <TicketShortcutCard events={events ?? []} />
 
           {/* ── Locatie pingen ───────────────────────────────────────────── */}
           <motion.div variants={listItem}>

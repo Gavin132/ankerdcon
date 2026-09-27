@@ -48,6 +48,11 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
 - **Today's meals** (`MealTodayCard.tsx`) and **quick ride tiles**
   (`QuickRideTiles.tsx`): offer or join a ride to/from the event or hotel. The
   direction and time are guessed from the clock (`utils/quickRide.ts`).
+- **Mijn ticket shortcut** (`TicketShortcutCard.tsx`): one tap to the current trip's ticket
+  sheet, reading straight from the same on-device store as the event page's tile — its text
+  changes depending on whether you've saved one yet. The link (`?openTicket=1`) is a one-shot
+  flag the trip page consumes and strips, not a real deep link — there is nothing server-side
+  for it to point at.
 - **Voor jou** (`ForYouPanel.tsx`, `utils/actionItems.ts`): everything you still
   have to arrange: a trip day without a ride, a restaurant without a car, expenses
   to settle, payment requests and payments waiting for your confirmation. Each item
