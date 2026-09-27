@@ -71,7 +71,9 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
   trip to jump to another one (`TripSwitcher.tsx`); on a phone you can also swipe sideways to the
   next or previous trip (`hooks/useSwipe.ts`) — a one-time pill (`SwipeHint.tsx`) points this out
   the first time a device lands on a page it can actually swipe on, then never shows again (or
-  the moment a real swipe happens, whichever comes first). Admins also get a pencil to edit the event.
+  the moment a real swipe happens, whichever comes first). The ticket and tiles slide and fade in
+  the direction swiped (`tripSlideVariants` in `TripOverviewTab.tsx`), so it's clear something
+  moved and which way, not just a sudden swap. Admins also get a pencil to edit the event.
 - Below it, a **tile** per part of the trip (`TripTiles.tsx`): Vervoer, Eten,
   Hotel (hotel trips only: address, stay, arrivals and departures, rooms), Foto's, Cosplay (trips with a convention), Weer,
   Praktisch, Uitgaven and Mijn ticket. Tiles show the answer ("6 rides, 3 people without a ride

@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { useCalendar, useHotelRooms } from "../../hooks/useCalendar";
 import { useSwipe } from "../../hooks/useSwipe";
 import { useUsers } from "../../hooks/useUsers";
@@ -38,6 +39,16 @@ const TILE_ORDER: Record<TripPhase, TileId[]> = {
   upcoming: [...CORE_TILES, "tickets", "cosplay", "weather", "practical", "expenses"],
   live: [...CORE_TILES, "tickets", "practical", "weather", "cosplay", "expenses"],
   past: [...CORE_TILES, "expenses", "cosplay"],
+};
+
+// A short slide + fade when swiping (or paging via the switcher's arrows)
+// between trips — enough to read as "this moved that way", not a showy
+// page transition. `custom` carries the direction into the variant
+// functions, same pattern TripSheet.tsx uses for its own view transitions.
+const tripSlideVariants = {
+  enter: (dir: "left" | "right") => ({ opacity: 0, x: dir === "left" ? 28 : -28 }),
+  center: { opacity: 1, x: 0 },
+  exit: (dir: "left" | "right") => ({ opacity: 0, x: dir === "left" ? -28 : 28 }),
 };
 
 /**
@@ -88,9 +99,14 @@ export function TripOverviewTab() {
   // Bumped on every trip switch (swipe or otherwise) — the swipe hint below
   // watches this to cut itself short the moment its lesson is no longer needed.
   const [tripSwitchCount, setTripSwitchCount] = useState(0);
+  // Which way the content should slide: left when moving to a later trip
+  // (swiping left, or the next-arrow), right for an earlier one — the same
+  // direction a finger dragged, so the page follows it instead of fighting it.
+  const [swipeDirection, setSwipeDirection] = useState<"left" | "right">("left");
   const goToTrip = (index: number) => {
     const target = allTrips[index];
     if (!target) return;
+    setSwipeDirection(index > at ? "left" : "right");
     setTripSwitchCount((c) => c + 1);
     navigate(routes.trip.view(target.id));
     window.scrollTo(0, 0);
@@ -153,30 +169,43 @@ export function TripOverviewTab() {
         <TripEditButton trip={trip} />
         <ShareButton onClick={onShare} />
       </HeaderAction>
-      <TripTicket
-        trip={trip}
-        phase={phase}
-        users={users}
-        myNames={myNames}
-        description={info.description}
-        hotel={info.hotel_location}
-        justJoined={justJoined}
-        onToggleDay={onToggleDay}
-        onJoin={() => {
-          setJustJoined(true);
-          joinTrip(trip);
-        }}
-        onLeave={() => {
-          setJustJoined(false);
-          leaveTrip(trip);
-        }}
-        onManage={() => setManageOpen(true)}
-      />
+      <AnimatePresence mode="popLayout" initial={false} custom={swipeDirection}>
+        <motion.div
+          key={trip.id}
+          custom={swipeDirection}
+          variants={tripSlideVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{ duration: 0.22, ease: "easeOut" }}
+          className="space-y-4"
+        >
+          <TripTicket
+            trip={trip}
+            phase={phase}
+            users={users}
+            myNames={myNames}
+            description={info.description}
+            hotel={info.hotel_location}
+            justJoined={justJoined}
+            onToggleDay={onToggleDay}
+            onJoin={() => {
+              setJustJoined(true);
+              joinTrip(trip);
+            }}
+            onLeave={() => {
+              setJustJoined(false);
+              leaveTrip(trip);
+            }}
+            onManage={() => setManageOpen(true)}
+          />
 
-      {/* Dense flow fills the gaps a missing tile (no hotel, no con) would leave. */}
-      <div className="grid grid-flow-dense grid-cols-2 gap-3 lg:grid-cols-4">
-        {TILE_ORDER[phase].map((id) => tiles[id] && <Fragment key={id}>{tiles[id]}</Fragment>)}
-      </div>
+          {/* Dense flow fills the gaps a missing tile (no hotel, no con) would leave. */}
+          <div className="grid grid-flow-dense grid-cols-2 gap-3 lg:grid-cols-4">
+            {TILE_ORDER[phase].map((id) => tiles[id] && <Fragment key={id}>{tiles[id]}</Fragment>)}
+          </div>
+        </motion.div>
+      </AnimatePresence>
 
       <TripSwitcherButton onClick={() => setSwitcherOpen(true)} />
       <TripSwitcher open={switcherOpen} onClose={() => setSwitcherOpen(false)} currentId={trip.id} myNames={myNames} />
