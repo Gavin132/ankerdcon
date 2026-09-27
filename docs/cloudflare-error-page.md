@@ -70,19 +70,49 @@ codes anyway.
 
 ## Deploying it
 
-1. **Cloudflare dashboard → Workers & Pages → Create → Create Worker.** Name it something
-   like `ankerd-error-page`.
-2. Open its editor and replace the default script with the contents of
-   `cloudflare/error-page-worker.js`, then **Deploy**.
-3. **Add it to both hostnames**, via **Workers & Pages → (the worker) → Settings → Triggers
-   → Add Route**, once for each:
+There are two ways to get the script onto Cloudflare. Either works; the CLI one also wires up
+both routes for you in the same step.
+
+### Option A — Wrangler CLI (`cloudflare/wrangler.jsonc` is set up for this)
+
+The dashboard's own "Deploy" / upload flow refuses a lone `.js` file with *"This uploader does
+not yet support projects that require a build process… use `wrangler deploy` instead"* — that
+message isn't really about this script (it has no build step), it's the upload-a-project
+wizard misreading a single file as an incomplete project. Wrangler is the way around it:
+
+```bash
+cd cloudflare
+npx wrangler login      # opens a browser to authorize wrangler against your Cloudflare account
+npx wrangler deploy     # reads wrangler.jsonc, uploads error-page-worker.js, creates both routes
+```
+
+`wrangler.jsonc` already names the Worker (`ankerd-error-page`) and both routes
+(`con.ankerd.org/*`, `dev.ankerd.org/*` in the `ankerd.org` zone), so a plain `wrangler deploy`
+from inside `cloudflare/` is the whole thing — nothing to fill in. Needs Node.js locally; `npx`
+fetches Wrangler itself, nothing to install ahead of time. Re-run `wrangler deploy` the same way
+whenever `error-page-worker.js` changes.
+
+### Option B — Dashboard, Quick Edit (no Wrangler)
+
+Skip the upload wizard — that's the one that rejects a single file — and use the plain code
+editor instead:
+
+1. **Workers & Pages → Create → Create Worker.** Name it `ankerd-error-page`, and when it asks
+   *how* to start, pick the option that opens straight into an online code editor (sometimes
+   labelled "Start with Hello World" or "Edit code") rather than "Deploy a project" / any option
+   that asks you to upload or connect a repo — that's the path that produced the error.
+2. In that editor, select all the placeholder code and paste in the contents of
+   `cloudflare/error-page-worker.js` instead, then **Save and deploy** (or **Deploy**).
+3. **Add both routes by hand**, since this path doesn't read `wrangler.jsonc`: **Workers &
+   Pages → ankerd-error-page → Settings → Triggers → Routes → Add route**, once for each:
    - Route: `con.ankerd.org/*` — Zone: `ankerd.org`
    - Route: `dev.ankerd.org/*` — Zone: `ankerd.org`
 
    (Routes, not a Workers "Custom Domain" — a Custom Domain makes the Worker the DNS target
    itself, which is a different setup than the existing proxied DNS records pointing at the
    home server; Routes run the Worker in front of the DNS record that's already there.)
-4. No environment variables or secrets are needed — the script is self-contained.
+
+Either way, no environment variables or secrets are needed — the script is self-contained.
 
 ## Testing it
 
