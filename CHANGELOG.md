@@ -12,12 +12,20 @@ All notable changes to Ankerd Con are documented here.
   this browser (IndexedDB) — never uploaded, never visible to anyone else, not even admins.
 - **A Hub shortcut for it**: a card next to "Locatie pingen" that jumps straight to the current
   trip's ticket sheet, and says whether you've saved one yet.
+- **A one-time hint** on the event page pointing out that you can swipe sideways to the next or
+  previous trip — shown once ever per device, and cut short the moment someone actually swipes.
 
 ### Changed
 
 - The Hub's upcoming-trips carousel now advances itself every 10 seconds when there's more than
   one. Pauses in a background tab, is skipped under "reduce motion", and any manual swipe/dot/arrow
   restarts the countdown instead of fighting it.
+
+### Fixed
+
+- The Cosplay tile's row of preview thumbnails could run past the edge of the card when a trip had
+  several cosplays with images (e.g. a big convention like HMIA Brussels) — it's capped at 2 with a
+  "+N" count now, and clipped defensively either way.
 
 ---
 

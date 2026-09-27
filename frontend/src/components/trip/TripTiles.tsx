@@ -319,15 +319,26 @@ export function CosplayTile({ trip, cosplays, myNames }: { trip: Trip; cosplays:
   const ids = new Set(trip.eventIds);
   const list = cosplays.filter((c) => c.linked_event_ids.some((id) => ids.has(id)));
   const mine = list.find((c) => sameName(myNames)(c.user_name));
-  const images = list.map((c) => c.inspo_images[0]).filter(Boolean).slice(0, 5);
+  // A "small" (single-column) tile is only wide enough for about 3 of these
+  // before the row would run past the card's edge — capped here rather than
+  // just visually clipped, so the count on the tile still matches what's
+  // actually shown instead of trailing off mid-image.
+  const allImages = list.map((c) => c.inspo_images[0]).filter(Boolean);
+  const images = allImages.slice(0, 2);
+  const moreCount = allImages.length - images.length;
 
   return (
     <TripTile icon={Sparkles} label="Cosplay" to={routes.trip.view(trip.id, "cosplay")} sheet>
       <TileValue>{list.length}</TileValue>
       <TileText>{list.length === 1 ? "cosplay" : "cosplays"}{mine ? `, jij als ${mine.character_name}` : ""}</TileText>
       {images.length > 0 && (
-        <span className="flex gap-1">
-          {images.map((src, i) => <img key={i} src={src} alt="" className="h-11 w-[34px] rounded-[5px] object-cover" />)}
+        <span className="flex min-w-0 items-center gap-1 overflow-hidden">
+          {images.map((src, i) => <img key={i} src={src} alt="" className="h-11 w-[34px] shrink-0 rounded-[5px] object-cover" />)}
+          {moreCount > 0 && (
+            <span className="flex h-11 shrink-0 items-center justify-center rounded-[5px] bg-sunken px-1.5 font-mono text-[10.5px] text-ink-3">
+              +{moreCount}
+            </span>
+          )}
         </span>
       )}
     </TripTile>

@@ -17,6 +17,7 @@ import { HeaderAction } from "../../components/layout/HeaderAction";
 import { ShareButton } from "../../components/common/ShareButton";
 import { TripEditButton } from "../../components/trip/TripEditButton";
 import { TripSwitcher, TripSwitcherButton } from "../../components/trip/TripSwitcher";
+import { SwipeHint } from "../../components/trip/SwipeHint";
 import { TripRsvpModal } from "../../components/calendar/TripRsvpModal";
 import { StoryViewer } from "../../components/story/StoryViewer";
 import {
@@ -84,9 +85,13 @@ export function TripOverviewTab() {
   const { data: calendar = [] } = useCalendar();
   const allTrips = buildTrips(calendar);
   const at = allTrips.findIndex((t) => t.id === trip.id);
+  // Bumped on every trip switch (swipe or otherwise) — the swipe hint below
+  // watches this to cut itself short the moment its lesson is no longer needed.
+  const [tripSwitchCount, setTripSwitchCount] = useState(0);
   const goToTrip = (index: number) => {
     const target = allTrips[index];
     if (!target) return;
+    setTripSwitchCount((c) => c + 1);
     navigate(routes.trip.view(target.id));
     window.scrollTo(0, 0);
   };
@@ -142,6 +147,7 @@ export function TripOverviewTab() {
 
   return (
     <div ref={pageRef} className="space-y-4">
+      <SwipeHint enabled={at >= 0 && activeTab === "overview" && allTrips.length > 1} dismissedBy={tripSwitchCount} />
       <HeaderAction>
         <TripSwitcherButton iconOnly onClick={() => setSwitcherOpen(true)} />
         <TripEditButton trip={trip} />
