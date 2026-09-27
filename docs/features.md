@@ -64,12 +64,20 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
   next or previous trip (`hooks/useSwipe.ts`). Admins also get a pencil to edit the event.
 - Below it, a **tile** per part of the trip (`TripTiles.tsx`): Vervoer, Eten,
   Hotel (hotel trips only: address, stay, arrivals and departures, rooms), Foto's, Cosplay (trips with a convention), Weer,
-  Praktisch and Uitgaven. Tiles show the answer ("6 rides, 3 people without a ride
+  Praktisch, Uitgaven and Mijn ticket. Tiles show the answer ("6 rides, 3 people without a ride
   back") and their order changes before, during and after the trip. The amber "zonder rit" and
   "nergens bij" pills open the names of who is missing (a sheet, `MissingPeopleSheet`).
 - Tiles open as **sheets** over the page (`TripSheet.tsx`). Vervoer, Hotel and
   Cosplay are routed with `?sheet=transport|rooms|cosplay` so they can be linked;
   Weer, Praktisch and Eten's "add meal" open from local state.
+- **Mijn ticket** (`TicketTile`/`TicketSheet` in `TripTiles.tsx`) lets a member save a photo or
+  PDF of their own event ticket — kept entirely in this browser's IndexedDB
+  (`utils/localTickets.ts`, `store/localTickets.store.ts`), never uploaded anywhere. Deliberately
+  not in the shared photo bucket or the database: nobody else can see it, not other members and
+  not admins, and there is nothing server-side to secure. The trade-off is the flip side of
+  that — it doesn't sync to another device and a browser can clear it on its own, so it's a
+  convenience, not a permanent archive. Not the same "ticket" as an event's `ticket_url` (where
+  to buy one) — that stays under Praktisch.
 - Multi-day trips get **day chips** to filter by day.
 
 ## Transport

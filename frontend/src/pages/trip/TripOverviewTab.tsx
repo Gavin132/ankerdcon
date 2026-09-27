@@ -20,7 +20,7 @@ import { TripSwitcher, TripSwitcherButton } from "../../components/trip/TripSwit
 import { TripRsvpModal } from "../../components/calendar/TripRsvpModal";
 import { StoryViewer } from "../../components/story/StoryViewer";
 import {
-  CosplayTile, ExpensesTile, FoodTile, PhotosTile, PracticalSheet, PracticalTile, RoomsTile, TransportTile, WeatherSheet, WeatherTile,
+  CosplayTile, ExpensesTile, FoodTile, PhotosTile, PracticalSheet, PracticalTile, RoomsTile, TicketSheet, TicketTile, TransportTile, WeatherSheet, WeatherTile,
   hasPracticalInfo,
 } from "../../components/trip/TripTiles";
 import { buildTrips, tripInfo, tripOutliers, tripPhase, tripUploadDay, type TripDay, type TripPhase } from "../../utils/trips";
@@ -29,13 +29,13 @@ import { TripTransportSheet } from "./TripTransportTab";
 import { TripCosplaySheet } from "./TripCosplayTab";
 import { TripRoomsSheet } from "./TripRoomsTab";
 
-type TileId = "transport" | "food" | "rooms" | "cosplay" | "weather" | "photos" | "practical" | "expenses";
+type TileId = "transport" | "food" | "rooms" | "cosplay" | "weather" | "photos" | "practical" | "expenses" | "tickets";
 
 /** Always the same first four (rooms only when the trip has a hotel); the phase only orders what comes after. */
 const CORE_TILES: TileId[] = ["transport", "rooms", "photos", "food"];
 const TILE_ORDER: Record<TripPhase, TileId[]> = {
-  upcoming: [...CORE_TILES, "cosplay", "weather", "practical", "expenses"],
-  live: [...CORE_TILES, "practical", "weather", "cosplay", "expenses"],
+  upcoming: [...CORE_TILES, "tickets", "cosplay", "weather", "practical", "expenses"],
+  live: [...CORE_TILES, "tickets", "practical", "weather", "cosplay", "expenses"],
   past: [...CORE_TILES, "expenses", "cosplay"],
 };
 
@@ -62,6 +62,7 @@ export function TripOverviewTab() {
   const [manageOpen, setManageOpen] = useState(false);
   const [weatherOpen, setWeatherOpen] = useState(false);
   const [practicalOpen, setPracticalOpen] = useState(false);
+  const [ticketOpen, setTicketOpen] = useState(false);
   const [viewDayId, setViewDayId] = useState<string | null>(null);
   const [switcherOpen, setSwitcherOpen] = useState(false);
 
@@ -123,6 +124,7 @@ export function TripOverviewTab() {
       <PracticalTile info={info} trip={trip} onOpen={() => setPracticalOpen(true)} />
     ),
     expenses: <ExpensesTile trip={trip} phase={phase} expenses={expenses} myNames={myNames} />,
+    tickets: phase !== "past" && <TicketTile trip={trip} onOpen={() => setTicketOpen(true)} />,
   };
 
   return (
@@ -173,6 +175,7 @@ export function TripOverviewTab() {
       {trip.isHotel && <TripRoomsSheet open={activeTab === "rooms"} onClose={closeSheet} />}
       {trip.location && <WeatherSheet open={weatherOpen} onClose={() => setWeatherOpen(false)} trip={trip} />}
       <PracticalSheet open={practicalOpen} onClose={() => setPracticalOpen(false)} info={info} trip={trip} />
+      <TicketSheet open={ticketOpen} onClose={() => setTicketOpen(false)} trip={trip} />
 
       <StoryViewer eventDayId={viewDayId ?? ""} open={viewDayId !== null} onClose={() => setViewDayId(null)} />
     </div>

@@ -110,6 +110,7 @@ the last known data.
 | Toasts | `store/toast.store.ts`; call `toast("success", "…")` from anywhere |
 | Time travel | `store/time.store.ts` (an admin-set fake "now") |
 | Story uploads waiting for a connection | `store/pendingStoryUploads.store.ts`, mirrored in IndexedDB |
+| A member's own ticket (photo/PDF), device-only | `store/localTickets.store.ts`, IndexedDB only — never sent to the backend |
 | Everything else | `useState` in the component that owns it |
 
 ## Forms and validation

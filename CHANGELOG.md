@@ -6,6 +6,11 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- **Mijn ticket** on the event page: save a photo or PDF of your own event ticket, kept only in
+  this browser (IndexedDB) — never uploaded, never visible to anyone else, not even admins.
+
 ---
 
 ## [2.0.1] - 2026-09-27
