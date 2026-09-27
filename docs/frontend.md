@@ -148,7 +148,10 @@ time-travel tool can test live and finished trips.
 The service worker caches the app shell and hashed assets; `useServiceWorker` and
 `UpdateBanner` offer "Nieuwe versie" when a new build is ready and reload only when the
 member taps it, so nothing is lost mid-typing. Story photos that cannot be sent are queued
-(`hooks/usePendingStoryUploads.ts`). The full picture is in
+(`hooks/usePendingStoryUploads.ts`). `OfflineBanner` (mounted in `App.tsx`, next to
+`ImpersonationBanner`) shows a sticky "Geen internetverbinding" bar app-wide for as long as
+`navigator.onLine` is false — not timed, since bad reception can last a while — and
+disappears the instant the browser's `online` event fires. The full picture is in
 [architecture.md](architecture.md#working-on-bad-reception).
 
 ## Conventions
