@@ -16,6 +16,7 @@ Start with the page that matches what you are doing.
 | work on the React app | [frontend.md](frontend.md), [design-system.md](design-system.md) |
 | find out why something is slow, down or wrong | [operations.md](operations.md) |
 | set up or repair the photo storage | [minio-setup.md](minio-setup.md) |
+| show a branded page instead of Cloudflare's own error page | [cloudflare-error-page.md](cloudflare-error-page.md) |
 
 Also in the repository root: [`README.md`](../README.md) (overview),
 [`CHANGELOG.md`](../CHANGELOG.md) (what changed per release),
