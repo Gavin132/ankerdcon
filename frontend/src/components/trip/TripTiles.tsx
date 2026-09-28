@@ -438,7 +438,7 @@ export function ExpensesTile({ trip, phase, expenses, myNames }: { trip: Trip; p
   return (
     <TripTile
       icon={Wallet}
-      label="Uitgaven"
+      label="Kosten"
       to={routes.tripExpenses.view(trip.id)}
       size={phase === "past" && open > 0 ? "wide" : "small"}
       pill={open > 0 && <TilePill>Open</TilePill>}
@@ -531,7 +531,7 @@ export function PracticalTile({ info, trip, onOpen }: { info: CalendarEvent; tri
   ].filter(Boolean) as string[];
 
   return (
-    <TripTile icon={AlertCircle} label="Praktisch" onOpen={onOpen}>
+    <TripTile icon={AlertCircle} label="Info" onOpen={onOpen}>
       {info.special_instructions ? (
         <>
           <span><TilePill>Let op</TilePill></span>
@@ -600,7 +600,7 @@ export function TicketTile({ trip, onOpen }: { trip: Trip; onOpen: () => void })
   const count = items.filter((t) => t.eventId === trip.id).length;
 
   return (
-    <TripTile icon={TicketIcon} label="Mijn ticket" onOpen={onOpen}>
+    <TripTile icon={TicketIcon} label="Ticket" onOpen={onOpen}>
       <TileValue>{count > 0 ? `${count} ${count === 1 ? "bestand" : "bestanden"}` : "Geen ticket"}</TileValue>
       <TileText>{count > 0 ? "Alleen op dit toestel opgeslagen" : "Bewaar een foto of PDF van je ticket"}</TileText>
     </TripTile>

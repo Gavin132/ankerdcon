@@ -76,7 +76,8 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
   moved and which way, not just a sudden swap. Admins also get a pencil to edit the event.
 - Below it, a **tile** per part of the trip (`TripTiles.tsx`): Vervoer, Eten,
   Hotel (hotel trips only: address, stay, arrivals and departures, rooms), Foto's, Cosplay (trips with a convention), Weer,
-  Praktisch, Uitgaven and Mijn ticket. Tiles show the answer ("6 rides, 3 people without a ride
+  Info (opens the Praktisch sheet), Kosten and Ticket (opens Mijn ticket); the tile labels are
+  short so they fit. Tiles show the answer ("6 rides, 3 people without a ride
   back") and their order changes before, during and after the trip. The amber "zonder rit" and
   "nergens bij" pills open the names of who is missing (a sheet, `MissingPeopleSheet`).
 - Tiles open as **sheets** over the page (`TripSheet.tsx`). Vervoer, Hotel and
