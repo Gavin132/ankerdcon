@@ -4,7 +4,9 @@ All notable changes to Ankerd Con are documented here.
 
 ---
 
-## [Unreleased]
+## [2.0.2] - 2026-09-28
+
+Quick patch: small features and fixes on top of 2.0.1.
 
 ### Added
 
@@ -12,20 +14,45 @@ All notable changes to Ankerd Con are documented here.
   this browser (IndexedDB) — never uploaded, never visible to anyone else, not even admins.
 - **A Hub shortcut for it**: a card next to "Locatie pingen" that jumps straight to the current
   trip's ticket sheet, and says whether you've saved one yet.
+- **Accent colour**: pick blue, turquoise, green, gold, orange, pink or purple under Instellingen →
+  Accentkleur. Per device; only the brand colour changes.
+- **Feedback**: Instellingen → Feedback geven sends a bug, idea or remark to the admins, optionally
+  anonymous (no name is stored). Admins read and triage it under Admin → Feedback. Needs migration
+  v2.28 (the `feedback` table) before the deploy.
+- **No-internet banner**: an amber bar at the top of every page while the device has no connection.
+- **Zip download on the admin CDN page** for whatever is shown (a feature, or one event's story
+  photos), streamed while it is built.
 - **A one-time hint** on the event page pointing out that you can swipe sideways to the next or
   previous trip — shown once ever per device, and cut short the moment someone actually swipes.
+- The event page's content now slides in from the side you swiped towards.
 
 ### Changed
 
+- **Photos keep more detail**: they are resized to 2560 px (was 1600) at JPEG 88 %, and a photo
+  the app already compressed is no longer re-encoded a second time by the server. Older photos are
+  unchanged.
 - The Hub's upcoming-trips carousel now advances itself every 10 seconds when there's more than
   one. Pauses in a background tab, is skipped under "reduce motion", and any manual swipe/dot/arrow
   restarts the countdown instead of fighting it.
+- Shorter labels on three event tiles so they fit: Ticket, Info and Kosten.
+- Someone refused after signing in with Google is told their Google account isn't linked and to try
+  Discord if that is how they signed up.
+- Admin "log in as" shows the real error instead of one canned message, and the backend warns at
+  startup when `SUPABASE_JWT_SECRET` is empty.
 
 ### Fixed
 
+- The back gesture (or Android back button) on a sheet such as Praktische info now closes the
+  sheet instead of leaving it open over the page you went back to.
+- The bottom navigation no longer jumps while swiping between events.
 - The Cosplay tile's row of preview thumbnails could run past the edge of the card when a trip had
   several cosplays with images (e.g. a big convention like HMIA Brussels) — it's capped at 2 with a
   "+N" count now, and clipped defensively either way.
+
+### Added for operators
+
+- A branded Cloudflare error page (Worker in `cloudflare/`) for host and gateway errors, with an
+  install guide in `docs/cloudflare-error-page.md`.
 
 ---
 
