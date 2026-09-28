@@ -12,6 +12,10 @@ All notable changes to Ankerd Con are documented here.
   with the X, by tapping beside them, or with Escape: they closed and immediately reopened. Caused by
   the 2.0.2 back-gesture fix.
 - Tapping beside a drawer to close it did nothing on iPhones.
+- A member's avatar was only ever fetched once, the first time it was empty, and then frozen
+  forever — if their Discord or Google picture later changed, or the stored image stopped
+  resolving, the app kept showing the broken one with no way to recover. It is now re-checked
+  once a day and replaced when it differs. Needs migration v2.29.
 
 ### Added
 

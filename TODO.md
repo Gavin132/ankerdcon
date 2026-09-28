@@ -20,6 +20,8 @@ been applied. (Migrations v2.19, v2.25, v2.26 and v2.27 are done.)
 
 - [ ] Run `db/migrations/migration_v2.28_feedback.sql` (the `feedback` table) **before** deploying the
       feedback feature; until then only sending and reading feedback answers 503.
+- [ ] Run `db/migrations/migration_v2.29_avatar_resync.sql` (`profiles.avatar_synced_at`) any time; until
+      then a broken or changed avatar is never refreshed (harmless, just misses the fix).
 - [ ] The old `calendar` table still exists: v2.19's two `ALTER TABLE` statements were run but
       not its last line, which drops it. Drop it (`DROP TABLE calendar;`) when you are sure nothing
       needs it, ideally after a backup.

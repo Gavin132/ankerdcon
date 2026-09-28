@@ -5,6 +5,7 @@ import threading
 import time
 import uuid
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
 
 import httpx
@@ -66,6 +67,23 @@ _NOT_YOURSELF = "Je kunt dit alleen voor jezelf doen."
 # or unlinks a provider, so a few minutes of staleness costs nothing.
 _IDENTITY_TTL_SECONDS = 600
 _IDENTITY_MISS_TTL_SECONDS = 60
+
+# A stored avatar_url is otherwise never revisited once set (see
+# _finalize_returning_user) — if Discord or Google ever stops serving that
+# exact image (an old avatar hash, a removed picture), the app would show a
+# broken image forever. Re-checked at most this often per profile instead.
+_AVATAR_RESYNC_SECONDS = 24 * 60 * 60
+
+
+def _avatar_stale(profile_row: dict) -> bool:
+    synced_at = profile_row.get("avatar_synced_at")
+    if not synced_at:
+        return True
+    try:
+        synced = datetime.fromisoformat(str(synced_at).replace("Z", "+00:00"))
+    except ValueError:
+        return True
+    return datetime.now(timezone.utc) - synced > timedelta(seconds=_AVATAR_RESYNC_SECONDS)
 
 
 def _strip_discriminator(name: str | None) -> str | None:
@@ -287,7 +305,7 @@ def get_current_user(
         try:
             existing = _retry_transient(
                 lambda: supabase.table("profiles").select(
-                    "name, is_active, is_first_login, allow_dm, discord_id, avatar_url, discord_username, email"
+                    "name, is_active, is_first_login, allow_dm, discord_id, avatar_url, avatar_synced_at, discord_username, email"
                 ).eq("id", user_id).execute()
             )
         except Exception as e:
@@ -354,7 +372,10 @@ def _finalize_returning_user(profile_row: dict, user_id: str, settings: Settings
 
     Backfill only ever fills a field that is currently empty; it never
     overwrites one that already has a value, and it only uses what Supabase
-    verified (see _verified_identity).
+    verified (see _verified_identity). The avatar is the one exception: it is
+    also re-checked periodically (_avatar_stale) and overwritten when Discord
+    or Google's current picture differs, so a changed or since-broken avatar
+    doesn't stay wrong or missing forever.
     """
     profile_name = profile_row["name"]
 
@@ -371,7 +392,8 @@ def _finalize_returning_user(profile_row: dict, user_id: str, settings: Settings
             logger.warning("Auth: first-login handling failed: %s", e)
 
     missing = [f for f in ("discord_id", "discord_username", "email", "avatar_url") if not profile_row.get(f)]
-    if not missing:
+    avatar_due = _avatar_stale(profile_row)
+    if not missing and not avatar_due:
         return profile_name
 
     try:
@@ -385,10 +407,13 @@ def _finalize_returning_user(profile_row: dict, user_id: str, settings: Settings
             sync["discord_username"] = identity.discord_username
         if "email" in missing and identity.email:
             sync["email"] = identity.email
-        if "avatar_url" in missing:
+        if "avatar_url" in missing or avatar_due:
             avatar = identity.discord_avatar or identity.email_avatar
-            if avatar:
+            if avatar and avatar != profile_row.get("avatar_url"):
                 sync["avatar_url"] = avatar
+            # Stamped whether or not it changed, so an unchanged avatar isn't
+            # re-fetched from Supabase on every request either.
+            sync["avatar_synced_at"] = datetime.now(timezone.utc).isoformat()
         if sync:
             supabase.table("profiles").update(sync).eq("id", user_id).execute()
     except Exception:
