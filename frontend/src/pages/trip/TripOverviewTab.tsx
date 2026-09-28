@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useCalendar, useHotelRooms } from "../../hooks/useCalendar";
 import { useSwipe } from "../../hooks/useSwipe";
 import { useUsers } from "../../hooks/useUsers";
@@ -41,15 +41,12 @@ const TILE_ORDER: Record<TripPhase, TileId[]> = {
   past: [...CORE_TILES, "expenses", "cosplay"],
 };
 
-// A short slide + fade when swiping (or paging via the switcher's arrows)
-// between trips — enough to read as "this moved that way", not a showy
-// page transition. `custom` carries the direction into the variant
-// functions, same pattern TripSheet.tsx uses for its own view transitions.
-const tripSlideVariants = {
-  enter: (dir: "left" | "right") => ({ opacity: 0, x: dir === "left" ? 28 : -28 }),
-  center: { opacity: 1, x: 0 },
-  exit: (dir: "left" | "right") => ({ opacity: 0, x: dir === "left" ? -28 : 28 }),
-};
+// A short slide + fade in when moving to another trip (swipe, the switcher's
+// arrows or its list) — enough to read as "this moved that way", not a showy
+// page transition. Enter-only on purpose: an exit animation has to keep the old
+// content mounted next to the new one, which changes the page height for a few
+// frames and made the fixed bottom nav jump on phones.
+const SLIDE_OFFSET_PX = 28;
 
 /**
  * Event › Overzicht: the trip's ticket with a tile per part of the trip.
@@ -99,18 +96,24 @@ export function TripOverviewTab() {
   // Bumped on every trip switch (swipe or otherwise) — the swipe hint below
   // watches this to cut itself short the moment its lesson is no longer needed.
   const [tripSwitchCount, setTripSwitchCount] = useState(0);
-  // Which way the content should slide: left when moving to a later trip
-  // (swiping left, or the next-arrow), right for an earlier one — the same
-  // direction a finger dragged, so the page follows it instead of fighting it.
-  const [swipeDirection, setSwipeDirection] = useState<"left" | "right">("left");
   const goToTrip = (index: number) => {
     const target = allTrips[index];
     if (!target) return;
-    setSwipeDirection(index > at ? "left" : "right");
     setTripSwitchCount((c) => c + 1);
     navigate(routes.trip.view(target.id));
     window.scrollTo(0, 0);
   };
+  // Which way the new content slides in: from the right when moving to a later
+  // trip (the same direction a finger dragged), from the left for an earlier
+  // one. Worked out from where we came from, so it also holds for the switcher.
+  const previous = useRef({ id: trip.id, at });
+  let slideFrom: number | null = null;
+  if (previous.current.id !== trip.id && previous.current.at >= 0 && at >= 0) {
+    slideFrom = at > previous.current.at ? SLIDE_OFFSET_PX : -SLIDE_OFFSET_PX;
+  }
+  useEffect(() => {
+    previous.current = { id: trip.id, at };
+  }, [trip.id, at]);
   useSwipe(pageRef, {
     enabled: at >= 0 && activeTab === "overview",
     onLeft: () => goToTrip(at + 1),
@@ -169,14 +172,13 @@ export function TripOverviewTab() {
         <TripEditButton trip={trip} />
         <ShareButton onClick={onShare} />
       </HeaderAction>
-      <AnimatePresence mode="popLayout" initial={false} custom={swipeDirection}>
+      {/* overflow-x-clip: the sliding content must never widen the page, or the
+          browser lets it pan sideways and the fixed bottom nav shifts with it. */}
+      <div className="overflow-x-clip">
         <motion.div
           key={trip.id}
-          custom={swipeDirection}
-          variants={tripSlideVariants}
-          initial="enter"
-          animate="center"
-          exit="exit"
+          initial={slideFrom === null ? false : { opacity: 0, x: slideFrom }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.22, ease: "easeOut" }}
           className="space-y-4"
         >
@@ -205,7 +207,7 @@ export function TripOverviewTab() {
             {TILE_ORDER[phase].map((id) => tiles[id] && <Fragment key={id}>{tiles[id]}</Fragment>)}
           </div>
         </motion.div>
-      </AnimatePresence>
+      </div>
 
       <TripSwitcherButton onClick={() => setSwitcherOpen(true)} />
       <TripSwitcher open={switcherOpen} onClose={() => setSwitcherOpen(false)} currentId={trip.id} myNames={myNames} />
