@@ -224,11 +224,20 @@ by hand, by members or admins.
 - A **location ping** is a zone or text and, when you allow it, GPS coordinates,
   stored on the profile and considered fresh for two hours. Pings within 20 m of each
   other share a pin.
-- A **profile** has an avatar, banner (colour or image), name font and colour,
+- A **profile** has an avatar (from Discord/Google, or a member's own upload — see below),
+  banner (colour or image), name font and colour,
   pronouns, bio, badges, aliases (former names), phone number and, on the current
   trip, room. Others see a popup with a "Bekijk profiel" button
   (`components/common/UserProfilePopup.tsx`); it scrolls inside itself on small screens.
 - Renaming keeps history: old data stays under the old name, which becomes an alias.
+- **Profielfoto**: a member can upload their own picture (JPG/PNG/WebP, 5 MB, centre-cropped
+  to a square client-side), replacing the Discord/Google one. The upload is marked
+  `avatar_custom`, which stops the periodic resync below from overwriting it; deleting it
+  reverts to Discord/Google on the next resync.
+- **Avatars stay current on their own**: since a stored `avatar_url` was previously only ever
+  filled in once and then frozen, a changed or since-broken Discord/Google picture could stay
+  wrong (or a broken image) forever. It is now re-checked once a day per profile
+  (`avatar_synced_at`) and replaced when it differs — skipped entirely for a custom upload.
 
 ## Search
 
@@ -252,7 +261,8 @@ See [architecture.md](architecture.md#background-jobs-and-notifications) for the
 - **Onboarding** (`pages/onboarding/`) runs on first login: a short dialogue with
   the mascot, profile, notifications and a feature tour. Admins can preview it.
 - **Instellingen** (`pages/SettingsPage.tsx`): notifications, Discord link, dark
-  theme, greeting, QR code to the app, the credits, and **Feedback geven**: a sheet where a member
+  theme, accent colour, density (comfortable/compact, see [design-system.md](design-system.md#rules)),
+  greeting, QR code to the app, the credits, and **Feedback geven**: a sheet where a member
   sends a bug, idea or remark (optionally anonymous, with no name stored) that admins read under
   Admin → Feedback.
 - **Wijzigingslog** (`pages/ChangelogPage.tsx`): release notes written in the admin

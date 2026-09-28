@@ -24,6 +24,13 @@ All notable changes to Ankerd Con are documented here.
 - Download a whole day's photos as one zip from the story viewer, next to the per-photo download.
 - When the app cannot start (an old iPhone, a stale cached copy) it now shows a "Ankerd Con kan niet
   starten" screen with what to try and the errors it saw, instead of a blank white page.
+- **Profielfoto**: upload your own profile picture (Profiel), instead of only the one Discord or
+  Google gives you. Needs migration v2.30.
+- **Instellingen → Dichtheid**: a comfortable/compact toggle that tightens spacing app-wide.
+- Signing several people up for a day (or into a hotel room) is now one request instead of one per
+  person — it used to visibly crawl one name at a time for a bigger group.
+- The launch splash no longer holds for a fixed ~4.5 s regardless of how ready the app already is;
+  it's now a brief brand moment (~1.5 s total).
 
 ---
 

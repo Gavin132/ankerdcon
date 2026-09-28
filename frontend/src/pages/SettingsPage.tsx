@@ -13,13 +13,14 @@ import {
   Youtube,
   Palette,
   Check,
+  Rows3,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { FeedbackSheet } from "../components/settings/FeedbackSheet";
 import { useNavigate } from "react-router-dom";
 import { useCurrentUser, useUpdatePreferences } from "../hooks/useUsers";
 import { useSmartBack } from "../hooks/useSmartBack";
-import { ACCENTS, useThemeStore } from "../store/theme.store";
+import { ACCENTS, useThemeStore, type Density } from "../store/theme.store";
 import { startDiscordLink } from "../services/auth.service";
 import { routes } from "../config/routes";
 import { listContainer, listItem } from "../utils/motion";
@@ -71,6 +72,13 @@ export function SettingsPage() {
   const toggleTheme = useThemeStore((s) => s.toggle);
   const accent = useThemeStore((s) => s.accent);
   const setAccent = useThemeStore((s) => s.setAccent);
+  const density = useThemeStore((s) => s.density);
+  const setDensity = useThemeStore((s) => s.setDensity);
+
+  const DENSITY_OPTIONS: { id: Density; label: string }[] = [
+    { id: "comfortable", label: "Comfortabel" },
+    { id: "compact", label: "Compact" },
+  ];
 
   async function onLinkDiscord() {
     try {
@@ -168,6 +176,37 @@ export function SettingsPage() {
                       }`}
                     >
                       {selected && <Check size={16} strokeWidth={3} />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                  <Rows3 size={16} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-semibold text-ink">Dichtheid</p>
+                  <p className="text-[12.5px] text-ink-3">Geldt voor dit apparaat</p>
+                </div>
+              </div>
+              <div className="mt-3 flex gap-2 pl-11" role="radiogroup" aria-label="Dichtheid">
+                {DENSITY_OPTIONS.map((o) => {
+                  const selected = density === o.id;
+                  return (
+                    <button
+                      key={o.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => setDensity(o.id)}
+                      className={`rounded-xl px-3 py-2 text-[13px] font-semibold transition-colors ${
+                        selected ? "border-2 border-outline bg-brand text-brand-on" : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"
+                      }`}
+                    >
+                      {o.label}
                     </button>
                   );
                 })}

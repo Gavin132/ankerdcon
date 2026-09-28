@@ -2,6 +2,9 @@ import { create } from "zustand";
 
 const STORAGE_KEY = "ankerd-theme";
 const ACCENT_KEY = "ankerd-accent";
+const DENSITY_KEY = "ankerd-density";
+
+export type Density = "comfortable" | "compact";
 
 /** The accent colour choices under Instellingen. `blue` is the default and sets no
  * attribute; the others are the `[data-accent]` blocks in index.css (keep in sync).
@@ -43,21 +46,42 @@ function applyAccent(accent: AccentId) {
   else document.documentElement.setAttribute("data-accent", accent);
 }
 
+function getInitialDensity(): Density {
+  try {
+    const stored = localStorage.getItem(DENSITY_KEY);
+    if (stored === "compact") return "compact";
+  } catch {}
+  return "comfortable";
+}
+
+// The `.density-compact` rules in index.css tighten gap/space-y/padding by
+// overriding Tailwind's own generated classes at higher specificity, rather
+// than every card/list/tile component branching on this — see the comment
+// there before touching either side of that split.
+function applyDensity(density: Density) {
+  document.documentElement.classList.toggle("density-compact", density === "compact");
+}
+
 interface ThemeStore {
   isDark: boolean;
   /** Per device, like the dark/light choice. */
   accent: AccentId;
+  density: Density;
   toggle: () => void;
   setAccent: (accent: AccentId) => void;
+  setDensity: (density: Density) => void;
 }
 
 const initialAccent = getInitialAccent();
-// Before the first render, so the page never shows the default blue first.
+const initialDensity = getInitialDensity();
+// Before the first render, so the page never shows the default for a beat.
 applyAccent(initialAccent);
+applyDensity(initialDensity);
 
 export const useThemeStore = create<ThemeStore>((set) => ({
   isDark: getInitialDark(),
   accent: initialAccent,
+  density: initialDensity,
   toggle: () =>
     set((s) => {
       const next = !s.isDark;
@@ -73,5 +97,13 @@ export const useThemeStore = create<ThemeStore>((set) => ({
       else localStorage.setItem(ACCENT_KEY, accent);
     } catch {}
     set({ accent });
+  },
+  setDensity: (density) => {
+    applyDensity(density);
+    try {
+      if (density === "comfortable") localStorage.removeItem(DENSITY_KEY);
+      else localStorage.setItem(DENSITY_KEY, density);
+    } catch {}
+    set({ density });
   },
 }));
