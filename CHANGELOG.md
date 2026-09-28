@@ -4,6 +4,15 @@ All notable changes to Ankerd Con are documented here.
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- When the app cannot start (an old iPhone, a stale cached copy) it now shows a "Ankerd Con kan niet
+  starten" screen with what to try and the errors it saw, instead of a blank white page.
+
+---
+
 ## [2.0.2] - 2026-09-28
 
 Quick patch: small features and fixes on top of 2.0.1.

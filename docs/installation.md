@@ -421,6 +421,7 @@ old image again.
 | Symptom | Likely cause |
 | --- | --- |
 | The build fails with "set SUPABASE_URL" | a required value is missing from the stack's variables (compose stops on purpose) |
+| One member (often an older iPhone) cannot open the app at all | A screen (added after 2.0.2) says "Ankerd Con kan niet starten" with the errors and browser it saw (`public/boot-guard.js`); ask for a screenshot of it. Usual causes: iOS too old for the bundle, a stale cached copy (Settings → Safari → Clear History and Website Data), a content blocker or DNS filter blocking the site or Supabase, or opening the link inside another app's built-in browser (Google sign-in refuses those) |
 | The page loads but is blank, the console says the Supabase URL is missing | the image was built without `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY`; set them and rebuild |
 | `/api/health` works but `/` returns 404 | the frontend was not built into the image (`backend/dist` missing). Use the root `Dockerfile`, not `backend/Dockerfile`. |
 | Discord login bounces back with an error | the Supabase **Callback URL** is missing from the Discord app's redirects, or the Site/Redirect URLs in step 1c do not match `APP_URL` |
