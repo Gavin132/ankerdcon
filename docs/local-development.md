@@ -270,6 +270,27 @@ the page afterwards.
 
 ---
 
+## Testing in WebKit (iPhone)
+
+Without an iPhone, `npm run ios-check` (in `frontend/`) opens the running app in Playwright's
+WebKit, the engine Safari uses, with an iPhone profile. It prints script errors, console errors and
+failed requests, says whether the "Ankerd Con kan niet starten" screen showed, and saves a screenshot
+to `frontend/playwright-out/` (git-ignored).
+
+```bash
+npm run ios-check                                  # the login page of http://localhost:5173
+npm run ios-check -- /trips                        # another path
+npm run ios-check -- / --device "iPhone SE" --url https://dev.ankerd.org
+npm run ios-check -- --list                        # device names
+```
+
+It is WebKit, not iOS: no Safari toolbar, no safe-area insets, no home-screen app, and only a recent
+WebKit version. It finds Safari-only script and layout problems and phone-size breakage; anything
+about a specific iOS version needs a real device or a cloud device service (BrowserStack). The
+browser is installed once with `npx playwright install webkit`. For your own interaction tests,
+import `webkit` and `devices` from `playwright` as the script does: `page.tap()` for taps,
+`page.mouse` for drags, `page.goBack()` for the back gesture.
+
 ## Troubleshooting
 
 **`.\dev.ps1` "cannot be loaded because running scripts is disabled"**

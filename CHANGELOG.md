@@ -6,8 +6,17 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- Drawers (Vervoer, Kamers, Cosplay, and a payment opened from a Discord link) could not be closed
+  with the X, by tapping beside them, or with Escape: they closed and immediately reopened. Caused by
+  the 2.0.2 back-gesture fix.
+- Tapping beside a drawer to close it did nothing on iPhones.
+
 ### Added
 
+- Drawers can be closed by swiping down on the pill or the header; story photos by swiping down
+  anywhere (the photo follows your finger).
 - When the app cannot start (an old iPhone, a stale cached copy) it now shows a "Ankerd Con kan niet
   starten" screen with what to try and the errors it saw, instead of a blank white page.
 
