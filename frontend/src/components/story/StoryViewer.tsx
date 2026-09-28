@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import { X, Trash2, Share2, Download, Loader2 } from "lucide-react";
 import { useStoryPhotos, useMarkStorySeen, useDeleteStoryPhoto } from "../../hooks/useStories";
 import { useCurrentUser } from "../../hooks/useUsers";
@@ -45,6 +45,8 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
 
   const [index, setIndex] = useState(0);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const dragY = useMotionValue(0);
+  const dragBackground = useTransform(dragY, [0, 320], ["rgba(8,12,15,1)", "rgba(8,12,15,0.25)"]);
   const highestSeqRef = useRef(0);
 
   useEffect(() => {
@@ -141,11 +143,24 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
   return createPortal(
     <AnimatePresence>
       {open && current && (
+        // Swipe down to close, Instagram-style: the photo follows the finger
+        // and the black fades out as it goes; a long or quick pull closes it,
+        // a short one springs back. The tap zones and buttons still work for
+        // plain taps (a drag past the threshold cancels the click itself).
         <motion.div
-          className="fixed inset-0 z-[600] flex flex-col bg-[#080C0F]"
+          className="fixed inset-0 z-[600] flex flex-col"
+          style={{ y: dragY, backgroundColor: dragBackground }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          exit={{ opacity: 0, y: 120, transition: { duration: 0.18 } }}
+          drag="y"
+          dragDirectionLock
+          dragConstraints={{ top: 0, bottom: 0 }}
+          dragElastic={{ top: 0, bottom: 1 }}
+          dragSnapToOrigin
+          onDragEnd={(_, info) => {
+            if (info.offset.y > 120 || info.velocity.y > 600) handleClose();
+          }}
         >
           {/* Progress bars */}
           <div className="flex gap-1 px-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] shrink-0">

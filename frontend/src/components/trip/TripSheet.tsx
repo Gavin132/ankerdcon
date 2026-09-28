@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X, ChevronLeft } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { AnimatedHeight } from "../common/AnimatedHeight";
 
 interface TripSheetProps {
@@ -50,14 +50,32 @@ function handleSheetPopState() {
  * second overlay on top — only the header's X fully closes it.
  */
 export function TripSheet({ open, onClose, title, subtitle, onBack, footer, viewKey, stacked, children }: TripSheetProps) {
+  // True while this sheet owns a history entry of its own (see below).
+  const ownsEntry = useRef(false);
+  const dragControls = useDragControls();
+
+  // Every way of closing by hand (X, backdrop, Escape, a downward drag) goes
+  // through the history entry when there is one: going back pops it and the
+  // popstate handler then calls onClose, exactly like the back gesture. Calling
+  // onClose and undoing the entry afterwards is what used to reopen sheets that
+  // the URL holds open (Vervoer, Kamers, a payment linked from a DM): onClose
+  // rewrote the URL, and stepping back then landed on the older entry that
+  // still had the sheet in it.
+  const requestClose = () => {
+    if (ownsEntry.current) window.history.back();
+    else onClose();
+  };
+  const requestCloseRef = useRef(requestClose);
+  requestCloseRef.current = requestClose;
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") requestCloseRef.current();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -82,6 +100,7 @@ export function TripSheet({ open, onClose, title, subtitle, onBack, footer, view
       if (cancelled) return;
       window.history.pushState({ ankerdSheet: true }, "");
       pushed = true;
+      ownsEntry.current = true;
       openSheetClosers.push(onClose);
       if (!popstateAttached) {
         window.addEventListener("popstate", handleSheetPopState);
@@ -92,17 +111,22 @@ export function TripSheet({ open, onClose, title, subtitle, onBack, footer, view
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
+      ownsEntry.current = false;
       if (!pushed) return;
-      // Still in the stack means something other than the back gesture
-      // closed this sheet (the X, the backdrop, Escape) — consume the
-      // history entry it pushed so a *later* back press doesn't land on a
-      // dead entry instead of leaving the page. Already missing means the
-      // back gesture itself is what got us here (handleSheetPopState popped
-      // it and called onClose), so there's nothing left to undo.
+      // Still in the stack means the parent closed this sheet by itself (a
+      // save that ends with onClose, say) rather than through a popstate —
+      // consume the history entry it pushed so a *later* back press doesn't
+      // land on a dead entry instead of leaving the page. But only while that
+      // entry is still the current one: if the router has since replaced or
+      // moved past it (the URL held the sheet open and was rewritten, or the
+      // sheet's own button navigated to another page), stepping back would
+      // undo that navigation or reopen the sheet. Already missing from the
+      // stack means the back gesture is what got us here (handleSheetPopState
+      // popped it and called onClose), so there's nothing left to undo.
       const idx = openSheetClosers.lastIndexOf(onClose);
       if (idx !== -1) {
         openSheetClosers.splice(idx, 1);
-        window.history.back();
+        if (window.history.state?.ankerdSheet === true) window.history.back();
       }
       if (openSheetClosers.length === 0 && popstateAttached) {
         window.removeEventListener("popstate", handleSheetPopState);
@@ -119,23 +143,40 @@ export function TripSheet({ open, onClose, title, subtitle, onBack, footer, view
       {open && (
         <div className={`fixed inset-0 ${stacked ? "z-[210]" : "z-[150]"}`}>
           {/* Backdrop */}
+          {/* cursor-pointer: iOS Safari does not deliver a tap to a plain div
+              unless it looks clickable. */}
           <motion.div
-            className="absolute inset-0 bg-slate-950/50"
+            className="absolute inset-0 cursor-pointer bg-slate-950/50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            onClick={onClose}
+            onClick={requestClose}
           />
 
-          {/* Sheet */}
+          {/* Sheet. Dragged down by its handle (the pill and the header); a
+              long or quick pull closes it, a short one springs back. */}
           <motion.div
             className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[85vh] w-full flex-col overflow-hidden rounded-t-[20px] border-t-1.5 border-x-1.5 border-line bg-surface sm:max-w-xl sm:border-x-1.5"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 32, stiffness: 320 }}
+            drag="y"
+            dragControls={dragControls}
+            dragListener={false}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.7 }}
+            dragSnapToOrigin
+            onDragEnd={(_, info) => {
+              if (info.offset.y > 110 || info.velocity.y > 600) requestClose();
+            }}
           >
+            {/* Drag handle: touch-action none so the browser does not scroll instead. */}
+            <div
+              className="shrink-0 cursor-grab touch-none active:cursor-grabbing"
+              onPointerDown={(e) => dragControls.start(e)}
+            >
             <div className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-line" aria-hidden />
 
             {/* Header */}
@@ -160,12 +201,13 @@ export function TripSheet({ open, onClose, title, subtitle, onBack, footer, view
               </div>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={requestClose}
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
                 aria-label="Sluiten"
               >
                 <X size={16} />
               </button>
+            </div>
             </div>
 
             {/* Scrollable body */}

@@ -14,6 +14,7 @@ venv/
 backend/dist/
 frontend/dist/
 frontend/node_modules/
+frontend/playwright-out/
 
 # Coverage
 .coverage
