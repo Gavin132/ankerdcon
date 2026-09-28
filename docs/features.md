@@ -164,7 +164,11 @@ the form is open; saving waits until nothing is queued.
   `store/pendingStoryUploads.store.ts`), even after the app was closed. The upload
   button shows an amber badge with how many are waiting.
 - Only the uploader can delete a photo (there is no admin override yet, see
-  [TODO.md](../TODO.md)); anyone can download the original.
+  [TODO.md](../TODO.md)); anyone can download the original, or the whole day
+  as one zip (the folder icon in the viewer), streamed while it is built.
+- **Swipe down to close** the viewer, Instagram-style — the photo follows the
+  finger and the background fades; a long or fast pull closes it, a short one
+  springs back.
 - **Profiles** list every photo a member has uploaded, newest first, with a chip
   per event and a full-screen viewer (`components/profile/UserPhotos.tsx`,
   `GET /api/stories/user/{id or name}`).

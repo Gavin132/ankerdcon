@@ -3,9 +3,6 @@ from datetime import datetime, timezone
 import re
 import uuid
 
-import io
-import zipfile
-
 from fastapi.concurrency import run_in_threadpool
 from typing import Optional
 
@@ -18,6 +15,7 @@ from app.constants import Tables
 from app.core import minio_client
 from app.core.logging import get_logger
 from app.core.uploads import clean_image, read_capped, sniff_video
+from app.core.zip_stream import stream_zip
 from app.dependencies import _unique_profile_name, get_admin_user
 from app.models.admin import (
     CdnListing,
@@ -1430,42 +1428,15 @@ def admin_cdn(
     )
 
 
-class _ZipSink(io.RawIOBase):
-    """A write-only stream that collects what zipfile writes, so the zip can be
-    sent while it is still being built instead of held whole in memory."""
-
-    def __init__(self) -> None:
-        self._chunks: list[bytes] = []
-
-    def writable(self) -> bool:
-        return True
-
-    def write(self, b) -> int:
-        self._chunks.append(bytes(b))
-        return len(b)
-
-    def drain(self) -> bytes:
-        data = b"".join(self._chunks)
-        self._chunks = []
-        return data
-
-
-def _zip_stream(objects: list[dict]):
-    sink = _ZipSink()
-    # Photos and videos are compressed already; storing them is faster and no bigger.
-    with zipfile.ZipFile(sink, "w", compression=zipfile.ZIP_STORED) as zf:
-        for o in objects:
-            try:
-                content, _ = minio_client.get_object_bytes(o["key"])
-            except Exception as e:
-                # One unreadable file shouldn't ruin the rest; the log says which.
-                logger.error("CDN zip: skipping %s: %s", o["key"], e)
-                continue
-            info = zipfile.ZipInfo(o["key"])
-            info.compress_type = zipfile.ZIP_STORED
-            zf.writestr(info, content)
-            yield sink.drain()
-    yield sink.drain()
+def _cdn_zip_entries(objects: list[dict]):
+    for o in objects:
+        try:
+            content, _ = minio_client.get_object_bytes(o["key"])
+        except Exception as e:
+            # One unreadable file shouldn't ruin the rest; the log says which.
+            logger.error("CDN zip: skipping %s: %s", o["key"], e)
+            continue
+        yield o["key"], content
 
 
 @router.get(AdminRoutes.CDN_DOWNLOAD)
@@ -1489,7 +1460,7 @@ def admin_download_cdn(
     logger.warning("CDN: admin %s downloads %d files (kind=%s, event=%s)", admin, len(chosen), kind, event)
     label = "-".join(p for p in ("cdn", kind, event[:8] if event else None) if p)
     return StreamingResponse(
-        _zip_stream(chosen),
+        stream_zip(_cdn_zip_entries(chosen)),
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{label}.zip"'},
     )

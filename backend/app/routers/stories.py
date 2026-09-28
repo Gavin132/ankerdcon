@@ -5,6 +5,7 @@ from collections import defaultdict
 
 from fastapi.concurrency import run_in_threadpool
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
+from fastapi.responses import StreamingResponse
 
 from app.config import get_settings
 from app.constants import Tables
@@ -12,6 +13,7 @@ from app.core import minio_client
 from app.core.database import supabase
 from app.core.logging import get_logger
 from app.core.uploads import clean_image, read_capped
+from app.core.zip_stream import stream_zip
 from app.dependencies import get_current_user
 from app.models.story import MarkStorySeenRequest, StoryDaySummary, StoryPhoto, StorySeenState, UserStoryPhoto
 from app.routes import StoryRoutes
@@ -27,6 +29,11 @@ _DB_ERROR = "Databasefout. Probeer het opnieuw."
 _MAX_BYTES = 15 * 1024 * 1024  # 15 MB
 _ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
 _EXT = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
+
+# A safety net on "download this day's photos as one zip", not the expected case: at
+# 15 MB (the per-photo cap) this bounds a zip at a few GB, not the ordinary size of a
+# day's story.
+_DAY_ZIP_MAX_FILES = 300
 
 
 def _require_day_id(event_day_id: str) -> None:
@@ -313,6 +320,56 @@ def download_story_photo(photo_id: str, _: str = Depends(get_current_user)):
         content=content,
         media_type=content_type,
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+def _day_zip_entries(photos: list[dict]):
+    bucket = get_settings().minio_bucket
+    for p in photos:
+        key = p["image_url"].split(f"/{bucket}/", 1)[-1]
+        try:
+            content, content_type = minio_client.get_object_bytes(key)
+        except Exception as e:
+            # One unreadable photo shouldn't ruin the rest; the log says which.
+            logger.error("Story zip: skipping %s: %s", p["id"], e)
+            continue
+        ext = _EXT.get(content_type, "jpg")
+        yield f"{p['seq']:03d}-{p['uploaded_by']}.{ext}", content
+
+
+@router.get(StoryRoutes.DOWNLOAD_ALL)
+def download_all_story_photos(event_day_id: str, current_user: str = Depends(get_current_user)):
+    """Every photo of this day as one zip, for a member to keep after the trip — the
+    same photos `list_story_photos` already shows them, streamed while it is built."""
+    _require_day_id(event_day_id)
+    try:
+        photos = (
+            supabase.table(Tables.STORY_PHOTOS)
+            .select("id, seq, uploaded_by, image_url")
+            .eq("event_day_id", event_day_id)
+            .order("seq")
+            .execute()
+            .data
+        ) or []
+        day_row = supabase.table(Tables.EVENT_DAYS).select("date").eq("id", event_day_id).execute()
+    except Exception as e:
+        logger.error("Failed to list story photos for zip, day %s: %s", event_day_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+    if not photos:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Er zijn nog geen foto's op deze dag.")
+    if len(photos) > _DAY_ZIP_MAX_FILES:
+        raise HTTPException(
+            status_code=413,
+            detail="Te veel foto's voor één zip. Download ze los via de foto zelf.",
+        )
+
+    date = day_row.data[0]["date"] if day_row.data else None
+    label = f"fotos-{date}" if date else "fotos"
+    return StreamingResponse(
+        stream_zip(_day_zip_entries(photos)),
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{label}.zip"'},
     )
 
 

@@ -1,5 +1,6 @@
 import { apiClient, VIDEO_UPLOAD_TIMEOUT_MS } from "../lib/api/client";
 import { apiRoutes } from "../config/api-routes";
+import { filenameFromContentDisposition, triggerBlobDownload } from "../utils/downloadFile";
 import type {
   AdminStats,
   CdnListing,
@@ -39,15 +40,7 @@ export async function downloadCdnZip(
     timeout: 0,
     onDownloadProgress: (e) => onProgress?.(e.loaded),
   });
-  const name = /filename="?([^";]+)"?/.exec(String(res.headers["content-disposition"] ?? ""))?.[1] ?? "cdn.zip";
-  const url = URL.createObjectURL(res.data);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  triggerBlobDownload(res.data, filenameFromContentDisposition(res.headers["content-disposition"], "cdn.zip"));
 }
 
 /** Delete a file from the bucket, whoever uploaded it (admin only). */

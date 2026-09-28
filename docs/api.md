@@ -115,6 +115,7 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `GET /stories/summary?event_day_ids=a,b` | member | per day: photo count, newest photo, whether there is anything unseen |
 | `GET /stories/user/{id or name}` | member | every photo one member uploaded, with its event |
 | `GET /stories/{day}` | member | a day's photos in order |
+| `GET /stories/{day}/download-all` | member | the day's photos as one zip, streamed while it is built (413 above 300 photos; a file MinIO can't read is skipped) |
 | `POST /stories/{day}` | member | upload a photo (multipart, field `file`) |
 | `GET /stories/{day}/seen`, `PUT /stories/{day}/seen` | member | your watch progress |
 | `GET /stories/photos/{id}/download` | member | the original, as a download |

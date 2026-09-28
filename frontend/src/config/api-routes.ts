@@ -27,6 +27,7 @@ export const apiRoutes = {
     byDay:   (eventDayId: string) => `/api/stories/${eventDayId}`,
     photo:   (photoId: string) => `/api/stories/photos/${photoId}`,
     download: (photoId: string) => `/api/stories/photos/${photoId}/download`,
+    downloadAll: (eventDayId: string) => `/api/stories/${eventDayId}/download-all`,
     seen:    (eventDayId: string) => `/api/stories/${eventDayId}/seen`,
     byUser:  (identifier: string) => `/api/stories/user/${encodeURIComponent(identifier)}`,
     summary: (eventDayIds: string[]) => `/api/stories/summary?event_day_ids=${eventDayIds.map(encodeURIComponent).join(",")}`,

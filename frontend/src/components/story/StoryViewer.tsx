@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
-import { X, Trash2, Share2, Download, Loader2 } from "lucide-react";
+import { animate, motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
+import { X, Trash2, Share2, Download, FolderDown, Loader2 } from "lucide-react";
 import { useStoryPhotos, useMarkStorySeen, useDeleteStoryPhoto } from "../../hooks/useStories";
 import { useCurrentUser } from "../../hooks/useUsers";
-import { downloadStoryPhoto } from "../../services/stories.service";
+import { downloadAllStoryPhotos, downloadStoryPhoto } from "../../services/stories.service";
 import { toast } from "../../store/toast.store";
 import { UserAvatar } from "../common/UserAvatar";
 import type { StoryPhoto } from "../../types";
@@ -45,6 +45,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
 
   const [index, setIndex] = useState(0);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [downloadingAll, setDownloadingAll] = useState(false);
   const dragY = useMotionValue(0);
   const dragBackground = useTransform(dragY, [0, 320], ["rgba(8,12,15,1)", "rgba(8,12,15,0.25)"]);
   const highestSeqRef = useRef(0);
@@ -55,6 +56,15 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
       highestSeqRef.current = 0;
     }
   }, [open, eventDayId]);
+
+  // dragY lives on this component, not the sheet it drags — the sheet unmounts
+  // on close but this doesn't, so a swipe-close leaves it sitting wherever the
+  // exit animation left it (see the exit prop below) instead of back at 0.
+  // Reset it before the sheet mounts again (useLayoutEffect: before paint, so
+  // there's no one-frame flash of the last close's offset), every open.
+  useLayoutEffect(() => {
+    if (open) dragY.set(0);
+  }, [open, dragY]);
 
   useEffect(() => {
     const photo = photos[index];
@@ -125,6 +135,17 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
     }
   }
 
+  async function handleDownloadAll() {
+    setDownloadingAll(true);
+    try {
+      await downloadAllStoryPhotos(activeEventDayId);
+    } catch {
+      toast("error", "Kon de foto's niet downloaden.");
+    } finally {
+      setDownloadingAll(false);
+    }
+  }
+
   async function handleDelete(photoId: string) {
     try {
       await deletePhoto.mutateAsync(photoId);
@@ -157,9 +178,12 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
           dragDirectionLock
           dragConstraints={{ top: 0, bottom: 0 }}
           dragElastic={{ top: 0, bottom: 1 }}
-          dragSnapToOrigin
           onDragEnd={(_, info) => {
             if (info.offset.y > 120 || info.velocity.y > 600) handleClose();
+            // Below the threshold: spring back by hand rather than
+            // dragSnapToOrigin, which would race the exit animation above
+            // for the same value on the close path.
+            else animate(dragY, 0, { type: "spring", stiffness: 500, damping: 40 });
           }}
         >
           {/* Progress bars */}
@@ -194,6 +218,16 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                 className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
               >
                 <Share2 size={16} />
+              </button>
+              <button
+                type="button"
+                disabled={downloadingAll}
+                onClick={handleDownloadAll}
+                title="Download alle foto's van deze dag als zip"
+                aria-label="Download alle foto's van deze dag"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3] disabled:opacity-50"
+              >
+                {downloadingAll ? <Loader2 size={16} className="animate-spin" /> : <FolderDown size={16} />}
               </button>
               <button
                 type="button"

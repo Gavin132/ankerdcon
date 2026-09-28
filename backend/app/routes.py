@@ -91,6 +91,7 @@ class StoryRoutes:
     LIST = "/{event_day_id}"          # GET list / POST upload
     DETAIL = "/photos/{photo_id}"     # DELETE (owner-only)
     DOWNLOAD = "/photos/{photo_id}/download"  # GET — original bytes, forced download
+    DOWNLOAD_ALL = "/{event_day_id}/download-all"  # GET — every photo of this day as one zip
     SEEN = "/{event_day_id}/seen"     # GET / PUT
     SUMMARY = "/summary"              # GET ?event_day_ids=a,b,c
     BY_USER = "/user/{identifier}"    # GET — every photo one member uploaded, with its event

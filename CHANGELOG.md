@@ -16,7 +16,8 @@ All notable changes to Ankerd Con are documented here.
 ### Added
 
 - Drawers can be closed by swiping down on the pill or the header; story photos by swiping down
-  anywhere (the photo follows your finger).
+  anywhere (the photo follows your finger, then springs back or closes).
+- Download a whole day's photos as one zip from the story viewer, next to the per-photo download.
 - When the app cannot start (an old iPhone, a stale cached copy) it now shows a "Ankerd Con kan niet
   starten" screen with what to try and the errors it saw, instead of a blank white page.
 
