@@ -61,12 +61,50 @@ Required in production:
 | `DISCORD_BOT_TOKEN`, `DISCORD_WEBHOOK_URL` | notifications; without the token no DM is sent (easy to forget in Portainer) |
 | `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET`, `MINIO_SECURE` | photo storage and the admin CDN page |
 | `CALENDAR_FEED_TOKEN` | optional; set it so the calendar links do not depend on the JWT secret |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | optional; web push (see [#web-push](#web-push) below). Push is simply not offered until these are set |
 
 Keep `API_DOCS_ENABLED` unset (off).
 
 The frontend needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` **at build time**;
 they are baked into the bundle, so changing them means rebuilding. `VITE_API_URL` stays empty
-because the frontend is served from the same origin as the API.
+because the frontend is served from the same origin as the API. `VITE_VAPID_PUBLIC_KEY` (below)
+is the same story.
+
+## Web push
+
+A second notification channel next to Discord DMs (`app/services/push_service.py`), for
+members who don't check Discord or signed up with Google. Uses [VAPID](https://datatracker.ietf.org/doc/html/rfc8292)
+(no third-party push service account, no cost) — the browser talks to Apple/Google/Mozilla's
+own push infrastructure directly.
+
+**Generate the key pair once, before the first deploy that offers push, and never rotate it**
+afterwards: rotating it silently breaks every subscription already out there, with no way to
+warn those members first — they'd just stop receiving anything until they happen to revisit
+Instellingen and re-enable it.
+
+```bash
+cd backend && .venv/Scripts/python -c "
+from py_vapid import Vapid02
+import base64
+v = Vapid02()
+v.generate_keys()
+pub = v.public_key.public_bytes(
+    __import__('cryptography.hazmat.primitives.serialization', fromlist=['Encoding']).Encoding.X962,
+    __import__('cryptography.hazmat.primitives.serialization', fromlist=['PublicFormat']).PublicFormat.UncompressedPoint,
+)
+priv = v.private_key.private_numbers().private_value.to_bytes(32, 'big')
+e = lambda b: base64.urlsafe_b64encode(b).rstrip(b'=').decode()
+print('VAPID_PUBLIC_KEY=' + e(pub))
+print('VAPID_PRIVATE_KEY=' + e(priv))
+"
+```
+
+Set the two printed values as `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` in the backend's
+environment, and the **same public key** as `VITE_VAPID_PUBLIC_KEY` in the frontend build (it's
+meant to be public — the browser needs it to subscribe). `VAPID_SUBJECT` is a `mailto:` address
+or the app's `https://` URL, only ever used by a push service to contact you if a key is
+misbehaving. Needs [migration v2.31](database.md) too. Until all of this is done, the
+"Pushmeldingen" toggle simply doesn't appear — nothing else is affected.
 
 ## Deploying
 

@@ -11,6 +11,7 @@ import { useCurrentUser, useUpdatePreferences } from "../hooks/useUsers";
 import { useSmartBack } from "../hooks/useSmartBack";
 import { routes } from "../config/routes";
 import { NOTIFICATION_CATEGORIES } from "../constants/notifications";
+import { PushToggle } from "../components/notifications/PushToggle";
 import { toast } from "../store/toast.store";
 
 /** Flat top bar for the pages outside the app shell: back, title, and home on a fresh entry. */
@@ -107,11 +108,16 @@ export function NotificationSettingsPage() {
         )}
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
+          <PushToggle />
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
           <div className="card-surface overflow-hidden">
             <div className="px-4 pb-3 pt-3.5">
               <p className="section-label">Discord DM's</p>
               <p className="mt-1 text-[12.5px] text-ink-3">
-                De bot stuurt je een privébericht voor de categorieën die je hieronder aanzet.
+                De bot stuurt je een privébericht voor de categorieën die je hieronder aanzet — en, als
+                pushmeldingen hierboven aanstaan, ook een melding op dit apparaat voor diezelfde categorieën.
               </p>
             </div>
 
@@ -147,8 +153,9 @@ export function NotificationSettingsPage() {
               </button>
             </div>
 
-            {/* Per-category toggles */}
-            <div className={`divide-y divide-line border-t border-line transition-opacity ${draftAllowDm ? "" : "pointer-events-none opacity-40"}`}>
+            {/* Per-category toggles — not faded by the Discord switch above:
+                these also govern push, which is independent of allow_dm. */}
+            <div className="divide-y divide-line border-t border-line">
               {NOTIFICATION_CATEGORIES.map((cat) => {
                 const checked = draftCategories.includes(cat.id);
                 return (

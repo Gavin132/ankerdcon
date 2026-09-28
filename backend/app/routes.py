@@ -82,6 +82,11 @@ class FeedbackRoutes:
     LIST = "/"  # POST
 
 
+class PushRoutes:
+    PREFIX = "/push"
+    SUBSCRIBE = "/subscribe"  # POST, DELETE
+
+
 class CosplayRoutes:
     PREFIX = "/cosplays"
     LIST = "/"

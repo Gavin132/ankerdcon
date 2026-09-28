@@ -11,3 +11,4 @@ apscheduler>=3.10,<4
 minio>=7.2,<8
 Pillow>=11,<12
 tzdata
+pywebpush>=2,<3

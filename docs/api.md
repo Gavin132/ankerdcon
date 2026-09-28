@@ -151,6 +151,19 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `GET /changelog/` | member | release notes |
 | `POST /feedback/` | member | send a bug, idea or remark (`kind`, `message` 5–2000 characters, `anonymous`, `app_version`). Anonymous rows carry no name. At most 5 per member per hour (429), counted in memory per process. |
 
+### Push — `/push`
+
+| Method and path | Who | What |
+| --- | --- | --- |
+| `POST /push/subscribe` | member | save (or refresh) this device's push subscription — the exact `PushSubscription.toJSON()` shape. Upserted on `endpoint`, so resubscribing the same device never duplicates. |
+| `DELETE /push/subscribe` | member | remove a subscription by `endpoint` — turns push off for that one device |
+
+Sending goes through `app/services/push_service.py`, called from `notification_service.py`
+alongside every Discord DM: `notification_categories` governs both channels (a member who wants
+"Nieuwe rit" gets it as a DM and/or a push, whichever they've set up); `allow_dm` only ever
+gated the DM half. Needs `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` — see
+[deployment.md#web-push](deployment.md#web-push); without them, sending silently does nothing.
+
 ### Link previews — *public*, not under `/api`
 
 `GET /trips/{id}` and `GET /events/{id}` (the older link shape) are for link-unfurling

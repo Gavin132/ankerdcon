@@ -48,6 +48,7 @@ Postgres on Supabase. Only the backend talks to it (see
 last refreshed from Discord/Google — see [security.md](security.md#authentication)), `avatar_custom`
 (true once a member uploads their own picture — stops the resync from overwriting it). Created by the backend after a whitelisted login, or by an admin as a stub that is claimed at first login. Never by a database trigger. |
 | `whitelist` | Who may log in | `discord_id` and/or `email`; one of them is required. |
+| `push_subscriptions` | Web push, per device | `user_name`, `endpoint` (unique — a device's own push-service URL, upserted on resubscribe, deleted when a push comes back 404/410), `p256dh`, `auth`. See [deployment.md#web-push](deployment.md#web-push). |
 | `badges` | Badge definitions | `name`, `description`, `image_url`, `display_order`. Members reference them through `profiles.badge_ids`. |
 
 ### Events
@@ -144,6 +145,7 @@ order, not the number in the title.
 | `migration_v2.28_feedback` | `feedback` table (member feedback; `user_name` is NULL when anonymous). Run **before** the deploy. |
 | `migration_v2.29_avatar_resync` | `profiles.avatar_synced_at`, so a stale or broken avatar is re-checked periodically instead of only once ever. Backend tolerates it being absent (skips the resync). |
 | `migration_v2.30_custom_avatar` | `profiles.avatar_custom`, so a member's own uploaded avatar isn't overwritten by the resync above. Backend tolerates it being absent (an avatar upload fails with 503 until it has run). |
+| `migration_v2.31_push_subscriptions` | `push_subscriptions` table. Run **before** the deploy; also needs the `VAPID_*` env vars — see [deployment.md#web-push](deployment.md#web-push). |
 | `migration_cosplays`, `add_whitelist_emails`, `remove_trigger` | one-offs: the cosplays table, a bulk-add template for the whitelist, removal of the old profile trigger |
 | `backfill_events_from_calendar.py`, `repoint_fks_to_new_events.py`, `calendar_id_mapping.json` | the one-time data move from `calendar` to `events`/`event_days` (kept for the record) |
 
@@ -167,6 +169,7 @@ Run in the SQL editor:
 | v2.28 | `select to_regclass('public.feedback')` is not null |
 | v2.29 | `select 1 from information_schema.columns where table_name = 'profiles' and column_name = 'avatar_synced_at'` returns a row |
 | v2.30 | `select 1 from information_schema.columns where table_name = 'profiles' and column_name = 'avatar_custom'` returns a row |
+| v2.31 | `select to_regclass('public.push_subscriptions')` is not null |
 
 `db/check_schema.py` compares `db/schema.sql` with the live database, but
 `schema.sql` is out of date (see below), so it reports differences that are not

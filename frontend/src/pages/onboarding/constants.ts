@@ -31,7 +31,7 @@ export const FEATURES = [
     icon: Ticket,
     color: "bg-sunken text-ink",
     title: "Event",
-    desc: "Alles voor één trip: vervoer, eten, hotelkamers, cosplays en foto's.",
+    desc: "Alles voor één trip: vervoer, eten, hotelkamers, cosplays, foto's en je ticket.",
   },
   {
     icon: CalendarDays,

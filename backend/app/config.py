@@ -34,6 +34,16 @@ class Settings(BaseSettings):
     minio_bucket: str = "story-photos"
     minio_secure: bool = True
 
+    # Web push — a second, Discord-independent notification channel. Generated
+    # once (see docs/deployment.md#web-push) and never changed afterwards:
+    # rotating the key pair silently invalidates every subscription already
+    # out there, with no way to warn those members first.
+    vapid_public_key: str = ""
+    vapid_private_key: str = ""
+    # The `sub` claim push services use to contact the site owner if a key is
+    # misbehaving — a mailto: address or the app's own https:// URL.
+    vapid_subject: str = ""
+
     # Interactive API docs at /api/docs. Off unless asked for: they map out
     # every endpoint for whoever finds them.
     api_docs_enabled: bool = False

@@ -141,12 +141,16 @@ upload can never stall the API. See [minio-setup.md](minio-setup.md).
 | `check_and_send_reminders` | daily at 08:00 | event reminders 7 days, 1 day and on the day |
 | `check_and_send_ticket_reminders` | every 15 minutes | "ticket sale opens in 24 hours" and "is open now" |
 
-Notifications go two ways: a **shared webhook** post (an embed in the group's
-Discord channel) and **personal DMs** through the bot. DMs are opt-in per
+Notifications go three ways: a **shared webhook** post (an embed in the group's
+Discord channel), **personal DMs** through the bot, and **web push**
+(`app/services/push_service.py`, VAPID, no third party). DM and push are opt-in per
 category (`event_created`, `ticket_sale`, `event_reminder_*`, `ride_created`,
-`expense_created`, `meal_created`), and only active members with "DM's toestaan"
-switched on receive them. Payment requests are personal DMs that only need the
-master switch. All of it is fire-and-forget: a failed DM never fails the request.
+`expense_created`, `meal_created`) — the category list is channel-agnostic, it says what a
+member wants to hear about, not how. A DM additionally needs "DM's toestaan" and a linked
+Discord account; push needs only a subscription (Instellingen → Notificaties, or onboarding)
+to exist for that device. Payment requests are personal, sent the same two ways, DM needing
+only the master switch. All of it is fire-and-forget: a failed DM or push never fails the
+request, and a push that comes back 404/410 (device gone) deletes its own subscription row.
 
 Because the scheduler lives in the API process, **two backends on the same
 database send every reminder twice**. Do not leave a local backend running

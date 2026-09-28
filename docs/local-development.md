@@ -197,6 +197,7 @@ For a Docker install, every value and where to get it is in [installation.md](in
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | yes | Supabase → Settings → API → publishable (anon) key. Never the secret key. |
 | `VITE_API_URL` | no | Leave empty locally; the Vite proxy handles `/api` |
 | `BACKEND_URL` | no | Where the dev proxy sends `/api`. Default `http://localhost:8000` |
+| `VITE_VAPID_PUBLIC_KEY` | no | Same value as the backend's `VAPID_PUBLIC_KEY`. Without it, push is simply not offered. |
 
 ### `backend/.env`
 
@@ -213,6 +214,7 @@ For a Docker install, every value and where to get it is in [installation.md](in
 | `API_DOCS_ENABLED` | no | `true` shows `/api/docs`. Keep `false` anywhere reachable from the internet. |
 | `RATE_LIMIT_PER_MINUTE` | no | Requests per client per minute before a 429 (default 600; writes get a quarter of it) |
 | `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET`, `MINIO_SECURE` | for photos | Host only for the endpoint (no `https://`). Bucket defaults to `story-photos`. See [minio-setup.md](minio-setup.md). Without them everything works except uploads and the admin CDN page. |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | for push | Generated once, never rotated — see [deployment.md#web-push](deployment.md#web-push). Without them, push is simply not offered. |
 
 ### Build-time variables (frontend)
 

@@ -53,6 +53,48 @@ self.addEventListener("message", (event) => {
   if (event.data === "SKIP_WAITING") self.skipWaiting();
 });
 
+// ── Web push ─────────────────────────────────────────────────────────────────
+// The backend (app/services/push_service.py) sends {title, body, url} as the
+// whole payload — nothing richer than that, so there's nothing to branch on
+// here beyond showing it and opening `url` on tap.
+
+self.addEventListener("push", (event) => {
+  let payload = { title: "Ankerd Con", body: "" };
+  try {
+    if (event.data) payload = { ...payload, ...event.data.json() };
+  } catch {
+    // Not JSON (shouldn't happen from our own backend) — show the fallback title/body.
+  }
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      data: { url: payload.url || "/" },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || "/";
+  event.waitUntil(
+    (async () => {
+      const clientsList = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      // Focus a tab already on the app rather than opening a second one —
+      // exact path doesn't have to match, same origin is enough.
+      for (const client of clientsList) {
+        if (new URL(client.url).origin === self.location.origin) {
+          await client.focus();
+          if ("navigate" in client) client.navigate(url);
+          return;
+        }
+      }
+      await self.clients.openWindow(url);
+    })(),
+  );
+});
+
 /** Build output is named after its own content, so a hit can be served with no questions asked. */
 async function cacheFirst(request) {
   const cache = await caches.open(ASSET_CACHE);

@@ -97,6 +97,10 @@ export const apiRoutes = {
 
   feedback: "/api/feedback/",
 
+  push: {
+    subscribe: "/api/push/subscribe",
+  },
+
   changelog: {
     base: "/api/changelog/",
   },

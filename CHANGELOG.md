@@ -27,6 +27,11 @@ All notable changes to Ankerd Con are documented here.
 - **Profielfoto**: upload your own profile picture (Profiel), instead of only the one Discord or
   Google gives you. Needs migration v2.30.
 - **Instellingen → Dichtheid**: a comfortable/compact toggle that tightens spacing app-wide.
+- **Pushmeldingen**: a second notification channel next to Discord DMs, per device (Instellingen
+  → Notificaties, and a step in onboarding) — the one that also works for members who signed up
+  with Google and have no Discord DM channel at all. Same category preferences as DM's now
+  govern both. Needs migration v2.31 and a VAPID key pair (see docs/deployment.md#web-push);
+  the toggle simply doesn't appear until that's set up.
 - Signing several people up for a day (or into a hotel room) is now one request instead of one per
   person — it used to visibly crawl one name at a time for a bigger group.
 - The launch splash no longer holds for a fixed ~4.5 s regardless of how ready the app already is;

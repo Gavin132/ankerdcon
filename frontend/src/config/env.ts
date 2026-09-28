@@ -19,4 +19,7 @@ export const env = {
   SUPABASE_PUBLISHABLE_KEY: requireEnv("VITE_SUPABASE_PUBLISHABLE_KEY"),
   DEV:  import.meta.env.DEV  as boolean,
   PROD: import.meta.env.PROD as boolean,
+  // Public by design (it's handed to the browser's Push API) — optional, so a
+  // deploy that hasn't set it up yet just doesn't offer push, nothing throws.
+  VAPID_PUBLIC_KEY: (import.meta.env["VITE_VAPID_PUBLIC_KEY"] as string | undefined) ?? "",
 } as const;

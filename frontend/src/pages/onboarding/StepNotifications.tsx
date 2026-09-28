@@ -1,5 +1,6 @@
 import { Bell, BellOff, MessageSquareOff } from "lucide-react";
 import { NOTIFICATION_CATEGORIES } from "../../constants/notifications";
+import { PushToggle } from "../../components/notifications/PushToggle";
 import type { ProfileState } from "./types";
 
 interface StepNotificationsProps {
@@ -22,9 +23,11 @@ export function StepNotifications({ state, onChange, hasDiscord }: StepNotificat
       <div>
         <h2 className="font-display text-[34px] font-extrabold uppercase leading-[0.95] tracking-[0.01em] text-ink">Kies je notificaties</h2>
         <p className="mt-2 text-sm leading-relaxed text-ink-2">
-          Alles staat standaard uit — zet aan waar je een DM van de bot voor wilt. Je kunt dit later altijd aanpassen.
+          Alles staat standaard uit — zet aan waar je bericht over wilt krijgen. Je kunt dit later altijd aanpassen.
         </p>
       </div>
+
+      <PushToggle />
 
       {!hasDiscord && (
         <div className="flex items-start gap-3 rounded-xl border-1.5 border-amber-300 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
@@ -78,7 +81,8 @@ export function StepNotifications({ state, onChange, hasDiscord }: StepNotificat
         </div>
       </div>
 
-      <div className={`card-surface divide-y divide-line overflow-hidden transition-opacity ${state.allowDm ? "" : "opacity-40 pointer-events-none"}`}>
+      {/* Not faded by the Discord switch above — these categories also govern push, independent of allow_dm. */}
+      <div className="card-surface divide-y divide-line overflow-hidden">
         {NOTIFICATION_CATEGORIES.map((cat) => {
           const checked = state.notificationCategories.includes(cat.id);
           return (
