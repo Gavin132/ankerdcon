@@ -89,12 +89,12 @@ export const sizeClasses = {
 
 export const TOKENS = {
   sky: {
-    dot: "bg-sky-500",
-    activeRow: "bg-sky-50 dark:bg-sky-900/30",
-    chip: "bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300",
-    chipX: "text-sky-400 hover:text-sky-700 dark:hover:text-sky-200",
-    check: "text-sky-500",
-    bar: "bg-sky-400",
+    dot: "bg-brand",
+    activeRow: "bg-brand-soft",
+    chip: "bg-brand-soft text-brand-text",
+    chipX: "text-brand-text/60 hover:text-brand-text",
+    check: "text-brand-text",
+    bar: "bg-brand",
     barFull: "bg-amber-400",
     counter: "text-slate-400",
     counterFull: "text-amber-500",

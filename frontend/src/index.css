@@ -41,6 +41,26 @@
   --nav-active-fg: 15 21 25;
 }
 
+/* ─── Accent colours ─────────────────────────────────────────────────────────
+   Instellingen › Accentkleur. Only the brand tokens change (fill, tint, text
+   colour); paper, surface, ink and every status colour stay put. Blue, the
+   default, is the :root/.dark values above and sets no attribute. Fill and
+   `--on-cyan` (dark ink) work on every fill; --cyan-text is at least 4.5:1 on
+   white, its dark counterpart on --surface. Ids are mirrored in
+   store/theme.store.ts. */
+[data-accent="teal"] { --cyan: 45 212 191; --cyan-soft: 213 245 240; --cyan-text: 11 122 110; }   /* #2DD4BF */
+.dark[data-accent="teal"] { --cyan-soft: 14 51 48; --cyan-text: 126 234 219; --nav-active-bg: 45 212 191; }
+[data-accent="green"] { --cyan: 79 195 138; --cyan-soft: 221 243 231; --cyan-text: 23 120 74; }   /* #4FC38A */
+.dark[data-accent="green"] { --cyan-soft: 15 46 32; --cyan-text: 143 221 181; --nav-active-bg: 79 195 138; }
+[data-accent="gold"] { --cyan: 250 204 21; --cyan-soft: 254 243 199; --cyan-text: 146 97 10; }   /* #FACC15 */
+.dark[data-accent="gold"] { --cyan-soft: 61 46 8; --cyan-text: 253 224 71; --nav-active-bg: 250 204 21; }
+[data-accent="orange"] { --cyan: 251 146 60; --cyan-soft: 254 233 214; --cyan-text: 170 73 8; }   /* #FB923C */
+.dark[data-accent="orange"] { --cyan-soft: 68 36 17; --cyan-text: 253 186 116; --nav-active-bg: 251 146 60; }
+[data-accent="pink"] { --cyan: 244 114 182; --cyan-soft: 252 228 241; --cyan-text: 184 35 111; }   /* #F472B6 */
+.dark[data-accent="pink"] { --cyan-soft: 69 22 47; --cyan-text: 249 168 212; --nav-active-bg: 244 114 182; }
+[data-accent="purple"] { --cyan: 167 139 250; --cyan-soft: 237 231 254; --cyan-text: 109 63 216; }   /* #A78BFA */
+.dark[data-accent="purple"] { --cyan-soft: 36 26 69; --cyan-text: 196 181 253; --nav-active-bg: 167 139 250; }
+
 @layer base {
   html {
     font-family: "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;

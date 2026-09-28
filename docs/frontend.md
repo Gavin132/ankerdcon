@@ -106,7 +106,7 @@ the last known data.
 | --- | --- |
 | Server data | TanStack Query |
 | Session, current user | `store/auth.store.ts` (Supabase session, forbidden flag, refresh) |
-| Theme | `store/theme.store.ts` (light/dark, applied to `<html>` and the browser theme colour) |
+| Theme | `store/theme.store.ts` (light/dark, applied to `<html>` and the browser theme colour; plus the accent colour, a `data-accent` attribute on `<html>`; both per device in localStorage) |
 | Toasts | `store/toast.store.ts`; call `toast("success", "…")` from anywhere |
 | Time travel | `store/time.store.ts` (an admin-set fake "now") |
 | Story uploads waiting for a connection | `store/pendingStoryUploads.store.ts`, mirrored in IndexedDB |

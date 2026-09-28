@@ -16,6 +16,15 @@ components in use, look at `pages/trip/TripOverviewTab.tsx` and `components/trip
 - **One bold element per screen** gets the 2px ink outline (`border-2 border-outline`),
   for example the Hub ticket or a trip's headline block. Everything else uses the
   1.5px `border-line`.
+- **Accent colour is a personal setting** (Instellingen → Accentkleur: blue, turquoise, green,
+  gold, orange, pink, purple; per device). It only swaps the brand tokens (`--cyan`,
+  `--cyan-soft`, `--cyan-text`, and `--nav-active-bg` in dark mode) through `[data-accent]`
+  blocks in `index.css`; paper, surface, ink and the status colours never change. So **use the
+  brand tokens (`bg-brand`, `bg-brand-soft`, `text-brand-text`), not `sky-*`, for anything that
+  means "the app's colour"** (spinners, links, selected states), or it stays blue for everyone
+  who picked another accent. `sky-*` is for things that are blue on purpose. A new accent needs
+  a fill, a tint and a text colour that is 4.5:1 on white, and their dark counterparts, and an
+  entry in `ACCENTS` (`theme.store.ts`).
 - **Blue (`#57B2F9`) is the brand fill**, for the main action and the one bold
   element. Text on the brand fill is ink (`text-brand-on`), never white. The fill is
   too light to use as text, so brand-coloured text and links use `text-brand-text`
