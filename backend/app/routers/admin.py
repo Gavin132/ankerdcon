@@ -1309,7 +1309,8 @@ async def admin_quick_upload(
 # ── CDN (the whole photo bucket) ───────────────────────────────────────────────
 
 _CDN_FOLDER_KINDS = {
-    "cosplay": "cosplay", "banners": "banner", "badges": "badge", "event-covers": "event-cover", "uploads": "upload",
+    "cosplay": "cosplay", "banners": "banner", "avatars": "avatar", "badges": "badge",
+    "event-covers": "event-cover", "uploads": "upload",
 }
 
 
@@ -1338,16 +1339,16 @@ def _cdn_owners(items: list[dict]) -> dict[str, str]:
                 owners[urls[r["image_url"]]] = r["uploaded_by"]
         except Exception as e:
             logger.error("CDN: story owner lookup failed: %s", e)
-    banner_items = [i for i in items if i["kind"] == "banner"]
-    if banner_items:
+    profile_items = [i for i in items if i["kind"] in ("banner", "avatar")]
+    if profile_items:
         try:
             names = {p["id"]: p["name"] for p in supabase.table(Tables.PROFILES).select("id, name").execute().data or []}
-            for i in banner_items:
-                parts = i["key"].split("/")  # banners/<user id>/<file>
+            for i in profile_items:
+                parts = i["key"].split("/")  # banners|avatars/<user id>/<file>
                 if len(parts) >= 3 and parts[1] in names:
                     owners[i["key"]] = names[parts[1]]
         except Exception as e:
-            logger.error("CDN: banner owner lookup failed: %s", e)
+            logger.error("CDN: banner/avatar owner lookup failed: %s", e)
     cosplay_urls = [i["url"] for i in items if i["kind"] == "cosplay"]
     if cosplay_urls:
         try:
@@ -1479,6 +1480,7 @@ def _forget_file(key: str, url: str) -> None:
     supabase.table(Tables.STORY_PHOTOS).delete().eq("image_url", url).execute()
     supabase.table(Tables.EVENTS).update({"image_url": None}).eq("image_url", url).execute()
     supabase.table(Tables.PROFILES).update({"banner_url": None, "banner_position": None}).eq("banner_url", url).execute()
+    supabase.table(Tables.PROFILES).update({"avatar_url": None, "avatar_custom": False, "avatar_synced_at": None}).eq("avatar_url", url).execute()
     for row in supabase.table(Tables.COSPLAYS).select("id, inspo_images").overlaps("inspo_images", [url]).execute().data or []:
         kept = [u for u in (row.get("inspo_images") or []) if u != url]
         supabase.table(Tables.COSPLAYS).update({"inspo_images": kept}).eq("id", row["id"]).execute()

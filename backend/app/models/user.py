@@ -20,6 +20,7 @@ class User(BaseModel):
     discord_id: Optional[str] = None
     discord_username: Optional[str] = None
     avatar_url: Optional[str] = None
+    avatar_custom: Optional[bool] = False
     is_admin: bool = False
     is_active: bool = True
     is_first_login: bool = True

@@ -21,6 +21,15 @@ export async function leaveCalendarEvent(id: string, userName: string): Promise<
   await apiClient.post(apiRoutes.calendar.leave(id), { user_name: userName });
 }
 
+/** Sign several people up for one day at once — one request instead of one per person. */
+export async function rsvpCalendarEventBulk(id: string, userNames: string[]): Promise<void> {
+  await apiClient.post(apiRoutes.calendar.rsvpBulk(id), { user_names: userNames });
+}
+
+export async function leaveCalendarEventBulk(id: string, userNames: string[]): Promise<void> {
+  await apiClient.post(apiRoutes.calendar.leaveBulk(id), { user_names: userNames });
+}
+
 export async function getHotelRooms(eventId: string): Promise<HotelRoom[]> {
   const { data } = await apiClient.get<HotelRoom[]>(apiRoutes.calendar.hotelRooms(eventId));
   return data;

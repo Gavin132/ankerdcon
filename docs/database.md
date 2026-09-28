@@ -44,7 +44,9 @@ Postgres on Supabase. Only the backend talks to it (see
 
 | Table | Purpose | Notes |
 | --- | --- | --- |
-| `profiles` | One row per member | `id` is the Supabase auth user id. `name`, `aliases` (former names), `discord_id`, `discord_username`, `email`, `avatar_url`, banner (`banner_color`, `banner_url`, `banner_position`), `color`, `font`, `bio`, `pronouns`, `phone_number`, `live_location_ping` (JSON text), `badge_ids`, `notification_categories`, `allow_dm`, `show_greeting`, `is_admin`, `is_active`, `is_first_login`, `onboarding_completed`, `avatar_synced_at` (when the avatar was last refreshed from Discord/Google — see [security.md](security.md#authentication)). Created by the backend after a whitelisted login, or by an admin as a stub that is claimed at first login. Never by a database trigger. |
+| `profiles` | One row per member | `id` is the Supabase auth user id. `name`, `aliases` (former names), `discord_id`, `discord_username`, `email`, `avatar_url`, banner (`banner_color`, `banner_url`, `banner_position`), `color`, `font`, `bio`, `pronouns`, `phone_number`, `live_location_ping` (JSON text), `badge_ids`, `notification_categories`, `allow_dm`, `show_greeting`, `is_admin`, `is_active`, `is_first_login`, `onboarding_completed`, `avatar_synced_at` (when the avatar was
+last refreshed from Discord/Google — see [security.md](security.md#authentication)), `avatar_custom`
+(true once a member uploads their own picture — stops the resync from overwriting it). Created by the backend after a whitelisted login, or by an admin as a stub that is claimed at first login. Never by a database trigger. |
 | `whitelist` | Who may log in | `discord_id` and/or `email`; one of them is required. |
 | `badges` | Badge definitions | `name`, `description`, `image_url`, `display_order`. Members reference them through `profiles.badge_ids`. |
 
@@ -141,6 +143,7 @@ order, not the number in the title.
 | `migration_v2.27_drop_payment_refs` | drop the unused `payment_ref` columns. Run **after** the backend that no longer reads them is live. |
 | `migration_v2.28_feedback` | `feedback` table (member feedback; `user_name` is NULL when anonymous). Run **before** the deploy. |
 | `migration_v2.29_avatar_resync` | `profiles.avatar_synced_at`, so a stale or broken avatar is re-checked periodically instead of only once ever. Backend tolerates it being absent (skips the resync). |
+| `migration_v2.30_custom_avatar` | `profiles.avatar_custom`, so a member's own uploaded avatar isn't overwritten by the resync above. Backend tolerates it being absent (an avatar upload fails with 503 until it has run). |
 | `migration_cosplays`, `add_whitelist_emails`, `remove_trigger` | one-offs: the cosplays table, a bulk-add template for the whitelist, removal of the old profile trigger |
 | `backfill_events_from_calendar.py`, `repoint_fks_to_new_events.py`, `calendar_id_mapping.json` | the one-time data move from `calendar` to `events`/`event_days` (kept for the record) |
 
@@ -163,6 +166,7 @@ Run in the SQL editor:
 | v2.27 | `select 1 from information_schema.columns where table_name = 'settlements' and column_name = 'payment_ref'` returns **no** row |
 | v2.28 | `select to_regclass('public.feedback')` is not null |
 | v2.29 | `select 1 from information_schema.columns where table_name = 'profiles' and column_name = 'avatar_synced_at'` returns a row |
+| v2.30 | `select 1 from information_schema.columns where table_name = 'profiles' and column_name = 'avatar_custom'` returns a row |
 
 `db/check_schema.py` compares `db/schema.sql` with the live database, but
 `schema.sql` is out of date (see below), so it reports differences that are not

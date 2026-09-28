@@ -74,6 +74,10 @@ export interface User {
   banner_color: string;
   pronouns: string;
   avatar_url?: string;
+  /** True once the avatar has been replaced by a manual upload — hides the
+   * "via Discord" badge and stops it being overwritten by a later Discord/
+   * Google resync (see app/dependencies.py, _finalize_returning_user). */
+  avatar_custom?: boolean;
   banner_url?: string;
   banner_position?: string;
   discord_id?: string;

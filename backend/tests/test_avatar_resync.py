@@ -101,6 +101,15 @@ def test_a_removed_avatar_is_not_overwritten_with_nothing(fake, monkeypatch):
     assert "avatar_synced_at" in fake.updates[0]
 
 
+def test_a_custom_avatar_is_never_touched_by_the_resync(fake, monkeypatch):
+    called = []
+    monkeypatch.setattr(deps, "_verified_identity", lambda uid: (called.append(uid), _identity())[1])
+    row = _profile(avatar_url="https://cdn.test/avatars/u1/mine.jpg", avatar_custom=True, avatar_synced_at=None)
+    deps._finalize_returning_user(row, USER_ID, get_settings())
+    assert called == []
+    assert fake.updates == []
+
+
 def test_a_deactivated_profile_is_still_refused_before_any_of_this(fake, monkeypatch):
     from fastapi import HTTPException
     monkeypatch.setattr(deps, "_verified_identity", lambda _uid: _identity())

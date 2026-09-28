@@ -38,7 +38,7 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
   that is not a GET (`RATE_LIMIT_PER_MINUTE`). The client is identified from
   `cf-connecting-ip`, but only when the request comes from the reverse proxy.
 - **Upload limits:** the whole request may be at most 20 MB. Per file: story photos
-  and cosplay images 15 MB, admin images 10 MB, banners 8 MB. Images are decoded,
+  and cosplay images 15 MB, admin images 10 MB, banners 8 MB, avatars 5 MB. Images are decoded,
   stripped of metadata (EXIF, including GPS) and re-encoded; only JPG, PNG and WebP are
   accepted (banners also GIF).
   The admin quick upload is the exception: it also takes videos (MP4, MOV, WebM) up to
@@ -66,6 +66,7 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `POST /users/me/link-discord` | member | link a Discord account to a Google login |
 | `PUT /users/{id}/location` | member | set a location ping (for yourself, via `act_as`) |
 | `POST /users/banner`, `DELETE /users/banner` | member | upload or remove your banner |
+| `POST /users/avatar`, `DELETE /users/avatar` | member | upload or remove a custom profile picture (JPG/PNG/WebP, 5 MB), replacing/restoring the Discord or Google one |
 
 ### Calendar (trips) — `/calendar`
 

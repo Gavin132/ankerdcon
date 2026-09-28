@@ -40,6 +40,22 @@ export async function deleteBanner(): Promise<void> {
   await apiClient.delete(apiRoutes.users.banner);
 }
 
+/** Custom profile picture, replacing the Discord/Google one. Already
+ * square-cropped and compressed client-side (utils/imageCompression.ts). */
+export async function uploadAvatar(blob: Blob): Promise<{ url: string }> {
+  const form = new FormData();
+  form.append("file", blob, "avatar.jpg");
+  const { data } = await apiClient.post<{ url: string }>(apiRoutes.users.avatar, form, {
+    headers: { "Content-Type": "multipart/form-data" },
+    timeout: UPLOAD_TIMEOUT_MS,
+  });
+  return data;
+}
+
+export async function deleteAvatar(): Promise<void> {
+  await apiClient.delete(apiRoutes.users.avatar);
+}
+
 export async function linkDiscordAccount(): Promise<User> {
   const { data } = await apiClient.post<User>(apiRoutes.users.linkDiscord);
   return data;

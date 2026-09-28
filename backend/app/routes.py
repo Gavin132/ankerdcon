@@ -25,6 +25,8 @@ class CalendarRoutes:
     LIST = "/"
     RSVP = "/{event_id}/rsvp"
     LEAVE = "/{event_id}/leave"
+    RSVP_BULK = "/{event_id}/rsvp/bulk"
+    LEAVE_BULK = "/{event_id}/leave/bulk"
     HOTEL_ROOMS = "/{event_id}/hotel-rooms"
     HOTEL_ROOMS_BULK = "/{event_id}/hotel-rooms/bulk"
     HOTEL_ROOM_ASSIGN = "/{event_id}/hotel-rooms/{room_id}/assign"
@@ -41,6 +43,7 @@ class UserRoutes:
     ME = "/me"
     DETAIL = "/{identifier}"
     BANNER = "/banner"
+    AVATAR = "/avatar"
     LINK_DISCORD = "/me/link-discord"
 
 

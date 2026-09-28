@@ -1,4 +1,4 @@
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, Field, model_validator
 from typing import Any
 
 class CalendarEvent(BaseModel):
@@ -41,6 +41,11 @@ class CalendarEvent(BaseModel):
 
 class CalendarRsvpRequest(BaseModel):
     user_name: str
+
+
+class CalendarBulkRsvpRequest(BaseModel):
+    """Several names for one day at once — see rsvp_event_bulk/leave_event_bulk."""
+    user_names: list[str] = Field(..., min_length=1, max_length=200)
 
 
 class Event(BaseModel):
