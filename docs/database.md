@@ -143,8 +143,8 @@ order, not the number in the title.
 | `migration_v2.26_settlements_one_open_per_pair` | one open settlement per pair, enforced by an index |
 | `migration_v2.27_drop_payment_refs` | drop the unused `payment_ref` columns. Run **after** the backend that no longer reads them is live. |
 | `migration_v2.28_feedback` | `feedback` table (member feedback; `user_name` is NULL when anonymous). Run **before** the deploy. |
-| `migration_v2.29_avatar_resync` | `profiles.avatar_synced_at`, so a stale or broken avatar is re-checked periodically instead of only once ever. Backend tolerates it being absent (skips the resync). |
-| `migration_v2.30_custom_avatar` | `profiles.avatar_custom`, so a member's own uploaded avatar isn't overwritten by the resync above. Backend tolerates it being absent (an avatar upload fails with 503 until it has run). |
+| `migration_v2.29_avatar_resync` | `profiles.avatar_synced_at`, so a stale or broken avatar is re-checked periodically instead of only once ever. **Run before the deploy** — `get_current_user`'s own profile lookup selects this column unconditionally, so its absence fails every login, not just the resync. |
+| `migration_v2.30_custom_avatar` | `profiles.avatar_custom`, so a member's own uploaded avatar isn't overwritten by the resync above. **Run before the deploy** — same reason as v2.29: it's in the unconditional profile-lookup select, so its absence fails every login. |
 | `migration_v2.31_push_subscriptions` | `push_subscriptions` table. Run **before** the deploy; also needs the `VAPID_*` env vars — see [deployment.md#web-push](deployment.md#web-push). |
 | `migration_cosplays`, `add_whitelist_emails`, `remove_trigger` | one-offs: the cosplays table, a bulk-add template for the whitelist, removal of the old profile trigger |
 | `backfill_events_from_calendar.py`, `repoint_fks_to_new_events.py`, `calendar_id_mapping.json` | the one-time data move from `calendar` to `events`/`event_days` (kept for the record) |

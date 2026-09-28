@@ -1,9 +1,13 @@
 -- ============================================================
 -- Migration v2.29 — Periodic avatar resync
 -- ============================================================
--- Run in Supabase SQL Editor (or psql), any time — the backend already
--- tolerates the column being absent (nothing crashes), it just never
--- refreshes an avatar until this has run.
+-- Run in Supabase SQL Editor (or psql) BEFORE deploying the backend commit
+-- that added this column: get_current_user's own profile lookup selects
+-- avatar_synced_at unconditionally, so its absence fails EVERY login with
+-- "column profiles.avatar_synced_at does not exist" on every request —
+-- surfacing to members as "Kan de server niet bereiken" — not just the
+-- resync this column is actually for. (The sibling column in v2.30 hit this
+-- exact failure live on dev; this one shares the same select, same risk.)
 -- ============================================================
 --
 -- Until now, a profile's avatar_url was only ever filled in once, the first
