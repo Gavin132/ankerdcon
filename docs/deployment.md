@@ -106,6 +106,13 @@ or the app's `https://` URL, only ever used by a push service to contact you if 
 misbehaving. Needs [migration v2.31](database.md) too. Until all of this is done, the
 "Pushmeldingen" toggle simply doesn't appear — nothing else is affected.
 
+**On the Portainer stacks** (see [portainer-stacks.md](portainer-stacks.md)), `VITE_VAPID_PUBLIC_KEY`
+has to be added to the **frontend-builder** service's `environment:` block, not just the stack's
+top-level "Environment variables" — that's where the other `VITE_*` values already live, since
+they're read by `npm run build` inside that container. Setting only the stack variable without
+also referencing it in the compose file does nothing. And because it's read at build time, adding
+it needs a stack **redeploy** (which reruns the builder), not just a container restart.
+
 ## Deploying
 
 The full stacks are in [portainer-stacks.md](portainer-stacks.md). A code change only goes live

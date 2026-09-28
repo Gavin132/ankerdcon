@@ -83,6 +83,7 @@ services:
     environment:
       VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
       VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY}
+      VITE_VAPID_PUBLIC_KEY: ${VITE_VAPID_PUBLIC_KEY}
     command: sh -c "npm install && npm run build"
 
   con-backend:
@@ -146,6 +147,7 @@ services:
     environment:
       VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
       VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY}
+      VITE_VAPID_PUBLIC_KEY: ${VITE_VAPID_PUBLIC_KEY}
       APP_ENV: dev
     command: sh -c "npm install && npm run build"
 
@@ -254,6 +256,7 @@ services:
     environment:
       VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
       VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY}
+      VITE_VAPID_PUBLIC_KEY: ${VITE_VAPID_PUBLIC_KEY}
     command: sh -c "npm ci && npm run build"
 
   con-backend:
