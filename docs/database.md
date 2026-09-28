@@ -139,6 +139,7 @@ order, not the number in the title.
 | `migration_v2.25_settlements` | `settlements`, `expense_shares.settlement_id` |
 | `migration_v2.26_settlements_one_open_per_pair` | one open settlement per pair, enforced by an index |
 | `migration_v2.27_drop_payment_refs` | drop the unused `payment_ref` columns. Run **after** the backend that no longer reads them is live. |
+| `migration_v2.28_feedback` | `feedback` table (member feedback; `user_name` is NULL when anonymous). Run **before** the deploy. |
 | `migration_cosplays`, `add_whitelist_emails`, `remove_trigger` | one-offs: the cosplays table, a bulk-add template for the whitelist, removal of the old profile trigger |
 | `backfill_events_from_calendar.py`, `repoint_fks_to_new_events.py`, `calendar_id_mapping.json` | the one-time data move from `calendar` to `events`/`event_days` (kept for the record) |
 
@@ -159,6 +160,7 @@ Run in the SQL editor:
 | v2.25 | `select to_regclass('public.settlements')` is not null |
 | v2.26 | `select 1 from pg_indexes where indexname = 'settlements_one_open_per_pair_idx'` returns a row |
 | v2.27 | `select 1 from information_schema.columns where table_name = 'settlements' and column_name = 'payment_ref'` returns **no** row |
+| v2.28 | `select to_regclass('public.feedback')` is not null |
 
 `db/check_schema.py` compares `db/schema.sql` with the live database, but
 `schema.sql` is out of date (see below), so it reports differences that are not

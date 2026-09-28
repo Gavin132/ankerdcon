@@ -59,6 +59,7 @@ const AdminBetalingenPage = lazyPage(() => import("./pages/admin/AdminBetalingen
 const AdminAnnouncementsPage = lazyPage(() => import("./pages/admin/AdminAnnouncementsPage"), "AdminAnnouncementsPage");
 const AdminChangelogPage = lazyPage(() => import("./pages/admin/AdminChangelogPage"), "AdminChangelogPage");
 const AdminImpersonatePage = lazyPage(() => import("./pages/admin/AdminImpersonatePage"), "AdminImpersonatePage");
+const AdminFeedbackPage = lazyPage(() => import("./pages/admin/AdminFeedbackPage"), "AdminFeedbackPage");
 const AdminCdnPage = lazyPage(() => import("./pages/admin/AdminCdnPage"), "AdminCdnPage");
 const AdminScreensPage = lazyPage(() => import("./pages/admin/AdminScreensPage"), "AdminScreensPage");
 const AdminTimeTravelPage = lazyPage(() => import("./pages/admin/AdminTimeTravelPage"), "AdminTimeTravelPage");
@@ -186,6 +187,7 @@ export const router = createBrowserRouter([
                   { path: routes.admin.timeTravel, element: <AdminTimeTravelPage /> },
                   { path: routes.admin.screens, element: <AdminScreensPage /> },
                   { path: routes.admin.cdn, element: <AdminCdnPage /> },
+                  { path: routes.admin.feedback, element: <AdminFeedbackPage /> },
                 ],
               },
             ],

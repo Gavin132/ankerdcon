@@ -36,6 +36,7 @@ export const QUERY_KEYS = {
   adminAnnouncements: ["admin", "announcements"] as const,
   adminChangelog: ["admin", "changelog"] as const,
   adminWhitelist: ["admin", "whitelist"] as const,
+  adminFeedback: ["admin", "feedback"] as const,
 
   cosplays: ["cosplays"] as const,
   expenses: ["expenses"] as const,

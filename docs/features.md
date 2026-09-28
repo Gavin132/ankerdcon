@@ -247,7 +247,9 @@ See [architecture.md](architecture.md#background-jobs-and-notifications) for the
 - **Onboarding** (`pages/onboarding/`) runs on first login: a short dialogue with
   the mascot, profile, notifications and a feature tour. Admins can preview it.
 - **Instellingen** (`pages/SettingsPage.tsx`): notifications, Discord link, dark
-  theme, greeting, QR code to the app, and the credits.
+  theme, greeting, QR code to the app, the credits, and **Feedback geven**: a sheet where a member
+  sends a bug, idea or remark (optionally anonymous, with no name stored) that admins read under
+  Admin → Feedback.
 - **Wijzigingslog** (`pages/ChangelogPage.tsx`): release notes written in the admin
   panel and stored in the database (not `CHANGELOG.md`, which is for developers).
 
@@ -268,5 +270,6 @@ See [architecture.md](architecture.md#background-jobs-and-notifications) for the
 | CDN | every file in the photo bucket, newest first, with its uploader; the "Uploaden" button puts an image or video there and gives a link to embed; the viewer's bin deletes a file, whoever uploaded it; "Download … (zip)" saves the current selection (a feature, or one event for story photos) as one zip |
 | Inloggen als gebruiker | act as a member for two hours ([security.md](security.md#log-in-as)) |
 | Tijdreis-widget | set the app's clock to test live or finished trips |
-| Schermen testen | preview the crash, unreachable, forbidden, 404 and queued-upload screens |
+| Feedback | what members sent through Instellingen → Feedback geven, filtered by status (nieuw, gezien, opgelost); anonymous messages show "Anoniem" |
+| Schermen testen | preview the crash, unreachable, forbidden (Discord and Google), 404 and queued-upload screens |
 | Preview: Onboarding | walk through onboarding without touching a profile |

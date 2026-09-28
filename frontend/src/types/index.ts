@@ -38,6 +38,20 @@ export interface Announcement {
   created_by?: string;
 }
 
+export type FeedbackKind = "bug" | "idea" | "other";
+export type FeedbackStatus = "new" | "seen" | "done";
+
+export interface Feedback {
+  id: string;
+  kind: FeedbackKind;
+  message: string;
+  /** Absent when the member sent it anonymously. */
+  user_name?: string | null;
+  app_version?: string | null;
+  status: FeedbackStatus;
+  created_at?: string;
+}
+
 export interface ChangelogEntry {
   id: string;
   title: string;

@@ -48,6 +48,7 @@ from app.models.admin import (
 )
 from app.models.announcement import Announcement, CreateAnnouncementRequest, UpdateAnnouncementRequest
 from app.models.whitelist import WhitelistEntry, CreateWhitelistEntryRequest
+from app.models.feedback import Feedback, UpdateFeedbackRequest
 from app.models.changelog import ChangelogEntry, CreateChangelogEntryRequest, UpdateChangelogEntryRequest
 from app.models.badge import Badge, BadgeOrderItem, CreateBadgeRequest, UpdateBadgeRequest
 from app.models.calendar import Event, EventDay, HotelRoom
@@ -1130,6 +1131,37 @@ def admin_delete_announcement(announcement_id: str, _: str = Depends(get_admin_u
         supabase.table(Tables.ANNOUNCEMENTS).delete().eq("id", announcement_id).execute()
     except Exception as e:
         logger.error("Failed to delete announcement %s: %s", announcement_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+
+# ── Feedback ─────────────────────────────────────────────────────────────────
+
+@router.get(AdminRoutes.FEEDBACK, response_model=list[Feedback])
+def admin_list_feedback(_: str = Depends(get_admin_user)) -> list[Feedback]:
+    try:
+        return supabase.table(Tables.FEEDBACK).select("*").order("created_at", desc=True).execute().data
+    except Exception as e:
+        logger.error("Failed to list feedback: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+
+@router.put(AdminRoutes.FEEDBACK_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
+def admin_update_feedback(feedback_id: str, body: UpdateFeedbackRequest, _: str = Depends(get_admin_user)) -> None:
+    try:
+        resp = supabase.table(Tables.FEEDBACK).update({"status": body.status}).eq("id", feedback_id).execute()
+    except Exception as e:
+        logger.error("Failed to update feedback %s: %s", feedback_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Feedback niet gevonden.")
+
+
+@router.delete(AdminRoutes.FEEDBACK_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
+def admin_delete_feedback(feedback_id: str, _: str = Depends(get_admin_user)) -> None:
+    try:
+        supabase.table(Tables.FEEDBACK).delete().eq("id", feedback_id).execute()
+    except Exception as e:
+        logger.error("Failed to delete feedback %s: %s", feedback_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 

@@ -6,12 +6,14 @@ import {
   QrCode,
   Bell,
   MessageSquare,
+  MessageSquareHeart,
   Sun,
   Moon,
   Github,
   Youtube,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { FeedbackSheet } from "../components/settings/FeedbackSheet";
 import { useNavigate } from "react-router-dom";
 import { useCurrentUser, useUpdatePreferences } from "../hooks/useUsers";
 import { useSmartBack } from "../hooks/useSmartBack";
@@ -60,6 +62,7 @@ export function SettingsPage() {
   const goBack = useSmartBack(routes.hub);
   const [qrOpen, setQrOpen] = useState(false);
   const [linkingDiscord, setLinkingDiscord] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const { data: me } = useCurrentUser();
   const updatePreferences = useUpdatePreferences();
   const isDark = useThemeStore((s) => s.isDark);
@@ -221,6 +224,17 @@ export function SettingsPage() {
         <motion.section variants={listItem} className={PANEL}>
           <p className="section-label px-4 pb-2.5 pt-3.5">App</p>
           <div className={PANEL_ROWS}>
+            <button onClick={() => setFeedbackOpen(true)} className={ROW}>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                <MessageSquareHeart size={16} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold text-ink">Feedback geven</p>
+                <p className="text-[12.5px] text-ink-3">Een bug, idee of iets anders, ook anoniem</p>
+              </div>
+              <ChevronRight size={16} className="shrink-0 text-ink-3" />
+            </button>
+
             <div className="flex items-center gap-3 px-4 py-3">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border-1.5 border-line bg-white">
                 <img src="/icons/icon-192.png" alt="Ankerd" className="h-6 w-6 object-contain" />
@@ -248,6 +262,8 @@ export function SettingsPage() {
           </div>
         </motion.section>
       </motion.div>
+
+      <FeedbackSheet open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </div>
   );
 }

@@ -147,6 +147,7 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `GET /badges/` | member | badge definitions |
 | `GET /announcements/active` | member | the banner messages to show |
 | `GET /changelog/` | member | release notes |
+| `POST /feedback/` | member | send a bug, idea or remark (`kind`, `message` 5–2000 characters, `anonymous`, `app_version`). Anonymous rows carry no name. At most 5 per member per hour (429), counted in memory per process. |
 
 ### Link previews — *public*, not under `/api`
 
@@ -164,6 +165,7 @@ and description are left out. Only registered when the built frontend exists.
 | Overview | `GET /admin/stats`, `GET /admin/cdn` (`?limit=&offset=&kind=&event=`: every file in the bucket, newest first; `event` narrows story photos to one event) |
 | Users | list, create (a stub for the whitelist), update, delete, bulk delete, bulk deactivate, `POST /admin/impersonate/{id}` ([security.md](security.md#log-in-as)), badges per user |
 | Whitelist | list, add, remove |
+| Feedback | `GET /admin/feedback` (newest first), `PUT /admin/feedback/{id}` (status `new`, `seen` or `done`), `DELETE /admin/feedback/{id}` |
 | Rides, meals | list, create, update, delete, bulk delete, remove one passenger or participant |
 | Events | list events and days, create, update, delete, add a day, update or delete a day, remove one participant, bulk RSVP, bulk delete, bulk set group |
 | Hotel rooms | list, update, delete |

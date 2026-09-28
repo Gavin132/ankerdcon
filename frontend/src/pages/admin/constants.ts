@@ -16,6 +16,7 @@ import {
   ListChecks,
   AlertTriangle,
   HardDrive,
+  MessageSquareText,
 } from "lucide-react";
 import { routes } from "../../config/routes";
 
@@ -74,6 +75,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Badges",      path: routes.admin.badges,     icon: ShieldCheck },
       { label: "Betalingen",  path: routes.admin.betalingen, icon: Euro },
       { label: "Aankondigingen", path: routes.admin.announcements, icon: Megaphone },
+      { label: "Feedback", path: routes.admin.feedback, icon: MessageSquareText },
       { label: "Wijzigingslog", path: routes.admin.changelog, icon: Sparkles },
     ],
   },
@@ -105,6 +107,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [routes.admin.timeTravel]: "Tijdreis-widget",
   [routes.admin.screens]: "Schermen testen",
   [routes.admin.cdn]: "CDN",
+  [routes.admin.feedback]: "Feedback",
 };
 
 // Ride direction tags are told apart by their label, not by colour (flat design:
