@@ -42,6 +42,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.info("Supabase connection established")
     except Exception as e:
         logger.warning("Supabase warmup failed — check credentials in .env: %s", e)
+    if not get_settings().supabase_jwt_secret:
+        # Otherwise the first sign is a 503 on the admin "log in as" button.
+        logger.warning("SUPABASE_JWT_SECRET is empty — admin 'log in as' and the calendar feed link will not work")
 
     _scheduler.add_job(check_and_send_reminders, "cron", hour=8, minute=0)
     # Ticket-sale timing needs finer granularity than a daily check — sale_start

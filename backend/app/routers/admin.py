@@ -3,10 +3,14 @@ from datetime import datetime, timezone
 import re
 import uuid
 
+import io
+import zipfile
+
 from fastapi.concurrency import run_in_threadpool
 from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi.responses import StreamingResponse
 import jwt
 
 from app.config import Settings, get_settings
@@ -1233,7 +1237,7 @@ def _store_quick_upload(content: bytes) -> dict:
     else:
         if len(content) > _IMAGE_MAX_BYTES:
             raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                status_code=413,
                 detail=f"Afbeelding te groot. Maximum is {_IMAGE_MAX_BYTES // (1024 * 1024)} MB.",
             )
         try:
@@ -1327,15 +1331,19 @@ def _cdn_owners(items: list[dict]) -> dict[str, str]:
     return owners
 
 
-@router.get(AdminRoutes.CDN, response_model=CdnListing)
-def admin_cdn(
-    limit: int = Query(60, ge=1, le=300),
-    offset: int = Query(0, ge=0),
-    kind: Optional[str] = None,
-    _: str = Depends(get_admin_user),
-) -> CdnListing:
-    """Every file in the photo bucket, newest first — so an admin can look for
-    anything that shouldn't be there. `kind` narrows it to one feature."""
+_EVENT_ID = re.compile(r"^[0-9a-f-]{36}$")
+
+# One zip is built and streamed in a single request, so it is bounded; a bigger
+# selection is downloaded in pieces (by feature or by event).
+_ZIP_MAX_BYTES = 1500 * 1024 * 1024
+_ZIP_MAX_FILES = 3000
+
+
+def _cdn_objects(kind: Optional[str], event: Optional[str]) -> tuple[list[dict], bool]:
+    """The bucket's objects, each tagged with its kind. Raises the 503 the CDN
+    endpoints share when the bucket cannot be read."""
+    if event is not None and not _EVENT_ID.match(event):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ongeldig event.")
     try:
         objects, capped = minio_client.list_all_objects()
     except RuntimeError as e:
@@ -1346,13 +1354,38 @@ def admin_cdn(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="De bucket kon niet worden uitgelezen. Controleer of MinIO bereikbaar is en de sleutel mag lijsten.",
         )
-
     for o in objects:
         o["kind"] = _cdn_kind(o["key"])
+    return objects, capped
+
+
+def _cdn_choose(objects: list[dict], kind: Optional[str], event: Optional[str]) -> list[dict]:
+    """Narrow to one feature and/or one event (story photos are stored under
+    <event id>/, so the event is a key prefix)."""
+    chosen = objects
+    if kind:
+        chosen = [o for o in chosen if o["kind"] == kind]
+    if event:
+        chosen = [o for o in chosen if o["key"].startswith(f"{event}/")]
+    return chosen
+
+
+@router.get(AdminRoutes.CDN, response_model=CdnListing)
+def admin_cdn(
+    limit: int = Query(60, ge=1, le=300),
+    offset: int = Query(0, ge=0),
+    kind: Optional[str] = None,
+    event: Optional[str] = None,
+    _: str = Depends(get_admin_user),
+) -> CdnListing:
+    """Every file in the photo bucket, newest first — so an admin can look for
+    anything that shouldn't be there. `kind` narrows it to one feature, `event`
+    to the story photos of one event."""
+    objects, capped = _cdn_objects(kind, event)
     counts: dict[str, int] = {}
     for o in objects:
         counts[o["kind"]] = counts.get(o["kind"], 0) + 1
-    chosen = [o for o in objects if o["kind"] == kind] if kind else objects
+    chosen = _cdn_choose(objects, kind, event)
     page = chosen[offset:offset + limit]
     owners = _cdn_owners(page)
     return CdnListing(
@@ -1360,7 +1393,73 @@ def admin_cdn(
         total_size=sum(o["size"] for o in chosen),
         capped=capped,
         counts=counts,
+        download_limit_bytes=_ZIP_MAX_BYTES,
         items=[CdnObject(**o, owner=owners.get(o["key"])) for o in page],
+    )
+
+
+class _ZipSink(io.RawIOBase):
+    """A write-only stream that collects what zipfile writes, so the zip can be
+    sent while it is still being built instead of held whole in memory."""
+
+    def __init__(self) -> None:
+        self._chunks: list[bytes] = []
+
+    def writable(self) -> bool:
+        return True
+
+    def write(self, b) -> int:
+        self._chunks.append(bytes(b))
+        return len(b)
+
+    def drain(self) -> bytes:
+        data = b"".join(self._chunks)
+        self._chunks = []
+        return data
+
+
+def _zip_stream(objects: list[dict]):
+    sink = _ZipSink()
+    # Photos and videos are compressed already; storing them is faster and no bigger.
+    with zipfile.ZipFile(sink, "w", compression=zipfile.ZIP_STORED) as zf:
+        for o in objects:
+            try:
+                content, _ = minio_client.get_object_bytes(o["key"])
+            except Exception as e:
+                # One unreadable file shouldn't ruin the rest; the log says which.
+                logger.error("CDN zip: skipping %s: %s", o["key"], e)
+                continue
+            info = zipfile.ZipInfo(o["key"])
+            info.compress_type = zipfile.ZIP_STORED
+            zf.writestr(info, content)
+            yield sink.drain()
+    yield sink.drain()
+
+
+@router.get(AdminRoutes.CDN_DOWNLOAD)
+def admin_download_cdn(
+    kind: Optional[str] = None,
+    event: Optional[str] = None,
+    admin: str = Depends(get_admin_user),
+) -> StreamingResponse:
+    """Everything the CDN page currently shows (one feature and/or event) as a
+    single zip, keeping the bucket's folders. Streamed as it is built, so a
+    large selection starts downloading at once."""
+    objects, _ = _cdn_objects(kind, event)
+    chosen = _cdn_choose(objects, kind, event)
+    if not chosen:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Er zijn geen bestanden om te downloaden.")
+    if len(chosen) > _ZIP_MAX_FILES or sum(o["size"] for o in chosen) > _ZIP_MAX_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail="Dit is te veel voor één zip. Kies eerst een onderdeel (of een event) en download die apart.",
+        )
+    logger.warning("CDN: admin %s downloads %d files (kind=%s, event=%s)", admin, len(chosen), kind, event)
+    label = "-".join(p for p in ("cdn", kind, event[:8] if event else None) if p)
+    return StreamingResponse(
+        _zip_stream(chosen),
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{label}.zip"'},
     )
 
 

@@ -229,6 +229,8 @@ export interface CdnListing {
   total_size: number;
   capped: boolean;
   counts: Record<string, number>;
+  /** The most one zip download may hold, in bytes. */
+  download_limit_bytes: number;
   items: CdnObject[];
 }
 

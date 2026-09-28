@@ -161,7 +161,7 @@ and description are left out. Only registered when the built frontend exists.
 
 | Area | Endpoints |
 | --- | --- |
-| Overview | `GET /admin/stats`, `GET /admin/cdn` (`?limit=&offset=&kind=`: every file in the bucket, newest first) |
+| Overview | `GET /admin/stats`, `GET /admin/cdn` (`?limit=&offset=&kind=&event=`: every file in the bucket, newest first; `event` narrows story photos to one event) |
 | Users | list, create (a stub for the whitelist), update, delete, bulk delete, bulk deactivate, `POST /admin/impersonate/{id}` ([security.md](security.md#log-in-as)), badges per user |
 | Whitelist | list, add, remove |
 | Rides, meals | list, create, update, delete, bulk delete, remove one passenger or participant |
@@ -172,6 +172,7 @@ and description are left out. Only registered when the built frontend exists.
 | Expenses | update (its linked event), delete, `PUT /admin/expense-shares/{id}` to force a status. Refused with 409 while the expense or share is in an open settlement. |
 | Announcements, changelog | list, create, update, delete |
 | Images | `POST /admin/uploads/{kind}` for event covers and badge images |
+| Download as zip | `GET /admin/cdn/download?kind=&event=` streams one zip of the same selection, keeping the bucket's folders. Built while it is sent (stored, not recompressed), so a big one starts at once. Refused with 413 above 1.5 GB or 3000 files; 404 when nothing matches. A file MinIO cannot read is skipped and logged. |
 | Delete a file | `DELETE /admin/cdn?key=<object key>` removes any file in the bucket and clears what pointed at it (story photo row, cosplay image, banner, event cover). Refuses a file a badge still uses (409). |
 | Quick upload | `POST /admin/quick-upload` stores an image or video under `uploads/` and returns `{url, key, media, size}` |
 

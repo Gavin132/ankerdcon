@@ -112,6 +112,7 @@ class AdminRoutes:
 
     # CDN — everything in the photo bucket
     CDN = "/cdn"
+    CDN_DOWNLOAD = "/cdn/download"
 
     # Users
     USERS = "/users"
