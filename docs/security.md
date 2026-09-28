@@ -135,7 +135,9 @@ Nothing is stored as it was sent. The browser compresses photos first, and the b
   anything that is not JPG, PNG or WebP (banners also GIF), with a pixel cap against
   decompression bombs;
 - re-encodes stills **without metadata**, so the EXIF GPS position a phone puts in a photo
-  never reaches other members (GIFs are only checked, since re-encoding would drop frames);
+  never reaches other members (GIFs are only checked, since re-encoding would drop frames;
+  a JPEG that carries no metadata is kept as is, so the app's own already compressed photos
+  do not go through a second lossy pass);
 - writes it to MinIO under a random name with short timeouts, in a worker thread.
 
 **Quick upload (admin only).** Admin → CDN has an "Uploaden" button for putting an image

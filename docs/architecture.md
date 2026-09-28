@@ -127,8 +127,8 @@ Files get a random name and are never overwritten, so each is stored with
 `Cache-Control: public, max-age=31536000, immutable`. Files uploaded before MinIO
 was added still live in Supabase Storage and keep working.
 
-Uploads are compressed in the browser first, then validated and re-encoded by the
-backend (`app/core/uploads.py`), then written to MinIO with short timeouts
+Uploads are compressed in the browser first (photos: longest side 2560 px, JPEG 88 %),
+then validated and stripped of metadata by the backend (`app/core/uploads.py`), then written to MinIO with short timeouts
 (5 s connect, 15 s read). The blocking work runs in a thread pool so one slow
 upload can never stall the API. See [minio-setup.md](minio-setup.md).
 

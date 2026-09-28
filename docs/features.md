@@ -153,8 +153,8 @@ the form is open; saving waits until nothing is queued.
 `components/story/`, `backend/app/routers/stories.py`.
 
 - Anyone can add a photo to a day, from the Hub, the trip ticket or the Foto's
-  tile. It is compressed in the browser (max 1600 px), re-encoded by the backend
-  and stored in MinIO.
+  tile. It is compressed in the browser (max 2560 px, JPEG 88 %), checked by the
+  backend and stored in MinIO.
 - A **story** is the day's photos in upload order (`seq`). Each member's progress
   is stored per day (`story_seen`), so a ring shows "unseen" until you have
   watched to the newest photo.
