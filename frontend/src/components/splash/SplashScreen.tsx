@@ -3,8 +3,11 @@ import { motion } from "framer-motion";
 import { APP_NAME } from "../../constants";
 import type { SplashScreenProps } from "../../types/interfaces";
 
-const HOLD_MS = 3600;
-const EXIT_DURATION = 0.9;
+// It isn't waiting on anything real — the cached app shell is usually ready
+// well before this — so it's kept just long enough to read as a brand
+// moment, not a loading screen with nothing behind it.
+const HOLD_MS = 1100;
+const EXIT_DURATION = 0.45;
 
 /**
  * Launch splash: a flat ink screen with the anchor logo and the app name in
@@ -28,7 +31,7 @@ export function SplashScreen({ onDismiss }: SplashScreenProps) {
         className="flex flex-col items-center text-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
+        transition={{ delay: 0.1, duration: 0.35, ease: "easeOut" }}
       >
         <img
           src="/assets/images/ankerd-logo.webp"
@@ -41,7 +44,7 @@ export function SplashScreen({ onDismiss }: SplashScreenProps) {
           className="mt-6 flex flex-col items-center gap-3"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.8, ease: "easeOut" }}
+          transition={{ delay: 0.25, duration: 0.35, ease: "easeOut" }}
         >
           <p className="font-display text-[52px] font-extrabold uppercase leading-[0.88] tracking-[0.01em] text-[#E6F0F3]">
             {APP_NAME}
