@@ -27,9 +27,12 @@ logger = get_logger(__name__)
 _BATCH = 200
 
 
-def _send_one(settings: Settings, sub: dict, payload: str) -> None:
+def _send_one(settings: Settings, sub: dict, payload: str) -> bool:
+    """Returns whether it was actually delivered to the push service — logged
+    by the caller as a running total, since a silent "nothing happened" is
+    the hardest failure mode here to diagnose from outside."""
     try:
-        webpush(
+        resp = webpush(
             subscription_info={
                 "endpoint": sub["endpoint"],
                 "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]},
@@ -39,24 +42,33 @@ def _send_one(settings: Settings, sub: dict, payload: str) -> None:
             vapid_claims={"sub": settings.vapid_subject},
             ttl=60 * 60 * 24,  # a day — long enough for a phone that was off, not stale after
         )
+        logger.info("Push: delivered to %s (%s)", sub["endpoint"][:60], getattr(resp, "status_code", "?"))
+        return True
     except WebPushException as e:
         status_code = e.status_code
         if status_code in (404, 410):
+            logger.info("Push: subscription %s gone (%s), removing it", sub["endpoint"][:60], status_code)
             try:
                 supabase.table(Tables.PUSH_SUBSCRIPTIONS).delete().eq("id", sub["id"]).execute()
             except Exception:
                 pass  # picked up again next time it 404s — non-fatal
         else:
-            logger.warning("Push send failed (%s): %s", status_code, e)
+            logger.warning("Push send to %s failed (%s): %s", sub["endpoint"][:60], status_code, e)
+        return False
     except Exception as e:
-        logger.warning("Push send failed: %s", e)
+        logger.warning("Push send to %s failed: %s", sub["endpoint"][:60], e)
+        return False
 
 
 def send_push(settings: Settings, user_names: list[str], title: str, body: str, url: str = "/") -> None:
     """Push `title`/`body` to every subscribed device of these members.
     Silently does nothing when push isn't configured (no VAPID key) or the
-    list is empty — never an error for the caller."""
-    if not settings.vapid_private_key or not user_names:
+    list is empty — never an error for the caller. Logs a summary either
+    way, since "was this even attempted" is otherwise invisible from outside."""
+    if not settings.vapid_private_key:
+        logger.info("Push: not configured (VAPID_PRIVATE_KEY empty), skipping %r", title)
+        return
+    if not user_names:
         return
     try:
         subs = (
@@ -68,14 +80,15 @@ def send_push(settings: Settings, user_names: list[str], title: str, body: str, 
             or []
         )
     except Exception as e:
-        logger.error("Push: failed to fetch subscriptions: %s", e)
+        logger.error("Push: failed to fetch subscriptions for %s: %s", user_names, e)
         return
     if not subs:
+        logger.info("Push: no subscriptions for %s (%r) — nobody in that list has push on", user_names, title)
         return
 
     payload = json.dumps({"title": title, "body": body, "url": url})
-    for sub in subs:
-        _send_one(settings, sub, payload)
+    delivered = sum(_send_one(settings, sub, payload) for sub in subs)
+    logger.info("Push %r: delivered to %d/%d subscription(s) for %s", title, delivered, len(subs), user_names)
 
 
 def headline(dm_content: str) -> str:
