@@ -180,7 +180,7 @@ export default function CrewMap({ users, onOpenProfile }: CrewMapProps) {
                     <div className="flex shrink-0 flex-col items-end gap-0.5 pt-0.5 text-[12px] font-semibold">
                       <button
                         type="button"
-                        className="text-sky-700 hover:underline"
+                        className="text-brand-text hover:underline"
                         onClick={(e) => {
                           const r = (e.currentTarget.closest(".leaflet-container") as HTMLElement).getBoundingClientRect();
                           onOpenProfile(p.user, { top: r.top, left: r.left, right: r.right, height: r.height });
@@ -188,7 +188,7 @@ export default function CrewMap({ users, onOpenProfile }: CrewMapProps) {
                       >
                         Profiel
                       </button>
-                      <a className="inline-flex items-center gap-0.5 text-sky-700 hover:underline" href={pingMapUrl(p.lat, p.lng)} target="_blank" rel="noopener noreferrer">
+                      <a className="inline-flex items-center gap-0.5 text-brand-text hover:underline" href={pingMapUrl(p.lat, p.lng)} target="_blank" rel="noopener noreferrer">
                         Route <ExternalLink size={10} />
                       </a>
                     </div>

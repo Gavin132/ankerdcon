@@ -21,7 +21,7 @@ export function Modal({
   title,
   description,
   children,
-  accent = "from-sky-400",
+  accent = "from-brand",
 }: ModalProps) {
   // Capture the mobile swipe-back gesture (and the Android back button) so it
   // closes this modal instead of navigating the page away underneath it.

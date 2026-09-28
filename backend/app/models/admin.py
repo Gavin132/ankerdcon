@@ -203,4 +203,6 @@ class CdnListing(BaseModel):
     total_size: int
     capped: bool = False
     counts: dict[str, int] = {}
+    # The most one zip download may hold, so the page can say so before asking.
+    download_limit_bytes: int = 0
     items: list[CdnObject]

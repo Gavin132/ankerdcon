@@ -23,6 +23,7 @@ class Tables:
     WHITELIST      = "whitelist"
     STORY_PHOTOS   = "story_photos"
     STORY_SEEN     = "story_seen"
+    FEEDBACK       = "feedback"
 
 
 # ── API ───────────────────────────────────────────────────────────

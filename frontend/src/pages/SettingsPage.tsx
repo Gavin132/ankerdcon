@@ -6,16 +6,20 @@ import {
   QrCode,
   Bell,
   MessageSquare,
+  MessageSquareHeart,
   Sun,
   Moon,
   Github,
   Youtube,
+  Palette,
+  Check,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { FeedbackSheet } from "../components/settings/FeedbackSheet";
 import { useNavigate } from "react-router-dom";
 import { useCurrentUser, useUpdatePreferences } from "../hooks/useUsers";
 import { useSmartBack } from "../hooks/useSmartBack";
-import { useThemeStore } from "../store/theme.store";
+import { ACCENTS, useThemeStore } from "../store/theme.store";
 import { startDiscordLink } from "../services/auth.service";
 import { routes } from "../config/routes";
 import { listContainer, listItem } from "../utils/motion";
@@ -60,10 +64,13 @@ export function SettingsPage() {
   const goBack = useSmartBack(routes.hub);
   const [qrOpen, setQrOpen] = useState(false);
   const [linkingDiscord, setLinkingDiscord] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const { data: me } = useCurrentUser();
   const updatePreferences = useUpdatePreferences();
   const isDark = useThemeStore((s) => s.isDark);
   const toggleTheme = useThemeStore((s) => s.toggle);
+  const accent = useThemeStore((s) => s.accent);
+  const setAccent = useThemeStore((s) => s.setAccent);
 
   async function onLinkDiscord() {
     try {
@@ -131,6 +138,40 @@ export function SettingsPage() {
                 <p className="text-[12.5px] text-ink-3">Geldt voor dit apparaat</p>
               </div>
               <Switch checked={isDark} onChange={toggleTheme} label="Donker thema" />
+            </div>
+
+            <div className="px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                  <Palette size={16} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-semibold text-ink">Accentkleur</p>
+                  <p className="text-[12.5px] text-ink-3">Geldt voor dit apparaat</p>
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2.5 pl-11" role="radiogroup" aria-label="Accentkleur">
+                {ACCENTS.map((a) => {
+                  const selected = accent === a.id;
+                  return (
+                    <button
+                      key={a.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      aria-label={a.label}
+                      title={a.label}
+                      onClick={() => setAccent(a.id)}
+                      style={{ backgroundColor: a.swatch }}
+                      className={`flex h-9 w-9 items-center justify-center rounded-full text-[#0F1519] transition-transform active:scale-95 ${
+                        selected ? "border-2 border-outline" : "border-1.5 border-line"
+                      }`}
+                    >
+                      {selected && <Check size={16} strokeWidth={3} />}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {me && (
@@ -221,6 +262,17 @@ export function SettingsPage() {
         <motion.section variants={listItem} className={PANEL}>
           <p className="section-label px-4 pb-2.5 pt-3.5">App</p>
           <div className={PANEL_ROWS}>
+            <button onClick={() => setFeedbackOpen(true)} className={ROW}>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                <MessageSquareHeart size={16} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold text-ink">Feedback geven</p>
+                <p className="text-[12.5px] text-ink-3">Een bug, idee of iets anders, ook anoniem</p>
+              </div>
+              <ChevronRight size={16} className="shrink-0 text-ink-3" />
+            </button>
+
             <div className="flex items-center gap-3 px-4 py-3">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border-1.5 border-line bg-white">
                 <img src="/icons/icon-192.png" alt="Ankerd" className="h-6 w-6 object-contain" />
@@ -248,6 +300,8 @@ export function SettingsPage() {
           </div>
         </motion.section>
       </motion.div>
+
+      <FeedbackSheet open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </div>
   );
 }

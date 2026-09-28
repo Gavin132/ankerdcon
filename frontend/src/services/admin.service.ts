@@ -21,9 +21,33 @@ export async function getAdminStats(): Promise<AdminStats> {
 
 // ── CDN ───────────────────────────────────────────────────────────────────────
 
-export async function getAdminCdn(params: { limit: number; offset: number; kind?: string }): Promise<CdnListing> {
+export async function getAdminCdn(params: { limit: number; offset: number; kind?: string; event?: string }): Promise<CdnListing> {
   const { data } = await apiClient.get<CdnListing>(apiRoutes.admin.cdn, { params });
   return data;
+}
+
+/** Everything of one feature and/or event as a zip, saved through the browser.
+ * The server streams it while building it, so there is no timeout here — a big
+ * selection legitimately takes a while. `onProgress` gets the bytes received. */
+export async function downloadCdnZip(
+  params: { kind?: string; event?: string },
+  onProgress?: (bytes: number) => void,
+): Promise<void> {
+  const res = await apiClient.get<Blob>(apiRoutes.admin.cdnDownload, {
+    params,
+    responseType: "blob",
+    timeout: 0,
+    onDownloadProgress: (e) => onProgress?.(e.loaded),
+  });
+  const name = /filename="?([^";]+)"?/.exec(String(res.headers["content-disposition"] ?? ""))?.[1] ?? "cdn.zip";
+  const url = URL.createObjectURL(res.data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 /** Delete a file from the bucket, whoever uploaded it (admin only). */

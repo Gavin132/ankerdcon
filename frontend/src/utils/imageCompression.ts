@@ -3,7 +3,7 @@
  * BannerCropModal.tsx, generalized for a natural (non-cropped) aspect ratio.
  * Shrinks both the stored file and the upload itself, which matters most on
  * bad convention-hall reception. */
-export function compressImage(file: File, maxDimension = 1600, quality = 0.85): Promise<Blob> {
+export function compressImage(file: File, maxDimension = 2560, quality = 0.88): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file);
     const img = new Image();

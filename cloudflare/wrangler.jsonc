@@ -1,0 +1,16 @@
+{
+  // Config for `wrangler deploy`, run from inside this `cloudflare/` folder.
+  // See docs/cloudflare-error-page.md for the full deploy steps.
+  "name": "ankerd-error-page",
+  "main": "error-page-worker.js",
+  "compatibility_date": "2026-09-27",
+
+  // Binds the Worker straight to both hostnames — `wrangler deploy` creates
+  // (or updates) these routes itself, so no manual dashboard step is needed
+  // for this part. The zone (ankerd.org) must already be on the Cloudflare
+  // account `wrangler login` authenticates as.
+  "routes": [
+    { "pattern": "con.ankerd.org/*", "zone_name": "ankerd.org" },
+    { "pattern": "dev.ankerd.org/*", "zone_name": "ankerd.org" }
+  ]
+}

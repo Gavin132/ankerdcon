@@ -74,6 +74,11 @@ class SettlementRoutes:
     CONFIRM = "/{settlement_id}/confirm"
 
 
+class FeedbackRoutes:
+    PREFIX = "/feedback"
+    LIST = "/"  # POST
+
+
 class CosplayRoutes:
     PREFIX = "/cosplays"
     LIST = "/"
@@ -112,6 +117,7 @@ class AdminRoutes:
 
     # CDN — everything in the photo bucket
     CDN = "/cdn"
+    CDN_DOWNLOAD = "/cdn/download"
 
     # Users
     USERS = "/users"
@@ -166,6 +172,10 @@ class AdminRoutes:
     # Announcements
     ANNOUNCEMENTS = "/announcements"
     ANNOUNCEMENT_DETAIL = "/announcements/{announcement_id}"
+
+    # Feedback from members
+    FEEDBACK = "/feedback"
+    FEEDBACK_DETAIL = "/feedback/{feedback_id}"
 
     # Changelog
     CHANGELOG = "/changelog"

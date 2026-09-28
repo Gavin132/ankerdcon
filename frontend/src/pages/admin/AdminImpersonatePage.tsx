@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { LogIn, ShieldAlert, UserCog } from "lucide-react";
 import { useAdminUsers, useAdminImpersonateUser } from "../../hooks/useAdmin";
+import { ApiError } from "../../lib/api/client";
 import { useCurrentUser } from "../../hooks/useUsers";
 import { useAuthStore } from "../../store/auth.store";
 import { UserAvatar } from "../../components/common/UserAvatar";
@@ -33,8 +34,9 @@ export function AdminImpersonatePage() {
       const { access_token } = await impersonateMutation.mutateAsync(userId);
       startImpersonation(access_token, name);
       // startImpersonation hard-reloads the page — nothing after this runs.
-    } catch {
-      toast("error", "Inloggen als deze gebruiker is mislukt.");
+    } catch (err) {
+      const detail = err instanceof ApiError ? err.message : null;
+      toast("error", detail || "Inloggen als deze gebruiker is mislukt.");
       setPendingId(null);
     }
   }

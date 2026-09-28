@@ -9,6 +9,7 @@ import { ToastContainer } from "./components/common/Toast";
 import { SplashScreen } from "./components/splash/SplashScreen";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
 import { ImpersonationBanner } from "./components/common/ImpersonationBanner";
+import { OfflineBanner } from "./components/common/OfflineBanner";
 import { UpdateBanner } from "./components/layout/UpdateBanner";
 import { useThemeStore } from "./store/theme.store";
 import { useSplash } from "./hooks/useSplash";
@@ -283,6 +284,7 @@ export function App() {
         <PendingUploadsSync />
         <AppBackdrop />
         <ImpersonationBanner />
+        <OfflineBanner />
         <Suspense fallback={<RouteFallback />}>
           <RouterProvider router={router} />
         </Suspense>

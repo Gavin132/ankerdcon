@@ -91,6 +91,8 @@ export const apiRoutes = {
     active: "/api/announcements/active",
   },
 
+  feedback: "/api/feedback/",
+
   changelog: {
     base: "/api/changelog/",
   },
@@ -99,6 +101,7 @@ export const apiRoutes = {
   admin: {
     stats: "/api/admin/stats",
     cdn:   "/api/admin/cdn",
+    cdnDownload: "/api/admin/cdn/download",
     quickUpload: "/api/admin/quick-upload",
     uploadImage: (kind: "event-cover" | "badge") => `/api/admin/uploads/${kind}`,
 
@@ -150,6 +153,11 @@ export const apiRoutes = {
       reorder:      "/api/admin/badges/reorder",
       assignUser:   (userId: string, badgeId: string) => `/api/admin/users/${userId}/badges/${badgeId}`,
       unassignUser: (userId: string, badgeId: string) => `/api/admin/users/${userId}/badges/${badgeId}`,
+    },
+
+    feedback: {
+      base: "/api/admin/feedback",
+      byId: (id: string) => `/api/admin/feedback/${id}`,
     },
 
     announcements: {

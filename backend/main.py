@@ -18,7 +18,7 @@ from app.constants import API_PREFIX, Tables
 from app.core.database import supabase
 from app.core.logging import configure_logging, get_logger
 from app.core.security import add_security_headers, limit_body_size, rate_limit
-from app.routers import admin, announcements, badges, calendar, changelog, cosplays, expenses, link_preview, meals, rides, settlements, stories, users
+from app.routers import admin, announcements, badges, calendar, changelog, cosplays, expenses, feedback, link_preview, meals, rides, settlements, stories, users
 from app.services.reminder_scheduler import check_and_send_reminders, check_and_send_ticket_reminders
 
 configure_logging()
@@ -42,6 +42,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.info("Supabase connection established")
     except Exception as e:
         logger.warning("Supabase warmup failed — check credentials in .env: %s", e)
+    if not get_settings().supabase_jwt_secret:
+        # Otherwise the first sign is a 503 on the admin "log in as" button.
+        logger.warning("SUPABASE_JWT_SECRET is empty — admin 'log in as' and the calendar feed link will not work")
 
     _scheduler.add_job(check_and_send_reminders, "cron", hour=8, minute=0)
     # Ticket-sale timing needs finer granularity than a daily check — sale_start
@@ -184,6 +187,7 @@ app.include_router(calendar.router, prefix=API_PREFIX)
 app.include_router(badges.router,    prefix=API_PREFIX)
 app.include_router(announcements.router, prefix=API_PREFIX)
 app.include_router(changelog.router,    prefix=API_PREFIX)
+app.include_router(feedback.router,     prefix=API_PREFIX)
 app.include_router(cosplays.router,  prefix=API_PREFIX)
 app.include_router(expenses.router,  prefix=API_PREFIX)
 app.include_router(settlements.router, prefix=API_PREFIX)

@@ -22,6 +22,26 @@ interface TripSheetProps {
 /** How many sheets are open; the page behind stays locked until the last one closes. */
 let scrollLocks = 0;
 
+// ── Back gesture / Android back button ──────────────────────────────────────
+// Without this, swiping back on a phone (or pressing Android's back button)
+// navigates the *page underneath* — the router moves to wherever history had
+// next, but nothing ever told this sheet to close, so it's left open floating
+// over whatever page the back gesture landed on. Each open sheet pushes a
+// throwaway history entry to give the gesture something of its own to
+// consume first, the same trick Modal.tsx uses for the same reason.
+//
+// A shared LIFO stack (not one listener per sheet) is what makes this correct
+// when sheets are stacked (`stacked`, e.g. a confirmation over a form): one
+// back press must close only the one on top, not every open sheet at once —
+// exactly what popping the last entry off a shared stack gives you, since a
+// stacked sheet can only ever have opened after the one under it.
+const openSheetClosers: Array<() => void> = [];
+let popstateAttached = false;
+
+function handleSheetPopState() {
+  openSheetClosers.pop()?.();
+}
+
 /**
  * A part of a trip (Vervoer, Cosplay, Kamers…), opened as a sheet from the
  * bottom over Event › Overzicht instead of navigating to its own page. Grows
@@ -47,6 +67,51 @@ export function TripSheet({ open, onClose, title, subtitle, onBack, footer, view
       scrollLocks--;
       if (scrollLocks === 0) document.body.style.overflow = "";
     };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    // Deferred a tick: React 18 StrictMode (dev only) mounts, cleans up and
+    // mounts this effect again synchronously before the browser gets a
+    // chance to run anything async — pushing immediately would push twice
+    // for one real open. See Modal.tsx for the same precaution in detail.
+    let cancelled = false;
+    let pushed = false;
+    const timer = window.setTimeout(() => {
+      if (cancelled) return;
+      window.history.pushState({ ankerdSheet: true }, "");
+      pushed = true;
+      openSheetClosers.push(onClose);
+      if (!popstateAttached) {
+        window.addEventListener("popstate", handleSheetPopState);
+        popstateAttached = true;
+      }
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      if (!pushed) return;
+      // Still in the stack means something other than the back gesture
+      // closed this sheet (the X, the backdrop, Escape) — consume the
+      // history entry it pushed so a *later* back press doesn't land on a
+      // dead entry instead of leaving the page. Already missing means the
+      // back gesture itself is what got us here (handleSheetPopState popped
+      // it and called onClose), so there's nothing left to undo.
+      const idx = openSheetClosers.lastIndexOf(onClose);
+      if (idx !== -1) {
+        openSheetClosers.splice(idx, 1);
+        window.history.back();
+      }
+      if (openSheetClosers.length === 0 && popstateAttached) {
+        window.removeEventListener("popstate", handleSheetPopState);
+        popstateAttached = false;
+      }
+    };
+    // Deliberately just `open` — this pushes/pops one history entry for the
+    // sheet's whole open lifetime, not on every re-render of its onClose prop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   return createPortal(

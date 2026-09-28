@@ -44,6 +44,10 @@ _CLOCK_LEEWAY_SECONDS = 30
 
 _AUTH_FAILED = "Authenticatie mislukt."
 _ACCESS_DENIED = "Toegang geweigerd. Neem contact op met een beheerder."
+_ACCESS_DENIED_EMAIL = (
+    "Dit Google-account is niet gekoppeld aan een profiel. Heb je je eerder met Discord aangemeld? "
+    "Log dan daarmee in. Anders: neem contact op met een beheerder."
+)
 _DEACTIVATED = "Je account is gedeactiveerd. Neem contact op met een beheerder."
 
 # Sent with the 403 that means "this account may not use the app at all" (not on
@@ -591,7 +595,7 @@ def _resolve_email_user(identity: VerifiedIdentity, user_id: str, settings: Sett
     if profile_name is None:
         if not _is_whitelisted("email", email):
             logger.info("Auth: email %s not in whitelist", email)
-            raise _no_access(_ACCESS_DENIED)
+            raise _no_access(_ACCESS_DENIED_EMAIL)
         profile_row = _create_profile({
             "id": user_id,
             "name": _unique_profile_name(identity.email_display_name or email.split("@")[0]),

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertCircle, BedDouble, Camera, Car, ChevronRight, CloudSun, Plus, Sparkles, Utensils, Wallet } from "lucide-react";
+import { AlertCircle, BedDouble, Camera, Car, ChevronRight, CloudSun, FileText, Plus, Sparkles, Ticket as TicketIcon, Trash2, Upload, Utensils, Wallet } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { StoryUploadButton } from "../story/StoryUploadButton";
 import { DayChips } from "./DayChips";
@@ -18,6 +18,8 @@ import { parseEventDate, splitDateTime, toDateKey, todayKey } from "../../utils/
 import { dayShort } from "../../utils/multiDay";
 import { formatCurrency } from "../../utils/format";
 import { defaultTripDayId, tripGaps, tripInfo, tripMeals, tripRides, tripOutliers, tripRoomGaps, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
+import { useLocalTicketsStore } from "../../store/localTickets.store";
+import type { LocalTicket } from "../../utils/localTickets";
 import type { CalendarEvent, Cosplay, Expense, HotelRoom, Meal, Ride, StoryDaySummary, User } from "../../types";
 
 const sameName = (names: string[]) => (n: string) => names.some((m) => m.toLowerCase() === n.toLowerCase());
@@ -317,15 +319,26 @@ export function CosplayTile({ trip, cosplays, myNames }: { trip: Trip; cosplays:
   const ids = new Set(trip.eventIds);
   const list = cosplays.filter((c) => c.linked_event_ids.some((id) => ids.has(id)));
   const mine = list.find((c) => sameName(myNames)(c.user_name));
-  const images = list.map((c) => c.inspo_images[0]).filter(Boolean).slice(0, 5);
+  // A "small" (single-column) tile is only wide enough for about 3 of these
+  // before the row would run past the card's edge — capped here rather than
+  // just visually clipped, so the count on the tile still matches what's
+  // actually shown instead of trailing off mid-image.
+  const allImages = list.map((c) => c.inspo_images[0]).filter(Boolean);
+  const images = allImages.slice(0, 2);
+  const moreCount = allImages.length - images.length;
 
   return (
     <TripTile icon={Sparkles} label="Cosplay" to={routes.trip.view(trip.id, "cosplay")} sheet>
       <TileValue>{list.length}</TileValue>
       <TileText>{list.length === 1 ? "cosplay" : "cosplays"}{mine ? `, jij als ${mine.character_name}` : ""}</TileText>
       {images.length > 0 && (
-        <span className="flex gap-1">
-          {images.map((src, i) => <img key={i} src={src} alt="" className="h-11 w-[34px] rounded-[5px] object-cover" />)}
+        <span className="flex min-w-0 items-center gap-1 overflow-hidden">
+          {images.map((src, i) => <img key={i} src={src} alt="" className="h-11 w-[34px] shrink-0 rounded-[5px] object-cover" />)}
+          {moreCount > 0 && (
+            <span className="flex h-11 shrink-0 items-center justify-center rounded-[5px] bg-sunken px-1.5 font-mono text-[10.5px] text-ink-3">
+              +{moreCount}
+            </span>
+          )}
         </span>
       )}
     </TripTile>
@@ -425,7 +438,7 @@ export function ExpensesTile({ trip, phase, expenses, myNames }: { trip: Trip; p
   return (
     <TripTile
       icon={Wallet}
-      label="Uitgaven"
+      label="Kosten"
       to={routes.tripExpenses.view(trip.id)}
       size={phase === "past" && open > 0 ? "wide" : "small"}
       pill={open > 0 && <TilePill>Open</TilePill>}
@@ -518,7 +531,7 @@ export function PracticalTile({ info, trip, onOpen }: { info: CalendarEvent; tri
   ].filter(Boolean) as string[];
 
   return (
-    <TripTile icon={AlertCircle} label="Praktisch" onOpen={onOpen}>
+    <TripTile icon={AlertCircle} label="Info" onOpen={onOpen}>
       {info.special_instructions ? (
         <>
           <span><TilePill>Let op</TilePill></span>
@@ -562,6 +575,157 @@ export function PracticalSheet({ open, onClose, info, trip }: { open: boolean; o
       {hasRows && <EventPractical event={info} bare />}
       {hasRows && hasLinks && <div className="my-4 h-px bg-line" />}
       {hasLinks && <EventLinks event={info} bare />}
+    </TripSheet>
+  );
+}
+
+/* ── Mijn ticket (this device only) ─────────────────────────────────────── */
+
+const TICKET_MAX_BYTES = 15 * 1024 * 1024; // 15 MB — generous for a screenshot or a vendor PDF
+const TICKET_ACCEPT = "image/jpeg,image/png,image/webp,application/pdf";
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+/** Answers "have I saved my ticket for this trip" — nothing here ever leaves the device. */
+export function TicketTile({ trip, onOpen }: { trip: Trip; onOpen: () => void }) {
+  const items = useLocalTicketsStore((s) => s.items);
+  const hydrate = useLocalTicketsStore((s) => s.hydrate);
+  useEffect(() => {
+    hydrate();
+  }, [hydrate]);
+  const count = items.filter((t) => t.eventId === trip.id).length;
+
+  return (
+    <TripTile icon={TicketIcon} label="Ticket" onOpen={onOpen}>
+      <TileValue>{count > 0 ? `${count} ${count === 1 ? "bestand" : "bestanden"}` : "Geen ticket"}</TileValue>
+      <TileText>{count > 0 ? "Alleen op dit toestel opgeslagen" : "Bewaar een foto of PDF van je ticket"}</TileText>
+    </TripTile>
+  );
+}
+
+/** One saved ticket: a thumbnail for an image, an icon for a PDF, tap to open full-screen. */
+function TicketRow({ ticket, onDelete }: { ticket: LocalTicket; onDelete: () => void }) {
+  const [confirming, setConfirming] = useState(false);
+  const url = useMemo(() => URL.createObjectURL(ticket.blob), [ticket.blob]);
+  useEffect(() => () => URL.revokeObjectURL(url), [url]);
+  const isImage = ticket.contentType.startsWith("image/");
+
+  return (
+    <div className="flex items-center gap-3 rounded-xl border-1.5 border-line px-3 py-2.5">
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex min-w-0 flex-1 items-center gap-3"
+      >
+        {isImage ? (
+          <img src={url} alt="" className="h-11 w-11 shrink-0 rounded-lg object-cover" />
+        ) : (
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink-3">
+            <FileText size={18} />
+          </span>
+        )}
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[13.5px] font-semibold text-ink">{ticket.fileName || "Ticket"}</span>
+          <span className="block text-[11.5px] text-ink-3">{formatBytes(ticket.size)} · tik om te bekijken</span>
+        </span>
+      </a>
+      {confirming ? (
+        <span className="flex shrink-0 items-center gap-1.5">
+          <button type="button" onClick={() => setConfirming(false)} className="rounded-lg px-2 py-1.5 text-xs font-semibold text-ink-2 hover:bg-sunken">
+            Nee
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            className="rounded-lg border-2 border-rose-800 bg-rose-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 dark:border-rose-400"
+          >
+            Verwijder
+          </button>
+        </span>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setConfirming(true)}
+          aria-label="Verwijderen"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
+        >
+          <Trash2 size={15} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** Opened from the Mijn ticket tile. Everything here lives in this browser's IndexedDB only —
+ * never uploaded, never visible to anyone else, not even an admin. That also means it doesn't
+ * follow you to another device, and a browser can clear it on its own (low on storage, a
+ * reinstall) — worth keeping a copy somewhere else too for anything you can't afford to lose. */
+export function TicketSheet({ open, onClose, trip }: { open: boolean; onClose: () => void; trip: Trip }) {
+  const items = useLocalTicketsStore((s) => s.items);
+  const add = useLocalTicketsStore((s) => s.add);
+  const remove = useLocalTicketsStore((s) => s.remove);
+  const [error, setError] = useState<string | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const mine = items.filter((t) => t.eventId === trip.id).sort((a, b) => b.createdAt - a.createdAt);
+
+  async function handleFile(file: File | undefined) {
+    if (!file) return;
+    setError(null);
+    const isAllowed = file.type.startsWith("image/") || file.type === "application/pdf";
+    if (!isAllowed) {
+      setError("Kies een foto (JPG, PNG, WebP) of een PDF.");
+      return;
+    }
+    if (file.size > TICKET_MAX_BYTES) {
+      setError(`Te groot: ${formatBytes(file.size)}. Maximaal 15 MB.`);
+      return;
+    }
+    const result = await add(trip.id, file);
+    if (!result) {
+      setError("Opslaan is niet gelukt op dit toestel (mogelijk privénavigatie of te weinig opslagruimte).");
+    }
+    if (fileInput.current) fileInput.current.value = "";
+  }
+
+  return (
+    <TripSheet open={open} onClose={onClose} title="Mijn ticket" subtitle={trip.title}>
+      <div className="mb-4 flex items-start gap-2.5 rounded-xl border-1.5 border-line bg-sunken px-3.5 py-3 text-xs leading-relaxed text-ink-2">
+        <TicketIcon size={14} className="mt-0.5 shrink-0 text-ink-3" />
+        <p>Alleen op dit toestel opgeslagen — niet in de cloud, niet zichtbaar voor anderen (ook niet voor beheerders).</p>
+      </div>
+
+      <input
+        ref={fileInput}
+        id="ticket-file"
+        type="file"
+        accept={TICKET_ACCEPT}
+        className="sr-only"
+        onChange={(e) => void handleFile(e.target.files?.[0])}
+      />
+      <label
+        htmlFor="ticket-file"
+        className="mb-4 flex cursor-pointer items-center justify-center gap-2 rounded-xl border-1.5 border-dashed border-line px-4 py-4 text-sm font-semibold text-ink transition-colors hover:border-ink-3"
+      >
+        <Upload size={16} className="text-ink-3" />
+        Ticket toevoegen (foto of PDF)
+      </label>
+
+      {error && <p className="mb-4 text-sm text-rose-700 dark:text-rose-300" role="alert">{error}</p>}
+
+      {mine.length === 0 ? (
+        <p className="py-6 text-center text-sm text-ink-3">Nog geen ticket toegevoegd.</p>
+      ) : (
+        <div className="space-y-2">
+          {mine.map((t) => (
+            <TicketRow key={t.id} ticket={t} onDelete={() => remove(t.id)} />
+          ))}
+        </div>
+      )}
     </TripSheet>
   );
 }

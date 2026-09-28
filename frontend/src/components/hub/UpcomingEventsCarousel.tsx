@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { UpcomingEventCard, type EventUrgency } from "./UpcomingEventCard";
 import { parseEventDate } from "../../utils/date";
@@ -70,6 +70,10 @@ function keyFor(item: CalendarItem): string {
   return item.type === "single" ? item.ev.id : item.multiDayId;
 }
 
+// Long enough to actually read a card, short enough that the row of dots
+// still feels alive.
+const AUTO_ADVANCE_MS = 10_000;
+
 export function UpcomingEventsCarousel({
   items,
   allEvents,
@@ -80,6 +84,10 @@ export function UpcomingEventsCarousel({
 }: UpcomingEventsCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
+  // Bumped on any manual navigation (swipe, dot, arrow) to restart the
+  // auto-advance countdown — jumping to the next card moments after someone
+  // deliberately picked one would feel like the page fighting them.
+  const [autoAdvanceKey, setAutoAdvanceKey] = useState(0);
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
@@ -92,6 +100,33 @@ export function UpcomingEventsCarousel({
     if (!el) return;
     el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
   }
+
+  function scrollToIndexManually(i: number) {
+    scrollToIndex(i);
+    setAutoAdvanceKey((k) => k + 1);
+  }
+
+  const itemCount = items.length;
+
+  useEffect(() => {
+    if (itemCount <= 1) return;
+    // A carousel that moves on its own is exactly what this preference asks
+    // apps to avoid; the dots and arrows still work, just nothing on a timer.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const id = window.setInterval(() => {
+      // A background tab has no visible position to advance from, and
+      // resuming it would otherwise show a jump of several cards at once.
+      if (document.hidden) return;
+      const el = scrollRef.current;
+      if (!el || el.clientWidth === 0) return;
+      const current = Math.round(el.scrollLeft / el.clientWidth);
+      scrollToIndex((current + 1) % itemCount);
+    }, AUTO_ADVANCE_MS);
+
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemCount, autoAdvanceKey]);
 
   if (items.length === 0) return null;
 
@@ -119,6 +154,7 @@ export function UpcomingEventsCarousel({
         <div
           ref={scrollRef}
           onScroll={handleScroll}
+          onPointerDown={() => setAutoAdvanceKey((k) => k + 1)}
           className="flex overflow-x-auto snap-x snap-mandatory gap-3 scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {items.map((item) => (
@@ -142,7 +178,7 @@ export function UpcomingEventsCarousel({
             <button
               key={keyFor(item)}
               type="button"
-              onClick={() => scrollToIndex(i)}
+              onClick={() => scrollToIndexManually(i)}
               aria-label={`Ga naar evenement ${i + 1}`}
               className={`h-1.5 rounded-full transition-all ${
                 i === index ? "w-5 bg-ink" : "w-1.5 bg-line hover:bg-ink-3"
@@ -152,7 +188,7 @@ export function UpcomingEventsCarousel({
         </div>
         <button
           type="button"
-          onClick={() => scrollToIndex(index - 1)}
+          onClick={() => scrollToIndexManually(index - 1)}
           aria-label="Vorig evenement"
           disabled={index === 0}
           className={arrowClass}
@@ -161,7 +197,7 @@ export function UpcomingEventsCarousel({
         </button>
         <button
           type="button"
-          onClick={() => scrollToIndex(index + 1)}
+          onClick={() => scrollToIndexManually(index + 1)}
           aria-label="Volgend evenement"
           disabled={index === items.length - 1}
           className={arrowClass}

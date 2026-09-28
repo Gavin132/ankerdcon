@@ -41,10 +41,18 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
 
 - **Story row**: an "add" tile and a ring per day with photos, unseen ones highlighted.
 - **Upcoming trip ticket** (`components/hub/UpcomingEventCard.tsx`): the nearest
-  trip with a countdown, its days and who is going.
+  trip with a countdown, its days and who is going. More than one upcoming trip becomes a
+  carousel (`UpcomingEventsCarousel.tsx`) that advances itself every 10 seconds — paused while
+  the tab is in the background, skipped entirely under "reduce motion", and the countdown
+  restarts whenever someone swipes or taps a dot/arrow themselves.
 - **Today's meals** (`MealTodayCard.tsx`) and **quick ride tiles**
   (`QuickRideTiles.tsx`): offer or join a ride to/from the event or hotel. The
   direction and time are guessed from the clock (`utils/quickRide.ts`).
+- **Mijn ticket shortcut** (`TicketShortcutCard.tsx`): one tap to the current trip's ticket
+  sheet, reading straight from the same on-device store as the event page's tile — its text
+  changes depending on whether you've saved one yet. The link (`?openTicket=1`) is a one-shot
+  flag the trip page consumes and strips, not a real deep link — there is nothing server-side
+  for it to point at.
 - **Voor jou** (`ForYouPanel.tsx`, `utils/actionItems.ts`): everything you still
   have to arrange: a trip day without a ride, a restaurant without a car, expenses
   to settle, payment requests and payments waiting for your confirmation. Each item
@@ -61,15 +69,28 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
   everyone by name (`TripParticipants.tsx`); that list has an "Iemand aanmelden" button too.
 - A calendar button in the top bar, and "Andere evenementen" under the tiles, open a list of every
   trip to jump to another one (`TripSwitcher.tsx`); on a phone you can also swipe sideways to the
-  next or previous trip (`hooks/useSwipe.ts`). Admins also get a pencil to edit the event.
+  next or previous trip (`hooks/useSwipe.ts`) — a one-time pill (`SwipeHint.tsx`) points this out
+  the first time a device lands on a page it can actually swipe on, then never shows again (or
+  the moment a real swipe happens, whichever comes first). The ticket and tiles slide and fade in
+  the direction swiped (`tripSlideVariants` in `TripOverviewTab.tsx`), so it's clear something
+  moved and which way, not just a sudden swap. Admins also get a pencil to edit the event.
 - Below it, a **tile** per part of the trip (`TripTiles.tsx`): Vervoer, Eten,
   Hotel (hotel trips only: address, stay, arrivals and departures, rooms), Foto's, Cosplay (trips with a convention), Weer,
-  Praktisch and Uitgaven. Tiles show the answer ("6 rides, 3 people without a ride
+  Info (opens the Praktisch sheet), Kosten and Ticket (opens Mijn ticket); the tile labels are
+  short so they fit. Tiles show the answer ("6 rides, 3 people without a ride
   back") and their order changes before, during and after the trip. The amber "zonder rit" and
   "nergens bij" pills open the names of who is missing (a sheet, `MissingPeopleSheet`).
 - Tiles open as **sheets** over the page (`TripSheet.tsx`). Vervoer, Hotel and
   Cosplay are routed with `?sheet=transport|rooms|cosplay` so they can be linked;
   Weer, Praktisch and Eten's "add meal" open from local state.
+- **Mijn ticket** (`TicketTile`/`TicketSheet` in `TripTiles.tsx`) lets a member save a photo or
+  PDF of their own event ticket — kept entirely in this browser's IndexedDB
+  (`utils/localTickets.ts`, `store/localTickets.store.ts`), never uploaded anywhere. Deliberately
+  not in the shared photo bucket or the database: nobody else can see it, not other members and
+  not admins, and there is nothing server-side to secure. The trade-off is the flip side of
+  that — it doesn't sync to another device and a browser can clear it on its own, so it's a
+  convenience, not a permanent archive. Not the same "ticket" as an event's `ticket_url` (where
+  to buy one) — that stays under Praktisch.
 - Multi-day trips get **day chips** to filter by day.
 
 ## Transport
@@ -133,8 +154,8 @@ the form is open; saving waits until nothing is queued.
 `components/story/`, `backend/app/routers/stories.py`.
 
 - Anyone can add a photo to a day, from the Hub, the trip ticket or the Foto's
-  tile. It is compressed in the browser (max 1600 px), re-encoded by the backend
-  and stored in MinIO.
+  tile. It is compressed in the browser (max 2560 px, JPEG 88 %), checked by the
+  backend and stored in MinIO.
 - A **story** is the day's photos in upload order (`seq`). Each member's progress
   is stored per day (`story_seen`), so a ring shows "unseen" until you have
   watched to the newest photo.
@@ -227,7 +248,9 @@ See [architecture.md](architecture.md#background-jobs-and-notifications) for the
 - **Onboarding** (`pages/onboarding/`) runs on first login: a short dialogue with
   the mascot, profile, notifications and a feature tour. Admins can preview it.
 - **Instellingen** (`pages/SettingsPage.tsx`): notifications, Discord link, dark
-  theme, greeting, QR code to the app, and the credits.
+  theme, greeting, QR code to the app, the credits, and **Feedback geven**: a sheet where a member
+  sends a bug, idea or remark (optionally anonymous, with no name stored) that admins read under
+  Admin → Feedback.
 - **Wijzigingslog** (`pages/ChangelogPage.tsx`): release notes written in the admin
   panel and stored in the database (not `CHANGELOG.md`, which is for developers).
 
@@ -245,8 +268,9 @@ See [architecture.md](architecture.md#background-jobs-and-notifications) for the
 | Badges | badge images and who has them |
 | Betalingen | expenses and shares, including forcing a status |
 | Aankondigingen, Wijzigingslog | banners and release notes |
-| CDN | every file in the photo bucket, newest first, with its uploader; the "Uploaden" button puts an image or video there and gives a link to embed; the viewer's bin deletes a file, whoever uploaded it |
+| CDN | every file in the photo bucket, newest first, with its uploader; the "Uploaden" button puts an image or video there and gives a link to embed; the viewer's bin deletes a file, whoever uploaded it; "Download … (zip)" saves the current selection (a feature, or one event for story photos) as one zip |
 | Inloggen als gebruiker | act as a member for two hours ([security.md](security.md#log-in-as)) |
 | Tijdreis-widget | set the app's clock to test live or finished trips |
-| Schermen testen | preview the crash, unreachable, forbidden, 404 and queued-upload screens |
+| Feedback | what members sent through Instellingen → Feedback geven, filtered by status (nieuw, gezien, opgelost); anonymous messages show "Anoniem" |
+| Schermen testen | preview the crash, unreachable, forbidden (Discord and Google), 404 and queued-upload screens |
 | Preview: Onboarding | walk through onboarding without touching a profile |

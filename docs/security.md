@@ -44,7 +44,10 @@ logging the member out.
 
 Access is **invite-only**. The `whitelist` table lists Discord ids and/or email
 addresses that may log in; anyone else gets a 403 ("Geen toegang") even with a valid
-Supabase account, because anyone can create one.
+Supabase account, because anyone can create one. Discord and Google are separate logins: a
+member who signed up with one and then signs in with the other (with a different email) is not
+linked to their profile and gets the "Geen toegang" screen, which for Google says to try Discord.
+Only people who sign up with Google can link Discord (Instellingen), not the other way round.
 
 - Manage it in **Admin → Whitelist**, or in SQL:
   `INSERT INTO whitelist (discord_id) VALUES ('123456789012345678');` or
@@ -135,7 +138,9 @@ Nothing is stored as it was sent. The browser compresses photos first, and the b
   anything that is not JPG, PNG or WebP (banners also GIF), with a pixel cap against
   decompression bombs;
 - re-encodes stills **without metadata**, so the EXIF GPS position a phone puts in a photo
-  never reaches other members (GIFs are only checked, since re-encoding would drop frames);
+  never reaches other members (GIFs are only checked, since re-encoding would drop frames;
+  a JPEG that carries no metadata is kept as is, so the app's own already compressed photos
+  do not go through a second lossy pass);
 - writes it to MinIO under a random name with short timeouts, in a worker thread.
 
 **Quick upload (admin only).** Admin → CDN has an "Uploaden" button for putting an image

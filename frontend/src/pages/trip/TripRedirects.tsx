@@ -8,7 +8,7 @@ import { lastTripTab } from "./tripContext";
 function Loading() {
   return (
     <div className="flex items-center justify-center py-24">
-      <div className="h-8 w-8 rounded-full border-2 border-sky-500 border-t-transparent animate-spin" />
+      <div className="h-8 w-8 rounded-full border-2 border-brand-text border-t-transparent animate-spin" />
     </div>
   );
 }
@@ -31,7 +31,7 @@ export function CurrentTripRedirect() {
       <div className="flex flex-col items-center gap-3 py-20 text-center text-slate-400">
         <CalendarDays size={40} className="opacity-30" />
         <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Nog geen events gepland</p>
-        <Link to={routes.calendar} className="text-xs font-semibold text-sky-500 hover:underline">
+        <Link to={routes.calendar} className="text-xs font-semibold text-brand-text hover:underline">
           Bekijk de agenda
         </Link>
       </div>

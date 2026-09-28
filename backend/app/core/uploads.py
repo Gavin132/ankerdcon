@@ -45,6 +45,15 @@ async def read_capped(file: UploadFile, max_bytes: int) -> bytes:
     return b"".join(chunks)
 
 
+# Keys Pillow puts in `info` for the JPEG segments that can hold personal data
+# (EXIF incl. GPS, XMP, Photoshop/IPTC, free-text comments).
+_METADATA_KEYS = ("exif", "xmp", "photoshop", "comment")
+
+
+def _carries_metadata(img: Image.Image) -> bool:
+    return bool(img.getexif()) or any(k in img.info for k in _METADATA_KEYS)
+
+
 def clean_image(content: bytes, allowed: set[str]) -> tuple[bytes, str, str]:
     """Check what an upload really is and strip its metadata.
 
@@ -52,7 +61,9 @@ def clean_image(content: bytes, allowed: set[str]) -> tuple[bytes, str, str]:
     find the actual format. Photos straight off a phone carry EXIF data,
     including the GPS position where they were taken, so still images are
     re-encoded without it (after applying the EXIF rotation, so they still
-    display upright). Animated GIFs are only checked, not re-encoded, since
+    display upright). A JPEG that has no such metadata is returned unchanged,
+    so a photo already compressed by the app is not compressed a second time.
+    Animated GIFs are only checked, not re-encoded, since
     that would drop their frames; GIFs have no EXIF block to strip.
 
     Returns (bytes, content type, file extension).
@@ -70,6 +81,12 @@ def clean_image(content: bytes, allowed: set[str]) -> tuple[bytes, str, str]:
 
     content_type, ext = IMAGE_FORMATS[fmt]
     if fmt == "GIF":
+        return content, content_type, ext
+
+    # A JPEG with nothing to strip (the app's own uploads, whose canvas export
+    # carries no EXIF) is kept byte for byte: re-encoding it would be a second
+    # lossy pass on an already compressed photo, for no privacy gain.
+    if fmt == "JPEG" and not _carries_metadata(img):
         return content, content_type, ext
 
     img = ImageOps.exif_transpose(img)

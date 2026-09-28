@@ -48,7 +48,7 @@ export function TripLayout() {
       <div className="flex flex-col items-center gap-3 py-20 text-center text-slate-400">
         <CalendarDays size={40} className="opacity-30" />
         <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Evenement niet gevonden</p>
-        <Link to={routes.calendar} className="text-xs font-semibold text-sky-500 hover:underline">
+        <Link to={routes.calendar} className="text-xs font-semibold text-brand-text hover:underline">
           Bekijk de agenda
         </Link>
       </div>

@@ -38,6 +38,20 @@ export interface Announcement {
   created_by?: string;
 }
 
+export type FeedbackKind = "bug" | "idea" | "other";
+export type FeedbackStatus = "new" | "seen" | "done";
+
+export interface Feedback {
+  id: string;
+  kind: FeedbackKind;
+  message: string;
+  /** Absent when the member sent it anonymously. */
+  user_name?: string | null;
+  app_version?: string | null;
+  status: FeedbackStatus;
+  created_at?: string;
+}
+
 export interface ChangelogEntry {
   id: string;
   title: string;
@@ -229,6 +243,8 @@ export interface CdnListing {
   total_size: number;
   capped: boolean;
   counts: Record<string, number>;
+  /** The most one zip download may hold, in bytes. */
+  download_limit_bytes: number;
   items: CdnObject[];
 }
 

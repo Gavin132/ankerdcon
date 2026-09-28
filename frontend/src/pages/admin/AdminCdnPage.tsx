@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronLeft, ChevronRight, Copy, ExternalLink, HardDrive, Play, Plus, Trash2, UploadCloud, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Copy, Download, ExternalLink, HardDrive, Loader2, Play, Plus, Trash2, UploadCloud, X } from "lucide-react";
 import { AdminPageHeader } from "./components/AdminPageHeader";
-import { deleteCdnFile, getAdminCdn, quickUpload, type QuickUploadResult } from "../../services/admin.service";
+import { deleteCdnFile, downloadCdnZip, getAdminCdn, quickUpload, type QuickUploadResult } from "../../services/admin.service";
+import { useAdminEvents } from "../../hooks/useAdmin";
 import { toast } from "../../store/toast.store";
 import { formatDateTime } from "../../utils/format";
 import type { CdnObject } from "../../types";
@@ -37,14 +38,18 @@ function formatSize(bytes: number): string {
 /** Everything in the photo bucket, newest first — to spot anything that shouldn't be there. */
 export function AdminCdnPage() {
   const [kind, setKind] = useState<string | null>(null);
+  // Only for story photos: their files are stored per event.
+  const [eventId, setEventId] = useState<string | null>(null);
+  const [downloaded, setDownloaded] = useState<number | null>(null);
   const [limit, setLimit] = useState(PAGE);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const qc = useQueryClient();
+  const { data: events = [] } = useAdminEvents();
 
   const { data, isLoading, isError, error, isFetching } = useQuery({
-    queryKey: ["admin", "cdn", kind, limit],
-    queryFn: () => getAdminCdn({ limit, offset: 0, kind: kind ?? undefined }),
+    queryKey: ["admin", "cdn", kind, eventId, limit],
+    queryFn: () => getAdminCdn({ limit, offset: 0, kind: kind ?? undefined, event: eventId ?? undefined }),
     placeholderData: keepPreviousData,
     staleTime: 30_000,
   });
@@ -54,8 +59,31 @@ export function AdminCdnPage() {
 
   function pickKind(next: string | null) {
     setKind(next);
+    setEventId(null);
     setLimit(PAGE);
     setOpenIndex(null);
+  }
+
+  function pickEvent(next: string | null) {
+    setEventId(next);
+    setLimit(PAGE);
+    setOpenIndex(null);
+  }
+
+  const tooBig = !!data && data.download_limit_bytes > 0 && data.total_size > data.download_limit_bytes;
+  const downloading = downloaded !== null;
+  const scope = eventId ? "dit event" : kind ? (KIND_LABEL[kind] ?? kind).toLowerCase() : "alles";
+
+  async function downloadAll() {
+    setDownloaded(0);
+    try {
+      await downloadCdnZip({ kind: kind ?? undefined, event: eventId ?? undefined }, setDownloaded);
+      toast("success", "Zip gedownload.");
+    } catch (e) {
+      toast("error", e instanceof Error && e.message ? e.message : "Downloaden mislukt. Probeer het opnieuw.");
+    } finally {
+      setDownloaded(null);
+    }
   }
 
   return (
@@ -111,7 +139,39 @@ export function AdminCdnPage() {
                 {opt.id && <span className="ml-1.5 font-mono text-[11px] opacity-70">{data?.counts[opt.id]}</span>}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => void downloadAll()}
+              disabled={downloading || tooBig || !data || data.total === 0}
+              title={tooBig ? "Te veel voor één zip: kies eerst een onderdeel of event." : `Download ${scope} als zip`}
+              className="btn-secondary ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] disabled:opacity-50"
+            >
+              {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+              {downloading ? `Bezig… ${formatSize(downloaded ?? 0)}` : `Download ${scope} (zip)`}
+            </button>
           </div>
+
+          {kind === "story" && (
+            <div className="flex flex-wrap items-center gap-2">
+              <label htmlFor="cdn-event" className="text-[12.5px] font-semibold text-ink-2">Per event</label>
+              <select
+                id="cdn-event"
+                value={eventId ?? ""}
+                onChange={(e) => pickEvent(e.target.value || null)}
+                className="rounded-lg border-1.5 border-line bg-surface px-3 py-1.5 text-[12.5px] text-ink"
+              >
+                <option value="">Alle events</option>
+                {events.map((ev) => (
+                  <option key={ev.id} value={ev.id}>{ev.event_name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          {tooBig && (
+            <p className="text-[12.5px] text-ink-3">
+              Dit is meer dan {formatSize(data?.download_limit_bytes ?? 0)}, te veel voor één zip. Kies een onderdeel{kind === "story" ? " of een event" : ""} en download die apart.
+            </p>
+          )}
 
           {isLoading ? (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">

@@ -22,6 +22,9 @@ Keeping the app running, and what to do when it misbehaves. Deploying is in
 | Status page | `status.ankerd.org` | uptime monitor for all ankerd projects |
 | Discord | hosted | webhook and bot |
 
+A branded page can replace Cloudflare's own 502/521/522/… error page: see
+[cloudflare-error-page.md](cloudflare-error-page.md).
+
 The home server is why response times on the status page look slow: see
 [Monitoring](#monitoring).
 

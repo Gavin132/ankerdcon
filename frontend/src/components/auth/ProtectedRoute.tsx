@@ -17,7 +17,7 @@ export function ProtectedRoute() {
   if (initializing || (accessToken && !forbidden && meLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-950">
-        <div className="h-8 w-8 rounded-full border-2 border-sky-500 border-t-transparent animate-spin" />
+        <div className="h-8 w-8 rounded-full border-2 border-brand-text border-t-transparent animate-spin" />
       </div>
     );
   }
