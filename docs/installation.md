@@ -424,7 +424,7 @@ old image again.
 | The page loads but is blank, the console says the Supabase URL is missing | the image was built without `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY`; set them and rebuild |
 | `/api/health` works but `/` returns 404 | the frontend was not built into the image (`backend/dist` missing). Use the root `Dockerfile`, not `backend/Dockerfile`. |
 | Discord login bounces back with an error | the Supabase **Callback URL** is missing from the Discord app's redirects, or the Site/Redirect URLs in step 1c do not match `APP_URL` |
-| Login works but the app says "Geen toegang" | you are not on the whitelist ([step 8](#8-first-start)) |
+| Login works but the app says "Geen toegang" | you are not on the whitelist ([step 8](#8-first-start)). Signed in with Google? Discord and Google are separate logins; the screen then suggests Discord if that is what the member signed up with |
 | Saving anything fails with a foreign-key or not-null error | a migration has not been run, or the database was built from an incomplete schema |
 | Saving fails with "permission denied for table" | the `service_role` grants in [1b](#1b-the-database) are missing |
 | Nobody gets DMs | `DISCORD_BOT_TOKEN` is empty, or the bot is not on the members' server |

@@ -44,7 +44,10 @@ logging the member out.
 
 Access is **invite-only**. The `whitelist` table lists Discord ids and/or email
 addresses that may log in; anyone else gets a 403 ("Geen toegang") even with a valid
-Supabase account, because anyone can create one.
+Supabase account, because anyone can create one. Discord and Google are separate logins: a
+member who signed up with one and then signs in with the other (with a different email) is not
+linked to their profile and gets the "Geen toegang" screen, which for Google says to try Discord.
+Only people who sign up with Google can link Discord (Instellingen), not the other way round.
 
 - Manage it in **Admin → Whitelist**, or in SQL:
   `INSERT INTO whitelist (discord_id) VALUES ('123456789012345678');` or

@@ -8,12 +8,13 @@ import { ForbiddenPage } from "../ForbiddenPage";
 import { NotFoundPage } from "../NotFoundPage";
 import { routes } from "../../config/routes";
 
-type ScreenKey = "crash" | "unreachable" | "forbidden" | "notFound" | "uploadQueued";
+type ScreenKey = "crash" | "unreachable" | "forbidden" | "forbiddenGoogle" | "notFound" | "uploadQueued";
 
 const SCREENS: { key: ScreenKey; label: string; when: string; icon: typeof WifiOff }[] = [
   { key: "crash", label: "Er ging iets mis", when: "De app crasht tijdens het renderen, en de automatische herlaad hielp niet.", icon: AlertTriangle },
   { key: "unreachable", label: "Kan de server niet bereiken", when: "Je bent ingelogd, maar je profiel kan niet worden geladen (backend offline, 5xx, geen bereik).", icon: WifiOff },
   { key: "forbidden", label: "Geen toegang", when: "Je Discord-account staat niet op de whitelist.", icon: ShieldX },
+  { key: "forbiddenGoogle", label: "Geen toegang (Google)", when: "Iemand logt in met Google, maar staat (nog) niet op de lijst, vaak omdat die eerder met Discord inlogde.", icon: ShieldX },
   { key: "notFound", label: "404 — pagina niet gevonden", when: "Een link naar een pagina die niet (meer) bestaat.", icon: FileQuestion },
   { key: "uploadQueued", label: "Upload wacht op verbinding", when: "Een story- of cosplayfoto kon niet weg door een slechte verbinding, en wordt automatisch opnieuw geprobeerd.", icon: UploadCloud },
 ];
@@ -99,6 +100,7 @@ export function AdminScreensPage() {
           {open === "crash" && <ErrorFallback />}
           {open === "unreachable" && <ServerUnreachable onRetry={() => {}} />}
           {open === "forbidden" && <ForbiddenPage onSignOut={() => setOpen(null)} />}
+          {open === "forbiddenGoogle" && <ForbiddenPage previewProvider="google" onSignOut={() => setOpen(null)} />}
           {open === "notFound" && <NotFoundPage />}
           {open === "uploadQueued" && <UploadQueuedPreview />}
           <button
