@@ -55,7 +55,7 @@ last refreshed from Discord/Google — see [security.md](security.md#authenticat
 
 | Table | Purpose | Notes |
 | --- | --- | --- |
-| `events` | A **trip**, one row per convention | `event_name`, `event_group_id` (series label), `location`, `description`, `image_url`, hotel (`is_hotel`, `hotel_location`, `hotel_info`), `is_party`, links and tickets (`website`, `ticket_url`, `ticket_sale_start`, `ticket_types` jsonb), practical info (`parking_info`, `locker_info`, `special_instructions`, `what_to_bring`), and `reminders_sent`, `ticket_reminders_sent` so a reminder is only sent once. |
+| `events` | A **trip**, one row per convention | `event_name`, `event_group_id` (series label), `location`, `description`, `image_url`, hotel (`is_hotel`, `hotel_location`, `hotel_info`), `event_type` (`con`/`gathering`/`concert`/NULL — shown at the top of the ticket card; `is_party` is the old boolean it replaced, left in place but unread), links and tickets (`website`, `ticket_url`, `ticket_sale_start`, `ticket_types` jsonb), practical info (`parking_info`, `locker_info`, `special_instructions`, `what_to_bring`), and `reminders_sent`, `ticket_reminders_sent` so a reminder is only sent once. |
 | `event_days` | A **day** of a trip | `event_id` → `events` (cascade), `date`, `has_con` (false = travel or hotel-only day), `participants`. Unique per `(event_id, date)`. |
 | `event_groups` | Series labels ("HDCC") | `name` is what `events.event_group_id` stores. |
 | `hotel_rooms` | Rooms of a hotel trip | `event_id` → the parent `events` row, `room_number` (nullable), `floor`, `capacity` (nullable), `instructions`, `occupants`. |
@@ -146,6 +146,7 @@ order, not the number in the title.
 | `migration_v2.29_avatar_resync` | `profiles.avatar_synced_at`, so a stale or broken avatar is re-checked periodically instead of only once ever. **Run before the deploy** — `get_current_user`'s own profile lookup selects this column unconditionally, so its absence fails every login, not just the resync. |
 | `migration_v2.30_custom_avatar` | `profiles.avatar_custom`, so a member's own uploaded avatar isn't overwritten by the resync above. **Run before the deploy** — same reason as v2.29: it's in the unconditional profile-lookup select, so its absence fails every login. |
 | `migration_v2.31_push_subscriptions` | `push_subscriptions` table. Run **before** the deploy; also needs the `VAPID_*` env vars — see [deployment.md#web-push](deployment.md#web-push). |
+| `migration_v2.32_event_type` | `events.event_type` (con/gathering/concert), backfilled from the old `is_party`. Safe to run any time — see its own header. |
 | `migration_cosplays`, `add_whitelist_emails`, `remove_trigger` | one-offs: the cosplays table, a bulk-add template for the whitelist, removal of the old profile trigger |
 | `backfill_events_from_calendar.py`, `repoint_fks_to_new_events.py`, `calendar_id_mapping.json` | the one-time data move from `calendar` to `events`/`event_days` (kept for the record) |
 
@@ -170,6 +171,7 @@ Run in the SQL editor:
 | v2.29 | `select 1 from information_schema.columns where table_name = 'profiles' and column_name = 'avatar_synced_at'` returns a row |
 | v2.30 | `select 1 from information_schema.columns where table_name = 'profiles' and column_name = 'avatar_custom'` returns a row |
 | v2.31 | `select to_regclass('public.push_subscriptions')` is not null |
+| v2.32 | `select 1 from information_schema.columns where table_name = 'events' and column_name = 'event_type'` returns a row |
 
 `db/check_schema.py` compares `db/schema.sql` with the live database, but
 `schema.sql` is out of date (see below), so it reports differences that are not

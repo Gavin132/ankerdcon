@@ -43,8 +43,9 @@ export function TripTicket({
   const going = myDays.length > 0;
   const year = trip.days[0].date.getFullYear();
   const when = `${trip.dateRange}${year !== getNow().getFullYear() ? ` ${year}` : ""}`;
+  const eventType = trip.days.find((d) => d.ev.event_type)?.ev.event_type ?? null;
   const summary = [
-    trip.days.some((d) => d.ev.is_party) ? "Feest" : trip.hasCon ? "Con" : "Reis",
+    eventType === "gathering" ? "Gathering" : eventType === "concert" ? "Concert" : trip.hasCon ? "Con" : "Reis",
     trip.days.length === 1 ? "1 dag" : `${trip.days.length} dagen`,
     trip.isHotel ? "hotel" : null,
   ].filter(Boolean).join(" · ");

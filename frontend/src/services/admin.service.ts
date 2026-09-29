@@ -6,6 +6,7 @@ import type {
   CdnListing,
   Event,
   EventDay,
+  EventType,
   CreateRideRequest,
   ExpenseShare,
   Meal,
@@ -231,7 +232,7 @@ export interface AdminCreateEventPayload {
   event_name: string;
   event_group_id?: string | null;
   is_hotel?: boolean;
-  is_party?: boolean;
+  event_type?: EventType | null;
   hotel_location?: string | null;
   hotel_info?: string | null;
   image_url?: string | null;

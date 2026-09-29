@@ -67,6 +67,10 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
 - The **ticket** (`components/trip/TripTicket.tsx`) shows the trip, its days, who
   is going and a countdown. Tap a day to sign up or off. Tap the avatars to see
   everyone by name (`TripParticipants.tsx`); that list has an "Iemand aanmelden" button too.
+- The line at the top of the ticket names what kind of trip it is: an admin can tag an event
+  **Con**, **Gathering** or **Concert** (`events.event_type` — Admin → Evenementen); untagged
+  falls back to "Con" when the trip has con programming (`has_con`) or "Reis" otherwise. Shown
+  the same way in the Agenda ticket and the Hub's upcoming-trip card.
 - A calendar button in the top bar, and "Andere evenementen" under the tiles, open a list of every
   trip to jump to another one (`TripSwitcher.tsx`); on a phone you can also swipe sideways to the
   next or previous trip (`hooks/useSwipe.ts`) — a one-time pill (`SwipeHint.tsx`) points this out

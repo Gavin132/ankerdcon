@@ -86,7 +86,7 @@ def _load_calendar_rows() -> list[dict]:
             "date": day["date"],
             "has_con": day.get("has_con", True),
             "is_hotel": event.get("is_hotel", False),
-            "is_party": event.get("is_party", False),
+            "event_type": event.get("event_type"),
             "hotel_location": event.get("hotel_location"),
             "hotel_info": event.get("hotel_info"),
             "participants": day.get("participants") or [],

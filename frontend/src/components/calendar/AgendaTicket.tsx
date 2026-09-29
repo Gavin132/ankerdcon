@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BedDouble, MapPin, PartyPopper, Ticket, Utensils } from "lucide-react";
+import { BedDouble, MapPin, Music2, PartyPopper, Ticket, Utensils } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { TripDayPicker } from "../trip/TripDayPicker";
 import { TripParticipants } from "../trip/TripParticipants";
@@ -41,14 +41,14 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
   const myDays = trip.days.filter((d) => d.ev.participants.some(isMine));
   const going = myDays.length > 0;
   const hotel = trip.days.map((d) => d.ev.hotel_location).find(Boolean);
-  const isParty = trip.days.some((d) => d.ev.is_party);
+  const eventType = trip.days.find((d) => d.ev.event_type)?.ev.event_type ?? null;
   const mealIds = new Set(meals.map((m) => m.linked_event_id).filter(Boolean));
   const hasMeal = trip.days.some((d) => mealIds.has(d.ev.id));
   const year = trip.days[0].date.getFullYear();
   const when = `${trip.dateRange}${year !== getNow().getFullYear() ? ` ${year}` : ""}`;
 
   const summary = [
-    isParty ? "Feest" : trip.hasCon ? "Con" : "Reis",
+    eventType === "gathering" ? "Gathering" : eventType === "concert" ? "Concert" : trip.hasCon ? "Con" : "Reis",
     trip.days.length === 1 ? "1 dag" : `${trip.days.length} dagen`,
     trip.isHotel ? "hotel" : null,
   ].filter(Boolean).join(" · ");
@@ -106,7 +106,8 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
             )}
             {hotel && <span className="flex min-w-0 items-center gap-1.5"><BedDouble size={13} className="shrink-0" /> <span className="truncate">{hotel}</span></span>}
             {hasMeal && <span className="flex items-center gap-1.5"><Utensils size={13} className="shrink-0" /> Etentje gepland</span>}
-            {isParty && <span className="flex items-center gap-1.5"><PartyPopper size={13} className="shrink-0" /> Feestje</span>}
+            {eventType === "gathering" && <span className="flex items-center gap-1.5"><PartyPopper size={13} className="shrink-0" /> Feestje</span>}
+            {eventType === "concert" && <span className="flex items-center gap-1.5"><Music2 size={13} className="shrink-0" /> Concert</span>}
           </p>
         </div>
 

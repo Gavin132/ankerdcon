@@ -4,6 +4,7 @@ from typing import Optional
 
 from pydantic import BaseModel, field_validator
 from app.core.validation import ImageUrl, WebUrl
+from app.models.calendar import EventType
 
 
 class AdminCreateUserRequest(BaseModel):
@@ -71,7 +72,7 @@ class AdminCreateEventRequest(BaseModel):
     event_name: str
     event_group_id: Optional[str] = None
     is_hotel: bool = False
-    is_party: bool = False
+    event_type: Optional[EventType] = None
     hotel_location: Optional[str] = None
     hotel_info: Optional[str] = None
     image_url: ImageUrl = None
@@ -91,7 +92,7 @@ class AdminUpdateEventRequest(BaseModel):
     event_name: Optional[str] = None
     event_group_id: Optional[str] = None
     is_hotel: Optional[bool] = None
-    is_party: Optional[bool] = None
+    event_type: Optional[EventType] = None
     hotel_location: Optional[str] = None
     hotel_info: Optional[str] = None
     image_url: ImageUrl = None

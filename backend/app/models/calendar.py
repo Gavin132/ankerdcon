@@ -1,5 +1,9 @@
 from pydantic import BaseModel, Field, model_validator
-from typing import Any
+from typing import Any, Literal
+
+# What kind of trip this is, shown at the top of its ticket card. None means
+# "just a trip" (the "Reis" fallback) — not every event needs one of these.
+EventType = Literal["con", "gathering", "concert"]
 
 class CalendarEvent(BaseModel):
     id: str
@@ -9,7 +13,7 @@ class CalendarEvent(BaseModel):
     date: str
     has_con: bool = True
     is_hotel: bool = False
-    is_party: bool = False
+    event_type: EventType | None = None
     hotel_location: str | None = None
     hotel_info: str | None = None
     participants: list[str] = []
@@ -31,8 +35,6 @@ class CalendarEvent(BaseModel):
     def clean_nulls(cls, data: Any) -> Any:
         if data.get('is_hotel') is None:
             data['is_hotel'] = False
-        if data.get('is_party') is None:
-            data['is_party'] = False
         if data.get('has_con') is None:
             data['has_con'] = True
         if data.get('participants') is None:
@@ -56,7 +58,7 @@ class Event(BaseModel):
     event_group_id: str | None = None
     event_name: str
     is_hotel: bool = False
-    is_party: bool = False
+    event_type: EventType | None = None
     hotel_location: str | None = None
     hotel_info: str | None = None
     image_url: str | None = None

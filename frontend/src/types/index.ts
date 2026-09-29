@@ -338,6 +338,10 @@ export interface BulkCreateHotelRoomsRequest {
   batches: HotelRoomBatch[];
 }
 
+/** What kind of trip this is, shown at the top of its ticket card. `null`/absent
+ * means a plain trip (the "Reis" fallback) — not every event needs one. */
+export type EventType = "con" | "gathering" | "concert";
+
 export interface CalendarEvent {
   id: string;
   event_group_id?: string;
@@ -346,7 +350,7 @@ export interface CalendarEvent {
   date: string;
   has_con: boolean;
   is_hotel: boolean;
-  is_party: boolean;
+  event_type: EventType | null;
   hotel_location?: string;
   hotel_info?: string;
   participants: string[];
@@ -370,7 +374,7 @@ export interface Event {
   event_group_id?: string;
   event_name: string;
   is_hotel: boolean;
-  is_party: boolean;
+  event_type: EventType | null;
   hotel_location?: string;
   hotel_info?: string;
   image_url?: string;

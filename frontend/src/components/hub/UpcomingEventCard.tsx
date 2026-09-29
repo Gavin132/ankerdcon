@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BedDouble, CalendarDays, MapPin, PartyPopper, Utensils } from "lucide-react";
+import { BedDouble, CalendarDays, MapPin, Music2, PartyPopper, Utensils } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { formatDate } from "../../utils/format";
 import { dayShort, monthShort } from "../../utils/multiDay";
@@ -92,8 +92,8 @@ export function UpcomingEventCard({
   const description = dayEvents.map((ev) => ev.description).find(Boolean) ?? null;
   const location = dayEvents.map((ev) => ev.location).find(Boolean) ?? null;
   const isHotel = dayEvents.some((ev) => ev.is_hotel);
-  const isParty = dayEvents.some((ev) => ev.is_party);
-  const isTravelOnly = !isGroupEvent && event.has_con === false && !event.is_party;
+  const eventType = dayEvents.find((ev) => ev.event_type)?.event_type ?? null;
+  const isTravelOnly = !isGroupEvent && event.has_con === false && !event.event_type;
   const title = isGroupEvent ? groupTitle : event.event_name;
   const when = isGroupEvent ? groupDateRange : formatDate(event.date);
   const participants = [...new Set(dayEvents.flatMap((ev) => ev.participants ?? []))];
@@ -132,7 +132,8 @@ export function UpcomingEventCard({
             {urgency === "tomorrow" && <Chip>Morgen</Chip>}
             {isTravelOnly && <Chip>Reisdag</Chip>}
             {isHotel && <Chip><BedDouble size={11} /> Hotel</Chip>}
-            {isParty && <Chip><PartyPopper size={11} /> Feestje</Chip>}
+            {eventType === "gathering" && <Chip><PartyPopper size={11} /> Feestje</Chip>}
+            {eventType === "concert" && <Chip><Music2 size={11} /> Concert</Chip>}
           </span>
         </button>
 

@@ -30,6 +30,10 @@ been applied. (Migrations v2.19, v2.25, v2.26 and v2.27 are done.)
       push. Also generate a VAPID key pair and set `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` on the
       backend and `VITE_VAPID_PUBLIC_KEY` on the frontend build — see docs/deployment.md#web-push. Until all of
       that is done, the "Pushmeldingen" toggle simply doesn't appear (this one really is harmless to leave unrun).
+- [ ] Run `db/migrations/migration_v2.32_event_type.sql` (`events.event_type`) any time — safe to leave unrun
+      for a while, unlike v2.29/v2.30: reads use `select("*")`, which just omits a missing column rather than
+      failing, so every trip shows no tag until this has run. Setting one in the admin event editor does need
+      it and fails clearly (503) until then. Also backfills `event_type = 'gathering'` from the old `is_party`.
 - [ ] The old `calendar` table still exists: v2.19's two `ALTER TABLE` statements were run but
       not its last line, which drops it. Drop it (`DROP TABLE calendar;`) when you are sure nothing
       needs it, ideally after a backup.
