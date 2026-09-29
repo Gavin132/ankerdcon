@@ -66,7 +66,7 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `POST /users/me/link-discord` | member | link a Discord account to a Google login |
 | `PUT /users/{id}/location` | member | set a location ping (for yourself, via `act_as`) |
 | `POST /users/banner`, `DELETE /users/banner` | member | upload or remove your banner |
-| `POST /users/avatar`, `DELETE /users/avatar` | member | upload or remove a custom profile picture (JPG/PNG/WebP, 5 MB), replacing/restoring the Discord or Google one |
+| `POST /users/avatar`, `DELETE /users/avatar` | member | upload or remove a custom profile picture — JPG/PNG/WebP (5 MB) or a small GIF (2 MB, kept as is, not re-encoded) — replacing/restoring the Discord or Google one |
 
 ### Calendar (trips) — `/calendar`
 

@@ -44,7 +44,7 @@ export async function deleteBanner(): Promise<void> {
  * square-cropped and compressed client-side (utils/imageCompression.ts). */
 export async function uploadAvatar(blob: Blob): Promise<{ url: string }> {
   const form = new FormData();
-  form.append("file", blob, "avatar.jpg");
+  form.append("file", blob, blob.type === "image/gif" ? "avatar.gif" : "avatar.jpg");
   const { data } = await apiClient.post<{ url: string }>(apiRoutes.users.avatar, form, {
     headers: { "Content-Type": "multipart/form-data" },
     timeout: UPLOAD_TIMEOUT_MS,

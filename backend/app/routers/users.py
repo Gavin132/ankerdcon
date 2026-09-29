@@ -21,10 +21,11 @@ LEGACY_BANNER_BUCKET = "banners"
 BANNER_MAX_BYTES = 8 * 1024 * 1024  # 8 MB
 BANNER_ALLOWED_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 
-# No GIF here (unlike the banner): a bouncing profile picture next to every name,
-# everywhere, is the kind of thing docs/design-system.md's "calm density" rules out.
 AVATAR_MAX_BYTES = 5 * 1024 * 1024  # 5 MB
-AVATAR_ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
+AVATAR_ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+# GIFs aren't re-encoded (clean_image only checks them, to keep the animation),
+# so unlike the other formats nothing shrinks it after upload — capped tighter here.
+AVATAR_GIF_MAX_BYTES = 2 * 1024 * 1024  # 2 MB
 
 router = APIRouter(prefix=UserRoutes.PREFIX, tags=["users"])
 
@@ -410,7 +411,16 @@ def _store_banner(current_user: str, position: str | None, content: bytes) -> di
 
 
 def _store_avatar(current_user: str, content: bytes) -> dict:
-    content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP"})
+    content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP", "GIF"})
+    # clean_image only checks a GIF (re-encoding would drop its frames), so this
+    # is the one place its size is actually capped down to the "kleine" (small)
+    # gifs Instellingen advertises — the general AVATAR_MAX_BYTES read at the
+    # upload boundary is too generous for something nothing else shrinks.
+    if content_type == "image/gif" and len(content) > AVATAR_GIF_MAX_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"Gif te groot. Maximaal {AVATAR_GIF_MAX_BYTES // (1024 * 1024)} MB voor een profielfoto-gif.",
+        )
 
     try:
         user_row = supabase.table(Tables.PROFILES).select("id, avatar_url, avatar_custom").eq("name", current_user).execute()
@@ -466,11 +476,11 @@ def _store_avatar(current_user: str, content: bytes) -> dict:
 @router.post(UserRoutes.AVATAR, response_model=dict)
 async def upload_avatar(file: UploadFile = File(...), current_user: str = Depends(get_current_user)) -> dict:
     """Upload a custom profile picture for the current user to MinIO,
-    replacing their Discord/Google one. JPG, PNG or WebP only."""
+    replacing their Discord/Google one. JPG, PNG, WebP, or a small GIF."""
     if file.content_type not in AVATAR_ALLOWED_TYPES:
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail="Bestandstype niet toegestaan. Gebruik JPG, PNG of WebP.",
+            detail="Bestandstype niet toegestaan. Gebruik JPG, PNG, WebP of GIF.",
         )
 
     content = await read_capped(file, AVATAR_MAX_BYTES)

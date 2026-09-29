@@ -230,10 +230,11 @@ by hand, by members or admins.
   trip, room. Others see a popup with a "Bekijk profiel" button
   (`components/common/UserProfilePopup.tsx`); it scrolls inside itself on small screens.
 - Renaming keeps history: old data stays under the old name, which becomes an alias.
-- **Profielfoto**: a member can upload their own picture (JPG/PNG/WebP, 5 MB, centre-cropped
-  to a square client-side), replacing the Discord/Google one. The upload is marked
-  `avatar_custom`, which stops the periodic resync below from overwriting it; deleting it
-  reverts to Discord/Google on the next resync.
+- **Profielfoto**: a pencil badge on the avatar (Profiel, own profile only) opens a picker —
+  JPG/PNG/WebP (5 MB, centre-cropped to a square client-side) or a small GIF (2 MB, kept as is
+  so the animation survives; not cropped). Replaces the Discord/Google one. The upload is
+  marked `avatar_custom`, which stops the periodic resync below from overwriting it; a small
+  "Verwijder eigen foto" link under the avatar reverts to Discord/Google on the next resync.
 - **Avatars stay current on their own**: since a stored `avatar_url` was previously only ever
   filled in once and then frozen, a changed or since-broken Discord/Google picture could stay
   wrong (or a broken image) forever. It is now re-checked once a day per profile

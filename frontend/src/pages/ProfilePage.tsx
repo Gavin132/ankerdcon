@@ -17,6 +17,7 @@ import {
   MapPin,
   Upload,
   Pencil,
+  Loader2,
   Save,
   Smartphone,
   Plus,
@@ -44,6 +45,10 @@ import { cropSquareAndCompress } from "../utils/imageCompression";
 import { toast } from "../store/toast.store";
 import { validateDisplayName, validatePhoneNumber } from "../utils/validation";
 import type { Badge, FontOption, User } from "../types";
+
+// Mirrors backend/app/routers/users.py's AVATAR_GIF_MAX_BYTES — checked here
+// too so a too-big gif never even starts uploading.
+const AVATAR_GIF_MAX_BYTES = 2 * 1024 * 1024;
 
 const FONT_MAP: Record<string, string> = {
   mono: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
@@ -255,6 +260,10 @@ function ProfileHead({
   badges,
   actions,
   children,
+  onEditAvatar,
+  avatarUploading,
+  onDeleteAvatar,
+  avatarDeleting,
 }: {
   user: User;
   hasAvatar: boolean;
@@ -267,6 +276,14 @@ function ProfileHead({
   badges: Badge[];
   actions?: React.ReactNode;
   children?: React.ReactNode;
+  /** Present only on your own profile: a pencil badge on the avatar opens the
+   * file picker directly, replacing the Discord badge in that corner — once
+   * you can change it, "via Discord" is no longer the interesting fact. */
+  onEditAvatar?: () => void;
+  avatarUploading?: boolean;
+  /** Only offered once there's something of yours to remove. */
+  onDeleteAvatar?: () => void;
+  avatarDeleting?: boolean;
 }) {
   return (
     <div className="card-surface overflow-hidden">
@@ -276,6 +293,7 @@ function ProfileHead({
       <div className="px-5 pb-5 sm:px-6 sm:pb-6">
         <div className="flex items-end justify-between gap-3">
           {/* Avatar — overlaps the banner bottom edge */}
+          <div className="flex shrink-0 flex-col items-start">
           <div className="relative -mt-[44px] shrink-0">
             <div
               className={`flex h-[88px] w-[88px] items-center justify-center overflow-hidden rounded-full border-4 border-surface ${
@@ -300,14 +318,44 @@ function ProfileHead({
                 </span>
               )}
             </div>
-            {/* Discord avatar badge — not shown for a member's own upload, which isn't from Discord */}
-            {hasAvatar && !user.avatar_custom && (
-              <div className="absolute bottom-1 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper">
-                <svg viewBox="0 0 24 24" className="h-3 w-3 fill-current" aria-hidden>
-                  <path d={DISCORD_PATH} />
-                </svg>
-              </div>
+            {onEditAvatar ? (
+              /* Own profile: a pencil to change the photo, taking this corner
+                 over from the Discord badge — once you can edit it, "via
+                 Discord" isn't the interesting fact anymore. */
+              <button
+                type="button"
+                onClick={onEditAvatar}
+                disabled={avatarUploading}
+                aria-label="Profielfoto wijzigen"
+                title="Profielfoto wijzigen"
+                className="absolute bottom-1 right-0 flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper transition-transform active:scale-95 disabled:opacity-60"
+              >
+                {avatarUploading ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : (
+                  <Pencil size={12} />
+                )}
+              </button>
+            ) : (
+              hasAvatar && !user.avatar_custom && (
+                <div className="absolute bottom-1 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper">
+                  <svg viewBox="0 0 24 24" className="h-3 w-3 fill-current" aria-hidden>
+                    <path d={DISCORD_PATH} />
+                  </svg>
+                </div>
+              )
             )}
+          </div>
+          {onDeleteAvatar && user.avatar_custom && (
+            <button
+              type="button"
+              onClick={onDeleteAvatar}
+              disabled={avatarDeleting}
+              className="mt-1.5 pl-1 text-[11px] font-semibold text-ink-3 underline decoration-dotted underline-offset-2 transition-colors hover:text-ink disabled:opacity-60"
+            >
+              {avatarDeleting ? "Bezig…" : "Verwijder eigen foto"}
+            </button>
+          )}
           </div>
 
           {actions && <div className="flex shrink-0 items-center gap-2 pt-3">{actions}</div>}
@@ -551,12 +599,22 @@ export function ProfilePage() {
     e.target.value = "";
     if (!f) return;
     try {
-      const blob = await cropSquareAndCompress(f);
-      await uploadAvatarMutation.mutateAsync(blob);
+      // A gif can't go through the square-crop canvas — that would flatten it to
+      // one still frame. Uploaded as-is instead (the backend keeps it "klein").
+      if (f.type === "image/gif") {
+        if (f.size > AVATAR_GIF_MAX_BYTES) {
+          toast("error", `Gif te groot. Maximaal ${AVATAR_GIF_MAX_BYTES / (1024 * 1024)} MB voor een profielfoto-gif.`);
+          return;
+        }
+        await uploadAvatarMutation.mutateAsync(f);
+      } else {
+        const blob = await cropSquareAndCompress(f);
+        await uploadAvatarMutation.mutateAsync(blob);
+      }
       setAvatarImgErr(false);
       toast("success", "Profielfoto bijgewerkt!");
-    } catch {
-      toast("error", "Kon profielfoto niet uploaden.");
+    } catch (err) {
+      toast("error", err instanceof Error && err.message ? err.message : "Kon profielfoto niet uploaden.");
     }
   }
 
@@ -718,8 +776,19 @@ export function ProfilePage() {
           nameStyle={nameStyle}
           pronouns={draftPronouns}
           badges={userBadges}
+          onEditAvatar={() => avatarInputRef.current?.click()}
+          avatarUploading={uploadAvatarMutation.isPending}
+          onDeleteAvatar={onAvatarDelete}
+          avatarDeleting={deleteAvatarMutation.isPending}
           actions={
             <>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={onAvatarFileChange}
+              />
               <Button
                 variant="secondary"
                 size="sm"
@@ -1042,70 +1111,6 @@ export function ProfilePage() {
             )}
           </Card>
         </div>
-
-        {/* ── Avatar ─────────────────────────────────────────────────────── */}
-        <Card title="Profielfoto">
-          {/* Hidden file input */}
-          <input
-            ref={avatarInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="hidden"
-            onChange={onAvatarFileChange}
-          />
-
-          <div className="flex items-center gap-4">
-            <div
-              className={`flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-1.5 border-line ${
-                !hasAvatar ? `bg-gradient-to-br ${avatarColor(user.name)}` : ""
-              }`}
-              style={
-                !hasAvatar && draftColor
-                  ? { backgroundColor: draftColor, backgroundImage: "none" }
-                  : undefined
-              }
-            >
-              {hasAvatar ? (
-                <img src={user.avatar_url} alt={user.name} className="h-full w-full object-cover" />
-              ) : (
-                <span className="text-xl font-bold text-white">{user.name[0].toUpperCase()}</span>
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-ink">
-                {user.avatar_custom ? "Eigen foto" : hasAvatar ? "Discord/Google avatar" : "Gegenereerde avatar"}
-              </p>
-              <p className="mt-0.5 text-xs text-ink-3">
-                {user.avatar_custom
-                  ? "Zichtbaar voor iedereen in de app"
-                  : hasAvatar
-                    ? "Gesynchroniseerd via Discord of Google"
-                    : "Upload een eigen foto, of koppel Discord / log in met Google"}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-3 flex gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="flex-1"
-              onClick={() => avatarInputRef.current?.click()}
-              loading={uploadAvatarMutation.isPending}
-            >
-              <Upload size={13} />
-              {user.avatar_custom ? "Wijzigen" : "Eigen foto uploaden"}
-            </Button>
-            {user.avatar_custom && (
-              <Button variant="danger" size="sm" onClick={onAvatarDelete} loading={deleteAvatarMutation.isPending}>
-                Verwijderen
-              </Button>
-            )}
-          </div>
-          <p className="mt-2 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-3">
-            JPEG · PNG · WebP · max 5 MB · wordt vierkant bijgesneden
-          </p>
-        </Card>
 
         <UserPhotos identifier={user.id ?? user.name} />
       </motion.div>

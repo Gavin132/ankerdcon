@@ -3,6 +3,8 @@ periodic resync (app/dependencies.py, _finalize_returning_user) leaves it alone,
 cleans up the file it replaces — but only when that file was itself a custom upload."""
 from io import BytesIO
 
+import pytest
+from fastapi import HTTPException
 from PIL import Image
 
 from app.routers import users
@@ -11,6 +13,12 @@ from app.routers import users
 def _jpeg_bytes() -> bytes:
     out = BytesIO()
     Image.new("RGB", (64, 64), (10, 20, 30)).save(out, "JPEG", quality=85)
+    return out.getvalue()
+
+
+def _gif_bytes(size=(64, 64)) -> bytes:
+    out = BytesIO()
+    Image.new("RGB", size, (10, 20, 30)).save(out, "GIF")
     return out.getvalue()
 
 
@@ -92,3 +100,19 @@ def test_deleting_when_there_is_nothing_custom_is_a_noop(monkeypatch):
     users.delete_avatar("Sam")
     assert fake.updates == []
     assert removed == []
+
+
+def test_a_small_gif_is_accepted_unmodified(monkeypatch):
+    fake, _ = _patch(monkeypatch, [{"id": "u1", "avatar_url": None, "avatar_custom": False}])
+    gif = _gif_bytes()
+    result = users._store_avatar("Sam", gif)
+    assert result["url"].endswith(".gif")
+    assert fake.updates[0]["avatar_custom"] is True
+
+
+def test_a_gif_over_the_small_cap_is_refused(monkeypatch):
+    _patch(monkeypatch, [{"id": "u1", "avatar_url": None, "avatar_custom": False}])
+    monkeypatch.setattr(users, "AVATAR_GIF_MAX_BYTES", 10)  # smaller than any real gif
+    with pytest.raises(HTTPException) as e:
+        users._store_avatar("Sam", _gif_bytes())
+    assert e.value.status_code == 413
