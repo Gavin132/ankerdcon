@@ -23,6 +23,9 @@ All notable changes to Ankerd Con are documented here.
   reach them; a meal never left the list either, however long ago it happened. It now shows every
   meal, and drops one from the list (not from the trip) 3 hours after it starts — the same rule
   the Hub's meal card already used.
+- The Foto's tile on the trip page put its own upload button inside the tile's outer button — invalid
+  HTML a browser "fixes" by silently splitting the two apart, which could make clicks land wrong.
+  The tile is a div now, styled and behaving the same either way.
 
 ### Added
 
