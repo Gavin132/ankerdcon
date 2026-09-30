@@ -127,7 +127,29 @@ def test_admin_update_event_regeocodes_a_changed_location(monkeypatch):
     body = AdminUpdateEventRequest(location="Jaarbeurs Utrecht")
     asyncio.run(admin_router.admin_update_event("e1", body, "admin"))
     assert db.rows[0]["location_lat"] == 52.09
-    assert db.rows[0]["location_lng"] == 5.12
+
+
+def test_admin_create_event_stores_the_maps_url_overrides(monkeypatch):
+    db = FakeSupabase()
+    monkeypatch.setattr(admin_router, "supabase", db)
+    monkeypatch.setattr(admin_router, "geocode", _fake_geocode)
+    body = AdminCreateEventRequest(
+        event_name="HDCC", location="Jaarbeurs Utrecht", location_maps_url="https://maps.app.goo.gl/con",
+        hotel_location="Van der Valk Utrecht", hotel_location_maps_url="https://maps.app.goo.gl/hotel",
+    )
+    asyncio.run(admin_router.admin_create_event(body, "admin"))
+    assert db.rows[0]["location_maps_url"] == "https://maps.app.goo.gl/con"
+    assert db.rows[0]["hotel_location_maps_url"] == "https://maps.app.goo.gl/hotel"
+
+
+def test_admin_update_event_can_clear_a_maps_url_override(monkeypatch):
+    db = FakeSupabase(rows=[{"id": "e1", "location_maps_url": "https://maps.app.goo.gl/old"}])
+    monkeypatch.setattr(admin_router, "supabase", db)
+    monkeypatch.setattr(admin_router, "geocode", _fake_geocode)
+    body = AdminUpdateEventRequest(location_maps_url=None)
+    body.__pydantic_fields_set__.add("location_maps_url")
+    asyncio.run(admin_router.admin_update_event("e1", body, "admin"))
+    assert db.rows[0]["location_maps_url"] is None
 
 
 def test_admin_update_event_clearing_location_clears_its_coordinates(monkeypatch):

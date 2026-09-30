@@ -225,7 +225,7 @@ export default function CrewMap({ users, onOpenProfile, trip, meals }: CrewMapPr
         lat: info.location_lat,
         lng: info.location_lng,
         label: trip.title,
-        routeUrl: pingMapUrl(info.location_lat, info.location_lng),
+        routeUrl: info.location_maps_url || pingMapUrl(info.location_lat, info.location_lng),
       });
     }
     if (trip.isHotel && info?.hotel_location_lat != null && info?.hotel_location_lng != null) {
@@ -234,7 +234,7 @@ export default function CrewMap({ users, onOpenProfile, trip, meals }: CrewMapPr
         lat: info.hotel_location_lat,
         lng: info.hotel_location_lng,
         label: "Hotel",
-        routeUrl: pingMapUrl(info.hotel_location_lat, info.hotel_location_lng),
+        routeUrl: info.hotel_location_maps_url || pingMapUrl(info.hotel_location_lat, info.hotel_location_lng),
       });
     }
     for (const m of tripMeals(meals, trip)) {

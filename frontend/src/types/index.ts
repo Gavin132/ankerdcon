@@ -360,6 +360,10 @@ export interface CalendarEvent {
   hotel_location?: string;
   hotel_location_lat?: number | null;
   hotel_location_lng?: number | null;
+  /** An exact Google Maps link, admin-set, used for the hotel pin's route
+   * instead of the geocoded coordinates when given — e.g. a hotel chain
+   * whose name geocodes to the wrong city. */
+  hotel_location_maps_url?: string | null;
   hotel_info?: string;
   participants: string[];
   image_url?: string;
@@ -367,6 +371,8 @@ export interface CalendarEvent {
   location?: string;
   location_lat?: number | null;
   location_lng?: number | null;
+  /** Same idea as hotel_location_maps_url, for the con location's pin. */
+  location_maps_url?: string | null;
   website?: string;
   ticket_url?: string;
   ticket_sale_start?: string;
@@ -388,12 +394,14 @@ export interface Event {
   hotel_location?: string;
   hotel_location_lat?: number | null;
   hotel_location_lng?: number | null;
+  hotel_location_maps_url?: string | null;
   hotel_info?: string;
   image_url?: string;
   description?: string;
   location?: string;
   location_lat?: number | null;
   location_lng?: number | null;
+  location_maps_url?: string | null;
   website?: string;
   ticket_url?: string;
   ticket_sale_start?: string;

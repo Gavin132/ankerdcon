@@ -54,9 +54,10 @@ All notable changes to Ankerd Con are documented here.
   same meal) — it used to go to everyone with "Nieuwe rit" on, regardless of whether they were even
   going or already sorted.
 - **Crew map**: the con location, hotel and each dinnerplan now show up as their own pins, always —
-  not only once someone's shared a live location. A dinnerplan can carry its own exact Google Maps
-  link (set when planning it) for a precise pin instead of a geocoded address. Needs migration
-  v2.33.
+  not only once someone's shared a live location. A location is geocoded automatically when saved;
+  when that doesn't land on the right spot (a hotel chain resolving to the wrong city, say), a
+  dinnerplan or, in Admin → Evenementen, the con/hotel location can carry its own exact Google Maps
+  link instead. Needs migrations v2.33 and v2.34.
 - Signing several people up for a day (or into a hotel room) is now one request instead of one per
   person — it used to visibly crawl one name at a time for a bigger group.
 - The launch splash no longer holds for a fixed ~4.5 s regardless of how ready the app already is;

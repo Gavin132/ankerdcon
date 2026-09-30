@@ -721,9 +721,9 @@ async def admin_create_event(body: AdminCreateEventRequest, _: str = Depends(get
 @router.put(AdminRoutes.EVENT_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
 async def admin_update_event(event_id: str, body: AdminUpdateEventRequest, _: str = Depends(get_admin_user)) -> None:
     updates = _build_updates(body, nullable_fields={
-        "event_group_id", "event_type", "hotel_location", "hotel_info", "image_url", "description",
-        "location", "website", "ticket_url", "ticket_sale_start", "locker_info",
-        "parking_info", "special_instructions", "what_to_bring",
+        "event_group_id", "event_type", "hotel_location", "hotel_location_maps_url", "hotel_info",
+        "image_url", "description", "location", "location_maps_url", "website", "ticket_url",
+        "ticket_sale_start", "locker_info", "parking_info", "special_instructions", "what_to_bring",
     })
     if not updates:
         return

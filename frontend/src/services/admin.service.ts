@@ -236,10 +236,12 @@ export interface AdminCreateEventPayload {
   is_hotel?: boolean;
   event_type?: EventType | null;
   hotel_location?: string | null;
+  hotel_location_maps_url?: string | null;
   hotel_info?: string | null;
   image_url?: string | null;
   description?: string | null;
   location?: string | null;
+  location_maps_url?: string | null;
   website?: string | null;
   ticket_url?: string | null;
   ticket_sale_start?: string | null;

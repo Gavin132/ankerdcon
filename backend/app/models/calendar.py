@@ -17,6 +17,7 @@ class CalendarEvent(BaseModel):
     hotel_location: str | None = None
     hotel_location_lat: float | None = None
     hotel_location_lng: float | None = None
+    hotel_location_maps_url: str | None = None
     hotel_info: str | None = None
     participants: list[str] = []
     # Info fields
@@ -25,6 +26,7 @@ class CalendarEvent(BaseModel):
     location: str | None = None
     location_lat: float | None = None
     location_lng: float | None = None
+    location_maps_url: str | None = None
     website: str | None = None
     ticket_url: str | None = None
     ticket_sale_start: str | None = None
@@ -66,12 +68,14 @@ class Event(BaseModel):
     hotel_location: str | None = None
     hotel_location_lat: float | None = None
     hotel_location_lng: float | None = None
+    hotel_location_maps_url: str | None = None
     hotel_info: str | None = None
     image_url: str | None = None
     description: str | None = None
     location: str | None = None
     location_lat: float | None = None
     location_lng: float | None = None
+    location_maps_url: str | None = None
     website: str | None = None
     ticket_url: str | None = None
     ticket_sale_start: str | None = None

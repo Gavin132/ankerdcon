@@ -76,10 +76,12 @@ class AdminCreateEventRequest(BaseModel):
     is_hotel: bool = False
     event_type: Optional[EventType] = None
     hotel_location: Optional[str] = None
+    hotel_location_maps_url: WebUrl = None
     hotel_info: Optional[str] = None
     image_url: ImageUrl = None
     description: Optional[str] = None
     location: Optional[str] = None
+    location_maps_url: WebUrl = None
     website: WebUrl = None
     ticket_url: WebUrl = None
     ticket_sale_start: Optional[str] = None
@@ -96,10 +98,12 @@ class AdminUpdateEventRequest(BaseModel):
     is_hotel: Optional[bool] = None
     event_type: Optional[EventType] = None
     hotel_location: Optional[str] = None
+    hotel_location_maps_url: WebUrl = None
     hotel_info: Optional[str] = None
     image_url: ImageUrl = None
     description: Optional[str] = None
     location: Optional[str] = None
+    location_maps_url: WebUrl = None
     website: WebUrl = None
     ticket_url: WebUrl = None
     ticket_sale_start: Optional[str] = None

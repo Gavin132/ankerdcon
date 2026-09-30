@@ -236,7 +236,11 @@ by hand, by members or admins.
   whenever its location text is saved — best-effort, no pin when it can't be resolved (a
   venue name OSM genuinely doesn't have, not just a rare failure). A dinnerplan can also
   carry its own exact Google Maps link (`maps_url`, set when planning it), used for that
-  pin's route instead of the geocoded coordinates when given.
+  pin's route instead of the geocoded coordinates when given — same override, admin-set, for
+  the con location and hotel (Admin → Evenementen), for a venue whose address geocodes
+  unreliably (e.g. a hotel chain resolving to the wrong city). None of these overrides place
+  a pin by themselves — the location text still needs to geocode first, they only change
+  where that pin's "Route" link goes.
 - A **profile** has an avatar (from Discord/Google, or a member's own upload — see below),
   banner (colour or image), name font and colour,
   pronouns, bio, badges, aliases (former names), phone number and, on the current
