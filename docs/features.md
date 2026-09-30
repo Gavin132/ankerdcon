@@ -232,10 +232,11 @@ by hand, by members or admins.
   stored on the profile and considered fresh for two hours. Pings within 20 m of each
   other share a pin.
 - A venue pin's coordinates are geocoded server-side (`app/services/geocoding_service.py`,
-  Open-Meteo's free geocoding API) whenever its location text is saved — best-effort, no
-  pin when it can't be resolved. A dinnerplan can also carry its own exact Google Maps
-  link (`maps_url`, set when planning it), used for that pin's route instead of the
-  geocoded coordinates when given.
+  Nominatim/OpenStreetMap, the same free geocoder `LocationSearchInput.tsx` already uses)
+  whenever its location text is saved — best-effort, no pin when it can't be resolved (a
+  venue name OSM genuinely doesn't have, not just a rare failure). A dinnerplan can also
+  carry its own exact Google Maps link (`maps_url`, set when planning it), used for that
+  pin's route instead of the geocoded coordinates when given.
 - A **profile** has an avatar (from Discord/Google, or a member's own upload — see below),
   banner (colour or image), name font and colour,
   pronouns, bio, badges, aliases (former names), phone number and, on the current
