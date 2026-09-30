@@ -255,21 +255,24 @@ holds in its query cache, so opening it makes no requests.
 `backend/app/services/`. Four things, all opt-in where they reach a person:
 
 - a **shared webhook** post per new event, ride, expense or meal, reminder and ticket sale;
-- **personal DMs and/or push** per category, chosen under Instellingen → Notificaties: a
-  member checks what they want to hear about once, and gets it through whichever
-  channel(s) they've set up (Discord DM needs `allow_dm` + a linked account; push needs
-  "Pushmeldingen" turned on for that device — see below);
+- **personal DMs or push** per category, chosen under Instellingen → Notificaties (and a step
+  in onboarding): a member picks exactly one channel — Discord DM or "Pushmeldingen" on this
+  device, never both — then checks what they want to hear about; the category list is the same
+  either way. `NotificationChannelPicker` (`components/notifications/`) is that channel choice;
+  it only offers a channel that's actually usable (Discord only if the profile has a linked
+  account, push only where the browser supports it), and picking one turns the other off —
+  selecting push unsubscribes Discord DMs (`allow_dm`) and vice versa;
 - **payment requests and confirmations**, the same way;
 - the in-app **announcement banner** and **changelog banner** (admin-written).
 
-**Pushmeldingen**: a member can turn on push per device (Instellingen → Notificaties, and a
-step in onboarding), independent of Discord — the one channel available to a Google-only
-member. Works on Android and desktop from the browser directly; on iOS it needs the app added
-to the home screen first, same as every browser's web push (that row explains this and doesn't
-offer a switch until then). Uses [VAPID](https://datatracker.ietf.org/doc/html/rfc8292), no
-third-party service or cost. The toggle reflects the device's real subscription state, not a
-saved preference, so it's always right even after a reinstall or a permission change made
-outside the app. See [deployment.md#web-push](deployment.md#web-push) for server setup.
+**Pushmeldingen**: per device, independent of Discord — the one channel available to a
+Google-only member. Works on Android and desktop from the browser directly; on iOS it needs the
+app added to the home screen first, same as every browser's web push (that row explains this
+and stays disabled until then). Uses [VAPID](https://datatracker.ietf.org/doc/html/rfc8292), no
+third-party service or cost. Its state in `NotificationChannelPicker` reflects the device's real
+subscription (via `hooks/usePush.ts`), not a saved preference, so it's always right even after a
+reinstall or a permission change made outside the app. See
+[deployment.md#web-push](deployment.md#web-push) for server setup.
 
 See [architecture.md](architecture.md#background-jobs-and-notifications) for the schedule.
 

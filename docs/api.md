@@ -161,7 +161,10 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 Sending goes through `app/services/push_service.py`, called from `notification_service.py`
 alongside every Discord DM: `notification_categories` governs both channels (a member who wants
 "Nieuwe rit" gets it as a DM and/or a push, whichever they've set up); `allow_dm` only ever
-gated the DM half. Needs `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` — see
+gated the DM half. The backend keeps the two channels fully independent on purpose — the
+frontend's `NotificationChannelPicker` is what makes a member pick just one, by flipping
+`allow_dm` and the device's push subscription together; nothing stops both being on at once if
+called directly. Needs `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` — see
 [deployment.md#web-push](deployment.md#web-push); without them, sending silently does nothing.
 
 ### Link previews — *public*, not under `/api`

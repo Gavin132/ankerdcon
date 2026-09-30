@@ -29,11 +29,14 @@ All notable changes to Ankerd Con are documented here.
 - **Event tags**: an event can be tagged Con, Gathering or Concert (Admin → Evenementen), shown at
   the top of its ticket card — replaces the old "Feestje" checkbox. Needs migration v2.32.
 - **Instellingen → Dichtheid**: a comfortable/compact toggle that tightens spacing app-wide.
-- **Pushmeldingen**: a second notification channel next to Discord DMs, per device (Instellingen
-  → Notificaties, and a step in onboarding) — the one that also works for members who signed up
-  with Google and have no Discord DM channel at all. Same category preferences as DM's now
-  govern both. Needs migration v2.31 and a VAPID key pair (see docs/deployment.md#web-push);
-  the toggle simply doesn't appear until that's set up.
+- **Pushmeldingen**: a notification channel next to Discord DMs, per device — the one that also
+  works for members who signed up with Google and have no Discord DM channel at all. Needs
+  migration v2.31 and a VAPID key pair (see docs/deployment.md#web-push); it simply isn't
+  offered until that's set up.
+- **Notificaties** (Instellingen, and a step in onboarding) now asks for one channel — Discord
+  or Pushmeldingen, never both — instead of two separate switches; the category list underneath
+  is unchanged and governs whichever channel is picked. Only a channel that's actually usable is
+  offered (Discord needs a linked account, push needs browser support).
 - Signing several people up for a day (or into a hotel room) is now one request instead of one per
   person — it used to visibly crawl one name at a time for a bigger group.
 - The launch splash no longer holds for a fixed ~4.5 s regardless of how ready the app already is;

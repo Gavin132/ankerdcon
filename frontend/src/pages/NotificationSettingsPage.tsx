@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Bell, BellOff, Save, MessageSquareOff, ArrowRight } from "lucide-react";
+import { Save, MessageSquareOff, ArrowRight } from "lucide-react";
 import { Button } from "../components/common/Button";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { UnsavedChangesModal } from "../components/common/UnsavedChangesModal";
@@ -11,7 +11,7 @@ import { useCurrentUser, useUpdatePreferences } from "../hooks/useUsers";
 import { useSmartBack } from "../hooks/useSmartBack";
 import { routes } from "../config/routes";
 import { NOTIFICATION_CATEGORIES } from "../constants/notifications";
-import { PushToggle } from "../components/notifications/PushToggle";
+import { NotificationChannelPicker } from "../components/notifications/NotificationChannelPicker";
 import { toast } from "../store/toast.store";
 
 /** Flat top bar for the pages outside the app shell: back, title, and home on a fresh entry. */
@@ -108,53 +108,18 @@ export function NotificationSettingsPage() {
         )}
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
-          <PushToggle />
+          <NotificationChannelPicker allowDm={draftAllowDm} onAllowDmChange={setDraftAllowDm} hasDiscord={!!user.discord_id} />
         </motion.div>
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
           <div className="card-surface overflow-hidden">
             <div className="px-4 pb-3 pt-3.5">
-              <p className="section-label">Discord DM's</p>
+              <p className="section-label">Waarvoor</p>
               <p className="mt-1 text-[12.5px] text-ink-3">
-                De bot stuurt je een privébericht voor de categorieën die je hieronder aanzet — en, als
-                pushmeldingen hierboven aanstaan, ook een melding op dit apparaat voor diezelfde categorieën.
+                Voor deze categorieën krijg je een bericht, via het kanaal dat je hierboven gekozen hebt.
               </p>
             </div>
 
-            {/* Master DM toggle */}
-            <div className="flex items-center justify-between gap-4 border-t border-line px-4 py-3">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken ${draftAllowDm ? "text-ink" : "text-ink-3"}`}>
-                  {draftAllowDm
-                    ? <Bell size={16} />
-                    : <BellOff size={16} />}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[14px] font-semibold text-ink">Discord DM's toestaan</p>
-                  <p className="text-[12.5px] text-ink-3">
-                    Zet uit om alle categorieën hieronder te negeren.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={draftAllowDm}
-                onClick={() => setDraftAllowDm((v) => !v)}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-1.5 transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-60 ${
-                  draftAllowDm ? "border-outline bg-brand" : "border-line bg-sunken"
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-4 w-4 rounded-full transition-transform duration-200 ${
-                    draftAllowDm ? "translate-x-[22px] bg-brand-on" : "translate-x-[3px] bg-ink-3"
-                  }`}
-                />
-              </button>
-            </div>
-
-            {/* Per-category toggles — not faded by the Discord switch above:
-                these also govern push, which is independent of allow_dm. */}
             <div className="divide-y divide-line border-t border-line">
               {NOTIFICATION_CATEGORIES.map((cat) => {
                 const checked = draftCategories.includes(cat.id);
