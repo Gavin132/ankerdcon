@@ -103,6 +103,23 @@ def test_an_inactive_member_gets_neither(monkeypatch, dmed, pushed):
     assert pushed == [[]]
 
 
+def test_eligible_names_further_restricts_who_gets_it(monkeypatch, dmed, pushed):
+    monkeypatch.setattr(svc, "supabase", FakeSupabase([
+        _profile(name="Sam", discord_id="d1"),
+        _profile(name="Timo", discord_id="d2"),
+    ]))
+    svc.broadcast_category_dm("tok", "ride_created", "content", eligible_names={"Timo"})
+    assert dmed == ["d2"]
+    assert pushed == [["Timo"]]
+
+
+def test_eligible_names_none_means_no_extra_restriction(monkeypatch, dmed, pushed):
+    monkeypatch.setattr(svc, "supabase", FakeSupabase([_profile()]))
+    svc.broadcast_category_dm("tok", "ride_created", "content", eligible_names=None)
+    assert dmed == ["d1"]
+    assert pushed == [["Sam"]]
+
+
 def test_push_title_is_the_category_not_the_app_name(monkeypatch, dmed, pushed_titles):
     monkeypatch.setattr(svc, "supabase", FakeSupabase([_profile()]))
     svc.broadcast_category_dm("tok", "meal_created", "🍽️ **Nieuwe maaltijd: Pizza**")

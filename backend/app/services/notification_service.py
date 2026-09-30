@@ -83,10 +83,14 @@ _PUSH_TITLES: dict[str, str] = {
 }
 
 
-def broadcast_category_dm(bot_token: str, category: str, content: str) -> None:
+def broadcast_category_dm(bot_token: str, category: str, content: str, eligible_names: set[str] | None = None) -> None:
     """Send `content` to every active, opted-in user for `category` — as a
     Discord DM (needs `allow_dm` + a linked account), a push (needs a
     subscription), or both; see the module docstring for exactly which.
+
+    `eligible_names`, when given, further restricts who gets it on top of the
+    usual category opt-in — e.g. rides.py also requires being signed up for
+    that event day and not already having a ride that covers it.
 
     Fire-and-forget — intended for `background_tasks.add_task`. Never raises;
     a failed fetch or a single failed send must never break the caller.
@@ -108,6 +112,8 @@ def broadcast_category_dm(bot_token: str, category: str, content: str) -> None:
         if not profile.get("is_active", True):
             continue
         if category not in (profile.get("notification_categories") or []):
+            continue
+        if eligible_names is not None and profile["name"] not in eligible_names:
             continue
         if bot_token and profile.get("allow_dm", True) and profile.get("discord_id"):
             discord_bot.send_dm(bot_token, profile["discord_id"], content)

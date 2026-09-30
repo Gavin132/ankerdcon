@@ -39,6 +39,10 @@ All notable changes to Ankerd Con are documented here.
   offered (Discord needs a linked account, push needs browser support).
 - A pushmelding's title is now what it's about ("Nieuwe maaltijd", "Betaalverzoek", …) instead of
   always "Ankerd Con" — the phone already shows the app's own name and icon next to it.
+- A new ride's notification now only reaches members signed up for that day who don't already have
+  a ride for the same need (the same direction that day, or for a restaurant ride, a ride to that
+  same meal) — it used to go to everyone with "Nieuwe rit" on, regardless of whether they were even
+  going or already sorted.
 - Signing several people up for a day (or into a hotel room) is now one request instead of one per
   person — it used to visibly crawl one name at a time for a bigger group.
 - The launch splash no longer holds for a fixed ~4.5 s regardless of how ready the app already is;

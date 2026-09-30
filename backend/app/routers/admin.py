@@ -52,6 +52,7 @@ from app.models.badge import Badge, BadgeOrderItem, CreateBadgeRequest, UpdateBa
 from app.models.calendar import Event, EventDay, HotelRoom
 from app.routers.calendar import _hotel_group_key
 from app.routers.expenses import expense_in_open_settlement, share_in_open_settlement
+from app.routers.rides import _notify_ride_created
 from app.models.meal import Meal
 from app.models.rides import CreateRideRequest, Ride
 from app.models.user import User
@@ -426,16 +427,7 @@ def admin_create_ride(
         logger.error("Failed to create ride: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
-    background_tasks.add_task(
-        notification_service.broadcast_category_dm,
-        settings.discord_bot_token,
-        notification_service.NotificationCategory.RIDE_CREATED,
-        M.DM_RIDE_CREATED.format(
-            driver=body.driver,
-            departure_time=body.departure_time,
-            start_location=body.start_location,
-        ),
-    )
+    background_tasks.add_task(_notify_ride_created, settings, body, body.driver, resp.data[0]["id"])
     return resp.data[0]
 
 

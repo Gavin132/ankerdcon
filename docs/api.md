@@ -91,6 +91,13 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `POST /rides/{id}/restaurant-driver`, `…/leave` | member | join or leave as a driver of a restaurant ride |
 | `POST /rides/{id}/restaurant-driver/assign`, `…/unassign` | member | put a passenger in or out of a car |
 
+Creating a ride broadcasts `ride_created` (`app/routers/rides.py`'s `_notify_ride_created`, also used by
+`admin_create_ride`), narrowed by `_day_ride_eligible_names` beyond the usual category opt-in: only a
+member signed up for that ride's day (`event_days.participants`) who doesn't already have a ride for the
+same need — the same `direction` that day, or for a `Restaurant` ride, a ride to that same
+`linked_meal_id` specifically. A ride with no `linked_event_id` (there is nothing to check "signed up"
+against) falls back to notifying every opted-in member, as before.
+
 ### Meals — `/meals`
 
 | Method and path | Who | What |
