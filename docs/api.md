@@ -164,7 +164,11 @@ alongside every Discord DM: `notification_categories` governs both channels (a m
 gated the DM half. The backend keeps the two channels fully independent on purpose — the
 frontend's `NotificationChannelPicker` is what makes a member pick just one, by flipping
 `allow_dm` and the device's push subscription together; nothing stops both being on at once if
-called directly. Needs `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` — see
+called directly. The push notification's title is a short, category-specific label (e.g.
+"Nieuwe maaltijd"), not the app name — a phone's own notification chrome already shows that;
+see `notification_service._PUSH_TITLES` for the mapping, and pass `title=` to `send_personal_dm`
+for a one-off notice (settlements.py) that isn't tied to a category. Needs
+`VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` — see
 [deployment.md#web-push](deployment.md#web-push); without them, sending silently does nothing.
 
 ### Link previews — *public*, not under `/api`

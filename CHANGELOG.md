@@ -37,6 +37,8 @@ All notable changes to Ankerd Con are documented here.
   or Pushmeldingen, never both — instead of two separate switches; the category list underneath
   is unchanged and governs whichever channel is picked. Only a channel that's actually usable is
   offered (Discord needs a linked account, push needs browser support).
+- A pushmelding's title is now what it's about ("Nieuwe maaltijd", "Betaalverzoek", …) instead of
+  always "Ankerd Con" — the phone already shows the app's own name and icon next to it.
 - Signing several people up for a day (or into a hotel room) is now one request instead of one per
   person — it used to visibly crawl one name at a time for a bigger group.
 - The launch splash no longer holds for a fixed ~4.5 s regardless of how ready the app already is;

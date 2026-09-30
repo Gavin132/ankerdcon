@@ -180,9 +180,9 @@ def _link_line(settings: Settings, settlement_id: Optional[str] = None) -> str:
     return f"\n{base}/finance?settle={settlement_id}" if settlement_id else f"\n{base}/finance"
 
 
-def _dm(background_tasks: BackgroundTasks, settings: Settings, profile_id: str, content: str) -> None:
+def _dm(background_tasks: BackgroundTasks, settings: Settings, profile_id: str, content: str, title: str) -> None:
     background_tasks.add_task(
-        notification_service.send_personal_dm, settings.discord_bot_token, profile_id, content
+        notification_service.send_personal_dm, settings.discord_bot_token, profile_id, content, title
     )
 
 
@@ -348,13 +348,16 @@ def create_settlement(
     if bal.amount_cents > 0:
         if new_status == "requested":
             _dm(background_tasks, settings, other, M.DM_SETTLEMENT_REQUESTED.format(
-                creditor=escape_markdown(names[me]), link_line=_link_line(settings, row["id"]), **fmt))
+                creditor=escape_markdown(names[me]), link_line=_link_line(settings, row["id"]), **fmt),
+                "Betaalverzoek")
         elif new_status == "claimed":
             _dm(background_tasks, settings, other, M.DM_SETTLEMENT_PAID.format(
-                debtor=escape_markdown(names[me]), link_line=_link_line(settings, row["id"]), **fmt))
+                debtor=escape_markdown(names[me]), link_line=_link_line(settings, row["id"]), **fmt),
+                "Betaling gemeld")
         else:
             _dm(background_tasks, settings, other, M.DM_SETTLEMENT_CONFIRMED.format(
-                creditor=escape_markdown(names[me]), **fmt))
+                creditor=escape_markdown(names[me]), **fmt),
+                "Betaling bevestigd")
 
     return Settlement(**_with_names(row, names))
 
@@ -387,7 +390,7 @@ def mark_paid(
         debtor=escape_markdown(names.get(row["from_user_id"], "Iemand")),
         amount=float(row["amount"]), currency=escape_markdown(row["currency"]),
         link_line=_link_line(settings, settlement_id),
-    ))
+    ), "Betaling gemeld")
     return {"status": "claimed"}
 
 
@@ -425,7 +428,7 @@ def confirm(
     _dm(background_tasks, settings, row["from_user_id"], M.DM_SETTLEMENT_CONFIRMED.format(
         creditor=escape_markdown(names.get(row["to_user_id"], "Iemand")),
         amount=float(row["amount"]), currency=escape_markdown(row["currency"]),
-    ))
+    ), "Betaling bevestigd")
     return {"status": "confirmed"}
 
 
@@ -460,9 +463,9 @@ def withdraw(
     if receiver_rejects:
         _dm(background_tasks, settings, row["from_user_id"], M.DM_SETTLEMENT_NOT_RECEIVED.format(
             creditor=escape_markdown(names.get(row["to_user_id"], "Iemand")),
-            link_line=_link_line(settings), **fmt))
+            link_line=_link_line(settings), **fmt), "Betaling niet ontvangen")
     else:
         other = row["to_user_id"] if me["id"] == row["from_user_id"] else row["from_user_id"]
         _dm(background_tasks, settings, other, M.DM_SETTLEMENT_CANCELLED.format(
             name=escape_markdown(me["name"]),
-            link_line=_link_line(settings), **fmt))
+            link_line=_link_line(settings), **fmt), "Verzoek ingetrokken")

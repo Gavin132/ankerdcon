@@ -46,6 +46,13 @@ def pushed(monkeypatch):
 
 
 @pytest.fixture
+def pushed_titles(monkeypatch):
+    calls = []
+    monkeypatch.setattr(svc.push_service, "send_push", lambda settings, names, title, body: calls.append(title))
+    return calls
+
+
+@pytest.fixture
 def dmed(monkeypatch):
     calls = []
     monkeypatch.setattr(svc.discord_bot, "send_dm", lambda token, discord_id, content: calls.append(discord_id))
@@ -96,6 +103,18 @@ def test_an_inactive_member_gets_neither(monkeypatch, dmed, pushed):
     assert pushed == [[]]
 
 
+def test_push_title_is_the_category_not_the_app_name(monkeypatch, dmed, pushed_titles):
+    monkeypatch.setattr(svc, "supabase", FakeSupabase([_profile()]))
+    svc.broadcast_category_dm("tok", "meal_created", "🍽️ **Nieuwe maaltijd: Pizza**")
+    assert pushed_titles == ["Nieuwe maaltijd"]
+
+
+def test_push_title_falls_back_to_the_app_name_for_an_unknown_category(monkeypatch, dmed, pushed_titles):
+    monkeypatch.setattr(svc, "supabase", FakeSupabase([_profile(notification_categories=["something_new"])]))
+    svc.broadcast_category_dm("tok", "something_new", "content")
+    assert pushed_titles == ["Ankerd Con"]
+
+
 # ── send_personal_dm ─────────────────────────────────────────────────────────
 
 def test_personal_dm_goes_to_both_channels(monkeypatch, dmed, pushed):
@@ -103,6 +122,18 @@ def test_personal_dm_goes_to_both_channels(monkeypatch, dmed, pushed):
     svc.send_personal_dm("tok", "u1", "content")
     assert dmed == ["d1"]
     assert pushed == [["Sam"]]
+
+
+def test_personal_dm_push_title_defaults_to_the_app_name(monkeypatch, dmed, pushed_titles):
+    monkeypatch.setattr(svc, "supabase", FakeSupabase([_profile()]))
+    svc.send_personal_dm("tok", "u1", "content")
+    assert pushed_titles == ["Ankerd Con"]
+
+
+def test_personal_dm_push_title_can_be_overridden(monkeypatch, dmed, pushed_titles):
+    monkeypatch.setattr(svc, "supabase", FakeSupabase([_profile()]))
+    svc.send_personal_dm("tok", "u1", "content", title="Betaalverzoek")
+    assert pushed_titles == ["Betaalverzoek"]
 
 
 def test_personal_dm_push_does_not_need_allow_dm(monkeypatch, dmed, pushed):

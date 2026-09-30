@@ -68,6 +68,20 @@ ALL_CATEGORIES: list[str] = [
     NotificationCategory.MEAL_CREATED,
 ]
 
+# Push notification title per category — a phone's notification chrome already
+# shows the app name and icon, so repeating "Ankerd Con" as the title told a
+# member nothing; this tells them what it's about before they even open it.
+_PUSH_TITLES: dict[str, str] = {
+    NotificationCategory.EVENT_CREATED: "Nieuw evenement",
+    NotificationCategory.TICKET_SALE: "Kaartverkoop",
+    NotificationCategory.EVENT_REMINDER_7D: "Over een week",
+    NotificationCategory.EVENT_REMINDER_1D: "Morgen",
+    NotificationCategory.EVENT_REMINDER_DAY_OF: "Vandaag",
+    NotificationCategory.RIDE_CREATED: "Nieuwe rit",
+    NotificationCategory.EXPENSE_CREATED: "Nieuwe uitgave",
+    NotificationCategory.MEAL_CREATED: "Nieuwe maaltijd",
+}
+
 
 def broadcast_category_dm(bot_token: str, category: str, content: str) -> None:
     """Send `content` to every active, opted-in user for `category` — as a
@@ -102,14 +116,17 @@ def broadcast_category_dm(bot_token: str, category: str, content: str) -> None:
 
     if dm_sent:
         logger.info("Notification broadcast (%s): DM to %d user(s)", category, dm_sent)
-    push_service.send_push(get_settings(), push_names, _APP_TITLE, push_service.headline(content))
+    title = _PUSH_TITLES.get(category, _APP_TITLE)
+    push_service.send_push(get_settings(), push_names, title, push_service.headline(content))
 
 
-def send_personal_dm(bot_token: str, profile_id: str, content: str) -> None:
+def send_personal_dm(bot_token: str, profile_id: str, content: str, title: str = _APP_TITLE) -> None:
     """Notify one member about something that needs *them* — a payment
     request to them, or a payment to confirm. Not a broadcast category, so
     the Discord DM needs only the master `allow_dm` switch; push, as always,
-    needs only a subscription to exist.
+    needs only a subscription to exist. `title` is the push notification's
+    title — callers outside a category (like settlements.py) pass their own
+    short description since there's no category to look one up from.
 
     Fire-and-forget like `broadcast_category_dm`; never raises.
     """
@@ -133,4 +150,4 @@ def send_personal_dm(bot_token: str, profile_id: str, content: str) -> None:
         return
     if bot_token and profile.get("allow_dm", True) and profile.get("discord_id"):
         discord_bot.send_dm(bot_token, profile["discord_id"], content)
-    push_service.send_push(get_settings(), [profile["name"]], _APP_TITLE, push_service.headline(content))
+    push_service.send_push(get_settings(), [profile["name"]], title, push_service.headline(content))
