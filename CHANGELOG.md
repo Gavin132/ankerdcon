@@ -16,6 +16,13 @@ All notable changes to Ankerd Con are documented here.
   forever — if their Discord or Google picture later changed, or the stored image stopped
   resolving, the app kept showing the broken one with no way to recover. It is now re-checked
   once a day and replaced when it differs. Needs migration v2.29.
+- Saving Profiel always showed the generic "Kon profiel niet opslaan." even when the backend said
+  exactly why (a name already taken, an invalid phone number, …) — it was reading the error in a
+  shape the API client stopped producing a while ago. The real reason shows now.
+- The trip page's Eten card only ever showed the first 3 meals and never the rest, with no way to
+  reach them; a meal never left the list either, however long ago it happened. It now shows every
+  meal, and drops one from the list (not from the trip) 3 hours after it starts — the same rule
+  the Hub's meal card already used.
 
 ### Added
 

@@ -660,10 +660,8 @@ export function ProfilePage() {
         bannerPosition: draftBannerPosition,
       });
       toast("success", "Profiel opgeslagen!");
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } } })
-        ?.response?.data?.detail;
-      toast("error", msg ?? "Kon profiel niet opslaan.");
+    } catch (err) {
+      toast("error", err instanceof Error && err.message ? err.message : "Kon profiel niet opslaan.");
     }
   }
 

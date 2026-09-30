@@ -174,6 +174,11 @@ export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Tr
 
 /* ── Eten ────────────────────────────────────────────────────────────────── */
 
+/** How long after its start a meal still counts as current here — matches
+ * MealTodayCard's LINGER_MS on the Hub, so "a meal is over" means the same
+ * thing everywhere in the app. */
+const MEAL_LINGER_MS = 3 * 60 * 60 * 1000;
+
 /**
  * Answers "is there a mealplan", links straight to each meal's own detail page
  * (so it has no single `to` of its own — each row is its own link) and, while
@@ -182,9 +187,16 @@ export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Tr
 export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: TripPhase; meals: Meal[]; myNames: string[] }) {
   const isMine = sameName(myNames);
   const all = tripMeals(meals, trip).sort((a, b) => a.time.localeCompare(b.time));
-  const now = toDateKey(getNow()) + "T" + getNow().toTimeString().slice(0, 5);
-  const ahead = all.filter((m) => m.time.replace(" ", "T") >= now);
-  const shown = (phase === "live" && ahead.length > 0 ? ahead : all).slice(0, 3);
+  const now = getNow().getTime();
+  const current = all.filter((m) => {
+    const start = new Date(m.time.replace(" ", "T")).getTime();
+    return isNaN(start) || now - start < MEAL_LINGER_MS;
+  });
+  const ahead = current.filter((m) => {
+    const start = new Date(m.time.replace(" ", "T")).getTime();
+    return isNaN(start) || start >= now;
+  });
+  const shown = phase === "live" && ahead.length > 0 ? ahead : current;
   const missingNames = phase === "upcoming" ? tripGaps(trip, [], meals).food : [];
   const missing = missingNames.length;
   const [addOpen, setAddOpen] = useState(false);
