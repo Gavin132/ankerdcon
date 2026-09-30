@@ -31,6 +31,7 @@ export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
   const [dayId, setDayId] = useState(() => defaultDayId(trip));
   const [time, setTime] = useState("19:00");
   const [location, setLocation] = useState("");
+  const [mapsUrl, setMapsUrl] = useState("");
   const [cost, setCost] = useState("");
   const [transport, setTransport] = useState(false);
 
@@ -40,6 +41,7 @@ export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
     setDayId(defaultDayId(trip));
     setTime("19:00");
     setLocation("");
+    setMapsUrl("");
     setCost("");
     setTransport(false);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -54,6 +56,7 @@ export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
         meal_name: name.trim(),
         time: `${toDateKey(day.date)}T${time}`,
         location: location.trim() || undefined,
+        maps_url: mapsUrl.trim() || undefined,
         cost: cost.trim() || undefined,
         transport_needed: transport,
         linked_event_id: day.ev.id,
@@ -126,6 +129,22 @@ export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
           />
+        </div>
+
+        <div>
+          <label htmlFor="meal-maps-url" className="section-label mb-2 block">Google Maps-link (optioneel)</label>
+          <input
+            id="meal-maps-url"
+            type="url"
+            className="input-field"
+            placeholder="https://maps.app.goo.gl/..."
+            value={mapsUrl}
+            onChange={(e) => setMapsUrl(e.target.value)}
+          />
+          <p className="mt-1.5 text-xs text-ink-3">
+            Opent direct de juiste plek vanaf de kaart, in plaats van dat iedereen er zelf naar moet zoeken. Vul ook
+            een locatie hierboven in, anders krijgt dit etentje geen pin.
+          </p>
         </div>
 
         <div>

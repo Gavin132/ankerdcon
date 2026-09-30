@@ -224,10 +224,18 @@ by hand, by members or admins.
 `pages/CrewPage.tsx`, `pages/ProfilePage.tsx`, `components/crew/CrewMap.tsx`.
 
 - **Crew** is the member directory plus **"Waar is iedereen"**: a Leaflet map of
-  fresh location pings.
+  fresh location pings, plus — always, not only when someone's shared a position — the
+  current trip's con location, hotel and each dinnerplan, as their own round pins (a
+  glyph instead of an avatar). Pins within 20 m of each other share one marker, e.g. two
+  dinnerplans at the same restaurant.
 - A **location ping** is a zone or text and, when you allow it, GPS coordinates,
   stored on the profile and considered fresh for two hours. Pings within 20 m of each
   other share a pin.
+- A venue pin's coordinates are geocoded server-side (`app/services/geocoding_service.py`,
+  Open-Meteo's free geocoding API) whenever its location text is saved — best-effort, no
+  pin when it can't be resolved. A dinnerplan can also carry its own exact Google Maps
+  link (`maps_url`, set when planning it), used for that pin's route instead of the
+  geocoded coordinates when given.
 - A **profile** has an avatar (from Discord/Google, or a member's own upload — see below),
   banner (colour or image), name font and colour,
   pronouns, bio, badges, aliases (former names), phone number and, on the current

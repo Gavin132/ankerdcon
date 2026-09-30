@@ -9,6 +9,7 @@ from app.models.meal import CreateMealRequest, Meal, RsvpRequest
 from app.routes import MealRoutes
 from app.services import notification_service
 from app.services.discord_bot import escape_markdown
+from app.services.geocoding_service import geocode
 from app import messages as M
 from app.core.database import supabase
 
@@ -28,17 +29,21 @@ def list_meals(_: str = Depends(get_current_user)) -> list[Meal]:
 
 
 @router.post(MealRoutes.LIST, status_code=status.HTTP_201_CREATED)
-def create_meal(
+async def create_meal(
     body: CreateMealRequest,
     background_tasks: BackgroundTasks,
     current_user: str = Depends(get_current_user),
     settings: Settings = Depends(get_settings),
 ) -> None:
+    coords = await geocode(body.location) if body.location else None
     meal_data = {
         "created_by": current_user,
         "meal_name": body.meal_name,
         "time": body.time,
         "location": body.location,
+        "location_lat": coords[0] if coords else None,
+        "location_lng": coords[1] if coords else None,
+        "maps_url": body.maps_url,
         "cost": float(body.cost) if body.cost else 0.0,
         "transport_needed": body.transport_needed,
         "participants": [],

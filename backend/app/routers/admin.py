@@ -53,6 +53,7 @@ from app.models.calendar import Event, EventDay, HotelRoom
 from app.routers.calendar import _hotel_group_key
 from app.routers.expenses import expense_in_open_settlement, share_in_open_settlement
 from app.routers.rides import _notify_ride_created
+from app.services.geocoding_service import geocode
 from app.models.meal import Meal
 from app.models.rides import CreateRideRequest, Ride
 from app.models.user import User
@@ -496,9 +497,12 @@ def admin_list_meals(_: str = Depends(get_admin_user)) -> list[Meal]:
 
 
 @router.post(AdminRoutes.MEALS, response_model=Meal, status_code=status.HTTP_201_CREATED)
-def admin_create_meal(body: AdminCreateMealRequest, _: str = Depends(get_admin_user)) -> Meal:
+async def admin_create_meal(body: AdminCreateMealRequest, _: str = Depends(get_admin_user)) -> Meal:
     meal_data = body.model_dump()
     meal_data["participants"] = []
+    if meal_data.get("location"):
+        coords = await geocode(meal_data["location"])
+        meal_data["location_lat"], meal_data["location_lng"] = coords if coords else (None, None)
     try:
         resp = supabase.table(Tables.MEALS).insert(meal_data).execute()
         return resp.data[0]
@@ -508,17 +512,20 @@ def admin_create_meal(body: AdminCreateMealRequest, _: str = Depends(get_admin_u
 
 
 @router.put(AdminRoutes.MEAL_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
-def admin_update_meal(
+async def admin_update_meal(
     meal_id: str,
     body: AdminUpdateMealRequest,
     _: str = Depends(get_admin_user),
 ) -> None:
     updates = _build_updates(body, nullable_fields={
-        "linked_event_id", "website", "menu_url", "description",
+        "linked_event_id", "website", "menu_url", "maps_url", "description",
         "dietary_options", "parking_info", "extra_notes",
     })
     if not updates:
         return
+    if "location" in updates:
+        coords = await geocode(updates["location"]) if updates["location"] else None
+        updates["location_lat"], updates["location_lng"] = coords if coords else (None, None)
     try:
         resp = supabase.table(Tables.MEALS).update(updates).eq("id", meal_id).execute()
     except Exception as e:
@@ -689,12 +696,20 @@ def admin_bulk_set_event_group(body: BulkSetEventGroupRequest, _: str = Depends(
 
 
 @router.post(AdminRoutes.EVENTS, response_model=Event, status_code=status.HTTP_201_CREATED)
-def admin_create_event(body: AdminCreateEventRequest, _: str = Depends(get_admin_user)) -> Event:
+async def admin_create_event(body: AdminCreateEventRequest, _: str = Depends(get_admin_user)) -> Event:
     """Creates the parent event only — add its days separately via
     admin_create_event_day, which fires the "event created" Discord DM once
     the first day is added (there's no date to announce before that)."""
     event_data = {k: v for k, v in body.model_dump().items() if v is not None and v != ""}
     event_data.setdefault("is_hotel", False)
+    if event_data.get("location"):
+        coords = await geocode(event_data["location"])
+        if coords:
+            event_data["location_lat"], event_data["location_lng"] = coords
+    if event_data.get("hotel_location"):
+        coords = await geocode(event_data["hotel_location"])
+        if coords:
+            event_data["hotel_location_lat"], event_data["hotel_location_lng"] = coords
     try:
         resp = supabase.table(Tables.EVENTS).insert(event_data).execute()
     except Exception as e:
@@ -704,7 +719,7 @@ def admin_create_event(body: AdminCreateEventRequest, _: str = Depends(get_admin
 
 
 @router.put(AdminRoutes.EVENT_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
-def admin_update_event(event_id: str, body: AdminUpdateEventRequest, _: str = Depends(get_admin_user)) -> None:
+async def admin_update_event(event_id: str, body: AdminUpdateEventRequest, _: str = Depends(get_admin_user)) -> None:
     updates = _build_updates(body, nullable_fields={
         "event_group_id", "event_type", "hotel_location", "hotel_info", "image_url", "description",
         "location", "website", "ticket_url", "ticket_sale_start", "locker_info",
@@ -712,6 +727,12 @@ def admin_update_event(event_id: str, body: AdminUpdateEventRequest, _: str = De
     })
     if not updates:
         return
+    if "location" in updates:
+        coords = await geocode(updates["location"]) if updates["location"] else None
+        updates["location_lat"], updates["location_lng"] = coords if coords else (None, None)
+    if "hotel_location" in updates:
+        coords = await geocode(updates["hotel_location"]) if updates["hotel_location"] else None
+        updates["hotel_location_lat"], updates["hotel_location_lng"] = coords if coords else (None, None)
     try:
         resp = supabase.table(Tables.EVENTS).update(updates).eq("id", event_id).execute()
     except Exception as e:

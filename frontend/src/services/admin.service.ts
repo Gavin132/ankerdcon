@@ -179,6 +179,7 @@ export interface AdminCreateMealPayload {
   meal_name: string;
   time: string;
   location?: string;
+  maps_url?: string | null;
   cost?: number;
   transport_needed?: boolean;
 }
@@ -193,6 +194,7 @@ export interface AdminUpdateMealPayload {
   meal_name?: string;
   time?: string;
   location?: string;
+  maps_url?: string | null;
   cost?: number;
   transport_needed?: boolean;
 }

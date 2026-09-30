@@ -42,6 +42,7 @@ class AdminCreateMealRequest(BaseModel):
     meal_name: str
     time: str
     location: str = ""
+    maps_url: WebUrl = None
     cost: float = 0.0
     transport_needed: bool = False
     linked_event_id: Optional[str] = None
@@ -57,6 +58,7 @@ class AdminUpdateMealRequest(BaseModel):
     meal_name: Optional[str] = None
     time: Optional[str] = None
     location: Optional[str] = None
+    maps_url: WebUrl = None
     cost: Optional[float] = None
     transport_needed: Optional[bool] = None
     linked_event_id: Optional[str] = None

@@ -8,6 +8,9 @@ class Meal(BaseModel):
     meal_name: str
     time: str
     location: str
+    location_lat: Optional[float] = None
+    location_lng: Optional[float] = None
+    maps_url: Optional[str] = None
     cost: float
     transport_needed: bool
     participants: list[str] = []
@@ -25,6 +28,7 @@ class CreateMealRequest(BaseModel):
     meal_name: str
     time: str
     location: str = ""
+    maps_url: WebUrl = None
     cost: str = ""
     transport_needed: bool = False
     linked_event_id: Optional[str] = None

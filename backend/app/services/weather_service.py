@@ -12,7 +12,8 @@ from datetime import datetime
 
 import httpx
 
-_GEO_URL     = "https://geocoding-api.open-meteo.com/v1/search"
+from app.services.geocoding_service import geocode
+
 _FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 _TIMEOUT      = 8.0
 
@@ -61,19 +62,14 @@ async def fetch_event_weather(location: str, date_str: str) -> EventWeather | No
     if not date:
         return None
 
+    place = await geocode(location)
+    if not place:
+        return None
+    lat, lon = place
+
     async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
         try:
-            # 1. Geocode the location name
-            geo = await client.get(_GEO_URL, params={
-                "name": location, "count": 1, "language": "nl", "format": "json",
-            })
-            geo.raise_for_status()
-            results = geo.json().get("results") or []
-            if not results:
-                return None
-            lat, lon = results[0]["latitude"], results[0]["longitude"]
-
-            # 2. Daily forecast for the event date
+            # Daily forecast for the event date
             forecast = await client.get(_FORECAST_URL, params={
                 "latitude": lat,
                 "longitude": lon,

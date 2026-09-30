@@ -15,12 +15,16 @@ class CalendarEvent(BaseModel):
     is_hotel: bool = False
     event_type: EventType | None = None
     hotel_location: str | None = None
+    hotel_location_lat: float | None = None
+    hotel_location_lng: float | None = None
     hotel_info: str | None = None
     participants: list[str] = []
     # Info fields
     image_url: str | None = None
     description: str | None = None
     location: str | None = None
+    location_lat: float | None = None
+    location_lng: float | None = None
     website: str | None = None
     ticket_url: str | None = None
     ticket_sale_start: str | None = None
@@ -60,10 +64,14 @@ class Event(BaseModel):
     is_hotel: bool = False
     event_type: EventType | None = None
     hotel_location: str | None = None
+    hotel_location_lat: float | None = None
+    hotel_location_lng: float | None = None
     hotel_info: str | None = None
     image_url: str | None = None
     description: str | None = None
     location: str | None = None
+    location_lat: float | None = None
+    location_lng: float | None = None
     website: str | None = None
     ticket_url: str | None = None
     ticket_sale_start: str | None = None

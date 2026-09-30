@@ -198,6 +198,11 @@ export interface Meal {
   meal_name: string;
   time: string;
   location: string;
+  location_lat?: number | null;
+  location_lng?: number | null;
+  /** A member-supplied exact Google Maps link — used for this meal's crew-map
+   * pin instead of the geocoded coordinates when present. */
+  maps_url?: string | null;
   cost: number;
   transport_needed: boolean;
   participants: string[];
@@ -289,6 +294,7 @@ export interface CreateMealRequest {
   meal_name: string;
   time: string;
   location?: string;
+  maps_url?: string;
   cost?: string;
   transport_needed?: boolean;
   linked_event_id?: string;
@@ -352,11 +358,15 @@ export interface CalendarEvent {
   is_hotel: boolean;
   event_type: EventType | null;
   hotel_location?: string;
+  hotel_location_lat?: number | null;
+  hotel_location_lng?: number | null;
   hotel_info?: string;
   participants: string[];
   image_url?: string;
   description?: string;
   location?: string;
+  location_lat?: number | null;
+  location_lng?: number | null;
   website?: string;
   ticket_url?: string;
   ticket_sale_start?: string;
@@ -376,10 +386,14 @@ export interface Event {
   is_hotel: boolean;
   event_type: EventType | null;
   hotel_location?: string;
+  hotel_location_lat?: number | null;
+  hotel_location_lng?: number | null;
   hotel_info?: string;
   image_url?: string;
   description?: string;
   location?: string;
+  location_lat?: number | null;
+  location_lng?: number | null;
   website?: string;
   ticket_url?: string;
   ticket_sale_start?: string;

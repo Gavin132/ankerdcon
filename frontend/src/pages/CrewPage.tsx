@@ -3,9 +3,11 @@ import { Search, Users, X, BedDouble, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUsers } from "../hooks/useUsers";
 import { useCalendar } from "../hooks/useCalendar";
+import { useMeals } from "../hooks/useMeals";
 import { useAuthStore } from "../store/auth.store";
 import { useBadges } from "../hooks/useBadges";
 import { useCurrentTripRoomNumbers } from "../hooks/useTripRooms";
+import { buildTrip, currentTripId } from "../utils/trips";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { UserProfilePopup, type AnchorRect } from "../components/common/UserProfilePopup";
 import { BadgeIcon } from "../components/common/BadgeIcon";
@@ -36,10 +38,14 @@ export function CrewPage() {
   const [pingOpen, setPingOpen] = useState(false);
 
   const { data: users = [], isLoading } = useUsers();
-  const { data: calendarEvents } = useCalendar();
+  const { data: calendarEvents = [] } = useCalendar();
+  const { data: meals = [] } = useMeals();
   const { data: allBadges = [] } = useBadges();
   const currentUser = useAuthStore((s) => s.currentUser);
   const roomNumbers = useCurrentTripRoomNumbers();
+
+  const tripId = currentTripId(calendarEvents);
+  const currentTrip = tripId ? buildTrip(calendarEvents, tripId) : null;
 
   const sorted = [...users].sort((a, b) => a.name.localeCompare(b.name, "nl"));
   const pinged = sorted.filter((u) => isPingFresh(u.live_location_ping));
@@ -88,17 +94,20 @@ export function CrewPage() {
             Locatie pingen
           </button>
         </div>
-        {pinned.length > 0 && (
-          <Suspense fallback={<div className="h-[280px] animate-pulse border-t border-line bg-sunken sm:h-[340px]" />}>
-            <CrewMap
-              users={pinned}
-              onOpenProfile={(u, rect) => {
-                setAnchorRect(rect);
-                setPopupUser(u);
-              }}
-            />
-          </Suspense>
-        )}
+        {/* Always mounted, not just when someone's pinned — the con/hotel/meal
+            pins (see CrewMap) are worth showing on their own, and CrewMap
+            itself renders nothing when it truly has no pin at all. */}
+        <Suspense fallback={<div className="h-[280px] animate-pulse border-t border-line bg-sunken sm:h-[340px]" />}>
+          <CrewMap
+            users={pinned}
+            trip={currentTrip}
+            meals={meals}
+            onOpenProfile={(u, rect) => {
+              setAnchorRect(rect);
+              setPopupUser(u);
+            }}
+          />
+        </Suspense>
         {pinged.length === 0 ? (
           <p className="border-t border-line px-4 py-3.5 text-[13px] text-ink-3">
             Nog niemand heeft een locatie gedeeld.
