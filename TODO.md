@@ -16,7 +16,7 @@ ticked off — `CHANGELOG.md` and git history are the record.
 Open items before or around the next deploy. New migrations go here until they are run, in
 the order they must be run, with the Supabase SQL editor; see
 [docs/deployment.md](docs/deployment.md#database-migrations) for how to check what has already
-been applied. (Migrations v2.19, v2.25, v2.26 and v2.27 are done.)
+been applied. (Migrations v2.19, v2.25, v2.26, v2.27, v2.33, v2.34 and v2.35 are done.)
 
 - [ ] Run `db/migrations/migration_v2.28_feedback.sql` (the `feedback` table) **before** deploying the
       feedback feature; until then only sending and reading feedback answers 503.
@@ -34,16 +34,6 @@ been applied. (Migrations v2.19, v2.25, v2.26 and v2.27 are done.)
       for a while, unlike v2.29/v2.30: reads use `select("*")`, which just omits a missing column rather than
       failing, so every trip shows no tag until this has run. Setting one in the admin event editor does need
       it and fails clearly (503) until then. Also backfills `event_type = 'gathering'` from the old `is_party`.
-- [ ] **Run `db/migrations/migration_v2.33_venue_geocoding.sql` before deploying the commit that added it**
-      (`events.location_lat/lng`, `events.hotel_location_lat/lng`, `meals.location_lat/lng`, `meals.maps_url`) —
-      unlike v2.32, this one is **not** safe to leave unrun: the backend writes these columns on every event/meal
-      create and update (to geocode the location), and an insert/update naming a column that doesn't exist yet
-      fails outright, breaking saving any event or meal, not just the crew map's venue pins.
-- [ ] **Run `db/migrations/migration_v2.34_venue_maps_url.sql` before deploying the commit that added it**
-      (`events.location_maps_url`, `events.hotel_location_maps_url`) — same reason as v2.33, not safe to leave
-      unrun.
-- [ ] **Run `db/migrations/migration_v2.35_parking_spots.sql` before deploying the commit that added it**
-      (the `parking_spots` table) — not safe to leave unrun: setting a parking spot writes to this table.
 - [ ] The old `calendar` table still exists: v2.19's two `ALTER TABLE` statements were run but
       not its last line, which drops it. Drop it (`DROP TABLE calendar;`) when you are sure nothing
       needs it, ideally after a backup.

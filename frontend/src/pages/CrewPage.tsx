@@ -9,6 +9,7 @@ import { useAuthStore } from "../store/auth.store";
 import { useBadges } from "../hooks/useBadges";
 import { useCurrentTripRoomNumbers } from "../hooks/useTripRooms";
 import { buildTrip, currentTripId, tripRides } from "../utils/trips";
+import { todayKey, toDateKey } from "../utils/date";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { UserProfilePopup, type AnchorRect } from "../components/common/UserProfilePopup";
 import { BadgeIcon } from "../components/common/BadgeIcon";
@@ -51,16 +52,30 @@ export function CrewPage() {
   const tripId = currentTripId(calendarEvents);
   const currentTrip = tripId ? buildTrip(calendarEvents, tripId) : null;
   const currentTripRides = currentTrip ? tripRides(rides, meals, currentTrip) : [];
+  // currentUser (from the auth store) is the Supabase auth id, but rides
+  // store driver/passengers by display name — resolve it via the already-
+  // loaded member list before comparing, same as popupUser's id check below.
+  const currentUserName = users.find((u) => u.id === currentUser)?.name;
   // Every driver whose spot you're allowed to set: yourself, or anyone
   // you share a ride with (either direction) — mirrors the backend's own
   // check in app/routers/parking.py.
-  const manageableDrivers = currentUser
+  const manageableDrivers = currentUserName
     ? [...new Set(
         currentTripRides
-          .filter((r) => r.driver === currentUser || r.passengers.includes(currentUser))
+          .filter((r) => r.driver === currentUserName || r.passengers.includes(currentUserName))
           .map((r) => r.driver),
       )].sort((a, b) => a.localeCompare(b, "nl"))
     : [];
+  // Only worth setting on the actual day of a ride you're on — before that
+  // the car hasn't arrived yet, and after, the pin isn't something to keep
+  // nudging. The button still shows on other days (so people know it's
+  // there), just greyed out.
+  const todayStr = todayKey();
+  const canSetParkingToday = currentTripRides.some((r) => {
+    if (!currentUserName || !(r.driver === currentUserName || r.passengers.includes(currentUserName))) return false;
+    const departed = new Date(r.departure_time.replace(" ", "T"));
+    return !isNaN(departed.getTime()) && toDateKey(departed) === todayStr;
+  });
 
   const sorted = [...users].sort((a, b) => a.name.localeCompare(b.name, "nl"));
   const pinged = sorted.filter((u) => isPingFresh(u.live_location_ping));
@@ -95,8 +110,8 @@ export function CrewPage() {
 
       {/* ── Waar is iedereen ─────────────────────────────────────────── */}
       <section className="card-surface overflow-hidden">
-        <div className="flex items-center justify-between gap-3 px-4 pt-3.5 pb-3">
-          <p className="section-label flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-3.5 pb-3">
+          <p className="section-label flex items-center gap-1.5 whitespace-nowrap">
             <MapPin size={12} />
             Waar is iedereen
           </p>
@@ -104,8 +119,14 @@ export function CrewPage() {
             {manageableDrivers.length > 0 && (
               <button
                 type="button"
-                onClick={() => setParkingOpen(true)}
-                className="flex items-center gap-1.5 rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
+                onClick={() => canSetParkingToday && setParkingOpen(true)}
+                disabled={!canSetParkingToday}
+                title={canSetParkingToday ? undefined : "Alleen te gebruiken op de dag van je rit"}
+                className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-[13px] font-semibold transition-colors ${
+                  canSetParkingToday
+                    ? "text-ink hover:border-ink-3"
+                    : "cursor-not-allowed text-ink-3 opacity-50"
+                }`}
               >
                 <Car size={13} />
                 Parkeerplek
@@ -114,7 +135,7 @@ export function CrewPage() {
             <button
               type="button"
               onClick={() => setPingOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
+              className="flex items-center gap-1.5 whitespace-nowrap rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
             >
               <MapPin size={13} />
               Locatie pingen
@@ -127,6 +148,7 @@ export function CrewPage() {
         <Suspense fallback={<div className="h-[280px] animate-pulse border-t border-line bg-sunken sm:h-[340px]" />}>
           <CrewMap
             users={pinned}
+            allUsers={users}
             trip={currentTrip}
             meals={meals}
             rides={currentTripRides}

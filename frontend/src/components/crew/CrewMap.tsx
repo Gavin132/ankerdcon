@@ -233,12 +233,16 @@ interface CrewMapProps {
    * Outbound ride (see ParkingPin) and to let it expire once that ride has
    * left. */
   rides: Ride[];
+  /** Every member, regardless of whether they've shared a position — a
+   * parking pin's driver (`users` above may not include them at all) needs
+   * their full profile for the "Profiel" link in its popup. */
+  allUsers: User[];
 }
 
 /** Everyone who shared their position, plus the current trip's con, hotel,
  * meal and parking locations, all on one map. Lazy-loaded — Leaflet is only
  * fetched once there's at least one pin to show. */
-export default function CrewMap({ users, onOpenProfile, trip, meals, rides }: CrewMapProps) {
+export default function CrewMap({ users, onOpenProfile, trip, meals, rides, allUsers }: CrewMapProps) {
   const isDark = useThemeStore((s) => s.isDark);
   const { data: parkingSpots = [] } = useParkingSpots(trip?.id);
 
@@ -354,7 +358,21 @@ export default function CrewMap({ users, onOpenProfile, trip, meals, rides }: Cr
           <Marker key={`parking:${p.driver}`} position={[p.lat, p.lng]} icon={parkingPinIcon()}>
             <Popup closeButton={false}>
               <div className="min-w-[160px] text-[13px] leading-snug">
-                <p className="font-semibold">Auto van {p.driver}</p>
+                <p className="font-semibold">
+                  Auto van{" "}
+                  <button
+                    type="button"
+                    className="text-brand-text hover:underline"
+                    onClick={(e) => {
+                      const driverUser = allUsers.find((u) => u.name === p.driver);
+                      if (!driverUser) return;
+                      const r = (e.currentTarget.closest(".leaflet-container") as HTMLElement).getBoundingClientRect();
+                      onOpenProfile(driverUser, { top: r.top, left: r.left, right: r.right, height: r.height });
+                    }}
+                  >
+                    {p.driver}
+                  </button>
+                </p>
                 {p.outboundRide ? (
                   <>
                     <p className="text-neutral-600">Vertrekt om {formatTime(p.outboundRide.departure_time)}</p>
