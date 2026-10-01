@@ -40,6 +40,10 @@ All notable changes to Ankerd Con are documented here.
 - The weather card used to have every member's browser call Open-Meteo directly — now it goes
   through the backend, which caches the response, so a burst of people opening the app around the
   same time shares one fetch instead of one each.
+- **Parkeerplek**: mark where a driver's car is parked on the crew map (Crew → Parkeerplek, next
+  to Locatie pingen) — a 🚗 pin anyone riding with that driver can set or correct. Tapping it shows
+  when that car is leaving and links to the ride, once one's been planned; it drops off the map 2
+  hours after that. Needs migration v2.35.
 - **Profielfoto en banner**: upload your own (Profiel) — a pencil on the photo and another on the
   banner, JPG/PNG/WebP or a small GIF — instead of only the one Discord or Google gives you for
   the avatar. Deleting one is now a small trash icon next to its pencil, not a text link. Both are

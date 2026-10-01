@@ -2,13 +2,18 @@ import { useEffect, useMemo, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import { Link } from "react-router-dom";
 import { ExternalLink } from "lucide-react";
 import { useThemeStore } from "../../store/theme.store";
 import { avatarColor, personInitial } from "../../utils/avatar";
 import { parsePing, pingAgo, pingMapUrl } from "../../utils/locationPing";
 import { tripMeals, type Trip } from "../../utils/trips";
+import { useParkingSpots } from "../../hooks/useParking";
+import { formatTime } from "../../utils/format";
+import { routes } from "../../config/routes";
+import { getNow } from "../../store/time.store";
 import type { AnchorRect } from "../common/UserProfilePopup";
-import type { Meal, User } from "../../types";
+import type { Meal, Ride, User } from "../../types";
 
 interface Pin {
   user: User;
@@ -88,6 +93,31 @@ function venuePinIcon(venues: VenuePin[]): L.DivIcon {
     html: `<div style="position:relative;width:${width}px;height:40px">${discs}${badge}</div>`,
     iconSize: [width, 40],
     iconAnchor: [width / 2, 20],
+    popupAnchor: [0, -22],
+  });
+}
+
+interface ParkingPin {
+  driver: string;
+  lat: number;
+  lng: number;
+  /** The driver's own Outbound ride for this trip, if one has been planned
+   * yet — resolved client-side from already-loaded ride data rather than
+   * stored on the pin, so it's always current: once Driver A plans their
+   * ride home, every existing pin for their car picks it up automatically. */
+  outboundRide: Ride | null;
+}
+
+/** One parking pin — no clustering: two different cars genuinely parked
+ * right next to each other is a real, if rare, coincidence, not worth a
+ * third clustering layer on top of the other two. */
+function parkingPinIcon(): L.DivIcon {
+  const disc = `<div style="width:40px;height:40px;border-radius:9999px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);background:#1b2227;display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1">🚗</div>`;
+  return L.divIcon({
+    className: "crew-pin",
+    html: disc,
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
     popupAnchor: [0, -22],
   });
 }
@@ -188,6 +218,9 @@ function FitToPins({ pins }: { pins: { user?: User; lat: number; lng: number; ke
   return null;
 }
 
+/** How long a parking pin lingers after its car's planned departure. */
+const PARKING_LINGER_MS = 2 * 60 * 60 * 1000;
+
 interface CrewMapProps {
   /** Users whose ping is still fresh. Only those that shared a GPS position get a pin. */
   users: User[];
@@ -196,13 +229,18 @@ interface CrewMapProps {
    * venue pins. Null shows just the member pins, same as before. */
   trip: Trip | null;
   meals: Meal[];
+  /** This trip's rides — used to resolve each parking pin's current
+   * Outbound ride (see ParkingPin) and to let it expire once that ride has
+   * left. */
+  rides: Ride[];
 }
 
-/** Everyone who shared their position, plus the current trip's con, hotel and
- * meal locations, all on one map. Lazy-loaded — Leaflet is only fetched once
- * there's at least one pin to show. */
-export default function CrewMap({ users, onOpenProfile, trip, meals }: CrewMapProps) {
+/** Everyone who shared their position, plus the current trip's con, hotel,
+ * meal and parking locations, all on one map. Lazy-loaded — Leaflet is only
+ * fetched once there's at least one pin to show. */
+export default function CrewMap({ users, onOpenProfile, trip, meals, rides }: CrewMapProps) {
   const isDark = useThemeStore((s) => s.isDark);
+  const { data: parkingSpots = [] } = useParkingSpots(trip?.id);
 
   const pins = useMemo<Pin[]>(
     () =>
@@ -250,11 +288,29 @@ export default function CrewMap({ users, onOpenProfile, trip, meals }: CrewMapPr
     return out;
   }, [trip, meals]);
 
+  const parkingPins = useMemo<ParkingPin[]>(() => {
+    const now = getNow().getTime();
+    const out: ParkingPin[] = [];
+    for (const spot of parkingSpots) {
+      const outboundRides = rides.filter((r) => r.direction === "Outbound" && r.driver === spot.driver);
+      // Several Outbound rides for the same driver shouldn't normally happen
+      // (the chauffeur only ever makes their own ride once), but the latest
+      // one is the sensible pick if it does.
+      const outboundRide = outboundRides.sort((a, b) => b.departure_time.localeCompare(a.departure_time))[0] ?? null;
+      if (outboundRide) {
+        const departed = new Date(outboundRide.departure_time.replace(" ", "T")).getTime();
+        if (!isNaN(departed) && now - departed > PARKING_LINGER_MS) continue; // the car has already left
+      }
+      out.push({ driver: spot.driver, lat: spot.lat, lng: spot.lng, outboundRide });
+    }
+    return out;
+  }, [parkingSpots, rides]);
+
   const clusters = useMemo(() => clusterPins(pins), [pins]);
   const venueClusters = useMemo(() => clusterVenuePins(venuePins), [venuePins]);
 
-  if (clusters.length === 0 && venueClusters.length === 0) return null;
-  const first = clusters[0] ?? venueClusters[0];
+  if (clusters.length === 0 && venueClusters.length === 0 && parkingPins.length === 0) return null;
+  const first = clusters[0] ?? venueClusters[0] ?? parkingPins[0];
 
   return (
     <div className={`isolate h-[280px] w-full overflow-hidden border-t border-line sm:h-[340px] ${isDark ? "crew-map-dark" : ""}`}>
@@ -272,7 +328,7 @@ export default function CrewMap({ users, onOpenProfile, trip, meals }: CrewMapPr
           maxZoom={19}
         />
         <KeepSized />
-        <FitToPins pins={[...clusters, ...venueClusters]} />
+        <FitToPins pins={[...clusters, ...venueClusters, ...parkingPins.map((p) => ({ ...p, key: `parking:${p.driver}` }))]} />
         {venueClusters.map((c) => (
           <Marker key={c.key} position={[c.lat, c.lng]} icon={venuePinIcon(c.members)}>
             <Popup closeButton={false}>
@@ -290,6 +346,28 @@ export default function CrewMap({ users, onOpenProfile, trip, meals }: CrewMapPr
                     </a>
                   </div>
                 ))}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+        {parkingPins.map((p) => (
+          <Marker key={`parking:${p.driver}`} position={[p.lat, p.lng]} icon={parkingPinIcon()}>
+            <Popup closeButton={false}>
+              <div className="min-w-[160px] text-[13px] leading-snug">
+                <p className="font-semibold">Auto van {p.driver}</p>
+                {p.outboundRide ? (
+                  <>
+                    <p className="text-neutral-600">Vertrekt om {formatTime(p.outboundRide.departure_time)}</p>
+                    <Link
+                      to={routes.ride.view(p.outboundRide.id)}
+                      className="mt-1 inline-flex items-center gap-0.5 text-[12px] font-semibold text-brand-text hover:underline"
+                    >
+                      Naar de rit <ExternalLink size={10} />
+                    </Link>
+                  </>
+                ) : (
+                  <p className="text-neutral-600">Nog geen terugrit gepland.</p>
+                )}
               </div>
             </Popup>
           </Marker>

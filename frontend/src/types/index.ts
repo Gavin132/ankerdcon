@@ -183,6 +183,25 @@ export interface LeaveRestaurantDriverRequest {
   user_name: string;
 }
 
+/** Where a driver's car is parked, for the crew map — keyed by the driver's
+ * name, not a specific ride: see utils/parking.ts for how the map resolves
+ * which of that driver's rides (if any) is the relevant one to show. */
+export interface ParkingSpot {
+  id: string;
+  trip_id: string;
+  driver: string;
+  lat: number;
+  lng: number;
+  placed_by: string;
+  created_at?: string;
+}
+
+export interface SetParkingSpotRequest {
+  driver: string;
+  lat: number;
+  lng: number;
+}
+
 export interface RestaurantAssignRequest {
   user_name: string;
   driver_name: string;

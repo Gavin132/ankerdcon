@@ -1,19 +1,21 @@
 import { lazy, Suspense, useState } from "react";
-import { Search, Users, X, BedDouble, MapPin } from "lucide-react";
+import { Search, Users, X, BedDouble, Car, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUsers } from "../hooks/useUsers";
 import { useCalendar } from "../hooks/useCalendar";
 import { useMeals } from "../hooks/useMeals";
+import { useRides } from "../hooks/useRides";
 import { useAuthStore } from "../store/auth.store";
 import { useBadges } from "../hooks/useBadges";
 import { useCurrentTripRoomNumbers } from "../hooks/useTripRooms";
-import { buildTrip, currentTripId } from "../utils/trips";
+import { buildTrip, currentTripId, tripRides } from "../utils/trips";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { UserProfilePopup, type AnchorRect } from "../components/common/UserProfilePopup";
 import { BadgeIcon } from "../components/common/BadgeIcon";
 import { LocationPingDisplay } from "../components/common/LocationPingDisplay";
 import { isPingFresh, parsePing } from "../utils/locationPing";
 import { LocationPingModal } from "../components/hub/LocationPingModal";
+import { ParkingSpotModal } from "../components/hub/ParkingSpotModal";
 import type { User } from "../types";
 
 const CLOSED_RECT: AnchorRect = { top: 0, left: 0, right: 0, height: 0 };
@@ -36,16 +38,29 @@ export function CrewPage() {
   const [popupUser, setPopupUser] = useState<User | null>(null);
   const [anchorRect, setAnchorRect] = useState<AnchorRect>(CLOSED_RECT);
   const [pingOpen, setPingOpen] = useState(false);
+  const [parkingOpen, setParkingOpen] = useState(false);
 
   const { data: users = [], isLoading } = useUsers();
   const { data: calendarEvents = [] } = useCalendar();
   const { data: meals = [] } = useMeals();
+  const { data: rides = [] } = useRides();
   const { data: allBadges = [] } = useBadges();
   const currentUser = useAuthStore((s) => s.currentUser);
   const roomNumbers = useCurrentTripRoomNumbers();
 
   const tripId = currentTripId(calendarEvents);
   const currentTrip = tripId ? buildTrip(calendarEvents, tripId) : null;
+  const currentTripRides = currentTrip ? tripRides(rides, meals, currentTrip) : [];
+  // Every driver whose spot you're allowed to set: yourself, or anyone
+  // you share a ride with (either direction) — mirrors the backend's own
+  // check in app/routers/parking.py.
+  const manageableDrivers = currentUser
+    ? [...new Set(
+        currentTripRides
+          .filter((r) => r.driver === currentUser || r.passengers.includes(currentUser))
+          .map((r) => r.driver),
+      )].sort((a, b) => a.localeCompare(b, "nl"))
+    : [];
 
   const sorted = [...users].sort((a, b) => a.name.localeCompare(b.name, "nl"));
   const pinged = sorted.filter((u) => isPingFresh(u.live_location_ping));
@@ -85,14 +100,26 @@ export function CrewPage() {
             <MapPin size={12} />
             Waar is iedereen
           </p>
-          <button
-            type="button"
-            onClick={() => setPingOpen(true)}
-            className="flex items-center gap-1.5 rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
-          >
-            <MapPin size={13} />
-            Locatie pingen
-          </button>
+          <div className="flex items-center gap-2">
+            {manageableDrivers.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setParkingOpen(true)}
+                className="flex items-center gap-1.5 rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
+              >
+                <Car size={13} />
+                Parkeerplek
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setPingOpen(true)}
+              className="flex items-center gap-1.5 rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
+            >
+              <MapPin size={13} />
+              Locatie pingen
+            </button>
+          </div>
         </div>
         {/* Always mounted, not just when someone's pinned — the con/hotel/meal
             pins (see CrewMap) are worth showing on their own, and CrewMap
@@ -102,6 +129,7 @@ export function CrewPage() {
             users={pinned}
             trip={currentTrip}
             meals={meals}
+            rides={currentTripRides}
             onOpenProfile={(u, rect) => {
               setAnchorRect(rect);
               setPopupUser(u);
@@ -258,6 +286,15 @@ export function CrewPage() {
         onClose={() => setPingOpen(false)}
         userNames={users.map((u) => u.name)}
       />
+
+      {tripId && (
+        <ParkingSpotModal
+          open={parkingOpen}
+          onClose={() => setParkingOpen(false)}
+          tripId={tripId}
+          manageableDrivers={manageableDrivers}
+        />
+      )}
     </div>
   );
 }

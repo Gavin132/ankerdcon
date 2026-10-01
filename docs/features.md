@@ -239,6 +239,15 @@ by hand, by members or admins.
   pin when neither resolves. A dinnerplan can carry its own Maps link (`maps_url`, set when
   planning it); the con location and hotel (Admin → Evenementen) can too — useful for a venue
   whose name geocodes unreliably or not at all (e.g. a hotel chain resolving to the wrong city).
+- **Parkeerplek**: where a driver's car is parked, as its own 🚗 pin — set from Crew ("Parkeerplek",
+  next to "Locatie pingen", only offered once there's a car you can set: yourself as a driver, or
+  anyone you share a ride with, either direction). Keyed by the driver's name, not a specific ride
+  (`app/routers/parking.py`; one row per trip+driver, `UNIQUE (trip_id, driver)` — correcting it
+  just updates the same row) — anyone on that driver's ride may set or correct it, it doesn't
+  matter who actually taps the pin down. The popup resolves live, client-side, to whichever of
+  that driver's Outbound rides is current (`CrewMap.tsx`): a departure time and a link to the ride
+  once one's been planned, otherwise "Nog geen terugrit gepland." The pin itself lingers for 2
+  hours after that ride's departure time, then drops off the map on its own — no explicit cleanup.
 - A **profile** has an avatar (from Discord/Google, or a member's own upload — see below),
   banner (colour or image), name font and colour,
   pronouns, bio, badges, aliases (former names), phone number and, on the current

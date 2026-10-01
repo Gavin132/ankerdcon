@@ -48,6 +48,8 @@ export const QUERY_KEYS = {
 
   hotelRooms:      (eventId: string) => ["hotel-rooms", eventId]       as const,
   adminHotelRooms: (eventId: string) => ["admin", "hotel-rooms", eventId] as const,
+
+  parking: (tripId: string) => ["parking", tripId] as const,
 };
 
 export const STALE_TIME = 30_000; // 30 seconds

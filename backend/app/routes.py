@@ -87,6 +87,12 @@ class PushRoutes:
     SUBSCRIBE = "/subscribe"  # POST, DELETE
 
 
+class ParkingRoutes:
+    PREFIX = "/parking"
+    BY_TRIP = "/{trip_id}"                # GET (list), POST (set/upsert one)
+    DETAIL = "/{trip_id}/{driver}"        # DELETE
+
+
 class WeatherRoutes:
     """A caching proxy in front of Open-Meteo for the member-facing weather
     card (WeatherCard.tsx / useEventWeather.ts) — every member's browser used

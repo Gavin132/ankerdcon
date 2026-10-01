@@ -42,6 +42,8 @@ been applied. (Migrations v2.19, v2.25, v2.26 and v2.27 are done.)
 - [ ] **Run `db/migrations/migration_v2.34_venue_maps_url.sql` before deploying the commit that added it**
       (`events.location_maps_url`, `events.hotel_location_maps_url`) — same reason as v2.33, not safe to leave
       unrun.
+- [ ] **Run `db/migrations/migration_v2.35_parking_spots.sql` before deploying the commit that added it**
+      (the `parking_spots` table) — not safe to leave unrun: setting a parking spot writes to this table.
 - [ ] The old `calendar` table still exists: v2.19's two `ALTER TABLE` statements were run but
       not its last line, which drops it. Drop it (`DROP TABLE calendar;`) when you are sure nothing
       needs it, ideally after a backup.

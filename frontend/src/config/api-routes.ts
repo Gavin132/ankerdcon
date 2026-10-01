@@ -108,6 +108,12 @@ export const apiRoutes = {
     archive: "/api/weather/archive",
   },
 
+  // ── Parking spots (crew map) ─────────────────────────────────────
+  parking: {
+    byTrip: (tripId: string) => `/api/parking/${encodeURIComponent(tripId)}`,
+    detail: (tripId: string, driver: string) => `/api/parking/${encodeURIComponent(tripId)}/${encodeURIComponent(driver)}`,
+  },
+
   changelog: {
     base: "/api/changelog/",
   },

@@ -200,6 +200,23 @@ geocode, 2 hours for a forecast, a week for archive data. This is separate from 
 `staleTime` throttle (`msUntilNextWeatherSlot()`), which is not a real cache, just "don't ask
 again too soon" — see [architecture.md](architecture.md#working-on-bad-reception).
 
+### Parking — `/parking`
+
+| Method and path | Who | What |
+| --- | --- | --- |
+| `GET /parking/{trip_id}` | member | every parking spot set for that trip |
+| `POST /parking/{trip_id}` | member\* | set (or correct) a driver's spot — `{driver, lat, lng}` |
+| `DELETE /parking/{trip_id}/{driver}` | member\* | clear a spot |
+
+\* The driver themselves, anyone who shares one of that driver's rides for this trip (either
+direction), or an admin — checked server-side (`app/routers/parking.py`'s `_can_manage`), not
+just hidden client-side. `trip_id` is whatever the frontend's own `tripIdOf()` resolves to for
+the trip (an `events.id` for a multi-day trip, an `event_days.id` for a single-day one — see
+`_day_ids_for_trip` for how the backend resolves either shape back to day ids). One row per
+`(trip_id, driver)` — a second person correcting the spot upserts the same row. Which of that
+driver's rides is "current" (for display and for the pin's own 2-hour-after-departure expiry) is
+resolved client-side in `CrewMap.tsx`, not stored here.
+
 ### Link previews — *public*, not under `/api`
 
 `GET /trips/{id}` and `GET /events/{id}` (the older link shape) are for link-unfurling

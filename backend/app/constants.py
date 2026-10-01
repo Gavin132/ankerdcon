@@ -25,6 +25,7 @@ class Tables:
     STORY_SEEN     = "story_seen"
     FEEDBACK       = "feedback"
     PUSH_SUBSCRIPTIONS = "push_subscriptions"
+    PARKING_SPOTS  = "parking_spots"
 
 
 # ── API ───────────────────────────────────────────────────────────
