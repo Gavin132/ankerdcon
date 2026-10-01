@@ -37,8 +37,10 @@ All notable changes to Ankerd Con are documented here.
 - Download a whole day's photos as one zip from the story viewer, next to the per-photo download.
 - When the app cannot start (an old iPhone, a stale cached copy) it now shows a "Ankerd Con kan niet
   starten" screen with what to try and the errors it saw, instead of a blank white page.
-- **Profielfoto**: upload your own profile picture (Profiel) — a pencil on your photo, JPG/PNG/WebP
-  or a small GIF — instead of only the one Discord or Google gives you. Needs migration v2.30.
+- **Profielfoto en banner**: upload your own (Profiel) — a pencil on the photo and another on the
+  banner, JPG/PNG/WebP or a small GIF — instead of only the one Discord or Google gives you for
+  the avatar. Deleting one is now a small trash icon next to its pencil, not a text link. Both are
+  also settable during onboarding, not only afterwards. Needs migration v2.30.
 - **Event tags**: an event can be tagged Con, Gathering or Concert (Admin → Evenementen), shown at
   the top of its ticket card — replaces the old "Feestje" checkbox. Needs migration v2.32.
 - **Instellingen → Dichtheid**: a comfortable/compact toggle that tightens spacing app-wide.

@@ -16,12 +16,12 @@ import {
   BedDouble,
   Phone,
   MapPin,
-  Upload,
   Pencil,
   Loader2,
   Save,
   Smartphone,
   Plus,
+  Trash2,
   X,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -42,14 +42,10 @@ import { BannerCropModal } from "../components/profile/BannerCropModal";
 import { BadgeIcon } from "../components/common/BadgeIcon";
 import { useAuthStore } from "../store/auth.store";
 import { avatarColor } from "../utils/avatar";
-import { cropSquareAndCompress } from "../utils/imageCompression";
+import { prepareAvatarFile } from "../utils/imageCompression";
 import { toast } from "../store/toast.store";
 import { validateDisplayName, validatePhoneNumber } from "../utils/validation";
 import type { Badge, FontOption, User } from "../types";
-
-// Mirrors backend/app/routers/users.py's AVATAR_GIF_MAX_BYTES — checked here
-// too so a too-big gif never even starts uploading.
-const AVATAR_GIF_MAX_BYTES = 2 * 1024 * 1024;
 
 const FONT_MAP: Record<string, string> = {
   mono: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
@@ -262,6 +258,11 @@ function ProfileHead({
   avatarUploading,
   onDeleteAvatar,
   avatarDeleting,
+  onEditBanner,
+  bannerUploading,
+  onDeleteBanner,
+  bannerDeleting,
+  hasBanner,
 }: {
   user: User;
   hasAvatar: boolean;
@@ -282,11 +283,45 @@ function ProfileHead({
   /** Only offered once there's something of yours to remove. */
   onDeleteAvatar?: () => void;
   avatarDeleting?: boolean;
+  /** Same idea as onEditAvatar, for the banner image. */
+  onEditBanner?: () => void;
+  bannerUploading?: boolean;
+  onDeleteBanner?: () => void;
+  bannerDeleting?: boolean;
+  /** Whether there's a banner image to remove (vs. just a colour). */
+  hasBanner?: boolean;
 }) {
   return (
     <div className="card-surface overflow-hidden">
       {/* Banner — the user's own image or colour */}
-      <div className="h-[128px] w-full sm:h-[200px]" style={bannerStyle} />
+      <div className="relative h-[128px] w-full sm:h-[200px]" style={bannerStyle}>
+        {onEditBanner && (
+          <div className="absolute right-3 top-3 flex items-center gap-1.5">
+            {onDeleteBanner && hasBanner && (
+              <button
+                type="button"
+                onClick={onDeleteBanner}
+                disabled={bannerDeleting}
+                aria-label="Banner verwijderen"
+                title="Banner verwijderen"
+                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-colors hover:bg-ink/90 disabled:opacity-60"
+              >
+                {bannerDeleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onEditBanner}
+              disabled={bannerUploading}
+              aria-label="Banner wijzigen"
+              title="Banner wijzigen"
+              className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-transform hover:bg-ink/90 active:scale-95 disabled:opacity-60"
+            >
+              {bannerUploading ? <Loader2 size={13} className="animate-spin" /> : <Pencil size={13} />}
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="px-5 pb-5 sm:px-6 sm:pb-6">
         <div className="flex items-end justify-between gap-3">
@@ -347,9 +382,11 @@ function ProfileHead({
               type="button"
               onClick={onDeleteAvatar}
               disabled={avatarDeleting}
-              className="mt-1.5 pl-1 text-[11px] font-semibold text-ink-3 underline decoration-dotted underline-offset-2 transition-colors hover:text-ink disabled:opacity-60"
+              aria-label="Profielfoto verwijderen"
+              title="Profielfoto verwijderen"
+              className="mt-1.5 flex h-6 w-6 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-sunken hover:text-ink disabled:opacity-60"
             >
-              {avatarDeleting ? "Bezig…" : "Verwijder eigen foto"}
+              {avatarDeleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
             </button>
           )}
           </div>
@@ -595,18 +632,7 @@ export function ProfilePage() {
     e.target.value = "";
     if (!f) return;
     try {
-      // A gif can't go through the square-crop canvas — that would flatten it to
-      // one still frame. Uploaded as-is instead (the backend keeps it "klein").
-      if (f.type === "image/gif") {
-        if (f.size > AVATAR_GIF_MAX_BYTES) {
-          toast("error", `Gif te groot. Maximaal ${AVATAR_GIF_MAX_BYTES / (1024 * 1024)} MB voor een profielfoto-gif.`);
-          return;
-        }
-        await uploadAvatarMutation.mutateAsync(f);
-      } else {
-        const blob = await cropSquareAndCompress(f);
-        await uploadAvatarMutation.mutateAsync(blob);
-      }
+      await uploadAvatarMutation.mutateAsync(await prepareAvatarFile(f));
       setAvatarImgErr(false);
       toast("success", "Profielfoto bijgewerkt!");
     } catch (err) {
@@ -774,6 +800,11 @@ export function ProfilePage() {
           avatarUploading={uploadAvatarMutation.isPending}
           onDeleteAvatar={onAvatarDelete}
           avatarDeleting={deleteAvatarMutation.isPending}
+          onEditBanner={() => bannerInputRef.current?.click()}
+          bannerUploading={uploadBannerMutation.isPending}
+          onDeleteBanner={onBannerDelete}
+          bannerDeleting={deleteBannerMutation.isPending}
+          hasBanner={!!user.banner_url}
           actions={
             <>
               <input
@@ -782,6 +813,13 @@ export function ProfilePage() {
                 accept="image/jpeg,image/png,image/webp,image/gif"
                 className="hidden"
                 onChange={onAvatarFileChange}
+              />
+              <input
+                ref={bannerInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                className="hidden"
+                onChange={onBannerFileChange}
               />
               <Button
                 variant="secondary"
@@ -1022,89 +1060,20 @@ export function ProfilePage() {
           </div>
         </Card>
 
-        <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-2">
-          {/* ── Bannerkleur ──────────────────────────────────────────────── */}
-          <Card title="Bannerkleur">
-            {/* Live preview strip */}
-            <div
-              className="mb-4 h-14 w-full rounded-xl border-1.5 border-line"
-              style={getBannerStyle(draftBanner)}
-            />
-            <ColorPicker
-              value={draftBanner}
-              onChange={setDraftBanner}
-              presets={BANNER_COLORS}
-              fallback="#1e293b"
-            />
-          </Card>
-
-          {/* ── Banner afbeelding ────────────────────────────────────────── */}
-          <Card title="Bannerafbeelding">
-            {/* Hidden file input */}
-            <input
-              ref={bannerInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/gif,image/webp"
-              className="hidden"
-              onChange={onBannerFileChange}
-            />
-
-            {user?.banner_url ? (
-              <>
-                {/* Preview */}
-                <div
-                  className="relative mb-3 overflow-hidden rounded-xl border-1.5 border-line"
-                  style={{ aspectRatio: "3/1" }}
-                >
-                  <img
-                    src={user.banner_url}
-                    alt="Banner"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => bannerInputRef.current?.click()}
-                    loading={uploadBannerMutation.isPending}
-                  >
-                    <Upload size={13} />
-                    Wijzigen
-                  </Button>
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={onBannerDelete}
-                    loading={deleteBannerMutation.isPending}
-                  >
-                    Verwijderen
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <button
-                type="button"
-                className="flex w-full flex-col items-center justify-center gap-2.5 rounded-xl border-2 border-dashed border-line py-7 transition-colors hover:border-ink-3 hover:bg-sunken"
-                onClick={() => bannerInputRef.current?.click()}
-                disabled={uploadBannerMutation.isPending}
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sunken text-ink-3">
-                  <Upload size={17} />
-                </div>
-                <div className="px-3 text-center">
-                  <p className="text-sm font-semibold text-ink">
-                    Klik om een afbeelding te uploaden
-                  </p>
-                  <p className="mt-0.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-3">
-                    JPEG · PNG · GIF · WebP · max 8 MB
-                  </p>
-                </div>
-              </button>
-            )}
-          </Card>
-        </div>
+        {/* ── Bannerkleur ──────────────────────────────────────────────── */}
+        <Card title="Bannerkleur" subtitle="Gebruikt als er geen bannerafbeelding is ingesteld.">
+          {/* Live preview strip */}
+          <div
+            className="mb-4 h-14 w-full rounded-xl border-1.5 border-line"
+            style={getBannerStyle(draftBanner)}
+          />
+          <ColorPicker
+            value={draftBanner}
+            onChange={setDraftBanner}
+            presets={BANNER_COLORS}
+            fallback="#1e293b"
+          />
+        </Card>
 
         <UserPhotos identifier={user.id ?? user.name} />
       </motion.div>

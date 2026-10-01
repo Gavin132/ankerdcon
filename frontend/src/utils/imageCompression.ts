@@ -44,6 +44,24 @@ export function compressImage(file: File, maxDimension = 2560, quality = 0.88): 
   });
 }
 
+/** Mirrors backend/app/routers/users.py's AVATAR_GIF_MAX_BYTES — checked
+ * here too so an oversized gif fails fast instead of after a slow upload. */
+export const AVATAR_GIF_MAX_BYTES = 2 * 1024 * 1024;
+
+/** The blob to actually upload as an avatar: a gif is sent as-is (cropping
+ * would flatten it to one still frame — the backend keeps it "klein"), size-
+ * capped client-side first; anything else is centre-cropped to a square and
+ * compressed. Throws a Dutch message on anything that stops it. */
+export async function prepareAvatarFile(file: File): Promise<Blob | File> {
+  if (file.type === "image/gif") {
+    if (file.size > AVATAR_GIF_MAX_BYTES) {
+      throw new Error(`Gif te groot. Maximaal ${AVATAR_GIF_MAX_BYTES / (1024 * 1024)} MB voor een profielfoto-gif.`);
+    }
+    return file;
+  }
+  return cropSquareAndCompress(file);
+}
+
 /** Centre-crops a file to a square (the app shows every avatar as a circle,
  * so an arbitrary rectangle would just be cropped unpredictably by the
  * browser anyway) and resizes it down to `size`, never up. No manual crop

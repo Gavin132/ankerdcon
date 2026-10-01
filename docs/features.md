@@ -245,11 +245,15 @@ by hand, by members or admins.
   trip, room. Others see a popup with a "Bekijk profiel" button
   (`components/common/UserProfilePopup.tsx`); it scrolls inside itself on small screens.
 - Renaming keeps history: old data stays under the old name, which becomes an alias.
-- **Profielfoto**: a pencil badge on the avatar (Profiel, own profile only) opens a picker —
-  JPG/PNG/WebP (5 MB, centre-cropped to a square client-side) or a small GIF (2 MB, kept as is
-  so the animation survives; not cropped). Replaces the Discord/Google one. The upload is
-  marked `avatar_custom`, which stops the periodic resync below from overwriting it; a small
-  "Verwijder eigen foto" link under the avatar reverts to Discord/Google on the next resync.
+- **Profielfoto en banner**: a pencil badge on the avatar, and another on the banner itself
+  (Profiel, own profile only; `prepareAvatarFile()` in `utils/imageCompression.ts` is the shared
+  upload-prep logic) opens a picker — JPG/PNG/WebP (centre-cropped to a square client-side for
+  the avatar, 3:1-cropped for the banner) or a small GIF (kept as-is so the animation survives;
+  not cropped). The avatar upload replaces the Discord/Google one and is marked `avatar_custom`,
+  which stops the periodic resync below from overwriting it. Deleting either is a small trash
+  icon next to its pencil, not a text link. The same upload flow (`StepProfile.tsx`'s
+  `ProfilePhotos`) is available during onboarding, saving immediately rather than waiting for
+  onboarding to finish.
 - **Avatars stay current on their own**: since a stored `avatar_url` was previously only ever
   filled in once and then frozen, a changed or since-broken Discord/Google picture could stay
   wrong (or a broken image) forever. It is now re-checked once a day per profile
