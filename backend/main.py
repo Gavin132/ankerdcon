@@ -18,7 +18,7 @@ from app.constants import API_PREFIX, Tables
 from app.core.database import supabase
 from app.core.logging import configure_logging, get_logger
 from app.core.security import add_security_headers, limit_body_size, rate_limit
-from app.routers import admin, announcements, badges, calendar, changelog, cosplays, expenses, feedback, link_preview, meals, push, rides, settlements, stories, users
+from app.routers import admin, announcements, badges, calendar, changelog, cosplays, expenses, feedback, link_preview, meals, push, rides, settlements, stories, users, weather
 from app.services.reminder_scheduler import check_and_send_reminders, check_and_send_ticket_reminders
 
 configure_logging()
@@ -194,6 +194,7 @@ app.include_router(expenses.router,  prefix=API_PREFIX)
 app.include_router(settlements.router, prefix=API_PREFIX)
 app.include_router(stories.router,   prefix=API_PREFIX)
 app.include_router(admin.router,     prefix=API_PREFIX)
+app.include_router(weather.router,   prefix=API_PREFIX)
 
 
 @app.get(f"{API_PREFIX}/health", tags=["meta"])

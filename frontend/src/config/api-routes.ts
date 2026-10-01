@@ -101,6 +101,13 @@ export const apiRoutes = {
     subscribe: "/api/push/subscribe",
   },
 
+  // ── Weather — a caching proxy in front of Open-Meteo, see WeatherRoutes ──
+  weather: {
+    geocode: "/api/weather/geocode",
+    forecast: "/api/weather/forecast",
+    archive: "/api/weather/archive",
+  },
+
   changelog: {
     base: "/api/changelog/",
   },

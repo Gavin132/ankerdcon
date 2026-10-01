@@ -183,6 +183,23 @@ for a one-off notice (settlements.py) that isn't tied to a category. Needs
 `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` — see
 [deployment.md#web-push](deployment.md#web-push); without them, sending silently does nothing.
 
+### Weather — `/weather`
+
+| Method and path | Who | What |
+| --- | --- | --- |
+| `GET /weather/geocode` (`?name=`) | member | Open-Meteo's geocoding search, passthrough |
+| `GET /weather/forecast` (`?latitude=&longitude=&date=`) | member | Open-Meteo's daily + hourly forecast for one date, passthrough |
+| `GET /weather/archive` (`?latitude=&longitude=&start_date=&end_date=`) | member | Open-Meteo's historical daily data, passthrough |
+
+A caching proxy (`app/routers/weather.py`) in front of Open-Meteo for the member-facing weather
+card (`hooks/useEventWeather.ts`) — every browser used to call Open-Meteo directly, which meant a
+burst of members opening the app around the same time could hit it with the same request many
+times over. Response shapes are untouched, so the frontend's own parsing/WMO-code mapping is
+unchanged; only the URL moved. Cached in-process, keyed by the request's own params — a day for a
+geocode, 2 hours for a forecast, a week for archive data. This is separate from each device's own
+`staleTime` throttle (`msUntilNextWeatherSlot()`), which is not a real cache, just "don't ask
+again too soon" — see [architecture.md](architecture.md#working-on-bad-reception).
+
 ### Link previews — *public*, not under `/api`
 
 `GET /trips/{id}` and `GET /events/{id}` (the older link shape) are for link-unfurling

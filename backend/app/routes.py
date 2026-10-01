@@ -87,6 +87,18 @@ class PushRoutes:
     SUBSCRIBE = "/subscribe"  # POST, DELETE
 
 
+class WeatherRoutes:
+    """A caching proxy in front of Open-Meteo for the member-facing weather
+    card (WeatherCard.tsx / useEventWeather.ts) — every member's browser used
+    to call Open-Meteo directly, so a burst of people opening the app at once
+    could hit it with the same request many times over. The response shapes
+    are unchanged passthroughs of Open-Meteo's own, cached server-side."""
+    PREFIX = "/weather"
+    GEOCODE = "/geocode"    # GET ?name=
+    FORECAST = "/forecast"  # GET ?latitude=&longitude=&date=
+    ARCHIVE = "/archive"    # GET ?latitude=&longitude=&start_date=&end_date=
+
+
 class CosplayRoutes:
     PREFIX = "/cosplays"
     LIST = "/"

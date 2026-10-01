@@ -37,6 +37,9 @@ All notable changes to Ankerd Con are documented here.
 - Download a whole day's photos as one zip from the story viewer, next to the per-photo download.
 - When the app cannot start (an old iPhone, a stale cached copy) it now shows a "Ankerd Con kan niet
   starten" screen with what to try and the errors it saw, instead of a blank white page.
+- The weather card used to have every member's browser call Open-Meteo directly — now it goes
+  through the backend, which caches the response, so a burst of people opening the app around the
+  same time shares one fetch instead of one each.
 - **Profielfoto en banner**: upload your own (Profiel) — a pencil on the photo and another on the
   banner, JPG/PNG/WebP or a small GIF — instead of only the one Discord or Google gives you for
   the avatar. Deleting one is now a small trash icon next to its pencil, not a text link. Both are
