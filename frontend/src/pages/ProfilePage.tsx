@@ -352,23 +352,39 @@ function ProfileHead({
               )}
             </div>
             {onEditAvatar ? (
-              /* Own profile: a pencil to change the photo, taking this corner
-                 over from the Discord badge — once you can edit it, "via
-                 Discord" isn't the interesting fact anymore. */
-              <button
-                type="button"
-                onClick={onEditAvatar}
-                disabled={avatarUploading}
-                aria-label="Profielfoto wijzigen"
-                title="Profielfoto wijzigen"
-                className="absolute bottom-1 right-0 flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper transition-transform active:scale-95 disabled:opacity-60"
-              >
-                {avatarUploading ? (
-                  <Loader2 size={13} className="animate-spin" />
-                ) : (
-                  <Pencil size={12} />
+              /* Own profile: a pencil to change the photo, next to a trash
+                 can when there's a custom upload to remove — same pairing as
+                 the banner's top-right corner. Takes this corner over from
+                 the Discord badge, since once you can edit it, "via Discord"
+                 isn't the interesting fact anymore. */
+              <div className="absolute bottom-1 right-0 flex items-center gap-1.5">
+                {onDeleteAvatar && user.avatar_custom && (
+                  <button
+                    type="button"
+                    onClick={onDeleteAvatar}
+                    disabled={avatarDeleting}
+                    aria-label="Profielfoto verwijderen"
+                    title="Profielfoto verwijderen"
+                    className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-colors hover:bg-ink/90 disabled:opacity-60"
+                  >
+                    {avatarDeleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                  </button>
                 )}
-              </button>
+                <button
+                  type="button"
+                  onClick={onEditAvatar}
+                  disabled={avatarUploading}
+                  aria-label="Profielfoto wijzigen"
+                  title="Profielfoto wijzigen"
+                  className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper transition-transform active:scale-95 disabled:opacity-60"
+                >
+                  {avatarUploading ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <Pencil size={12} />
+                  )}
+                </button>
+              </div>
             ) : (
               hasAvatar && !user.avatar_custom && (
                 <div className="absolute bottom-1 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper">
@@ -377,18 +393,6 @@ function ProfileHead({
               )
             )}
           </div>
-          {onDeleteAvatar && user.avatar_custom && (
-            <button
-              type="button"
-              onClick={onDeleteAvatar}
-              disabled={avatarDeleting}
-              aria-label="Profielfoto verwijderen"
-              title="Profielfoto verwijderen"
-              className="mt-1.5 flex h-6 w-6 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-sunken hover:text-ink disabled:opacity-60"
-            >
-              {avatarDeleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
-            </button>
-          )}
           </div>
 
           {actions && <div className="flex shrink-0 items-center gap-2 pt-3">{actions}</div>}
