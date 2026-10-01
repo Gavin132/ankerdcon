@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Car, UserCheck, UserMinus, UtensilsCrossed } from "lucide-react";
+import { Car, ChevronRight, UserCheck, UserMinus, UtensilsCrossed } from "lucide-react";
 import { useMeals, useRsvpMeal, useCancelRsvp } from "../hooks/useMeals";
 import { useCalendar } from "../hooks/useCalendar";
 import { useRides } from "../hooks/useRides";
@@ -153,10 +153,14 @@ export function MealDetailPage() {
                 <button
                   type="button"
                   onClick={() => setQuickRideOpen(true)}
-                  className="flex w-full items-center justify-center gap-2 rounded-[12px] border-1.5 border-dashed border-rose-400 bg-rose-50 px-4 py-6 text-sm font-semibold text-rose-700 transition-colors hover:border-rose-500 dark:border-rose-400/60 dark:bg-rose-500/10 dark:text-rose-300"
+                  className="flex w-full items-center gap-3 rounded-[12px] border-1.5 border-dashed border-rose-400 bg-rose-50 px-4 py-5 text-left text-sm font-semibold text-rose-700 transition-colors hover:border-rose-500 hover:bg-rose-100 active:scale-[0.99] dark:border-rose-400/60 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/15"
                 >
-                  <Car size={16} />
-                  Nog geen rit georganiseerd — bied een auto aan
+                  <Car size={18} className="shrink-0" />
+                  <span className="flex-1">
+                    Nog geen rit georganiseerd
+                    <span className="block font-normal text-rose-600 dark:text-rose-300/80">Tik om een auto aan te bieden</span>
+                  </span>
+                  <ChevronRight size={16} className="shrink-0" />
                 </button>
               )
             )}

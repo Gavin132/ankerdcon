@@ -26,6 +26,9 @@ All notable changes to Ankerd Con are documented here.
 - The Foto's tile on the trip page put its own upload button inside the tile's outer button — invalid
   HTML a browser "fixes" by silently splitting the two apart, which could make clicks land wrong.
   The tile is a div now, styled and behaving the same either way.
+- The "Nog geen rit georganiseerd" box on a meal page (when it needs transport) is a button, but
+  looked like a plain warning banner — nothing said it was tappable. It now spells out "Tik om een
+  auto aan te bieden" and ends in a chevron, like other tappable rows in the app.
 
 ### Added
 
