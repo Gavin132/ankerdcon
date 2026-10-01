@@ -107,9 +107,10 @@ against) falls back to notifying every opted-in member, as before.
 | `POST /meals/{id}/rsvp`, `…/cancel-rsvp` | member | join or leave |
 | `DELETE /meals/{id}` | owner | remove |
 
-`location` is geocoded server-side on save (`app/services/geocoding_service.py`) into
-`location_lat`/`location_lng`, best-effort — used to place this meal's pin on the crew map.
-`maps_url`, when given, is an exact Google Maps link used for that pin's route instead.
+`location_lat`/`location_lng` are resolved server-side on save (`app/services/geocoding_service.py`'s
+`resolve_location()`) to place this meal's pin on the crew map — from `maps_url` when given (its own
+embedded coordinates, extracted from the resolved link), otherwise by geocoding `location`.
+Best-effort throughout; neither resolving means no pin.
 
 ### Cosplays — `/cosplays`
 

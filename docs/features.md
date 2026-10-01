@@ -231,16 +231,14 @@ by hand, by members or admins.
 - A **location ping** is a zone or text and, when you allow it, GPS coordinates,
   stored on the profile and considered fresh for two hours. Pings within 20 m of each
   other share a pin.
-- A venue pin's coordinates are geocoded server-side (`app/services/geocoding_service.py`,
-  Nominatim/OpenStreetMap, the same free geocoder `LocationSearchInput.tsx` already uses)
-  whenever its location text is saved — best-effort, no pin when it can't be resolved (a
-  venue name OSM genuinely doesn't have, not just a rare failure). A dinnerplan can also
-  carry its own exact Google Maps link (`maps_url`, set when planning it), used for that
-  pin's route instead of the geocoded coordinates when given — same override, admin-set, for
-  the con location and hotel (Admin → Evenementen), for a venue whose address geocodes
-  unreliably (e.g. a hotel chain resolving to the wrong city). None of these overrides place
-  a pin by themselves — the location text still needs to geocode first, they only change
-  where that pin's "Route" link goes.
+- A venue pin's coordinates come from `app/services/geocoding_service.py`'s `resolve_location()`,
+  server-side, whenever the location is saved: a Google Maps link, if given, wins (its own
+  coordinates are extracted directly from the resolved URL — the exact spot a member picked,
+  not a guess from a name), otherwise the location text is geocoded via Nominatim/OpenStreetMap
+  (the same free geocoder `LocationSearchInput.tsx` already uses). Best-effort throughout — no
+  pin when neither resolves. A dinnerplan can carry its own Maps link (`maps_url`, set when
+  planning it); the con location and hotel (Admin → Evenementen) can too — useful for a venue
+  whose name geocodes unreliably or not at all (e.g. a hotel chain resolving to the wrong city).
 - A **profile** has an avatar (from Discord/Google, or a member's own upload — see below),
   banner (colour or image), name font and colour,
   pronouns, bio, badges, aliases (former names), phone number and, on the current

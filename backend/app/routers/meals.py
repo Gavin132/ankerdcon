@@ -9,7 +9,7 @@ from app.models.meal import CreateMealRequest, Meal, RsvpRequest
 from app.routes import MealRoutes
 from app.services import notification_service
 from app.services.discord_bot import escape_markdown
-from app.services.geocoding_service import geocode
+from app.services.geocoding_service import resolve_location
 from app import messages as M
 from app.core.database import supabase
 
@@ -35,7 +35,7 @@ async def create_meal(
     current_user: str = Depends(get_current_user),
     settings: Settings = Depends(get_settings),
 ) -> None:
-    coords = await geocode(body.location) if body.location else None
+    coords = await resolve_location(body.location, body.maps_url)
     meal_data = {
         "created_by": current_user,
         "meal_name": body.meal_name,

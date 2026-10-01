@@ -53,7 +53,7 @@ from app.models.calendar import Event, EventDay, HotelRoom
 from app.routers.calendar import _hotel_group_key
 from app.routers.expenses import expense_in_open_settlement, share_in_open_settlement
 from app.routers.rides import _notify_ride_created
-from app.services.geocoding_service import geocode
+from app.services.geocoding_service import resolve_location
 from app.models.meal import Meal
 from app.models.rides import CreateRideRequest, Ride
 from app.models.user import User
@@ -87,6 +87,34 @@ def _build_updates(body, nullable_fields: set[str] | None = None) -> dict:
         if field in body.model_fields_set:
             updates[field] = getattr(body, field)
     return updates
+
+
+async def _resolve_update_coords(table: str, row_id: str, updates: dict, text_field: str, maps_field: str) -> None:
+    """Re-resolves `{text_field}_lat`/`_lng` into `updates` when either the
+    location text or its Maps-link override changed — using the new value
+    for whichever one did, and the row's current value (one more read) for
+    whichever one didn't, since combining a *new* location with a *stale*
+    maps_url (or the reverse) would resolve the wrong spot, or wrongly null
+    out an otherwise-still-valid pin. Leaves `updates` untouched when
+    neither field is in it.
+    """
+    if text_field not in updates and maps_field not in updates:
+        return
+    text = updates.get(text_field)
+    maps_url = updates.get(maps_field)
+    if text_field not in updates or maps_field not in updates:
+        try:
+            rows = supabase.table(table).select(f"{text_field}, {maps_field}").eq("id", row_id).execute().data
+        except Exception as e:
+            logger.error("Failed to fetch current %s/%s for %s %s: %s", text_field, maps_field, table, row_id, e)
+            rows = []
+        current = rows[0] if rows else {}
+        if text_field not in updates:
+            text = current.get(text_field)
+        if maps_field not in updates:
+            maps_url = current.get(maps_field)
+    coords = await resolve_location(text, maps_url)
+    updates[f"{text_field}_lat"], updates[f"{text_field}_lng"] = coords if coords else (None, None)
 
 
 # ── Stats ──────────────────────────────────────────────────────────────────────
@@ -500,9 +528,9 @@ def admin_list_meals(_: str = Depends(get_admin_user)) -> list[Meal]:
 async def admin_create_meal(body: AdminCreateMealRequest, _: str = Depends(get_admin_user)) -> Meal:
     meal_data = body.model_dump()
     meal_data["participants"] = []
-    if meal_data.get("location"):
-        coords = await geocode(meal_data["location"])
-        meal_data["location_lat"], meal_data["location_lng"] = coords if coords else (None, None)
+    coords = await resolve_location(meal_data.get("location"), meal_data.get("maps_url"))
+    if coords:
+        meal_data["location_lat"], meal_data["location_lng"] = coords
     try:
         resp = supabase.table(Tables.MEALS).insert(meal_data).execute()
         return resp.data[0]
@@ -523,9 +551,7 @@ async def admin_update_meal(
     })
     if not updates:
         return
-    if "location" in updates:
-        coords = await geocode(updates["location"]) if updates["location"] else None
-        updates["location_lat"], updates["location_lng"] = coords if coords else (None, None)
+    await _resolve_update_coords(Tables.MEALS, meal_id, updates, "location", "maps_url")
     try:
         resp = supabase.table(Tables.MEALS).update(updates).eq("id", meal_id).execute()
     except Exception as e:
@@ -702,14 +728,12 @@ async def admin_create_event(body: AdminCreateEventRequest, _: str = Depends(get
     the first day is added (there's no date to announce before that)."""
     event_data = {k: v for k, v in body.model_dump().items() if v is not None and v != ""}
     event_data.setdefault("is_hotel", False)
-    if event_data.get("location"):
-        coords = await geocode(event_data["location"])
-        if coords:
-            event_data["location_lat"], event_data["location_lng"] = coords
-    if event_data.get("hotel_location"):
-        coords = await geocode(event_data["hotel_location"])
-        if coords:
-            event_data["hotel_location_lat"], event_data["hotel_location_lng"] = coords
+    coords = await resolve_location(event_data.get("location"), event_data.get("location_maps_url"))
+    if coords:
+        event_data["location_lat"], event_data["location_lng"] = coords
+    coords = await resolve_location(event_data.get("hotel_location"), event_data.get("hotel_location_maps_url"))
+    if coords:
+        event_data["hotel_location_lat"], event_data["hotel_location_lng"] = coords
     try:
         resp = supabase.table(Tables.EVENTS).insert(event_data).execute()
     except Exception as e:
@@ -727,12 +751,8 @@ async def admin_update_event(event_id: str, body: AdminUpdateEventRequest, _: st
     })
     if not updates:
         return
-    if "location" in updates:
-        coords = await geocode(updates["location"]) if updates["location"] else None
-        updates["location_lat"], updates["location_lng"] = coords if coords else (None, None)
-    if "hotel_location" in updates:
-        coords = await geocode(updates["hotel_location"]) if updates["hotel_location"] else None
-        updates["hotel_location_lat"], updates["hotel_location_lng"] = coords if coords else (None, None)
+    await _resolve_update_coords(Tables.EVENTS, event_id, updates, "location", "location_maps_url")
+    await _resolve_update_coords(Tables.EVENTS, event_id, updates, "hotel_location", "hotel_location_maps_url")
     try:
         resp = supabase.table(Tables.EVENTS).update(updates).eq("id", event_id).execute()
     except Exception as e:
