@@ -40,5 +40,21 @@ class CreateMealRequest(BaseModel):
     extra_notes: Optional[str] = None
 
 
+class UpdateMealRequest(BaseModel):
+    meal_name: Optional[str] = None
+    time: Optional[str] = None
+    location: Optional[str] = None
+    maps_url: WebUrl = None
+    cost: Optional[float] = None
+    transport_needed: Optional[bool] = None
+    linked_event_id: Optional[str] = None
+    website: WebUrl = None
+    menu_url: WebUrl = None
+    description: Optional[str] = None
+    dietary_options: Optional[str] = None
+    parking_info: Optional[str] = None
+    extra_notes: Optional[str] = None
+
+
 class RsvpRequest(BaseModel):
     user_name: str

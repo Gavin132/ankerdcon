@@ -105,6 +105,7 @@ against) falls back to notifying every opted-in member, as before.
 | `GET /meals/` | member | meals |
 | `POST /meals/` | member | plan a meal |
 | `POST /meals/{id}/rsvp`, `…/cancel-rsvp` | member | join or leave |
+| `PUT /meals/{id}` | owner | edit |
 | `DELETE /meals/{id}` | owner | remove |
 
 `location_lat`/`location_lng` are resolved server-side on save (`app/services/geocoding_service.py`'s

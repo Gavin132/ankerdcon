@@ -44,6 +44,8 @@ All notable changes to Ankerd Con are documented here.
   to Locatie pingen) — a 🚗 pin anyone riding with that driver can set or correct. Tapping it shows
   when that car is leaving and links to the ride, once one's been planned; it drops off the map 2
   hours after that. Needs migration v2.35.
+- Whoever planned a meal — or an admin — can now edit it afterwards: a pencil next to the share
+  button on the meal page, same as the event page's.
 - **Profielfoto en banner**: upload your own (Profiel) — a pencil on the photo and another on the
   banner, JPG/PNG/WebP or a small GIF — instead of only the one Discord or Google gives you for
   the avatar. Deleting one is now a small trash icon next to its pencil, not a text link. Both are

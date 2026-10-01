@@ -325,6 +325,22 @@ export interface CreateMealRequest {
   extra_notes?: string;
 }
 
+export interface UpdateMealRequest {
+  meal_name?: string;
+  time?: string;
+  location?: string;
+  maps_url?: string | null;
+  cost?: number;
+  transport_needed?: boolean;
+  linked_event_id?: string | null;
+  website?: string | null;
+  menu_url?: string | null;
+  description?: string | null;
+  dietary_options?: string | null;
+  parking_info?: string | null;
+  extra_notes?: string | null;
+}
+
 export interface RsvpRequest {
   user_name: string;
 }
