@@ -53,6 +53,13 @@ def pushed_titles(monkeypatch):
 
 
 @pytest.fixture
+def pushed_bodies(monkeypatch):
+    calls = []
+    monkeypatch.setattr(svc.push_service, "send_push", lambda settings, names, title, body: calls.append(body))
+    return calls
+
+
+@pytest.fixture
 def dmed(monkeypatch):
     calls = []
     monkeypatch.setattr(svc.discord_bot, "send_dm", lambda token, discord_id, content: calls.append(discord_id))
@@ -130,6 +137,14 @@ def test_push_title_falls_back_to_the_app_name_for_an_unknown_category(monkeypat
     monkeypatch.setattr(svc, "supabase", FakeSupabase([_profile(notification_categories=["something_new"])]))
     svc.broadcast_category_dm("tok", "something_new", "content")
     assert pushed_titles == ["Ankerd Con"]
+
+
+def test_push_body_does_not_repeat_the_title(monkeypatch, dmed, pushed_bodies):
+    """The title ("Nieuwe maaltijd") already shows in the notification chrome —
+    the body shouldn't open with it again."""
+    monkeypatch.setattr(svc, "supabase", FakeSupabase([_profile()]))
+    svc.broadcast_category_dm("tok", "meal_created", "🍽️ **Nieuwe maaltijd: Pizza**\n🕐 19:00")
+    assert pushed_bodies == ["🍽️ Pizza"]
 
 
 # ── send_personal_dm ─────────────────────────────────────────────────────────

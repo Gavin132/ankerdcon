@@ -91,11 +91,23 @@ def send_push(settings: Settings, user_names: list[str], title: str, body: str, 
     logger.info("Push %r: delivered to %d/%d subscription(s) for %s", title, delivered, len(subs), user_names)
 
 
-def headline(dm_content: str) -> str:
+def headline(dm_content: str, title: str | None = None) -> str:
     """The DM templates in app/messages.py are Discord markdown, meant for a chat
     bubble; a push notification is one short plain line. Takes the first line,
     strips the ** bold markers (the only markdown these templates use) and
-    trims it to a sane notification length."""
+    trims it to a sane notification length.
+
+    Several templates open with "{title}: {detail}" — the same phrase the
+    push notification's own `title` already shows, which reads as a stutter
+    ("Nieuwe maaltijd" / "Nieuwe maaltijd: Pizza"). When the line starts with
+    exactly that, right after its emoji, the redundant part is dropped and
+    only the detail (plus the emoji) is kept. Templates phrased as a full
+    sentence ("Sam heeft een nieuwe rit aangemaakt") don't match this and are
+    left as they are."""
     first_line = dm_content.strip().split("\n", 1)[0]
-    plain = first_line.replace("**", "")
+    emoji, _, rest = first_line.partition(" ")
+    plain = rest.replace("**", "")
+    if title and plain.startswith(f"{title}: "):
+        plain = plain[len(title) + 2:]
+    plain = f"{emoji} {plain}".strip()
     return plain if len(plain) <= 120 else plain[:117] + "…"

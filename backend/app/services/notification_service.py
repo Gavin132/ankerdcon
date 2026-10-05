@@ -123,7 +123,7 @@ def broadcast_category_dm(bot_token: str, category: str, content: str, eligible_
     if dm_sent:
         logger.info("Notification broadcast (%s): DM to %d user(s)", category, dm_sent)
     title = _PUSH_TITLES.get(category, _APP_TITLE)
-    push_service.send_push(get_settings(), push_names, title, push_service.headline(content))
+    push_service.send_push(get_settings(), push_names, title, push_service.headline(content, title))
 
 
 def send_personal_dm(bot_token: str, profile_id: str, content: str, title: str = _APP_TITLE) -> None:
@@ -156,4 +156,4 @@ def send_personal_dm(bot_token: str, profile_id: str, content: str, title: str =
         return
     if bot_token and profile.get("allow_dm", True) and profile.get("discord_id"):
         discord_bot.send_dm(bot_token, profile["discord_id"], content)
-    push_service.send_push(get_settings(), [profile["name"]], title, push_service.headline(content))
+    push_service.send_push(get_settings(), [profile["name"]], title, push_service.headline(content, title))

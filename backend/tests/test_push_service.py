@@ -106,3 +106,14 @@ def test_an_empty_name_list_sends_nothing(monkeypatch):
 ])
 def test_headline_derives_a_short_plain_first_line(content, expected):
     assert headline(content) == expected
+
+
+def test_headline_drops_a_title_that_repeats_at_the_start():
+    content = "🍽️ **Nieuwe maaltijd: Pizza**\n🕐 19:00"
+    assert headline(content, title="Nieuwe maaltijd") == "🍽️ Pizza"
+
+
+def test_headline_leaves_a_full_sentence_alone_even_with_a_title():
+    # "Nieuwe rit" only appears mid-sentence here, not as a "title: detail" prefix.
+    content = "🚗 **Sam heeft een nieuwe rit aangemaakt**"
+    assert headline(content, title="Nieuwe rit") == "🚗 Sam heeft een nieuwe rit aangemaakt"
