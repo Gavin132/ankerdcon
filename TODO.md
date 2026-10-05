@@ -16,24 +16,11 @@ ticked off — `CHANGELOG.md` and git history are the record.
 Open items before or around the next deploy. New migrations go here until they are run, in
 the order they must be run, with the Supabase SQL editor; see
 [docs/deployment.md](docs/deployment.md#database-migrations) for how to check what has already
-been applied. (Migrations v2.19, v2.25, v2.26, v2.27, v2.33, v2.34 and v2.35 are done.)
+been applied. (Migrations v2.19 (apart from its last line, below) and v2.25 up to v2.35 are done.)
 
-- [ ] Run `db/migrations/migration_v2.28_feedback.sql` (the `feedback` table) **before** deploying the
-      feedback feature; until then only sending and reading feedback answers 503.
-- [ ] **Run `db/migrations/migration_v2.29_avatar_resync.sql` and `db/migrations/migration_v2.30_custom_avatar.sql`
-      before deploying the commit that added them** (`profiles.avatar_synced_at`, `profiles.avatar_custom`) —
-      `get_current_user`'s own profile lookup selects both columns unconditionally, so missing either one fails
-      *every* login (not just avatar upload/resync as the columns' own purpose might suggest), surfacing as
-      "Kan de server niet bereiken" for everyone. Learned this the hard way on dev; if this ever happens again,
-      running the two `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` statements fixes it instantly, no redeploy needed.
-- [ ] Run `db/migrations/migration_v2.31_push_subscriptions.sql` (`push_subscriptions`) before deploying web
-      push. Also generate a VAPID key pair and set `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` on the
-      backend and `VITE_VAPID_PUBLIC_KEY` on the frontend build — see docs/deployment.md#web-push. Until all of
-      that is done, the "Pushmeldingen" toggle simply doesn't appear (this one really is harmless to leave unrun).
-- [ ] Run `db/migrations/migration_v2.32_event_type.sql` (`events.event_type`) any time — safe to leave unrun
-      for a while, unlike v2.29/v2.30: reads use `select("*")`, which just omits a missing column rather than
-      failing, so every trip shows no tag until this has run. Setting one in the admin event editor does need
-      it and fails clearly (503) until then. Also backfills `event_type = 'gathering'` from the old `is_party`.
+- [ ] Generate a VAPID key pair and set `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` on the
+      backend and `VITE_VAPID_PUBLIC_KEY` on the frontend build — see docs/deployment.md#web-push. Until
+      that is done, the "Pushmeldingen" toggle simply doesn't appear (harmless to leave for a while).
 - [ ] The old `calendar` table still exists: v2.19's two `ALTER TABLE` statements were run but
       not its last line, which drops it. Drop it (`DROP TABLE calendar;`) when you are sure nothing
       needs it, ideally after a backup.

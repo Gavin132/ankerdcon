@@ -6,6 +6,14 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+---
+
+## [2.1.0] - 2026-10-05
+
+A calmer Vervoer, parking spots on the crew map, push notifications, a search that finds things to
+do, and a lot of small fixes. Every migration up to v2.35 has to have been run (see
+`docs/deployment.md`).
+
 ### Fixed
 
 - Drawers (Vervoer, Kamers, Cosplay, and a payment opened from a Discord link) could not be closed
@@ -29,9 +37,34 @@ All notable changes to Ankerd Con are documented here.
 - The "Nog geen rit georganiseerd" box on a meal page (when it needs transport) is a button, but
   looked like a plain warning banner — nothing said it was tappable. It now spells out "Tik om een
   auto aan te bieden" and ends in a chevron, like other tappable rows in the app.
+- A push notification's title repeated itself at the start of its own text ("Nieuwe maaltijd" /
+  "Nieuwe maaltijd: Pizza") for new meals and new events — the body no longer repeats what the
+  title already says.
+- Story rings and photos lagged behind: opening a story could show the previous photo until you
+  reopened it, because the day's photo list was cached for up to 30 seconds while the ring already
+  knew about the new one. The viewer now always asks again when it opens, the rings refresh every
+  minute, and the next photos are loaded ahead so tapping through is instant.
+- On desktop the story viewer could slide down and leave a gap of a few hundred pixels showing the
+  background: dragging a photo with the mouse started the browser's own image drag. Swiping down to
+  close is for touch only now, and photos can't be dragged.
+- The onboarding colour list (and the profile's) had orange twice — amber and orange looked the
+  same. One is left.
+- The Parkeerplek button on Crew is always there now, so people know the option exists; while it
+  can't be used it is greyed out and tapping it says why.
 
 ### Added
 
+- **A chemistry joke on every error screen**, from soc.ankerd.nl, in Dutch: under "Er ging iets
+  mis", "Pagina niet gevonden", "Geen toegang", "Kan de server niet bereiken" and "Ankerd Con kan
+  niet starten".
+- **Add several photos to a story at once.** Pick as many as you like (up to 30); they go in
+  one after the other in the order they were taken (read from the photo, or the file's date when it
+  has none), with a count while they upload and one message at the end. A lost connection queues
+  the rest to send later.
+- **Search finds things to do**, not just things: "Acties" cards such as Locatie pingen, Parkeerplek
+  opslaan, Rit aanmaken and Etentje plannen, found by everyday words too ("lift", "diner", "ping",
+  "geparkeerd"). Those that belong to a trip act on the current trip — the one the Event tab opens
+  on — and the card says which. Each opens the right sheet straight away.
 - Drawers can be closed by swiping down on the pill or the header; story photos by swiping down
   anywhere (the photo follows your finger, then springs back or closes).
 - Download a whole day's photos as one zip from the story viewer, next to the per-photo download.
@@ -76,6 +109,18 @@ All notable changes to Ankerd Con are documented here.
   person — it used to visibly crawl one name at a time for a bigger group.
 - The launch splash no longer holds for a fixed ~4.5 s regardless of how ready the app already is;
   it's now a brief brand moment (~1.5 s total).
+
+### Changed
+
+- **Vervoer is calmer.** The sheet used to stack a card per ride (eight things on each) inside a
+  collapsible per day, under three "Ik rijd" buttons and an amber banner. It now shows one
+  direction of one day at a time: pick Heen, Terug or Eten at the top and, on a multi-day trip, the
+  day below it. Each ride is a single row; tap it for who rides along, the parking info and Stap
+  in / Uitstappen. **Your own ride is the blue row**, the others are greyed back, and every row
+  shows how full the car should leave ("doel 3–4"). "Rit aanbieden" sits next to the day chips,
+  and "N mensen hebben nog geen vervoer" is one line at the bottom. The sheet opens on the
+  direction and day that are next up, the same way the Hub's "Rit aanbieden" and "Meerijden" tiles
+  decide. The Tijdlijn view is gone: the list is already in time order.
 
 ---
 

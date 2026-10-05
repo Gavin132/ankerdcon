@@ -104,11 +104,23 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
 - **Heen** (inbound), **Terug** (outbound) and **Restaurant** rides. A ride has a
   driver, seats, a departure time, a start and end location and optional parking
   info. Public transport has no seats.
+- **The Vervoer sheet** shows one direction of one day at a time: a segmented control picks
+  Heen, Terug or Eten (with the number of rides), and on a multi-day trip day chips pick the
+  day (an amber dot marks a day that still has people without transport). Each ride is a
+  single row (time, driver, where from or to, seats free and the car's target); tap it for
+  who rides along, the parking info, **Stap in** / **Uitstappen** and a link to the ride's
+  own page. **Your own ride is the blue row.** The sheet opens on the direction and day the
+  Hub's "Rit aanbieden" and "Meerijden" tiles would use (`utils/transportView.ts`, built on
+  `planQuickRide`): Heen before the trip and in the morning, Terug from 13:00, Heen on
+  tomorrow's day from 21:00, Terug on the last day once it's over, and Eten instead of Terug
+  when the trip has no hotel and a meal still to come needs a ride. That is only the starting
+  point; it never moves while the sheet is open.
 - The driver counts as a passenger; "seats" are the seats for others. Claiming and
   leaving a seat work for anyone, see [acting-for-others.md](acting-for-others.md).
-- **"Ik rijd"** on Heen/Terug becomes **"Rit verwijderen"** once you already drive
-  that direction that day. It asks to confirm and warns when others have joined.
-  `DELETE /api/rides/{id}` is for the driver or an admin.
+- **"Rit aanbieden"** (next to the day chips, Heen and Terug only) is gone once you already
+  drive that direction that day; the ride itself then offers **"Rit verwijderen"**. It asks
+  to confirm and warns when others have joined. `DELETE /api/rides/{id}` is for the driver
+  or an admin.
 - **Restaurant rides** are created from a meal that needs transport and can have
   several cars, each with its own seats (`RestaurantRideGroup.tsx`, `CarCard.tsx`).
 - **Car loading advice** (Heen and Terug, per day): from the number of people signed up for
@@ -116,12 +128,14 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
   left behind (`utils/carBalance.ts`). Cars go in departure order; whatever an early car
   leaves without, the later ones have to take. With 11 people and three 5-seaters the first
   should take 3–4; if it leaves with 2 the second needs 4–5; if that one leaves with 4 the
-  third has to be full. Each car has a pill ("Nog 1 nodig · doel 3–4", "Op schema"), and the
-  direction shows people, cars, seats and who has no car yet or how many seats are short.
+  third has to be full. Each row shows the target ("doel 3–4", amber when the car is short,
+  green when it's on course) and the open ride the full pill ("Nog 1 nodig · doel 3–4", "Op
+  schema"), and the direction shows people, cars, seats and who has no car yet or how many
+  seats are short.
   It is live advice from today's sign-ups and never blocks anyone: cars rarely leave on
   time, so nothing is locked in. Public transport and cars that left over two hours ago are
   left out.
-- Ride cards change colour as departure nears and show a countdown; a ride stays
+- An open ride shows a countdown pill as departure nears; a ride stays
   visible for two hours after it leaves, then moves to the history
   (`utils/rides.ts` → `getRideStatus`).
 - The vehicle icon comes from `rideVehicleIcon`: a train for public transport, a
@@ -157,9 +171,15 @@ the form is open; saving waits until nothing is queued.
 
 `components/story/`, `backend/app/routers/stories.py`.
 
-- Anyone can add a photo to a day, from the Hub, the trip ticket or the Foto's
-  tile. It is compressed in the browser (max 2560 px, JPEG 88 %), checked by the
+- Anyone can add photos to a day, from the Hub, the trip ticket or the Foto's
+  tile. Each is compressed in the browser (max 2560 px, JPEG 88 %), checked by the
   backend and stored in MinIO.
+- **Several at once** (`hooks/useStoryPhotoPicker.ts`, shared by both entry points): up to
+  30, uploaded one after the other, **oldest first by when they were taken**. The story shows
+  upload order, so uploading in capture order is what sorts them. The date is the EXIF
+  `DateTimeOriginal` (`utils/photoDate.ts`), read from the original because the canvas
+  compression strips EXIF, with the file's `lastModified` as fallback. One toast sums up the
+  batch; after a network failure the rest is queued without waiting out more timeouts.
 - A **story** is the day's photos in upload order (`seq`). Each member's progress
   is stored per day (`story_seen`), so a ring shows "unseen" until you have
   watched to the newest photo.
@@ -273,6 +293,21 @@ by hand, by members or admins.
 `components/layout/GlobalSearch.tsx`. The magnifier in the top bar opens a search
 over trips, rides, meals, cosplays and crew. It filters the data the app already
 holds in its query cache, so opening it makes no requests.
+
+It also finds **actions** ("Acties": Locatie pingen, Parkeerplek opslaan, Rit aanmaken,
+Etentje plannen, Hotelkamers, Cosplay toevoegen, Foto's, Kosten en afrekenen), matched on the
+label and on aliases such as "lift" or "diner" (`utils/searchActions.ts`, where a new one is
+added). An action that belongs to a trip acts on the **current trip** (`currentTripId`, as the
+Event tab does) and names it on the card; ride and meal creation are left out once that trip is
+over. The card navigates with `location.state = { action }` and the target page opens its sheet
+through `hooks/useRouteAction.ts` (Crew: ping, parking; the Eten tile: addMeal). Rit aanmaken only opens the Vervoer
+sheet, where the member picks Rit aanbieden themselves.
+
+## Error screens
+
+Every error screen (`ErrorFallback`, `ServerUnreachable`, `ForbiddenPage`, `NotFoundPage`, and
+`public/boot-guard.js`) ends its message with a random Dutch chemistry joke
+(`constants/chemistryJokes.ts`). `boot-guard.js` is plain ES5 and keeps its own copy of the list.
 
 ## Notifications
 
