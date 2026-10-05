@@ -10,6 +10,8 @@ import { useBadges } from "../hooks/useBadges";
 import { useCurrentTripRoomNumbers } from "../hooks/useTripRooms";
 import { buildTrip, currentTripId, tripRides } from "../utils/trips";
 import { todayKey, toDateKey } from "../utils/date";
+import { toast } from "../store/toast.store";
+import { useRouteAction } from "../hooks/useRouteAction";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { UserProfilePopup, type AnchorRect } from "../components/common/UserProfilePopup";
 import { BadgeIcon } from "../components/common/BadgeIcon";
@@ -68,14 +70,26 @@ export function CrewPage() {
     : [];
   // Only worth setting on the actual day of a ride you're on — before that
   // the car hasn't arrived yet, and after, the pin isn't something to keep
-  // nudging. The button still shows on other days (so people know it's
-  // there), just greyed out.
+  // nudging. The button always shows (so people know it's there), greyed out
+  // while it can't be used; tapping it then says why.
   const todayStr = todayKey();
   const canSetParkingToday = currentTripRides.some((r) => {
     if (!currentUserName || !(r.driver === currentUserName || r.passengers.includes(currentUserName))) return false;
     const departed = new Date(r.departure_time.replace(" ", "T"));
     return !isNaN(departed.getTime()) && toDateKey(departed) === todayStr;
   });
+  const parkingBlockedReason = !tripId
+    ? "Er is nog geen evenement om een parkeerplek bij op te slaan."
+    : manageableDrivers.length === 0
+      ? "Je kunt een parkeerplek opslaan als je in een rit zit, op de dag van die rit."
+      : !canSetParkingToday
+        ? "Je kunt een parkeerplek alleen opslaan op de dag van je rit."
+        : null;
+
+  const openParking = () => (parkingBlockedReason ? toast("info", parkingBlockedReason) : setParkingOpen(true));
+  // The global search's "Locatie pingen" / "Parkeerplek opslaan" cards land here.
+  useRouteAction("ping", () => setPingOpen(true));
+  useRouteAction("parking", openParking);
 
   const sorted = [...users].sort((a, b) => a.name.localeCompare(b.name, "nl"));
   const pinged = sorted.filter((u) => isPingFresh(u.live_location_ping));
@@ -116,22 +130,20 @@ export function CrewPage() {
             Waar is iedereen
           </p>
           <div className="flex items-center gap-2">
-            {manageableDrivers.length > 0 && (
-              <button
-                type="button"
-                onClick={() => canSetParkingToday && setParkingOpen(true)}
-                disabled={!canSetParkingToday}
-                title={canSetParkingToday ? undefined : "Alleen te gebruiken op de dag van je rit"}
-                className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-[13px] font-semibold transition-colors ${
-                  canSetParkingToday
-                    ? "text-ink hover:border-ink-3"
-                    : "cursor-not-allowed text-ink-3 opacity-50"
-                }`}
-              >
-                <Car size={13} />
-                Parkeerplek
-              </button>
-            )}
+            {/* aria-disabled instead of disabled: a disabled button swallows the
+                tap, and on a phone there is no hover tooltip to say why. */}
+            <button
+              type="button"
+              onClick={openParking}
+              aria-disabled={!!parkingBlockedReason}
+              title={parkingBlockedReason ?? undefined}
+              className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-[13px] font-semibold transition-colors ${
+                parkingBlockedReason ? "text-ink-3 opacity-50" : "text-ink hover:border-ink-3"
+              }`}
+            >
+              <Car size={13} />
+              Parkeerplek
+            </button>
             <button
               type="button"
               onClick={() => setPingOpen(true)}

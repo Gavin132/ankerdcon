@@ -10,6 +10,7 @@ import { WeatherCard, ClimateAverageCard, WeatherSkeleton } from "../event/Weath
 import { EventPractical } from "../event/EventPractical";
 import { EventLinks } from "../event/EventLinks";
 import { TileText, TilePill, TileValue, TripTile } from "./TripTile";
+import { useRouteAction } from "../../hooks/useRouteAction";
 import { useEventWeather } from "../../hooks/useEventWeather";
 import { useUsers } from "../../hooks/useUsers";
 import { routes } from "../../config/routes";
@@ -201,6 +202,10 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
   const missing = missingNames.length;
   const [addOpen, setAddOpen] = useState(false);
   const [missingOpen, setMissingOpen] = useState(false);
+  // The global search's "Etentje plannen" card lands here with the form open.
+  useRouteAction("addMeal", () => {
+    if (phase !== "past") setAddOpen(true);
+  });
 
   return (
     <TripTile
