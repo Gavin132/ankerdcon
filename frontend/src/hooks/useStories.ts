@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getStoryPhotos,
-  uploadStoryPhoto,
   deleteStoryPhoto,
   markStorySeen,
   getStorySummary,
@@ -10,11 +9,15 @@ import {
 import { QUERY_KEYS, STALE_TIME } from "../constants";
 import type { StoryDaySummary, StorySeenState } from "../types";
 
-export function useStoryPhotos(eventDayId: string, options?: { enabled?: boolean }) {
+/** `alwaysFresh` is for the viewer: members upload to the same day while
+ * others are watching, and the ring (from the summary) already says there's a
+ * new photo — so opening the story has to ask again instead of trusting a list
+ * cached up to STALE_TIME ago, or the new photo is missing until it's reopened. */
+export function useStoryPhotos(eventDayId: string, options?: { enabled?: boolean; alwaysFresh?: boolean }) {
   return useQuery({
     queryKey: QUERY_KEYS.storyDay(eventDayId),
     queryFn: () => getStoryPhotos(eventDayId),
-    staleTime: STALE_TIME,
+    staleTime: options?.alwaysFresh ? 0 : STALE_TIME,
     enabled: options?.enabled ?? !!eventDayId,
   });
 }
@@ -26,17 +29,6 @@ export function useUserPhotos(identifier: string) {
     queryFn: () => getUserPhotos(identifier),
     staleTime: STALE_TIME,
     enabled: !!identifier,
-  });
-}
-
-export function useUploadStoryPhoto(eventDayId: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (blob: Blob) => uploadStoryPhoto(eventDayId, blob),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.storyDay(eventDayId) });
-      qc.invalidateQueries({ queryKey: ["stories", "summary"] });
-    },
   });
 }
 
@@ -101,6 +93,9 @@ export function useStorySummary(eventDayIds: string[]) {
     queryKey: QUERY_KEYS.storySummary(eventDayIds),
     queryFn: () => getStorySummary(eventDayIds),
     staleTime: STALE_TIME,
+    // The rings are how people notice new photos, so they shouldn't wait for a
+    // refocus; this only runs while the page is visible.
+    refetchInterval: 60_000,
     enabled: eventDayIds.length > 0,
   });
 }

@@ -1,9 +1,6 @@
-import { useRef, useState } from "react";
 import { ImagePlus, Plus, Loader2, UploadCloud } from "lucide-react";
-import { compressImage } from "../../utils/imageCompression";
-import { useUploadStoryPhoto } from "../../hooks/useStories";
+import { useStoryPhotoPicker } from "../../hooks/useStoryPhotoPicker";
 import { usePendingStoryUploadsStore } from "../../store/pendingStoryUploads.store";
-import { queueOrToastUploadError } from "../../utils/pendingStoryUploadUi";
 import { toast } from "../../store/toast.store";
 
 interface AddStoryTileProps {
@@ -18,44 +15,12 @@ interface AddStoryTileProps {
  * small plus badge overlapping its corner, always the first tile in the
  * Hub's story row. */
 export function AddStoryTile({ eventDayId }: AddStoryTileProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [compressing, setCompressing] = useState(false);
-  const uploadMutation = useUploadStoryPhoto(eventDayId ?? "");
+  const picker = useStoryPhotoPicker(eventDayId);
   const pendingCount = usePendingStoryUploadsStore((s) =>
     eventDayId ? s.items.filter((i) => i.eventDayId === eventDayId).length : 0,
   );
 
-  async function handleFile(file: File | undefined) {
-    if (!file || !eventDayId) return;
-    setCompressing(true);
-    let blob: Blob;
-    try {
-      blob = await compressImage(file);
-    } catch {
-      toast("error", "Kon foto niet verwerken. Probeer een andere foto.");
-      setCompressing(false);
-      if (inputRef.current) inputRef.current.value = "";
-      return;
-    }
-    setCompressing(false);
-
-    if (!navigator.onLine) {
-      await queueOrToastUploadError(eventDayId, blob, { isOffline: true });
-      if (inputRef.current) inputRef.current.value = "";
-      return;
-    }
-
-    try {
-      await uploadMutation.mutateAsync(blob);
-      toast("success", "Foto toegevoegd aan de story!");
-    } catch (err) {
-      await queueOrToastUploadError(eventDayId, blob, err);
-    } finally {
-      if (inputRef.current) inputRef.current.value = "";
-    }
-  }
-
-  const busy = compressing || uploadMutation.isPending;
+  const busy = picker.busy;
   const disabled = eventDayId === null;
 
   function handleClick() {
@@ -63,18 +28,12 @@ export function AddStoryTile({ eventDayId }: AddStoryTileProps) {
       toast("info", "Er is nog geen evenement om foto's aan toe te voegen.");
       return;
     }
-    inputRef.current?.click();
+    picker.open();
   }
 
   return (
     <div className={`flex flex-col items-center gap-1.5 shrink-0 w-16 ${disabled ? "opacity-40" : ""}`}>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        className="hidden"
-        onChange={(e) => handleFile(e.target.files?.[0])}
-      />
+      <input ref={picker.inputRef} {...picker.inputProps} />
       <button
         type="button"
         disabled={busy}
@@ -102,7 +61,9 @@ export function AddStoryTile({ eventDayId }: AddStoryTileProps) {
         )}
       </button>
       <span className="max-w-full truncate font-mono text-[10.5px] font-semibold uppercase text-ink-2">
-        Toevoegen
+        {picker.progress && picker.progress.total > 1
+          ? `${picker.progress.done}/${picker.progress.total}`
+          : "Toevoegen"}
       </span>
     </div>
   );
