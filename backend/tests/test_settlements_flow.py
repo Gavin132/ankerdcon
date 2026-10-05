@@ -125,7 +125,10 @@ def env(monkeypatch):
     monkeypatch.setattr(settlements_router, "supabase", fake)
     monkeypatch.setattr(expenses_router, "supabase", fake)
     dms = []
-    monkeypatch.setattr(notification_service, "send_personal_dm", lambda _t, pid, content: dms.append((pid, content)))
+    monkeypatch.setattr(
+        notification_service, "send_personal_dm",
+        lambda _t, pid, content, title=None: dms.append((pid, content, title)),
+    )
     monkeypatch.setattr(notification_service, "broadcast_category_dm", lambda *a: None)
     user = {"name": "Timo"}
     main.app.dependency_overrides[get_current_user] = lambda: user["name"]

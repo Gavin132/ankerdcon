@@ -36,6 +36,11 @@ access token. Every API request carries it; the backend (`app/dependencies.py`,
    someone else's account. It then applies the [whitelist](#the-whitelist).
 4. Refuses deactivated profiles (403).
 
+Once found, `discord_id`, `discord_username`, `email` and `avatar_url` are backfilled
+when empty, never overwritten — except the avatar, which is also re-checked once a
+day (`avatar_synced_at`) and replaced when it differs, so a changed or since-broken
+avatar image heals itself on a later login instead of staying wrong forever.
+
 Failures that say nothing about the token (Supabase unreachable, a dropped
 connection) are retried and end as **503**, not 401, so the app retries instead of
 logging the member out.

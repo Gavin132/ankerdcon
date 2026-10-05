@@ -44,15 +44,19 @@ Postgres on Supabase. Only the backend talks to it (see
 
 | Table | Purpose | Notes |
 | --- | --- | --- |
-| `profiles` | One row per member | `id` is the Supabase auth user id. `name`, `aliases` (former names), `discord_id`, `discord_username`, `email`, `avatar_url`, banner (`banner_color`, `banner_url`, `banner_position`), `color`, `font`, `bio`, `pronouns`, `phone_number`, `live_location_ping` (JSON text), `badge_ids`, `notification_categories`, `allow_dm`, `show_greeting`, `is_admin`, `is_active`, `is_first_login`, `onboarding_completed`. Created by the backend after a whitelisted login, or by an admin as a stub that is claimed at first login. Never by a database trigger. |
+| `profiles` | One row per member | `id` is the Supabase auth user id. `name`, `aliases` (former names), `discord_id`, `discord_username`, `email`, `avatar_url`, banner (`banner_color`, `banner_url`, `banner_position`), `color`, `font`, `bio`, `pronouns`, `phone_number`, `live_location_ping` (JSON text), `badge_ids`, `notification_categories`, `allow_dm`, `show_greeting`, `is_admin`, `is_active`, `is_first_login`, `onboarding_completed`, `avatar_synced_at` (when the avatar was
+last refreshed from Discord/Google — see [security.md](security.md#authentication)), `avatar_custom`
+(true once a member uploads their own picture — stops the resync from overwriting it). Created by the backend after a whitelisted login, or by an admin as a stub that is claimed at first login. Never by a database trigger. |
 | `whitelist` | Who may log in | `discord_id` and/or `email`; one of them is required. |
+| `push_subscriptions` | Web push, per device | `user_name`, `endpoint` (unique — a device's own push-service URL, upserted on resubscribe, deleted when a push comes back 404/410), `p256dh`, `auth`. See [deployment.md#web-push](deployment.md#web-push). |
+| `parking_spots` | Where a driver's car is parked, for the crew map | `trip_id` (plain text, not a foreign key — see the migration's own header for why), `driver`, `lat`/`lng`, `placed_by`. `UNIQUE (trip_id, driver)`: one row per driver per trip, upserted. |
 | `badges` | Badge definitions | `name`, `description`, `image_url`, `display_order`. Members reference them through `profiles.badge_ids`. |
 
 ### Events
 
 | Table | Purpose | Notes |
 | --- | --- | --- |
-| `events` | A **trip**, one row per convention | `event_name`, `event_group_id` (series label), `location`, `description`, `image_url`, hotel (`is_hotel`, `hotel_location`, `hotel_info`), `is_party`, links and tickets (`website`, `ticket_url`, `ticket_sale_start`, `ticket_types` jsonb), practical info (`parking_info`, `locker_info`, `special_instructions`, `what_to_bring`), and `reminders_sent`, `ticket_reminders_sent` so a reminder is only sent once. |
+| `events` | A **trip**, one row per convention | `event_name`, `event_group_id` (series label), `location` + `location_lat`/`location_lng` + `location_maps_url`, `description`, `image_url`, hotel (`is_hotel`, `hotel_location` + `hotel_location_lat`/`hotel_location_lng` + `hotel_location_maps_url`, `hotel_info`), `event_type` (`con`/`gathering`/`concert`/NULL — shown at the top of the ticket card; `is_party` is the old boolean it replaced, left in place but unread), links and tickets (`website`, `ticket_url`, `ticket_sale_start`, `ticket_types` jsonb), practical info (`parking_info`, `locker_info`, `special_instructions`, `what_to_bring`), and `reminders_sent`, `ticket_reminders_sent` so a reminder is only sent once. The `_lat`/`_lng` columns are resolved server-side (`app/services/geocoding_service.py`'s `resolve_location()`) whenever the location is saved — from `_maps_url` when given (its own embedded coordinates win over a geocoded guess), otherwise by geocoding the location text. Best-effort, NULL when neither resolves (e.g. a hotel chain whose name doesn't geocode to the right branch, and no Maps link set either) — and these columns feed the crew map's venue pins. |
 | `event_days` | A **day** of a trip | `event_id` → `events` (cascade), `date`, `has_con` (false = travel or hotel-only day), `participants`. Unique per `(event_id, date)`. |
 | `event_groups` | Series labels ("HDCC") | `name` is what `events.event_group_id` stores. |
 | `hotel_rooms` | Rooms of a hotel trip | `event_id` → the parent `events` row, `room_number` (nullable), `floor`, `capacity` (nullable), `instructions`, `occupants`. |
@@ -62,7 +66,7 @@ Postgres on Supabase. Only the backend talks to it (see
 | Table | Purpose | Notes |
 | --- | --- | --- |
 | `rides` | Heen, Terug and Restaurant rides | `direction`, `driver`, `vehicle_type`, `departure_time`, `start_location`, `end_location`, `total_seats`, `passengers`, `parking_info`, `car_available`, `action_required`, `restaurant_drivers` (jsonb: cars with their own seats and passengers), `linked_event_id` (a day), `linked_meal_id`. |
-| `meals` | Planned meals | `meal_name`, `time`, `location`, `cost`, `transport_needed`, `participants`, `linked_event_id` (a day), `created_by`, and links and notes. |
+| `meals` | Planned meals | `meal_name`, `time`, `location` + `location_lat`/`location_lng` (resolved the same way as an event's, for the crew map), `maps_url` (an optional exact Google Maps link — its own coordinates win over geocoding `location` when given), `cost`, `transport_needed`, `participants`, `linked_event_id` (a day), `created_by`, and links and notes. |
 | `cosplays` | A character worn by a member | `user_name`, `character_name`, `series`, `notes`, `inspo_images` (max 3, enforced by the API), `linked_event_ids` (days). |
 | `story_photos` | Photos in a day's story | `event_day_id`, `uploaded_by` (a name), `image_url`, `seq` (global, increasing). |
 | `story_seen` | How far each member has watched a day | `(user_name, event_day_id)`, `last_seen_seq`. |
@@ -140,6 +144,13 @@ order, not the number in the title.
 | `migration_v2.26_settlements_one_open_per_pair` | one open settlement per pair, enforced by an index |
 | `migration_v2.27_drop_payment_refs` | drop the unused `payment_ref` columns. Run **after** the backend that no longer reads them is live. |
 | `migration_v2.28_feedback` | `feedback` table (member feedback; `user_name` is NULL when anonymous). Run **before** the deploy. |
+| `migration_v2.29_avatar_resync` | `profiles.avatar_synced_at`, so a stale or broken avatar is re-checked periodically instead of only once ever. **Run before the deploy** — `get_current_user`'s own profile lookup selects this column unconditionally, so its absence fails every login, not just the resync. |
+| `migration_v2.30_custom_avatar` | `profiles.avatar_custom`, so a member's own uploaded avatar isn't overwritten by the resync above. **Run before the deploy** — same reason as v2.29: it's in the unconditional profile-lookup select, so its absence fails every login. |
+| `migration_v2.31_push_subscriptions` | `push_subscriptions` table. Run **before** the deploy; also needs the `VAPID_*` env vars — see [deployment.md#web-push](deployment.md#web-push). |
+| `migration_v2.32_event_type` | `events.event_type` (con/gathering/concert), backfilled from the old `is_party`. Safe to run any time — see its own header. |
+| `migration_v2.33_venue_geocoding` | `events.location_lat/lng`, `events.hotel_location_lat/lng`, `meals.location_lat/lng`, `meals.maps_url` — venue pins for the crew map. **Run before the deploy** — the backend writes these columns on every event/meal save. |
+| `migration_v2.34_venue_maps_url` | `events.location_maps_url`, `events.hotel_location_maps_url` — admin-set exact Maps links, for a venue (e.g. a hotel chain) whose address doesn't geocode reliably. **Run before the deploy**, same reason as v2.33. |
+| `migration_v2.35_parking_spots` | `parking_spots` table — one pin per (trip, driver) for the crew map. **Run before the deploy**: setting a spot writes to this table, and it doesn't exist until this runs. |
 | `migration_cosplays`, `add_whitelist_emails`, `remove_trigger` | one-offs: the cosplays table, a bulk-add template for the whitelist, removal of the old profile trigger |
 | `backfill_events_from_calendar.py`, `repoint_fks_to_new_events.py`, `calendar_id_mapping.json` | the one-time data move from `calendar` to `events`/`event_days` (kept for the record) |
 
@@ -161,6 +172,13 @@ Run in the SQL editor:
 | v2.26 | `select 1 from pg_indexes where indexname = 'settlements_one_open_per_pair_idx'` returns a row |
 | v2.27 | `select 1 from information_schema.columns where table_name = 'settlements' and column_name = 'payment_ref'` returns **no** row |
 | v2.28 | `select to_regclass('public.feedback')` is not null |
+| v2.29 | `select 1 from information_schema.columns where table_name = 'profiles' and column_name = 'avatar_synced_at'` returns a row |
+| v2.30 | `select 1 from information_schema.columns where table_name = 'profiles' and column_name = 'avatar_custom'` returns a row |
+| v2.31 | `select to_regclass('public.push_subscriptions')` is not null |
+| v2.32 | `select 1 from information_schema.columns where table_name = 'events' and column_name = 'event_type'` returns a row |
+| v2.33 | `select 1 from information_schema.columns where table_name = 'meals' and column_name = 'maps_url'` returns a row |
+| v2.34 | `select 1 from information_schema.columns where table_name = 'events' and column_name = 'location_maps_url'` returns a row |
+| v2.35 | `select to_regclass('public.parking_spots')` is not null |
 
 `db/check_schema.py` compares `db/schema.sql` with the live database, but
 `schema.sql` is out of date (see below), so it reports differences that are not

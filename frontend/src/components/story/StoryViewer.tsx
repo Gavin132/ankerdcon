@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
-import { X, Trash2, Share2, Download, Loader2 } from "lucide-react";
+import { animate, motion, AnimatePresence, useDragControls, useMotionValue, useTransform } from "framer-motion";
+import { X, Trash2, Share2, Download, FolderDown, Loader2 } from "lucide-react";
 import { useStoryPhotos, useMarkStorySeen, useDeleteStoryPhoto } from "../../hooks/useStories";
 import { useCurrentUser } from "../../hooks/useUsers";
-import { downloadStoryPhoto } from "../../services/stories.service";
+import { downloadAllStoryPhotos, downloadStoryPhoto } from "../../services/stories.service";
 import { toast } from "../../store/toast.store";
 import { UserAvatar } from "../common/UserAvatar";
 import type { StoryPhoto } from "../../types";
@@ -38,14 +38,16 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
   // initial empty string for that one render — firing a request against
   // "" (a 404, since the backend route needs a real id segment). Requiring
   // a non-empty id too keeps the query disabled until the effect catches up.
-  const { data: photos = [] } = useStoryPhotos(activeEventDayId, { enabled: open && !!activeEventDayId });
+  const { data: photos = [] } = useStoryPhotos(activeEventDayId, { enabled: open && !!activeEventDayId, alwaysFresh: true });
   const { data: me } = useCurrentUser();
   const markSeen = useMarkStorySeen(activeEventDayId);
   const deletePhoto = useDeleteStoryPhoto(activeEventDayId);
 
   const [index, setIndex] = useState(0);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [downloadingAll, setDownloadingAll] = useState(false);
   const dragY = useMotionValue(0);
+  const dragControls = useDragControls();
   const dragBackground = useTransform(dragY, [0, 320], ["rgba(8,12,15,1)", "rgba(8,12,15,0.25)"]);
   const highestSeqRef = useRef(0);
 
@@ -56,10 +58,30 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
     }
   }, [open, eventDayId]);
 
+  // dragY lives on this component, not the sheet it drags — the sheet unmounts
+  // on close but this doesn't, so a swipe-close leaves it sitting wherever the
+  // exit animation left it (see the exit prop below) instead of back at 0.
+  // Reset it before the sheet mounts again (useLayoutEffect: before paint, so
+  // there's no one-frame flash of the last close's offset), every open.
+  useLayoutEffect(() => {
+    if (open) dragY.set(0);
+  }, [open, dragY]);
+
   useEffect(() => {
     const photo = photos[index];
     if (photo) highestSeqRef.current = Math.max(highestSeqRef.current, photo.seq);
   }, [index, photos]);
+
+  // Photos are big and the connection is often poor: start loading the next
+  // two while this one is on screen, so tapping on doesn't leave the previous
+  // photo sitting there (the <img> is keyed per photo, so a slow one shows
+  // black rather than the old picture).
+  useEffect(() => {
+    if (!open) return;
+    for (const p of [photos[index + 1], photos[index + 2]]) {
+      if (p) new Image().src = p.image_url;
+    }
+  }, [open, index, photos]);
 
   const flushSeen = useCallback(() => {
     if (highestSeqRef.current > 0) markSeen.mutate(highestSeqRef.current);
@@ -125,6 +147,17 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
     }
   }
 
+  async function handleDownloadAll() {
+    setDownloadingAll(true);
+    try {
+      await downloadAllStoryPhotos(activeEventDayId);
+    } catch {
+      toast("error", "Kon de foto's niet downloaden.");
+    } finally {
+      setDownloadingAll(false);
+    }
+  }
+
   async function handleDelete(photoId: string) {
     try {
       await deletePhoto.mutateAsync(photoId);
@@ -154,12 +187,24 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, y: 120, transition: { duration: 0.18 } }}
           drag="y"
+          // Swipe-to-close is a touch gesture. With a mouse it made no sense and
+          // was how the viewer got stuck a few hundred pixels down: dragging the
+          // photo starts the browser's own image drag, which cancels the pointer
+          // without an end event, so the spring back never ran.
+          dragListener={false}
+          dragControls={dragControls}
+          onPointerDown={(e) => {
+            if (e.pointerType !== "mouse") dragControls.start(e);
+          }}
           dragDirectionLock
           dragConstraints={{ top: 0, bottom: 0 }}
           dragElastic={{ top: 0, bottom: 1 }}
-          dragSnapToOrigin
           onDragEnd={(_, info) => {
             if (info.offset.y > 120 || info.velocity.y > 600) handleClose();
+            // Below the threshold: spring back by hand rather than
+            // dragSnapToOrigin, which would race the exit animation above
+            // for the same value on the close path.
+            else animate(dragY, 0, { type: "spring", stiffness: 500, damping: 40 });
           }}
         >
           {/* Progress bars */}
@@ -197,6 +242,16 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
               </button>
               <button
                 type="button"
+                disabled={downloadingAll}
+                onClick={handleDownloadAll}
+                title="Download alle foto's van deze dag als zip"
+                aria-label="Download alle foto's van deze dag"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3] disabled:opacity-50"
+              >
+                {downloadingAll ? <Loader2 size={16} className="animate-spin" /> : <FolderDown size={16} />}
+              </button>
+              <button
+                type="button"
                 disabled={downloadingId === current.id}
                 onClick={() => handleDownload(current)}
                 className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3] disabled:opacity-50"
@@ -229,9 +284,11 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
           {/* Photo + tap zones */}
           <div className="relative flex-1 min-h-0">
             <img
+              key={current.id}
               src={current.image_url}
               alt=""
-              className="absolute inset-0 h-full w-full object-contain"
+              draggable={false}
+              className="absolute inset-0 h-full w-full select-none object-contain"
             />
             <button type="button" aria-label="Vorige" onClick={prev} className="absolute inset-y-0 left-0 w-1/3" />
             <button type="button" aria-label="Volgende" onClick={next} className="absolute inset-y-0 right-0 w-2/3" />

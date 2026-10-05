@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "../lib/api/client";
+import { apiRoutes } from "../config/api-routes";
 
 export interface HourlySlot {
   hour: number;
@@ -81,17 +83,13 @@ async function geocode(location: string): Promise<{ latitude: number; longitude:
   const candidates = [...new Set([location, ...segments.reverse(), ...words.reverse()])];
 
   for (const candidate of candidates) {
-    const res = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(candidate)}&count=1&language=nl&format=json`,
-    );
-    const data = await res.json();
+    const { data } = await apiClient.get(apiRoutes.weather.geocode, { params: { name: candidate } });
     const place = data.results?.[0];
     if (place) return { latitude: place.latitude, longitude: place.longitude };
   }
   return null;
 }
 
-const _ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive";
 const CLIMATE_YEARS = 10;
 const CLIMATE_WINDOW_DAYS = 3; // ± days around the target date to sample, per year
 
@@ -123,13 +121,9 @@ async function fetchClimateAverage(
   const endYear = new Date().getFullYear() - 1;
   const startYear = endYear - (CLIMATE_YEARS - 1);
 
-  const res = await fetch(
-    `${_ARCHIVE_URL}?latitude=${latitude}&longitude=${longitude}` +
-      `&start_date=${startYear}-01-01&end_date=${endYear}-12-31` +
-      `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max` +
-      `&timezone=Europe%2FAmsterdam`,
-  );
-  const data = await res.json();
+  const { data } = await apiClient.get(apiRoutes.weather.archive, {
+    params: { latitude, longitude, start_date: `${startYear}-01-01`, end_date: `${endYear}-12-31` },
+  });
   const daily = data.daily;
   if (!daily?.time?.length) return null;
 
@@ -200,14 +194,9 @@ async function fetchWeather(
   const { latitude, longitude } = place;
 
   // 2. Daily + hourly forecast
-  const weatherRes = await fetch(
-    `https://api.open-meteo.com/v1/forecast` +
-      `?latitude=${latitude}&longitude=${longitude}` +
-      `&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max,sunrise,sunset` +
-      `&hourly=temperature_2m,precipitation_probability,weather_code` +
-      `&timezone=Europe%2FAmsterdam&start_date=${date}&end_date=${date}`,
-  );
-  const weatherData = await weatherRes.json();
+  const { data: weatherData } = await apiClient.get(apiRoutes.weather.forecast, {
+    params: { latitude, longitude, date },
+  });
 
   const daily = weatherData.daily;
   // Right at the edge of the forecast horizon, Open-Meteo can return a

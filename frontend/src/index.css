@@ -61,6 +61,72 @@
 [data-accent="purple"] { --cyan: 167 139 250; --cyan-soft: 237 231 254; --cyan-text: 109 63 216; }   /* #A78BFA */
 .dark[data-accent="purple"] { --cyan-soft: 36 26 69; --cyan-text: 196 181 253; --nav-active-bg: 167 139 250; }
 
+/* ─── Compact density ────────────────────────────────────────────────────────
+   Instellingen › Weergave › Compact. Tightens the app's own gap/space-y/padding
+   utilities by overriding Tailwind's generated classes at higher specificity
+   (.density-compact .gap-3 beats .gap-3) instead of every card/list/tile branching
+   on a density prop — new components need nothing extra to pick this up, as long
+   as they use these ordinary utility classes. Only the row/card range (1.5–5) is
+   touched; page-level spacing (6 and up) is left alone so density doesn't reflow
+   whole pages, only the density of what's on them. Applied via
+   store/theme.store.ts (`density-compact` class on <html>). */
+.density-compact .gap-1.5 { gap: 0.25rem; }
+.density-compact .gap-2 { gap: 0.375rem; }
+.density-compact .gap-2.5 { gap: 0.5rem; }
+.density-compact .gap-3 { gap: 0.5rem; }
+.density-compact .gap-3.5 { gap: 0.625rem; }
+.density-compact .gap-4 { gap: 0.75rem; }
+.density-compact .gap-5 { gap: 0.875rem; }
+.density-compact .gap-x-1.5 { column-gap: 0.25rem; }
+.density-compact .gap-x-2 { column-gap: 0.375rem; }
+.density-compact .gap-x-2.5 { column-gap: 0.5rem; }
+.density-compact .gap-x-3 { column-gap: 0.5rem; }
+.density-compact .gap-x-3.5 { column-gap: 0.625rem; }
+.density-compact .gap-x-4 { column-gap: 0.75rem; }
+.density-compact .gap-x-5 { column-gap: 0.875rem; }
+.density-compact .gap-y-1.5 { row-gap: 0.25rem; }
+.density-compact .gap-y-2 { row-gap: 0.375rem; }
+.density-compact .gap-y-2.5 { row-gap: 0.5rem; }
+.density-compact .gap-y-3 { row-gap: 0.5rem; }
+.density-compact .gap-y-3.5 { row-gap: 0.625rem; }
+.density-compact .gap-y-4 { row-gap: 0.75rem; }
+.density-compact .gap-y-5 { row-gap: 0.875rem; }
+.density-compact .space-y-1.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.25rem; }
+.density-compact .space-y-2 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.375rem; }
+.density-compact .space-y-2.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.5rem; }
+.density-compact .space-y-3 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.5rem; }
+.density-compact .space-y-3.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.625rem; }
+.density-compact .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.75rem; }
+.density-compact .space-y-5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.875rem; }
+.density-compact .space-x-1.5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.25rem; }
+.density-compact .space-x-2 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.375rem; }
+.density-compact .space-x-2.5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.5rem; }
+.density-compact .space-x-3 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.5rem; }
+.density-compact .space-x-3.5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.625rem; }
+.density-compact .space-x-4 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.75rem; }
+.density-compact .space-x-5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.875rem; }
+.density-compact .p-1.5 { padding: 0.25rem; }
+.density-compact .p-2 { padding: 0.375rem; }
+.density-compact .p-2.5 { padding: 0.5rem; }
+.density-compact .p-3 { padding: 0.5rem; }
+.density-compact .p-3.5 { padding: 0.625rem; }
+.density-compact .p-4 { padding: 0.75rem; }
+.density-compact .p-5 { padding: 0.875rem; }
+.density-compact .px-1.5 { padding-left: 0.25rem; padding-right: 0.25rem; }
+.density-compact .px-2 { padding-left: 0.375rem; padding-right: 0.375rem; }
+.density-compact .px-2.5 { padding-left: 0.5rem; padding-right: 0.5rem; }
+.density-compact .px-3 { padding-left: 0.5rem; padding-right: 0.5rem; }
+.density-compact .px-3.5 { padding-left: 0.625rem; padding-right: 0.625rem; }
+.density-compact .px-4 { padding-left: 0.75rem; padding-right: 0.75rem; }
+.density-compact .px-5 { padding-left: 0.875rem; padding-right: 0.875rem; }
+.density-compact .py-1.5 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+.density-compact .py-2 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
+.density-compact .py-2.5 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.density-compact .py-3 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.density-compact .py-3.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+.density-compact .py-4 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+.density-compact .py-5 { padding-top: 0.875rem; padding-bottom: 0.875rem; }
+
 @layer base {
   html {
     font-family: "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;

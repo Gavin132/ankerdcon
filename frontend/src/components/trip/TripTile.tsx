@@ -73,11 +73,27 @@ export function TripTile({ icon: Icon, label, to, onToggle, expanded, onOpen, sh
   }
 
   if (onOpen) {
+    // A real <button>, not a <div role="button">, would be nicer — but some
+    // tiles (PhotosTile) put their own buttons in `children` (the upload
+    // button), and a <button> can't legally contain another one: the browser
+    // silently splits the DOM to fix it, which desyncs it from what React
+    // thinks it rendered. A div stays correct either way.
     return (
-      <button type="button" onClick={onOpen} className={className}>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onOpen}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onOpen();
+          }
+        }}
+        className={className}
+      >
         {header}
         {children}
-      </button>
+      </div>
     );
   }
 

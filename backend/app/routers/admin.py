@@ -3,9 +3,6 @@ from datetime import datetime, timezone
 import re
 import uuid
 
-import io
-import zipfile
-
 from fastapi.concurrency import run_in_threadpool
 from typing import Optional
 
@@ -18,6 +15,7 @@ from app.constants import Tables
 from app.core import minio_client
 from app.core.logging import get_logger
 from app.core.uploads import clean_image, read_capped, sniff_video
+from app.core.zip_stream import stream_zip
 from app.dependencies import _unique_profile_name, get_admin_user
 from app.models.admin import (
     CdnListing,
@@ -54,6 +52,8 @@ from app.models.badge import Badge, BadgeOrderItem, CreateBadgeRequest, UpdateBa
 from app.models.calendar import Event, EventDay, HotelRoom
 from app.routers.calendar import _hotel_group_key
 from app.routers.expenses import expense_in_open_settlement, share_in_open_settlement
+from app.routers.rides import _notify_ride_created
+from app.services.geocoding_service import resolve_location
 from app.models.meal import Meal
 from app.models.rides import CreateRideRequest, Ride
 from app.models.user import User
@@ -87,6 +87,34 @@ def _build_updates(body, nullable_fields: set[str] | None = None) -> dict:
         if field in body.model_fields_set:
             updates[field] = getattr(body, field)
     return updates
+
+
+async def _resolve_update_coords(table: str, row_id: str, updates: dict, text_field: str, maps_field: str) -> None:
+    """Re-resolves `{text_field}_lat`/`_lng` into `updates` when either the
+    location text or its Maps-link override changed — using the new value
+    for whichever one did, and the row's current value (one more read) for
+    whichever one didn't, since combining a *new* location with a *stale*
+    maps_url (or the reverse) would resolve the wrong spot, or wrongly null
+    out an otherwise-still-valid pin. Leaves `updates` untouched when
+    neither field is in it.
+    """
+    if text_field not in updates and maps_field not in updates:
+        return
+    text = updates.get(text_field)
+    maps_url = updates.get(maps_field)
+    if text_field not in updates or maps_field not in updates:
+        try:
+            rows = supabase.table(table).select(f"{text_field}, {maps_field}").eq("id", row_id).execute().data
+        except Exception as e:
+            logger.error("Failed to fetch current %s/%s for %s %s: %s", text_field, maps_field, table, row_id, e)
+            rows = []
+        current = rows[0] if rows else {}
+        if text_field not in updates:
+            text = current.get(text_field)
+        if maps_field not in updates:
+            maps_url = current.get(maps_field)
+    coords = await resolve_location(text, maps_url)
+    updates[f"{text_field}_lat"], updates[f"{text_field}_lng"] = coords if coords else (None, None)
 
 
 # ── Stats ──────────────────────────────────────────────────────────────────────
@@ -428,16 +456,7 @@ def admin_create_ride(
         logger.error("Failed to create ride: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
-    background_tasks.add_task(
-        notification_service.broadcast_category_dm,
-        settings.discord_bot_token,
-        notification_service.NotificationCategory.RIDE_CREATED,
-        M.DM_RIDE_CREATED.format(
-            driver=body.driver,
-            departure_time=body.departure_time,
-            start_location=body.start_location,
-        ),
-    )
+    background_tasks.add_task(_notify_ride_created, settings, body, body.driver, resp.data[0]["id"])
     return resp.data[0]
 
 
@@ -506,9 +525,12 @@ def admin_list_meals(_: str = Depends(get_admin_user)) -> list[Meal]:
 
 
 @router.post(AdminRoutes.MEALS, response_model=Meal, status_code=status.HTTP_201_CREATED)
-def admin_create_meal(body: AdminCreateMealRequest, _: str = Depends(get_admin_user)) -> Meal:
+async def admin_create_meal(body: AdminCreateMealRequest, _: str = Depends(get_admin_user)) -> Meal:
     meal_data = body.model_dump()
     meal_data["participants"] = []
+    coords = await resolve_location(meal_data.get("location"), meal_data.get("maps_url"))
+    if coords:
+        meal_data["location_lat"], meal_data["location_lng"] = coords
     try:
         resp = supabase.table(Tables.MEALS).insert(meal_data).execute()
         return resp.data[0]
@@ -518,17 +540,18 @@ def admin_create_meal(body: AdminCreateMealRequest, _: str = Depends(get_admin_u
 
 
 @router.put(AdminRoutes.MEAL_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
-def admin_update_meal(
+async def admin_update_meal(
     meal_id: str,
     body: AdminUpdateMealRequest,
     _: str = Depends(get_admin_user),
 ) -> None:
     updates = _build_updates(body, nullable_fields={
-        "linked_event_id", "website", "menu_url", "description",
+        "linked_event_id", "website", "menu_url", "maps_url", "description",
         "dietary_options", "parking_info", "extra_notes",
     })
     if not updates:
         return
+    await _resolve_update_coords(Tables.MEALS, meal_id, updates, "location", "maps_url")
     try:
         resp = supabase.table(Tables.MEALS).update(updates).eq("id", meal_id).execute()
     except Exception as e:
@@ -699,12 +722,18 @@ def admin_bulk_set_event_group(body: BulkSetEventGroupRequest, _: str = Depends(
 
 
 @router.post(AdminRoutes.EVENTS, response_model=Event, status_code=status.HTTP_201_CREATED)
-def admin_create_event(body: AdminCreateEventRequest, _: str = Depends(get_admin_user)) -> Event:
+async def admin_create_event(body: AdminCreateEventRequest, _: str = Depends(get_admin_user)) -> Event:
     """Creates the parent event only — add its days separately via
     admin_create_event_day, which fires the "event created" Discord DM once
     the first day is added (there's no date to announce before that)."""
     event_data = {k: v for k, v in body.model_dump().items() if v is not None and v != ""}
     event_data.setdefault("is_hotel", False)
+    coords = await resolve_location(event_data.get("location"), event_data.get("location_maps_url"))
+    if coords:
+        event_data["location_lat"], event_data["location_lng"] = coords
+    coords = await resolve_location(event_data.get("hotel_location"), event_data.get("hotel_location_maps_url"))
+    if coords:
+        event_data["hotel_location_lat"], event_data["hotel_location_lng"] = coords
     try:
         resp = supabase.table(Tables.EVENTS).insert(event_data).execute()
     except Exception as e:
@@ -714,14 +743,16 @@ def admin_create_event(body: AdminCreateEventRequest, _: str = Depends(get_admin
 
 
 @router.put(AdminRoutes.EVENT_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
-def admin_update_event(event_id: str, body: AdminUpdateEventRequest, _: str = Depends(get_admin_user)) -> None:
+async def admin_update_event(event_id: str, body: AdminUpdateEventRequest, _: str = Depends(get_admin_user)) -> None:
     updates = _build_updates(body, nullable_fields={
-        "event_group_id", "hotel_location", "hotel_info", "image_url", "description",
-        "location", "website", "ticket_url", "ticket_sale_start", "locker_info",
-        "parking_info", "special_instructions", "what_to_bring",
+        "event_group_id", "event_type", "hotel_location", "hotel_location_maps_url", "hotel_info",
+        "image_url", "description", "location", "location_maps_url", "website", "ticket_url",
+        "ticket_sale_start", "locker_info", "parking_info", "special_instructions", "what_to_bring",
     })
     if not updates:
         return
+    await _resolve_update_coords(Tables.EVENTS, event_id, updates, "location", "location_maps_url")
+    await _resolve_update_coords(Tables.EVENTS, event_id, updates, "hotel_location", "hotel_location_maps_url")
     try:
         resp = supabase.table(Tables.EVENTS).update(updates).eq("id", event_id).execute()
     except Exception as e:
@@ -1311,7 +1342,8 @@ async def admin_quick_upload(
 # ── CDN (the whole photo bucket) ───────────────────────────────────────────────
 
 _CDN_FOLDER_KINDS = {
-    "cosplay": "cosplay", "banners": "banner", "badges": "badge", "event-covers": "event-cover", "uploads": "upload",
+    "cosplay": "cosplay", "banners": "banner", "avatars": "avatar", "badges": "badge",
+    "event-covers": "event-cover", "uploads": "upload",
 }
 
 
@@ -1340,16 +1372,16 @@ def _cdn_owners(items: list[dict]) -> dict[str, str]:
                 owners[urls[r["image_url"]]] = r["uploaded_by"]
         except Exception as e:
             logger.error("CDN: story owner lookup failed: %s", e)
-    banner_items = [i for i in items if i["kind"] == "banner"]
-    if banner_items:
+    profile_items = [i for i in items if i["kind"] in ("banner", "avatar")]
+    if profile_items:
         try:
             names = {p["id"]: p["name"] for p in supabase.table(Tables.PROFILES).select("id, name").execute().data or []}
-            for i in banner_items:
-                parts = i["key"].split("/")  # banners/<user id>/<file>
+            for i in profile_items:
+                parts = i["key"].split("/")  # banners|avatars/<user id>/<file>
                 if len(parts) >= 3 and parts[1] in names:
                     owners[i["key"]] = names[parts[1]]
         except Exception as e:
-            logger.error("CDN: banner owner lookup failed: %s", e)
+            logger.error("CDN: banner/avatar owner lookup failed: %s", e)
     cosplay_urls = [i["url"] for i in items if i["kind"] == "cosplay"]
     if cosplay_urls:
         try:
@@ -1430,42 +1462,15 @@ def admin_cdn(
     )
 
 
-class _ZipSink(io.RawIOBase):
-    """A write-only stream that collects what zipfile writes, so the zip can be
-    sent while it is still being built instead of held whole in memory."""
-
-    def __init__(self) -> None:
-        self._chunks: list[bytes] = []
-
-    def writable(self) -> bool:
-        return True
-
-    def write(self, b) -> int:
-        self._chunks.append(bytes(b))
-        return len(b)
-
-    def drain(self) -> bytes:
-        data = b"".join(self._chunks)
-        self._chunks = []
-        return data
-
-
-def _zip_stream(objects: list[dict]):
-    sink = _ZipSink()
-    # Photos and videos are compressed already; storing them is faster and no bigger.
-    with zipfile.ZipFile(sink, "w", compression=zipfile.ZIP_STORED) as zf:
-        for o in objects:
-            try:
-                content, _ = minio_client.get_object_bytes(o["key"])
-            except Exception as e:
-                # One unreadable file shouldn't ruin the rest; the log says which.
-                logger.error("CDN zip: skipping %s: %s", o["key"], e)
-                continue
-            info = zipfile.ZipInfo(o["key"])
-            info.compress_type = zipfile.ZIP_STORED
-            zf.writestr(info, content)
-            yield sink.drain()
-    yield sink.drain()
+def _cdn_zip_entries(objects: list[dict]):
+    for o in objects:
+        try:
+            content, _ = minio_client.get_object_bytes(o["key"])
+        except Exception as e:
+            # One unreadable file shouldn't ruin the rest; the log says which.
+            logger.error("CDN zip: skipping %s: %s", o["key"], e)
+            continue
+        yield o["key"], content
 
 
 @router.get(AdminRoutes.CDN_DOWNLOAD)
@@ -1489,7 +1494,7 @@ def admin_download_cdn(
     logger.warning("CDN: admin %s downloads %d files (kind=%s, event=%s)", admin, len(chosen), kind, event)
     label = "-".join(p for p in ("cdn", kind, event[:8] if event else None) if p)
     return StreamingResponse(
-        _zip_stream(chosen),
+        stream_zip(_cdn_zip_entries(chosen)),
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{label}.zip"'},
     )
@@ -1508,6 +1513,7 @@ def _forget_file(key: str, url: str) -> None:
     supabase.table(Tables.STORY_PHOTOS).delete().eq("image_url", url).execute()
     supabase.table(Tables.EVENTS).update({"image_url": None}).eq("image_url", url).execute()
     supabase.table(Tables.PROFILES).update({"banner_url": None, "banner_position": None}).eq("banner_url", url).execute()
+    supabase.table(Tables.PROFILES).update({"avatar_url": None, "avatar_custom": False, "avatar_synced_at": None}).eq("avatar_url", url).execute()
     for row in supabase.table(Tables.COSPLAYS).select("id, inspo_images").overlaps("inspo_images", [url]).execute().data or []:
         kept = [u for u in (row.get("inspo_images") or []) if u != url]
         supabase.table(Tables.COSPLAYS).update({"inspo_images": kept}).eq("id", row["id"]).execute()

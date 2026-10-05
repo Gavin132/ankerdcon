@@ -2,12 +2,18 @@ import { useEffect, useMemo, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import { Link } from "react-router-dom";
 import { ExternalLink } from "lucide-react";
 import { useThemeStore } from "../../store/theme.store";
 import { avatarColor, personInitial } from "../../utils/avatar";
 import { parsePing, pingAgo, pingMapUrl } from "../../utils/locationPing";
+import { tripMeals, type Trip } from "../../utils/trips";
+import { useParkingSpots } from "../../hooks/useParking";
+import { formatTime } from "../../utils/format";
+import { routes } from "../../config/routes";
+import { getNow } from "../../store/time.store";
 import type { AnchorRect } from "../common/UserProfilePopup";
-import type { User } from "../../types";
+import type { Meal, Ride, User } from "../../types";
 
 interface Pin {
   user: User;
@@ -17,6 +23,20 @@ interface Pin {
   text: string;
   at: Date | null;
 }
+
+type VenueKind = "con" | "hotel" | "meal";
+
+interface VenuePin {
+  kind: VenueKind;
+  lat: number;
+  lng: number;
+  label: string;
+  /** The exact place to open on tap — a meal's own Google Maps link when it
+   * has one, otherwise directions to the geocoded coordinates. */
+  routeUrl: string;
+}
+
+const VENUE_GLYPH: Record<VenueKind, string> = { con: "🎫", hotel: "🏨", meal: "🍽️" };
 
 const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
@@ -49,6 +69,55 @@ function pinIcon(users: User[]): L.DivIcon {
     html: `<div style="position:relative;width:${width}px;height:40px">${discs}${badge}</div>`,
     iconSize: [width, 40],
     iconAnchor: [width / 2, 20],
+    popupAnchor: [0, -22],
+  });
+}
+
+/** One venue as a round disc with its kind's glyph, same shape as an avatar disc. */
+function venueDisc(kind: VenueKind, offset: number, z: number): string {
+  return `<div style="position:absolute;left:${offset}px;top:0;z-index:${z};width:40px;height:40px;border-radius:9999px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);background:#1b2227;display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1">${VENUE_GLYPH[kind]}</div>`;
+}
+
+/** A pin for one venue, or — when several share a spot, e.g. two dinnerplans at the same
+ * restaurant — their glyphs overlapped, with "+N" past the third (same shape as pinIcon). */
+function venuePinIcon(venues: VenuePin[]): L.DivIcon {
+  const shown = venues.slice(0, SHOWN);
+  const extra = venues.length - shown.length;
+  const discs = shown.map((v, i) => venueDisc(v.kind, i * STEP, SHOWN - i)).join("");
+  const badge = extra > 0
+    ? `<div style="position:absolute;left:${shown.length * STEP}px;top:0;z-index:0;width:40px;height:40px;border-radius:9999px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);background:#1b2227;color:#fff;display:flex;align-items:center;justify-content:center;font:700 13px/1 Poppins,system-ui,sans-serif">+${extra}</div>`
+    : "";
+  const width = 40 + (shown.length - 1) * STEP + (extra > 0 ? STEP : 0);
+  return L.divIcon({
+    className: "crew-pin",
+    html: `<div style="position:relative;width:${width}px;height:40px">${discs}${badge}</div>`,
+    iconSize: [width, 40],
+    iconAnchor: [width / 2, 20],
+    popupAnchor: [0, -22],
+  });
+}
+
+interface ParkingPin {
+  driver: string;
+  lat: number;
+  lng: number;
+  /** The driver's own Outbound ride for this trip, if one has been planned
+   * yet — resolved client-side from already-loaded ride data rather than
+   * stored on the pin, so it's always current: once Driver A plans their
+   * ride home, every existing pin for their car picks it up automatically. */
+  outboundRide: Ride | null;
+}
+
+/** One parking pin — no clustering: two different cars genuinely parked
+ * right next to each other is a real, if rare, coincidence, not worth a
+ * third clustering layer on top of the other two. */
+function parkingPinIcon(): L.DivIcon {
+  const disc = `<div style="width:40px;height:40px;border-radius:9999px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);background:#1b2227;display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1">🚗</div>`;
+  return L.divIcon({
+    className: "crew-pin",
+    html: disc,
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
     popupAnchor: [0, -22],
   });
 }
@@ -90,6 +159,33 @@ function clusterPins(pins: Pin[]): Cluster[] {
   }));
 }
 
+interface VenueCluster {
+  key: string;
+  members: VenuePin[];
+  lat: number;
+  lng: number;
+}
+
+/** Same grouping as clusterPins, for venues — mainly matters for two dinnerplans
+ * that turn out to be at the same restaurant, or a meal right at the hotel. */
+function clusterVenuePins(venues: VenuePin[]): VenueCluster[] {
+  const parent = venues.map((_, i) => i);
+  const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+  for (let i = 0; i < venues.length; i++) {
+    for (let j = i + 1; j < venues.length; j++) {
+      if (distanceMeters(venues[i], venues[j]) <= MERGE_METERS) parent[find(i)] = find(j);
+    }
+  }
+  const groups = new Map<number, VenuePin[]>();
+  venues.forEach((v, i) => groups.set(find(i), [...(groups.get(find(i)) ?? []), v]));
+  return [...groups.values()].map((members) => ({
+    key: members.map((m) => `${m.kind}:${m.label}`).sort().join("|"),
+    members,
+    lat: members.reduce((sum, m) => sum + m.lat, 0) / members.length,
+    lng: members.reduce((sum, m) => sum + m.lng, 0) / members.length,
+  }));
+}
+
 /** Leaflet measures its container once; this re-measures whenever it changes size (late CSS, rotation, a sheet resizing). */
 function KeepSized() {
   const map = useMap();
@@ -122,15 +218,33 @@ function FitToPins({ pins }: { pins: { user?: User; lat: number; lng: number; ke
   return null;
 }
 
+/** How long a parking pin lingers after its car's planned departure. */
+const PARKING_LINGER_MS = 2 * 60 * 60 * 1000;
+
 interface CrewMapProps {
   /** Users whose ping is still fresh. Only those that shared a GPS position get a pin. */
   users: User[];
   onOpenProfile: (user: User, rect: AnchorRect) => void;
+  /** The current (or nearest) trip — its con/hotel location and meals become
+   * venue pins. Null shows just the member pins, same as before. */
+  trip: Trip | null;
+  meals: Meal[];
+  /** This trip's rides — used to resolve each parking pin's current
+   * Outbound ride (see ParkingPin) and to let it expire once that ride has
+   * left. */
+  rides: Ride[];
+  /** Every member, regardless of whether they've shared a position — a
+   * parking pin's driver (`users` above may not include them at all) needs
+   * their full profile for the "Profiel" link in its popup. */
+  allUsers: User[];
 }
 
-/** Everyone who shared their position, as their avatar on one map. Lazy-loaded — Leaflet is only fetched when there's a pin to show. */
-export default function CrewMap({ users, onOpenProfile }: CrewMapProps) {
+/** Everyone who shared their position, plus the current trip's con, hotel,
+ * meal and parking locations, all on one map. Lazy-loaded — Leaflet is only
+ * fetched once there's at least one pin to show. */
+export default function CrewMap({ users, onOpenProfile, trip, meals, rides, allUsers }: CrewMapProps) {
   const isDark = useThemeStore((s) => s.isDark);
+  const { data: parkingSpots = [] } = useParkingSpots(trip?.id);
 
   const pins = useMemo<Pin[]>(
     () =>
@@ -143,14 +257,69 @@ export default function CrewMap({ users, onOpenProfile }: CrewMapProps) {
     [users],
   );
 
-  const clusters = useMemo(() => clusterPins(pins), [pins]);
+  const venuePins = useMemo<VenuePin[]>(() => {
+    if (!trip) return [];
+    const info = trip.days[0]?.ev;
+    const out: VenuePin[] = [];
+    if (info?.location_lat != null && info?.location_lng != null) {
+      out.push({
+        kind: "con",
+        lat: info.location_lat,
+        lng: info.location_lng,
+        label: trip.title,
+        routeUrl: info.location_maps_url || pingMapUrl(info.location_lat, info.location_lng),
+      });
+    }
+    if (trip.isHotel && info?.hotel_location_lat != null && info?.hotel_location_lng != null) {
+      out.push({
+        kind: "hotel",
+        lat: info.hotel_location_lat,
+        lng: info.hotel_location_lng,
+        label: "Hotel",
+        routeUrl: info.hotel_location_maps_url || pingMapUrl(info.hotel_location_lat, info.hotel_location_lng),
+      });
+    }
+    for (const m of tripMeals(meals, trip)) {
+      if (m.location_lat == null || m.location_lng == null) continue;
+      out.push({
+        kind: "meal",
+        lat: m.location_lat,
+        lng: m.location_lng,
+        label: m.meal_name,
+        routeUrl: m.maps_url || pingMapUrl(m.location_lat, m.location_lng),
+      });
+    }
+    return out;
+  }, [trip, meals]);
 
-  if (pins.length === 0) return null;
+  const parkingPins = useMemo<ParkingPin[]>(() => {
+    const now = getNow().getTime();
+    const out: ParkingPin[] = [];
+    for (const spot of parkingSpots) {
+      const outboundRides = rides.filter((r) => r.direction === "Outbound" && r.driver === spot.driver);
+      // Several Outbound rides for the same driver shouldn't normally happen
+      // (the chauffeur only ever makes their own ride once), but the latest
+      // one is the sensible pick if it does.
+      const outboundRide = outboundRides.sort((a, b) => b.departure_time.localeCompare(a.departure_time))[0] ?? null;
+      if (outboundRide) {
+        const departed = new Date(outboundRide.departure_time.replace(" ", "T")).getTime();
+        if (!isNaN(departed) && now - departed > PARKING_LINGER_MS) continue; // the car has already left
+      }
+      out.push({ driver: spot.driver, lat: spot.lat, lng: spot.lng, outboundRide });
+    }
+    return out;
+  }, [parkingSpots, rides]);
+
+  const clusters = useMemo(() => clusterPins(pins), [pins]);
+  const venueClusters = useMemo(() => clusterVenuePins(venuePins), [venuePins]);
+
+  if (clusters.length === 0 && venueClusters.length === 0 && parkingPins.length === 0) return null;
+  const first = clusters[0] ?? venueClusters[0] ?? parkingPins[0];
 
   return (
     <div className={`isolate h-[280px] w-full overflow-hidden border-t border-line sm:h-[340px] ${isDark ? "crew-map-dark" : ""}`}>
       <MapContainer
-        center={[pins[0].lat, pins[0].lng]}
+        center={[first.lat, first.lng]}
         zoom={15}
         scrollWheelZoom={false}
         className="h-full w-full bg-sunken"
@@ -163,7 +332,64 @@ export default function CrewMap({ users, onOpenProfile }: CrewMapProps) {
           maxZoom={19}
         />
         <KeepSized />
-        <FitToPins pins={clusters} />
+        <FitToPins pins={[...clusters, ...venueClusters, ...parkingPins.map((p) => ({ ...p, key: `parking:${p.driver}` }))]} />
+        {venueClusters.map((c) => (
+          <Marker key={c.key} position={[c.lat, c.lng]} icon={venuePinIcon(c.members)}>
+            <Popup closeButton={false}>
+              <div className="max-h-[170px] min-w-[150px] space-y-2 overflow-y-auto text-[13px] leading-snug">
+                {c.members.map((v) => (
+                  <div key={`${v.kind}:${v.label}`} className="flex items-center justify-between gap-3">
+                    <p className="min-w-0 truncate font-semibold">{v.label}</p>
+                    <a
+                      className="inline-flex shrink-0 items-center gap-0.5 text-[12px] font-semibold text-brand-text hover:underline"
+                      href={v.routeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Route <ExternalLink size={10} />
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+        {parkingPins.map((p) => (
+          <Marker key={`parking:${p.driver}`} position={[p.lat, p.lng]} icon={parkingPinIcon()}>
+            <Popup closeButton={false}>
+              <div className="min-w-[160px] text-[13px] leading-snug">
+                <p className="font-semibold">
+                  Auto van{" "}
+                  <button
+                    type="button"
+                    className="text-brand-text hover:underline"
+                    onClick={(e) => {
+                      const driverUser = allUsers.find((u) => u.name === p.driver);
+                      if (!driverUser) return;
+                      const r = (e.currentTarget.closest(".leaflet-container") as HTMLElement).getBoundingClientRect();
+                      onOpenProfile(driverUser, { top: r.top, left: r.left, right: r.right, height: r.height });
+                    }}
+                  >
+                    {p.driver}
+                  </button>
+                </p>
+                {p.outboundRide ? (
+                  <>
+                    <p className="text-neutral-600">Vertrekt om {formatTime(p.outboundRide.departure_time)}</p>
+                    <Link
+                      to={routes.ride.view(p.outboundRide.id)}
+                      className="mt-1 inline-flex items-center gap-0.5 text-[12px] font-semibold text-brand-text hover:underline"
+                    >
+                      Naar de rit <ExternalLink size={10} />
+                    </Link>
+                  </>
+                ) : (
+                  <p className="text-neutral-600">Nog geen terugrit gepland.</p>
+                )}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
         {clusters.map((c) => (
           <Marker key={c.key} position={[c.lat, c.lng]} icon={pinIcon(c.members.map((m) => m.user))}>
             <Popup closeButton={false}>

@@ -25,6 +25,8 @@ class CalendarRoutes:
     LIST = "/"
     RSVP = "/{event_id}/rsvp"
     LEAVE = "/{event_id}/leave"
+    RSVP_BULK = "/{event_id}/rsvp/bulk"
+    LEAVE_BULK = "/{event_id}/leave/bulk"
     HOTEL_ROOMS = "/{event_id}/hotel-rooms"
     HOTEL_ROOMS_BULK = "/{event_id}/hotel-rooms/bulk"
     HOTEL_ROOM_ASSIGN = "/{event_id}/hotel-rooms/{room_id}/assign"
@@ -41,6 +43,7 @@ class UserRoutes:
     ME = "/me"
     DETAIL = "/{identifier}"
     BANNER = "/banner"
+    AVATAR = "/avatar"
     LINK_DISCORD = "/me/link-discord"
 
 
@@ -79,6 +82,29 @@ class FeedbackRoutes:
     LIST = "/"  # POST
 
 
+class PushRoutes:
+    PREFIX = "/push"
+    SUBSCRIBE = "/subscribe"  # POST, DELETE
+
+
+class ParkingRoutes:
+    PREFIX = "/parking"
+    BY_TRIP = "/{trip_id}"                # GET (list), POST (set/upsert one)
+    DETAIL = "/{trip_id}/{driver}"        # DELETE
+
+
+class WeatherRoutes:
+    """A caching proxy in front of Open-Meteo for the member-facing weather
+    card (WeatherCard.tsx / useEventWeather.ts) — every member's browser used
+    to call Open-Meteo directly, so a burst of people opening the app at once
+    could hit it with the same request many times over. The response shapes
+    are unchanged passthroughs of Open-Meteo's own, cached server-side."""
+    PREFIX = "/weather"
+    GEOCODE = "/geocode"    # GET ?name=
+    FORECAST = "/forecast"  # GET ?latitude=&longitude=&date=
+    ARCHIVE = "/archive"    # GET ?latitude=&longitude=&start_date=&end_date=
+
+
 class CosplayRoutes:
     PREFIX = "/cosplays"
     LIST = "/"
@@ -91,6 +117,7 @@ class StoryRoutes:
     LIST = "/{event_day_id}"          # GET list / POST upload
     DETAIL = "/photos/{photo_id}"     # DELETE (owner-only)
     DOWNLOAD = "/photos/{photo_id}/download"  # GET — original bytes, forced download
+    DOWNLOAD_ALL = "/{event_day_id}/download-all"  # GET — every photo of this day as one zip
     SEEN = "/{event_day_id}/seen"     # GET / PUT
     SUMMARY = "/summary"              # GET ?event_day_ids=a,b,c
     BY_USER = "/user/{identifier}"    # GET — every photo one member uploaded, with its event

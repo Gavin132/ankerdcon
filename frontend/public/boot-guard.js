@@ -10,6 +10,18 @@
   var errors = [];
   var startedAt = new Date().getTime();
   var box = null;
+  // Same list as src/constants/chemistryJokes.ts; this file can't import it.
+  var jokes = [
+    "Waarom heeft de bioloog het uitgemaakt met de natuurkundige? Ze hadden geen chemie.",
+    "Waar zijn de virussen gebleven? Ze griep weg.",
+    "Een heliumatoom loopt een bar binnen. De barman zegt: \"Sorry, we schenken geen edelgas.\" Het heliumatoom reageert niet.",
+    "Wat gebeurt er als elektronen hun energie verliezen? Ze krijgen Bohr'ed.",
+    "Waarom maakte de fractie zich zorgen over het trouwen met de komma? Omdat hij zich zou moeten bekeren.",
+    "Wat is het favoriete type wiskunde van een vogel? OWL-gebra.",
+    "Waarom was de meetkundeleraar niet op school? Omdat ze haar hoek verstuikte!!",
+    "Waarom loste de ijsbeer op in water? Omdat hij polair was!",
+    "Wat moet je doen met een dode scheikundige? Barium!"
+  ];
 
   function note(text) {
     if (errors.length < 6 && text) errors.push(String(text).slice(0, 300));
@@ -50,8 +62,13 @@
       "<li>Update iOS (Instellingen → Algemeen → Software-update) en gebruik Safari in plaats van een ander programma.</li>" +
       "</ol>" +
       '<p style="margin:0 0 12px">Werkt het nog steeds niet? Stuur een screenshot van dit scherm naar een beheerder.</p>' +
+      '<p class="joke" style="margin:0 0 12px;font-size:13px;opacity:.65"></p>' +
       '<pre style="white-space:pre-wrap;word-break:break-word;font:12px/1.4 ui-monospace,Menlo,monospace;margin:0;padding:10px;border-radius:8px;background:' +
       (dark ? "#141B20" : "#EBF1F3") + '"></pre></div>';
+    var joke = box.getElementsByTagName("p");
+    joke[joke.length - 1].appendChild(
+      document.createTextNode("Scheikundemop: " + jokes[Math.floor(Math.random() * jokes.length)]),
+    );
     var pre = box.getElementsByTagName("pre")[0];
     pre.appendChild(
       document.createTextNode(details + "\n\n" + navigator.userAgent + "\n" + window.innerWidth + "x" + window.innerHeight),

@@ -4,6 +4,8 @@ import {
   getCalendarFeedPath,
   rsvpCalendarEvent,
   leaveCalendarEvent,
+  rsvpCalendarEventBulk,
+  leaveCalendarEventBulk,
   getHotelRooms,
   createHotelRoom,
   bulkCreateHotelRooms,
@@ -43,6 +45,57 @@ export function useRsvpCalendarEvent() {
         old?.map((ev) =>
           ev.id === id && !ev.participants.includes(userName)
             ? { ...ev, participants: [...ev.participants, userName] }
+            : ev,
+        ),
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) qc.setQueryData(QUERY_KEYS.calendar, ctx.previous);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.calendar }),
+  });
+}
+
+/** Signs several people up for one day in a single request — the optimistic
+ * update adds every name at once, instead of one mutation (and one request)
+ * per person. */
+export function useRsvpCalendarEventBulk() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, userNames }: { id: string; userNames: string[] }) =>
+      rsvpCalendarEventBulk(id, userNames),
+    onMutate: async ({ id, userNames }) => {
+      await qc.cancelQueries({ queryKey: QUERY_KEYS.calendar });
+      const previous = qc.getQueryData<CalendarEvent[]>(QUERY_KEYS.calendar);
+      qc.setQueryData<CalendarEvent[]>(QUERY_KEYS.calendar, (old) =>
+        old?.map((ev) =>
+          ev.id === id
+            ? { ...ev, participants: [...ev.participants, ...userNames.filter((n) => !ev.participants.includes(n))] }
+            : ev,
+        ),
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) qc.setQueryData(QUERY_KEYS.calendar, ctx.previous);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.calendar }),
+  });
+}
+
+export function useLeaveCalendarEventBulk() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, userNames }: { id: string; userNames: string[] }) =>
+      leaveCalendarEventBulk(id, userNames),
+    onMutate: async ({ id, userNames }) => {
+      await qc.cancelQueries({ queryKey: QUERY_KEYS.calendar });
+      const previous = qc.getQueryData<CalendarEvent[]>(QUERY_KEYS.calendar);
+      qc.setQueryData<CalendarEvent[]>(QUERY_KEYS.calendar, (old) =>
+        old?.map((ev) =>
+          ev.id === id
+            ? { ...ev, participants: ev.participants.filter((p) => !userNames.includes(p)) }
             : ev,
         ),
       );

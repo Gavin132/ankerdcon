@@ -17,14 +17,17 @@ COPY frontend/package.json frontend/package-lock.json frontend/
 RUN cd frontend && npm ci
 COPY frontend frontend
 
-# These two are baked into the bundle, so changing them means rebuilding the
-# image. Both are public by design (the publishable key is not a secret).
+# These are baked into the bundle, so changing them means rebuilding the
+# image. All public by design (none of these are secrets) — VITE_VAPID_PUBLIC_KEY
+# is optional: leave it unset and the "Pushmeldingen" toggle just doesn't appear.
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_PUBLISHABLE_KEY
+ARG VITE_VAPID_PUBLIC_KEY=""
 # "dev" builds the orange beta icon and title; leave empty for the live app.
 ARG APP_ENV=""
 ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
     VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY \
+    VITE_VAPID_PUBLIC_KEY=$VITE_VAPID_PUBLIC_KEY \
     APP_ENV=$APP_ENV
 RUN cd frontend && npm run build
 

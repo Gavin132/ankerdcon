@@ -39,6 +39,14 @@ components in use, look at `pages/trip/TripOverviewTab.tsx` and `components/trip
   relies on (a user's own avatar colour, a badge's own colour).
 - **Calm density.** Don't add avatar stacks or buttons to every row. Remove
   decorative background icons and watermarks inside cards.
+- **Compact mode is a personal setting, not a design decision.** Instellingen →
+  Dichtheid tightens `gap-*`, `space-y-*`, `space-x-*` and `p(x/y)-*` in the row/card
+  range (1.5 through 5) app-wide by overriding those Tailwind classes at higher
+  specificity under `.density-compact` (`index.css`, applied via `store/theme.store.ts`
+  as a class on `<html>`) — not by any component branching on it. A new component
+  using these ordinary utility classes picks it up automatically; nothing extra is
+  needed. Page-level spacing (6 and up) is deliberately left alone, so this changes
+  the density of what's on a page, not the page's own layout.
 
 ## Tokens
 

@@ -22,18 +22,18 @@ How Ankerd Con is put together, and why. For the reference details see
                     │  TanStack Query cache (persisted)          │
                     └───────┬─────────────────────┬──────────────┘
                             │ HTTPS               │ HTTPS (login only,
-                            │ /api/*, static      │ weather, place search)
+                            │ /api/*, static      │ place search)
                             ▼                     ▼
-                    ┌───────────────┐      ┌──────────────┐   ┌─────────────┐
-                    │  Cloudflare   │      │ Supabase Auth│   │ Open-Meteo  │
-                    └───────┬───────┘      └──────┬───────┘   │ Nominatim   │
-                            │ (home server)       │           └─────────────┘
-                            ▼                     │ public key set
-                    ┌───────────────────────────┐ │
-                    │  FastAPI backend          │◄┘
-                    │  + serves the built React │
-                    │  app from backend/dist    │
-                    └───┬──────────┬────────┬───┘
+                    ┌───────────────┐      ┌───────────────┐   ┌─────────────┐
+                    │  Cloudflare   │      │ Supabase Auth │   │ Open-Meteo  │
+                    └───────┬───────┘      └───────┬───────┘   │ Nominatim   │
+                            │ (home server)        │           └──────▲──────┘
+                            ▼                      │ public key set   │ weather,
+                    ┌────────────────────────────┐ │                  │ geocoding
+                    │  FastAPI backend           │◄┘                  │
+                    │  + serves the built React  ├────────────────────┘
+                    │  app from backend/dist     │
+                    └───┬──────────┬────────┬────┘
                         │          │        │
           service role  │          │ S3 API │ bot / webhook
                         ▼          ▼        ▼
@@ -44,11 +44,16 @@ How Ankerd Con is put together, and why. For the reference details see
 ```
 
 - The **browser** is a single-page React app. It talks to the backend for
-  everything except logging in (Supabase Auth), weather (Open-Meteo) and place
-  search (Nominatim), which it calls directly.
+  everything except logging in (Supabase Auth) and place search (Nominatim,
+  `LocationSearchInput.tsx`'s autocomplete), which it calls directly. Weather
+  used to be a third direct call, straight from every browser to Open-Meteo —
+  now it's proxied and cached by the backend instead (see below), so a burst
+  of members opening the app at once shares one fetch instead of one each.
 - The **backend** is one FastAPI process. It is the only thing that talks to the
   database, to MinIO and to Discord. In production it also serves the built
-  frontend, so the whole app is one container.
+  frontend, so the whole app is one container. It also calls out to Open-Meteo
+  (weather) and Nominatim (geocoding a venue's address for the crew map, and
+  weather's own location lookup) — both free, keyless, and best-effort.
 - **Supabase** provides Postgres and the login service. **MinIO** stores every
   uploaded image and is reached by browsers through `cdn.ankerd.org`.
 
@@ -141,12 +146,16 @@ upload can never stall the API. See [minio-setup.md](minio-setup.md).
 | `check_and_send_reminders` | daily at 08:00 | event reminders 7 days, 1 day and on the day |
 | `check_and_send_ticket_reminders` | every 15 minutes | "ticket sale opens in 24 hours" and "is open now" |
 
-Notifications go two ways: a **shared webhook** post (an embed in the group's
-Discord channel) and **personal DMs** through the bot. DMs are opt-in per
+Notifications go three ways: a **shared webhook** post (an embed in the group's
+Discord channel), **personal DMs** through the bot, and **web push**
+(`app/services/push_service.py`, VAPID, no third party). DM and push are opt-in per
 category (`event_created`, `ticket_sale`, `event_reminder_*`, `ride_created`,
-`expense_created`, `meal_created`), and only active members with "DM's toestaan"
-switched on receive them. Payment requests are personal DMs that only need the
-master switch. All of it is fire-and-forget: a failed DM never fails the request.
+`expense_created`, `meal_created`) — the category list is channel-agnostic, it says what a
+member wants to hear about, not how. A DM additionally needs "DM's toestaan" and a linked
+Discord account; push needs only a subscription (Instellingen → Notificaties, or onboarding)
+to exist for that device. Payment requests are personal, sent the same two ways, DM needing
+only the master switch. All of it is fire-and-forget: a failed DM or push never fails the
+request, and a push that comes back 404/410 (device gone) deletes its own subscription row.
 
 Because the scheduler lives in the API process, **two backends on the same
 database send every reminder twice**. Do not leave a local backend running
@@ -171,7 +180,14 @@ normal case, not an error:
 - **Upload queue**: a story photo that cannot be sent is kept in IndexedDB and
   retried when the connection returns, even after the app is closed.
   Cosplay images are retried while their form stays open.
-- **Weather** is cached and refreshed at 08, 12, 16 and 20 o'clock.
+- **Weather**: two separate caches, easy to conflate. Each device only refetches
+  at 08, 12, 16 and 20 o'clock (`msUntilNextWeatherSlot()`, a TanStack Query
+  `staleTime`) — that's per-device, not a real cache, just "don't ask again too
+  soon". The actual shared cache is server-side: `app/routers/weather.py`
+  proxies Open-Meteo and caches the response in-process (geocoding a day,
+  a forecast for 2 hours, climate-average history for a week), so many members
+  opening the app around the same time share one upstream fetch instead of
+  one each.
 - **Errors**: a screen that cannot load points at `status.ankerd.org`. If Supabase
   is unreachable the backend answers `503`, never `401`, so the app does not log
   people out over a network blip.

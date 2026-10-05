@@ -38,7 +38,7 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
   that is not a GET (`RATE_LIMIT_PER_MINUTE`). The client is identified from
   `cf-connecting-ip`, but only when the request comes from the reverse proxy.
 - **Upload limits:** the whole request may be at most 20 MB. Per file: story photos
-  and cosplay images 15 MB, admin images 10 MB, banners 8 MB. Images are decoded,
+  and cosplay images 15 MB, admin images 10 MB, banners 8 MB, avatars 5 MB. Images are decoded,
   stripped of metadata (EXIF, including GPS) and re-encoded; only JPG, PNG and WebP are
   accepted (banners also GIF).
   The admin quick upload is the exception: it also takes videos (MP4, MOV, WebM) up to
@@ -66,6 +66,7 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `POST /users/me/link-discord` | member | link a Discord account to a Google login |
 | `PUT /users/{id}/location` | member | set a location ping (for yourself, via `act_as`) |
 | `POST /users/banner`, `DELETE /users/banner` | member | upload or remove your banner |
+| `POST /users/avatar`, `DELETE /users/avatar` | member | upload or remove a custom profile picture — JPG/PNG/WebP (5 MB) or a small GIF (2 MB, kept as is, not re-encoded) — replacing/restoring the Discord or Google one |
 
 ### Calendar (trips) — `/calendar`
 
@@ -90,6 +91,13 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `POST /rides/{id}/restaurant-driver`, `…/leave` | member | join or leave as a driver of a restaurant ride |
 | `POST /rides/{id}/restaurant-driver/assign`, `…/unassign` | member | put a passenger in or out of a car |
 
+Creating a ride broadcasts `ride_created` (`app/routers/rides.py`'s `_notify_ride_created`, also used by
+`admin_create_ride`), narrowed by `_day_ride_eligible_names` beyond the usual category opt-in: only a
+member signed up for that ride's day (`event_days.participants`) who doesn't already have a ride for the
+same need — the same `direction` that day, or for a `Restaurant` ride, a ride to that same
+`linked_meal_id` specifically. A ride with no `linked_event_id` (there is nothing to check "signed up"
+against) falls back to notifying every opted-in member, as before.
+
 ### Meals — `/meals`
 
 | Method and path | Who | What |
@@ -97,7 +105,13 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `GET /meals/` | member | meals |
 | `POST /meals/` | member | plan a meal |
 | `POST /meals/{id}/rsvp`, `…/cancel-rsvp` | member | join or leave |
+| `PUT /meals/{id}` | owner | edit |
 | `DELETE /meals/{id}` | owner | remove |
+
+`location_lat`/`location_lng` are resolved server-side on save (`app/services/geocoding_service.py`'s
+`resolve_location()`) to place this meal's pin on the crew map — from `maps_url` when given (its own
+embedded coordinates, extracted from the resolved link), otherwise by geocoding `location`.
+Best-effort throughout; neither resolving means no pin.
 
 ### Cosplays — `/cosplays`
 
@@ -115,6 +129,7 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `GET /stories/summary?event_day_ids=a,b` | member | per day: photo count, newest photo, whether there is anything unseen |
 | `GET /stories/user/{id or name}` | member | every photo one member uploaded, with its event |
 | `GET /stories/{day}` | member | a day's photos in order |
+| `GET /stories/{day}/download-all` | member | the day's photos as one zip, streamed while it is built (413 above 300 photos; a file MinIO can't read is skipped) |
 | `POST /stories/{day}` | member | upload a photo (multipart, field `file`) |
 | `GET /stories/{day}/seen`, `PUT /stories/{day}/seen` | member | your watch progress |
 | `GET /stories/photos/{id}/download` | member | the original, as a download |
@@ -148,6 +163,60 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `GET /announcements/active` | member | the banner messages to show |
 | `GET /changelog/` | member | release notes |
 | `POST /feedback/` | member | send a bug, idea or remark (`kind`, `message` 5–2000 characters, `anonymous`, `app_version`). Anonymous rows carry no name. At most 5 per member per hour (429), counted in memory per process. |
+
+### Push — `/push`
+
+| Method and path | Who | What |
+| --- | --- | --- |
+| `POST /push/subscribe` | member | save (or refresh) this device's push subscription — the exact `PushSubscription.toJSON()` shape. Upserted on `endpoint`, so resubscribing the same device never duplicates. |
+| `DELETE /push/subscribe` | member | remove a subscription by `endpoint` — turns push off for that one device |
+
+Sending goes through `app/services/push_service.py`, called from `notification_service.py`
+alongside every Discord DM: `notification_categories` governs both channels (a member who wants
+"Nieuwe rit" gets it as a DM and/or a push, whichever they've set up); `allow_dm` only ever
+gated the DM half. The backend keeps the two channels fully independent on purpose — the
+frontend's `NotificationChannelPicker` is what makes a member pick just one, by flipping
+`allow_dm` and the device's push subscription together; nothing stops both being on at once if
+called directly. The push notification's title is a short, category-specific label (e.g.
+"Nieuwe maaltijd"), not the app name — a phone's own notification chrome already shows that;
+see `notification_service._PUSH_TITLES` for the mapping, and pass `title=` to `send_personal_dm`
+for a one-off notice (settlements.py) that isn't tied to a category. Needs
+`VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` — see
+[deployment.md#web-push](deployment.md#web-push); without them, sending silently does nothing.
+
+### Weather — `/weather`
+
+| Method and path | Who | What |
+| --- | --- | --- |
+| `GET /weather/geocode` (`?name=`) | member | Open-Meteo's geocoding search, passthrough |
+| `GET /weather/forecast` (`?latitude=&longitude=&date=`) | member | Open-Meteo's daily + hourly forecast for one date, passthrough |
+| `GET /weather/archive` (`?latitude=&longitude=&start_date=&end_date=`) | member | Open-Meteo's historical daily data, passthrough |
+
+A caching proxy (`app/routers/weather.py`) in front of Open-Meteo for the member-facing weather
+card (`hooks/useEventWeather.ts`) — every browser used to call Open-Meteo directly, which meant a
+burst of members opening the app around the same time could hit it with the same request many
+times over. Response shapes are untouched, so the frontend's own parsing/WMO-code mapping is
+unchanged; only the URL moved. Cached in-process, keyed by the request's own params — a day for a
+geocode, 2 hours for a forecast, a week for archive data. This is separate from each device's own
+`staleTime` throttle (`msUntilNextWeatherSlot()`), which is not a real cache, just "don't ask
+again too soon" — see [architecture.md](architecture.md#working-on-bad-reception).
+
+### Parking — `/parking`
+
+| Method and path | Who | What |
+| --- | --- | --- |
+| `GET /parking/{trip_id}` | member | every parking spot set for that trip |
+| `POST /parking/{trip_id}` | member\* | set (or correct) a driver's spot — `{driver, lat, lng}` |
+| `DELETE /parking/{trip_id}/{driver}` | member\* | clear a spot |
+
+\* The driver themselves, anyone who shares one of that driver's rides for this trip (either
+direction), or an admin — checked server-side (`app/routers/parking.py`'s `_can_manage`), not
+just hidden client-side. `trip_id` is whatever the frontend's own `tripIdOf()` resolves to for
+the trip (an `events.id` for a multi-day trip, an `event_days.id` for a single-day one — see
+`_day_ids_for_trip` for how the backend resolves either shape back to day ids). One row per
+`(trip_id, driver)` — a second person correcting the spot upserts the same row. Which of that
+driver's rides is "current" (for display and for the pin's own 2-hour-after-departure expiry) is
+resolved client-side in `CrewMap.tsx`, not stored here.
 
 ### Link previews — *public*, not under `/api`
 

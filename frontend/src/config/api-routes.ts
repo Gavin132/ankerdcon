@@ -27,6 +27,7 @@ export const apiRoutes = {
     byDay:   (eventDayId: string) => `/api/stories/${eventDayId}`,
     photo:   (photoId: string) => `/api/stories/photos/${photoId}`,
     download: (photoId: string) => `/api/stories/photos/${photoId}/download`,
+    downloadAll: (eventDayId: string) => `/api/stories/${eventDayId}/download-all`,
     seen:    (eventDayId: string) => `/api/stories/${eventDayId}/seen`,
     byUser:  (identifier: string) => `/api/stories/user/${encodeURIComponent(identifier)}`,
     summary: (eventDayIds: string[]) => `/api/stories/summary?event_day_ids=${eventDayIds.map(encodeURIComponent).join(",")}`,
@@ -62,6 +63,8 @@ export const apiRoutes = {
     feedUrl:      "/api/calendar/feed-url",
     rsvp:         (id: string) => `/api/calendar/${id}/rsvp`,
     leave:        (id: string) => `/api/calendar/${id}/leave`,
+    rsvpBulk:     (id: string) => `/api/calendar/${id}/rsvp/bulk`,
+    leaveBulk:    (id: string) => `/api/calendar/${id}/leave/bulk`,
     hotelRooms:   (eventId: string) => `/api/calendar/${eventId}/hotel-rooms`,
     hotelRoomsBulk: (eventId: string) => `/api/calendar/${eventId}/hotel-rooms/bulk`,
     assignRoom:   (eventId: string, roomId: string) => `/api/calendar/${eventId}/hotel-rooms/${roomId}/assign`,
@@ -76,6 +79,7 @@ export const apiRoutes = {
     preferences: "/api/users/preferences",
     name:        "/api/users/name",
     banner:      "/api/users/banner",
+    avatar:      "/api/users/avatar",
     linkDiscord: "/api/users/me/link-discord",
     byId:        (identifier: string) => `/api/users/${identifier}`,
     location:    (identifier: string) => `/api/users/${identifier}/location`,
@@ -92,6 +96,23 @@ export const apiRoutes = {
   },
 
   feedback: "/api/feedback/",
+
+  push: {
+    subscribe: "/api/push/subscribe",
+  },
+
+  // ── Weather — a caching proxy in front of Open-Meteo, see WeatherRoutes ──
+  weather: {
+    geocode: "/api/weather/geocode",
+    forecast: "/api/weather/forecast",
+    archive: "/api/weather/archive",
+  },
+
+  // ── Parking spots (crew map) ─────────────────────────────────────
+  parking: {
+    byTrip: (tripId: string) => `/api/parking/${encodeURIComponent(tripId)}`,
+    detail: (tripId: string, driver: string) => `/api/parking/${encodeURIComponent(tripId)}/${encodeURIComponent(driver)}`,
+  },
 
   changelog: {
     base: "/api/changelog/",

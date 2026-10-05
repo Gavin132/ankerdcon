@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getMeals, createMeal, rsvpMeal, cancelRsvp } from "../services/meals.service";
+import { getMeals, createMeal, updateMeal, rsvpMeal, cancelRsvp } from "../services/meals.service";
 import { QUERY_KEYS, STALE_TIME } from "../constants";
-import type { CreateMealRequest, RsvpRequest, Meal } from "../types";
+import type { CreateMealRequest, UpdateMealRequest, RsvpRequest, Meal } from "../types";
 
 export function useMeals() {
   return useQuery({
@@ -15,6 +15,15 @@ export function useCreateMeal() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateMealRequest) => createMeal(payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.meals }),
+  });
+}
+
+export function useUpdateMeal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateMealRequest }) =>
+      updateMeal(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.meals }),
   });
 }

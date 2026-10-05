@@ -1,0 +1,113 @@
+"""
+Web push — a second notification channel next to the Discord DMs in
+notification_service.py, for members who don't check Discord, or who signed
+up with Google and have no Discord DM channel at all.
+
+Fire-and-forget throughout, like discord_bot.py: a missing VAPID key, an
+unreachable push service or a dead subscription must never break the caller.
+A subscription that comes back 404/410 (uninstalled, cleared site data,
+revoked permission) is deleted here — the one place that finds out.
+"""
+
+from __future__ import annotations
+
+import json
+
+from pywebpush import WebPushException, webpush
+
+from app.config import Settings
+from app.constants import Tables
+from app.core.database import supabase
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
+
+# Batched sends: this many `.in_("user_name", ...)` at a time, so a broadcast
+# to everyone doesn't build one arbitrarily long query.
+_BATCH = 200
+
+
+def _send_one(settings: Settings, sub: dict, payload: str) -> bool:
+    """Returns whether it was actually delivered to the push service — logged
+    by the caller as a running total, since a silent "nothing happened" is
+    the hardest failure mode here to diagnose from outside."""
+    try:
+        resp = webpush(
+            subscription_info={
+                "endpoint": sub["endpoint"],
+                "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]},
+            },
+            data=payload,
+            vapid_private_key=settings.vapid_private_key,
+            vapid_claims={"sub": settings.vapid_subject},
+            ttl=60 * 60 * 24,  # a day — long enough for a phone that was off, not stale after
+        )
+        logger.info("Push: delivered to %s (%s)", sub["endpoint"][:60], getattr(resp, "status_code", "?"))
+        return True
+    except WebPushException as e:
+        status_code = e.status_code
+        if status_code in (404, 410):
+            logger.info("Push: subscription %s gone (%s), removing it", sub["endpoint"][:60], status_code)
+            try:
+                supabase.table(Tables.PUSH_SUBSCRIPTIONS).delete().eq("id", sub["id"]).execute()
+            except Exception:
+                pass  # picked up again next time it 404s — non-fatal
+        else:
+            logger.warning("Push send to %s failed (%s): %s", sub["endpoint"][:60], status_code, e)
+        return False
+    except Exception as e:
+        logger.warning("Push send to %s failed: %s", sub["endpoint"][:60], e)
+        return False
+
+
+def send_push(settings: Settings, user_names: list[str], title: str, body: str, url: str = "/") -> None:
+    """Push `title`/`body` to every subscribed device of these members.
+    Silently does nothing when push isn't configured (no VAPID key) or the
+    list is empty — never an error for the caller. Logs a summary either
+    way, since "was this even attempted" is otherwise invisible from outside."""
+    if not settings.vapid_private_key:
+        logger.info("Push: not configured (VAPID_PRIVATE_KEY empty), skipping %r", title)
+        return
+    if not user_names:
+        return
+    try:
+        subs = (
+            supabase.table(Tables.PUSH_SUBSCRIPTIONS)
+            .select("id, endpoint, p256dh, auth")
+            .in_("user_name", user_names[:_BATCH])
+            .execute()
+            .data
+            or []
+        )
+    except Exception as e:
+        logger.error("Push: failed to fetch subscriptions for %s: %s", user_names, e)
+        return
+    if not subs:
+        logger.info("Push: no subscriptions for %s (%r) — nobody in that list has push on", user_names, title)
+        return
+
+    payload = json.dumps({"title": title, "body": body, "url": url})
+    delivered = sum(_send_one(settings, sub, payload) for sub in subs)
+    logger.info("Push %r: delivered to %d/%d subscription(s) for %s", title, delivered, len(subs), user_names)
+
+
+def headline(dm_content: str, title: str | None = None) -> str:
+    """The DM templates in app/messages.py are Discord markdown, meant for a chat
+    bubble; a push notification is one short plain line. Takes the first line,
+    strips the ** bold markers (the only markdown these templates use) and
+    trims it to a sane notification length.
+
+    Several templates open with "{title}: {detail}" — the same phrase the
+    push notification's own `title` already shows, which reads as a stutter
+    ("Nieuwe maaltijd" / "Nieuwe maaltijd: Pizza"). When the line starts with
+    exactly that, right after its emoji, the redundant part is dropped and
+    only the detail (plus the emoji) is kept. Templates phrased as a full
+    sentence ("Sam heeft een nieuwe rit aangemaakt") don't match this and are
+    left as they are."""
+    first_line = dm_content.strip().split("\n", 1)[0]
+    emoji, _, rest = first_line.partition(" ")
+    plain = rest.replace("**", "")
+    if title and plain.startswith(f"{title}: "):
+        plain = plain[len(title) + 2:]
+    plain = f"{emoji} {plain}".strip()
+    return plain if len(plain) <= 120 else plain[:117] + "…"

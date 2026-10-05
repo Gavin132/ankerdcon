@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Car, UserCheck, UserMinus, UtensilsCrossed } from "lucide-react";
+import { Car, ChevronRight, Pencil, UserCheck, UserMinus, UtensilsCrossed } from "lucide-react";
 import { useMeals, useRsvpMeal, useCancelRsvp } from "../hooks/useMeals";
 import { useCalendar } from "../hooks/useCalendar";
 import { useRides } from "../hooks/useRides";
-import { useUsers } from "../hooks/useUsers";
+import { useUsers, useCurrentUser } from "../hooks/useUsers";
 import { useSmartBack } from "../hooks/useSmartBack";
 import { toast } from "../store/toast.store";
 import { routes } from "../config/routes";
@@ -13,6 +13,7 @@ import { LinkedEventCard } from "../components/detail/LinkedEventCard";
 import { MealHero } from "../components/meal/MealHero";
 import { MealLinks } from "../components/meal/MealLinks";
 import { MealPractical } from "../components/meal/MealPractical";
+import { MealEditSheet } from "../components/meal/MealEditSheet";
 import { RestaurantDetailActions } from "../components/ride/RestaurantDetailActions";
 import { RestaurantQuickDriverModal } from "../components/transport/RestaurantQuickDriverModal";
 import { Button } from "../components/common/Button";
@@ -23,11 +24,13 @@ export function MealDetailPage() {
   const { id } = useParams<{ id: string }>();
   const goBack = useSmartBack(routes.currentTrip.tab("overview"));
   const [quickRideOpen, setQuickRideOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const { data: meals = [], isLoading } = useMeals();
   const { data: events = [] } = useCalendar();
   const { data: rides = [] } = useRides();
   const { data: users = [] } = useUsers();
+  const { data: me } = useCurrentUser();
 
   const [rsvpOpen, setRsvpOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -46,6 +49,7 @@ export function MealDetailPage() {
 
   const userNames = users.map((u) => u.name);
   const participants = meal?.participants ?? [];
+  const canEdit = !!meal && !!me && (me.is_admin || meal.created_by === me.name);
 
   async function onShare() {
     const url = window.location.href;
@@ -130,7 +134,24 @@ export function MealDetailPage() {
 
   return (
     <div className="min-h-screen bg-paper">
-      <DetailTopbar title={meal.meal_name} onBack={goBack} onShare={onShare} />
+      <DetailTopbar
+        title={meal.meal_name}
+        onBack={goBack}
+        onShare={onShare}
+        actions={
+          canEdit && (
+            <button
+              type="button"
+              onClick={() => setEditOpen(true)}
+              title="Etentje bewerken"
+              aria-label="Etentje bewerken"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+            >
+              <Pencil size={16} />
+            </button>
+          )
+        }
+      />
 
       {(() => {
         const hasSidePanel = !!linkedEvent;
@@ -153,10 +174,14 @@ export function MealDetailPage() {
                 <button
                   type="button"
                   onClick={() => setQuickRideOpen(true)}
-                  className="flex w-full items-center justify-center gap-2 rounded-[12px] border-1.5 border-dashed border-rose-400 bg-rose-50 px-4 py-6 text-sm font-semibold text-rose-700 transition-colors hover:border-rose-500 dark:border-rose-400/60 dark:bg-rose-500/10 dark:text-rose-300"
+                  className="flex w-full items-center gap-3 rounded-[12px] border-1.5 border-dashed border-rose-400 bg-rose-50 px-4 py-5 text-left text-sm font-semibold text-rose-700 transition-colors hover:border-rose-500 hover:bg-rose-100 active:scale-[0.99] dark:border-rose-400/60 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/15"
                 >
-                  <Car size={16} />
-                  Nog geen rit georganiseerd — bied een auto aan
+                  <Car size={18} className="shrink-0" />
+                  <span className="flex-1">
+                    Nog geen rit georganiseerd
+                    <span className="block font-normal text-rose-600 dark:text-rose-300/80">Tik om een auto aan te bieden</span>
+                  </span>
+                  <ChevronRight size={16} className="shrink-0" />
                 </button>
               )
             )}
@@ -246,6 +271,15 @@ export function MealDetailPage() {
           </Button>
         </div>
       </Modal>
+
+      {canEdit && (
+        <MealEditSheet
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          meal={meal}
+          events={events}
+        />
+      )}
     </div>
   );
 }

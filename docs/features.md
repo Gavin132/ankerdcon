@@ -67,6 +67,10 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
 - The **ticket** (`components/trip/TripTicket.tsx`) shows the trip, its days, who
   is going and a countdown. Tap a day to sign up or off. Tap the avatars to see
   everyone by name (`TripParticipants.tsx`); that list has an "Iemand aanmelden" button too.
+- The line at the top of the ticket names what kind of trip it is: an admin can tag an event
+  **Con**, **Gathering** or **Concert** (`events.event_type` — Admin → Evenementen); untagged
+  falls back to "Con" when the trip has con programming (`has_con`) or "Reis" otherwise. Shown
+  the same way in the Agenda ticket and the Hub's upcoming-trip card.
 - A calendar button in the top bar, and "Andere evenementen" under the tiles, open a list of every
   trip to jump to another one (`TripSwitcher.tsx`); on a phone you can also swipe sideways to the
   next or previous trip (`hooks/useSwipe.ts`) — a one-time pill (`SwipeHint.tsx`) points this out
@@ -100,11 +104,23 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
 - **Heen** (inbound), **Terug** (outbound) and **Restaurant** rides. A ride has a
   driver, seats, a departure time, a start and end location and optional parking
   info. Public transport has no seats.
+- **The Vervoer sheet** shows one direction of one day at a time: a segmented control picks
+  Heen, Terug or Eten (with the number of rides), and on a multi-day trip day chips pick the
+  day (an amber dot marks a day that still has people without transport). Each ride is a
+  single row (time, driver, where from or to, seats free and the car's target); tap it for
+  who rides along, the parking info, **Stap in** / **Uitstappen** and a link to the ride's
+  own page. **Your own ride is the blue row.** The sheet opens on the direction and day the
+  Hub's "Rit aanbieden" and "Meerijden" tiles would use (`utils/transportView.ts`, built on
+  `planQuickRide`): Heen before the trip and in the morning, Terug from 13:00, Heen on
+  tomorrow's day from 21:00, Terug on the last day once it's over, and Eten instead of Terug
+  when the trip has no hotel and a meal still to come needs a ride. That is only the starting
+  point; it never moves while the sheet is open.
 - The driver counts as a passenger; "seats" are the seats for others. Claiming and
   leaving a seat work for anyone, see [acting-for-others.md](acting-for-others.md).
-- **"Ik rijd"** on Heen/Terug becomes **"Rit verwijderen"** once you already drive
-  that direction that day. It asks to confirm and warns when others have joined.
-  `DELETE /api/rides/{id}` is for the driver or an admin.
+- **"Rit aanbieden"** (next to the day chips, Heen and Terug only) is gone once you already
+  drive that direction that day; the ride itself then offers **"Rit verwijderen"**. It asks
+  to confirm and warns when others have joined. `DELETE /api/rides/{id}` is for the driver
+  or an admin.
 - **Restaurant rides** are created from a meal that needs transport and can have
   several cars, each with its own seats (`RestaurantRideGroup.tsx`, `CarCard.tsx`).
 - **Car loading advice** (Heen and Terug, per day): from the number of people signed up for
@@ -112,12 +128,14 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
   left behind (`utils/carBalance.ts`). Cars go in departure order; whatever an early car
   leaves without, the later ones have to take. With 11 people and three 5-seaters the first
   should take 3–4; if it leaves with 2 the second needs 4–5; if that one leaves with 4 the
-  third has to be full. Each car has a pill ("Nog 1 nodig · doel 3–4", "Op schema"), and the
-  direction shows people, cars, seats and who has no car yet or how many seats are short.
+  third has to be full. Each row shows the target ("doel 3–4", amber when the car is short,
+  green when it's on course) and the open ride the full pill ("Nog 1 nodig · doel 3–4", "Op
+  schema"), and the direction shows people, cars, seats and who has no car yet or how many
+  seats are short.
   It is live advice from today's sign-ups and never blocks anyone: cars rarely leave on
   time, so nothing is locked in. Public transport and cars that left over two hours ago are
   left out.
-- Ride cards change colour as departure nears and show a countdown; a ride stays
+- An open ride shows a countdown pill as departure nears; a ride stays
   visible for two hours after it leaves, then moves to the history
   (`utils/rides.ts` → `getRideStatus`).
 - The vehicle icon comes from `rideVehicleIcon`: a train for public transport, a
@@ -153,9 +171,15 @@ the form is open; saving waits until nothing is queued.
 
 `components/story/`, `backend/app/routers/stories.py`.
 
-- Anyone can add a photo to a day, from the Hub, the trip ticket or the Foto's
-  tile. It is compressed in the browser (max 2560 px, JPEG 88 %), checked by the
+- Anyone can add photos to a day, from the Hub, the trip ticket or the Foto's
+  tile. Each is compressed in the browser (max 2560 px, JPEG 88 %), checked by the
   backend and stored in MinIO.
+- **Several at once** (`hooks/useStoryPhotoPicker.ts`, shared by both entry points): up to
+  30, uploaded one after the other, **oldest first by when they were taken**. The story shows
+  upload order, so uploading in capture order is what sorts them. The date is the EXIF
+  `DateTimeOriginal` (`utils/photoDate.ts`), read from the original because the canvas
+  compression strips EXIF, with the file's `lastModified` as fallback. One toast sums up the
+  batch; after a network failure the rest is queued without waiting out more timeouts.
 - A **story** is the day's photos in upload order (`seq`). Each member's progress
   is stored per day (`story_seen`), so a ring shows "unseen" until you have
   watched to the newest photo.
@@ -164,7 +188,11 @@ the form is open; saving waits until nothing is queued.
   `store/pendingStoryUploads.store.ts`), even after the app was closed. The upload
   button shows an amber badge with how many are waiting.
 - Only the uploader can delete a photo (there is no admin override yet, see
-  [TODO.md](../TODO.md)); anyone can download the original.
+  [TODO.md](../TODO.md)); anyone can download the original, or the whole day
+  as one zip (the folder icon in the viewer), streamed while it is built.
+- **Swipe down to close** the viewer, Instagram-style — the photo follows the
+  finger and the background fades; a long or fast pull closes it, a short one
+  springs back.
 - **Profiles** list every photo a member has uploaded, newest first, with a chip
   per event and a full-screen viewer (`components/profile/UserPhotos.tsx`,
   `GET /api/stories/user/{id or name}`).
@@ -216,15 +244,49 @@ by hand, by members or admins.
 `pages/CrewPage.tsx`, `pages/ProfilePage.tsx`, `components/crew/CrewMap.tsx`.
 
 - **Crew** is the member directory plus **"Waar is iedereen"**: a Leaflet map of
-  fresh location pings.
+  fresh location pings, plus — always, not only when someone's shared a position — the
+  current trip's con location, hotel and each dinnerplan, as their own round pins (a
+  glyph instead of an avatar). Pins within 20 m of each other share one marker, e.g. two
+  dinnerplans at the same restaurant.
 - A **location ping** is a zone or text and, when you allow it, GPS coordinates,
   stored on the profile and considered fresh for two hours. Pings within 20 m of each
   other share a pin.
-- A **profile** has an avatar, banner (colour or image), name font and colour,
+- A venue pin's coordinates come from `app/services/geocoding_service.py`'s `resolve_location()`,
+  server-side, whenever the location is saved: a Google Maps link, if given, wins (its own
+  coordinates are extracted directly from the resolved URL — the exact spot a member picked,
+  not a guess from a name), otherwise the location text is geocoded via Nominatim/OpenStreetMap
+  (the same free geocoder `LocationSearchInput.tsx` already uses). Best-effort throughout — no
+  pin when neither resolves. A dinnerplan can carry its own Maps link (`maps_url`, set when
+  planning it); the con location and hotel (Admin → Evenementen) can too — useful for a venue
+  whose name geocodes unreliably or not at all (e.g. a hotel chain resolving to the wrong city).
+- **Parkeerplek**: where a driver's car is parked, as its own 🚗 pin — set from Crew ("Parkeerplek",
+  next to "Locatie pingen", only offered once there's a car you can set: yourself as a driver, or
+  anyone you share a ride with, either direction). Keyed by the driver's name, not a specific ride
+  (`app/routers/parking.py`; one row per trip+driver, `UNIQUE (trip_id, driver)` — correcting it
+  just updates the same row) — anyone on that driver's ride may set or correct it, it doesn't
+  matter who actually taps the pin down. The popup resolves live, client-side, to whichever of
+  that driver's Outbound rides is current (`CrewMap.tsx`): a departure time and a link to the ride
+  once one's been planned, otherwise "Nog geen terugrit gepland." The pin itself lingers for 2
+  hours after that ride's departure time, then drops off the map on its own — no explicit cleanup.
+- A **profile** has an avatar (from Discord/Google, or a member's own upload — see below),
+  banner (colour or image), name font and colour,
   pronouns, bio, badges, aliases (former names), phone number and, on the current
   trip, room. Others see a popup with a "Bekijk profiel" button
   (`components/common/UserProfilePopup.tsx`); it scrolls inside itself on small screens.
 - Renaming keeps history: old data stays under the old name, which becomes an alias.
+- **Profielfoto en banner**: a pencil badge on the avatar, and another on the banner itself
+  (Profiel, own profile only; `prepareAvatarFile()` in `utils/imageCompression.ts` is the shared
+  upload-prep logic) opens a picker — JPG/PNG/WebP (centre-cropped to a square client-side for
+  the avatar, 3:1-cropped for the banner) or a small GIF (kept as-is so the animation survives;
+  not cropped). The avatar upload replaces the Discord/Google one and is marked `avatar_custom`,
+  which stops the periodic resync below from overwriting it. Deleting either is a small trash
+  icon next to its pencil, not a text link. The same upload flow (`StepProfile.tsx`'s
+  `ProfilePhotos`) is available during onboarding, saving immediately rather than waiting for
+  onboarding to finish.
+- **Avatars stay current on their own**: since a stored `avatar_url` was previously only ever
+  filled in once and then frozen, a changed or since-broken Discord/Google picture could stay
+  wrong (or a broken image) forever. It is now re-checked once a day per profile
+  (`avatar_synced_at`) and replaced when it differs — skipped entirely for a custom upload.
 
 ## Search
 
@@ -232,14 +294,44 @@ by hand, by members or admins.
 over trips, rides, meals, cosplays and crew. It filters the data the app already
 holds in its query cache, so opening it makes no requests.
 
+It also finds **actions** ("Acties": Locatie pingen, Parkeerplek opslaan, Rit aanmaken,
+Etentje plannen, Hotelkamers, Cosplay toevoegen, Foto's, Kosten en afrekenen), matched on the
+label and on aliases such as "lift" or "diner" (`utils/searchActions.ts`, where a new one is
+added). An action that belongs to a trip acts on the **current trip** (`currentTripId`, as the
+Event tab does) and names it on the card; ride and meal creation are left out once that trip is
+over. The card navigates with `location.state = { action }` and the target page opens its sheet
+through `hooks/useRouteAction.ts` (Crew: ping, parking; the Eten tile: addMeal). Rit aanmaken only opens the Vervoer
+sheet, where the member picks Rit aanbieden themselves.
+
+## Error screens
+
+Every error screen (`ErrorFallback`, `ServerUnreachable`, `ForbiddenPage`, `NotFoundPage`, and
+`public/boot-guard.js`) ends its message with a random Dutch chemistry joke
+(`constants/chemistryJokes.ts`). `boot-guard.js` is plain ES5 and keeps its own copy of the list.
+
 ## Notifications
 
 `backend/app/services/`. Four things, all opt-in where they reach a person:
 
 - a **shared webhook** post per new event, ride, expense or meal, reminder and ticket sale;
-- **personal DMs** per category, chosen under Instellingen → Notificaties;
-- **payment requests and confirmations** as personal DMs;
+- **personal DMs or push** per category, chosen under Instellingen → Notificaties (and a step
+  in onboarding): a member picks exactly one channel — Discord DM or "Pushmeldingen" on this
+  device, never both — then checks what they want to hear about; the category list is the same
+  either way. `NotificationChannelPicker` (`components/notifications/`) is that channel choice;
+  it only offers a channel that's actually usable (Discord only if the profile has a linked
+  account, push only where the browser supports it), and picking one turns the other off —
+  selecting push unsubscribes Discord DMs (`allow_dm`) and vice versa;
+- **payment requests and confirmations**, the same way;
 - the in-app **announcement banner** and **changelog banner** (admin-written).
+
+**Pushmeldingen**: per device, independent of Discord — the one channel available to a
+Google-only member. Works on Android and desktop from the browser directly; on iOS it needs the
+app added to the home screen first, same as every browser's web push (that row explains this
+and stays disabled until then). Uses [VAPID](https://datatracker.ietf.org/doc/html/rfc8292), no
+third-party service or cost. Its state in `NotificationChannelPicker` reflects the device's real
+subscription (via `hooks/usePush.ts`), not a saved preference, so it's always right even after a
+reinstall or a permission change made outside the app. See
+[deployment.md#web-push](deployment.md#web-push) for server setup.
 
 See [architecture.md](architecture.md#background-jobs-and-notifications) for the schedule.
 
@@ -248,7 +340,8 @@ See [architecture.md](architecture.md#background-jobs-and-notifications) for the
 - **Onboarding** (`pages/onboarding/`) runs on first login: a short dialogue with
   the mascot, profile, notifications and a feature tour. Admins can preview it.
 - **Instellingen** (`pages/SettingsPage.tsx`): notifications, Discord link, dark
-  theme, greeting, QR code to the app, the credits, and **Feedback geven**: a sheet where a member
+  theme, accent colour, density (comfortable/compact, see [design-system.md](design-system.md#rules)),
+  greeting, QR code to the app, the credits, and **Feedback geven**: a sheet where a member
   sends a bug, idea or remark (optionally anonymous, with no name stored) that admins read under
   Admin → Feedback.
 - **Wijzigingslog** (`pages/ChangelogPage.tsx`): release notes written in the admin

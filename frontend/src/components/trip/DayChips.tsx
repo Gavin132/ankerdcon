@@ -9,10 +9,12 @@ interface DayChipsProps {
   onChange: (dayId: string | null) => void;
   /** Offer an "Alle dagen" chip. Off where a single day is required (Overzicht). */
   allowAll?: boolean;
+  /** Days that still need something get a small amber dot. */
+  attention?: (dayId: string) => boolean;
 }
 
 /** Day filter for a multi-day trip — travel (hotel-only) days get a bed icon. */
-export function DayChips({ days, value, onChange, allowAll = false }: DayChipsProps) {
+export function DayChips({ days, value, onChange, allowAll = false, attention }: DayChipsProps) {
   const chip = (active: boolean) =>
     `shrink-0 flex items-center gap-1.5 rounded-[10px] border-1.5 px-3 py-1.5 text-[13px] font-semibold whitespace-nowrap transition-colors ${
       active
@@ -41,6 +43,7 @@ export function DayChips({ days, value, onChange, allowAll = false }: DayChipsPr
         >
           {ev.has_con === false && <BedDouble size={12} />}
           <span className="capitalize">{dayShort(date)}</span> <span className="font-mono tabular-nums">{date.getDate()}</span>
+          {attention?.(ev.id) && <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />}
         </button>
       ))}
     </div>

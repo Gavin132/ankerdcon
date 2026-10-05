@@ -5,6 +5,7 @@ import threading
 import time
 import uuid
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
 
 import httpx
@@ -66,6 +67,23 @@ _NOT_YOURSELF = "Je kunt dit alleen voor jezelf doen."
 # or unlinks a provider, so a few minutes of staleness costs nothing.
 _IDENTITY_TTL_SECONDS = 600
 _IDENTITY_MISS_TTL_SECONDS = 60
+
+# A stored avatar_url is otherwise never revisited once set (see
+# _finalize_returning_user) — if Discord or Google ever stops serving that
+# exact image (an old avatar hash, a removed picture), the app would show a
+# broken image forever. Re-checked at most this often per profile instead.
+_AVATAR_RESYNC_SECONDS = 24 * 60 * 60
+
+
+def _avatar_stale(profile_row: dict) -> bool:
+    synced_at = profile_row.get("avatar_synced_at")
+    if not synced_at:
+        return True
+    try:
+        synced = datetime.fromisoformat(str(synced_at).replace("Z", "+00:00"))
+    except ValueError:
+        return True
+    return datetime.now(timezone.utc) - synced > timedelta(seconds=_AVATAR_RESYNC_SECONDS)
 
 
 def _strip_discriminator(name: str | None) -> str | None:
@@ -287,7 +305,7 @@ def get_current_user(
         try:
             existing = _retry_transient(
                 lambda: supabase.table("profiles").select(
-                    "name, is_active, is_first_login, allow_dm, discord_id, avatar_url, discord_username, email"
+                    "name, is_active, is_first_login, allow_dm, discord_id, avatar_url, avatar_custom, avatar_synced_at, discord_username, email"
                 ).eq("id", user_id).execute()
             )
         except Exception as e:
@@ -354,7 +372,10 @@ def _finalize_returning_user(profile_row: dict, user_id: str, settings: Settings
 
     Backfill only ever fills a field that is currently empty; it never
     overwrites one that already has a value, and it only uses what Supabase
-    verified (see _verified_identity).
+    verified (see _verified_identity). The avatar is the one exception: it is
+    also re-checked periodically (_avatar_stale) and overwritten when Discord
+    or Google's current picture differs, so a changed or since-broken avatar
+    doesn't stay wrong or missing forever.
     """
     profile_name = profile_row["name"]
 
@@ -370,8 +391,13 @@ def _finalize_returning_user(profile_row: dict, user_id: str, settings: Settings
         except Exception as e:
             logger.warning("Auth: first-login handling failed: %s", e)
 
-    missing = [f for f in ("discord_id", "discord_username", "email", "avatar_url") if not profile_row.get(f)]
-    if not missing:
+    missing = [f for f in ("discord_id", "discord_username", "email") if not profile_row.get(f)]
+    # A custom-uploaded avatar (app/routers/users.py, upload_avatar) is never
+    # touched here — it's a member's own choice, not something to resync back
+    # to whatever Discord/Google currently has.
+    avatar_custom = bool(profile_row.get("avatar_custom"))
+    avatar_due = not avatar_custom and (not profile_row.get("avatar_url") or _avatar_stale(profile_row))
+    if not missing and not avatar_due:
         return profile_name
 
     try:
@@ -385,10 +411,13 @@ def _finalize_returning_user(profile_row: dict, user_id: str, settings: Settings
             sync["discord_username"] = identity.discord_username
         if "email" in missing and identity.email:
             sync["email"] = identity.email
-        if "avatar_url" in missing:
+        if avatar_due:
             avatar = identity.discord_avatar or identity.email_avatar
-            if avatar:
+            if avatar and avatar != profile_row.get("avatar_url"):
                 sync["avatar_url"] = avatar
+            # Stamped whether or not it changed, so an unchanged avatar isn't
+            # re-fetched from Supabase on every request either.
+            sync["avatar_synced_at"] = datetime.now(timezone.utc).isoformat()
         if sync:
             supabase.table("profiles").update(sync).eq("id", user_id).execute()
     except Exception:
@@ -415,7 +444,7 @@ def _resolve_discord_user(identity: VerifiedIdentity, user_id: str, settings: Se
     discord_id = identity.discord_id
     assert discord_id  # the caller only routes verified Discord identities here
 
-    _select = "id, name, is_active, is_first_login, allow_dm, discord_id, avatar_url, discord_username"
+    _select = "id, name, is_active, is_first_login, allow_dm, discord_id, avatar_url, avatar_custom, discord_username"
     profile_row: dict | None = None
     profile_name: str | None = None
     _db_error = False
@@ -495,7 +524,11 @@ def _resolve_discord_user(identity: VerifiedIdentity, user_id: str, settings: Se
         sync: dict = {}
         if profile_row.get("discord_id") != discord_id:
             sync["discord_id"] = discord_id
-        if identity.discord_avatar and profile_row.get("avatar_url") != identity.discord_avatar:
+        if (
+            not profile_row.get("avatar_custom")
+            and identity.discord_avatar
+            and profile_row.get("avatar_url") != identity.discord_avatar
+        ):
             sync["avatar_url"] = identity.discord_avatar
         if identity.discord_username and profile_row.get("discord_username") != identity.discord_username:
             sync["discord_username"] = identity.discord_username
@@ -562,7 +595,7 @@ def _resolve_email_user(identity: VerifiedIdentity, user_id: str, settings: Sett
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    _select = "id, name, is_active, is_first_login, allow_dm, avatar_url, email"
+    _select = "id, name, is_active, is_first_login, allow_dm, avatar_url, avatar_custom, email"
     profile_row: dict | None = None
     profile_name: str | None = None
     _db_error = False
@@ -615,7 +648,11 @@ def _resolve_email_user(identity: VerifiedIdentity, user_id: str, settings: Sett
             logger.warning("Auth: clearing is_first_login failed: %s", e)
 
     try:
-        if identity.email_avatar and profile_row.get("avatar_url") != identity.email_avatar:
+        if (
+            not profile_row.get("avatar_custom")
+            and identity.email_avatar
+            and profile_row.get("avatar_url") != identity.email_avatar
+        ):
             supabase.table("profiles").update({"avatar_url": identity.email_avatar}).eq("id", profile_row["id"]).execute()
     except Exception:
         pass
@@ -678,6 +715,33 @@ def _profile_exists(name: str) -> bool:
     except Exception as e:
         logger.error("Member lookup failed for %r: %s", name, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Databasefout. Probeer het opnieuw.")
+
+
+def act_for_anyone_bulk(current_user: str, requested: list[str], *, adding: bool = False) -> list[str]:
+    """`act_for_anyone` for a whole list of names in one call — one profile
+    lookup for the lot instead of one per name. Signing several people up for
+    several days used to fire a lookup (and a write) per person, which is why
+    it visibly crawled one name at a time; a "day" endpoint that takes the
+    whole list gets this down to one lookup and one write per day instead."""
+    names = [(r or "").strip() or current_user for r in requested]
+    if adding:
+        to_check = {n for n in names if n != current_user}
+        if to_check:
+            try:
+                found = {
+                    r["name"] for r in
+                    supabase.table("profiles").select("name").in_("name", list(to_check)).execute().data or []
+                }
+            except Exception as e:
+                logger.error("Member lookup failed for %r: %s", to_check, e)
+                raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Databasefout. Probeer het opnieuw.")
+            missing = sorted(to_check - found)
+            if missing:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Onbekend lid: {', '.join(missing)}. Kies een naam uit de lijst.",
+                )
+    return names
 
 
 def _is_own_former_name(current_user: str, name: str) -> bool:

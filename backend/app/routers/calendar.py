@@ -9,9 +9,10 @@ from app.config import Settings, get_settings
 from app.constants import API_PREFIX, Tables
 from app.core.atomic import update_list
 from app.core.logging import get_logger
-from app.dependencies import act_for_anyone, get_current_user
+from app.dependencies import act_for_anyone, act_for_anyone_bulk, get_current_user
 from app.models.calendar import (
     BulkCreateHotelRoomsRequest,
+    CalendarBulkRsvpRequest,
     CalendarEvent,
     CalendarRsvpRequest,
     CreateHotelRoomRequest,
@@ -85,13 +86,19 @@ def _load_calendar_rows() -> list[dict]:
             "date": day["date"],
             "has_con": day.get("has_con", True),
             "is_hotel": event.get("is_hotel", False),
-            "is_party": event.get("is_party", False),
+            "event_type": event.get("event_type"),
             "hotel_location": event.get("hotel_location"),
+            "hotel_location_lat": event.get("hotel_location_lat"),
+            "hotel_location_lng": event.get("hotel_location_lng"),
+            "hotel_location_maps_url": event.get("hotel_location_maps_url"),
             "hotel_info": event.get("hotel_info"),
             "participants": day.get("participants") or [],
             "image_url": event.get("image_url"),
             "description": event.get("description"),
             "location": event.get("location"),
+            "location_lat": event.get("location_lat"),
+            "location_lng": event.get("location_lng"),
+            "location_maps_url": event.get("location_maps_url"),
             "website": event.get("website"),
             "ticket_url": event.get("ticket_url"),
             "ticket_sale_start": event.get("ticket_sale_start"),
@@ -201,6 +208,31 @@ def leave_event(event_id: str, body: CalendarRsvpRequest, current_user: str = De
     )
 
 
+@router.post(CalendarRoutes.RSVP_BULK, status_code=status.HTTP_204_NO_CONTENT)
+def rsvp_event_bulk(event_id: str, body: CalendarBulkRsvpRequest, current_user: str = Depends(get_current_user)) -> None:
+    """Add several people to this day at once — one profile lookup and one
+    write, instead of the per-name request signing a group up used to need."""
+    names = act_for_anyone_bulk(current_user, body.user_names, adding=True)
+
+    def add(existing: list, _row: dict) -> list | None:
+        new = [n for n in names if n not in existing]
+        return existing + new if new else None
+
+    update_list(Tables.EVENT_DAYS, event_id, "participants", add, not_found="Evenement niet gevonden.")
+
+
+@router.post(CalendarRoutes.LEAVE_BULK, status_code=status.HTTP_204_NO_CONTENT)
+def leave_event_bulk(event_id: str, body: CalendarBulkRsvpRequest, current_user: str = Depends(get_current_user)) -> None:
+    """Remove several people from this day at once."""
+    names = act_for_anyone_bulk(current_user, body.user_names)
+
+    def remove(existing: list, _row: dict) -> list | None:
+        remaining = [n for n in existing if n not in names]
+        return remaining if len(remaining) != len(existing) else None
+
+    update_list(Tables.EVENT_DAYS, event_id, "participants", remove, not_found="Evenement niet gevonden.")
+
+
 # ── Hotel Rooms ────────────────────────────────────────────────────────────────
 
 def _hotel_group_key(event_id: str) -> tuple[str, bool]:
@@ -249,7 +281,7 @@ def create_hotel_room(
     data = {k: v for k, v in body.model_dump().items() if v is not None}
     data["event_id"] = group_key
     # Same rule as assigning people to a room: anyone may be put in.
-    data["occupants"] = [act_for_anyone(current_user, name, adding=True) for name in body.occupants]
+    data["occupants"] = act_for_anyone_bulk(current_user, body.occupants, adding=True)
     try:
         resp = supabase.table(Tables.HOTEL_ROOMS).insert(data).execute()
         return resp.data[0]
@@ -291,7 +323,7 @@ def assign_hotel_room(
     body: HotelRoomAssignRequest,
     current_user: str = Depends(get_current_user),
 ) -> None:
-    user_names = [act_for_anyone(current_user, name, adding=True) for name in body.user_names]
+    user_names = act_for_anyone_bulk(current_user, body.user_names, adding=True)
 
     def add(occupants: list, room: dict) -> list | None:
         merged = list(dict.fromkeys(occupants + user_names))

@@ -39,6 +39,7 @@ const mealSchema = z.object({
   meal_name: z.string().min(1, "Naam is verplicht"),
   time: z.string().min(1, "Tijdstip is verplicht"),
   location: z.string().optional(),
+  maps_url: z.preprocess(optStr, z.string()).optional(),
   cost: z.coerce.number().min(0),
   transport_needed: z.boolean().optional(),
   linked_event_id: z.preprocess(optStr, z.string()).optional(),
@@ -78,6 +79,7 @@ function MealDrawer({
       meal_name: isEdit ? meal.meal_name : "",
       time: isEdit ? meal.time : "",
       location: isEdit ? meal.location : "",
+      maps_url: isEdit ? (meal.maps_url ?? "") : "",
       cost: isEdit ? meal.cost : 0,
       transport_needed: isEdit ? meal.transport_needed : false,
       linked_event_id: isEdit ? (meal.linked_event_id ?? "") : "",
@@ -94,6 +96,7 @@ function MealDrawer({
     const payload = {
       ...values,
       linked_event_id: values.linked_event_id || null,
+      maps_url: values.maps_url || null,
       website: values.website || null,
       menu_url: values.menu_url || null,
       description: values.description || null,
@@ -202,6 +205,18 @@ function MealDrawer({
           <p className="text-[10px] text-ink-3 mt-1.5">
             Zoek een naam of adres — selecteer een resultaat om de locatie te
             bevestigen met een kaartpreview.
+          </p>
+        </div>
+
+        <div>
+          <label className={L}>Google Maps-link</label>
+          <input
+            {...register("maps_url")}
+            className={F}
+            placeholder="https://maps.app.goo.gl/..."
+          />
+          <p className="text-[10px] text-ink-3 mt-1.5">
+            Opent direct de juiste plek vanaf de crew-kaart. Zonder een locatie hierboven krijgt dit etentje geen pin.
           </p>
         </div>
 

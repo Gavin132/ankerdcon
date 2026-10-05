@@ -28,6 +28,68 @@ router = APIRouter(prefix=RideRoutes.PREFIX, tags=["rides"])
 _DB_ERROR = "Databasefout. Probeer het opnieuw."
 
 
+def _day_ride_eligible_names(direction: str, linked_event_id: str | None, linked_meal_id: str | None, new_ride_id: str) -> set[str] | None:
+    """Who a new ride's notification should reach: members signed up for that
+    event day who don't already have a ride covering the same need — the
+    same direction that day, or for a Restaurant ride, a ride to that same
+    meal specifically (there being at most one Restaurant ride per meal).
+
+    Returns None (no extra filtering — every opted-in member) when the ride
+    has no day link at all, since there is then nothing to check "signed up"
+    against.
+    """
+    if not linked_event_id:
+        return None
+    try:
+        days = supabase.table(Tables.EVENT_DAYS).select("participants").eq("id", linked_event_id).execute().data
+    except Exception as e:
+        logger.error("Ride notification: failed to fetch day %s: %s", linked_event_id, e)
+        return None
+    if not days:
+        return None
+    participants = set(days[0].get("participants") or [])
+    if not participants:
+        return set()
+
+    try:
+        query = supabase.table(Tables.RIDES).select("id, driver, passengers, restaurant_drivers").eq("direction", direction)
+        query = query.eq("linked_meal_id", linked_meal_id) if direction == "Restaurant" else query.eq("linked_event_id", linked_event_id)
+        others = query.execute().data or []
+    except Exception as e:
+        logger.error("Ride notification: failed to fetch existing rides: %s", e)
+        return participants  # can't tell who's already covered — notify everyone signed up rather than no one
+
+    covered: set[str] = set()
+    for row in others:
+        if row.get("id") == new_ride_id:
+            continue
+        covered.add(row.get("driver"))
+        covered.update(row.get("passengers") or [])
+        for d in row.get("restaurant_drivers") or []:
+            covered.add(d.get("name"))
+            covered.update(d.get("passengers") or [])
+
+    return participants - covered
+
+
+def _notify_ride_created(settings: Settings, body: CreateRideRequest, driver: str, ride_id: str) -> None:
+    """The two DB reads `_day_ride_eligible_names` needs are pure
+    nice-to-have filtering, not something the response to the driver should
+    wait on — done here, inside the background task, alongside the send
+    itself rather than before `create_ride` returns."""
+    eligible = _day_ride_eligible_names(body.direction, body.linked_event_id, body.linked_meal_id, ride_id)
+    notification_service.broadcast_category_dm(
+        settings.discord_bot_token,
+        notification_service.NotificationCategory.RIDE_CREATED,
+        M.DM_RIDE_CREATED.format(
+            driver=escape_markdown(driver),
+            departure_time=escape_markdown(body.departure_time),
+            start_location=escape_markdown(body.start_location),
+        ),
+        eligible,
+    )
+
+
 def _get_ride_or_404(ride_id: str, fields: str = "*") -> dict:
     """Fetch a ride by ID or raise 404. Wraps DB errors as 503."""
     try:
@@ -75,16 +137,7 @@ def create_ride(
 
     ride = response.data[0]
 
-    background_tasks.add_task(
-        notification_service.broadcast_category_dm,
-        settings.discord_bot_token,
-        notification_service.NotificationCategory.RIDE_CREATED,
-        M.DM_RIDE_CREATED.format(
-            driver=escape_markdown(driver),
-            departure_time=escape_markdown(body.departure_time),
-            start_location=escape_markdown(body.start_location),
-        ),
-    )
+    background_tasks.add_task(_notify_ride_created, settings, body, driver, ride["id"])
     return ride
 
 

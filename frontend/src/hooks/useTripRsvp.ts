@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useCurrentUser } from "./useUsers";
-import { useLeaveCalendarEvent, useRsvpCalendarEvent } from "./useCalendar";
+import { useLeaveCalendarEventBulk, useRsvpCalendarEventBulk } from "./useCalendar";
 import { toast } from "../store/toast.store";
 import { dayShort } from "../utils/multiDay";
 import type { Trip, TripDay } from "../utils/trips";
@@ -8,13 +8,17 @@ import type { Trip, TripDay } from "../utils/trips";
 /**
  * Signing up for trips, shared by the Agenda and the Event tab: yourself for
  * the whole trip or one day, or anyone for any days via the manage modal.
- * Mutations run one at a time — each call snapshots the calendar cache for
- * its optimistic update, so parallel calls would overwrite each other.
+ * Each day is one request carrying every name at once (see
+ * useRsvpCalendarEventBulk) — signing a group up used to fire one request per
+ * (day, person) pair, which visibly crawled one name at a time for a big
+ * group. Days themselves still go one at a time: each call snapshots the
+ * calendar cache for its optimistic update, so parallel calls across days
+ * would overwrite each other.
  */
 export function useTripRsvp() {
   const { data: me } = useCurrentUser();
-  const rsvpMutation = useRsvpCalendarEvent();
-  const leaveMutation = useLeaveCalendarEvent();
+  const rsvpMutation = useRsvpCalendarEventBulk();
+  const leaveMutation = useLeaveCalendarEventBulk();
 
   /** Every name the signed-in user can appear under in `participants`. */
   const myNames = useMemo(
@@ -23,22 +27,20 @@ export function useTripRsvp() {
   );
 
   async function rsvp(id: string, userNames: string[]) {
-    for (const userName of userNames) {
-      try {
-        await rsvpMutation.mutateAsync({ id, userName });
-      } catch {
-        // silently ignore duplicate sign-ups
-      }
+    if (userNames.length === 0) return;
+    try {
+      await rsvpMutation.mutateAsync({ id, userNames });
+    } catch {
+      // silently ignore duplicate sign-ups
     }
   }
 
   async function leave(id: string, userNames: string[]) {
-    for (const userName of userNames) {
-      try {
-        await leaveMutation.mutateAsync({ id, userName });
-      } catch {
-        // silently ignore if not found
-      }
+    if (userNames.length === 0) return;
+    try {
+      await leaveMutation.mutateAsync({ id, userNames });
+    } catch {
+      // silently ignore if not found
     }
   }
 

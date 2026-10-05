@@ -45,12 +45,14 @@ const eventSchema = z.object({
   event_name: z.string().min(1, "Naam is verplicht"),
   event_group_id: optStr,
   is_hotel: z.boolean().optional(),
-  is_party: z.boolean().optional(),
+  event_type: z.union([z.literal("con"), z.literal("gathering"), z.literal("concert"), z.literal("")]).optional(),
   hotel_location: optStr,
+  hotel_location_maps_url: optUrl,
   hotel_info: optStr,
   image_url: optUrl,
   description: optStr,
   location: optStr,
+  location_maps_url: optUrl,
   website: optUrl,
   ticket_url: optUrl,
   ticket_sale_start: optStr,
@@ -263,12 +265,14 @@ export function EventEditDrawer({
       event_name: isEdit ? event.event_name : "",
       event_group_id: isEdit ? (event.event_group_id ?? "") : "",
       is_hotel: isEdit ? event.is_hotel : false,
-      is_party: isEdit ? event.is_party : false,
+      event_type: isEdit ? (event.event_type ?? "") : "",
       hotel_location: isEdit ? (event.hotel_location ?? "") : "",
+      hotel_location_maps_url: isEdit ? (event.hotel_location_maps_url ?? "") : "",
       hotel_info: isEdit ? (event.hotel_info ?? "") : "",
       image_url: isEdit ? (event.image_url ?? "") : "",
       description: isEdit ? (event.description ?? "") : "",
       location: isEdit ? (event.location ?? "") : "",
+      location_maps_url: isEdit ? (event.location_maps_url ?? "") : "",
       website: isEdit ? (event.website ?? "") : "",
       ticket_url: isEdit ? (event.ticket_url ?? "") : "",
       ticket_sale_start: isEdit ? (event.ticket_sale_start ?? "") : "",
@@ -287,13 +291,15 @@ export function EventEditDrawer({
     const cleaned = {
       event_name: values.event_name,
       is_hotel: values.is_hotel,
-      is_party: values.is_party,
+      event_type: values.event_type || null,
       hotel_location: strip(values.hotel_location),
+      hotel_location_maps_url: strip(values.hotel_location_maps_url),
       hotel_info: strip(values.hotel_info),
       event_group_id: strip(values.event_group_id),
       image_url: strip(values.image_url),
       description: strip(values.description),
       location: strip(values.location),
+      location_maps_url: strip(values.location_maps_url),
       website: strip(values.website),
       ticket_url: strip(values.ticket_url),
       ticket_sale_start: strip(values.ticket_sale_start),
@@ -386,10 +392,15 @@ export function EventEditDrawer({
             <input type="checkbox" {...register("is_hotel")} className="cb" />
             <span className="text-sm text-ink-2">Hotel beschikbaar</span>
           </label>
-          <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-line bg-paper px-3 py-2.5 hover:bg-sunken transition-colors">
-            <input type="checkbox" {...register("is_party")} className="cb" />
-            <span className="text-sm text-ink-2">Feestje / gezellig samenzijn</span>
-          </label>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-ink-2">Tag</label>
+            <select {...register("event_type")} className={F}>
+              <option value="">— Geen tag —</option>
+              <option value="con">Con</option>
+              <option value="gathering">Gathering</option>
+              <option value="concert">Concert</option>
+            </select>
+          </div>
           {watch("is_hotel") && (
             <div>
               <label className="mb-1 block text-xs font-medium text-ink-2">Hotellocatie</label>
@@ -407,6 +418,16 @@ export function EventEditDrawer({
               />
               <p className="mt-1 text-xs text-ink-3">
                 Gebruikt voor de snelle "rit naar hotel"-knop op het hoofdscherm.
+              </p>
+            </div>
+          )}
+          {watch("is_hotel") && (
+            <div>
+              <label className="mb-1 block text-xs font-medium text-ink-2">Google Maps-link hotel (optioneel)</label>
+              <input {...register("hotel_location_maps_url")} className={F} placeholder="https://maps.app.goo.gl/..." />
+              <p className="mt-1 text-xs text-ink-3">
+                Voor als de locatie hierboven niet (goed) geocodet — bijv. een hotelketen die naar de
+                verkeerde stad wijst. Opent direct deze link vanaf de crew-kaart in plaats daarvan.
               </p>
             </div>
           )}
@@ -549,6 +570,14 @@ export function EventEditDrawer({
                 />
               )}
             />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-ink-2">Google Maps-link (optioneel)</label>
+            <input {...register("location_maps_url")} className={F} placeholder="https://maps.app.goo.gl/..." />
+            <p className="mt-1 text-xs text-ink-3">
+              Voor als de locatie hierboven niet (goed) geocodet. Opent direct deze link vanaf de
+              crew-kaart in plaats daarvan.
+            </p>
           </div>
         </div>
 

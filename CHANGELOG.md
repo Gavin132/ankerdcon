@@ -6,19 +6,121 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+---
+
+## [2.1.0] - 2026-10-05
+
+A calmer Vervoer, parking spots on the crew map, push notifications, a search that finds things to
+do, and a lot of small fixes. Every migration up to v2.35 has to have been run (see
+`docs/deployment.md`).
+
 ### Fixed
 
 - Drawers (Vervoer, Kamers, Cosplay, and a payment opened from a Discord link) could not be closed
   with the X, by tapping beside them, or with Escape: they closed and immediately reopened. Caused by
   the 2.0.2 back-gesture fix.
 - Tapping beside a drawer to close it did nothing on iPhones.
+- A member's avatar was only ever fetched once, the first time it was empty, and then frozen
+  forever — if their Discord or Google picture later changed, or the stored image stopped
+  resolving, the app kept showing the broken one with no way to recover. It is now re-checked
+  once a day and replaced when it differs. Needs migration v2.29.
+- Saving Profiel always showed the generic "Kon profiel niet opslaan." even when the backend said
+  exactly why (a name already taken, an invalid phone number, …) — it was reading the error in a
+  shape the API client stopped producing a while ago. The real reason shows now.
+- The trip page's Eten card only ever showed the first 3 meals and never the rest, with no way to
+  reach them; a meal never left the list either, however long ago it happened. It now shows every
+  meal, and drops one from the list (not from the trip) 3 hours after it starts — the same rule
+  the Hub's meal card already used.
+- The Foto's tile on the trip page put its own upload button inside the tile's outer button — invalid
+  HTML a browser "fixes" by silently splitting the two apart, which could make clicks land wrong.
+  The tile is a div now, styled and behaving the same either way.
+- The "Nog geen rit georganiseerd" box on a meal page (when it needs transport) is a button, but
+  looked like a plain warning banner — nothing said it was tappable. It now spells out "Tik om een
+  auto aan te bieden" and ends in a chevron, like other tappable rows in the app.
+- A push notification's title repeated itself at the start of its own text ("Nieuwe maaltijd" /
+  "Nieuwe maaltijd: Pizza") for new meals and new events — the body no longer repeats what the
+  title already says.
+- Story rings and photos lagged behind: opening a story could show the previous photo until you
+  reopened it, because the day's photo list was cached for up to 30 seconds while the ring already
+  knew about the new one. The viewer now always asks again when it opens, the rings refresh every
+  minute, and the next photos are loaded ahead so tapping through is instant.
+- On desktop the story viewer could slide down and leave a gap of a few hundred pixels showing the
+  background: dragging a photo with the mouse started the browser's own image drag. Swiping down to
+  close is for touch only now, and photos can't be dragged.
+- The onboarding colour list (and the profile's) had orange twice — amber and orange looked the
+  same. One is left.
+- The Parkeerplek button on Crew is always there now, so people know the option exists; while it
+  can't be used it is greyed out and tapping it says why.
 
 ### Added
 
+- **A chemistry joke on every error screen**, from soc.ankerd.nl, in Dutch: under "Er ging iets
+  mis", "Pagina niet gevonden", "Geen toegang", "Kan de server niet bereiken" and "Ankerd Con kan
+  niet starten".
+- **Add several photos to a story at once.** Pick as many as you like (up to 30); they go in
+  one after the other in the order they were taken (read from the photo, or the file's date when it
+  has none), with a count while they upload and one message at the end. A lost connection queues
+  the rest to send later.
+- **Search finds things to do**, not just things: "Acties" cards such as Locatie pingen, Parkeerplek
+  opslaan, Rit aanmaken and Etentje plannen, found by everyday words too ("lift", "diner", "ping",
+  "geparkeerd"). Those that belong to a trip act on the current trip — the one the Event tab opens
+  on — and the card says which. Each opens the right sheet straight away.
 - Drawers can be closed by swiping down on the pill or the header; story photos by swiping down
-  anywhere (the photo follows your finger).
+  anywhere (the photo follows your finger, then springs back or closes).
+- Download a whole day's photos as one zip from the story viewer, next to the per-photo download.
 - When the app cannot start (an old iPhone, a stale cached copy) it now shows a "Ankerd Con kan niet
   starten" screen with what to try and the errors it saw, instead of a blank white page.
+- The weather card used to have every member's browser call Open-Meteo directly — now it goes
+  through the backend, which caches the response, so a burst of people opening the app around the
+  same time shares one fetch instead of one each.
+- **Parkeerplek**: mark where a driver's car is parked on the crew map (Crew → Parkeerplek, next
+  to Locatie pingen) — a 🚗 pin anyone riding with that driver can set or correct. Tapping it shows
+  when that car is leaving and links to the ride, once one's been planned; it drops off the map 2
+  hours after that. Needs migration v2.35.
+- Whoever planned a meal — or an admin — can now edit it afterwards: a pencil next to the share
+  button on the meal page, same as the event page's.
+- **Profielfoto en banner**: upload your own (Profiel) — a pencil on the photo and another on the
+  banner, JPG/PNG/WebP or a small GIF — instead of only the one Discord or Google gives you for
+  the avatar. Deleting one is now a small trash icon next to its pencil, not a text link. Both are
+  also settable during onboarding, not only afterwards. Needs migration v2.30.
+- **Event tags**: an event can be tagged Con, Gathering or Concert (Admin → Evenementen), shown at
+  the top of its ticket card — replaces the old "Feestje" checkbox. Needs migration v2.32.
+- **Instellingen → Dichtheid**: a comfortable/compact toggle that tightens spacing app-wide.
+- **Pushmeldingen**: a notification channel next to Discord DMs, per device — the one that also
+  works for members who signed up with Google and have no Discord DM channel at all. Needs
+  migration v2.31 and a VAPID key pair (see docs/deployment.md#web-push); it simply isn't
+  offered until that's set up.
+- **Notificaties** (Instellingen, and a step in onboarding) now asks for one channel — Discord
+  or Pushmeldingen, never both — instead of two separate switches; the category list underneath
+  is unchanged and governs whichever channel is picked. Only a channel that's actually usable is
+  offered (Discord needs a linked account, push needs browser support).
+- A pushmelding's title is now what it's about ("Nieuwe maaltijd", "Betaalverzoek", …) instead of
+  always "Ankerd Con" — the phone already shows the app's own name and icon next to it.
+- A new ride's notification now only reaches members signed up for that day who don't already have
+  a ride for the same need (the same direction that day, or for a restaurant ride, a ride to that
+  same meal) — it used to go to everyone with "Nieuwe rit" on, regardless of whether they were even
+  going or already sorted.
+- **Crew map**: the con location, hotel and each dinnerplan now show up as their own pins, always —
+  not only once someone's shared a live location. A location is geocoded automatically when saved;
+  when that doesn't land on the right spot (a hotel chain resolving to the wrong city, say, or not
+  at all), a dinnerplan or, in Admin → Evenementen, the con/hotel location can carry its own exact
+  Google Maps link instead, which places the pin itself. Needs migrations v2.33 and v2.34.
+- Signing several people up for a day (or into a hotel room) is now one request instead of one per
+  person — it used to visibly crawl one name at a time for a bigger group.
+- The launch splash no longer holds for a fixed ~4.5 s regardless of how ready the app already is;
+  it's now a brief brand moment (~1.5 s total).
+
+### Changed
+
+- **Vervoer is calmer.** The sheet used to stack a card per ride (eight things on each) inside a
+  collapsible per day, under three "Ik rijd" buttons and an amber banner. It now shows one
+  direction of one day at a time: pick Heen, Terug or Eten at the top and, on a multi-day trip, the
+  day below it. Each ride is a single row; tap it for who rides along, the parking info and Stap
+  in / Uitstappen. **Your own ride is the blue row**, the others are greyed back, and every row
+  shows how full the car should leave ("doel 3–4"). "Rit aanbieden" sits next to the day chips,
+  and "N mensen hebben nog geen vervoer" is one line at the bottom. The sheet opens on the
+  direction and day that are next up, the same way the Hub's "Rit aanbieden" and "Meerijden" tiles
+  decide. The Tijdlijn view is gone: the list is already in time order.
 
 ---
 

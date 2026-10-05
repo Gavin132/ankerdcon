@@ -4,6 +4,7 @@ import { ShieldX } from "lucide-react";
 import { supabase } from "../services/supabase";
 import { useAuthStore } from "../store/auth.store";
 import { APP_NAME } from "../constants";
+import { ChemistryJoke } from "../components/common/ChemistryJoke";
 
 /** `onSignOut` lets the admin preview show this screen without really signing out;
  * `previewProvider` lets it show the Google variant too. */
@@ -67,6 +68,7 @@ export function ForbiddenPage({ onSignOut, previewProvider }: { onSignOut?: () =
             Neem contact op met een beheerder.
           </p>
         )}
+        <ChemistryJoke className="mt-4" />
 
         <button
           onClick={handleSignOut}

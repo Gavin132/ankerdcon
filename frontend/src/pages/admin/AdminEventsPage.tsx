@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, CalendarDays, Hotel, Tag, Check, History, PartyPopper } from "lucide-react";
+import { Plus, CalendarDays, Hotel, Tag, Check, History, Music2, PartyPopper, Ticket } from "lucide-react";
 import type { Event, EventDay } from "../../types";
 import {
   useAdminEvents,
@@ -346,13 +346,17 @@ export function AdminEventsPage() {
                             <span className="hidden sm:inline">Hotel</span>
                           </span>
                         )}
-                        {ev.is_party && (
+                        {ev.event_type && (
                           <span
-                            title="Feestje"
+                            title={{ con: "Con", gathering: "Gathering", concert: "Concert" }[ev.event_type]}
                             className="inline-flex items-center gap-1.5 rounded-full bg-sunken p-1.5 text-[11.5px] font-semibold text-ink-2 sm:px-2 sm:py-0.5"
                           >
-                            <PartyPopper size={10} />
-                            <span className="hidden sm:inline">Feestje</span>
+                            {ev.event_type === "con" && <Ticket size={10} />}
+                            {ev.event_type === "gathering" && <PartyPopper size={10} />}
+                            {ev.event_type === "concert" && <Music2 size={10} />}
+                            <span className="hidden sm:inline">
+                              {{ con: "Con", gathering: "Gathering", concert: "Concert" }[ev.event_type]}
+                            </span>
                           </span>
                         )}
                         <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2">

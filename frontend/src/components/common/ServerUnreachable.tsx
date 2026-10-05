@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { WifiOff } from "lucide-react";
 import { StatusLink } from "./StatusLink";
+import { ChemistryJoke } from "./ChemistryJoke";
 
 /**
  * Shown when the signed-in user's profile can't be loaded (backend down, a 5xx,
@@ -26,6 +27,7 @@ export function ServerUnreachable({ onRetry }: { onRetry: () => void }) {
         <p className="mt-3 max-w-[300px] text-sm leading-relaxed text-ink-2">
           Controleer je verbinding of probeer het zo nog eens.
         </p>
+        <ChemistryJoke className="mt-4" />
         <button type="button" onClick={onRetry} className="btn-primary mt-6 px-4 py-2.5 text-sm">
           Opnieuw proberen
         </button>

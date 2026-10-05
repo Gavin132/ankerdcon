@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   completeOnboarding,
+  deleteAvatar,
   deleteBanner,
   getCurrentUser,
   getUser,
@@ -8,6 +9,7 @@ import {
   pingLocation,
   updateName,
   updatePreferences,
+  uploadAvatar,
   uploadBanner,
   type CompleteOnboardingPayload,
 } from "../services/users.service";
@@ -104,6 +106,30 @@ export function useDeleteBanner() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: deleteBanner,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.userBase });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.users });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.currentUser });
+    },
+  });
+}
+
+export function useUploadAvatar() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (blob: Blob) => uploadAvatar(blob),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.userBase });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.users });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.currentUser });
+    },
+  });
+}
+
+export function useDeleteAvatar() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: deleteAvatar,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.userBase });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.users });

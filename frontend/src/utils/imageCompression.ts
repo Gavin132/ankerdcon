@@ -43,3 +43,67 @@ export function compressImage(file: File, maxDimension = 2560, quality = 0.88): 
     img.src = objectUrl;
   });
 }
+
+/** Mirrors backend/app/routers/users.py's AVATAR_GIF_MAX_BYTES — checked
+ * here too so an oversized gif fails fast instead of after a slow upload. */
+export const AVATAR_GIF_MAX_BYTES = 2 * 1024 * 1024;
+
+/** The blob to actually upload as an avatar: a gif is sent as-is (cropping
+ * would flatten it to one still frame — the backend keeps it "klein"), size-
+ * capped client-side first; anything else is centre-cropped to a square and
+ * compressed. Throws a Dutch message on anything that stops it. */
+export async function prepareAvatarFile(file: File): Promise<Blob | File> {
+  if (file.type === "image/gif") {
+    if (file.size > AVATAR_GIF_MAX_BYTES) {
+      throw new Error(`Gif te groot. Maximaal ${AVATAR_GIF_MAX_BYTES / (1024 * 1024)} MB voor een profielfoto-gif.`);
+    }
+    return file;
+  }
+  return cropSquareAndCompress(file);
+}
+
+/** Centre-crops a file to a square (the app shows every avatar as a circle,
+ * so an arbitrary rectangle would just be cropped unpredictably by the
+ * browser anyway) and resizes it down to `size`, never up. No manual crop
+ * step — same "just handle it" approach as the story/cosplay upload. */
+export function cropSquareAndCompress(file: File, size = 512, quality = 0.88): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+
+    img.onload = () => {
+      const side = Math.min(img.naturalWidth, img.naturalHeight);
+      const sx = (img.naturalWidth - side) / 2;
+      const sy = (img.naturalHeight - side) / 2;
+      const out = Math.min(size, side);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = out;
+      canvas.height = out;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Canvas niet beschikbaar"));
+        return;
+      }
+      ctx.drawImage(img, sx, sy, side, side, 0, 0, out, out);
+
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(objectUrl);
+          if (blob) resolve(blob);
+          else reject(new Error("Comprimeren mislukt"));
+        },
+        "image/jpeg",
+        quality,
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Kon afbeelding niet laden"));
+    };
+
+    img.src = objectUrl;
+  });
+}

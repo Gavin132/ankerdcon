@@ -1,17 +1,24 @@
 import { lazy, Suspense, useState } from "react";
-import { Search, Users, X, BedDouble, MapPin } from "lucide-react";
+import { Search, Users, X, BedDouble, Car, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUsers } from "../hooks/useUsers";
 import { useCalendar } from "../hooks/useCalendar";
+import { useMeals } from "../hooks/useMeals";
+import { useRides } from "../hooks/useRides";
 import { useAuthStore } from "../store/auth.store";
 import { useBadges } from "../hooks/useBadges";
 import { useCurrentTripRoomNumbers } from "../hooks/useTripRooms";
+import { buildTrip, currentTripId, tripRides } from "../utils/trips";
+import { todayKey, toDateKey } from "../utils/date";
+import { toast } from "../store/toast.store";
+import { useRouteAction } from "../hooks/useRouteAction";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { UserProfilePopup, type AnchorRect } from "../components/common/UserProfilePopup";
 import { BadgeIcon } from "../components/common/BadgeIcon";
 import { LocationPingDisplay } from "../components/common/LocationPingDisplay";
 import { isPingFresh, parsePing } from "../utils/locationPing";
 import { LocationPingModal } from "../components/hub/LocationPingModal";
+import { ParkingSpotModal } from "../components/hub/ParkingSpotModal";
 import type { User } from "../types";
 
 const CLOSED_RECT: AnchorRect = { top: 0, left: 0, right: 0, height: 0 };
@@ -34,12 +41,55 @@ export function CrewPage() {
   const [popupUser, setPopupUser] = useState<User | null>(null);
   const [anchorRect, setAnchorRect] = useState<AnchorRect>(CLOSED_RECT);
   const [pingOpen, setPingOpen] = useState(false);
+  const [parkingOpen, setParkingOpen] = useState(false);
 
   const { data: users = [], isLoading } = useUsers();
-  const { data: calendarEvents } = useCalendar();
+  const { data: calendarEvents = [] } = useCalendar();
+  const { data: meals = [] } = useMeals();
+  const { data: rides = [] } = useRides();
   const { data: allBadges = [] } = useBadges();
   const currentUser = useAuthStore((s) => s.currentUser);
   const roomNumbers = useCurrentTripRoomNumbers();
+
+  const tripId = currentTripId(calendarEvents);
+  const currentTrip = tripId ? buildTrip(calendarEvents, tripId) : null;
+  const currentTripRides = currentTrip ? tripRides(rides, meals, currentTrip) : [];
+  // currentUser (from the auth store) is the Supabase auth id, but rides
+  // store driver/passengers by display name — resolve it via the already-
+  // loaded member list before comparing, same as popupUser's id check below.
+  const currentUserName = users.find((u) => u.id === currentUser)?.name;
+  // Every driver whose spot you're allowed to set: yourself, or anyone
+  // you share a ride with (either direction) — mirrors the backend's own
+  // check in app/routers/parking.py.
+  const manageableDrivers = currentUserName
+    ? [...new Set(
+        currentTripRides
+          .filter((r) => r.driver === currentUserName || r.passengers.includes(currentUserName))
+          .map((r) => r.driver),
+      )].sort((a, b) => a.localeCompare(b, "nl"))
+    : [];
+  // Only worth setting on the actual day of a ride you're on — before that
+  // the car hasn't arrived yet, and after, the pin isn't something to keep
+  // nudging. The button always shows (so people know it's there), greyed out
+  // while it can't be used; tapping it then says why.
+  const todayStr = todayKey();
+  const canSetParkingToday = currentTripRides.some((r) => {
+    if (!currentUserName || !(r.driver === currentUserName || r.passengers.includes(currentUserName))) return false;
+    const departed = new Date(r.departure_time.replace(" ", "T"));
+    return !isNaN(departed.getTime()) && toDateKey(departed) === todayStr;
+  });
+  const parkingBlockedReason = !tripId
+    ? "Er is nog geen evenement om een parkeerplek bij op te slaan."
+    : manageableDrivers.length === 0
+      ? "Je kunt een parkeerplek opslaan als je in een rit zit, op de dag van die rit."
+      : !canSetParkingToday
+        ? "Je kunt een parkeerplek alleen opslaan op de dag van je rit."
+        : null;
+
+  const openParking = () => (parkingBlockedReason ? toast("info", parkingBlockedReason) : setParkingOpen(true));
+  // The global search's "Locatie pingen" / "Parkeerplek opslaan" cards land here.
+  useRouteAction("ping", () => setPingOpen(true));
+  useRouteAction("parking", openParking);
 
   const sorted = [...users].sort((a, b) => a.name.localeCompare(b.name, "nl"));
   const pinged = sorted.filter((u) => isPingFresh(u.live_location_ping));
@@ -74,31 +124,52 @@ export function CrewPage() {
 
       {/* ── Waar is iedereen ─────────────────────────────────────────── */}
       <section className="card-surface overflow-hidden">
-        <div className="flex items-center justify-between gap-3 px-4 pt-3.5 pb-3">
-          <p className="section-label flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-3.5 pb-3">
+          <p className="section-label flex items-center gap-1.5 whitespace-nowrap">
             <MapPin size={12} />
             Waar is iedereen
           </p>
-          <button
-            type="button"
-            onClick={() => setPingOpen(true)}
-            className="flex items-center gap-1.5 rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
-          >
-            <MapPin size={13} />
-            Locatie pingen
-          </button>
+          <div className="flex items-center gap-2">
+            {/* aria-disabled instead of disabled: a disabled button swallows the
+                tap, and on a phone there is no hover tooltip to say why. */}
+            <button
+              type="button"
+              onClick={openParking}
+              aria-disabled={!!parkingBlockedReason}
+              title={parkingBlockedReason ?? undefined}
+              className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-[13px] font-semibold transition-colors ${
+                parkingBlockedReason ? "text-ink-3 opacity-50" : "text-ink hover:border-ink-3"
+              }`}
+            >
+              <Car size={13} />
+              Parkeerplek
+            </button>
+            <button
+              type="button"
+              onClick={() => setPingOpen(true)}
+              className="flex items-center gap-1.5 whitespace-nowrap rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
+            >
+              <MapPin size={13} />
+              Locatie pingen
+            </button>
+          </div>
         </div>
-        {pinned.length > 0 && (
-          <Suspense fallback={<div className="h-[280px] animate-pulse border-t border-line bg-sunken sm:h-[340px]" />}>
-            <CrewMap
-              users={pinned}
-              onOpenProfile={(u, rect) => {
-                setAnchorRect(rect);
-                setPopupUser(u);
-              }}
-            />
-          </Suspense>
-        )}
+        {/* Always mounted, not just when someone's pinned — the con/hotel/meal
+            pins (see CrewMap) are worth showing on their own, and CrewMap
+            itself renders nothing when it truly has no pin at all. */}
+        <Suspense fallback={<div className="h-[280px] animate-pulse border-t border-line bg-sunken sm:h-[340px]" />}>
+          <CrewMap
+            users={pinned}
+            allUsers={users}
+            trip={currentTrip}
+            meals={meals}
+            rides={currentTripRides}
+            onOpenProfile={(u, rect) => {
+              setAnchorRect(rect);
+              setPopupUser(u);
+            }}
+          />
+        </Suspense>
         {pinged.length === 0 ? (
           <p className="border-t border-line px-4 py-3.5 text-[13px] text-ink-3">
             Nog niemand heeft een locatie gedeeld.
@@ -249,6 +320,15 @@ export function CrewPage() {
         onClose={() => setPingOpen(false)}
         userNames={users.map((u) => u.name)}
       />
+
+      {tripId && (
+        <ParkingSpotModal
+          open={parkingOpen}
+          onClose={() => setParkingOpen(false)}
+          tripId={tripId}
+          manageableDrivers={manageableDrivers}
+        />
+      )}
     </div>
   );
 }

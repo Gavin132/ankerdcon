@@ -1,10 +1,12 @@
 import { apiClient, VIDEO_UPLOAD_TIMEOUT_MS } from "../lib/api/client";
 import { apiRoutes } from "../config/api-routes";
+import { filenameFromContentDisposition, triggerBlobDownload } from "../utils/downloadFile";
 import type {
   AdminStats,
   CdnListing,
   Event,
   EventDay,
+  EventType,
   CreateRideRequest,
   ExpenseShare,
   Meal,
@@ -39,15 +41,7 @@ export async function downloadCdnZip(
     timeout: 0,
     onDownloadProgress: (e) => onProgress?.(e.loaded),
   });
-  const name = /filename="?([^";]+)"?/.exec(String(res.headers["content-disposition"] ?? ""))?.[1] ?? "cdn.zip";
-  const url = URL.createObjectURL(res.data);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  triggerBlobDownload(res.data, filenameFromContentDisposition(res.headers["content-disposition"], "cdn.zip"));
 }
 
 /** Delete a file from the bucket, whoever uploaded it (admin only). */
@@ -185,6 +179,7 @@ export interface AdminCreateMealPayload {
   meal_name: string;
   time: string;
   location?: string;
+  maps_url?: string | null;
   cost?: number;
   transport_needed?: boolean;
 }
@@ -199,6 +194,7 @@ export interface AdminUpdateMealPayload {
   meal_name?: string;
   time?: string;
   location?: string;
+  maps_url?: string | null;
   cost?: number;
   transport_needed?: boolean;
 }
@@ -238,12 +234,14 @@ export interface AdminCreateEventPayload {
   event_name: string;
   event_group_id?: string | null;
   is_hotel?: boolean;
-  is_party?: boolean;
+  event_type?: EventType | null;
   hotel_location?: string | null;
+  hotel_location_maps_url?: string | null;
   hotel_info?: string | null;
   image_url?: string | null;
   description?: string | null;
   location?: string | null;
+  location_maps_url?: string | null;
   website?: string | null;
   ticket_url?: string | null;
   ticket_sale_start?: string | null;

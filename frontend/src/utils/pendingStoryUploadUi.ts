@@ -12,15 +12,30 @@ export async function queueOrToastUploadError(
   blob: Blob,
   err: unknown | { isOffline: true },
 ): Promise<void> {
-  const isNetworkFailure =
-    (err as { isOffline?: boolean })?.isOffline === true ||
-    (err instanceof ApiError && (err.status === 0 || err.status === 503 || err.status === 524));
-  if (isNetworkFailure) {
-    const queued = await usePendingStoryUploadsStore.getState().add(eventDayId, blob);
-    if (queued) {
-      toast("info", "Geen verbinding — de foto wordt verzonden zodra je weer online bent.");
-      return;
-    }
+  const outcome = await queueIfNetworkFailure(eventDayId, blob, err);
+  if (outcome === "queued") {
+    toast("info", "Geen verbinding — de foto wordt verzonden zodra je weer online bent.");
+    return;
   }
   toast("error", "Kon foto niet uploaden. Probeer opnieuw.");
+}
+
+/** The quiet half of the above, for batches that sum up in one toast at the end:
+ * `"queued"` when the failure looked like a lost connection and the photo is now
+ * waiting in the queue, `"failed"` for anything else. */
+export async function queueIfNetworkFailure(
+  eventDayId: string,
+  blob: Blob,
+  err: unknown | { isOffline: true },
+): Promise<"queued" | "failed"> {
+  if (!isNetworkFailure(err)) return "failed";
+  const queued = await usePendingStoryUploadsStore.getState().add(eventDayId, blob);
+  return queued ? "queued" : "failed";
+}
+
+export function isNetworkFailure(err: unknown | { isOffline: true }): boolean {
+  return (
+    (err as { isOffline?: boolean })?.isOffline === true ||
+    (err instanceof ApiError && (err.status === 0 || err.status === 503 || err.status === 524))
+  );
 }

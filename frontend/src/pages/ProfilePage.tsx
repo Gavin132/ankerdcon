@@ -6,6 +6,7 @@ import { useSmartBack, isFreshEntry } from "../hooks/useSmartBack";
 import { useCurrentTripRoomNumbers } from "../hooks/useTripRooms";
 import { useBadges } from "../hooks/useBadges";
 import { HomeLinkButton } from "../components/common/HomeLinkButton";
+import { DiscordIcon } from "../components/common/DiscordIcon";
 import { UserPhotos } from "../components/profile/UserPhotos";
 import { UnsavedChangesModal } from "../components/common/UnsavedChangesModal";
 import {
@@ -15,11 +16,12 @@ import {
   BedDouble,
   Phone,
   MapPin,
-  Upload,
   Pencil,
+  Loader2,
   Save,
   Smartphone,
   Plus,
+  Trash2,
   X,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -33,11 +35,14 @@ import {
   useUpdateName,
   useUploadBanner,
   useDeleteBanner,
+  useUploadAvatar,
+  useDeleteAvatar,
 } from "../hooks/useUsers";
 import { BannerCropModal } from "../components/profile/BannerCropModal";
 import { BadgeIcon } from "../components/common/BadgeIcon";
 import { useAuthStore } from "../store/auth.store";
 import { avatarColor } from "../utils/avatar";
+import { prepareAvatarFile } from "../utils/imageCompression";
 import { toast } from "../store/toast.store";
 import { validateDisplayName, validatePhoneNumber } from "../utils/validation";
 import type { Badge, FontOption, User } from "../types";
@@ -67,7 +72,6 @@ const NAME_COLORS = [
   "#6366f1",
   "#ec4899",
   "#14b8a6",
-  "#fb923c",
   "#a3e635",
   "#64748b",
 ];
@@ -101,9 +105,6 @@ function getBannerStyle(
   if (bannerColor) return { backgroundColor: bannerColor };
   return { backgroundColor: "#0F1519" };
 }
-
-const DISCORD_PATH =
-  "M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.042.033.056a19.91 19.91 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z";
 
 const topBarButtonClass =
   "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink";
@@ -252,6 +253,15 @@ function ProfileHead({
   badges,
   actions,
   children,
+  onEditAvatar,
+  avatarUploading,
+  onDeleteAvatar,
+  avatarDeleting,
+  onEditBanner,
+  bannerUploading,
+  onDeleteBanner,
+  bannerDeleting,
+  hasBanner,
 }: {
   user: User;
   hasAvatar: boolean;
@@ -264,15 +274,58 @@ function ProfileHead({
   badges: Badge[];
   actions?: React.ReactNode;
   children?: React.ReactNode;
+  /** Present only on your own profile: a pencil badge on the avatar opens the
+   * file picker directly, replacing the Discord badge in that corner — once
+   * you can change it, "via Discord" is no longer the interesting fact. */
+  onEditAvatar?: () => void;
+  avatarUploading?: boolean;
+  /** Only offered once there's something of yours to remove. */
+  onDeleteAvatar?: () => void;
+  avatarDeleting?: boolean;
+  /** Same idea as onEditAvatar, for the banner image. */
+  onEditBanner?: () => void;
+  bannerUploading?: boolean;
+  onDeleteBanner?: () => void;
+  bannerDeleting?: boolean;
+  /** Whether there's a banner image to remove (vs. just a colour). */
+  hasBanner?: boolean;
 }) {
   return (
     <div className="card-surface overflow-hidden">
       {/* Banner — the user's own image or colour */}
-      <div className="h-[128px] w-full sm:h-[200px]" style={bannerStyle} />
+      <div className="relative h-[128px] w-full sm:h-[200px]" style={bannerStyle}>
+        {onEditBanner && (
+          <div className="absolute right-3 top-3 flex items-center gap-1.5">
+            {onDeleteBanner && hasBanner && (
+              <button
+                type="button"
+                onClick={onDeleteBanner}
+                disabled={bannerDeleting}
+                aria-label="Banner verwijderen"
+                title="Banner verwijderen"
+                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-colors hover:bg-ink/90 disabled:opacity-60"
+              >
+                {bannerDeleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onEditBanner}
+              disabled={bannerUploading}
+              aria-label="Banner wijzigen"
+              title="Banner wijzigen"
+              className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-transform hover:bg-ink/90 active:scale-95 disabled:opacity-60"
+            >
+              {bannerUploading ? <Loader2 size={13} className="animate-spin" /> : <Pencil size={13} />}
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="px-5 pb-5 sm:px-6 sm:pb-6">
         <div className="flex items-end justify-between gap-3">
           {/* Avatar — overlaps the banner bottom edge */}
+          <div className="flex shrink-0 flex-col items-start">
           <div className="relative -mt-[44px] shrink-0">
             <div
               className={`flex h-[88px] w-[88px] items-center justify-center overflow-hidden rounded-full border-4 border-surface ${
@@ -297,14 +350,48 @@ function ProfileHead({
                 </span>
               )}
             </div>
-            {/* Discord avatar badge */}
-            {hasAvatar && (
-              <div className="absolute bottom-1 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper">
-                <svg viewBox="0 0 24 24" className="h-3 w-3 fill-current" aria-hidden>
-                  <path d={DISCORD_PATH} />
-                </svg>
+            {onEditAvatar ? (
+              /* Own profile: a pencil to change the photo, next to a trash
+                 can when there's a custom upload to remove — same pairing as
+                 the banner's top-right corner. Takes this corner over from
+                 the Discord badge, since once you can edit it, "via Discord"
+                 isn't the interesting fact anymore. */
+              <div className="absolute bottom-1 right-0 flex items-center gap-1.5">
+                {onDeleteAvatar && user.avatar_custom && (
+                  <button
+                    type="button"
+                    onClick={onDeleteAvatar}
+                    disabled={avatarDeleting}
+                    aria-label="Profielfoto verwijderen"
+                    title="Profielfoto verwijderen"
+                    className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-colors hover:bg-ink/90 disabled:opacity-60"
+                  >
+                    {avatarDeleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={onEditAvatar}
+                  disabled={avatarUploading}
+                  aria-label="Profielfoto wijzigen"
+                  title="Profielfoto wijzigen"
+                  className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper transition-transform active:scale-95 disabled:opacity-60"
+                >
+                  {avatarUploading ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <Pencil size={12} />
+                  )}
+                </button>
               </div>
+            ) : (
+              hasAvatar && !user.avatar_custom && (
+                <div className="absolute bottom-1 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper">
+                  <DiscordIcon size={12} />
+                </div>
+              )
             )}
+          </div>
           </div>
 
           {actions && <div className="flex shrink-0 items-center gap-2 pt-3">{actions}</div>}
@@ -428,6 +515,8 @@ export function ProfilePage() {
   const renameMutation = useUpdateName();
   const uploadBannerMutation = useUploadBanner();
   const deleteBannerMutation = useDeleteBanner();
+  const uploadAvatarMutation = useUploadAvatar();
+  const deleteAvatarMutation = useDeleteAvatar();
 
   // The route may carry the member's id instead of their name, so compare with the loaded profile too.
   const isOwn = (currentUser === decodedName || (!!user && currentUser === user.name)) && !preview;
@@ -452,6 +541,7 @@ export function ProfilePage() {
   const [cropFile, setCropFile] = useState<File | null>(null);
   const [cropOpen, setCropOpen] = useState(false);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const hasAvatar = !!user?.avatar_url && !avatarImgErr;
 
@@ -540,6 +630,28 @@ export function ProfilePage() {
     }
   }
 
+  async function onAvatarFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    try {
+      await uploadAvatarMutation.mutateAsync(await prepareAvatarFile(f));
+      setAvatarImgErr(false);
+      toast("success", "Profielfoto bijgewerkt!");
+    } catch (err) {
+      toast("error", err instanceof Error && err.message ? err.message : "Kon profielfoto niet uploaden.");
+    }
+  }
+
+  async function onAvatarDelete() {
+    try {
+      await deleteAvatarMutation.mutateAsync();
+      toast("success", "Profielfoto verwijderd, terug naar Discord/Google.");
+    } catch {
+      toast("error", "Kon profielfoto niet verwijderen.");
+    }
+  }
+
   async function onSave() {
     if (phoneError) {
       toast("error", phoneError);
@@ -577,10 +689,8 @@ export function ProfilePage() {
         bannerPosition: draftBannerPosition,
       });
       toast("success", "Profiel opgeslagen!");
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } } })
-        ?.response?.data?.detail;
-      toast("error", msg ?? "Kon profiel niet opslaan.");
+    } catch (err) {
+      toast("error", err instanceof Error && err.message ? err.message : "Kon profiel niet opslaan.");
     }
   }
 
@@ -689,8 +799,31 @@ export function ProfilePage() {
           nameStyle={nameStyle}
           pronouns={draftPronouns}
           badges={userBadges}
+          onEditAvatar={() => avatarInputRef.current?.click()}
+          avatarUploading={uploadAvatarMutation.isPending}
+          onDeleteAvatar={onAvatarDelete}
+          avatarDeleting={deleteAvatarMutation.isPending}
+          onEditBanner={() => bannerInputRef.current?.click()}
+          bannerUploading={uploadBannerMutation.isPending}
+          onDeleteBanner={onBannerDelete}
+          bannerDeleting={deleteBannerMutation.isPending}
+          hasBanner={!!user.banner_url}
           actions={
             <>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={onAvatarFileChange}
+              />
+              <input
+                ref={bannerInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                className="hidden"
+                onChange={onBannerFileChange}
+              />
               <Button
                 variant="secondary"
                 size="sm"
@@ -930,129 +1063,19 @@ export function ProfilePage() {
           </div>
         </Card>
 
-        <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-2">
-          {/* ── Bannerkleur ──────────────────────────────────────────────── */}
-          <Card title="Bannerkleur">
-            {/* Live preview strip */}
-            <div
-              className="mb-4 h-14 w-full rounded-xl border-1.5 border-line"
-              style={getBannerStyle(draftBanner)}
-            />
-            <ColorPicker
-              value={draftBanner}
-              onChange={setDraftBanner}
-              presets={BANNER_COLORS}
-              fallback="#1e293b"
-            />
-          </Card>
-
-          {/* ── Banner afbeelding ────────────────────────────────────────── */}
-          <Card title="Bannerafbeelding">
-            {/* Hidden file input */}
-            <input
-              ref={bannerInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/gif,image/webp"
-              className="hidden"
-              onChange={onBannerFileChange}
-            />
-
-            {user?.banner_url ? (
-              <>
-                {/* Preview */}
-                <div
-                  className="relative mb-3 overflow-hidden rounded-xl border-1.5 border-line"
-                  style={{ aspectRatio: "3/1" }}
-                >
-                  <img
-                    src={user.banner_url}
-                    alt="Banner"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => bannerInputRef.current?.click()}
-                    loading={uploadBannerMutation.isPending}
-                  >
-                    <Upload size={13} />
-                    Wijzigen
-                  </Button>
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={onBannerDelete}
-                    loading={deleteBannerMutation.isPending}
-                  >
-                    Verwijderen
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <button
-                type="button"
-                className="flex w-full flex-col items-center justify-center gap-2.5 rounded-xl border-2 border-dashed border-line py-7 transition-colors hover:border-ink-3 hover:bg-sunken"
-                onClick={() => bannerInputRef.current?.click()}
-                disabled={uploadBannerMutation.isPending}
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sunken text-ink-3">
-                  <Upload size={17} />
-                </div>
-                <div className="px-3 text-center">
-                  <p className="text-sm font-semibold text-ink">
-                    Klik om een afbeelding te uploaden
-                  </p>
-                  <p className="mt-0.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-3">
-                    JPEG · PNG · GIF · WebP · max 8 MB
-                  </p>
-                </div>
-              </button>
-            )}
-          </Card>
-        </div>
-
-        {/* ── Avatar info ────────────────────────────────────────────────── */}
-        <Card title="Avatar">
-          <div className="flex items-center gap-4">
-            <div
-              className={`flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-1.5 border-line ${
-                !hasAvatar ? `bg-gradient-to-br ${avatarColor(user.name)}` : ""
-              }`}
-              style={
-                !hasAvatar && draftColor
-                  ? {
-                      backgroundColor: draftColor,
-                      backgroundImage: "none",
-                    }
-                  : undefined
-              }
-            >
-              {hasAvatar ? (
-                <img
-                  src={user.avatar_url}
-                  alt={user.name}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span className="text-xl font-bold text-white">
-                  {user.name[0].toUpperCase()}
-                </span>
-              )}
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-ink">
-                {hasAvatar ? "Discord avatar" : "Gegenereerde avatar"}
-              </p>
-              <p className="mt-0.5 text-xs text-ink-3">
-                {hasAvatar
-                  ? "Gesynchroniseerd via Discord of Google"
-                  : "Koppel Discord of log in met Google voor je eigen avatar"}
-              </p>
-            </div>
-          </div>
+        {/* ── Bannerkleur ──────────────────────────────────────────────── */}
+        <Card title="Bannerkleur" subtitle="Gebruikt als er geen bannerafbeelding is ingesteld.">
+          {/* Live preview strip */}
+          <div
+            className="mb-4 h-14 w-full rounded-xl border-1.5 border-line"
+            style={getBannerStyle(draftBanner)}
+          />
+          <ColorPicker
+            value={draftBanner}
+            onChange={setDraftBanner}
+            presets={BANNER_COLORS}
+            fallback="#1e293b"
+          />
         </Card>
 
         <UserPhotos identifier={user.id ?? user.name} />

@@ -21,6 +21,12 @@ LEGACY_BANNER_BUCKET = "banners"
 BANNER_MAX_BYTES = 8 * 1024 * 1024  # 8 MB
 BANNER_ALLOWED_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 
+AVATAR_MAX_BYTES = 5 * 1024 * 1024  # 5 MB
+AVATAR_ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+# GIFs aren't re-encoded (clean_image only checks them, to keep the animation),
+# so unlike the other formats nothing shrinks it after upload — capped tighter here.
+AVATAR_GIF_MAX_BYTES = 2 * 1024 * 1024  # 2 MB
+
 router = APIRouter(prefix=UserRoutes.PREFIX, tags=["users"])
 
 _DB_ERROR = "Databasefout. Probeer het opnieuw."
@@ -402,6 +408,112 @@ def _store_banner(current_user: str, position: str | None, content: bytes) -> di
     # Only now that the new banner is saved: remove the one it replaces.
     _remove_banner_file(old_url)
     return {"url": url}
+
+
+def _store_avatar(current_user: str, content: bytes) -> dict:
+    content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP", "GIF"})
+    # clean_image only checks a GIF (re-encoding would drop its frames), so this
+    # is the one place its size is actually capped down to the "kleine" (small)
+    # gifs Instellingen advertises — the general AVATAR_MAX_BYTES read at the
+    # upload boundary is too generous for something nothing else shrinks.
+    if content_type == "image/gif" and len(content) > AVATAR_GIF_MAX_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"Gif te groot. Maximaal {AVATAR_GIF_MAX_BYTES // (1024 * 1024)} MB voor een profielfoto-gif.",
+        )
+
+    try:
+        user_row = supabase.table(Tables.PROFILES).select("id, avatar_url, avatar_custom").eq("name", current_user).execute()
+    except Exception as e:
+        logger.error("Failed to fetch profile for avatar upload (%s): %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+    if not user_row.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
+
+    user_id = user_row.data[0]["id"]
+    old_url: str | None = user_row.data[0].get("avatar_url")
+    old_was_custom = bool(user_row.data[0].get("avatar_custom"))
+
+    key = f"avatars/{user_id}/{uuid.uuid4().hex}.{ext}"
+    try:
+        url = minio_client.upload_bytes(key, content, content_type)
+    except RuntimeError as e:
+        logger.error("Avatar upload failed (MinIO not configured): %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
+    except Exception as e:
+        logger.error("MinIO avatar upload failed for user %s: %s", current_user, e)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Uploaden mislukt. Probeer het opnieuw.",
+        )
+
+    try:
+        # avatar_custom stops the periodic Discord/Google resync
+        # (app/dependencies.py, _finalize_returning_user) from quietly
+        # overwriting this with their provider picture again later.
+        supabase.table(Tables.PROFILES).update({
+            "avatar_url": url,
+            "avatar_custom": True,
+            "avatar_synced_at": datetime.now(timezone.utc).isoformat(),
+        }).eq("name", current_user).execute()
+    except Exception as e:
+        logger.error("Failed to save avatar URL for user %s: %s", current_user, e)
+        try:
+            minio_client.delete_object(key)
+        except Exception:
+            pass
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+    # Only now that the new avatar is saved: remove the one it replaces, but
+    # only if that was itself a custom upload (_remove_banner_file no-ops on
+    # a Discord/Google URL regardless, this just skips the attempt).
+    if old_was_custom:
+        _remove_banner_file(old_url)
+    return {"url": url}
+
+
+@router.post(UserRoutes.AVATAR, response_model=dict)
+async def upload_avatar(file: UploadFile = File(...), current_user: str = Depends(get_current_user)) -> dict:
+    """Upload a custom profile picture for the current user to MinIO,
+    replacing their Discord/Google one. JPG, PNG, WebP, or a small GIF."""
+    if file.content_type not in AVATAR_ALLOWED_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Bestandstype niet toegestaan. Gebruik JPG, PNG, WebP of GIF.",
+        )
+
+    content = await read_capped(file, AVATAR_MAX_BYTES)
+    return await run_in_threadpool(_store_avatar, current_user, content)
+
+
+@router.delete(UserRoutes.AVATAR, status_code=status.HTTP_204_NO_CONTENT)
+def delete_avatar(current_user: str = Depends(get_current_user)) -> None:
+    """Remove a custom avatar, reverting to the Discord/Google picture (which
+    the next login's periodic resync fills back in, since avatar_url is now
+    empty)."""
+    try:
+        user_row = supabase.table(Tables.PROFILES).select("avatar_url, avatar_custom").eq("name", current_user).execute()
+    except Exception as e:
+        logger.error("Failed to fetch profile for avatar delete (%s): %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+    if not user_row.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
+
+    row = user_row.data[0]
+    if not row.get("avatar_custom"):
+        return  # nothing custom to remove
+
+    try:
+        supabase.table(Tables.PROFILES).update({
+            "avatar_url": None, "avatar_custom": False, "avatar_synced_at": None,
+        }).eq("name", current_user).execute()
+    except Exception as e:
+        logger.error("Failed to clear avatar for user %s: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+    _remove_banner_file(row.get("avatar_url"))
 
 
 @router.post(UserRoutes.BANNER, response_model=dict)

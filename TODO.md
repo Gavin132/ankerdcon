@@ -16,10 +16,11 @@ ticked off — `CHANGELOG.md` and git history are the record.
 Open items before or around the next deploy. New migrations go here until they are run, in
 the order they must be run, with the Supabase SQL editor; see
 [docs/deployment.md](docs/deployment.md#database-migrations) for how to check what has already
-been applied. (Migrations v2.19, v2.25, v2.26 and v2.27 are done.)
+been applied. (Migrations v2.19 (apart from its last line, below) and v2.25 up to v2.35 are done.)
 
-- [ ] Run `db/migrations/migration_v2.28_feedback.sql` (the `feedback` table) **before** deploying the
-      feedback feature; until then only sending and reading feedback answers 503.
+- [ ] Generate a VAPID key pair and set `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` on the
+      backend and `VITE_VAPID_PUBLIC_KEY` on the frontend build — see docs/deployment.md#web-push. Until
+      that is done, the "Pushmeldingen" toggle simply doesn't appear (harmless to leave for a while).
 - [ ] The old `calendar` table still exists: v2.19's two `ALTER TABLE` statements were run but
       not its last line, which drops it. Drop it (`DROP TABLE calendar;`) when you are sure nothing
       needs it, ideally after a backup.

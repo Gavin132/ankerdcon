@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, X, CalendarDays, Car, Utensils, Sparkles, Users } from "lucide-react";
+import { Search, X, CalendarDays, Car, Utensils, Sparkles, Users, Zap, MapPin, BedDouble, Camera, Wallet } from "lucide-react";
 import { useCalendar } from "../../hooks/useCalendar";
 import { useRides } from "../../hooks/useRides";
 import { useMeals } from "../../hooks/useMeals";
@@ -8,14 +8,31 @@ import { useCosplays } from "../../hooks/useCosplays";
 import { useUsers } from "../../hooks/useUsers";
 import { UserAvatar } from "../common/UserAvatar";
 import { routes } from "../../config/routes";
-import { buildTrips, tripIdForEvent } from "../../utils/trips";
+import { buildTrip, buildTrips, currentTripId, isTripOver, tripIdForEvent } from "../../utils/trips";
+import { matchSearchActions, type SearchActionId } from "../../utils/searchActions";
+import type { RouteActionState } from "../../hooks/useRouteAction";
 
 interface ResultRow {
   key: string;
   title: string;
   subtitle: string;
   to: string;
+  /** Asks the page it lands on to open something (see `useRouteAction`). */
+  state?: RouteActionState;
+  /** Overrides the group's icon, for rows that each mean something different. */
+  icon?: typeof CalendarDays;
 }
+
+const ACTION_ICONS: Record<SearchActionId, typeof CalendarDays> = {
+  ping: MapPin,
+  parking: Car,
+  ride: Car,
+  meal: Utensils,
+  rooms: BedDouble,
+  cosplay: Sparkles,
+  photos: Camera,
+  finance: Wallet,
+};
 
 interface ResultGroup {
   label: string;
@@ -38,6 +55,11 @@ function resolveDriverName(driver: string, users: { name: string; discord_userna
  * rides, maaltijden, cosplays and crew — filtered client-side against the
  * query caches the rest of the app already keeps warm, so opening this never
  * fires a request of its own.
+ *
+ * Besides data it finds things to *do* ("Acties": ping your location, make a
+ * ride…). Those that belong to a trip act on the current one — the same trip the
+ * Event tab opens on — and say so under the card, so it is never a surprise
+ * which event a new ride or meal ends up on.
  */
 export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [query, setQuery] = useState("");
@@ -63,6 +85,44 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
     const crewRows = users.filter((u) => u.id && matches(q, u.name, u.discord_username));
 
     const out: ResultGroup[] = [];
+
+    const tripId = currentTripId(events);
+    const currentTrip = tripId ? buildTrip(events, tripId) : null;
+    const actions = matchSearchActions(q, {
+      hasTrip: !!currentTrip,
+      tripOver: currentTrip ? isTripOver(currentTrip) : false,
+      hasHotel: !!currentTrip?.isHotel,
+      hasCon: !!currentTrip?.hasCon,
+    });
+    if (actions.length) {
+      out.push({
+        label: "Acties",
+        icon: Zap,
+        rows: actions.map((a) => {
+          const forTrip = a.needsTrip && currentTrip ? ` · ${currentTrip.title}` : "";
+          let to: string = routes.finance;
+          if (a.id === "ping" || a.id === "parking") to = routes.crew;
+          else if (currentTrip) {
+            to =
+              a.id === "ride" ? routes.trip.view(currentTrip.id, "transport")
+              : a.id === "meal" ? routes.trip.view(currentTrip.id)
+              : a.id === "rooms" ? routes.trip.view(currentTrip.id, "rooms")
+              : a.id === "cosplay" ? routes.trip.view(currentTrip.id, "cosplay")
+              : a.id === "photos" ? routes.trip.view(currentTrip.id, "photos")
+              : routes.finance;
+          }
+          return {
+            key: `action-${a.id}`,
+            title: a.label,
+            subtitle: `${a.hint}${forTrip}`,
+            to,
+            state: a.route ? { action: a.route } : undefined,
+            icon: ACTION_ICONS[a.id],
+          };
+        }),
+      });
+    }
+
     if (trips.length) {
       out.push({
         label: "Evenementen",
@@ -134,10 +194,10 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
     return out.filter((g) => g.rows.length > 0);
   }, [query, events, rides, meals, cosplays, users]);
 
-  function go(to: string) {
+  function go(to: string, state?: RouteActionState) {
     setQuery("");
     onClose();
-    navigate(to);
+    navigate(to, state ? { state } : undefined);
   }
 
   function handleClose() {
@@ -160,7 +220,7 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Zoek events, ritten, maaltijden, cosplays, crew…"
+          placeholder="Zoek events, ritten, crew, of wat je wilt doen…"
           className="min-w-0 flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-3"
         />
         <button
@@ -192,14 +252,14 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
                   <button
                     key={row.key}
                     type="button"
-                    onClick={() => go(row.to)}
+                    onClick={() => go(row.to, row.state)}
                     className="card-surface-hover flex w-full items-center gap-3 p-3 text-left"
                   >
                     {group.label === "Crew" ? (
                       <UserAvatar name={row.title} className="h-8 w-8 shrink-0 text-[11px]" />
                     ) : (
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink-2">
-                        <group.icon size={14} />
+                        {row.icon ? <row.icon size={14} /> : <group.icon size={14} />}
                       </span>
                     )}
                     <span className="min-w-0 flex-1">

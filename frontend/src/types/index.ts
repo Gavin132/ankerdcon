@@ -74,6 +74,10 @@ export interface User {
   banner_color: string;
   pronouns: string;
   avatar_url?: string;
+  /** True once the avatar has been replaced by a manual upload — hides the
+   * "via Discord" badge and stops it being overwritten by a later Discord/
+   * Google resync (see app/dependencies.py, _finalize_returning_user). */
+  avatar_custom?: boolean;
   banner_url?: string;
   banner_position?: string;
   discord_id?: string;
@@ -179,6 +183,25 @@ export interface LeaveRestaurantDriverRequest {
   user_name: string;
 }
 
+/** Where a driver's car is parked, for the crew map — keyed by the driver's
+ * name, not a specific ride: see utils/parking.ts for how the map resolves
+ * which of that driver's rides (if any) is the relevant one to show. */
+export interface ParkingSpot {
+  id: string;
+  trip_id: string;
+  driver: string;
+  lat: number;
+  lng: number;
+  placed_by: string;
+  created_at?: string;
+}
+
+export interface SetParkingSpotRequest {
+  driver: string;
+  lat: number;
+  lng: number;
+}
+
 export interface RestaurantAssignRequest {
   user_name: string;
   driver_name: string;
@@ -194,6 +217,11 @@ export interface Meal {
   meal_name: string;
   time: string;
   location: string;
+  location_lat?: number | null;
+  location_lng?: number | null;
+  /** A member-supplied exact Google Maps link — used for this meal's crew-map
+   * pin instead of the geocoded coordinates when present. */
+  maps_url?: string | null;
   cost: number;
   transport_needed: boolean;
   participants: string[];
@@ -285,6 +313,7 @@ export interface CreateMealRequest {
   meal_name: string;
   time: string;
   location?: string;
+  maps_url?: string;
   cost?: string;
   transport_needed?: boolean;
   linked_event_id?: string;
@@ -294,6 +323,22 @@ export interface CreateMealRequest {
   dietary_options?: string;
   parking_info?: string;
   extra_notes?: string;
+}
+
+export interface UpdateMealRequest {
+  meal_name?: string;
+  time?: string;
+  location?: string;
+  maps_url?: string | null;
+  cost?: number;
+  transport_needed?: boolean;
+  linked_event_id?: string | null;
+  website?: string | null;
+  menu_url?: string | null;
+  description?: string | null;
+  dietary_options?: string | null;
+  parking_info?: string | null;
+  extra_notes?: string | null;
 }
 
 export interface RsvpRequest {
@@ -334,6 +379,10 @@ export interface BulkCreateHotelRoomsRequest {
   batches: HotelRoomBatch[];
 }
 
+/** What kind of trip this is, shown at the top of its ticket card. `null`/absent
+ * means a plain trip (the "Reis" fallback) — not every event needs one. */
+export type EventType = "con" | "gathering" | "concert";
+
 export interface CalendarEvent {
   id: string;
   event_group_id?: string;
@@ -342,13 +391,23 @@ export interface CalendarEvent {
   date: string;
   has_con: boolean;
   is_hotel: boolean;
-  is_party: boolean;
+  event_type: EventType | null;
   hotel_location?: string;
+  hotel_location_lat?: number | null;
+  hotel_location_lng?: number | null;
+  /** An exact Google Maps link, admin-set, used for the hotel pin's route
+   * instead of the geocoded coordinates when given — e.g. a hotel chain
+   * whose name geocodes to the wrong city. */
+  hotel_location_maps_url?: string | null;
   hotel_info?: string;
   participants: string[];
   image_url?: string;
   description?: string;
   location?: string;
+  location_lat?: number | null;
+  location_lng?: number | null;
+  /** Same idea as hotel_location_maps_url, for the con location's pin. */
+  location_maps_url?: string | null;
   website?: string;
   ticket_url?: string;
   ticket_sale_start?: string;
@@ -366,12 +425,18 @@ export interface Event {
   event_group_id?: string;
   event_name: string;
   is_hotel: boolean;
-  is_party: boolean;
+  event_type: EventType | null;
   hotel_location?: string;
+  hotel_location_lat?: number | null;
+  hotel_location_lng?: number | null;
+  hotel_location_maps_url?: string | null;
   hotel_info?: string;
   image_url?: string;
   description?: string;
   location?: string;
+  location_lat?: number | null;
+  location_lng?: number | null;
+  location_maps_url?: string | null;
   website?: string;
   ticket_url?: string;
   ticket_sale_start?: string;
