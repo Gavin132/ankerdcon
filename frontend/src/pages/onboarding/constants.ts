@@ -8,10 +8,11 @@ import {
 
 export const TOTAL_STEPS = 4; // features(1) + profile(2) + notifications(3) + done(4); dialogue is step 0
 
+// One orange only: amber (#f59e0b) and orange (#fb923c) looked like the same colour.
 export const NAME_COLORS = [
   "#0ea5e9", "#8b5cf6", "#10b981", "#f43f5e",
   "#f59e0b", "#6366f1", "#ec4899", "#14b8a6",
-  "#fb923c", "#a3e635",
+  "#a3e635",
 ];
 
 export const BANNER_COLORS = [
