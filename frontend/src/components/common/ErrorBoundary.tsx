@@ -4,6 +4,7 @@ import { AlertTriangle } from "lucide-react";
 import { routes } from "../../config/routes";
 import { attemptAutoReload } from "../../utils/errorRecovery";
 import { StatusLink } from "./StatusLink";
+import { ChemistryJoke } from "./ChemistryJoke";
 
 interface Props {
   children: ReactNode;
@@ -43,6 +44,7 @@ export function ErrorFallback() {
         <p className="mt-3 max-w-[300px] text-sm leading-relaxed text-ink-2">
           De app is onverwacht vastgelopen. Probeer het opnieuw, of ga terug naar het startscherm.
         </p>
+        <ChemistryJoke className="mt-4" />
 
         <div className="mt-7 flex flex-wrap items-center justify-center gap-2.5">
           <button

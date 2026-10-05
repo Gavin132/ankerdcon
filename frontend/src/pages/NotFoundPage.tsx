@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../config/routes";
 import { APP_NAME } from "../constants";
+import { ChemistryJoke } from "../components/common/ChemistryJoke";
 
 export function NotFoundPage() {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ export function NotFoundPage() {
         <p className="mt-3 max-w-[280px] text-sm leading-relaxed text-ink-2">
           Dit anker is losgeslagen. De pagina bestaat niet (meer) in {APP_NAME}.
         </p>
+        <ChemistryJoke className="mt-4" />
 
         <button
           onClick={() => navigate(routes.hub, { replace: true })}
