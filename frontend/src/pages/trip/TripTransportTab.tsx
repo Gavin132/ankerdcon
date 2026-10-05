@@ -1,16 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Car,
-  ChevronDown,
-  ArrowRight,
-  ArrowLeft,
-  History,
-  Utensils,
-  CalendarClock,
-  X as XIcon,
-  Trash2,
-} from "lucide-react";
+import { Car, ChevronDown, History, X as XIcon } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { LocationSearchInput } from "../../components/common/LocationSearchInput";
@@ -19,12 +9,11 @@ import { z } from "zod";
 import { Button } from "../../components/common/Button";
 import { TripSheet } from "../../components/trip/TripSheet";
 import { DayChips } from "../../components/trip/DayChips";
-import { RideCardSkeleton } from "../../components/common/Skeleton";
 import { NamePicker } from "../../components/common/NamePicker";
-import { RideCard } from "../../components/transport/RideCard";
+import { SegmentedControl } from "../../components/common/SegmentedControl";
+import { RideRow } from "../../components/transport/RideRow";
 import { RestaurantMealPrompt, RestaurantRideGroup } from "../../components/transport/RestaurantRideGroup";
-import { RideTimeline } from "../../components/transport/RideTimeline";
-import { useRides, useCreateRide, useDeleteRide } from "../../hooks/useRides";
+import { useRides, useCreateRide } from "../../hooks/useRides";
 import { useUsers, useCurrentUser } from "../../hooks/useUsers";
 import { useCalendar } from "../../hooks/useCalendar";
 import { useMeals } from "../../hooks/useMeals";
@@ -33,7 +22,8 @@ import { getRideStatus } from "../../utils/rides";
 import { planDirection } from "../../utils/carBalance";
 import { toDateKey, todayKey, parseEventDate, splitDateTime } from "../../utils/date";
 import { useTimeStore } from "../../store/time.store";
-import { defaultTripDayId, isTripOver, tripGaps, tripRides } from "../../utils/trips";
+import { isTripOver, tripGaps, tripRides } from "../../utils/trips";
+import { defaultTransportView } from "../../utils/transportView";
 import { TripMissingList } from "../../components/trip/TripMissingList";
 import { useTrip } from "./tripContext";
 import type { Direction, Ride } from "../../types";
@@ -82,31 +72,24 @@ const container = {
   show: { opacity: 1, transition: { staggerChildren: 0.05 } },
 };
 
-const DIRECTION_ORDER: Direction[] = ["Inbound", "Outbound", "Restaurant"];
+const SEGMENTS: { value: Direction; label: string }[] = [
+  { value: "Inbound", label: "Heen" },
+  { value: "Outbound", label: "Terug" },
+  { value: "Restaurant", label: "Eten" },
+];
 
-const DIRECTION_LABEL: Record<Direction, string> = {
-  Inbound: "Heen",
-  Outbound: "Terug",
-  Restaurant: "Restaurant",
-};
-
-const DIRECTION_ICON: Record<Direction, React.ReactNode> = {
-  Inbound: <ArrowRight size={12} className="shrink-0" />,
-  Outbound: <ArrowLeft size={12} className="shrink-0" />,
-  Restaurant: <Utensils size={12} className="shrink-0" />,
-};
+const departureTime = (r: Ride) => new Date(r.departure_time.replace(" ", "T")).getTime();
 
 /**
- * Event › Vervoer, opened as a bottom sheet over Overzicht. Rides are
- * organised by day first (the day chips are right here in the sheet) and by
- * direction within a day. When a specific day is picked, its Heen/Terug/
- * Restaurant groups show flat, no accordion needed for just one day; on
- * "Alle dagen" each day becomes its own collapsible section, nearest day
- * open by default. Adding a ride slides the sheet to its own form view
- * instead of stacking a second overlay on top.
+ * Event › Vervoer, opened as a bottom sheet over Overzicht. One direction
+ * (Heen, Terug or Eten) of one day at a time: a segmented control picks the
+ * direction, day chips the day. It opens on what the Hub's "Rit aanbieden" and
+ * "Meerijden" tiles would open on (see `defaultTransportView`) and then stays
+ * where the member puts it. Your own ride is the blue row. Adding a ride slides
+ * the sheet to its own form view instead of stacking a second overlay on top.
  */
 export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { trip, dayId, setDayId } = useTrip();
+  const { trip } = useTrip();
   const location = useLocation();
   useTimeStore((s) => s.override); // re-render when the time-travel override changes
   const [view, setView] = useState<"list" | "form">("list");
@@ -118,9 +101,10 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
     const t = window.setTimeout(() => setView("list"), 400);
     return () => window.clearTimeout(t);
   }, [open]);
-  const [showTimeline, setShowTimeline] = useState(false);
-  const [openDayIds, setOpenDayIds] = useState<Set<string>>(() => new Set([defaultTripDayId(trip)]));
-  const [historyOpenIds, setHistoryOpenIds] = useState<Set<string>>(new Set());
+  const [segment, setSegment] = useState<Direction>("Inbound");
+  const [activeDayId, setActiveDayId] = useState(() => trip.days[0].ev.id);
+  const [expandedRideId, setExpandedRideId] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const { data: allRides, isLoading } = useRides();
   const { data: users } = useUsers();
   const { data: currentUser } = useCurrentUser();
@@ -131,20 +115,20 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
   const canonicalName = (name: string) =>
     ((users ?? []).find((u) => u.name === name || u.discord_username === name || u.aliases?.includes(name))?.name ?? name).toLowerCase();
   const createMutation = useCreateRide();
-  const deleteMutation = useDeleteRide();
-  const [confirmDeleteRideId, setConfirmDeleteRideId] = useState<string | null>(null);
 
-  async function handleDeleteRide(ride: Ride) {
-    try {
-      await deleteMutation.mutateAsync(ride.id);
-      setConfirmDeleteRideId(null);
-      toast("success", "Rit verwijderd.");
-    } catch {
-      toast("error", "Kon de rit niet verwijderen. Probeer opnieuw.");
-    }
-  }
+  // Each time the sheet opens, it picks the direction and day that are next up.
+  useEffect(() => {
+    if (!open) return;
+    const start = defaultTransportView(trip, meals);
+    setSegment(start.direction);
+    setActiveDayId(start.dayId);
+    setExpandedRideId(null);
+    setHistoryOpen(false);
+    // Deliberately only on open: later changes to the meals must not undo a choice.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
-  const rides = tripRides(allRides ?? [], meals, trip, dayId);
+  const dayRides = tripRides(allRides ?? [], meals, trip, activeDayId);
   const gaps = tripGaps(trip, allRides ?? [], meals);
   const missingPeople = gaps.transport.map((g) => ({ name: g.name, detail: g.items.join(" & ") }));
   const tripMealIds = new Set(meals.filter((m) => m.linked_event_id && trip.eventIds.includes(m.linked_event_id)).map((m) => m.id));
@@ -169,6 +153,52 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
     return !!d && toDateKey(d) >= todayStr;
   };
   const upcomingTripDays = trip.days.filter((d) => isUpcoming(d.ev.date)).map((d) => d.ev);
+
+  // ── What the list shows: one direction of one day ─────────────────────────
+  const myCanon = currentUser ? canonicalName(currentUser.name) : null;
+  const isMine = (r: Ride) =>
+    !!myCanon && (canonicalName(r.driver) === myCanon || r.passengers.some((p) => canonicalName(p) === myCanon));
+  const isActive = (r: Ride) => getRideStatus(r.departure_time).status !== "past";
+
+  // Restaurant rides are created from the meal ("Ik rijd" on a meal that has no ride yet).
+  const mealsWithoutRide = tripMealOptions.filter(
+    (m) =>
+      m.transport_needed &&
+      m.linked_event_id === activeDayId &&
+      !(allRides ?? []).some((r) => r.direction === "Restaurant" && r.linked_meal_id === m.id),
+  );
+  const countFor = (d: Direction) =>
+    dayRides.filter((r) => r.direction === d && isActive(r)).length + (d === "Restaurant" ? mealsWithoutRide.length : 0);
+  // No Eten without a meal on the trip (unless something already points there).
+  const showEten = segment === "Restaurant" || tripMealOptions.length > 0;
+
+  const segmentRides = dayRides.filter((r) => r.direction === segment);
+  const active = segmentRides.filter(isActive).sort((a, b) => departureTime(a) - departureTime(b));
+  const past = segmentRides.filter((r) => !isActive(r)).sort((a, b) => departureTime(a) - departureTime(b));
+
+  // Someone can only be the driver of one ride per direction per day, so once
+  // they have one, offering another would just invite a duplicate: the button
+  // goes, and the ride itself offers to be taken back.
+  const myDriverRide = segment !== "Restaurant" ? active.find((r) => r.driver === currentUser?.name) : undefined;
+  const canOffer = segment !== "Restaurant" && !isTripOver(trip) && !myDriverRide;
+
+  // How full each car should leave so nobody is left behind (Heen and Terug, per day).
+  const plan =
+    segment !== "Restaurant" && !isTripOver(trip)
+      ? planDirection(segmentRides, trip.days.find((d) => d.ev.id === activeDayId)?.ev.participants ?? [], canonicalName)
+      : null;
+
+  function pickSegment(next: Direction) {
+    setSegment(next);
+    setExpandedRideId(null);
+    setHistoryOpen(false);
+  }
+
+  function pickDay(id: string) {
+    setActiveDayId(id);
+    setExpandedRideId(null);
+    setHistoryOpen(false);
+  }
 
   const {
     register,
@@ -200,30 +230,15 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
     // rides prompt) can ask a specific direction's form to pop right open.
     if (!open) return;
     const state = location.state as { tab?: Direction } | null;
-    if (state?.tab) openCreate(state.tab, dayId ?? undefined);
+    if (state?.tab) {
+      setSegment(state.tab);
+      openCreate(state.tab, defaultTransportView(trip, meals).dayId);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  function toggleDay(id: string) {
-    setOpenDayIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  function toggleHistory(key: string) {
-    setHistoryOpenIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }
-
   function openCreate(direction: Direction = "Inbound", explicitDayId?: string) {
-    const defaultDay = upcomingTripDays.find((d) => d.id === (explicitDayId ?? dayId)) ?? upcomingTripDays[0];
+    const defaultDay = upcomingTripDays.find((d) => d.id === (explicitDayId ?? activeDayId)) ?? upcomingTripDays[0];
     // The meal a new restaurant ride links to by default — whichever of this
     // day's etentjes comes first; falls back to the trip's next one if this
     // day doesn't have one of its own yet.
@@ -270,6 +285,10 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
         linked_event_id: values.linked_event_id || undefined,
         linked_meal_id: values.linked_meal_id || undefined,
       });
+      // Back on the list, looking at the ride that was just added.
+      setSegment(values.direction as Direction);
+      if (values.linked_event_id) setActiveDayId(values.linked_event_id);
+      setExpandedRideId(null);
       reset();
       setView("list");
       toast("success", "Rit toegevoegd aan het schema!");
@@ -278,172 +297,18 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
     }
   }
 
-  /** One direction's rides within an already day-scoped ride list. */
-  function renderDirectionGroup(direction: Direction, dayRides: Ride[], targetDayId?: string) {
-    const all = dayRides.filter((r) => r.direction === direction);
-    const active = all.filter((r) => getRideStatus(r.departure_time).status !== "past");
-    // Restaurant rides are created from the meal ("Ik rijd" on a meal that has no ride yet).
-    const restaurantDayId = targetDayId ?? dayId;
-    const mealsWithoutRide = direction === "Restaurant"
-      ? tripMealOptions.filter(
-          (m) =>
-            m.transport_needed &&
-            (!restaurantDayId || m.linked_event_id === restaurantDayId) &&
-            !(allRides ?? []).some((r) => r.direction === "Restaurant" && r.linked_meal_id === m.id),
-        )
-      : [];
-
-    // Someone can only be the driver of one ride per direction per day — once
-    // they've made one, "Ik rijd" would just be confusing (or invite a second,
-    // duplicate ride), so it turns into a way to take that ride back instead.
-    const myRide = active.find((r) => r.driver === currentUser?.name);
-
-    // How full each car should leave so nobody is left behind (Heen and Terug, per day).
-    const balanceDayId = targetDayId ?? dayId;
-    const plan =
-      direction !== "Restaurant" && balanceDayId && !isTripOver(trip)
-        ? planDirection(all, trip.days.find((d) => d.ev.id === balanceDayId)?.ev.participants ?? [], canonicalName)
-        : null;
-    const myRideOtherPassengers = myRide ? myRide.passengers.filter((p) => p !== myRide.driver).length : 0;
-
+  function renderRow(ride: Ride, readOnly = false) {
     return (
-      <div key={direction}>
-        <div className="mb-2 flex items-center gap-1.5">
-          {DIRECTION_ICON[direction]}
-          <span className="section-label">{DIRECTION_LABEL[direction]}</span>
-          <span className="font-mono text-[11px] tabular-nums text-ink-3">{active.length}</span>
-          {direction !== "Restaurant" && !isTripOver(trip) && !myRide && (
-            <button
-              type="button"
-              onClick={() => openCreate(direction, targetDayId)}
-              className="btn-primary ml-auto h-8 px-3 text-xs"
-            >
-              <Car size={13} /> Ik rijd
-            </button>
-          )}
-          {direction !== "Restaurant" && !isTripOver(trip) && myRide && (
-            confirmDeleteRideId === myRide.id ? (
-              <div className="ml-auto flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setConfirmDeleteRideId(null)}
-                  className="h-8 rounded-lg px-2 text-xs font-semibold text-ink-2 hover:text-ink"
-                >
-                  Annuleer
-                </button>
-                <button
-                  type="button"
-                  disabled={deleteMutation.isPending}
-                  onClick={() => handleDeleteRide(myRide)}
-                  className="flex h-8 items-center gap-1 rounded-lg bg-rose-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-rose-700 disabled:opacity-60"
-                >
-                  <Trash2 size={13} /> Zeker weten?
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setConfirmDeleteRideId(myRide.id)}
-                className="ml-auto flex h-8 items-center gap-1 rounded-lg border-1.5 border-line px-3 text-xs font-semibold text-ink-2 transition-colors hover:border-rose-300 hover:text-rose-600 dark:hover:border-rose-500/40 dark:hover:text-rose-400"
-              >
-                <Trash2 size={13} /> Rit verwijderen
-              </button>
-            )
-          )}
-        </div>
-        {myRide && confirmDeleteRideId === myRide.id && myRideOtherPassengers > 0 && (
-          <p className="-mt-1 mb-2 text-[11.5px] text-rose-600 dark:text-rose-400">
-            {myRideOtherPassengers === 1
-              ? "Er is al iemand bij deze rit ingedeeld — die persoon verliest zijn plek."
-              : `Er zijn al ${myRideOtherPassengers} mensen bij deze rit ingedeeld — zij verliezen hun plek.`}
-          </p>
-        )}
-        {plan && (
-          <p className="mb-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px] text-ink-3">
-            <span>
-              {plan.people} {plan.people === 1 ? "persoon" : "mensen"} · {plan.cars.length} {plan.cars.length === 1 ? "auto" : "auto's"} · {plan.seats} plekken
-            </span>
-            {plan.seatShortage > 0 ? (
-              <span className="font-semibold text-rose-700 dark:text-rose-300">Nog {plan.seatShortage} {plan.seatShortage === 1 ? "plek" : "plekken"} tekort</span>
-            ) : plan.withoutSeat > 0 ? (
-              <span className="font-semibold text-amber-700 dark:text-amber-300">{plan.withoutSeat} nog zonder auto</span>
-            ) : (
-              <span className="font-semibold text-emerald-700 dark:text-emerald-300">Iedereen heeft een plek</span>
-            )}
-          </p>
-        )}
-        {active.length === 0 && mealsWithoutRide.length === 0 ? (
-          <p className="py-1 text-xs text-ink-3">
-            Nog geen {direction === "Restaurant" ? "route" : "rit"}.
-          </p>
-        ) : (
-          <motion.div className="space-y-2.5" variants={container} initial="hidden" animate="show">
-            {mealsWithoutRide.map((m) => <RestaurantMealPrompt key={m.id} meal={m} />)}
-            {active.map((ride) =>
-              ride.direction === "Restaurant" ? (
-                <RestaurantRideGroup key={ride.id} ride={ride} userNames={userNames} />
-              ) : (
-                <RideCard key={ride.id} ride={ride} userNames={userNames} guidance={plan?.cars.find((c) => c.rideId === ride.id)} />
-              ),
-            )}
-          </motion.div>
-        )}
-      </div>
-    );
-  }
-
-  /** All three direction groups for one day, plus that day's own history toggle. */
-  function renderDayContent(dayRides: Ride[], historyKey: string, targetDayId?: string) {
-    const past = dayRides.filter((r) => getRideStatus(r.departure_time).status === "past");
-    const historyOpen = historyOpenIds.has(historyKey);
-
-    // No restaurant section on a day without a mealplan (unless a restaurant ride already exists).
-    const mealDayId = targetDayId ?? dayId;
-    const hasMealplan = tripMealOptions.some((m) => !mealDayId || m.linked_event_id === mealDayId);
-    const hasRestaurantRide = dayRides.some((r) => r.direction === "Restaurant");
-    const directions = DIRECTION_ORDER.filter((d) => d !== "Restaurant" || hasMealplan || hasRestaurantRide);
-
-    return (
-      <div className="space-y-4">
-        <div className="grid gap-4">
-          {directions.map((d) => renderDirectionGroup(d, dayRides, targetDayId))}
-        </div>
-        {past.length > 0 && (
-          <div>
-            <button
-              type="button"
-              onClick={() => toggleHistory(historyKey)}
-              aria-expanded={historyOpen}
-              className="flex min-h-[40px] items-center gap-2 text-[13px] font-semibold text-ink-2 hover:text-ink"
-            >
-              <History size={13} />
-              Geschiedenis <span className="font-mono tabular-nums">({past.length})</span>
-              <ChevronDown size={13} className={`transition-transform duration-200 ${historyOpen ? "rotate-180" : ""}`} />
-            </button>
-            <AnimatePresence>
-              {historyOpen && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden"
-                >
-                  <div className="mt-2 space-y-2.5 opacity-60">
-                    {past.map((ride) =>
-                      ride.direction === "Restaurant" ? (
-                        <RestaurantRideGroup key={ride.id} ride={ride} userNames={userNames} />
-                      ) : (
-                        <RideCard key={ride.id} ride={ride} userNames={userNames} />
-                      ),
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
-      </div>
+      <RideRow
+        key={ride.id}
+        ride={ride}
+        userNames={userNames}
+        guidance={readOnly ? undefined : plan?.cars.find((c) => c.rideId === ride.id)}
+        mine={isMine(ride)}
+        expanded={expandedRideId === ride.id}
+        onToggle={() => setExpandedRideId((prev) => (prev === ride.id ? null : ride.id))}
+        canDelete={!readOnly && !isTripOver(trip)}
+      />
     );
   }
 
@@ -465,7 +330,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
           ? formDirection === "Restaurant"
             ? "Zet tijd en locatie neer — pas als iemand “Ik rijd” aangeeft, is er echt een rit"
             : "Vul de details van de rit in"
-          : undefined
+          : `${trip.title} · ${trip.dateRange}`
       }
       footer={view === "form" ? formFooter : undefined}
     >
@@ -642,95 +507,117 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
           )}
         </form>
       ) : (
-        <div className="space-y-5">
-          <div className="flex items-center justify-between gap-3">
-            {trip.days.length > 1 ? (
-              <DayChips days={trip.days} value={dayId} onChange={setDayId} allowAll />
-            ) : (
-              <span />
-            )}
-            <button
-              type="button"
-              onClick={() => setShowTimeline((v) => !v)}
-              className="flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-brand-text hover:underline"
-            >
-              <CalendarClock size={14} />
-              {showTimeline ? "Verberg tijdlijn" : "Tijdlijn"}
-            </button>
-          </div>
+        <div className="space-y-3.5">
+          <SegmentedControl
+            ariaLabel="Richting"
+            value={segment}
+            onChange={pickSegment}
+            options={SEGMENTS.filter((s) => s.value !== "Restaurant" || showEten).map((s) => ({ ...s, count: countFor(s.value) }))}
+          />
 
-          {missingPeople.length > 0 && <TripMissingList title="Nog geen vervoer" people={missingPeople} />}
+          {(trip.days.length > 1 || canOffer) && (
+            <div className="flex items-center justify-between gap-2.5">
+              {trip.days.length > 1 ? (
+                <div className="min-w-0">
+                  <DayChips days={trip.days} value={activeDayId} onChange={(id) => id && pickDay(id)} attention={dayNeedsAttention} />
+                </div>
+              ) : (
+                <span />
+              )}
+              {canOffer && (
+                <button
+                  type="button"
+                  onClick={() => openCreate(segment, activeDayId)}
+                  className="btn-primary h-[34px] shrink-0 px-3 text-[12.5px]"
+                >
+                  <Car size={14} /> Rit aanbieden
+                </button>
+              )}
+            </div>
+          )}
+
+          {plan && (
+            <p className="text-[12px] text-ink-3">
+              {plan.people} {plan.people === 1 ? "persoon" : "mensen"} · {plan.cars.length} {plan.cars.length === 1 ? "auto" : "auto's"} · {plan.seats} plekken
+              {" · "}
+              {plan.seatShortage > 0 ? (
+                <span className="font-semibold text-rose-700 dark:text-rose-300">Nog {plan.seatShortage} {plan.seatShortage === 1 ? "plek" : "plekken"} tekort</span>
+              ) : plan.withoutSeat > 0 ? (
+                <span className="font-semibold text-amber-700 dark:text-amber-300">{plan.withoutSeat} nog zonder auto</span>
+              ) : (
+                <span className="font-semibold text-emerald-700 dark:text-emerald-300">Iedereen heeft een plek</span>
+              )}
+            </p>
+          )}
 
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
-              key={showTimeline ? "timeline" : (dayId ?? "all")}
+              key={`${segment}:${activeDayId}`}
+              className="space-y-3.5"
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.14, ease: "easeOut" }}
             >
-          {showTimeline ? (
-            <RideTimeline rides={rides} />
-          ) : isLoading ? (
-            <div className="space-y-3">
-              {[0, 1, 2].map((i) => <RideCardSkeleton key={i} />)}
-            </div>
-          ) : dayId ? (
-            // One day picked via the day chips — flat groups, nothing to expand.
-            renderDayContent(rides, dayId, dayId)
-          ) : (
-            // "Alle dagen" — one collapsible section per trip day.
-            <div className="space-y-2.5">
-              {trip.days.map(({ ev }) => {
-                const dayRides = tripRides(allRides ?? [], meals, trip, ev.id);
-                const isOpen = openDayIds.has(ev.id);
-                const activeCount = dayRides.filter((r) => getRideStatus(r.departure_time).status !== "past").length;
-                return (
-                  <div key={ev.id} className="overflow-hidden rounded-xl border-1.5 border-line bg-surface">
-                    <button
-                      type="button"
-                      onClick={() => toggleDay(ev.id)}
-                      aria-expanded={isOpen}
-                      className="flex min-h-[44px] w-full items-center gap-2.5 px-4 py-3 text-left"
-                    >
-                      {dayNeedsAttention(ev.id) && (
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" aria-hidden />
-                      )}
-                      <span className="flex min-w-0 flex-1 flex-col gap-0.5 leading-tight">
-                        <span className="truncate font-display text-[15px] font-extrabold uppercase tracking-[0.02em] text-ink">
-                          {ev.event_name}
-                        </span>
-                        <span className="font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-3">
-                          {parseEventDate(ev.date)?.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" }) ?? ev.date}
-                        </span>
-                      </span>
-                      <span className="ml-auto shrink-0 font-mono text-[11px] tabular-nums text-ink-3">
-                        {activeCount} {activeCount === 1 ? "rit" : "ritten"}
-                      </span>
-                      <ChevronDown size={14} className={`shrink-0 text-ink-3 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
-                    </button>
-                    <AnimatePresence>
-                      {isOpen && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="border-t-1.5 border-line px-4 py-4">
-                            {renderDayContent(dayRides, ev.id, ev.id)}
+              {isLoading ? (
+                <div className="space-y-2.5">
+                  {[0, 1, 2].map((i) => <div key={i} className="h-[64px] animate-pulse rounded-xl bg-sunken" />)}
+                </div>
+              ) : segment === "Restaurant" ? (
+                active.length === 0 && mealsWithoutRide.length === 0 ? (
+                  <p className="py-1 text-xs text-ink-3">Nog geen etentje met vervoer op deze dag.</p>
+                ) : (
+                  <motion.div className="space-y-2.5" variants={container} initial="hidden" animate="show">
+                    {mealsWithoutRide.map((m) => <RestaurantMealPrompt key={m.id} meal={m} />)}
+                    {active.map((ride) => <RestaurantRideGroup key={ride.id} ride={ride} userNames={userNames} />)}
+                  </motion.div>
+                )
+              ) : active.length === 0 ? (
+                <p className="py-1 text-xs text-ink-3">Nog geen rit.</p>
+              ) : (
+                <div className="card-surface divide-y divide-line overflow-hidden">{active.map((ride) => renderRow(ride))}</div>
+              )}
+
+              {past.length > 0 && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setHistoryOpen((v) => !v)}
+                    aria-expanded={historyOpen}
+                    className="flex min-h-[40px] items-center gap-2 text-[13px] font-semibold text-ink-2 hover:text-ink"
+                  >
+                    <History size={13} />
+                    Geschiedenis <span className="font-mono tabular-nums">({past.length})</span>
+                    <ChevronDown size={13} className={`transition-transform duration-200 ${historyOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  <AnimatePresence>
+                    {historyOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        {segment === "Restaurant" ? (
+                          <div className="mt-2 space-y-2.5 opacity-60">
+                            {past.map((ride) => <RestaurantRideGroup key={ride.id} ride={ride} userNames={userNames} />)}
                           </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                        ) : (
+                          <div className="card-surface mt-2 divide-y divide-line overflow-hidden">{past.map((ride) => renderRow(ride, true))}</div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
+
+          <TripMissingList
+            title={`${missingPeople.length} ${missingPeople.length === 1 ? "persoon heeft" : "mensen hebben"} nog geen vervoer`}
+            people={missingPeople}
+          />
         </div>
       )}
     </TripSheet>
