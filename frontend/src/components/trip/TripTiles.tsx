@@ -11,6 +11,7 @@ import { EventPractical } from "../event/EventPractical";
 import { EventLinks } from "../event/EventLinks";
 import { TileText, TilePill, TileValue, TripTile } from "./TripTile";
 import { useRouteAction } from "../../hooks/useRouteAction";
+import { activityCount, mealCategory } from "../../utils/mealCategory";
 import { useEventWeather } from "../../hooks/useEventWeather";
 import { useUsers } from "../../hooks/useUsers";
 import { routes } from "../../config/routes";
@@ -173,7 +174,7 @@ export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Tr
   );
 }
 
-/* ── Eten ────────────────────────────────────────────────────────────────── */
+/* ── Activiteiten (eten, bowlen, groepsfoto, ...) ───────────────────────── */
 
 /** How long after its start a meal still counts as current here — matches
  * MealTodayCard's LINGER_MS on the Hub, so "a meal is over" means the same
@@ -181,7 +182,8 @@ export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Tr
 const MEAL_LINGER_MS = 3 * 60 * 60 * 1000;
 
 /**
- * Answers "is there a mealplan", links straight to each meal's own detail page
+ * Answers "what is planned": every activity of the trip, a meal as much as the
+ * group photo. Links straight to each one's own detail page
  * (so it has no single `to` of its own — each row is its own link) and, while
  * the trip isn't over, has a "+" for anyone to plan another one.
  */
@@ -202,7 +204,7 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
   const missing = missingNames.length;
   const [addOpen, setAddOpen] = useState(false);
   const [missingOpen, setMissingOpen] = useState(false);
-  // The global search's "Etentje plannen" card lands here with the form open.
+  // The global search's "Activiteit toevoegen" card lands here with the form open.
   useRouteAction("addMeal", () => {
     if (phase !== "past") setAddOpen(true);
   });
@@ -210,7 +212,7 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
   return (
     <TripTile
       icon={Utensils}
-      label="Eten"
+      label="Activiteiten"
       size={phase === "past" ? "small" : "wide"}
       pill={
         missing > 0 && (
@@ -230,8 +232,8 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
           <button
             type="button"
             onClick={() => setAddOpen(true)}
-            title="Etentje toevoegen"
-            aria-label="Etentje toevoegen"
+            title="Activiteit toevoegen"
+            aria-label="Activiteit toevoegen"
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-1.5 border-outline bg-brand text-brand-on transition-opacity hover:opacity-90"
           >
             <Plus size={15} strokeWidth={2.5} />
@@ -240,7 +242,7 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
       }
     >
       <TileValue>
-        {all.length === 0 ? "Nog niks gepland" : phase === "live" && ahead[0] ? nextMealText(ahead[0].time) : `${all.length} ${all.length === 1 ? "etentje" : "etentjes"}`}
+        {all.length === 0 ? "Nog niks gepland" : phase === "live" && ahead[0] ? nextMealText(ahead[0].time) : activityCount(all.length)}
       </TileValue>
       {phase !== "past" && shown.length > 0 && (
         <ul className="-mx-1.5 divide-y divide-line">
@@ -254,7 +256,9 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
                 <span className="min-w-0">
                   <span className="block truncate font-semibold text-ink">{m.meal_name}</span>
                   <span className="block text-ink-3">
-                    {m.participants.length} mee, {m.participants.some(isMine) ? "jij ook" : "jij nog niet"}
+                    {mealCategory(m).has_signup
+                      ? `${m.participants.length} mee, ${m.participants.some(isMine) ? "jij ook" : "jij nog niet"}`
+                      : mealCategory(m).name}
                   </span>
                 </span>
                 <ChevronRight size={14} className="shrink-0 text-ink-3" />

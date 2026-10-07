@@ -98,12 +98,13 @@ same need — the same `direction` that day, or for a `Restaurant` ride, a ride 
 `linked_meal_id` specifically. A ride with no `linked_event_id` (there is nothing to check "signed up"
 against) falls back to notifying every opted-in member, as before.
 
-### Meals — `/meals`
+### Activities — `/meals`, `/meal-categories`
 
 | Method and path | Who | What |
 | --- | --- | --- |
-| `GET /meals/` | member | meals |
-| `POST /meals/` | member | plan a meal |
+| `GET /meals/` | member | activities, each with its `category` |
+| `POST /meals/` | member | plan an activity (`category_id` optional: defaults to the first category) |
+| `GET /meal-categories` | member | the kinds of activity, in order |
 | `POST /meals/{id}/rsvp`, `…/cancel-rsvp` | member | join or leave |
 | `PUT /meals/{id}` | owner | edit |
 | `DELETE /meals/{id}` | owner | remove |
@@ -235,6 +236,7 @@ and description are left out. Only registered when the built frontend exists.
 | Users | list, create (a stub for the whitelist), update, delete, bulk delete, bulk deactivate, `POST /admin/impersonate/{id}` ([security.md](security.md#log-in-as)), badges per user |
 | Whitelist | list, add, remove |
 | Feedback | `GET /admin/feedback` (newest first), `PUT /admin/feedback/{id}` (status `new`, `seen` or `done`), `DELETE /admin/feedback/{id}` |
+| Meal categories (`/admin/meal-categories`) | list, create, update (name, order, switches), delete (409 while in use) |
 | Rides, meals | list, create, update, delete, bulk delete, remove one passenger or participant |
 | Events | list events and days, create, update, delete, add a day, update or delete a day, remove one participant, bulk RSVP, bulk delete, bulk set group |
 | Hotel rooms | list, update, delete |

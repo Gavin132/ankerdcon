@@ -4,6 +4,7 @@ from app.config import Settings, get_settings
 from app.constants import Tables
 from app.core.atomic import update_list
 from app.core.logging import get_logger
+from app.core.meal_categories import default_category_id, list_meals_with_category, require_category
 from app.dependencies import act_for_anyone, get_current_user, require_owner_or_admin
 from app.models.meal import CreateMealRequest, Meal, RsvpRequest, UpdateMealRequest
 from app.routes import MealRoutes
@@ -22,7 +23,7 @@ _DB_ERROR = "Databasefout. Probeer het opnieuw."
 @router.get(MealRoutes.LIST, response_model=list[Meal])
 def list_meals(_: str = Depends(get_current_user)) -> list[Meal]:
     try:
-        return supabase.table(Tables.MEALS).select("*").execute().data
+        return list_meals_with_category()
     except Exception as e:
         logger.error("Failed to list meals: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
@@ -35,6 +36,8 @@ async def create_meal(
     current_user: str = Depends(get_current_user),
     settings: Settings = Depends(get_settings),
 ) -> None:
+    if body.category_id:
+        require_category(body.category_id)
     coords = await resolve_location(body.location, body.maps_url)
     meal_data = {
         "created_by": current_user,
@@ -55,6 +58,9 @@ async def create_meal(
         "parking_info": body.parking_info,
         "extra_notes": body.extra_notes,
     }
+    category_id = body.category_id or default_category_id()
+    if category_id:
+        meal_data["category_id"] = category_id
     try:
         supabase.table(Tables.MEALS).insert(meal_data).execute()
     except Exception as e:
@@ -153,6 +159,8 @@ async def update_meal(
             updates[field] = getattr(body, field)
     if not updates:
         return
+    if updates.get("category_id"):
+        require_category(updates["category_id"])
     await _resolve_meal_update_coords(meal_id, updates)
 
     try:

@@ -8,6 +8,7 @@ import { useCalendar } from "../../hooks/useCalendar";
 import { useAuthStore } from "../../store/auth.store";
 import { formatDateTime } from "../../utils/format";
 import { routes } from "../../config/routes";
+import { mealCategory } from "../../utils/mealCategory";
 import type { CalendarEvent, Meal, User } from "../../types";
 
 const CLOSED_RECT: AnchorRect = { top: 0, left: 0, right: 0, height: 0 };
@@ -24,7 +25,7 @@ interface MealHeroProps {
   onCancelClick: () => void;
 }
 
-/** Flat ink hero for a meal: name in the display face, mono chips, brand-blue "Aanmelden". */
+/** Flat ink hero for an activity: name in the display face, mono chips, brand-blue "Aanmelden". */
 export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick }: MealHeroProps) {
   const { data: calendarEvents } = useCalendar();
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -32,6 +33,7 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
   const [popupAnchorRect, setPopupAnchorRect] = useState<AnchorRect>(CLOSED_RECT);
   const [namesOpen, setNamesOpen] = useState(false);
   const participants = meal.participants ?? [];
+  const category = mealCategory(meal);
 
   function resolveUser(stored: string) {
     return users.find(
@@ -52,15 +54,18 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
     <section className="overflow-hidden rounded-[14px] border-2 border-outline bg-[#0F1519] text-[#E6F0F3]">
       <div className="px-5 py-5 sm:px-7 sm:py-6">
 
-        {linkedEvent && (
-          <Link
-            to={routes.event.view(linkedEvent.id)}
-            className={`${CHIP} mb-3 transition-colors hover:bg-white/20`}
-          >
-            <CalendarDays size={11} />
-            {linkedEvent.event_name}
-          </Link>
-        )}
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          <span className={`${CHIP} !border-white/40 !bg-white/20`}>{category.name}</span>
+          {linkedEvent && (
+            <Link
+              to={routes.event.view(linkedEvent.id)}
+              className={`${CHIP} transition-colors hover:bg-white/20`}
+            >
+              <CalendarDays size={11} />
+              {linkedEvent.event_name}
+            </Link>
+          )}
+        </div>
 
         <h1 className="break-words font-display text-[34px] font-extrabold uppercase leading-[0.95] tracking-[0.005em] text-[#E6F0F3] sm:text-[42px]">
           {meal.meal_name}
@@ -84,13 +89,13 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
               {meal.location}
             </span>
           )}
-          {meal.cost > 0 && (
+          {category.has_cost && meal.cost > 0 && (
             <span className={`${CHIP} tabular-nums`}>
               <Banknote size={11} />
               €{meal.cost.toFixed(2)} p.p.
             </span>
           )}
-          {meal.transport_needed && (
+          {category.has_transport && meal.transport_needed && (
             <span className={CHIP}>
               <Bus size={11} />
               Vervoer nodig
@@ -98,7 +103,8 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
           )}
         </div>
 
-        {/* Attendees + sign-up */}
+        {/* Attendees + sign-up: only for kinds of activity people sign up for (not the group photo). */}
+        {category.has_signup && (
         <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-dashed border-white/20 pt-4">
           {participants.length > 0 && (
             <button
@@ -144,6 +150,7 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
             </button>
           </div>
         </div>
+        )}
 
         {/* Who's on the list, by name — the avatars alone don't say. */}
         <Collapse open={namesOpen && participants.length > 0}>

@@ -1,9 +1,15 @@
 import { apiClient } from "../lib/api/client";
 import { apiRoutes } from "../config/api-routes";
-import type { Meal, CreateMealRequest, UpdateMealRequest, RsvpRequest } from "../types";
+import type { Meal, MealCategory, CreateMealRequest, UpdateMealRequest, RsvpRequest } from "../types";
 
 export async function getMeals(): Promise<Meal[]> {
   const { data } = await apiClient.get<Meal[]>(apiRoutes.meals.base);
+  return data;
+}
+
+/** The kinds of activity to pick from. */
+export async function getMealCategories(): Promise<MealCategory[]> {
+  const { data } = await apiClient.get<MealCategory[]>(apiRoutes.mealCategories);
   return data;
 }
 

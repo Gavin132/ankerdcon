@@ -29,6 +29,7 @@ export const QUERY_KEYS = {
   adminUsers:  ["admin", "users"]  as const,
   adminRides:  ["admin", "rides"]  as const,
   adminMeals:  ["admin", "meals"]  as const,
+  adminMealCategories: ["admin", "meal-categories"] as const,
   adminEvents: ["admin", "events"] as const,
   adminEventDays: ["admin", "event-days"] as const,
   adminBadges:       ["admin", "badges"]       as const,
@@ -38,6 +39,7 @@ export const QUERY_KEYS = {
   adminWhitelist: ["admin", "whitelist"] as const,
   adminFeedback: ["admin", "feedback"] as const,
 
+  mealCategories: ["meal-categories"] as const,
   cosplays: ["cosplays"] as const,
   expenses: ["expenses"] as const,
 

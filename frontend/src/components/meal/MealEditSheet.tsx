@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { Save } from "lucide-react";
 import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
-import { useUpdateMeal } from "../../hooks/useMeals";
+import { CategoryPicker } from "./CategoryPicker";
+import { useMealCategories, useUpdateMeal } from "../../hooks/useMeals";
+import { mealCategory } from "../../utils/mealCategory";
 import { toast } from "../../store/toast.store";
 import type { CalendarEvent, Meal } from "../../types";
 
@@ -14,13 +16,15 @@ interface MealEditSheetProps {
 }
 
 /**
- * Lets whoever created the meal — or an admin — fix it afterwards. Same
- * fields as "Etentje toevoegen" (TripMealSheet), plus which event it's
+ * Lets whoever created the activity — or an admin — fix it afterwards. Same
+ * fields as "Activiteit toevoegen" (TripMealSheet), plus which event it's
  * linked to; the more detailed practical fields (website, menu, dieet,
  * parkeren, notities) stay admin-only, edited from the admin panel.
  */
 export function MealEditSheet({ open, onClose, meal, events }: MealEditSheetProps) {
   const updateMutation = useUpdateMeal();
+  const { data: categories = [] } = useMealCategories();
+  const [categoryId, setCategoryId] = useState<string | null>(meal.category_id ?? meal.category?.id ?? null);
   const [name, setName] = useState(meal.meal_name);
   const [time, setTime] = useState(meal.time);
   const [location, setLocation] = useState(meal.location);
@@ -38,8 +42,11 @@ export function MealEditSheet({ open, onClose, meal, events }: MealEditSheetProp
     setCost(meal.cost ? String(meal.cost) : "");
     setTransport(meal.transport_needed);
     setLinkedEventId(meal.linked_event_id ?? "");
+    setCategoryId(meal.category_id ?? meal.category?.id ?? null);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // What is on screen follows the soort picked now, falling back to the one it has.
+  const category = categories.find((c) => c.id === categoryId) ?? mealCategory(meal);
   const canSave = name.trim().length > 0 && time.length > 0;
 
   async function save() {
@@ -52,15 +59,16 @@ export function MealEditSheet({ open, onClose, meal, events }: MealEditSheetProp
           time,
           location: location.trim(),
           maps_url: mapsUrl.trim() || null,
-          cost: cost.trim() ? Number(cost.replace(",", ".")) : 0,
-          transport_needed: transport,
+          cost: category.has_cost && cost.trim() ? Number(cost.replace(",", ".")) : 0,
+          transport_needed: category.has_transport && transport,
           linked_event_id: linkedEventId || null,
+          category_id: category.id || undefined,
         },
       });
-      toast("success", "Etentje bijgewerkt!");
+      toast("success", "Activiteit bijgewerkt!");
       onClose();
     } catch {
-      toast("error", "Kon het etentje niet opslaan. Probeer opnieuw.");
+      toast("error", "Kon de activiteit niet opslaan. Probeer opnieuw.");
     }
   }
 
@@ -68,7 +76,7 @@ export function MealEditSheet({ open, onClose, meal, events }: MealEditSheetProp
     <TripSheet
       open={open}
       onClose={onClose}
-      title="Etentje bewerken"
+      title="Activiteit bewerken"
       subtitle={meal.meal_name}
       footer={
         <Button onClick={save} loading={updateMutation.isPending} disabled={!canSave} className="w-full">
@@ -78,12 +86,14 @@ export function MealEditSheet({ open, onClose, meal, events }: MealEditSheetProp
       }
     >
       <div className="space-y-5">
+        <CategoryPicker categories={categories} value={category.id} onChange={(c) => setCategoryId(c.id)} />
+
         <div>
-          <label htmlFor="meal-edit-name" className="section-label mb-2 block">Waar eten we?</label>
+          <label htmlFor="meal-edit-name" className="section-label mb-2 block">{category.is_meal ? "Waar eten we?" : "Wat gaan we doen?"}</label>
           <input
             id="meal-edit-name"
             className="input-field"
-            placeholder="Bijv. Pizza bij Luigi's"
+            placeholder={category.is_meal ? "Bijv. Pizza bij Luigi's" : "Bijv. Bowlen of Groepsfoto"}
             maxLength={80}
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -106,7 +116,7 @@ export function MealEditSheet({ open, onClose, meal, events }: MealEditSheetProp
           <input
             id="meal-edit-location"
             className="input-field"
-            placeholder="Adres of naam van het restaurant"
+            placeholder={category.is_meal ? "Adres of naam van het restaurant" : "Adres of naam van de plek"}
             maxLength={120}
             value={location}
             onChange={(e) => setLocation(e.target.value)}
@@ -125,6 +135,7 @@ export function MealEditSheet({ open, onClose, meal, events }: MealEditSheetProp
           />
         </div>
 
+        {category.has_cost && (
         <div>
           <label htmlFor="meal-edit-cost" className="section-label mb-2 block">Prijs p.p. (optioneel)</label>
           <div className="relative">
@@ -139,6 +150,7 @@ export function MealEditSheet({ open, onClose, meal, events }: MealEditSheetProp
             />
           </div>
         </div>
+        )}
 
         <div>
           <label htmlFor="meal-edit-linked-event" className="section-label mb-2 block">Gekoppeld evenement (optioneel)</label>
@@ -157,10 +169,11 @@ export function MealEditSheet({ open, onClose, meal, events }: MealEditSheetProp
           </select>
         </div>
 
+        {category.has_transport && (
         <div className="flex items-center justify-between gap-4 rounded-xl border-1.5 border-line bg-surface px-3.5 py-3">
           <div className="min-w-0">
             <p id="meal-edit-transport-label" className="text-[14px] font-semibold text-ink">Vervoer regelen</p>
-            <p className="text-[12px] leading-snug text-ink-3">Er komt een rit naar het restaurant waar mensen zich voor kunnen aanmelden.</p>
+            <p className="text-[12px] leading-snug text-ink-3">Er komt een rit naartoe waar mensen zich voor kunnen aanmelden.</p>
           </div>
           <button
             type="button"
@@ -175,6 +188,7 @@ export function MealEditSheet({ open, onClose, meal, events }: MealEditSheetProp
             />
           </button>
         </div>
+        )}
       </div>
     </TripSheet>
   );

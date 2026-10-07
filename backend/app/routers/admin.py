@@ -14,9 +14,11 @@ from app.config import Settings, get_settings
 from app.constants import Tables
 from app.core import minio_client
 from app.core.logging import get_logger
+from app.core.meal_categories import default_category_id, list_meals_with_category, require_category
 from app.core.uploads import clean_image, read_capped, sniff_video
 from app.core.zip_stream import stream_zip
 from app.dependencies import _unique_profile_name, get_admin_user
+from app.models.meal_category import CreateMealCategoryRequest, MealCategory, UpdateMealCategoryRequest
 from app.models.admin import (
     CdnListing,
     CdnObject,
@@ -518,7 +520,7 @@ def admin_remove_passenger(ride_id: str, passenger: str, _: str = Depends(get_ad
 @router.get(AdminRoutes.MEALS, response_model=list[Meal])
 def admin_list_meals(_: str = Depends(get_admin_user)) -> list[Meal]:
     try:
-        return supabase.table(Tables.MEALS).select("*").execute().data
+        return list_meals_with_category()
     except Exception as e:
         logger.error("Failed to list meals: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
@@ -528,6 +530,14 @@ def admin_list_meals(_: str = Depends(get_admin_user)) -> list[Meal]:
 async def admin_create_meal(body: AdminCreateMealRequest, _: str = Depends(get_admin_user)) -> Meal:
     meal_data = body.model_dump()
     meal_data["participants"] = []
+    if meal_data.get("category_id"):
+        require_category(meal_data["category_id"])
+    else:
+        default_id = default_category_id()
+        if default_id:
+            meal_data["category_id"] = default_id
+        else:
+            meal_data.pop("category_id", None)
     coords = await resolve_location(meal_data.get("location"), meal_data.get("maps_url"))
     if coords:
         meal_data["location_lat"], meal_data["location_lng"] = coords
@@ -551,6 +561,8 @@ async def admin_update_meal(
     })
     if not updates:
         return
+    if updates.get("category_id"):
+        require_category(updates["category_id"])
     await _resolve_update_coords(Tables.MEALS, meal_id, updates, "location", "maps_url")
     try:
         resp = supabase.table(Tables.MEALS).update(updates).eq("id", meal_id).execute()
@@ -934,6 +946,77 @@ def admin_delete_hotel_room(
         supabase.table(Tables.HOTEL_ROOMS).delete().eq("id", room_id).execute()
     except Exception as e:
         logger.error("Failed to delete hotel room %s: %s", room_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+
+# ── Meal categories ─────────────────────────────────────────────────────────────
+
+@router.get(AdminRoutes.MEAL_CATEGORIES, response_model=list[MealCategory])
+def admin_list_meal_categories(_: str = Depends(get_admin_user)) -> list[MealCategory]:
+    try:
+        return supabase.table(Tables.MEAL_CATEGORIES).select("*").order("sort_order").order("name").execute().data
+    except Exception as e:
+        logger.error("Failed to list meal categories: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+
+@router.post(AdminRoutes.MEAL_CATEGORIES, response_model=MealCategory, status_code=status.HTTP_201_CREATED)
+def admin_create_meal_category(body: CreateMealCategoryRequest, _: str = Depends(get_admin_user)) -> MealCategory:
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Geef de categorie een naam.")
+    try:
+        existing = supabase.table(Tables.MEAL_CATEGORIES).select("name, sort_order").execute().data
+    except Exception as e:
+        logger.error("Failed to read meal categories before creating %s: %s", name, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if any(r["name"].lower() == name.lower() for r in existing):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Er is al een categorie met de naam {name}.")
+    row = {**body.model_dump(), "name": name, "sort_order": max((r["sort_order"] for r in existing), default=-1) + 1}
+    try:
+        resp = supabase.table(Tables.MEAL_CATEGORIES).insert(row).execute()
+    except Exception as e:
+        logger.error("Failed to create meal category %s: %s", name, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    return resp.data[0]
+
+
+@router.put(AdminRoutes.MEAL_CATEGORY_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
+def admin_update_meal_category(category_id: str, body: UpdateMealCategoryRequest, _: str = Depends(get_admin_user)) -> None:
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    if "name" in updates:
+        updates["name"] = updates["name"].strip()
+        if not updates["name"]:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Geef de categorie een naam.")
+    if not updates:
+        return
+    try:
+        resp = supabase.table(Tables.MEAL_CATEGORIES).update(updates).eq("id", category_id).execute()
+    except Exception as e:
+        logger.error("Failed to update meal category %s: %s", category_id, e)
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Er is al een categorie met die naam, of de database is niet bereikbaar.")
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Categorie niet gevonden.")
+
+
+@router.delete(AdminRoutes.MEAL_CATEGORY_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
+def admin_delete_meal_category(category_id: str, _: str = Depends(get_admin_user)) -> None:
+    """Refused while items still use it: they would otherwise lose their kind."""
+    try:
+        in_use = supabase.table(Tables.MEALS).select("id").eq("category_id", category_id).execute().data
+    except Exception as e:
+        logger.error("Failed to check use of meal category %s: %s", category_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if in_use:
+        n = len(in_use)
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Deze categorie wordt nog door {n} {'activiteit' if n == 1 else 'activiteiten'} gebruikt. Zet die eerst in een andere categorie.",
+        )
+    try:
+        supabase.table(Tables.MEAL_CATEGORIES).delete().eq("id", category_id).execute()
+    except Exception as e:
+        logger.error("Failed to delete meal category %s: %s", category_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 

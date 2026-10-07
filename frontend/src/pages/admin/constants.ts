@@ -62,7 +62,15 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Gebruikers",  path: routes.admin.users,  icon: Users },
       { label: "Whitelist",   path: routes.admin.whitelist, icon: ListChecks },
       { label: "Ritten",      path: routes.admin.rides,  icon: Car },
-      { label: "Maaltijden",  path: routes.admin.meals,  icon: UtensilsCrossed },
+      {
+        label: "Activiteiten",
+        path: routes.admin.meals,
+        icon: UtensilsCrossed,
+        children: [
+          { label: "Overzicht",   path: routes.admin.meals,          icon: UtensilsCrossed, end: true },
+          { label: "Categorieën", path: routes.admin.mealCategories, icon: Layers },
+        ],
+      },
       {
         label: "Evenementen",
         path: routes.admin.events,
@@ -96,7 +104,8 @@ export const PAGE_TITLES: Record<string, string> = {
   [routes.admin.users]:       "Gebruikers",
   [routes.admin.whitelist]:   "Whitelist",
   [routes.admin.rides]:       "Ritten",
-  [routes.admin.meals]:       "Maaltijden",
+  [routes.admin.meals]:       "Activiteiten",
+  [routes.admin.mealCategories]: "Activiteitscategorieën",
   [routes.admin.events]:      "Evenementen",
   [routes.admin.eventGroups]: "Evenementgroepen",
   [routes.admin.badges]:      "Badges",

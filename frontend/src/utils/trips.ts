@@ -1,6 +1,7 @@
 import type { CalendarEvent, HotelRoom, Meal, Ride } from "../types";
 import { parseEventDate, toDateKey, todayKey } from "./date";
 import { formatDateRange, groupCalendarEntries } from "./multiDay";
+import { isMealItem } from "./mealCategory";
 
 /**
  * A trip is the unit the Event tab is built around: every day of one
@@ -251,7 +252,8 @@ export function tripGaps(trip: Trip, rides: Ride[], meals: Meal[]): TripGaps {
   const inbound = onRide("Inbound");
   const outbound = onRide("Outbound");
 
-  const thisTripMeals = tripMeals(meals, trip);
+  // Only meals count here: being at the bowling alley or in the group photo is not having dinner.
+  const thisTripMeals = tripMeals(meals, trip).filter(isMealItem);
   const eating = new Set(thisTripMeals.flatMap((m) => m.participants ?? []).map((n) => n.toLowerCase()));
 
   const transport = trip.participants

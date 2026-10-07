@@ -10,6 +10,7 @@ import type {
   CreateRideRequest,
   ExpenseShare,
   Meal,
+  MealCategory,
   Ride,
   User,
 } from "../types";
@@ -182,6 +183,7 @@ export interface AdminCreateMealPayload {
   maps_url?: string | null;
   cost?: number;
   transport_needed?: boolean;
+  category_id?: string;
 }
 
 export async function createAdminMeal(payload: AdminCreateMealPayload): Promise<Meal> {
@@ -197,6 +199,7 @@ export interface AdminUpdateMealPayload {
   maps_url?: string | null;
   cost?: number;
   transport_needed?: boolean;
+  category_id?: string;
 }
 
 export async function updateAdminMeal({ id, ...payload }: AdminUpdateMealPayload): Promise<void> {
@@ -341,6 +344,31 @@ export async function adminUpdateHotelRoom(
 
 export async function adminDeleteHotelRoom(eventId: string, roomId: string): Promise<void> {
   await apiClient.delete(apiRoutes.admin.events.hotelRoomById(eventId, roomId));
+}
+
+// ── Meal categories ───────────────────────────────────────────────────────────
+
+export type MealCategoryFlags = Pick<MealCategory, "has_signup" | "has_cost" | "has_transport" | "is_meal">;
+
+export async function getAdminMealCategories(): Promise<MealCategory[]> {
+  const { data } = await apiClient.get<MealCategory[]>(apiRoutes.admin.mealCategories.base);
+  return data;
+}
+
+export async function createAdminMealCategory(payload: { name: string } & MealCategoryFlags): Promise<MealCategory> {
+  const { data } = await apiClient.post<MealCategory>(apiRoutes.admin.mealCategories.base, payload);
+  return data;
+}
+
+export async function updateAdminMealCategory(
+  id: string,
+  payload: Partial<MealCategoryFlags> & { name?: string; sort_order?: number },
+): Promise<void> {
+  await apiClient.put(apiRoutes.admin.mealCategories.byId(id), payload);
+}
+
+export async function deleteAdminMealCategory(id: string): Promise<void> {
+  await apiClient.delete(apiRoutes.admin.mealCategories.byId(id));
 }
 
 // ── Event groups ──────────────────────────────────────────────────────────────

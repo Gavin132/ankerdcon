@@ -14,6 +14,7 @@ import {
   useAdminBulkDeleteMeals,
 } from "../../hooks/useAdmin";
 import { useCalendar } from "../../hooks/useCalendar";
+import { useMealCategories } from "../../hooks/useMeals";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { AdminDrawer } from "./AdminDrawer";
 import { toast } from "../../store/toast.store";
@@ -43,6 +44,7 @@ const mealSchema = z.object({
   cost: z.coerce.number().min(0),
   transport_needed: z.boolean().optional(),
   linked_event_id: z.preprocess(optStr, z.string()).optional(),
+  category_id: z.preprocess(optStr, z.string()).optional(),
   website: z.preprocess(optStr, z.string()).optional(),
   menu_url: z.preprocess(optStr, z.string()).optional(),
   description: z.preprocess(optStr, z.string()).optional(),
@@ -65,6 +67,7 @@ function MealDrawer({
   const updateMutation = useAdminUpdateMeal();
   const removeParticipant = useAdminRemoveMealParticipant();
   const { data: allEvents = [] } = useCalendar();
+  const { data: categories = [] } = useMealCategories();
   const isEdit = meal !== null && meal !== "new";
   const open = meal !== null;
 
@@ -83,6 +86,7 @@ function MealDrawer({
       cost: isEdit ? meal.cost : 0,
       transport_needed: isEdit ? meal.transport_needed : false,
       linked_event_id: isEdit ? (meal.linked_event_id ?? "") : "",
+      category_id: isEdit ? (meal.category_id ?? "") : "",
       website: isEdit ? (meal.website ?? "") : "",
       menu_url: isEdit ? (meal.menu_url ?? "") : "",
       description: isEdit ? (meal.description ?? "") : "",
@@ -96,6 +100,7 @@ function MealDrawer({
     const payload = {
       ...values,
       linked_event_id: values.linked_event_id || null,
+      category_id: values.category_id || undefined,
       maps_url: values.maps_url || null,
       website: values.website || null,
       menu_url: values.menu_url || null,
@@ -107,14 +112,14 @@ function MealDrawer({
     try {
       if (isEdit) {
         await updateMutation.mutateAsync({ id: meal.id, ...payload });
-        toast("success", "Maaltijd bijgewerkt.");
+        toast("success", "Activiteit bijgewerkt.");
       } else {
         await createMutation.mutateAsync(payload);
         toast("success", `${values.meal_name} aangemaakt.`);
       }
       onClose();
     } catch {
-      toast("error", "Kon maaltijd niet opslaan.");
+      toast("error", "Kon activiteit niet opslaan.");
     }
   }
 
@@ -232,6 +237,18 @@ function MealDrawer({
         {/* ── Extended info ─────────────────────────────────────────── */}
         <div className={SECTION}>
           <p className={SECTION_TITLE}>Koppeling & details</p>
+
+          {categories.length > 0 && (
+            <div>
+              <label className={L}>Categorie</label>
+              <select {...register("category_id")} className={F}>
+                {!isEdit && <option value="">— Standaard (bovenste) —</option>}
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label className={L}>Koppel aan evenement</label>

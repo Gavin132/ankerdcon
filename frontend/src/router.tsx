@@ -54,6 +54,7 @@ const AdminRidesPage = lazyPage(() => import("./pages/admin/AdminRidesPage"), "A
 const AdminMealsPage = lazyPage(() => import("./pages/admin/AdminMealsPage"), "AdminMealsPage");
 const AdminEventsPage = lazyPage(() => import("./pages/admin/AdminEventsPage"), "AdminEventsPage");
 const AdminBadgesPage = lazyPage(() => import("./pages/admin/AdminBadgesPage"), "AdminBadgesPage");
+const AdminMealCategoriesPage = lazyPage(() => import("./pages/admin/AdminMealCategoriesPage"), "AdminMealCategoriesPage");
 const AdminEventGroupsPage = lazyPage(() => import("./pages/admin/AdminEventGroupsPage"), "AdminEventGroupsPage");
 const AdminBetalingenPage = lazyPage(() => import("./pages/admin/AdminBetalingenPage"), "AdminBetalingenPage");
 const AdminAnnouncementsPage = lazyPage(() => import("./pages/admin/AdminAnnouncementsPage"), "AdminAnnouncementsPage");
@@ -177,6 +178,7 @@ export const router = createBrowserRouter([
                   { path: routes.admin.whitelist,  element: <AdminWhitelistPage /> },
                   { path: routes.admin.rides,      element: <AdminRidesPage /> },
                   { path: routes.admin.meals,      element: <AdminMealsPage /> },
+                  { path: routes.admin.mealCategories, element: <AdminMealCategoriesPage /> },
                   { path: routes.admin.events,      element: <AdminEventsPage /> },
                   { path: routes.admin.eventGroups, element: <AdminEventGroupsPage /> },
                   { path: routes.admin.badges,      element: <AdminBadgesPage /> },

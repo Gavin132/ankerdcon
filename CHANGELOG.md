@@ -6,6 +6,40 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The "Er ging iets mis" screen could not be left.** Both buttons only reloaded the page, which
+  read the same saved data back in and crashed the same way, so for some members it came back
+  every time. "Probeer opnieuw" and "Terug naar start" now throw away what the app saved on the
+  device (the offline copy and the cached data, not your login or settings) and start from the
+  server. The saved data is also dropped as soon as the screen appears, and a new build never
+  reads the saved data of the previous one (before, a hotfix with the same version number did).
+  The screen shows the technical message, so a screenshot says what went wrong.
+- The "Nieuwe versie / Herladen" banner and toasts could sit on top of the error screen; the
+  error screen is now above everything.
+- When the browser blocks storage, a crash showed a blank page instead of the error screen.
+
+### Added
+
+- **Activiteiten.** The Eten tile is now Activiteiten: besides a meal, anyone can plan bowling,
+  Jeopardy, a concert or the group photo. Each one has a soort, picked when planning it. The soort
+  decides what you fill in and what the page has: a meal has a price, a menu and dietary wishes,
+  bowling has a price and a car, Jeopardy only signing up, and the group photo just a time and a
+  place, without signing up. Existing etentjes are the soort Eten and look the same.
+- **Admins manage the soorten** under Admin → Activiteiten → Categorieën: add, rename, reorder and
+  delete them, and switch per soort *Aanmelden*, *Prijs*, *Vervoer* and *Telt als eten* on or off.
+  Eten, Activiteit, Groepsfoto, Spel, Con and Concert are there to start with. A soort that
+  activities still use cannot be deleted. Needs migration v2.36.
+
+### Changed
+
+- Notifications and search say "activiteit" instead of "etentje": "Nieuwe activiteit", and
+  "Activiteit toevoegen" (also found by "eten", "diner", "bowlen", "groepsfoto") in the search.
+- "Nergens bij" only counts meals: being at the bowling alley is not having dinner.
+- **Vervoer shows Heen, Terug and Eten under each other** instead of behind a switch: three
+  sections per day, each with its own "Rit aanbieden". The sheet still opens on the day the
+  Hub's tiles would use and scrolls to the right section.
+
 ---
 
 ## [2.1.0] - 2026-10-05

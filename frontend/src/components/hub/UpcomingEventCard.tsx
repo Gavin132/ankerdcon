@@ -150,7 +150,7 @@ export function UpcomingEventCard({
             <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-2">
               <span className="flex items-center gap-1.5"><CalendarDays size={13} className="shrink-0" /> {when}</span>
               {location && <span className="flex min-w-0 items-center gap-1.5"><MapPin size={13} className="shrink-0" /> <span className="truncate">{location}</span></span>}
-              {!isGroupEvent && hasMeal(event.id) && <span className="flex items-center gap-1.5"><Utensils size={13} className="shrink-0" /> Etentje gepland</span>}
+              {!isGroupEvent && hasMeal(event.id) && <span className="flex items-center gap-1.5"><Utensils size={13} className="shrink-0" /> Activiteit gepland</span>}
             </p>
             {description && (
               <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-ink-3">{description}</p>

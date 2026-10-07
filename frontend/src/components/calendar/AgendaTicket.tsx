@@ -105,7 +105,7 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
               <span className="flex min-w-0 items-center gap-1.5"><MapPin size={13} className="shrink-0" /> <span className="truncate">{trip.location}</span></span>
             )}
             {hotel && <span className="flex min-w-0 items-center gap-1.5"><BedDouble size={13} className="shrink-0" /> <span className="truncate">{hotel}</span></span>}
-            {hasMeal && <span className="flex items-center gap-1.5"><Utensils size={13} className="shrink-0" /> Etentje gepland</span>}
+            {hasMeal && <span className="flex items-center gap-1.5"><Utensils size={13} className="shrink-0" /> Activiteit gepland</span>}
             {eventType === "gathering" && <span className="flex items-center gap-1.5"><PartyPopper size={13} className="shrink-0" /> Feestje</span>}
             {eventType === "concert" && <span className="flex items-center gap-1.5"><Music2 size={13} className="shrink-0" /> Concert</span>}
           </p>

@@ -104,12 +104,13 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
 - **Heen** (inbound), **Terug** (outbound) and **Restaurant** rides. A ride has a
   driver, seats, a departure time, a start and end location and optional parking
   info. Public transport has no seats.
-- **The Vervoer sheet** shows one direction of one day at a time: a segmented control picks
-  Heen, Terug or Eten (with the number of rides), and on a multi-day trip day chips pick the
+- **The Vervoer sheet** shows one day at a time, with three sections under each other:
+  **Heen**, **Terug** and, when the trip has a meal, **Eten** (each header with its number of
+  rides and, for Heen and Terug, its own "Rit aanbieden"). On a multi-day trip day chips pick the
   day (an amber dot marks a day that still has people without transport). Each ride is a
   single row (time, driver, where from or to, seats free and the car's target); tap it for
   who rides along, the parking info, **Stap in** / **Uitstappen** and a link to the ride's
-  own page. **Your own ride is the blue row.** The sheet opens on the direction and day the
+  own page. **Your own ride is the blue row.** The sheet opens on the day, and scrolls to the section, the
   Hub's "Rit aanbieden" and "Meerijden" tiles would use (`utils/transportView.ts`, built on
   `planQuickRide`): Heen before the trip and in the morning, Terug from 13:00, Heen on
   tomorrow's day from 21:00, Terug on the last day once it's over, and Eten instead of Terug
@@ -142,13 +143,29 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
   truck for one specific member (by profile id), otherwise a car, drawn smaller for
   4 seats or fewer.
 
-## Food
+## Activities (food, bowling, the group photo)
 
-`components/food/`, `components/meal/`, `backend/app/routers/meals.py`. A meal has a
+`components/food/`, `components/meal/`, `backend/app/routers/meals.py`. An activity has a
 time, location, cost, dietary notes, links, whether it needs transport, and
-participants. Anyone can plan a meal for a trip (`TripMealSheet.tsx`); only its
-creator or an admin can delete it. The Eten tile lists the next meals, and its
-"nergens bij" pill opens the names of the members who are not at any meal yet.
+participants. It started as the meal ("etentje"), so code, API and the `meals` table keep
+that name; the app calls it an **activiteit**. Anyone can plan one for a trip
+(`TripMealSheet.tsx`); only its creator or an admin can edit or delete it. The
+**Activiteiten** tile lists the next ones, and its "nergens bij" pill opens the names of the
+members who are not at any *meal* yet.
+
+- **Soort (category).** Each activity has a category (Eten, Activiteit, Groepsfoto, Spel,
+  Con, Concert, ...) from the `meal_categories` table. Admins manage them under
+  Admin → Activiteiten → Categorieën: add, rename, reorder (the top one is preselected) and
+  delete (refused while activities still use it). The backend sends a category along with each
+  activity (`Meal.category`), so no screen needs a second request, and an activity without one
+  behaves as before (`FALLBACK_CATEGORY` in `utils/mealCategory.ts`).
+- **What a category has**, as four switches: *Aanmelden* (the Aanmelden/Afmelden buttons and the
+  list of who is going), *Prijs* (a price per person), *Vervoer* (the "Vervoer regelen" switch,
+  and so a ride) and *Telt als eten* (dietary wishes, and "nergens bij"). The create and edit
+  sheets and the detail page show only what the category has. The group photo has none of them:
+  just a time and a place.
+- No maximum number of spots and no sign-up deadline, on purpose.
+- The Vervoer sheet's third section is called Activiteiten and lists every activity with a car.
 
 ## Hotel rooms
 

@@ -129,8 +129,8 @@ def test_eligible_names_none_means_no_extra_restriction(monkeypatch, dmed, pushe
 
 def test_push_title_is_the_category_not_the_app_name(monkeypatch, dmed, pushed_titles):
     monkeypatch.setattr(svc, "supabase", FakeSupabase([_profile()]))
-    svc.broadcast_category_dm("tok", "meal_created", "🍽️ **Nieuwe maaltijd: Pizza**")
-    assert pushed_titles == ["Nieuwe maaltijd"]
+    svc.broadcast_category_dm("tok", "meal_created", "🍽️ **Nieuwe activiteit: Pizza**")
+    assert pushed_titles == ["Nieuwe activiteit"]
 
 
 def test_push_title_falls_back_to_the_app_name_for_an_unknown_category(monkeypatch, dmed, pushed_titles):
@@ -140,10 +140,10 @@ def test_push_title_falls_back_to_the_app_name_for_an_unknown_category(monkeypat
 
 
 def test_push_body_does_not_repeat_the_title(monkeypatch, dmed, pushed_bodies):
-    """The title ("Nieuwe maaltijd") already shows in the notification chrome —
+    """The title ("Nieuwe activiteit") already shows in the notification chrome —
     the body shouldn't open with it again."""
     monkeypatch.setattr(svc, "supabase", FakeSupabase([_profile()]))
-    svc.broadcast_category_dm("tok", "meal_created", "🍽️ **Nieuwe maaltijd: Pizza**\n🕐 19:00")
+    svc.broadcast_category_dm("tok", "meal_created", "🍽️ **Nieuwe activiteit: Pizza**\n🕐 19:00")
     assert pushed_bodies == ["🍽️ Pizza"]
 
 

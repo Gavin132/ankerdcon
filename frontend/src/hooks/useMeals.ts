@@ -1,12 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getMeals, createMeal, updateMeal, rsvpMeal, cancelRsvp } from "../services/meals.service";
+import { getMeals, getMealCategories, createMeal, updateMeal, rsvpMeal, cancelRsvp } from "../services/meals.service";
 import { QUERY_KEYS, STALE_TIME } from "../constants";
-import type { CreateMealRequest, UpdateMealRequest, RsvpRequest, Meal } from "../types";
+import type { CreateMealRequest, UpdateMealRequest, RsvpRequest, Meal, MealCategory } from "../types";
 
 export function useMeals() {
   return useQuery({
     queryKey: QUERY_KEYS.meals,
     queryFn: getMeals,
+    staleTime: STALE_TIME,
+  });
+}
+
+/** The kinds of activity. Empty (never an error) when they cannot be loaded, so the form
+ * still works with the old etentje behaviour. */
+export function useMealCategories() {
+  return useQuery<MealCategory[]>({
+    queryKey: QUERY_KEYS.mealCategories,
+    queryFn: () => getMealCategories().catch(() => []),
     staleTime: STALE_TIME,
   });
 }

@@ -52,6 +52,7 @@ class AdminCreateMealRequest(BaseModel):
     dietary_options: Optional[str] = None
     parking_info: Optional[str] = None
     extra_notes: Optional[str] = None
+    category_id: Optional[str] = None
 
 
 class AdminUpdateMealRequest(BaseModel):
@@ -68,6 +69,7 @@ class AdminUpdateMealRequest(BaseModel):
     dietary_options: Optional[str] = None
     parking_info: Optional[str] = None
     extra_notes: Optional[str] = None
+    category_id: Optional[str] = None
 
 
 class AdminCreateEventRequest(BaseModel):

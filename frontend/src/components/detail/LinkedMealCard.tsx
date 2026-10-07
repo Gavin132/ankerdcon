@@ -16,7 +16,7 @@ export function LinkedMealCard({ meal }: { meal: Meal }) {
     <div className="card-surface overflow-hidden">
       <div className="px-4 py-4">
         <h2 className="section-label mb-3">
-          Gekoppeld etentje
+          Gekoppelde activiteit
         </h2>
         <Link
           to={routes.meal.view(meal.id)}

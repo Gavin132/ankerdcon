@@ -105,6 +105,7 @@ export const routes = {
     users:             "/admin/users",
     rides:             "/admin/rides",
     meals:             "/admin/meals",
+    mealCategories:    "/admin/meal-categories",
     events:            "/admin/events",
     eventGroups:       "/admin/event-groups",
     badges:            "/admin/badges",

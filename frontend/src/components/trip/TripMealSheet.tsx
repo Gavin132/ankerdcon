@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { Utensils } from "lucide-react";
+import { CalendarPlus } from "lucide-react";
 import { TripSheet } from "./TripSheet";
 import { Button } from "../common/Button";
-import { useCreateMeal } from "../../hooks/useMeals";
+import { CategoryPicker } from "../meal/CategoryPicker";
+import { useCreateMeal, useMealCategories } from "../../hooks/useMeals";
+import { defaultCategory } from "../../utils/mealCategory";
 import { toast } from "../../store/toast.store";
 import { toDateKey, todayKey } from "../../utils/date";
 import { dayShort, monthShort } from "../../utils/multiDay";
@@ -21,12 +23,16 @@ function defaultDayId(trip: Trip): string {
 }
 
 /**
- * Anyone can plan a meal for the trip. It's linked to the chosen day of the
- * trip, shows up in the Eten tile straight away and (like one made in the
- * admin panel) notifies everyone subscribed to new meals.
+ * Anyone can plan an activity for the trip: a meal, bowling, the group photo.
+ * The chosen soort decides what the form asks (a price, a car) and what the
+ * page has afterwards (signing up). It's linked to the chosen day of the trip,
+ * shows up in the Activiteiten tile straight away and (like one made in the
+ * admin panel) notifies everyone subscribed to new activities.
  */
 export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
   const createMutation = useCreateMeal();
+  const { data: categories = [] } = useMealCategories();
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [dayId, setDayId] = useState(() => defaultDayId(trip));
   const [time, setTime] = useState("19:00");
@@ -44,8 +50,11 @@ export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
     setMapsUrl("");
     setCost("");
     setTransport(false);
+    setCategoryId(null);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Until someone picks one, the first soort (normally Eten) is selected.
+  const category = categories.find((c) => c.id === categoryId) ?? defaultCategory(categories);
   const day = trip.days.find((d) => d.ev.id === dayId) ?? trip.days[0];
   const canSave = name.trim().length > 0 && time.length > 0;
 
@@ -57,14 +66,15 @@ export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
         time: `${toDateKey(day.date)}T${time}`,
         location: location.trim() || undefined,
         maps_url: mapsUrl.trim() || undefined,
-        cost: cost.trim() || undefined,
-        transport_needed: transport,
+        cost: category.has_cost ? cost.trim() || undefined : undefined,
+        transport_needed: category.has_transport && transport,
         linked_event_id: day.ev.id,
+        category_id: category.id || undefined,
       });
       toast("success", `${name.trim()} toegevoegd`);
       onClose();
     } catch {
-      toast("error", "Kon het etentje niet toevoegen. Probeer opnieuw.");
+      toast("error", "Kon de activiteit niet toevoegen. Probeer opnieuw.");
     }
   }
 
@@ -72,22 +82,24 @@ export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
     <TripSheet
       open={open}
       onClose={onClose}
-      title="Etentje toevoegen"
+      title="Activiteit toevoegen"
       subtitle={trip.title}
       footer={
         <Button onClick={save} loading={createMutation.isPending} disabled={!canSave} className="w-full">
-          <Utensils size={15} />
-          Etentje opslaan
+          <CalendarPlus size={15} />
+          Activiteit opslaan
         </Button>
       }
     >
       <div className="space-y-5">
+        <CategoryPicker categories={categories} value={category.id} onChange={(c) => setCategoryId(c.id)} />
+
         <div>
-          <label htmlFor="meal-name" className="section-label mb-2 block">Waar eten we?</label>
+          <label htmlFor="meal-name" className="section-label mb-2 block">{category.is_meal ? "Waar eten we?" : "Wat gaan we doen?"}</label>
           <input
             id="meal-name"
             className="input-field"
-            placeholder="Bijv. Pizza bij Luigi's"
+            placeholder={category.is_meal ? "Bijv. Pizza bij Luigi's" : "Bijv. Bowlen of Groepsfoto"}
             maxLength={80}
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -124,7 +136,7 @@ export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
           <input
             id="meal-location"
             className="input-field"
-            placeholder="Adres of naam van het restaurant"
+            placeholder={category.is_meal ? "Adres of naam van het restaurant" : "Adres of naam van de plek"}
             maxLength={120}
             value={location}
             onChange={(e) => setLocation(e.target.value)}
@@ -143,10 +155,11 @@ export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
           />
           <p className="mt-1.5 text-xs text-ink-3">
             Opent direct de juiste plek vanaf de kaart, in plaats van dat iedereen er zelf naar moet zoeken. Vul ook
-            een locatie hierboven in, anders krijgt dit etentje geen pin.
+            een locatie hierboven in, anders krijgt deze activiteit geen pin.
           </p>
         </div>
 
+        {category.has_cost && (
         <div>
           <label htmlFor="meal-cost" className="section-label mb-2 block">Prijs p.p. (optioneel)</label>
           <div className="relative">
@@ -161,12 +174,14 @@ export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
             />
           </div>
         </div>
+        )}
 
         {/* A real switch, so it reads as an on/off choice rather than an input. */}
+        {category.has_transport && (
         <div className="flex items-center justify-between gap-4 rounded-xl border-1.5 border-line bg-surface px-3.5 py-3">
           <div className="min-w-0">
             <p id="meal-transport-label" className="text-[14px] font-semibold text-ink">Vervoer regelen</p>
-            <p className="text-[12px] leading-snug text-ink-3">Er komt een rit naar het restaurant waar mensen zich voor kunnen aanmelden.</p>
+            <p className="text-[12px] leading-snug text-ink-3">Er komt een rit naartoe waar mensen zich voor kunnen aanmelden.</p>
           </div>
           <button
             type="button"
@@ -181,6 +196,7 @@ export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
             />
           </button>
         </div>
+        )}
       </div>
     </TripSheet>
   );

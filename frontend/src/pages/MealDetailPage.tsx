@@ -18,6 +18,7 @@ import { RestaurantDetailActions } from "../components/ride/RestaurantDetailActi
 import { RestaurantQuickDriverModal } from "../components/transport/RestaurantQuickDriverModal";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
+import { mealCategory } from "../utils/mealCategory";
 import { NamePicker } from "../components/common/NamePicker";
 
 export function MealDetailPage() {
@@ -124,7 +125,7 @@ export function MealDetailPage() {
         <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
           <UtensilsCrossed size={22} />
         </span>
-        <p className="text-sm font-semibold text-ink">Maaltijd niet gevonden</p>
+        <p className="text-sm font-semibold text-ink">Activiteit niet gevonden</p>
         <button onClick={goBack} className="text-xs font-semibold text-brand-text hover:underline">
           Terug
         </button>
@@ -143,8 +144,8 @@ export function MealDetailPage() {
             <button
               type="button"
               onClick={() => setEditOpen(true)}
-              title="Etentje bewerken"
-              aria-label="Etentje bewerken"
+              title="Activiteit bewerken"
+              aria-label="Activiteit bewerken"
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
             >
               <Pencil size={16} />
@@ -170,7 +171,7 @@ export function MealDetailPage() {
             {restaurantRide ? (
               <RestaurantDetailActions ride={restaurantRide} userNames={userNames} users={users} linkedMeal={meal} />
             ) : (
-              meal.transport_needed && linkedEvent && (
+              mealCategory(meal).has_transport && meal.transport_needed && linkedEvent && (
                 <button
                   type="button"
                   onClick={() => setQuickRideOpen(true)}

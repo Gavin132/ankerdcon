@@ -49,9 +49,9 @@ export const SEARCH_ACTIONS: readonly SearchActionDef[] = [
   },
   {
     id: "meal",
-    label: "Etentje plannen",
-    hint: "Maak een maaltijd aan",
-    aliases: ["eten", "maaltijd aanmaken", "etentje aanmaken", "diner", "lunch", "ontbijt", "restaurant", "meal", "uit eten", "food"],
+    label: "Activiteit toevoegen",
+    hint: "Een etentje, bowlen, groepsfoto of iets anders",
+    aliases: ["activiteiten", "etentje plannen", "etentje aanmaken", "eten", "maaltijd", "diner", "lunch", "ontbijt", "restaurant", "bowlen", "spel", "groepsfoto", "concert", "plannen", "meal", "uit eten", "food"],
     needsTrip: true,
     needsOpenTrip: true,
     route: "addMeal",

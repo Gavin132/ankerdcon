@@ -79,7 +79,7 @@ _PUSH_TITLES: dict[str, str] = {
     NotificationCategory.EVENT_REMINDER_DAY_OF: "Vandaag",
     NotificationCategory.RIDE_CREATED: "Nieuwe rit",
     NotificationCategory.EXPENSE_CREATED: "Nieuwe uitgave",
-    NotificationCategory.MEAL_CREATED: "Nieuwe maaltijd",
+    NotificationCategory.MEAL_CREATED: "Nieuwe activiteit",
 }
 
 
