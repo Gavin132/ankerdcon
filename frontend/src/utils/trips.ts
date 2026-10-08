@@ -24,6 +24,9 @@ export interface Trip {
   title: string;
   dateRange: string;
   location: string;
+  /** Where `location` is, as the backend resolved it when the event was saved (from the
+   * address or the Maps link). Null when it could not be placed. */
+  locationCoords: { latitude: number; longitude: number } | null;
   isHotel: boolean;
   hasCon: boolean;
   /** Everyone signed up for at least one day of the trip. */
@@ -58,6 +61,11 @@ export function tripIdOf(ev: CalendarEvent): string {
   return ev.multi_day_id || ev.id;
 }
 
+function locationCoordsOf(days: TripDay[]): Trip["locationCoords"] {
+  const day = days.find((d) => d.ev.location_lat != null && d.ev.location_lng != null);
+  return day ? { latitude: day.ev.location_lat as number, longitude: day.ev.location_lng as number } : null;
+}
+
 function tripFromDays(id: string, days: TripDay[]): Trip {
   return {
     id,
@@ -66,6 +74,7 @@ function tripFromDays(id: string, days: TripDay[]): Trip {
     title: days[0].ev.event_name,
     dateRange: formatDateRange(days.map((d) => d.date)),
     location: days.find((d) => d.ev.location)?.ev.location ?? "",
+    locationCoords: locationCoordsOf(days),
     isHotel: days.some((d) => d.ev.is_hotel),
     hasCon: days.some((d) => d.ev.has_con !== false),
     participants: [...new Set(days.flatMap((d) => d.ev.participants ?? []))],

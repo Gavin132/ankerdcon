@@ -476,8 +476,8 @@ export function ExpensesTile({ trip, phase, expenses, myNames }: { trip: Trip; p
 
 /* ── Weer ────────────────────────────────────────────────────────────────── */
 
-function DayForecast({ location, day }: { location: string; day: TripDay }) {
-  const { data } = useEventWeather(location, toDateKey(day.date));
+function DayForecast({ trip, day }: { trip: Trip; day: TripDay }) {
+  const { data } = useEventWeather(trip.location, toDateKey(day.date), trip.locationCoords);
   const max = data ? Math.round(data.kind === "forecast" ? data.data.temp_max : data.data.temp_max_avg) : null;
   return (
     <span className="flex flex-col items-center gap-0.5 text-[11px] text-ink-3">
@@ -491,7 +491,7 @@ function DayForecast({ location, day }: { location: string; day: TripDay }) {
 export function WeatherTile({ trip, onOpen }: { trip: Trip; onOpen: () => void }) {
   const days = trip.days.filter((d) => toDateKey(d.date) >= todayKey()).slice(0, 4);
   const first = days[0] ?? trip.days[0];
-  const { data } = useEventWeather(trip.location, toDateKey(first.date));
+  const { data } = useEventWeather(trip.location, toDateKey(first.date), trip.locationCoords);
 
   return (
     <TripTile icon={CloudSun} label="Weer" onOpen={onOpen}>
@@ -501,7 +501,7 @@ export function WeatherTile({ trip, onOpen }: { trip: Trip; onOpen: () => void }
       <TileText>{data ? `${data.kind === "climate" ? "Gemiddeld, " : ""}${data.data.description.toLowerCase()}` : "Nog geen weer"}</TileText>
       {days.length > 1 && (
         <span className="grid grid-cols-4 gap-1">
-          {days.map((d) => <DayForecast key={d.ev.id} location={trip.location} day={d} />)}
+          {days.map((d) => <DayForecast key={d.ev.id} trip={trip} day={d} />)}
         </span>
       )}
     </TripTile>
@@ -512,7 +512,7 @@ export function WeatherTile({ trip, onOpen }: { trip: Trip; onOpen: () => void }
 export function WeatherSheet({ open, onClose, trip }: { open: boolean; onClose: () => void; trip: Trip }) {
   const [dayId, setDayId] = useState(() => defaultTripDayId(trip));
   const day = trip.days.find((d) => d.ev.id === dayId) ?? trip.days[0];
-  const { data: weather, isLoading } = useEventWeather(trip.location, toDateKey(day.date));
+  const { data: weather, isLoading } = useEventWeather(trip.location, toDateKey(day.date), trip.locationCoords);
 
   return (
     <TripSheet open={open} onClose={onClose} title="Weer" subtitle={trip.title}>

@@ -186,9 +186,14 @@ async function fetchClimateAverage(
 async function fetchWeather(
   location: string,
   date: string,
+  known: Coordinates | null,
 ): Promise<WeatherResult | null> {
-  // 1. Geocode (with word-level fallback)
-  const place = await geocode(location);
+  // 1. Where is it? The event's own coordinates when it has them: the backend placed
+  //    it from the address or the Maps link when it was saved. Searching the name again
+  //    here is only for events it could not place, and it is a guess ("Brussel Expo"
+  //    found nothing, and the last-resort single word "Expo" matched a village in
+  //    Virginia, so the card showed that village's 29 degrees for Brussels in October).
+  const place = known ?? (await geocode(location));
   if (!place) return null;
 
   const { latitude, longitude } = place;
@@ -282,13 +287,16 @@ export function msUntilNextWeatherSlot(now: Date = new Date()): number {
   return next.getTime() - now.getTime();
 }
 
+export type Coordinates = { latitude: number; longitude: number };
+
 export function useEventWeather(
   location: string | undefined,
   date: string | undefined,
+  coords?: Coordinates | null,
 ) {
   return useQuery({
-    queryKey: ["eventWeather", location, date],
-    queryFn: () => fetchWeather(location!, date!),
+    queryKey: ["eventWeather", location, date, coords?.latitude ?? null, coords?.longitude ?? null],
+    queryFn: () => fetchWeather(location!, date!, coords ?? null),
     enabled: !!location && !!date,
     staleTime: msUntilNextWeatherSlot(),
     retry: false,
