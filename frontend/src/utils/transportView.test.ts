@@ -32,6 +32,11 @@ describe("defaultTransportView", () => {
     expect(defaultTransportView(trip(true), [], at(21, 22))).toEqual({ direction: "Inbound", dayId: "sun" });
   });
 
+  it("flips at 20:00 exactly: still Terug at 19:59, Heen tomorrow from 20:00", () => {
+    expect(defaultTransportView(trip(true), [], at(21, 19, 59))).toEqual({ direction: "Outbound", dayId: "sat" });
+    expect(defaultTransportView(trip(true), [], at(21, 20))).toEqual({ direction: "Inbound", dayId: "sun" });
+  });
+
   it("stays on Terug, on the last day, once the trip is over", () => {
     expect(defaultTransportView(trip(true), [], at(25, 12))).toEqual({ direction: "Outbound", dayId: "sun" });
   });
