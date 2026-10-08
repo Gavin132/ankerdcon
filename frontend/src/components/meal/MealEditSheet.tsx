@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Save } from "lucide-react";
+import { Save, Trash2 } from "lucide-react";
 import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
 import { CategoryPicker } from "./CategoryPicker";
-import { useMealCategories, useUpdateMeal } from "../../hooks/useMeals";
+import { useDeleteMeal, useMealCategories, useUpdateMeal } from "../../hooks/useMeals";
 import { mealCategory } from "../../utils/mealCategory";
 import { toast } from "../../store/toast.store";
 import type { CalendarEvent, Meal } from "../../types";
@@ -13,16 +13,21 @@ interface MealEditSheetProps {
   onClose: () => void;
   meal: Meal;
   events: CalendarEvent[];
+  /** Called once the activity is gone, so the page showing it can leave. */
+  onDeleted: () => void;
 }
 
 /**
- * Lets whoever created the activity — or an admin — fix it afterwards. Same
+ * Lets whoever created the activity — or an admin — fix it afterwards, or remove
+ * it. Same
  * fields as "Activiteit toevoegen" (TripMealSheet), plus which event it's
  * linked to; the more detailed practical fields (website, menu, dieet,
  * parkeren, notities) stay admin-only, edited from the admin panel.
  */
-export function MealEditSheet({ open, onClose, meal, events }: MealEditSheetProps) {
+export function MealEditSheet({ open, onClose, meal, events, onDeleted }: MealEditSheetProps) {
   const updateMutation = useUpdateMeal();
+  const deleteMutation = useDeleteMeal();
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const { data: categories = [] } = useMealCategories();
   const [categoryId, setCategoryId] = useState<string | null>(meal.category_id ?? meal.category?.id ?? null);
   const [name, setName] = useState(meal.meal_name);
@@ -43,11 +48,23 @@ export function MealEditSheet({ open, onClose, meal, events }: MealEditSheetProp
     setTransport(meal.transport_needed);
     setLinkedEventId(meal.linked_event_id ?? "");
     setCategoryId(meal.category_id ?? meal.category?.id ?? null);
+    setConfirmDelete(false);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // What is on screen follows the soort picked now, falling back to the one it has.
   const category = categories.find((c) => c.id === categoryId) ?? mealCategory(meal);
   const canSave = name.trim().length > 0 && time.length > 0;
+
+  async function remove() {
+    try {
+      await deleteMutation.mutateAsync(meal.id);
+      toast("success", `${meal.meal_name} verwijderd.`);
+      onClose();
+      onDeleted();
+    } catch {
+      toast("error", "Kon de activiteit niet verwijderen. Probeer opnieuw.");
+    }
+  }
 
   async function save() {
     if (!canSave) return;
@@ -189,6 +206,38 @@ export function MealEditSheet({ open, onClose, meal, events }: MealEditSheetProp
           </button>
         </div>
         )}
+
+        {/* Removing is a different thing from saving, so it sits apart and asks first. */}
+        <div className="border-t-1.5 border-line pt-5">
+          {confirmDelete ? (
+            <div className="space-y-3 rounded-xl border-1.5 border-rose-300 bg-rose-50 p-3.5 dark:border-rose-400/40 dark:bg-rose-500/10">
+              <p className="text-[13px] leading-snug text-rose-800 dark:text-rose-200">
+                <b>{meal.meal_name}</b> verwijderen?
+                {meal.participants.length > 0 &&
+                  ` ${meal.participants.length} ${meal.participants.length === 1 ? "aanmelding gaat" : "aanmeldingen gaan"} mee.`}
+                {meal.transport_needed && " De rit ernaartoe wordt ook verwijderd."} Dit kan niet ongedaan worden.
+              </p>
+              <div className="flex gap-2">
+                <Button variant="danger" onClick={remove} loading={deleteMutation.isPending} className="flex-1">
+                  <Trash2 size={15} />
+                  Ja, verwijderen
+                </Button>
+                <Button variant="secondary" onClick={() => setConfirmDelete(false)} disabled={deleteMutation.isPending} className="flex-1">
+                  Annuleren
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="flex items-center gap-2 text-[13px] font-semibold text-rose-700 transition-colors hover:text-rose-900 dark:text-rose-300 dark:hover:text-rose-200"
+            >
+              <Trash2 size={14} />
+              Activiteit verwijderen
+            </button>
+          )}
+        </div>
       </div>
     </TripSheet>
   );

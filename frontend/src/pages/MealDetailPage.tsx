@@ -279,6 +279,7 @@ export function MealDetailPage() {
           onClose={() => setEditOpen(false)}
           meal={meal}
           events={events}
+          onDeleted={goBack}
         />
       )}
     </div>

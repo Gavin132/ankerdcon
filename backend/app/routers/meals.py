@@ -1,4 +1,5 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi.concurrency import run_in_threadpool
 
 from app.config import Settings, get_settings
 from app.constants import Tables
@@ -36,8 +37,10 @@ async def create_meal(
     current_user: str = Depends(get_current_user),
     settings: Settings = Depends(get_settings),
 ) -> None:
+    # These handlers are `async` for the geocoding await, so every database call in them goes
+    # through the thread pool: called directly, a slow query would freeze the whole server.
     if body.category_id:
-        require_category(body.category_id)
+        await run_in_threadpool(require_category, body.category_id)
     coords = await resolve_location(body.location, body.maps_url)
     meal_data = {
         "created_by": current_user,
@@ -58,11 +61,11 @@ async def create_meal(
         "parking_info": body.parking_info,
         "extra_notes": body.extra_notes,
     }
-    category_id = body.category_id or default_category_id()
+    category_id = body.category_id or await run_in_threadpool(default_category_id)
     if category_id:
         meal_data["category_id"] = category_id
     try:
-        supabase.table(Tables.MEALS).insert(meal_data).execute()
+        await run_in_threadpool(lambda: supabase.table(Tables.MEALS).insert(meal_data).execute())
     except Exception as e:
         logger.error("Failed to create meal: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
@@ -120,7 +123,7 @@ async def _resolve_meal_update_coords(meal_id: str, updates: dict) -> None:
     maps_url = updates.get("maps_url")
     if "location" not in updates or "maps_url" not in updates:
         try:
-            rows = supabase.table(Tables.MEALS).select("location, maps_url").eq("id", meal_id).execute().data
+            rows = (await run_in_threadpool(lambda: supabase.table(Tables.MEALS).select("location, maps_url").eq("id", meal_id).execute())).data
         except Exception as e:
             logger.error("Failed to fetch current location/maps_url for meal %s: %s", meal_id, e)
             rows = []
@@ -141,7 +144,7 @@ async def update_meal(
 ) -> None:
     """Let whoever created a meal — or an admin — correct it afterwards."""
     try:
-        row = supabase.table(Tables.MEALS).select("created_by").eq("id", meal_id).execute()
+        row = await run_in_threadpool(lambda: supabase.table(Tables.MEALS).select("created_by").eq("id", meal_id).execute())
     except Exception as e:
         logger.error("Failed to fetch meal %s for update: %s", meal_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
@@ -160,11 +163,11 @@ async def update_meal(
     if not updates:
         return
     if updates.get("category_id"):
-        require_category(updates["category_id"])
+        await run_in_threadpool(require_category, updates["category_id"])
     await _resolve_meal_update_coords(meal_id, updates)
 
     try:
-        resp = supabase.table(Tables.MEALS).update(updates).eq("id", meal_id).execute()
+        resp = await run_in_threadpool(lambda: supabase.table(Tables.MEALS).update(updates).eq("id", meal_id).execute())
     except Exception as e:
         logger.error("Failed to update meal %s: %s", meal_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
@@ -187,7 +190,10 @@ def delete_meal(meal_id: str, current_user: str = Depends(get_current_user)) -> 
         "Alleen wie deze maaltijd heeft aangemaakt, of een admin, kan hem verwijderen.",
     )
 
+    # The ride to a restaurant only exists for that meal; left behind, it would lose its
+    # meal and hang around unseen with people still signed up for it.
     try:
+        supabase.table(Tables.RIDES).delete().eq("direction", "Restaurant").eq("linked_meal_id", meal_id).execute()
         supabase.table(Tables.MEALS).delete().eq("id", meal_id).execute()
     except Exception as e:
         logger.error("Failed to delete meal %s: %s", meal_id, e)

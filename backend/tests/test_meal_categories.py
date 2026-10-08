@@ -70,8 +70,8 @@ class _Query:
 
 
 class FakeDb:
-    def __init__(self, categories=None, meals=None):
-        self.tables = {"meal_categories": categories if categories is not None else [], "meals": meals or []}
+    def __init__(self, categories=None, meals=None, rides=None):
+        self.tables = {"meal_categories": categories if categories is not None else [], "meals": meals or [], "rides": rides or []}
 
     def table(self, name):
         return _Query(self, name)
@@ -188,3 +188,41 @@ def test_listing_meals_falls_back_to_plain_rows_when_the_embed_fails(monkeypatch
     monkeypatch.setattr(mc, "supabase", db)
     assert mc.list_meals_with_category() == [{"id": "m1"}]
     assert db.calls[-1] == "*"
+
+
+# ── deleting an activity ─────────────────────────────────────────────────────
+
+
+def _delete(monkeypatch, db, user, is_admin=False):
+    _use(monkeypatch, db)
+    monkeypatch.setattr(deps, "_is_admin", lambda _n: is_admin)
+    meals_router.delete_meal("m1", user)
+
+
+def test_the_creator_can_delete_an_activity_and_its_restaurant_ride(monkeypatch):
+    db = FakeDb(
+        meals=[{"id": "m1", "created_by": "Sam"}, {"id": "m2", "created_by": "Sam"}],
+        rides=[
+            {"id": "r1", "direction": "Restaurant", "linked_meal_id": "m1"},
+            {"id": "r2", "direction": "Restaurant", "linked_meal_id": "m2"},
+            {"id": "r3", "direction": "Inbound", "linked_meal_id": "m1"},
+        ],
+    )
+    _delete(monkeypatch, db, "Sam")
+    assert [m["id"] for m in db.tables["meals"]] == ["m2"]
+    # Only that meal's restaurant ride goes; another meal's and a plain Heen ride stay.
+    assert sorted(r["id"] for r in db.tables["rides"]) == ["r2", "r3"]
+
+
+def test_an_admin_can_delete_someone_elses_activity(monkeypatch):
+    db = FakeDb(meals=[{"id": "m1", "created_by": "Sam"}])
+    _delete(monkeypatch, db, "Admin", is_admin=True)
+    assert db.tables["meals"] == []
+
+
+def test_someone_else_cannot_delete_it(monkeypatch):
+    db = FakeDb(meals=[{"id": "m1", "created_by": "Sam"}], rides=[{"id": "r1", "direction": "Restaurant", "linked_meal_id": "m1"}])
+    with pytest.raises(HTTPException) as e:
+        _delete(monkeypatch, db, "Lou")
+    assert e.value.status_code == 403
+    assert len(db.tables["meals"]) == 1 and len(db.tables["rides"]) == 1
