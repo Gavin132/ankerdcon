@@ -1,12 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ChevronDown, Users } from "lucide-react";
 import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
 import { useCurrentUser } from "../../hooks/useUsers";
 import { useCreateRide } from "../../hooks/useRides";
+import { useCalendar } from "../../hooks/useCalendar";
 import { toast } from "../../store/toast.store";
-import { quickDepartureOptions, splitDateTime } from "../../utils/date";
+import { quickDepartureOptions, splitDateTime, toDateKey } from "../../utils/date";
+import { buildTrip, tripIdOf } from "../../utils/trips";
+import { defaultRideEnds } from "../../utils/rideLocations";
 import type { CalendarEvent, Direction, VehicleType } from "../../types";
 
 interface QuickRideModalProps {
@@ -18,26 +21,37 @@ interface QuickRideModalProps {
   initialDeparture?: string;
 }
 
-/** Best-guess start/end for a direction — event.location on the con side,
- * event.hotel_location on the hotel side (blank when there isn't one, e.g. a
- * non-hotel event's "home" end — the user can just type it in directly). */
-function defaultLocationsFor(direction: Direction, event: CalendarEvent): { start: string; end: string } {
-  const toHotel = direction === "Outbound";
-  return {
-    start: (toHotel ? event.location : event.hotel_location) || "",
-    end: (toHotel ? event.hotel_location : event.location) || "",
-  };
-}
 
 export function QuickRideModal({ open, onClose, event, initialDirection, initialDeparture }: QuickRideModalProps) {
   const { data: me } = useCurrentUser();
   const driver = me?.name ?? "";
   const createMutation = useCreateRide();
 
+  const { data: allEvents = [] } = useCalendar();
+  const trip = useMemo(() => buildTrip(allEvents, tripIdOf(event)), [allEvents, event]);
+
   const [direction, setDirection] = useState<Direction>(initialDirection);
   const [startLocation, setStartLocation] = useState("");
   const [endLocation, setEndLocation] = useState("");
+  // Once someone types in a location, a later change of day or direction leaves it alone.
+  const [edited, setEdited] = useState({ start: false, end: false });
   const [departureTime, setDepartureTime] = useState(() => initialDeparture ?? quickDepartureOptions()[0].value);
+
+  /** Best-guess start/end: the venue on the event side and, on the days the member
+   * sleeps there, the hotel on the other (see defaultRideEnds). Depends on which day
+   * of the trip the departure falls on. */
+  const departureDay = splitDateTime(departureTime)[0];
+  function defaultsFor(d: Direction): { start: string; end: string } {
+    const days = trip?.days ?? [];
+    return defaultRideEnds({
+      direction: d,
+      dayIndex: days.findIndex((x) => toDateKey(x.date) === departureDay),
+      dayCount: Math.max(days.length, 1),
+      venue: event.location || "",
+      hotel: event.hotel_location || "",
+      isHotel: !!event.is_hotel,
+    });
+  }
   const [seats, setSeats] = useState(5);
   const [vehicleType, setVehicleType] = useState<VehicleType>("Car");
   const [parkingInfo, setParkingInfo] = useState("");
@@ -47,9 +61,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
   useEffect(() => {
     if (open) {
       setDirection(initialDirection);
-      const defaults = defaultLocationsFor(initialDirection, event);
-      setStartLocation(defaults.start);
-      setEndLocation(defaults.end);
+      setEdited({ start: false, end: false });
       setDepartureTime(initialDeparture ?? quickDepartureOptions()[0].value);
       setSeats(5);
       setVehicleType("Car");
@@ -60,10 +72,18 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
 
   function switchDirection(d: Direction) {
     setDirection(d);
-    const defaults = defaultLocationsFor(d, event);
-    setStartLocation(defaults.start);
-    setEndLocation(defaults.end);
+    setEdited({ start: false, end: false });
   }
+
+  // Fills the two ends in, and follows along when the direction or the day changes,
+  // until the member types in one of them.
+  useEffect(() => {
+    if (!open) return;
+    const defaults = defaultsFor(direction);
+    if (!edited.start) setStartLocation(defaults.start);
+    if (!edited.end) setEndLocation(defaults.end);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, direction, departureDay, trip, edited.start, edited.end]);
 
   const toHotel = direction === "Outbound";
   const missingLocation = !startLocation || !endLocation;
@@ -129,7 +149,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
           <input
             type="text"
             value={startLocation}
-            onChange={(e) => setStartLocation(e.target.value)}
+            onChange={(e) => { setStartLocation(e.target.value); setEdited((v) => ({ ...v, start: true })); }}
             placeholder="Onbekende locatie"
             className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-3"
           />
@@ -137,7 +157,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
           <input
             type="text"
             value={endLocation}
-            onChange={(e) => setEndLocation(e.target.value)}
+            onChange={(e) => { setEndLocation(e.target.value); setEdited((v) => ({ ...v, end: true })); }}
             placeholder="Onbekende locatie"
             className="min-w-0 flex-1 bg-transparent text-right text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-3"
           />

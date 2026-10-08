@@ -22,7 +22,8 @@ import { planDirection } from "../../utils/carBalance";
 import { toDateKey, todayKey, parseEventDate, splitDateTime } from "../../utils/date";
 import { useTimeStore } from "../../store/time.store";
 import { isTripOver, tripGaps, tripRides } from "../../utils/trips";
-import { defaultTransportView } from "../../utils/transportView";
+import { defaultTransportView, driversMissing } from "../../utils/transportView";
+import { defaultRideEnds } from "../../utils/rideLocations";
 import { TripMissingList } from "../../components/trip/TripMissingList";
 import { useTrip } from "./tripContext";
 import type { Direction, Ride } from "../../types";
@@ -135,6 +136,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
   }, [open]);
 
   const dayRides = tripRides(allRides ?? [], meals, trip, activeDayId);
+  const tripAllRides = tripRides(allRides ?? [], meals, trip);
   const gaps = tripGaps(trip, allRides ?? [], meals);
   const missingPeople = gaps.transport.map((g) => ({ name: g.name, detail: g.items.join(" & ") }));
   const tripMealIds = new Set(meals.filter((m) => m.linked_event_id && trip.eventIds.includes(m.linked_event_id)).map((m) => m.id));
@@ -191,7 +193,13 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
       direction !== "Restaurant" && !isTripOver(trip)
         ? planDirection(all, trip.days.find((d) => d.ev.id === activeDayId)?.ev.participants ?? [], canonicalName)
         : null;
-    return { all, active, past, canOffer, plan };
+    // Drivers who planned the other way for this trip but not this one: on the way back,
+    // that is the list of who still has to make a Terug ride, without going through everyone.
+    const missingDrivers =
+      direction === "Restaurant" || isTripOver(trip)
+        ? []
+        : driversMissing(tripAllRides, direction === "Inbound" ? "Outbound" : "Inbound", direction, canonicalName);
+    return { all, active, past, canOffer, plan, missingDrivers };
   }
 
   function pickDay(id: string) {
@@ -245,14 +253,23 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
       .filter((m) => m.linked_event_id === defaultDay?.id)
       .sort((a, b) => a.time.localeCompare(b.time));
     const defaultMeal = dayMeals[0] ?? tripMealOptions[0];
+    // The hotel is the other end of a ride on the days the member sleeps there.
+    const ends = defaultRideEnds({
+      direction,
+      dayIndex: trip.days.findIndex((d) => d.ev.id === defaultDay?.id),
+      dayCount: trip.days.length,
+      venue: defaultDay?.location ?? "",
+      hotel: trip.days.find((d) => d.ev.hotel_location)?.ev.hotel_location ?? "",
+      isHotel: trip.isHotel,
+    });
     reset({
       direction,
       total_seats: 5,
       driver: currentUser?.name ?? "",
       linked_event_id: direction === "Restaurant" ? undefined : defaultDay?.id,
       linked_meal_id: direction === "Restaurant" ? defaultMeal?.id : undefined,
-      start_location: direction === "Outbound" ? defaultDay?.location ?? "" : "",
-      end_location: direction === "Inbound" ? defaultDay?.location ?? "" : direction === "Restaurant" ? defaultMeal?.location ?? "" : "",
+      start_location: ends.start,
+      end_location: direction === "Restaurant" ? defaultMeal?.location ?? "" : ends.end,
       parking_info: defaultDay?.parking_info ?? "",
       departure_time: direction === "Restaurant"
         ? `${toDateKey(parseEventDate(defaultDay?.date ?? "") ?? new Date())}T${defaultMeal ? splitDateTime(defaultMeal.time)[1] : "18:00"}`
@@ -312,7 +329,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
   }
 
   function renderSection(direction: Direction) {
-    const { active, past, canOffer, plan } = sectionOf(direction);
+    const { active, past, canOffer, plan, missingDrivers } = sectionOf(direction);
     const isEten = direction === "Restaurant";
     const count = active.length + (isEten ? mealsWithoutRide.length : 0);
     const historyShown = historyOpen.includes(direction);
@@ -334,17 +351,10 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
           )}
         </div>
 
-        {plan && (
-          <p className="text-[12px] text-ink-3">
-            {plan.people} {plan.people === 1 ? "persoon" : "mensen"} · {plan.cars.length} {plan.cars.length === 1 ? "auto" : "auto's"} · {plan.seats} plekken
-            {" · "}
-            {plan.seatShortage > 0 ? (
-              <span className="font-semibold text-rose-700 dark:text-rose-300">Nog {plan.seatShortage} {plan.seatShortage === 1 ? "plek" : "plekken"} tekort</span>
-            ) : plan.withoutSeat > 0 ? (
-              <span className="font-semibold text-amber-700 dark:text-amber-300">{plan.withoutSeat} nog zonder auto</span>
-            ) : (
-              <span className="font-semibold text-emerald-700 dark:text-emerald-300">Iedereen heeft een plek</span>
-            )}
+        {missingDrivers.length > 0 && (
+          <p className="text-[12.5px] leading-snug text-ink-2">
+            <span className="font-semibold text-ink">{direction === "Outbound" ? "Nog geen terugrit" : "Nog geen heenrit"}:</span>{" "}
+            {missingDrivers.join(", ")}
           </p>
         )}
 
