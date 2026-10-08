@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Car, ChevronRight, Users } from "lucide-react";
 import { routes } from "../../config/routes";
 import { useCalendar } from "../../hooks/useCalendar";
-import { parseEventDate } from "../../utils/date";
+import { parseEventDate, toDateKey } from "../../utils/date";
 import { planQuickRide } from "../../utils/quickRide";
 import { tripIdOf } from "../../utils/trips";
 import { QuickRideModal } from "../transport/QuickRideModal";
@@ -60,9 +60,10 @@ export function QuickRideTiles({ event, restaurantMeal, rides = [] }: QuickRideT
   const toHotel = direction === "Outbound";
   const isRestaurantLeg = toHotel && !!restaurantMeal;
 
-  const where = event.is_hotel
-    ? (toHotel ? "Naar hotel" : "Naar evenement")
-    : (toHotel ? "Naar huis" : "Naar evenement");
+  // Away from the event goes to the hotel only on a day before the last; on the last day it is home.
+  const lastKey = groupDays.length > 0 ? toDateKey(new Date(Math.max(...groupDays.map((d) => d.getTime())))) : null;
+  const backToHotel = toHotel && event.is_hotel && lastKey !== null && plan.departure.slice(0, 10) < lastKey;
+  const where = toHotel ? (backToHotel ? "Naar hotel" : "Naar huis") : "Naar evenement";
   const hint = isRestaurantLeg ? "Naar restaurant" : `${where} · ${plan.when}`;
 
   const existingRestaurantRide = isRestaurantLeg

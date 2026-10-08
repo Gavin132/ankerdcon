@@ -5,6 +5,8 @@ import { readFileSync } from "fs";
 // Single source of truth for the app version — backend/VERSION. Bump it
 // there only; the backend reads the same file at runtime (see backend/main.py).
 const appVersion = readFileSync("../backend/VERSION", "utf-8").trim();
+// Differs per build, unlike the version: see `buster` in App.tsx.
+const buildId = Date.now().toString(36);
 
 // Swaps the PWA's icon/manifest/theme-color/title in index.html when this is
 // a dev build — set via APP_ENV, a plain build-time var (not exposed to the
@@ -66,6 +68,7 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), devIconPlugin(isDevBuild), serviceWorkerPlugin(appVersion)],
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
+      __BUILD_ID__: JSON.stringify(buildId),
     },
     server: {
       port: process.env.PORT ? Number(process.env.PORT) : 5173,

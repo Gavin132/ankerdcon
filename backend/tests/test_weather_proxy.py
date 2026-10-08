@@ -96,6 +96,73 @@ def test_archive_is_cached(monkeypatch):
     assert sum(c.calls for c in fake_cls.instances) == 1
 
 
+def _status_client(code):
+    class _StatusClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args):
+            return False
+
+        async def get(self, url, **_kwargs):
+            request = httpx.Request("GET", url)
+            response = httpx.Response(code, request=request, json={"error": True, "reason": "Parameter 'start_date' is out of allowed range"})
+
+            class _Resp:
+                def raise_for_status(self_inner):
+                    response.raise_for_status()
+
+                def json(self_inner):
+                    return response.json()
+
+            return _Resp()
+
+    return _StatusClient()
+
+
+def _patch_status(monkeypatch, code):
+    fake_httpx = type("M", (), {
+        "AsyncClient": staticmethod(lambda **_kw: _status_client(code)),
+        "RequestError": httpx.RequestError,
+        "HTTPStatusError": httpx.HTTPStatusError,
+    })
+    monkeypatch.setattr(weather_router, "httpx", fake_httpx)
+
+
+def test_a_date_beyond_the_forecast_range_is_an_empty_forecast_not_an_error(monkeypatch):
+    """Open-Meteo answers 400 for a date more than ~16 days out. The card needs an empty
+    forecast then, so it falls back to the climate average instead of "no weather data"."""
+    _patch_status(monkeypatch, 400)
+    result = asyncio.run(weather_router.forecast(latitude=52.09, longitude=5.12, date="2026-12-12", _="Sam"))
+    assert result == {"daily": {}}
+
+
+def test_a_bad_request_is_still_an_error_for_geocoding_and_the_archive(monkeypatch):
+    from fastapi import HTTPException
+
+    _patch_status(monkeypatch, 400)
+    for call in (
+        lambda: weather_router.geocode(name="Utrecht", _="Sam"),
+        lambda: weather_router.archive(latitude=1.0, longitude=2.0, start_date="2016-01-01", end_date="2025-12-31", _="Sam"),
+    ):
+        try:
+            asyncio.run(call())
+            assert False, "should have raised"
+        except HTTPException as e:
+            assert e.status_code == 503
+
+
+def test_a_server_error_on_the_forecast_is_still_a_503(monkeypatch):
+    from fastapi import HTTPException
+
+    _patch_status(monkeypatch, 500)
+    try:
+        asyncio.run(weather_router.forecast(latitude=52.09, longitude=5.12, date="2026-10-17", _="Sam"))
+        assert False, "should have raised"
+    except HTTPException as e:
+        assert e.status_code == 503
+
+
 def test_an_upstream_failure_becomes_a_503(monkeypatch):
     class _RaisingClient:
         async def __aenter__(self):

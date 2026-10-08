@@ -47,7 +47,9 @@ _ARCHIVE_TTL = 7 * 24 * 60 * 60  # a week — historical data never changes
 _cache: dict[tuple, tuple[float, dict]] = {}
 
 
-async def _cached_get(url: str, params: dict, cache_key: tuple, ttl: float) -> dict:
+async def _cached_get(url: str, params: dict, cache_key: tuple, ttl: float, *, bad_request_means: dict | None = None) -> dict:
+    """`bad_request_means` is what a 400 from Open-Meteo stands for, when it is an
+    answer rather than an error (see `forecast`)."""
     now = time.monotonic()
     hit = _cache.get(cache_key)
     if hit and hit[0] > now:
@@ -57,7 +59,12 @@ async def _cached_get(url: str, params: dict, cache_key: tuple, ttl: float) -> d
             resp = await client.get(url, params=params)
             resp.raise_for_status()
             data = resp.json()
-    except (httpx.RequestError, httpx.HTTPStatusError, ValueError) as e:
+    except httpx.HTTPStatusError as e:
+        if bad_request_means is None or e.response.status_code != 400:
+            logger.warning("Weather proxy request to %s failed: %s", url, e)
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_UPSTREAM_ERROR)
+        data = bad_request_means
+    except (httpx.RequestError, ValueError) as e:
         logger.warning("Weather proxy request to %s failed: %s", url, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_UPSTREAM_ERROR)
     _cache[cache_key] = (now + ttl, data)
@@ -102,6 +109,10 @@ async def forecast(
         },
         ("forecast", latitude, longitude, date),
         _FORECAST_TTL,
+        # Open-Meteo only forecasts about 16 days ahead, and for a date beyond that it
+        # answers 400 ("out of allowed range") instead of an empty forecast. That is
+        # not a failure: it is how the app learns to show the climate average instead.
+        bad_request_means={"daily": {}},
     )
 
 

@@ -248,7 +248,7 @@ export function AdminDashboardPage() {
     { label: "Gebruikers",  value: stats?.users,  icon: Users,           path: routes.admin.users  },
     { label: "Evenementen", value: stats?.events,  icon: CalendarDays,    path: routes.admin.events },
     { label: "Ritten",      value: stats?.rides,   icon: Car,             path: routes.admin.rides  },
-    { label: "Maaltijden",  value: stats?.meals,   icon: UtensilsCrossed, path: routes.admin.meals  },
+    { label: "Activiteiten", value: stats?.meals,   icon: UtensilsCrossed, path: routes.admin.meals  },
     { label: "Cosplays",    value: cosplays.length, icon: Sparkles,       path: null                },
     { label: "Uitgaven",    value: formatAmount(totalExpenses), icon: Wallet, path: null           },
   ];

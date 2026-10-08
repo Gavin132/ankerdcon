@@ -53,6 +53,14 @@ Levels to know:
 - `WARNING … Impersonation: admin X signed in as Y`: every "log in as".
 - `WARNING … Auth: local token check failed`: real logins are falling back to asking Supabase
   (a missing `cryptography` package or a changed issuer). Everything still works but is slower.
+- `WARNING … Slow request: GET /api/x took 7.3s (status 200, 4 other requests in progress)`: a
+  request took 1.5 seconds or more. This is the first thing to look at when the site "feels slow":
+  *which* requests, how long, and how many others were running. Every API response also carries a
+  `Server-Timing: app;dur=…` header (browser dev tools → Network → Timing), which is the time spent
+  inside the backend; if the browser sees much longer than that, the delay is in front of the
+  backend (Cloudflare, the tunnel, the home connection).
+- `WARNING … Could not tune the database connection`: the library changed shape and the database
+  client runs on its slower, riskier defaults (see below).
 - `INFO … Auth: verifying logins locally with the project's ES256 signing key` appears once
   after the first login and confirms the fast path works.
 
@@ -68,6 +76,7 @@ Levels to know:
 | Everyone gets logged out, or "Kan de server niet bereiken" | Supabase or the connection to it is down | the backend answers 503, not 401, and the app retries. Check the Supabase status page. |
 | `/api/admin/cdn` shows an error | MinIO is down, or its key may not list the bucket | see [minio-setup.md](minio-setup.md) |
 | A Tikkie or bank link is refused | it is outside the allowed providers | see [security.md](security.md#money-and-links) |
+| The whole site, or the admin CDN page, hangs for a while, a refresh does not help, then it recovers on its own | the database connection died quietly. The library shares one HTTP/2 connection for every query and waited up to 120 seconds on it. The backend now uses ordinary connections with a 5 s connect and 20 s read limit and re-sends reads once, so a stall is one slow request, not all of them. If it still happens, look for `Slow request` lines: they show whether it is the database, MinIO (the CDN page lists the whole bucket; the listing is kept for 45 s) or the network in front. |
 | Photos slow on first view only | normal: they are cached immutably after one download | nothing |
 
 ## Backups and recovery

@@ -22,7 +22,7 @@ export function RouteErrorFallback() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (giveUp) return <ErrorFallback />;
+  if (giveUp) return <ErrorFallback error={error} />;
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-paper">
       <div className="h-8 w-8 rounded-full border-2 border-brand-text border-t-transparent animate-spin" />

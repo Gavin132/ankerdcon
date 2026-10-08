@@ -1,5 +1,5 @@
 import { MessageSquareOff } from "lucide-react";
-import { NOTIFICATION_CATEGORIES } from "../../constants/notifications";
+import { categoriesFor } from "../../constants/notifications";
 import { NotificationChannelPicker } from "../../components/notifications/NotificationChannelPicker";
 import type { ProfileState } from "./types";
 
@@ -51,7 +51,7 @@ export function StepNotifications({ state, onChange, hasDiscord }: StepNotificat
       />
 
       <div className="card-surface divide-y divide-line overflow-hidden">
-        {NOTIFICATION_CATEGORIES.map((cat) => {
+        {categoriesFor(false).map((cat) => {
           const checked = state.notificationCategories.includes(cat.id);
           return (
             <label

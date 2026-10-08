@@ -8,6 +8,7 @@ class Tables:
     PROFILES     = "profiles"
     RIDES        = "rides"
     MEALS        = "meals"
+    MEAL_CATEGORIES = "meal_categories"
     PAYMENTS     = "payments"
     EVENTS       = "events"
     EVENT_DAYS   = "event_days"

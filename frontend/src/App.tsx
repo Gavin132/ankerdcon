@@ -268,13 +268,14 @@ export function App() {
       {/* Restores the last known data from localStorage before the first paint,
           so the app opens on real content and revalidates behind it instead of
           showing skeletons until the network answers. `buster` is the app
-          version: a new release never reads a cache shaped by the old one. */}
+          version and build: a new release (even a hotfix that keeps the version number)
+          never reads a cache shaped by the old one, which could crash it on start. */}
       <PersistQueryClientProvider
         client={queryClient}
         persistOptions={{
           persister: queryPersister,
           maxAge: QUERY_CACHE_MAX_AGE,
-          buster: __APP_VERSION__,
+          buster: `${__APP_VERSION__}-${__BUILD_ID__}`,
           dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
         }}
       >

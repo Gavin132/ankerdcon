@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from app.core.validation import WebUrl
+from app.models.meal_category import MealCategory
 
 
 class Meal(BaseModel):
@@ -22,6 +23,9 @@ class Meal(BaseModel):
     parking_info: Optional[str] = None
     extra_notes: Optional[str] = None
     created_by: Optional[str] = None
+    category_id: Optional[str] = None
+    # The category row itself, so the app knows what this item has without a second request.
+    category: Optional[MealCategory] = None
 
 
 class CreateMealRequest(BaseModel):
@@ -38,6 +42,7 @@ class CreateMealRequest(BaseModel):
     dietary_options: Optional[str] = None
     parking_info: Optional[str] = None
     extra_notes: Optional[str] = None
+    category_id: Optional[str] = None
 
 
 class UpdateMealRequest(BaseModel):
@@ -54,6 +59,7 @@ class UpdateMealRequest(BaseModel):
     dietary_options: Optional[str] = None
     parking_info: Optional[str] = None
     extra_notes: Optional[str] = None
+    category_id: Optional[str] = None
 
 
 class RsvpRequest(BaseModel):

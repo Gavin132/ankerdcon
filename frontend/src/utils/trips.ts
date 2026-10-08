@@ -1,6 +1,7 @@
 import type { CalendarEvent, HotelRoom, Meal, Ride } from "../types";
 import { parseEventDate, toDateKey, todayKey } from "./date";
 import { formatDateRange, groupCalendarEntries } from "./multiDay";
+import { isMealItem } from "./mealCategory";
 
 /**
  * A trip is the unit the Event tab is built around: every day of one
@@ -23,6 +24,9 @@ export interface Trip {
   title: string;
   dateRange: string;
   location: string;
+  /** Where `location` is, as the backend resolved it when the event was saved (from the
+   * address or the Maps link). Null when it could not be placed. */
+  locationCoords: { latitude: number; longitude: number } | null;
   isHotel: boolean;
   hasCon: boolean;
   /** Everyone signed up for at least one day of the trip. */
@@ -57,6 +61,11 @@ export function tripIdOf(ev: CalendarEvent): string {
   return ev.multi_day_id || ev.id;
 }
 
+function locationCoordsOf(days: TripDay[]): Trip["locationCoords"] {
+  const day = days.find((d) => d.ev.location_lat != null && d.ev.location_lng != null);
+  return day ? { latitude: day.ev.location_lat as number, longitude: day.ev.location_lng as number } : null;
+}
+
 function tripFromDays(id: string, days: TripDay[]): Trip {
   return {
     id,
@@ -65,6 +74,7 @@ function tripFromDays(id: string, days: TripDay[]): Trip {
     title: days[0].ev.event_name,
     dateRange: formatDateRange(days.map((d) => d.date)),
     location: days.find((d) => d.ev.location)?.ev.location ?? "",
+    locationCoords: locationCoordsOf(days),
     isHotel: days.some((d) => d.ev.is_hotel),
     hasCon: days.some((d) => d.ev.has_con !== false),
     participants: [...new Set(days.flatMap((d) => d.ev.participants ?? []))],
@@ -251,7 +261,8 @@ export function tripGaps(trip: Trip, rides: Ride[], meals: Meal[]): TripGaps {
   const inbound = onRide("Inbound");
   const outbound = onRide("Outbound");
 
-  const thisTripMeals = tripMeals(meals, trip);
+  // Only meals count here: being at the bowling alley or in the group photo is not having dinner.
+  const thisTripMeals = tripMeals(meals, trip).filter(isMealItem);
   const eating = new Set(thisTripMeals.flatMap((m) => m.participants ?? []).map((n) => n.toLowerCase()));
 
   const transport = trip.participants

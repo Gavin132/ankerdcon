@@ -66,7 +66,7 @@ export function TripPlanList({ trip, rides, meals, dayKey, past }: TripPlanListP
   const items = planItems(trip, rides, meals, past).filter((i) => !dayKey || i.dayKey === dayKey);
 
   if (items.length === 0) {
-    return <p className="text-[13px] text-ink-3">{past ? "Geen ritten of etentjes vastgelegd." : "Nog geen ritten of etentjes gepland."}</p>;
+    return <p className="text-[13px] text-ink-3">{past ? "Geen ritten of activiteiten vastgelegd." : "Nog geen ritten of activiteiten gepland."}</p>;
   }
 
   let previousDay: string | null = null;

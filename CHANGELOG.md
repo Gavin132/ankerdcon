@@ -6,6 +6,113 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- **Admins can get a notification for new feedback.** Under Instellingen → Notificaties admins have an
+  extra switch, "Nieuwe feedback", that only they see. It sends a Discord DM or a push (whichever you
+  use) with the kind, the message (shortened) and who sent it; an anonymous message names nobody.
+  Anyone who is not an admin cannot switch it on, and stops getting it if they stop being one.
+
+### Changed
+
+- **The admin CDN page loads a screenful at a time** (24 files, whole rows) and fetches more as you
+  scroll down, instead of asking for 60 at once and then everything again on "Toon meer". Videos
+  fetch their first frame only when they come near the screen. Paging through the viewer keeps
+  loading ahead.
+
+- The hub's "Rit aanbieden" no longer says "Naar hotel" / "Naar evenement" on a hotel trip: the switch
+  and the title say **Heen** and **Terug** like everywhere else, since on the last day Terug goes
+  home, not to the hotel. The tile's grey line says "Naar huis" then too, and "Naar hotel" only on
+  days before the last.
+- The hub's "Rit aanbieden" and "Meerijden" switch to tomorrow's ride to the event from 20:00 (was
+  21:00), in the evening of a day that is not the last.
+
+---
+
+## [2.1.1] - 2026-10-08
+
+Activities (a meal is now one kind of activity), a faster and steadier backend, a calmer Vervoer
+with the hotel filled in, and fixes to the weather card and the error screen. Needs migration
+v2.36 (see `TODO.md`).
+
+### Fixed
+
+- **The weather card said "Geen weersdata beschikbaar" for events more than about two weeks away**
+  instead of the usual average for that date. Since the weather moved through the backend, the
+  forecast service's answer for a date out of range (a 400, not an empty forecast) was treated as a
+  failure, so the app never fell back to the average of the past ten years. The backend now passes
+  that on as "no forecast yet".
+- **The weather card showed another country's weather for some events.** It looked the event up by
+  name again, and when "Brussel Expo" found nothing it tried single words: "Expo" matched a village
+  in Virginia, so HMIA Brussels showed 29° for a Saturday in October (Brussels: 14°). It now uses
+  the coordinates the event was saved with (from its address or Maps link), and only searches by
+  name for an event that could not be placed.
+- **The site sometimes hung for minutes** (the admin CDN page too), a refresh did not always help,
+  and it went away by itself. The backend shared one long-lived connection to the database for
+  everything and waited up to 120 seconds on it, so a connection that died quietly stalled every
+  request. It now uses ordinary connections, gives up on a database call after 5 seconds to connect
+  and 20 to answer, and sends a read again once on a fresh connection when the first one was dead.
+- Saving or editing an activity or an event in the admin panel waited for the database on the
+  server's main thread, so one slow query froze every other request. It now runs on a worker thread
+  like the rest.
+- The admin CDN page listed the whole photo storage again on every click. The listing is now kept
+  for 45 seconds, and dropped at once when a file is added or removed.
+- Slow requests (1.5 seconds or more) are now written to the log with how many others were in
+  progress, and every API answer carries a `Server-Timing` header, so the next time it feels slow
+  there is something to look at.
+
+- **The "Er ging iets mis" screen could not be left.** Both buttons only reloaded the page, which
+  read the same saved data back in and crashed the same way, so for some members it came back
+  every time. "Probeer opnieuw" and "Terug naar start" now throw away what the app saved on the
+  device (the offline copy and the cached data, not your login or settings) and start from the
+  server. The saved data is also dropped as soon as the screen appears, and a new build never
+  reads the saved data of the previous one (before, a hotfix with the same version number did).
+  The screen shows the technical message, so a screenshot says what went wrong.
+- The "Nieuwe versie / Herladen" banner and toasts could sit on top of the error screen; the
+  error screen is now above everything.
+- When the browser blocks storage, a crash showed a blank page instead of the error screen.
+
+### Added
+
+- **Activiteiten.** The Eten tile is now Activiteiten: besides a meal, anyone can plan bowling,
+  Jeopardy, a concert or the group photo. Each one has a soort, picked when planning it. The soort
+  decides what you fill in and what the page has: a meal has a price, a menu and dietary wishes,
+  bowling has a price and a car, Jeopardy only signing up, and the group photo just a time and a
+  place, without signing up. Existing etentjes are the soort Eten and look the same.
+- **Admins manage the soorten** under Admin → Activiteiten → Categorieën: add, rename, reorder and
+  delete them, and switch per soort *Aanmelden*, *Prijs*, *Vervoer* and *Telt als eten* on or off.
+  Eten, Activiteit, Groepsfoto, Spel, Con and Concert are there to start with. A soort that
+  activities still use cannot be deleted. Needs migration v2.36.
+
+### Changed
+
+- Whoever planned an activity, or an admin, can now **delete** it from the same pencil that edits it. It
+  asks first and says how many sign-ups go with it; the ride to its restaurant, if there is one, is
+  removed too.
+- Notifications and search say "activiteit" instead of "etentje": "Nieuwe activiteit", and
+  "Activiteit toevoegen" (also found by "eten", "diner", "bowlen", "groepsfoto") in the search.
+- "Nergens bij" only counts meals: being at the bowling alley is not having dinner.
+- **A new ride knows about the hotel.** On a trip with a hotel, Heen on any day after the first
+  starts at the hotel (you slept there), and Terug on any day before the last ends at the hotel.
+  The first Heen and the last Terug stay empty: that is from and to home. This holds in the Vervoer
+  sheet and in the hub's "Rit aanbieden" (which used to put the hotel on the first and last day
+  too, and looks at the day you pick). Typing in a location yourself is never overwritten.
+- **Meerijden on the hub looks like Vervoer.** The sheet is one day at a time (day chips on a trip
+  of several days, with the amber dot for days that still miss a ride), Heen and Terug under each
+  other with a row per ride, your own in blue, and Stap in one tap away, instead of the old cards
+  that needed a selection first. The way you are probably going (from the time of day) is scrolled into view.
+- **The cars to an activity look like Heen and Terug.** Under Activiteiten in Vervoer each car was
+  still the old card with an avatar and a footer, next to the compact rows of Heen and Terug. They
+  are rows now too: time, driver and who rides along, seats free on the right, your own car in blue,
+  and Stap in / Uitstappen one tap away.
+- **Vervoer names who still has to make a ride.** Under Terug (and Heen) a line lists the drivers
+  who planned the other way but not this one, so you no longer have to go through every driver to
+  find out who has not made a return ride yet. The summary line ("4 mensen · 1 auto · 5 plekken"
+  and its yellow warning) is gone: the warning is already at the bottom of the sheet.
+- **Vervoer shows Heen, Terug and Eten under each other** instead of behind a switch: three
+  sections per day, each with its own "Rit aanbieden". The sheet still opens on the day the
+  Hub's tiles would use and scrolls to the right section.
+
 ---
 
 ## [2.1.0] - 2026-10-05

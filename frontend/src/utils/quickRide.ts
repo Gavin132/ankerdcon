@@ -4,7 +4,7 @@ import { dayShort, monthShort } from "./multiDay";
 import type { Direction } from "../types";
 
 /** From this hour on the day is done, so the next ride is tomorrow's. */
-export const NIGHT_START_HOUR = 21;
+export const NIGHT_START_HOUR = 20;
 /** From this hour you're presumably winding down and heading back. */
 const HEADING_BACK_HOUR = 13;
 /** "Morgenochtend" — matches the preset in `quickDepartureOptions`. */
@@ -31,7 +31,7 @@ function morningOf(day: Date): Date {
  * - Before the event starts: a ride *to* the event, the morning it starts —
  *   whatever the time now.
  * - During it: to the event until early afternoon, back after that, and from
- *   21:00 a ride to the event again tomorrow morning — if there is a
+ *   20:00 a ride to the event again tomorrow morning — if there is a
  *   tomorrow. After the last day it stays a ride back.
  *
  * Only a *default*: the offer sheet still lets the user flip it.

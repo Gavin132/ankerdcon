@@ -212,6 +212,23 @@ export interface RestaurantUnassignRequest {
 }
 
 // Meals
+/** A kind of activity (Eten, Activiteit, Groepsfoto, ...), managed by admins. The flags
+ * say which parts of the form and the page its items have. */
+export interface MealCategory {
+  id: string;
+  name: string;
+  sort_order: number;
+  /** People can sign up ("Aanmelden"). */
+  has_signup: boolean;
+  /** A price per person. */
+  has_cost: boolean;
+  /** A car can be arranged to it (Vervoer). */
+  has_transport: boolean;
+  /** Counts as a meal: menu and dietary fields, and "nergens bij". */
+  is_meal: boolean;
+}
+
+/** An activity. Still called Meal in code and API: it started as the etentje. */
 export interface Meal {
   id: string;
   meal_name: string;
@@ -233,6 +250,9 @@ export interface Meal {
   parking_info?: string;
   extra_notes?: string;
   created_by?: string | null;
+  category_id?: string | null;
+  /** Sent along by the backend; missing on old rows and before the migration. */
+  category?: MealCategory | null;
 }
 
 // Event-day photo stories
@@ -323,6 +343,7 @@ export interface CreateMealRequest {
   dietary_options?: string;
   parking_info?: string;
   extra_notes?: string;
+  category_id?: string;
 }
 
 export interface UpdateMealRequest {
@@ -339,6 +360,7 @@ export interface UpdateMealRequest {
   dietary_options?: string | null;
   parking_info?: string | null;
   extra_notes?: string | null;
+  category_id?: string;
 }
 
 export interface RsvpRequest {

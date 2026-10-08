@@ -52,7 +52,7 @@ function resolveDriverName(driver: string, users: { name: string; discord_userna
 
 /**
  * Full-screen search over everything already loaded into the app — trips,
- * rides, maaltijden, cosplays and crew — filtered client-side against the
+ * rides, activiteiten, cosplays and crew — filtered client-side against the
  * query caches the rest of the app already keeps warm, so opening this never
  * fires a request of its own.
  *
@@ -149,7 +149,7 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
     }
     if (mealRows.length) {
       out.push({
-        label: "Maaltijden",
+        label: "Activiteiten",
         icon: Utensils,
         rows: mealRows.slice(0, MAX_PER_GROUP).map((m) => ({
           key: m.id,

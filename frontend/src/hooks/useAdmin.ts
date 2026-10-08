@@ -8,6 +8,10 @@ import {
   bulkDeleteAdminRides,
   bulkDeleteAdminMeals,
   bulkDeleteAdminEventGroups,
+  createAdminMealCategory,
+  deleteAdminMealCategory,
+  getAdminMealCategories,
+  updateAdminMealCategory,
   bulkSetAdminEventGroup,
   createAdminEvent,
   createAdminEventDay,
@@ -381,6 +385,42 @@ export function useAdminDeleteHotelRoom() {
 }
 
 // ── Event group hooks ─────────────────────────────────────────────────────────
+
+function invalidateMealCategories(qc: ReturnType<typeof useQueryClient>) {
+  // The members' list and every activity's embedded copy of its category change too.
+  qc.invalidateQueries({ queryKey: QUERY_KEYS.adminMealCategories });
+  qc.invalidateQueries({ queryKey: QUERY_KEYS.mealCategories });
+  qc.invalidateQueries({ queryKey: QUERY_KEYS.meals });
+}
+
+export function useAdminMealCategories() {
+  return useQuery({ queryKey: QUERY_KEYS.adminMealCategories, queryFn: getAdminMealCategories });
+}
+
+export function useAdminCreateMealCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: createAdminMealCategory,
+    onSuccess: () => invalidateMealCategories(qc),
+  });
+}
+
+export function useAdminUpdateMealCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Parameters<typeof updateAdminMealCategory>[1] }) =>
+      updateAdminMealCategory(id, payload),
+    onSuccess: () => invalidateMealCategories(qc),
+  });
+}
+
+export function useAdminDeleteMealCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteAdminMealCategory(id),
+    onSuccess: () => invalidateMealCategories(qc),
+  });
+}
 
 export function useAdminEventGroups() {
   return useQuery({ queryKey: QUERY_KEYS.adminEventGroups, queryFn: getAdminEventGroups });

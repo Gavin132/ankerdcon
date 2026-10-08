@@ -41,6 +41,8 @@ export const apiRoutes = {
     cancelRsvp: (id: string) => `/api/meals/${id}/cancel-rsvp`,
   },
 
+  mealCategories: "/api/meal-categories",
+
   // ── Payments ─────────────────────────────────────────────────────
 
   // ── Expenses ──────────────────────────────────────────────────────
@@ -146,6 +148,11 @@ export const apiRoutes = {
       byId:        (id: string) => `/api/admin/meals/${id}`,
       participant: (id: string, p: string) => `/api/admin/meals/${id}/participants/${encodeURIComponent(p)}`,
       bulkDelete:  "/api/admin/meals/bulk-delete",
+    },
+
+    mealCategories: {
+      base: "/api/admin/meal-categories",
+      byId: (id: string) => `/api/admin/meal-categories/${id}`,
     },
 
     events: {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultTransportView, dayForDateKey } from "./transportView";
+import { defaultTransportView, dayForDateKey, driversMissing } from "./transportView";
 import { buildTrip } from "./trips";
 import type { CalendarEvent, Meal } from "../types";
 
@@ -32,6 +32,11 @@ describe("defaultTransportView", () => {
     expect(defaultTransportView(trip(true), [], at(21, 22))).toEqual({ direction: "Inbound", dayId: "sun" });
   });
 
+  it("flips at 20:00 exactly: still Terug at 19:59, Heen tomorrow from 20:00", () => {
+    expect(defaultTransportView(trip(true), [], at(21, 19, 59))).toEqual({ direction: "Outbound", dayId: "sat" });
+    expect(defaultTransportView(trip(true), [], at(21, 20))).toEqual({ direction: "Inbound", dayId: "sun" });
+  });
+
   it("stays on Terug, on the last day, once the trip is over", () => {
     expect(defaultTransportView(trip(true), [], at(25, 12))).toEqual({ direction: "Outbound", dayId: "sun" });
   });
@@ -58,5 +63,40 @@ describe("dayForDateKey", () => {
   it("falls back to the next day, then the last", () => {
     expect(dayForDateKey(days, "2026-11-01")).toBe("sat");
     expect(dayForDateKey(days, "2026-12-01")).toBe("sun");
+  });
+});
+
+describe("driversMissing", () => {
+  const ride = (driver: string, direction: "Inbound" | "Outbound" | "Restaurant") => ({ driver, direction });
+
+  it("lists who drives Heen but has no Terug yet", () => {
+    const rides = [ride("Anna", "Inbound"), ride("Bram", "Inbound"), ride("Cas", "Inbound"), ride("Cas", "Outbound")];
+    expect(driversMissing(rides, "Inbound", "Outbound")).toEqual(["Anna", "Bram"]);
+  });
+
+  it("is empty when everyone has planned both ways", () => {
+    const rides = [ride("Anna", "Inbound"), ride("Anna", "Outbound")];
+    expect(driversMissing(rides, "Inbound", "Outbound")).toEqual([]);
+  });
+
+  it("works the other way round", () => {
+    const rides = [ride("Anna", "Outbound"), ride("Bram", "Inbound"), ride("Bram", "Outbound")];
+    expect(driversMissing(rides, "Outbound", "Inbound")).toEqual(["Anna"]);
+  });
+
+  it("ignores restaurant rides and counts a driver once", () => {
+    const rides = [ride("Anna", "Inbound"), ride("Anna", "Inbound"), ride("Anna", "Restaurant")];
+    expect(driversMissing(rides, "Inbound", "Outbound")).toEqual(["Anna"]);
+  });
+
+  it("matches a driver under a former name through the canonical form", () => {
+    const canonical = (n: string) => (n === "Annie" ? "anna" : n.toLowerCase());
+    const rides = [ride("Annie", "Inbound"), ride("Anna", "Outbound")];
+    expect(driversMissing(rides, "Inbound", "Outbound", canonical)).toEqual([]);
+  });
+
+  it("sorts the names", () => {
+    const rides = [ride("Zoë", "Inbound"), ride("Anna", "Inbound")];
+    expect(driversMissing(rides, "Inbound", "Outbound")).toEqual(["Anna", "Zoë"]);
   });
 });

@@ -2,7 +2,7 @@ import { getNow } from "../store/time.store";
 import { toDateKey } from "./date";
 import { planQuickRide } from "./quickRide";
 import { tripMeals, type Trip, type TripDay } from "./trips";
-import type { Direction, Meal } from "../types";
+import type { Direction, Meal, Ride } from "../types";
 
 export interface TransportView {
   direction: Direction;
@@ -40,4 +40,30 @@ export function defaultTransportView(trip: Trip, meals: Meal[], now: Date = getN
     if (mealStillToCome) return { direction: "Restaurant", dayId };
   }
   return { direction: plan.direction, dayId };
+}
+
+/**
+ * Drivers who have a ride one way but none the other, for the trip as a whole: the
+ * people to nudge when everyone else already planned the way back. `have` is the
+ * direction they did plan, `lack` the one they did not. Names are compared through
+ * `canonical`, so a driver under a former name is not counted twice; each is shown
+ * under the name the ride has.
+ */
+export function driversMissing(
+  rides: Pick<Ride, "direction" | "driver">[],
+  have: Direction,
+  lack: Direction,
+  canonical: (name: string) => string = (n) => n.toLowerCase(),
+): string[] {
+  const covered = new Set(rides.filter((r) => r.direction === lack && r.driver).map((r) => canonical(r.driver)));
+  const seen = new Set<string>();
+  const missing: string[] = [];
+  for (const r of rides) {
+    if (r.direction !== have || !r.driver) continue;
+    const key = canonical(r.driver);
+    if (covered.has(key) || seen.has(key)) continue;
+    seen.add(key);
+    missing.push(r.driver);
+  }
+  return missing.sort((a, b) => a.localeCompare(b, "nl"));
 }

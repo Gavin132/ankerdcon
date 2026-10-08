@@ -11,6 +11,8 @@ export interface NotificationCategoryDef {
   id: string;
   label: string;
   description: string;
+  /** Only offered to admins (the backend refuses it for anyone else). */
+  adminOnly?: boolean;
 }
 
 export const NOTIFICATION_CATEGORIES: NotificationCategoryDef[] = [
@@ -21,5 +23,11 @@ export const NOTIFICATION_CATEGORIES: NotificationCategoryDef[] = [
   { id: "event_reminder_day_of", label: "Herinnering — op de dag zelf", description: "Op de dag van het evenement zelf." },
   { id: "ride_created", label: "Nieuwe rit", description: "Wanneer iemand een rit aanmaakt." },
   { id: "expense_created", label: "Nieuwe uitgave", description: "Wanneer iemand een groepsuitgave toevoegt." },
-  { id: "meal_created", label: "Nieuw etentje", description: "Wanneer iemand een etentje plant." },
+  { id: "meal_created", label: "Nieuwe activiteit", description: "Wanneer iemand een activiteit plant, zoals een etentje of bowlen." },
+  { id: "feedback_submitted", label: "Nieuwe feedback", description: "Wanneer iemand een bug, idee of opmerking instuurt. Alleen voor admins.", adminOnly: true },
 ];
+
+/** The categories this member can choose from. */
+export function categoriesFor(isAdmin: boolean): NotificationCategoryDef[] {
+  return NOTIFICATION_CATEGORIES.filter((c) => !c.adminOnly || isAdmin);
+}

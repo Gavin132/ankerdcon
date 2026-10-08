@@ -138,6 +138,11 @@ class ChangelogRoutes:
     LIST = "/"
 
 
+class MealCategoryRoutes:
+    PREFIX = "/meal-categories"
+    LIST = ""
+
+
 class AdminRoutes:
     PREFIX = "/admin"
     STATS = "/stats"
@@ -185,6 +190,10 @@ class AdminRoutes:
     EVENT_DAY_BULK_RSVP = "/event-days/{day_id}/bulk-rsvp"
     EVENT_HOTEL_ROOMS = "/calendar/{event_id}/hotel-rooms"
     EVENT_HOTEL_ROOM = "/calendar/{event_id}/hotel-rooms/{room_id}"
+
+    # Meal categories (Eten, Activiteit, Groepsfoto, ...)
+    MEAL_CATEGORIES = "/meal-categories"
+    MEAL_CATEGORY_DETAIL = "/meal-categories/{category_id}"
 
     # Event groups
     EVENT_GROUPS = "/event-groups"

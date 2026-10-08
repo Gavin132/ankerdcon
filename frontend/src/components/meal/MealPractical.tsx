@@ -1,5 +1,6 @@
 import { ParkingSquare, Leaf, StickyNote, Bus, MapPin, ExternalLink, Navigation } from "lucide-react";
 import { buildEmbedUrl, buildMapsOpenUrl } from "../../utils/maps";
+import { mealCategory } from "../../utils/mealCategory";
 import type { Meal } from "../../types";
 
 interface MealPracticalProps {
@@ -21,12 +22,11 @@ function PracticalRow({ icon, label, children }: { icon: React.ReactNode; label:
 }
 
 export function MealPractical({ meal }: MealPracticalProps) {
-  const hasPractical = !!(
-    meal.transport_needed ||
-    meal.parking_info ||
-    meal.dietary_options ||
-    meal.extra_notes
-  );
+  const category = mealCategory(meal);
+  // Dietary wishes only make sense for a meal; a price-less, car-less kind has no transport row.
+  const showTransport = category.has_transport && meal.transport_needed;
+  const showDietary = category.is_meal && !!meal.dietary_options;
+  const hasPractical = !!(showTransport || meal.parking_info || showDietary || meal.extra_notes);
 
   const hasLocation = !!(meal.location?.trim());
   const embedUrl = hasLocation ? buildEmbedUrl(meal.location) : null;
@@ -81,7 +81,7 @@ export function MealPractical({ meal }: MealPracticalProps) {
           <div className="space-y-3 px-4 py-4">
             <h2 className="section-label">Praktisch</h2>
 
-            {meal.transport_needed && (
+            {showTransport && (
               <PracticalRow icon={<Bus size={14} />} label="Vervoer">
                 Vervoer is nodig voor dit evenement.
               </PracticalRow>
@@ -93,7 +93,7 @@ export function MealPractical({ meal }: MealPracticalProps) {
               </PracticalRow>
             )}
 
-            {meal.dietary_options && (
+            {showDietary && (
               <PracticalRow icon={<Leaf size={14} />} label="Dieet opties">
                 {meal.dietary_options}
               </PracticalRow>

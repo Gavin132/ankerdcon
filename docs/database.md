@@ -66,7 +66,8 @@ last refreshed from Discord/Google — see [security.md](security.md#authenticat
 | Table | Purpose | Notes |
 | --- | --- | --- |
 | `rides` | Heen, Terug and Restaurant rides | `direction`, `driver`, `vehicle_type`, `departure_time`, `start_location`, `end_location`, `total_seats`, `passengers`, `parking_info`, `car_available`, `action_required`, `restaurant_drivers` (jsonb: cars with their own seats and passengers), `linked_event_id` (a day), `linked_meal_id`. |
-| `meals` | Planned meals | `meal_name`, `time`, `location` + `location_lat`/`location_lng` (resolved the same way as an event's, for the crew map), `maps_url` (an optional exact Google Maps link — its own coordinates win over geocoding `location` when given), `cost`, `transport_needed`, `participants`, `linked_event_id` (a day), `created_by`, and links and notes. |
+| `meals` | Planned activities (started as meals) | `category_id` (→ `meal_categories`), `meal_name`, `time`, `location` + `location_lat`/`location_lng` (resolved the same way as an event's, for the crew map), `maps_url` (an optional exact Google Maps link — its own coordinates win over geocoding `location` when given), `cost`, `transport_needed`, `participants`, `linked_event_id` (a day), `created_by`, and links and notes. |
+| `meal_categories` | Kinds of activity | `name` (unique), `sort_order`, and four switches: `has_signup`, `has_cost`, `has_transport`, `is_meal`. Managed by admins; `meals.category_id` is `ON DELETE RESTRICT`. |
 | `cosplays` | A character worn by a member | `user_name`, `character_name`, `series`, `notes`, `inspo_images` (max 3, enforced by the API), `linked_event_ids` (days). |
 | `story_photos` | Photos in a day's story | `event_day_id`, `uploaded_by` (a name), `image_url`, `seq` (global, increasing). |
 | `story_seen` | How far each member has watched a day | `(user_name, event_day_id)`, `last_seen_seq`. |
@@ -151,6 +152,7 @@ order, not the number in the title.
 | `migration_v2.33_venue_geocoding` | `events.location_lat/lng`, `events.hotel_location_lat/lng`, `meals.location_lat/lng`, `meals.maps_url` — venue pins for the crew map. **Run before the deploy** — the backend writes these columns on every event/meal save. |
 | `migration_v2.34_venue_maps_url` | `events.location_maps_url`, `events.hotel_location_maps_url` — admin-set exact Maps links, for a venue (e.g. a hotel chain) whose address doesn't geocode reliably. **Run before the deploy**, same reason as v2.33. |
 | `migration_v2.35_parking_spots` | `parking_spots` table — one pin per (trip, driver) for the crew map. **Run before the deploy**: setting a spot writes to this table, and it doesn't exist until this runs. |
+| `migration_v2.36_meal_categories` | `meal_categories` table (Eten, Activiteit, Groepsfoto, Spel, Con, Concert) and `meals.category_id`, with every existing meal set to Eten. **Run before the deploy**: planning or editing an activity writes `category_id`. Reading works without it (the app falls back to the old behaviour). |
 | `migration_cosplays`, `add_whitelist_emails`, `remove_trigger` | one-offs: the cosplays table, a bulk-add template for the whitelist, removal of the old profile trigger |
 | `backfill_events_from_calendar.py`, `repoint_fks_to_new_events.py`, `calendar_id_mapping.json` | the one-time data move from `calendar` to `events`/`event_days` (kept for the record) |
 
@@ -179,6 +181,7 @@ Run in the SQL editor:
 | v2.33 | `select 1 from information_schema.columns where table_name = 'meals' and column_name = 'maps_url'` returns a row |
 | v2.34 | `select 1 from information_schema.columns where table_name = 'events' and column_name = 'location_maps_url'` returns a row |
 | v2.35 | `select to_regclass('public.parking_spots')` is not null |
+| v2.36 | `select to_regclass('public.meal_categories')` is not null |
 
 `db/check_schema.py` compares `db/schema.sql` with the live database, but
 `schema.sql` is out of date (see below), so it reports differences that are not
