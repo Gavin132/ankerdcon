@@ -6,7 +6,19 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- **Admins can get a notification for new feedback.** Under Instellingen → Notificaties admins have an
+  extra switch, "Nieuwe feedback", that only they see. It sends a Discord DM or a push (whichever you
+  use) with the kind, the message (shortened) and who sent it; an anonymous message names nobody.
+  Anyone who is not an admin cannot switch it on, and stops getting it if they stop being one.
+
 ### Changed
+
+- **The admin CDN page loads a screenful at a time** (24 files, whole rows) and fetches more as you
+  scroll down, instead of asking for 60 at once and then everything again on "Toon meer". Videos
+  fetch their first frame only when they come near the screen. Paging through the viewer keeps
+  loading ahead.
 
 - The hub's "Rit aanbieden" no longer says "Naar hotel" / "Naar evenement" on a hotel trip: the switch
   and the title say **Heen** and **Terug** like everywhere else, since on the last day Terug goes

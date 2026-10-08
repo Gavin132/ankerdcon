@@ -369,7 +369,9 @@ See [architecture.md](architecture.md#background-jobs-and-notifications) for the
   theme, accent colour, density (comfortable/compact, see [design-system.md](design-system.md#rules)),
   greeting, QR code to the app, the credits, and **Feedback geven**: a sheet where a member
   sends a bug, idea or remark (optionally anonymous, with no name stored) that admins read under
-  Admin → Feedback.
+  Admin → Feedback. Admins can also switch on **Nieuwe feedback** in their notification settings
+  (category `feedback_submitted`, in `ADMIN_ONLY_CATEGORIES`): a DM or push per message, anonymous ones
+  without a name; only an admin can choose it and a broadcast skips a profile that no longer is one.
 - **Wijzigingslog** (`pages/ChangelogPage.tsx`): release notes written in the admin
   panel and stored in the database (not `CHANGELOG.md`, which is for developers).
 
@@ -387,7 +389,7 @@ See [architecture.md](architecture.md#background-jobs-and-notifications) for the
 | Badges | badge images and who has them |
 | Betalingen | expenses and shares, including forcing a status |
 | Aankondigingen, Wijzigingslog | banners and release notes |
-| CDN | every file in the photo bucket, newest first, with its uploader; the "Uploaden" button puts an image or video there and gives a link to embed; the viewer's bin deletes a file, whoever uploaded it; "Download … (zip)" saves the current selection (a feature, or one event for story photos) as one zip |
+| CDN | every file in the photo bucket, newest first (24 at a time, more as you scroll; videos load their first frame only near the screen), with its uploader; the "Uploaden" button puts an image or video there and gives a link to embed; the viewer's bin deletes a file, whoever uploaded it; "Download … (zip)" saves the current selection (a feature, or one event for story photos) as one zip |
 | Inloggen als gebruiker | act as a member for two hours ([security.md](security.md#log-in-as)) |
 | Tijdreis-widget | set the app's clock to test live or finished trips |
 | Feedback | what members sent through Instellingen → Feedback geven, filtered by status (nieuw, gezien, opgelost); anonymous messages show "Anoniem" |
