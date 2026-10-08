@@ -55,6 +55,7 @@ class NotificationCategory:
     RIDE_CREATED = "ride_created"
     EXPENSE_CREATED = "expense_created"
     MEAL_CREATED = "meal_created"
+    FEEDBACK_SUBMITTED = "feedback_submitted"
 
 
 ALL_CATEGORIES: list[str] = [
@@ -66,7 +67,13 @@ ALL_CATEGORIES: list[str] = [
     NotificationCategory.RIDE_CREATED,
     NotificationCategory.EXPENSE_CREATED,
     NotificationCategory.MEAL_CREATED,
+    NotificationCategory.FEEDBACK_SUBMITTED,
 ]
+
+# Categories only admins can have. Choosing one is refused for anyone else (see
+# users.py), and a broadcast skips a profile that is no longer an admin even if it
+# still carries the category from when it was.
+ADMIN_ONLY_CATEGORIES: frozenset[str] = frozenset({NotificationCategory.FEEDBACK_SUBMITTED})
 
 # Push notification title per category — a phone's notification chrome already
 # shows the app name and icon, so repeating "Ankerd Con" as the title told a
@@ -80,6 +87,7 @@ _PUSH_TITLES: dict[str, str] = {
     NotificationCategory.RIDE_CREATED: "Nieuwe rit",
     NotificationCategory.EXPENSE_CREATED: "Nieuwe uitgave",
     NotificationCategory.MEAL_CREATED: "Nieuwe activiteit",
+    NotificationCategory.FEEDBACK_SUBMITTED: "Nieuwe feedback",
 }
 
 
@@ -98,7 +106,7 @@ def broadcast_category_dm(bot_token: str, category: str, content: str, eligible_
     try:
         profiles = (
             supabase.table(Tables.PROFILES)
-            .select("name, discord_id, notification_categories, is_active, allow_dm")
+            .select("name, discord_id, notification_categories, is_active, allow_dm, is_admin")
             .execute()
             .data
         )
@@ -112,6 +120,8 @@ def broadcast_category_dm(bot_token: str, category: str, content: str, eligible_
         if not profile.get("is_active", True):
             continue
         if category not in (profile.get("notification_categories") or []):
+            continue
+        if category in ADMIN_ONLY_CATEGORIES and not profile.get("is_admin"):
             continue
         if eligible_names is not None and profile["name"] not in eligible_names:
             continue

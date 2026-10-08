@@ -226,3 +226,17 @@ def test_someone_else_cannot_delete_it(monkeypatch):
         _delete(monkeypatch, db, "Lou")
     assert e.value.status_code == 403
     assert len(db.tables["meals"]) == 1 and len(db.tables["rides"]) == 1
+
+
+# ── admin-only notification categories ───────────────────────────────────────
+
+def test_only_admins_may_choose_the_feedback_notification(monkeypatch):
+    from app.routers import users as users_router
+
+    monkeypatch.setattr(users_router, "_is_admin", lambda name: name == "Admin")
+    users_router._require_admin_for_categories(["ride_created"], "Sam")  # an ordinary category: fine for anyone
+    users_router._require_admin_for_categories(["feedback_submitted"], "Admin")
+    users_router._require_admin_for_categories(None, "Sam")
+    with pytest.raises(HTTPException) as e:
+        users_router._require_admin_for_categories(["ride_created", "feedback_submitted"], "Sam")
+    assert e.value.status_code == 403

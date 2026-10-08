@@ -10,7 +10,7 @@ import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 import { useCurrentUser, useUpdatePreferences } from "../hooks/useUsers";
 import { useSmartBack } from "../hooks/useSmartBack";
 import { routes } from "../config/routes";
-import { NOTIFICATION_CATEGORIES } from "../constants/notifications";
+import { categoriesFor } from "../constants/notifications";
 import { NotificationChannelPicker } from "../components/notifications/NotificationChannelPicker";
 import { toast } from "../store/toast.store";
 
@@ -121,7 +121,7 @@ export function NotificationSettingsPage() {
             </div>
 
             <div className="divide-y divide-line border-t border-line">
-              {NOTIFICATION_CATEGORIES.map((cat) => {
+              {categoriesFor(!!user.is_admin).map((cat) => {
                 const checked = draftCategories.includes(cat.id);
                 return (
                   <label

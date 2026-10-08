@@ -9,9 +9,10 @@ from app.constants import Tables
 from app.core import minio_client
 from app.core.logging import get_logger
 from app.core.uploads import clean_image, read_capped
-from app.dependencies import act_as, get_current_user, _strip_discriminator
+from app.dependencies import _is_admin, act_as, get_current_user, _strip_discriminator
 from app.models.user import CompleteOnboardingRequest, LocationPingRequest, UpdateNameRequest, UpdatePreferencesRequest, User
 from app.routes import UserRoutes
+from app.services.notification_service import ADMIN_ONLY_CATEGORIES
 from app.core.database import supabase
 
 logger = get_logger(__name__)
@@ -101,6 +102,15 @@ def list_all_users_safely(_: str = Depends(get_current_user)) -> list[User]:
     return safe_users
 
 
+def _require_admin_for_categories(categories: list[str] | None, user: str) -> None:
+    """Some notification categories (new feedback) are for admins only."""
+    if categories and ADMIN_ONLY_CATEGORIES.intersection(categories) and not _is_admin(user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Deze melding is alleen voor admins.",
+        )
+
+
 @router.put(UserRoutes.PREFERENCES, status_code=status.HTTP_204_NO_CONTENT)
 def update_preferences(
     body: UpdatePreferencesRequest,
@@ -122,6 +132,7 @@ def update_preferences(
 
     if not updates:
         return
+    _require_admin_for_categories(body.notification_categories, current_user)
     _reject_claimed_aliases(body.aliases, current_user)
 
     try:
@@ -241,6 +252,7 @@ def complete_onboarding(
         _reject_claimed_aliases(body.aliases, current_user)
         updates["aliases"] = body.aliases
     if body.notification_categories is not None:
+        _require_admin_for_categories(body.notification_categories, current_user)
         updates["notification_categories"] = body.notification_categories
 
     try:

@@ -186,3 +186,29 @@ def test_personal_dm_with_no_profile_id_sends_nothing(monkeypatch, dmed, pushed)
     svc.send_personal_dm("tok", "", "content")
     assert dmed == []
     assert pushed == []
+
+
+# ── admin-only categories ────────────────────────────────────────────────────
+
+def test_feedback_notifications_reach_admins_only(monkeypatch, dmed, pushed):
+    rows = [
+        _profile(id="a", name="Admin", discord_id="da", is_admin=True, notification_categories=["feedback_submitted"]),
+        _profile(id="m", name="Member", discord_id="dm", is_admin=False, notification_categories=["feedback_submitted"]),
+    ]
+    monkeypatch.setattr(svc, "supabase", FakeSupabase(rows))
+    svc.broadcast_category_dm("tok", "feedback_submitted", "💬 **Nieuwe feedback**")
+    # A member who somehow carries the category (e.g. a former admin) gets nothing.
+    assert dmed == ["da"]
+    assert pushed == [["Admin"]]
+
+
+def test_an_admin_who_did_not_ask_gets_no_feedback_notification(monkeypatch, dmed, pushed):
+    monkeypatch.setattr(svc, "supabase", FakeSupabase([_profile(is_admin=True, notification_categories=["ride_created"])]))
+    svc.broadcast_category_dm("tok", "feedback_submitted", "💬 **Nieuwe feedback**")
+    assert dmed == [] and pushed == [[]]
+
+
+def test_feedback_has_its_own_push_title(monkeypatch, dmed, pushed_titles):
+    monkeypatch.setattr(svc, "supabase", FakeSupabase([_profile(is_admin=True, notification_categories=["feedback_submitted"])]))
+    svc.broadcast_category_dm("tok", "feedback_submitted", "💬 **Nieuwe feedback (bug)**")
+    assert pushed_titles == ["Nieuwe feedback"]
