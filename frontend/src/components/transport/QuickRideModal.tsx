@@ -85,7 +85,6 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, direction, departureDay, trip, edited.start, edited.end]);
 
-  const toHotel = direction === "Outbound";
   const missingLocation = !startLocation || !endLocation;
 
   async function onSubmit() {
@@ -119,7 +118,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
     <TripSheet
       open={open}
       onClose={onClose}
-      title={event.is_hotel ? (toHotel ? "Rit naar hotel aanbieden" : "Rit naar evenement aanbieden") : "Rit aanbieden"}
+      title="Rit aanbieden"
       subtitle="Alleen de vertrektijd en het aantal plekken zijn nodig."
       footer={footer}
     >
@@ -138,7 +137,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
                   : "text-ink-2 hover:text-ink"
               }`}
             >
-              {event.is_hotel ? (d === "Inbound" ? "Naar evenement" : "Naar hotel") : (d === "Inbound" ? "Heen" : "Terug")}
+              {d === "Inbound" ? "Heen" : "Terug"}
             </button>
           ))}
         </div>
