@@ -6,6 +6,15 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- The hub's "Rit aanbieden" no longer says "Naar hotel" / "Naar evenement" on a hotel trip: the switch
+  and the title say **Heen** and **Terug** like everywhere else, since on the last day Terug goes
+  home, not to the hotel. The tile's grey line says "Naar huis" then too, and "Naar hotel" only on
+  days before the last.
+- The hub's "Rit aanbieden" and "Meerijden" switch to tomorrow's ride to the event from 20:00 (was
+  21:00), in the evening of a day that is not the last.
+
 ---
 
 ## [2.1.1] - 2026-10-08
