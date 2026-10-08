@@ -6,7 +6,39 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+---
+
+## [2.1.1] - 2026-10-08
+
+Activities (a meal is now one kind of activity), a faster and steadier backend, a calmer Vervoer
+with the hotel filled in, and fixes to the weather card and the error screen. Needs migration
+v2.36 (see `TODO.md`).
+
 ### Fixed
+
+- **The weather card said "Geen weersdata beschikbaar" for events more than about two weeks away**
+  instead of the usual average for that date. Since the weather moved through the backend, the
+  forecast service's answer for a date out of range (a 400, not an empty forecast) was treated as a
+  failure, so the app never fell back to the average of the past ten years. The backend now passes
+  that on as "no forecast yet".
+- **The weather card showed another country's weather for some events.** It looked the event up by
+  name again, and when "Brussel Expo" found nothing it tried single words: "Expo" matched a village
+  in Virginia, so HMIA Brussels showed 29° for a Saturday in October (Brussels: 14°). It now uses
+  the coordinates the event was saved with (from its address or Maps link), and only searches by
+  name for an event that could not be placed.
+- **The site sometimes hung for minutes** (the admin CDN page too), a refresh did not always help,
+  and it went away by itself. The backend shared one long-lived connection to the database for
+  everything and waited up to 120 seconds on it, so a connection that died quietly stalled every
+  request. It now uses ordinary connections, gives up on a database call after 5 seconds to connect
+  and 20 to answer, and sends a read again once on a fresh connection when the first one was dead.
+- Saving or editing an activity or an event in the admin panel waited for the database on the
+  server's main thread, so one slow query froze every other request. It now runs on a worker thread
+  like the rest.
+- The admin CDN page listed the whole photo storage again on every click. The listing is now kept
+  for 45 seconds, and dropped at once when a file is added or removed.
+- Slow requests (1.5 seconds or more) are now written to the log with how many others were in
+  progress, and every API answer carries a `Server-Timing` header, so the next time it feels slow
+  there is something to look at.
 
 - **The "Er ging iets mis" screen could not be left.** Both buttons only reloaded the page, which
   read the same saved data back in and crashed the same way, so for some members it came back
@@ -33,9 +65,29 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- Whoever planned an activity, or an admin, can now **delete** it from the same pencil that edits it. It
+  asks first and says how many sign-ups go with it; the ride to its restaurant, if there is one, is
+  removed too.
 - Notifications and search say "activiteit" instead of "etentje": "Nieuwe activiteit", and
   "Activiteit toevoegen" (also found by "eten", "diner", "bowlen", "groepsfoto") in the search.
 - "Nergens bij" only counts meals: being at the bowling alley is not having dinner.
+- **A new ride knows about the hotel.** On a trip with a hotel, Heen on any day after the first
+  starts at the hotel (you slept there), and Terug on any day before the last ends at the hotel.
+  The first Heen and the last Terug stay empty: that is from and to home. This holds in the Vervoer
+  sheet and in the hub's "Rit aanbieden" (which used to put the hotel on the first and last day
+  too, and looks at the day you pick). Typing in a location yourself is never overwritten.
+- **Meerijden on the hub looks like Vervoer.** The sheet is one day at a time (day chips on a trip
+  of several days, with the amber dot for days that still miss a ride), Heen and Terug under each
+  other with a row per ride, your own in blue, and Stap in one tap away, instead of the old cards
+  that needed a selection first. The way you are probably going (from the time of day) is scrolled into view.
+- **The cars to an activity look like Heen and Terug.** Under Activiteiten in Vervoer each car was
+  still the old card with an avatar and a footer, next to the compact rows of Heen and Terug. They
+  are rows now too: time, driver and who rides along, seats free on the right, your own car in blue,
+  and Stap in / Uitstappen one tap away.
+- **Vervoer names who still has to make a ride.** Under Terug (and Heen) a line lists the drivers
+  who planned the other way but not this one, so you no longer have to go through every driver to
+  find out who has not made a return ride yet. The summary line ("4 mensen · 1 auto · 5 plekken"
+  and its yellow warning) is gone: the warning is already at the bottom of the sheet.
 - **Vervoer shows Heen, Terug and Eten under each other** instead of behind a switch: three
   sections per day, each with its own "Rit aanbieden". The sheet still opens on the day the
   Hub's tiles would use and scrolls to the right section.

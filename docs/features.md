@@ -48,6 +48,10 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
 - **Today's meals** (`MealTodayCard.tsx`) and **quick ride tiles**
   (`QuickRideTiles.tsx`): offer or join a ride to/from the event or hotel. The
   direction and time are guessed from the clock (`utils/quickRide.ts`).
+  "Meerijden" is the same day chips and Heen/Terug rows as the Vervoer sheet (`JoinRideModal.tsx` reuses
+  `RideRow`). Where a new ride starts and ends is `defaultRideEnds` (`utils/rideLocations.ts`),
+  shared with the Vervoer sheet: the venue on the event side and, on a hotel trip, the hotel on
+  the other side except for the first Heen and the last Terug (those are from and to home).
 - **Mijn ticket shortcut** (`TicketShortcutCard.tsx`): one tap to the current trip's ticket
   sheet, reading straight from the same on-device store as the event page's tile — its text
   changes depending on whether you've saved one yet. The link (`?openTicket=1`) is a one-shot
@@ -110,7 +114,10 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
   day (an amber dot marks a day that still has people without transport). Each ride is a
   single row (time, driver, where from or to, seats free and the car's target); tap it for
   who rides along, the parking info, **Stap in** / **Uitstappen** and a link to the ride's
-  own page. **Your own ride is the blue row.** The sheet opens on the day, and scrolls to the section, the
+  own page. **Your own ride is the blue row.** Under the Heen and Terug headers a line names the
+  drivers who planned the other way but not this one ("Nog geen terugrit: Anna, Bram"), for the
+  whole trip, so on the way back nobody has to go through every driver to see who is still missing
+  (`driversMissing` in `utils/transportView.ts`). The sheet opens on the day, and scrolls to the section, the
   Hub's "Rit aanbieden" and "Meerijden" tiles would use (`utils/transportView.ts`, built on
   `planQuickRide`): Heen before the trip and in the morning, Terug from 13:00, Heen on
   tomorrow's day from 21:00, Terug on the last day once it's over, and Eten instead of Terug
@@ -149,7 +156,9 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
 time, location, cost, dietary notes, links, whether it needs transport, and
 participants. It started as the meal ("etentje"), so code, API and the `meals` table keep
 that name; the app calls it an **activiteit**. Anyone can plan one for a trip
-(`TripMealSheet.tsx`); only its creator or an admin can edit or delete it. The
+(`TripMealSheet.tsx`); only its creator or an admin can edit or delete it, both from the pencil on
+its page (`MealEditSheet.tsx`; deleting asks first and also removes the ride to its restaurant,
+which has no meaning without it). The
 **Activiteiten** tile lists the next ones, and its "nergens bij" pill opens the names of the
 members who are not at any *meal* yet.
 
