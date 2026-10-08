@@ -106,7 +106,7 @@ async def _resolve_update_coords(table: str, row_id: str, updates: dict, text_fi
     maps_url = updates.get(maps_field)
     if text_field not in updates or maps_field not in updates:
         try:
-            rows = supabase.table(table).select(f"{text_field}, {maps_field}").eq("id", row_id).execute().data
+            rows = (await run_in_threadpool(lambda: supabase.table(table).select(f"{text_field}, {maps_field}").eq("id", row_id).execute())).data
         except Exception as e:
             logger.error("Failed to fetch current %s/%s for %s %s: %s", text_field, maps_field, table, row_id, e)
             rows = []
@@ -531,9 +531,9 @@ async def admin_create_meal(body: AdminCreateMealRequest, _: str = Depends(get_a
     meal_data = body.model_dump()
     meal_data["participants"] = []
     if meal_data.get("category_id"):
-        require_category(meal_data["category_id"])
+        await run_in_threadpool(require_category, meal_data["category_id"])
     else:
-        default_id = default_category_id()
+        default_id = await run_in_threadpool(default_category_id)
         if default_id:
             meal_data["category_id"] = default_id
         else:
@@ -542,7 +542,7 @@ async def admin_create_meal(body: AdminCreateMealRequest, _: str = Depends(get_a
     if coords:
         meal_data["location_lat"], meal_data["location_lng"] = coords
     try:
-        resp = supabase.table(Tables.MEALS).insert(meal_data).execute()
+        resp = await run_in_threadpool(lambda: supabase.table(Tables.MEALS).insert(meal_data).execute())
         return resp.data[0]
     except Exception as e:
         logger.error("Failed to create meal: %s", e)
@@ -562,10 +562,10 @@ async def admin_update_meal(
     if not updates:
         return
     if updates.get("category_id"):
-        require_category(updates["category_id"])
+        await run_in_threadpool(require_category, updates["category_id"])
     await _resolve_update_coords(Tables.MEALS, meal_id, updates, "location", "maps_url")
     try:
-        resp = supabase.table(Tables.MEALS).update(updates).eq("id", meal_id).execute()
+        resp = await run_in_threadpool(lambda: supabase.table(Tables.MEALS).update(updates).eq("id", meal_id).execute())
     except Exception as e:
         logger.error("Failed to update meal %s: %s", meal_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
@@ -747,7 +747,7 @@ async def admin_create_event(body: AdminCreateEventRequest, _: str = Depends(get
     if coords:
         event_data["hotel_location_lat"], event_data["hotel_location_lng"] = coords
     try:
-        resp = supabase.table(Tables.EVENTS).insert(event_data).execute()
+        resp = await run_in_threadpool(lambda: supabase.table(Tables.EVENTS).insert(event_data).execute())
     except Exception as e:
         logger.error("Failed to create event: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
@@ -766,7 +766,7 @@ async def admin_update_event(event_id: str, body: AdminUpdateEventRequest, _: st
     await _resolve_update_coords(Tables.EVENTS, event_id, updates, "location", "location_maps_url")
     await _resolve_update_coords(Tables.EVENTS, event_id, updates, "hotel_location", "hotel_location_maps_url")
     try:
-        resp = supabase.table(Tables.EVENTS).update(updates).eq("id", event_id).execute()
+        resp = await run_in_threadpool(lambda: supabase.table(Tables.EVENTS).update(updates).eq("id", event_id).execute())
     except Exception as e:
         logger.error("Failed to update event %s: %s", event_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)

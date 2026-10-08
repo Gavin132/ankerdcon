@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncGenerator
@@ -75,6 +76,37 @@ app = FastAPI(
 app.middleware("http")(rate_limit(settings))
 app.middleware("http")(limit_body_size())
 app.middleware("http")(add_security_headers(settings))
+
+
+# A request that takes this long is worth a line in the log. The site feeling slow
+# comes and goes, and when it happens the question is always the same: was it the
+# database, the photo storage, or the network in front of the app? This says which
+# request, how long, and how many others were in progress at the time.
+_SLOW_REQUEST_SECONDS = 1.5
+_in_flight = 0
+
+
+@app.middleware("http")
+async def time_requests(request: Request, call_next):
+    """Logs slow requests and puts the time in a Server-Timing header (shown under
+    Timing in the browser's network tab). Added last, so it runs first and times
+    everything else, middleware included."""
+    global _in_flight
+    started = time.perf_counter()
+    _in_flight += 1
+    try:
+        response = await call_next(request)
+    finally:
+        _in_flight -= 1
+    elapsed = time.perf_counter() - started
+    if request.url.path.startswith(API_PREFIX):
+        response.headers["Server-Timing"] = f"app;dur={elapsed * 1000:.0f}"
+    if elapsed >= _SLOW_REQUEST_SECONDS:
+        logger.warning(
+            "Slow request: %s %s took %.1fs (status %s, %d other requests in progress)",
+            request.method, request.url.path, elapsed, response.status_code, _in_flight,
+        )
+    return response
 
 app.add_middleware(
     CORSMiddleware,

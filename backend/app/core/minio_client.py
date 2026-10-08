@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import threading
+import time
 from functools import lru_cache
 from io import BytesIO
 
@@ -84,6 +86,7 @@ def upload_bytes(key: str, content: bytes, content_type: str) -> str:
         content_type=content_type,
         metadata={"Cache-Control": _CACHE_CONTROL_FOREVER},
     )
+    _forget_listing()
     return f"{_public_base()}{key}"
 
 
@@ -92,12 +95,51 @@ def upload_bytes(key: str, content: bytes, content_type: str) -> str:
 _LIST_CAP = 20000
 
 
+# Listing the bucket walks every object over the network, and the CDN page asks for it on
+# every click (another page, another filter, the zip button). Reuse one listing for a
+# short while; any upload or delete through this module drops it at once, so the page
+# never lags behind a change made here.
+_LIST_TTL_SECONDS = 45
+_list_lock = threading.Lock()
+_list_cache: tuple[float, list[dict], bool] | None = None
+# Bumped by every change, so a listing that was already under way when the change
+# happened is not stored afterwards as if it were current. Its own tiny lock: a
+# change must never wait for a slow listing.
+_generation = 0
+_generation_lock = threading.Lock()
+
+
+def _forget_listing() -> None:
+    """Call after a change to the bucket."""
+    global _list_cache, _generation
+    with _generation_lock:
+        _generation += 1
+        _list_cache = None
+
+
 def list_all_objects() -> tuple[list[dict], bool]:
     """Every object in the bucket, newest first, as (objects, was_capped).
+    Cached for a short while (see _LIST_TTL_SECONDS); callers get their own copies.
 
     Each item: key, url, size (bytes), last_modified (ISO). Goes through the
     backend's own credentials, so it works whatever the public bucket policy
     allows (which is GetObject only — no listing)."""
+    global _list_cache
+    # The lock is held while listing, so a burst of requests waits for one listing
+    # instead of each starting its own.
+    with _list_lock:
+        cached = _list_cache
+        if cached and time.monotonic() < cached[0]:
+            return [dict(o) for o in cached[1]], cached[2]
+        started_at = _generation
+        out, capped = _list_bucket()
+        with _generation_lock:
+            if _generation == started_at:
+                _list_cache = (time.monotonic() + _LIST_TTL_SECONDS, out, capped)
+        return [dict(o) for o in out], capped
+
+
+def _list_bucket() -> tuple[list[dict], bool]:
     settings = get_settings()
     out: list[dict] = []
     capped = False
@@ -136,6 +178,7 @@ def key_from_url(url: str | None) -> str | None:
 def delete_object(key: str) -> None:
     settings = get_settings()
     _client().remove_object(settings.minio_bucket, key)
+    _forget_listing()
 
 
 def get_object_bytes(key: str) -> tuple[bytes, str]:
