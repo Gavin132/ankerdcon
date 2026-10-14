@@ -165,6 +165,11 @@ def create_expense(
                 logger.error("Failed to remove expense %s after its shares failed: %s", expense_id, cleanup_error)
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
+    # Who it is for: the trip's people, and always whoever shares in the bill.
+    trip_names = notification_service.trip_names_for_day(body.linked_event_id)
+    if trip_names is not None:
+        trip_names = trip_names | {s.participant for s in body.shares} | {paid_by}
+
     background_tasks.add_task(
         notification_service.broadcast_category_dm,
         settings.discord_bot_token,
@@ -175,6 +180,7 @@ def create_expense(
             currency=escape_markdown(body.currency),
             description=escape_markdown(body.description),
         ),
+        trip_names=trip_names,
     )
 
 

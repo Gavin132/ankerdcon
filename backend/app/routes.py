@@ -45,6 +45,7 @@ class UserRoutes:
     BANNER = "/banner"
     AVATAR = "/avatar"
     LINK_DISCORD = "/me/link-discord"
+    TEST_NOTIFICATION = "/me/test-notification"
 
 
 class MealRoutes:

@@ -57,14 +57,34 @@ async function getRegistration(): Promise<ServiceWorkerRegistration> {
   return Promise.race([ready, timeout]);
 }
 
-export async function getPushState(): Promise<PushState> {
+/** What can be said about push right now without asking the browser anything slow:
+ * everything except whether this device is already subscribed. Null means that part
+ * still has to be looked up (see getPushState). */
+export function immediatePushState(): Exclude<PushState, "on" | "off"> | null {
   if (!isPushSupported()) return "unsupported";
   if (needsHomeScreenInstall()) return "needs-install";
   if (Notification.permission === "denied") return "denied";
+  return null;
+}
+
+/** Looking up the subscription is only worth this long. It is a local question, so a
+ * longer wait means the browser is not going to answer. */
+const LOOKUP_TIMEOUT_MS = 1500;
+
+export async function getPushState(): Promise<PushState> {
+  const immediate = immediatePushState();
+  if (immediate) return immediate;
   try {
-    const reg = await getRegistration();
-    const sub = await reg.pushManager.getSubscription();
-    return sub ? "on" : "off";
+    // getRegistration() answers at once, with nothing when no service worker is registered
+    // (always so in a dev build). `serviceWorker.ready` would wait for one that never
+    // comes, and that wait is what used to keep this card hidden for seconds.
+    const lookup = (async () => {
+      const reg = await navigator.serviceWorker.getRegistration();
+      const sub = reg ? await reg.pushManager.getSubscription() : null;
+      return sub ? ("on" as const) : ("off" as const);
+    })();
+    const timeout = new Promise<"off">((resolve) => window.setTimeout(() => resolve("off"), LOOKUP_TIMEOUT_MS));
+    return await Promise.race([lookup, timeout]);
   } catch {
     return "off";
   }

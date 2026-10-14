@@ -91,6 +91,8 @@ export interface User {
   aliases?: string[];
   badge_ids?: string[];
   notification_categories?: string[];
+  /** Only hear about a trip's new activities and expenses when going on that trip (default on). */
+  notify_own_trips_only?: boolean;
   created_at?: string;
 }
 
@@ -111,6 +113,7 @@ export interface UpdatePreferencesRequest {
   aliases?: string[];
   allow_dm?: boolean;
   show_greeting?: boolean;
+  notify_own_trips_only?: boolean;
   notification_categories?: string[];
 }
 

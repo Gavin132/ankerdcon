@@ -91,7 +91,41 @@ _PUSH_TITLES: dict[str, str] = {
 }
 
 
-def broadcast_category_dm(bot_token: str, category: str, content: str, eligible_names: set[str] | None = None) -> None:
+def trip_names_for_day(day_id: str | None) -> set[str] | None:
+    """Everyone signed up for any day of the trip this event day belongs to: the people a notification
+    about that trip is for. None when there is no such day, or it cannot be read, meaning "no trip to
+    narrow it to" (the notification then goes to everyone who asked for it)."""
+    if not day_id:
+        return None
+    try:
+        day = supabase.table(Tables.EVENT_DAYS).select("event_id").eq("id", day_id).execute().data
+        if not day:
+            return None
+        days = supabase.table(Tables.EVENT_DAYS).select("participants").eq("event_id", day[0]["event_id"]).execute().data
+    except Exception as e:
+        logger.warning("Could not read who goes on the trip of day %s: %s", day_id, e)
+        return None
+    return {name for d in days for name in (d.get("participants") or [])}
+
+
+def _fetch_profiles(category: str) -> list[dict]:
+    """The profiles a broadcast chooses from. Asks for the own-trips setting too, but a database that
+    does not have that column yet (the migration has not run) must not silence every notification."""
+    columns = "name, discord_id, notification_categories, is_active, allow_dm, is_admin"
+    try:
+        return supabase.table(Tables.PROFILES).select(f"{columns}, notify_own_trips_only").execute().data
+    except Exception as e:
+        logger.warning("Notification broadcast (%s): own-trips setting unavailable, ignoring it: %s", category, e)
+        return supabase.table(Tables.PROFILES).select(columns).execute().data
+
+
+def broadcast_category_dm(
+    bot_token: str,
+    category: str,
+    content: str,
+    eligible_names: set[str] | None = None,
+    trip_names: set[str] | None = None,
+) -> None:
     """Send `content` to every active, opted-in user for `category` — as a
     Discord DM (needs `allow_dm` + a linked account), a push (needs a
     subscription), or both; see the module docstring for exactly which.
@@ -100,16 +134,15 @@ def broadcast_category_dm(bot_token: str, category: str, content: str, eligible_
     usual category opt-in — e.g. rides.py also requires being signed up for
     that event day and not already having a ride that covers it.
 
+    `trip_names` is who the notification is about (see trip_names_for_day). A member who keeps
+    "alleen voor mijn trips" on (the default) only gets it when they are in that set; one who
+    switched it off gets everything they opted in to, as before.
+
     Fire-and-forget — intended for `background_tasks.add_task`. Never raises;
     a failed fetch or a single failed send must never break the caller.
     """
     try:
-        profiles = (
-            supabase.table(Tables.PROFILES)
-            .select("name, discord_id, notification_categories, is_active, allow_dm, is_admin")
-            .execute()
-            .data
-        )
+        profiles = _fetch_profiles(category)
     except Exception as e:
         logger.error("Notification broadcast (%s): failed to fetch profiles: %s", category, e)
         return
@@ -124,6 +157,8 @@ def broadcast_category_dm(bot_token: str, category: str, content: str, eligible_
         if category in ADMIN_ONLY_CATEGORIES and not profile.get("is_admin"):
             continue
         if eligible_names is not None and profile["name"] not in eligible_names:
+            continue
+        if trip_names is not None and profile.get("notify_own_trips_only", True) and profile["name"] not in trip_names:
             continue
         if bot_token and profile.get("allow_dm", True) and profile.get("discord_id"):
             discord_bot.send_dm(bot_token, profile["discord_id"], content)

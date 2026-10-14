@@ -212,3 +212,110 @@ def test_feedback_has_its_own_push_title(monkeypatch, dmed, pushed_titles):
     monkeypatch.setattr(svc, "supabase", FakeSupabase([_profile(is_admin=True, notification_categories=["feedback_submitted"])]))
     svc.broadcast_category_dm("tok", "feedback_submitted", "💬 **Nieuwe feedback (bug)**")
     assert pushed_titles == ["Nieuwe feedback"]
+
+
+# ── "alleen voor mijn trips" ─────────────────────────────────────────────────
+
+def test_a_member_on_the_default_setting_only_hears_about_their_own_trip(monkeypatch, dmed, pushed):
+    rows = [
+        _profile(id="a", name="Goes", discord_id="dg", notification_categories=["meal_created"], notify_own_trips_only=True),
+        _profile(id="b", name="Stays", discord_id="ds", notification_categories=["meal_created"], notify_own_trips_only=True),
+    ]
+    monkeypatch.setattr(svc, "supabase", FakeSupabase(rows))
+    svc.broadcast_category_dm("tok", "meal_created", "📅 **Nieuwe activiteit: Bowlen**", trip_names={"Goes"})
+    assert dmed == ["dg"] and pushed == [["Goes"]]
+
+
+def test_a_member_who_switched_it_off_hears_about_every_trip(monkeypatch, dmed, pushed):
+    rows = [_profile(name="Stays", discord_id="ds", notification_categories=["meal_created"], notify_own_trips_only=False)]
+    monkeypatch.setattr(svc, "supabase", FakeSupabase(rows))
+    svc.broadcast_category_dm("tok", "meal_created", "x", trip_names={"Someone else"})
+    assert dmed == ["ds"]
+
+
+def test_without_a_trip_everyone_who_asked_gets_it(monkeypatch, dmed, pushed):
+    rows = [_profile(name="Stays", discord_id="ds", notification_categories=["meal_created"], notify_own_trips_only=True)]
+    monkeypatch.setattr(svc, "supabase", FakeSupabase(rows))
+    svc.broadcast_category_dm("tok", "meal_created", "x", trip_names=None)
+    assert dmed == ["ds"]
+
+
+def test_the_default_applies_to_a_profile_that_has_no_setting_yet(monkeypatch, dmed, pushed):
+    """A database without the column (migration not run) must still notify; the new default applies."""
+    monkeypatch.setattr(svc, "supabase", FakeSupabase([_profile(name="Stays", notification_categories=["meal_created"])]))
+    svc.broadcast_category_dm("tok", "meal_created", "x", trip_names={"Someone else"})
+    assert dmed == []
+
+
+def test_a_database_without_the_setting_does_not_silence_everything(monkeypatch, dmed):
+    class NoColumn(FakeSupabase):
+        def select(self, columns, *_):
+            if "notify_own_trips_only" in columns:
+                raise RuntimeError("column does not exist")
+            return self
+
+    monkeypatch.setattr(svc, "supabase", NoColumn([_profile(notification_categories=["meal_created"])]))
+    svc.broadcast_category_dm("tok", "meal_created", "x")
+    assert dmed == ["d1"]
+
+
+def test_trip_names_are_everyone_on_any_day_of_the_trip(monkeypatch):
+    class Days:
+        def __init__(self):
+            self.step = 0
+
+        def table(self, _name):
+            return self
+
+        def select(self, columns):
+            self.columns = columns
+            return self
+
+        def eq(self, col, val):
+            self.col = col
+            return self
+
+        def execute(self):
+            if self.columns == "event_id":
+                return _Result([{"event_id": "E"}])
+            return _Result([{"participants": ["A", "B"]}, {"participants": ["B", "C"]}, {"participants": None}])
+
+    monkeypatch.setattr(svc, "supabase", Days())
+    assert svc.trip_names_for_day("d1") == {"A", "B", "C"}
+    assert svc.trip_names_for_day(None) is None
+
+
+# ── testmelding ──────────────────────────────────────────────────────────────
+
+def test_a_test_notification_goes_to_the_member_themselves(monkeypatch):
+    from types import SimpleNamespace
+    from fastapi import HTTPException
+    from app.routers import users as users_router
+
+    class One:
+        def table(self, _n):
+            return self
+
+        def select(self, *_):
+            return self
+
+        def eq(self, *_):
+            return self
+
+        def execute(self):
+            return _Result([{"id": "u1"}])
+
+    sent = []
+    monkeypatch.setattr(users_router, "supabase", One())
+    monkeypatch.setattr(users_router.notification_service, "send_personal_dm", lambda token, pid, content, title: sent.append((pid, title)))
+    users_router._test_sent.clear()
+    settings = SimpleNamespace(discord_bot_token="tok")
+
+    for _ in range(5):
+        users_router.send_test_notification("Sam", settings)
+    assert sent == [("u1", "Testmelding")] * 5
+    with pytest.raises(HTTPException) as e:
+        users_router.send_test_notification("Sam", settings)
+    assert e.value.status_code == 429
+    users_router.send_test_notification("Alex", settings)  # someone else is not affected
+    assert len(sent) == 6

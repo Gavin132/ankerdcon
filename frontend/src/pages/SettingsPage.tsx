@@ -111,7 +111,7 @@ export function SettingsPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[14px] font-semibold text-ink">Notificaties</p>
-                <p className="text-[12.5px] text-ink-3">Kies welke Discord DM's je ontvangt</p>
+                <p className="text-[12.5px] text-ink-3">Kies hoe je meldingen krijgt, via Discord of push, en waarvoor</p>
               </div>
               <ChevronRight size={16} className="shrink-0 text-ink-3" />
             </button>

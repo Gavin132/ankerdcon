@@ -83,6 +83,7 @@ export const apiRoutes = {
     banner:      "/api/users/banner",
     avatar:      "/api/users/avatar",
     linkDiscord: "/api/users/me/link-discord",
+    testNotification: "/api/users/me/test-notification",
     byId:        (identifier: string) => `/api/users/${identifier}`,
     location:    (identifier: string) => `/api/users/${identifier}/location`,
   },

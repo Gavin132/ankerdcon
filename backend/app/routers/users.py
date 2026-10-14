@@ -1,9 +1,13 @@
 from datetime import datetime, timezone
 import json
+import time
 import uuid
 
 from fastapi.concurrency import run_in_threadpool
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+
+from app import messages as M
+from app.config import Settings, get_settings
 
 from app.constants import Tables
 from app.core import minio_client
@@ -12,6 +16,7 @@ from app.core.uploads import clean_image, read_capped
 from app.dependencies import _is_admin, act_as, get_current_user, _strip_discriminator
 from app.models.user import CompleteOnboardingRequest, LocationPingRequest, UpdateNameRequest, UpdatePreferencesRequest, User
 from app.routes import UserRoutes
+from app.services import notification_service
 from app.services.notification_service import ADMIN_ONLY_CATEGORIES
 from app.core.database import supabase
 
@@ -127,6 +132,7 @@ def update_preferences(
         "aliases":                 body.aliases,
         "allow_dm":                body.allow_dm,
         "show_greeting":           body.show_greeting,
+        "notify_own_trips_only":   body.notify_own_trips_only,
         "notification_categories": body.notification_categories,
     }.items() if v is not None}
 
@@ -143,6 +149,37 @@ def update_preferences(
 
     if not response.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
+
+
+# Kept in memory per process, like the feedback limit: enough to stop one member flooding themselves.
+_TEST_MAX_PER_HOUR = 5
+_test_sent: dict[str, list[float]] = {}
+
+
+@router.post(UserRoutes.TEST_NOTIFICATION, status_code=status.HTTP_204_NO_CONTENT)
+def send_test_notification(
+    current_user: str = Depends(get_current_user),
+    settings: Settings = Depends(get_settings),
+) -> None:
+    """Sends the member one message through the channel(s) they have set up (Discord DM and/or push),
+    so they can see for themselves that it arrives."""
+    now = time.monotonic()
+    recent = [t for t in _test_sent.get(current_user, []) if now - t < 3600]
+    if len(recent) >= _TEST_MAX_PER_HOUR:
+        _test_sent[current_user] = recent
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Je hebt net al een paar testmeldingen gestuurd. Probeer het over een uur opnieuw.",
+        )
+    _test_sent[current_user] = [*recent, now]
+    try:
+        rows = supabase.table(Tables.PROFILES).select("id").eq("name", current_user).execute().data
+    except Exception as e:
+        logger.error("Failed to look up %s for a test notification: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if not rows:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
+    notification_service.send_personal_dm(settings.discord_bot_token, rows[0]["id"], M.DM_TEST_NOTIFICATION, title="Testmelding")
 
 
 @router.patch(UserRoutes.NAME, status_code=status.HTTP_204_NO_CONTENT)

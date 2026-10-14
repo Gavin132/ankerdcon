@@ -30,6 +30,8 @@ class User(BaseModel):
     aliases: list[str] = []
     badge_ids: list[str] = []
     notification_categories: list[str] = []
+    # Only get a notification about a trip's activities and expenses when going on that trip.
+    notify_own_trips_only: bool = True
     created_at: Optional[str] = None
 
 class UpdateNameRequest(BaseModel):
@@ -66,6 +68,7 @@ class UpdatePreferencesRequest(BaseModel):
     aliases: Optional[list[str]] = None
     allow_dm: Optional[bool] = None
     show_greeting: Optional[bool] = None
+    notify_own_trips_only: Optional[bool] = None
     notification_categories: Optional[list[str]] = None
 
     @field_validator("notification_categories")

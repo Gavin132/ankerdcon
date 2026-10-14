@@ -21,6 +21,11 @@ export async function updatePreferences(payload: UpdatePreferencesRequest): Prom
   await apiClient.put(apiRoutes.users.preferences, payload);
 }
 
+/** Sends the member one message through the channel(s) they have set up. */
+export async function sendTestNotification(): Promise<void> {
+  await apiClient.post(apiRoutes.users.testNotification);
+}
+
 export async function updateName(payload: UpdateNameRequest): Promise<void> {
   await apiClient.patch(apiRoutes.users.name, payload);
 }

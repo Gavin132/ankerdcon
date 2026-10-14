@@ -9,6 +9,7 @@ import {
   pingLocation,
   updateName,
   updatePreferences,
+  sendTestNotification,
   uploadAvatar,
   uploadBanner,
   type CompleteOnboardingPayload,
@@ -76,6 +77,10 @@ export function usePingLocation() {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.users });
     },
   });
+}
+
+export function useSendTestNotification() {
+  return useMutation({ mutationFn: sendTestNotification });
 }
 
 export function useUpdatePreferences() {
