@@ -82,6 +82,7 @@ export interface AdminCreateUserPayload {
   name: string;
   discord_id?: string;
   is_admin?: boolean;
+  is_viewer?: boolean;
 }
 
 export async function createAdminUser(payload: AdminCreateUserPayload): Promise<User> {
@@ -97,6 +98,7 @@ export interface AdminUpdateUserPayload {
   bio?: string;
   color?: string;
   is_admin?: boolean;
+  is_viewer?: boolean;
   is_active?: boolean;
   aliases?: string[];
 }

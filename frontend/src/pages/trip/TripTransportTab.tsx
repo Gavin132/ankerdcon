@@ -24,6 +24,7 @@ import { useTimeStore } from "../../store/time.store";
 import { isTripOver, tripGaps, tripRides } from "../../utils/trips";
 import { defaultTransportView, driversMissing } from "../../utils/transportView";
 import { defaultRideEnds } from "../../utils/rideLocations";
+import { useIsViewer } from "../../hooks/useIsViewer";
 import { TripMissingList } from "../../components/trip/TripMissingList";
 import { useTrip } from "./tripContext";
 import type { Direction, Ride } from "../../types";
@@ -89,6 +90,7 @@ const departureTime = (r: Ride) => new Date(r.departure_time.replace(" ", "T")).
  * the sheet to its own form view instead of stacking a second overlay on top.
  */
 export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const viewer = useIsViewer();
   const { trip } = useTrip();
   const location = useLocation();
   useTimeStore((s) => s.override); // re-render when the time-travel override changes
@@ -187,7 +189,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
     // they have one, offering another would just invite a duplicate: the button
     // goes, and the ride itself offers to be taken back.
     const myDriverRide = direction !== "Restaurant" ? active.find((r) => r.driver === currentUser?.name) : undefined;
-    const canOffer = direction !== "Restaurant" && !isTripOver(trip) && !myDriverRide;
+    const canOffer = direction !== "Restaurant" && !isTripOver(trip) && !myDriverRide && !viewer;
     // How full each car should leave so nobody is left behind (Heen and Terug, per day).
     const plan =
       direction !== "Restaurant" && !isTripOver(trip)

@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Shield, ShieldOff, Plus, X, UserPlus, Ban, CheckCircle, Copy, Check } from "lucide-react";
+import { Shield, ShieldOff, Plus, X, UserPlus, Ban, CheckCircle, Copy, Check, Eye } from "lucide-react";
 import {
   useAdminUsers,
   useAdminCreateUser,
@@ -35,6 +35,7 @@ const createSchema = z.object({
   name: z.string().min(2, "Min 2 tekens").max(30, "Max 30 tekens"),
   discord_id: z.string().optional(),
   is_admin: z.boolean().optional(),
+  is_viewer: z.boolean().optional(),
 });
 type CreateForm = z.infer<typeof createSchema>;
 
@@ -49,9 +50,10 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
     setValue,
   } = useForm<CreateForm>({
     resolver: zodResolver(createSchema),
-    defaultValues: { name: "", discord_id: "", is_admin: false },
+    defaultValues: { name: "", discord_id: "", is_admin: false, is_viewer: false },
   });
   const isAdmin = watch("is_admin");
+  const isViewer = watch("is_viewer");
   const { requestClose, confirming, confirmDiscard, cancelDiscard } = useConfirmDiscard(isDirty, onClose);
 
   async function onSubmit(values: CreateForm) {
@@ -60,6 +62,8 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
         name: values.name,
         discord_id: values.discord_id || undefined,
         is_admin: values.is_admin,
+        // Only sent when it is on: a database without the column yet must still be able to add anyone.
+        ...(values.is_viewer ? { is_viewer: true } : {}),
       });
       toast("success", `${values.name} toegevoegd.`);
       reset();
@@ -133,6 +137,31 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
             />
           </button>
         </div>
+        <div className="flex items-center justify-between rounded-xl border-1.5 border-line bg-paper px-4 py-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <Eye size={15} className="text-ink-2" />
+              <span className="text-sm font-medium text-ink">Alleen kijken</span>
+            </div>
+            <p className="mt-1 text-[11px] text-ink-3">Kan alles bekijken, maar niets aanpassen of zich ergens voor aanmelden.</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={!!isViewer}
+            aria-label="Alleen kijken"
+            onClick={() => setValue("is_viewer", !isViewer, { shouldDirty: true })}
+            className={`relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors ${
+              isViewer ? "bg-ink dark:bg-brand" : "bg-line"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition-transform ${
+                isViewer ? "translate-x-4 bg-paper" : "bg-white dark:bg-ink-3"
+              }`}
+            />
+          </button>
+        </div>
       </form>
     </AdminDrawer>
     <DiscardChangesConfirm open={confirming} onCancel={cancelDiscard} onConfirm={confirmDiscard} />
@@ -151,6 +180,7 @@ const editSchema = z.object({
     .regex(/^(#[0-9a-fA-F]{3,6})?$/, "Gebruik hex kleur (#rrggbb)")
     .optional(),
   is_admin: z.boolean().optional(),
+  is_viewer: z.boolean().optional(),
 });
 type EditForm = z.infer<typeof editSchema>;
 
@@ -180,9 +210,11 @@ function UserEditDrawer({
       bio: user?.bio ?? "",
       color: user?.color ?? "",
       is_admin: user?.is_admin ?? false,
+      is_viewer: user?.is_viewer ?? false,
     },
   });
   const isAdmin = watch("is_admin");
+  const isViewer = watch("is_viewer");
 
   function addAlias() {
     const trimmed = aliasInput.trim();
@@ -194,7 +226,14 @@ function UserEditDrawer({
 
   async function onSubmit(values: EditForm) {
     try {
-      await updateMutation.mutateAsync({ id: user!.id!, ...values, aliases });
+      // is_viewer only when it was changed: a database without the column yet must still save everything else.
+      const { is_viewer, ...rest } = values;
+      await updateMutation.mutateAsync({
+        id: user!.id!,
+        ...rest,
+        aliases,
+        ...((is_viewer ?? false) !== (user?.is_viewer ?? false) ? { is_viewer } : {}),
+      });
       toast("success", `${user!.name} bijgewerkt.`);
       onClose();
     } catch {
@@ -369,6 +408,31 @@ function UserEditDrawer({
               <span
                 className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition-transform ${
                   isAdmin ? "translate-x-4 bg-paper" : "bg-white dark:bg-ink-3"
+                }`}
+              />
+            </button>
+          </div>
+          <div className="flex items-center justify-between rounded-xl border-1.5 border-line bg-paper px-4 py-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <Eye size={15} className="text-ink-2" />
+                <span className="text-sm font-medium text-ink">Alleen kijken</span>
+              </div>
+              <p className="mt-1 text-[11px] text-ink-3">Kan alles bekijken, maar niets aanpassen of zich ergens voor aanmelden.</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={!!isViewer}
+              aria-label="Alleen kijken"
+              onClick={() => setValue("is_viewer", !isViewer, { shouldDirty: true })}
+              className={`relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors ${
+                isViewer ? "bg-ink dark:bg-brand" : "bg-line"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition-transform ${
+                  isViewer ? "translate-x-4 bg-paper" : "bg-white dark:bg-ink-3"
                 }`}
               />
             </button>
@@ -628,7 +692,15 @@ export function AdminUsersPage() {
                         )}
                       </td>
                       <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
-                        {user.is_admin ? (
+                        {user.is_viewer && !user.is_admin ? (
+                          <span
+                            title="Alleen kijken"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface p-1.5 text-[11.5px] font-semibold text-ink-2 sm:px-2 sm:py-0.5"
+                          >
+                            <Eye size={10} />
+                            <span className="hidden sm:inline">Kijker</span>
+                          </span>
+                        ) : user.is_admin ? (
                           <span
                             title="Admin"
                             className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface p-1.5 text-[11.5px] font-semibold text-ink sm:px-2 sm:py-0.5"

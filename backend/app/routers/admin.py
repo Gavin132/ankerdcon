@@ -17,7 +17,7 @@ from app.core.logging import get_logger
 from app.core.meal_categories import default_category_id, list_meals_with_category, require_category
 from app.core.uploads import clean_image, read_capped, sniff_video
 from app.core.zip_stream import stream_zip
-from app.dependencies import _unique_profile_name, get_admin_user
+from app.dependencies import _unique_profile_name, forget_viewer, get_admin_user
 from app.models.meal_category import CreateMealCategoryRequest, MealCategory, UpdateMealCategoryRequest
 from app.models.admin import (
     CdnListing,
@@ -164,6 +164,8 @@ def admin_create_user(body: AdminCreateUserRequest, _: str = Depends(get_admin_u
             detail="Deze naam is al in gebruik (of was de naam van iemand anders).",
         )
     data: dict = {"name": body.name, "is_admin": body.is_admin, "is_active": True, "is_first_login": True}
+    if body.is_viewer:
+        data["is_viewer"] = True
     if body.discord_id:
         data["discord_id"] = body.discord_id
     try:
@@ -301,6 +303,8 @@ def admin_update_user(
 
     if not resp.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
+    # The member's own requests should feel the change at once, not after the short memory of the check.
+    forget_viewer(row["name"])
 
     # Deactivation: send DM + remove from all events
     if body.is_active is False and row.get("is_active") is not False:
@@ -410,7 +414,7 @@ def admin_create_whitelist_entry(body: CreateWhitelistEntryRequest, _: str = Dep
     try:
         resp = (
             supabase.table(Tables.WHITELIST)
-            .insert({"discord_id": body.discord_id, "email": body.email})
+            .insert({"discord_id": body.discord_id, "email": body.email, **({"viewer": True} if body.viewer else {})})
             .execute()
         )
         return resp.data[0]

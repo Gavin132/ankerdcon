@@ -1,6 +1,8 @@
 import axios from "axios";
 import { env } from "../../config/env";
 import { useAuthStore } from "../../store/auth.store";
+import { toastReadOnly } from "../../store/toast.store";
+import { isViewerMode, READ_ONLY_MESSAGE, viewerMayRequest } from "../viewerMode";
 
 // ── Typed error class ──────────────────────────────────────────────
 
@@ -53,6 +55,12 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
+  // A read-only member's change is not even sent: the backend would refuse it anyway, and this way
+  // they are told why, once, instead of getting each screen's own idea of what went wrong.
+  if (isViewerMode() && !viewerMayRequest(config.method ?? "get", config.url ?? "")) {
+    toastReadOnly(READ_ONLY_MESSAGE);
+    return Promise.reject(new ApiError(403, READ_ONLY_MESSAGE));
+  }
   const token = useAuthStore.getState().accessToken;
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;

@@ -29,6 +29,7 @@ import { toast } from "../../store/toast.store";
 import { ApiError } from "../../lib/api/client";
 import { listContainer, listItem } from "../../utils/motion";
 import { useTrip } from "./tripContext";
+import { useIsViewer } from "../../hooks/useIsViewer";
 import type { Cosplay } from "../../types";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -74,6 +75,7 @@ const SL = "mb-1.5 block text-[12.5px] font-semibold text-ink-2";
  * list/form pattern as Vervoer — instead of stacking a second overlay on top.
  */
 export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const viewer = useIsViewer();
   const { trip, dayId } = useTrip();
   const firstConDay = trip.days.find((d) => d.ev.has_con !== false) ?? trip.days[0];
   const id = dayId ?? firstConDay.ev.id;
@@ -637,13 +639,15 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                 </p>
                 <p className="mt-1 text-xs text-ink-3">Laat anderen weten wat je draagt!</p>
               </div>
-              <button
-                onClick={openCreate}
-                className="btn-primary px-4 py-2.5 text-sm"
-              >
-                <Plus size={16} />
-                Eerste cosplay toevoegen
-              </button>
+              {!viewer && (
+                <button
+                  onClick={openCreate}
+                  className="btn-primary px-4 py-2.5 text-sm"
+                >
+                  <Plus size={16} />
+                  Eerste cosplay toevoegen
+                </button>
+              )}
             </div>
           )}
 
@@ -688,7 +692,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                 ))}
 
                 {/* Add cosplay card — shown on last page or when no filters active */}
-                {(!isFiltered || page === totalPages) && (
+                {(!isFiltered || page === totalPages) && !viewer && (
                   <motion.button
                     key="add-card"
                     variants={listItem}

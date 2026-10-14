@@ -22,6 +22,8 @@ class User(BaseModel):
     avatar_url: Optional[str] = None
     avatar_custom: Optional[bool] = False
     is_admin: bool = False
+    # Read-only: can look at everything, change nothing (see dependencies.get_current_user).
+    is_viewer: bool = False
     is_active: bool = True
     is_first_login: bool = True
     onboarding_completed: bool = False

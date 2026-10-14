@@ -11,6 +11,7 @@ import { formatTime } from "../../utils/format";
 import { formatCountdown, getRideStatus, rideLocationLabel } from "../../utils/rides";
 import { toast } from "../../store/toast.store";
 import { routes } from "../../config/routes";
+import { useIsViewer } from "../../hooks/useIsViewer";
 import type { CarGuidance } from "../../utils/carBalance";
 import type { Ride } from "../../types";
 
@@ -67,6 +68,7 @@ interface RideRowProps {
  * with the rest (who rides along, parking, getting in or out) one tap away.
  */
 export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, canDelete = false }: RideRowProps) {
+  const viewer = useIsViewer();
   const [action, setAction] = useState<"claim" | "leave" | null>(null);
   const [claimNames, setClaimNames] = useState<string[]>([]);
   const [leaveNames, setLeaveNames] = useState<string[]>([]);
@@ -244,7 +246,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
             </div>
           )}
 
-          {canAct && (
+          {canAct && !viewer && (
             <div className="space-y-2.5 pt-1">
               {action ? (
                 <>

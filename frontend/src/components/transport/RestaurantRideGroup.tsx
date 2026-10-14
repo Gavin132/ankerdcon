@@ -14,6 +14,7 @@ import { formatTime } from "../../utils/format";
 import { getRideStatus } from "../../utils/rides";
 import { listItem } from "../../utils/motion";
 import { routes } from "../../config/routes";
+import { useIsViewer } from "../../hooks/useIsViewer";
 import type { Meal, Ride, RestaurantDriver } from "../../types";
 
 /** The member's own car. Same blue as their row under Heen and Terug (RideRow). */
@@ -43,6 +44,7 @@ interface CarRowProps {
  * or out one tap away.
  */
 function CarRow({ driver, departure, canAct, userNames, mine, expanded, onToggle, cars }: CarRowProps) {
+  const viewer = useIsViewer();
   const [action, setAction] = useState<"join" | "leave" | null>(null);
   const [joinNames, setJoinNames] = useState<string[]>([]);
   const [leaveNames, setLeaveNames] = useState<string[]>([]);
@@ -109,7 +111,7 @@ function CarRow({ driver, departure, canAct, userNames, mine, expanded, onToggle
             </span>
           </div>
 
-          {canAct && (
+          {canAct && !viewer && (
             <div className="space-y-2.5 pt-1">
               {action ? (
                 <>
@@ -168,6 +170,7 @@ function CarRow({ driver, departure, canAct, userNames, mine, expanded, onToggle
  * then every car going there as a row, the same look as Heen and Terug.
  */
 export function RestaurantRideGroup({ ride, userNames }: { ride: Ride; userNames: string[] }) {
+  const viewer = useIsViewer();
   const [driverOpen, setDriverOpen] = useState(false);
   const [expandedCar, setExpandedCar] = useState<string | null>(null);
   const { data: meals = [] } = useMeals();
@@ -186,7 +189,7 @@ export function RestaurantRideGroup({ ride, userNames }: { ride: Ride; userNames
   const driverNames = new Set(drivers.map((d) => d.name));
   const assignedPax = new Set(drivers.flatMap((d) => d.passengers));
   const unassigned = cars.attendees.filter((a) => !driverNames.has(a) && !assignedPax.has(a));
-  const canOfferRide = canAct && !!linkedMeal && !!linkedEvent;
+  const canOfferRide = canAct && !viewer && !!linkedMeal && !!linkedEvent;
 
   const resolve = (stored: string) =>
     users.find((u) => u.name === stored || u.discord_username === stored || u.aliases?.includes(stored))?.name ?? stored;
@@ -263,6 +266,7 @@ export function RestaurantRideGroup({ ride, userNames }: { ride: Ride; userNames
  * the shared ride and registers you as its first car (see RestaurantQuickDriverModal).
  */
 export function RestaurantMealPrompt({ meal }: { meal: Meal }) {
+  const viewer = useIsViewer();
   const [open, setOpen] = useState(false);
   const { data: events = [] } = useCalendar();
   const event = meal.linked_event_id ? events.find((e) => e.id === meal.linked_event_id) : undefined;
@@ -280,9 +284,11 @@ export function RestaurantMealPrompt({ meal }: { meal: Meal }) {
             <span className="font-mono tabular-nums">{formatTime(meal.time)}</span> · nog geen auto's
           </span>
         </span>
-        <button type="button" onClick={() => setOpen(true)} className="btn-primary h-8 shrink-0 px-3 text-xs">
-          <Car size={13} /> Ik rijd
-        </button>
+        {!viewer && (
+          <button type="button" onClick={() => setOpen(true)} className="btn-primary h-8 shrink-0 px-3 text-xs">
+            <Car size={13} /> Ik rijd
+          </button>
+        )}
       </div>
       <RestaurantQuickDriverModal open={open} onClose={() => setOpen(false)} event={event} meal={meal} />
     </motion.div>

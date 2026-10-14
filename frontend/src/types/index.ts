@@ -22,6 +22,8 @@ export interface WhitelistEntry {
   id: string;
   discord_id: string | null;
   email: string | null;
+  /** Whoever gets in through this entry gets a read-only account. */
+  viewer?: boolean;
   created_at: string | null;
 }
 
@@ -83,6 +85,8 @@ export interface User {
   discord_id?: string;
   discord_username?: string;
   is_admin?: boolean;
+  /** Read-only: can look at everything, change nothing (see lib/viewerMode.ts). */
+  is_viewer?: boolean;
   is_active?: boolean;
   is_first_login?: boolean;
   onboarding_completed?: boolean;

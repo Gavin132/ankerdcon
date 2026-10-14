@@ -9,12 +9,15 @@ class WhitelistEntry(BaseModel):
     id: str
     discord_id: Optional[str] = None
     email: Optional[str] = None
+    # Gets a read-only account: can look, cannot change anything.
+    viewer: bool = False
     created_at: Optional[str] = None
 
 
 class CreateWhitelistEntryRequest(BaseModel):
     discord_id: Optional[str] = None
     email: Optional[str] = None
+    viewer: bool = False
 
     @model_validator(mode="after")
     def _require_one_identifier(self) -> "CreateWhitelistEntryRequest":

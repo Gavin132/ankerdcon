@@ -12,6 +12,7 @@ import { buildTrip, currentTripId, tripRides } from "../utils/trips";
 import { todayKey, toDateKey } from "../utils/date";
 import { toast } from "../store/toast.store";
 import { useRouteAction } from "../hooks/useRouteAction";
+import { useIsViewer } from "../hooks/useIsViewer";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { UserProfilePopup, type AnchorRect } from "../components/common/UserProfilePopup";
 import { BadgeIcon } from "../components/common/BadgeIcon";
@@ -37,6 +38,7 @@ const CrewMap = lazy(() => import("../components/crew/CrewMap"));
 
 /** Crew tab: everyone in the group, where people are right now, and a way to share your own location. */
 export function CrewPage() {
+  const viewer = useIsViewer();
   const [query, setQuery] = useState("");
   const [popupUser, setPopupUser] = useState<User | null>(null);
   const [anchorRect, setAnchorRect] = useState<AnchorRect>(CLOSED_RECT);
@@ -129,6 +131,7 @@ export function CrewPage() {
             <MapPin size={12} />
             Waar is iedereen
           </p>
+          {!viewer && (
           <div className="flex items-center gap-2">
             {/* aria-disabled instead of disabled: a disabled button swallows the
                 tap, and on a phone there is no hover tooltip to say why. */}
@@ -153,6 +156,7 @@ export function CrewPage() {
               Locatie pingen
             </button>
           </div>
+          )}
         </div>
         {/* Always mounted, not just when someone's pinned — the con/hotel/meal
             pins (see CrewMap) are worth showing on their own, and CrewMap

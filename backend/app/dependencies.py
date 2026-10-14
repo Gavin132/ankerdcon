@@ -1,6 +1,7 @@
 """FastAPI dependency providers shared across routers."""
 from __future__ import annotations
 
+import re
 import threading
 import time
 import uuid
@@ -10,7 +11,7 @@ from typing import Any, Callable
 
 import httpx
 from gotrue.errors import AuthRetryableError
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import jwt
 
@@ -269,9 +270,79 @@ def _unique_profile_name(candidate: str) -> str:
     return f"{candidate}-{uuid.uuid4().hex[:6]}"
 
 
+# ── Read-only members ("kijkers") ─────────────────────────────────────────────
+#
+# A member flagged `is_viewer` can look at everything and change nothing. It is enforced here, for every
+# route at once, because every route authenticates through get_current_user: any request that is not a
+# plain read is refused for a viewer, except the few that are about their own account or that merely
+# looking records. An admin is never read-only, whatever the flag says.
+
+_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+_READ_ONLY = "Je account is alleen-lezen: je kunt de app bekijken, maar niets aanpassen."
+
+_VIEWER_WRITABLE: tuple[tuple[frozenset[str], re.Pattern[str]], ...] = tuple(
+    (frozenset(methods.split("|")), re.compile(pattern))
+    for methods, pattern in (
+        ("PUT", r"^/api/users/preferences$"),                # their own settings, incl. notifications
+        ("POST", r"^/api/users/me/onboarding$"),
+        ("POST", r"^/api/users/me/test-notification$"),
+        ("POST|DELETE", r"^/api/users/(avatar|banner)$"),    # their own picture
+        ("POST", r"^/api/users/me/link-discord$"),
+        ("POST|DELETE", r"^/api/push/subscribe$"),
+        ("POST", r"^/api/feedback/?$"),                      # they may still say what is wrong
+        ("PUT", r"^/api/stories/[^/]+/seen$"),               # watching a story marks it seen
+    )
+)
+
+
+def viewer_may_write(method: str, path: str) -> bool:
+    """Whether a read-only member may make this request."""
+    return method in _SAFE_METHODS or any(method in methods and rx.match(path) for methods, rx in _VIEWER_WRITABLE)
+
+
+_VIEWER_TTL_SECONDS = 30
+_viewer_cache: dict[str, tuple[float, bool]] = {}
+
+
+def _is_viewer(name: str) -> bool:
+    """Whether the member is read-only. Looked up only for requests that would change something, and
+    remembered briefly. A database without the column yet (the migration has not run) counts as "no
+    one is read-only" rather than as an error, so it can never lock anyone out."""
+    now = time.monotonic()
+    hit = _viewer_cache.get(name)
+    if hit and hit[0] > now:
+        return hit[1]
+    try:
+        rows = supabase.table("profiles").select("is_viewer, is_admin").eq("name", name).execute().data
+    except Exception as e:
+        logger.warning("Read-only check failed for %s (has the is_viewer migration run?): %s", name, e)
+        return False
+    viewer = bool(rows and rows[0].get("is_viewer") and not rows[0].get("is_admin"))
+    _viewer_cache[name] = (now + _VIEWER_TTL_SECONDS, viewer)
+    return viewer
+
+
+def forget_viewer(name: str) -> None:
+    """Drops the remembered answer, after an admin changed it."""
+    _viewer_cache.pop(name, None)
+
+
 def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(_bearer),
     settings: Settings = Depends(get_settings),
+) -> str:
+    """The signed-in member's display name (see `_authenticate`), refused for a read-only member
+    when the request would change something."""
+    name = _authenticate(credentials, settings)
+    if not viewer_may_write(request.method, request.url.path) and _is_viewer(name):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_READ_ONLY)
+    return name
+
+
+def _authenticate(
+    credentials: HTTPAuthorizationCredentials,
+    settings: Settings,
 ) -> str:
     """Validate the Supabase JWT, enforce the allowlist, and return the user's display name.
 
@@ -564,6 +635,19 @@ def _claim_stub_profile(identity: VerifiedIdentity, select: str) -> dict | None:
     return None
 
 
+def _whitelisted_as_viewer(fields: dict) -> bool:
+    """Whether the whitelist entry this new member got in through says "alleen kijken". Best effort: if
+    the column is not there yet, nobody is a viewer."""
+    try:
+        for column in ("discord_id", "email"):
+            value = fields.get(column)
+            if value and supabase.table("whitelist").select("viewer").eq(column, value).eq("viewer", True).execute().data:
+                return True
+    except Exception as e:
+        logger.warning("Auth: could not read the viewer flag of the whitelist entry: %s", e)
+    return False
+
+
 def _create_profile(fields: dict) -> dict:
     insert_data = {
         "is_active": True,
@@ -571,6 +655,8 @@ def _create_profile(fields: dict) -> dict:
         "allow_dm": True,
         **{k: v for k, v in fields.items() if v},
     }
+    if _whitelisted_as_viewer(fields):
+        insert_data["is_viewer"] = True
     try:
         resp = supabase.table("profiles").insert(insert_data).execute()
     except Exception as e:

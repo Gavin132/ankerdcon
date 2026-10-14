@@ -11,6 +11,7 @@ class AdminCreateUserRequest(BaseModel):
     name: str
     discord_id: Optional[str] = None
     is_admin: bool = False
+    is_viewer: bool = False
 
 
 class AdminUpdateUserRequest(BaseModel):
@@ -20,6 +21,7 @@ class AdminUpdateUserRequest(BaseModel):
     bio: Optional[str] = None
     color: Optional[str] = None
     is_admin: Optional[bool] = None
+    is_viewer: Optional[bool] = None
     is_active: Optional[bool] = None
     aliases: Optional[list[str]] = None
 

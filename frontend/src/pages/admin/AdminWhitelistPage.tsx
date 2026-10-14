@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, ShieldCheck, MessageSquare, Mail, Trash2 } from "lucide-react";
+import { Plus, ShieldCheck, MessageSquare, Mail, Trash2, Eye } from "lucide-react";
 import { useAdminWhitelist, useCreateWhitelistEntry, useDeleteWhitelistEntry } from "../../hooks/useWhitelist";
 import { toast } from "../../store/toast.store";
 import { F } from "./styles";
@@ -13,6 +13,7 @@ export function AdminWhitelistPage() {
 
   const [discordId, setDiscordId] = useState("");
   const [email, setEmail] = useState("");
+  const [viewer, setViewer] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   async function handleCreate(e: React.FormEvent) {
@@ -24,9 +25,12 @@ export function AdminWhitelistPage() {
       await createMutation.mutateAsync({
         discord_id: trimmedDiscordId || undefined,
         email: trimmedEmail || undefined,
+        // Only sent when ticked: a database without the column yet must still be able to add anyone.
+        ...(viewer ? { viewer: true } : {}),
       });
       setDiscordId("");
       setEmail("");
+      setViewer(false);
       toast("success", "Toegevoegd aan de whitelist.");
     } catch {
       toast("error", "Kon niet toevoegen — staat deze persoon er al op?");
@@ -58,7 +62,7 @@ export function AdminWhitelistPage() {
       </p>
 
       {/* Create form */}
-      <form onSubmit={handleCreate} className="flex flex-col gap-2 sm:flex-row">
+      <form onSubmit={handleCreate} className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <input
           value={discordId}
           onChange={(e) => setDiscordId(e.target.value)}
@@ -72,6 +76,13 @@ export function AdminWhitelistPage() {
           className={`${F} flex-1`}
           placeholder="of e-mailadres…"
         />
+        <label className="flex basis-full cursor-pointer items-center gap-2 text-[13px] text-ink-2">
+          <input type="checkbox" className="cb" checked={viewer} onChange={(e) => setViewer(e.target.checked)} />
+          <Eye size={13} className="shrink-0" />
+          <span>
+            <b className="font-semibold text-ink">Alleen kijken</b>: kan alles bekijken, maar niets aanpassen of zich ergens voor aanmelden.
+          </span>
+        </label>
         <button
           type="submit"
           disabled={(!discordId.trim() && !email.trim()) || createMutation.isPending}
@@ -117,6 +128,11 @@ export function AdminWhitelistPage() {
                       <span className="truncate font-mono text-[13px] font-medium text-ink">
                         {entry.discord_id || entry.email}
                       </span>
+                      {entry.viewer && (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-line bg-surface px-2 py-0.5 text-[11px] font-semibold text-ink-2">
+                          <Eye size={10} /> Kijker
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">

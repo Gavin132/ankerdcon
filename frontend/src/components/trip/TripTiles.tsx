@@ -11,6 +11,7 @@ import { EventPractical } from "../event/EventPractical";
 import { EventLinks } from "../event/EventLinks";
 import { TileText, TilePill, TileValue, TripTile } from "./TripTile";
 import { useRouteAction } from "../../hooks/useRouteAction";
+import { useIsViewer } from "../../hooks/useIsViewer";
 import { activityCount, mealCategory } from "../../utils/mealCategory";
 import { useEventWeather } from "../../hooks/useEventWeather";
 import { useUsers } from "../../hooks/useUsers";
@@ -188,6 +189,7 @@ const MEAL_LINGER_MS = 3 * 60 * 60 * 1000;
  * the trip isn't over, has a "+" for anyone to plan another one.
  */
 export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: TripPhase; meals: Meal[]; myNames: string[] }) {
+  const viewer = useIsViewer();
   const isMine = sameName(myNames);
   const all = tripMeals(meals, trip).sort((a, b) => a.time.localeCompare(b.time));
   const now = getNow().getTime();
@@ -228,7 +230,7 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
         )
       }
       action={
-        phase !== "past" && (
+        phase !== "past" && !viewer && (
           <button
             type="button"
             onClick={() => setAddOpen(true)}
@@ -382,6 +384,7 @@ const UPLOAD_BUTTON_CLASS =
  * it elsewhere.
  */
 export function PhotosTile({ trip, phase, summary, onOpenDay, uploadDayId }: { trip: Trip; phase: TripPhase; summary?: Record<string, StoryDaySummary>; onOpenDay: (dayId: string) => void; uploadDayId?: string }) {
+  const viewer = useIsViewer();
   const perDay = trip.days.map((d) => ({ day: d, s: summary?.[d.ev.id] }));
   const total = perDay.reduce((sum, x) => sum + (x.s?.photo_count ?? 0), 0);
   const today = todayKey();
@@ -401,7 +404,7 @@ export function PhotosTile({ trip, phase, summary, onOpenDay, uploadDayId }: { t
         <>
           <div className="flex items-center justify-between gap-2">
             <TileValue>{phase === "past" ? "Geen foto's" : "Story"}</TileValue>
-            {uploadDayId && (
+            {uploadDayId && !viewer && (
               <span onClick={(e) => e.stopPropagation()} className="shrink-0">
                 <StoryUploadButton eventDayId={uploadDayId} className={UPLOAD_BUTTON_CLASS} />
               </span>
@@ -415,7 +418,7 @@ export function PhotosTile({ trip, phase, summary, onOpenDay, uploadDayId }: { t
         <>
           <div className="flex items-center justify-between gap-2">
             <TileValue>{phase === "live" && todayCount > 0 ? `${todayCount} vandaag` : `${total} foto's`}</TileValue>
-            {uploadDayId && (
+            {uploadDayId && !viewer && (
               <span onClick={(e) => e.stopPropagation()} className="shrink-0">
                 <StoryUploadButton eventDayId={uploadDayId} className={UPLOAD_BUTTON_CLASS} />
               </span>

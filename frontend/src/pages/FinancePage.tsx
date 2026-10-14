@@ -11,6 +11,7 @@ import { ExpenseDetailDrawer } from "../components/finance/ExpenseDetailDrawer";
 import { SettleUpCard, type SettleTarget } from "../components/finance/SettleUpCard";
 import { SettlementDrawer } from "../components/finance/SettlementDrawer";
 import { RideCostsCard } from "../components/finance/RideCostsCard";
+import { useIsViewer } from "../hooks/useIsViewer";
 import { useSettleUp } from "../hooks/useSettlements";
 import { useExpenses } from "../hooks/useExpenses";
 import { useUsers } from "../hooks/useUsers";
@@ -26,6 +27,7 @@ function resolveUser(name: string, users: User[]) {
 }
 
 export function FinancePage() {
+  const viewer = useIsViewer();
   const [createOpen, setCreateOpen]           = useState(false);
   const [detailExpenseId, setDetailExpenseId] = useState<string | null>(null);
   // Hub › Voor jou links here with `?expense=<id>` to open that expense directly.
@@ -307,10 +309,12 @@ export function FinancePage() {
             Uitgaven
             {expenses.length > 0 && <span className="font-mono text-[11px] tabular-nums text-ink-3">{expenses.length}</span>}
           </p>
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus size={14} />
-            Uitgave toevoegen
-          </Button>
+          {!viewer && (
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <Plus size={14} />
+              Uitgave toevoegen
+            </Button>
+          )}
         </div>
         {expenses.length === 0 ? (
           <div className="card-surface">

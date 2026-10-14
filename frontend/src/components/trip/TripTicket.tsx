@@ -6,6 +6,7 @@ import { TripParticipants } from "./TripParticipants";
 import { daysBetween, toDateKey, todayKey } from "../../utils/date";
 import { tripImage, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
 import { getNow } from "../../store/time.store";
+import { useIsViewer } from "../../hooks/useIsViewer";
 import type { User } from "../../types";
 
 interface TripTicketProps {
@@ -33,6 +34,7 @@ export function TripTicket({
   trip, phase, users, myNames, description, hotel, justJoined,
   onToggleDay, onJoin, onLeave, onManage,
 }: TripTicketProps) {
+  const viewer = useIsViewer();
   const image = tripImage(trip);
   const today = todayKey();
   const firstKey = toDateKey(trip.days[0].date);
@@ -115,7 +117,7 @@ export function TripTicket({
 
         {/* Days: tap one to sign up for it or off it, until it has passed */}
         {trip.days.length > 1 && (
-          <TripDayPicker trip={trip} myNames={myNames} readOnly={phase === "past"} onToggleDay={onToggleDay} />
+          <TripDayPicker trip={trip} myNames={myNames} readOnly={phase === "past" || viewer} onToggleDay={onToggleDay} />
         )}
 
         <div className="mt-auto flex flex-wrap items-center gap-2.5">
@@ -150,6 +152,7 @@ export function TripTicket({
             <span className="font-display text-[60px] font-black leading-[0.8] text-ink md:text-[96px]">{count.big}</span>
             <span className="pb-0.5 text-[13px] leading-tight text-ink-2">{count.small}</span>
           </div>
+          {!viewer && (
           <button
             type="button"
             onClick={onManage}
@@ -158,6 +161,7 @@ export function TripTicket({
             <UserPlus size={13} className="shrink-0" />
             {phase === "past" ? "Aanmeldingen aanpassen" : "Iemand aanmelden"}
           </button>
+          )}
         </div>
 
         {(going || phase === "past") && (
@@ -175,7 +179,7 @@ export function TripTicket({
         )}
 
         {/* Multi-day trips sign up per day (see the day boxes); only a single day needs a button. */}
-        {phase !== "past" && trip.days.length === 1 && (
+        {phase !== "past" && trip.days.length === 1 && !viewer && (
           <div className="flex flex-col items-end gap-2 md:items-stretch">
             {going ? (
               <button

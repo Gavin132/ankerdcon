@@ -8,6 +8,7 @@ import { useCalendar } from "../../hooks/useCalendar";
 import { useAuthStore } from "../../store/auth.store";
 import { formatDateTime } from "../../utils/format";
 import { routes } from "../../config/routes";
+import { useIsViewer } from "../../hooks/useIsViewer";
 import { mealCategory } from "../../utils/mealCategory";
 import type { CalendarEvent, Meal, User } from "../../types";
 
@@ -27,6 +28,7 @@ interface MealHeroProps {
 
 /** Flat ink hero for an activity: name in the display face, mono chips, brand-blue "Aanmelden". */
 export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick }: MealHeroProps) {
+  const viewer = useIsViewer();
   const { data: calendarEvents } = useCalendar();
   const currentUser = useAuthStore((s) => s.currentUser);
   const [popupUser, setPopupUser] = useState<User | null>(null);
@@ -131,6 +133,7 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
               </span>
             </button>
           )}
+          {!viewer && (
           <div className="ml-auto flex items-center gap-2">
             {participants.length > 0 && (
               <button
@@ -149,6 +152,7 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
               <UserCheck size={13} /> Aanmelden
             </button>
           </div>
+          )}
         </div>
         )}
 

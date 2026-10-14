@@ -16,6 +16,7 @@ import { useCurrentUser, useUsers } from "../hooks/useUsers";
 import { groupCalendarEntries, dayShort } from "../utils/multiDay";
 import { UpcomingEventsCarousel } from "../components/hub/UpcomingEventsCarousel";
 import { QuickRideTiles } from "../components/hub/QuickRideTiles";
+import { useIsViewer } from "../hooks/useIsViewer";
 import { MealTodayCard } from "../components/hub/MealTodayCard";
 import { TicketShortcutCard } from "../components/hub/TicketShortcutCard";
 import { LocationPingModal } from "../components/hub/LocationPingModal";
@@ -37,6 +38,7 @@ const MONTHS_NL = ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","
 
 export function HubPage() {
   const navigate = useNavigate();
+  const viewer = useIsViewer();
   const currentUser = useAuthStore((s) => s.currentUser);
   const [popupUser, setPopupUser] = useState<User | null>(null);
   const [popupAnchorRect, setPopupAnchorRect] = useState<AnchorRect>({ top: 0, left: 0, right: 0, height: 0 });
@@ -157,8 +159,12 @@ export function HubPage() {
       {storyDays.length > 0 && (
         <motion.div variants={listItem}>
           <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <AddStoryTile eventDayId={uploadTargetDay?.id ?? null} />
-            <div className="w-px h-16 shrink-0 self-start bg-line" />
+            {!viewer && (
+              <>
+                <AddStoryTile eventDayId={uploadTargetDay?.id ?? null} />
+                <div className="w-px h-16 shrink-0 self-start bg-line" />
+              </>
+            )}
             {storyDays.map((day) => {
               const summary = storySummary?.[day.id];
               return (
@@ -205,7 +211,7 @@ export function HubPage() {
 
           {/* ── Quick ride shortcuts — switches to the shared restaurant ride
                 itself in the evening when a meal still needs transport. ── */}
-          {event && (
+          {event && !viewer && (
             <motion.div variants={listItem}>
               <QuickRideTiles event={event} restaurantMeal={restaurantMeal} rides={rides ?? []} />
             </motion.div>
