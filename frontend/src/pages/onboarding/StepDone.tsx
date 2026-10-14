@@ -26,7 +26,7 @@ export function StepDone() {
         <div className="flex items-center gap-3">
           <Sparkles size={15} className="shrink-0 text-ink-3" />
           <p className="text-xs leading-relaxed text-ink-2">
-            Je kunt je profiel en voorkeuren altijd aanpassen via de <strong className="text-ink">Meer</strong> pagina.
+            Je kunt je profiel en voorkeuren altijd aanpassen via je avatar, onder <strong className="text-ink">Instellingen</strong>.
           </p>
         </div>
       </div>
