@@ -115,6 +115,12 @@ Page head pattern (see `TripLayout`, `HubPage`):
   inside one sheet with `viewKey`. Used for trip parts, expenses, settle-up, and more. There is no
   right-hand drawer any more: the admin panel's edit panels (`AdminDrawer`) and its
   unsaved-changes confirmation are `TripSheet`s too (`stacked` puts the confirmation above the form).
+  **A sheet opened over another sheet** does not hide it: the one underneath slides to just above the new
+  one and shows only its top bar (pill and title, 56 px of it per sheet), dimmed by the new sheet's
+  lighter backdrop, like two pages laid over each other. Tapping the dimmed area, Escape or the back
+  gesture closes the top one, and the one underneath slides back. `components/trip/sheetStack.ts` keeps
+  the open sheets and their heights; `TripSheet` does the drawing, so no caller has to do anything.
+  A sheet over something that is not a `TripSheet` still needs `stacked`.
 - **Modals, menus, popovers:** `bg-surface border-1.5 border-line`, may keep
   `shadow-xl` (floating layers are the only thing with a shadow). Backdrop `bg-slate-950/50`, no blur.
 - **Empty states:** icon in an `h-12 w-12 rounded-xl bg-sunken text-ink-3` square, `text-sm font-semibold text-ink` title, `text-xs text-ink-3` body.

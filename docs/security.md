@@ -75,7 +75,7 @@ Everything that is not "any signed-in member may do this" is a line in a router.
 
 | Rule | Where | Meaning |
 | --- | --- | --- |
-| member | `get_current_user` | any whitelisted, active member |
+| member | `get_current_user` | any whitelisted, active member. A **read-only member ("kijker", `profiles.is_viewer`)** gets a 403 (without `X-Access`) on every request that changes something, except their own account (preferences, onboarding, test notification, avatar, banner, Discord link, push subscribe, feedback) and marking a story seen (`_VIEWER_WRITABLE`). Enforced here for every route at once, with the flag looked up only for writes and remembered 30 s. An admin is never read-only. A database without the column is treated as "nobody is read-only". |
 | admin | `get_admin_user` | additionally `profiles.is_admin`, read from the database (never from the token) |
 | acting for someone | `act_as` / `act_for_anyone` | sign-ups (meals, seats, trip days, hotel rooms) may name anyone; `paid_by`, location pings and cosplays only yourself (admins anyone). See [acting-for-others.md](acting-for-others.md). |
 | creator or admin | `require_owner_or_admin` | deleting things you made |

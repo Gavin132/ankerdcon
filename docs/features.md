@@ -206,6 +206,19 @@ the form is open; saving waits until nothing is queued.
   `DateTimeOriginal` (`utils/photoDate.ts`), read from the original because the canvas
   compression strips EXIF, with the file's `lastModified` as fallback. One toast sums up the
   batch; after a network failure the rest is queued without waiting out more timeouts.
+- **Videos** (MP4, MOV, WebM, up to 80 MB) go in the same story. The phone makes a still frame of
+  the video (`utils/videoPoster.ts`; a dark frame if the browser cannot decode it) and sends both;
+  the server checks the bytes really are a video, stores the file untouched (no re-encoding, no
+  ffmpeg) and the frame next to it (`story_photos.poster_url`, migration v2.40). The frame is what
+  grids, the story ring and profiles show, with a small play badge. In the viewer a video plays
+  with sound when the browser allows it (otherwise muted, with a speaker button), its progress bar
+  follows the video and the story moves on when it ends. A video is **not compressed**: over 80 MB it is
+  refused at once (before anything is sent), over 25 MB it asks first ("Grote video": on mobile data
+  it can take long and fail) through `askConfirm` / `ConfirmHost` (`store/confirm.store.ts`), and
+  declining skips just that video. A video is not queued when the
+  connection drops (too big to keep): it fails and can be added again. One that a device cannot
+  decode (an iPhone's HEVC on a desktop without the codec) says so and the story carries on; the
+  file can still be downloaded.
 - A **story** is the day's photos in upload order (`seq`). Each member's progress
   is stored per day (`story_seen`), so a ring shows "unseen" until you have
   watched to the newest photo.
@@ -234,6 +247,26 @@ add up to the bill exactly, in whole cents (10 euro over three people is 3,34 +
 from the start. An expense can be linked to a trip, and the page can be filtered
 per trip. The form pre-selects the event nearest to today and only offers events
 from the last two months on.
+
+**Ritkosten (what passengers owe the driver).** `RideCostsCard` on this page, backed by
+`app/services/ride_costs.py` and `app/routers/ride_costs.py`. One simple rule, because it is how
+friends settle it anyway: **everyone pays the driver of the first ride they took to the trip.**
+
+1. A driver enters **one amount** for the whole trip: fuel, tolls, parking, everything.
+2. It is shared **equally** by the driver and the people who went to the trip in their car. "The first ride
+   to the trip" is a person's earliest **Heen** in the app. Someone with no Heen in the app (they came by
+   train and were picked up later) pays the driver of the first ride they were a passenger in. Someone who
+   drove their own Heen pays nobody.
+3. **Switching cars later changes nothing**: whoever you rode with on Saturday or Sunday, you still owe only
+   that one driver, one amount, however many rides there were. That is the point of the rule (earlier
+   versions shared by distance per ride, which gave drivers long lists of tiny amounts).
+4. The driver keeps what does not divide into whole cents, so the shares add up to the amount exactly. A
+   driver nobody went with has nobody to ask and shows nothing; a Saturday-only driver is paid only by their
+   own first-Heen group (they can enter a higher amount if that is unfair).
+5. Rides that are not in the app do not count. It is an **overview, not a ledger**: the driver sees who owes
+   what (with a copy button for the amount) and asks for it by Tikkie or a payment request. Nothing is
+   booked, so it does not enter the balance or Afrekenen. Passengers see a line "Jij betaalt <driver>". A
+   trip appears from its first day until 90 days after its last.
 
 **Afrekenen (settle up).** Instead of paying back every share separately, two
 members settle everything open between them in one payment:
@@ -334,6 +367,10 @@ sheet, where the member picks Rit aanbieden themselves.
 Every error screen (`ErrorFallback`, `ServerUnreachable`, `ForbiddenPage`, `NotFoundPage`, and
 `public/boot-guard.js`) ends its message with a random Dutch chemistry joke
 (`constants/chemistryJokes.ts`). `boot-guard.js` is plain ES5 and keeps its own copy of the list.
+The crash screen (`ErrorFallback`) also has "Vertel wat er gebeurde" (`CrashFeedback.tsx`): a bug report with
+the page and the technical message appended. It calls the feedback service directly, without React Query or
+the router, because that screen can replace the whole app. The other error screens do not have it, as they
+appear when the server cannot be reached, the member is not signed in, or the app did not start.
 
 ## Notifications
 
@@ -347,6 +384,13 @@ Every error screen (`ErrorFallback`, `ServerUnreachable`, `ForbiddenPage`, `NotF
   it only offers a channel that's actually usable (Discord only if the profile has a linked
   account, push only where the browser supports it), and picking one turns the other off —
   selecting push unsubscribes Discord DMs (`allow_dm`) and vice versa;
+- **Waarvoor** is grouped (Evenementen, Plannen, and for admins the feedback notification), with a
+  quick choice on top: Alles, Alleen belangrijk (`IMPORTANT_CATEGORY_IDS`), Niets. **"Alleen mijn trips"**
+  (`profiles.notify_own_trips_only`, on by default) limits new activities and new expenses to people who
+  are going on that trip (everyone signed up for any of its days; for an expense also whoever shares in it);
+  rides already only went to people on that day. Event and ticket-sale notifications stay for everyone
+  who asked. **Testmelding** (`POST /users/me/test-notification`, 5 an hour) sends one message through the
+  saved channel(s);
 - **payment requests and confirmations**, the same way;
 - the in-app **announcement banner** and **changelog banner** (admin-written).
 
@@ -360,6 +404,22 @@ reinstall or a permission change made outside the app. See
 [deployment.md#web-push](deployment.md#web-push) for server setup.
 
 See [architecture.md](architecture.md#background-jobs-and-notifications) for the schedule.
+
+## Read-only members (kijkers)
+
+Someone who may look at the app but not take part: a parent, a partner, a friend who is not going. They
+still go on the whitelist (tick **Alleen kijken** on the entry, and whoever logs in through it gets a
+read-only account) or an admin switches **Alleen kijken** on a member under Gebruikers (`profiles.is_viewer`).
+
+- **The backend refuses every change** except their own account settings and marking a story seen
+  (`get_current_user`, see [security.md](security.md#authorization)); an admin is never read-only.
+- **The app does not offer what they cannot do**: a slim "Je kunt alleen meekijken" bar
+  (`ViewerBanner`), no sign-up or day buttons on a trip, no quick-ride tiles, no "Rit aanbieden" or
+  "Stap in", no new activity, expense, cosplay, story photo, parking spot or location ping
+  (`useIsViewer`). Anything left that does try to change something is not sent
+  (`lib/viewerMode.ts`, mirroring the backend's list): it says why, once, and the screen's own
+  "kon niet ..." error is held back.
+- They keep their own settings, notifications and feedback, and they appear in the crew list like anyone.
 
 ## Onboarding, settings and the changelog
 
@@ -394,4 +454,4 @@ See [architecture.md](architecture.md#background-jobs-and-notifications) for the
 | Tijdreis-widget | set the app's clock to test live or finished trips |
 | Feedback | what members sent through Instellingen → Feedback geven, filtered by status (nieuw, gezien, opgelost); anonymous messages show "Anoniem" |
 | Schermen testen | preview the crash, unreachable, forbidden (Discord and Google), 404 and queued-upload screens |
-| Preview: Onboarding | walk through onboarding without touching a profile |
+| Preview: Onboarding | walk through onboarding without touching a profile. It renders the same `OnboardingFlow` (`pages/onboarding/`) as the real `OnboardingPage`, so it cannot drift; only saving (nothing) and the done button differ |

@@ -64,6 +64,7 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `PATCH /users/name` | member | rename yourself (the old name becomes an alias) |
 | `POST /users/me/onboarding` | member | finish onboarding |
 | `POST /users/me/link-discord` | member | link a Discord account to a Google login |
+| `POST /users/me/test-notification` | member | send yourself one message through your saved channel(s); 5 an hour |
 | `PUT /users/{id}/location` | member | set a location ping (for yourself, via `act_as`) |
 | `POST /users/banner`, `DELETE /users/banner` | member | upload or remove your banner |
 | `POST /users/avatar`, `DELETE /users/avatar` | member | upload or remove a custom profile picture — JPG/PNG/WebP (5 MB) or a small GIF (2 MB, kept as is, not re-encoded) — replacing/restoring the Discord or Google one |
@@ -131,7 +132,7 @@ Best-effort throughout; neither resolving means no pin.
 | `GET /stories/user/{id or name}` | member | every photo one member uploaded, with its event |
 | `GET /stories/{day}` | member | a day's photos in order |
 | `GET /stories/{day}/download-all` | member | the day's photos as one zip, streamed while it is built (413 above 300 photos; a file MinIO can't read is skipped) |
-| `POST /stories/{day}` | member | upload a photo (multipart, field `file`) |
+| `POST /stories/{day}` | member | upload a photo (multipart, field `file`, max 15 MB), or a video (`file` as MP4/MOV/WebM, max 80 MB, plus the still frame as field `poster`). Photos and videos come back with `media_type` (`image`/`video`, from the file name) and `poster_url` |
 | `GET /stories/{day}/seen`, `PUT /stories/{day}/seen` | member | your watch progress |
 | `GET /stories/photos/{id}/download` | member | the original, as a download |
 | `DELETE /stories/photos/{id}` | uploader | remove |
@@ -218,6 +219,18 @@ the trip (an `events.id` for a multi-day trip, an `event_days.id` for a single-d
 `(trip_id, driver)` — a second person correcting the spot upserts the same row. Which of that
 driver's rides is "current" (for display and for the pin's own 2-hour-after-departure expiry) is
 resolved client-side in `CrewMap.tsx`, not stored here.
+
+### Ride costs — `/ride-costs`
+
+| Method and path | Who | What |
+| --- | --- | --- |
+| `GET /ride-costs` | member | the member's ride costs: per trip as a driver (the sheet: the amount, who shares it, what each owes) and as a passenger (what they owe which driver) |
+| `PUT /ride-costs/{trip_id}` | driver | the driver's amount for the trip, all in one — `{amount}`; empty or 0 removes it; 404 without rides as driver there |
+
+Amounts are worked out on the server (`app/services/ride_costs.py`): everyone pays the driver of the first
+ride they took to the trip, the amount shared equally. A driver sees their passengers' amounts, a passenger
+only their own line. `trip_id` is the frontend's `tripIdOf()` (an `events.id` for a multi-day trip, an
+`event_days.id` for a single-day one).
 
 ### Link previews — *public*, not under `/api`
 

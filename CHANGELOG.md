@@ -6,6 +6,65 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+---
+
+## [2.1.2] - 2026-10-15
+
+Videos in stories, read-only members (kijkers), what passengers owe the driver (ritkosten), calmer
+notification settings, sheets that stack over each other, and a faster onboarding and notification
+card. Needs migrations v2.36 to v2.40 (already run on the live database).
+
+### Added
+
+- **Videos in stories.** Add a video (MP4, MOV or WebM, up to 80 MB) to a story the same way as a
+  photo, alone or mixed with photos. It plays full screen with sound (a speaker button if the browser
+  starts it muted), the progress bar follows the video and the story moves on when it ends. Videos
+  show up in the profile and trip photo grids with a play badge. Videos are not compressed: one over
+  80 MB is refused straight away, and one over 25 MB asks first (it can take long on mobile data).
+  A video needs migration v2.40.
+- **Read-only members ("kijkers").** Someone can now be allowed to look at the app but not take part, and
+  still has to be on the whitelist: tick **Alleen kijken** on the whitelist entry (or on a member under
+  Admin → Gebruikers). They see everything, get a slim "Je kunt alleen meekijken" bar, and no buttons to
+  sign up, offer a ride, add an activity, expense, cosplay or photo, share a location or a parking
+  spot. The server refuses every change they try anyway, apart from their own settings, notifications,
+  feedback and watching stories. Admins are never read-only. Needs migration v2.39.
+- **Notification settings, tidied.** The categories are grouped (Evenementen, Plannen), with a quick choice
+  on top (Alles, Alleen belangrijk, Niets). A new switch **"Alleen mijn trips"**, on by default, limits the
+  notifications for new activities and expenses to the trips you are going on (rides already worked that
+  way). The channel card has a **Testmelding** button that sends you one message, so you can see it
+  arrive. Betaalverzoeken are listed as always on. Needs migration v2.38 to change the switch.
+- **Ritkosten: what passengers owe the driver.** In Financiën, under Afrekenen, a driver enters what the
+  trip cost them (fuel, tolls and parking in one amount) and sees what each passenger owes. One simple
+  rule: **everyone pays the driver of the first ride they took to the trip**, and the amount is shared
+  equally by the driver and the people in that car. Switching cars later in the trip changes nothing, so
+  nobody ends up with a list of tiny amounts. It is an overview, not a payment: ask for it with a Tikkie.
+  Passengers see "Jij betaalt <naam>". Needs migration v2.37.
+- **"Vertel wat er gebeurde" on the crash screen ("Er ging iets mis").** One tap opens a small box;
+  what you write goes to Admin → Feedback as a bug, with the page and the technical message added
+  automatically. It is on that screen only: the others cannot use it (the server is unreachable, you
+  are not signed in, or the app did not start).
+
+### Fixed
+
+- Settings → Notificaties said "Kies welke Discord DM's je ontvangt"; it now says you choose how
+  (Discord or push) and for what.
+- **The "Meldingen via" card (Discord or push) took seconds to appear** in the notification settings and
+  in onboarding: nothing was shown until the app had asked the browser whether this device is
+  subscribed, and it did that by waiting for a service worker, which never arrives in a dev build and
+  can be slow on a first visit (it gave up after 8 seconds). The card now shows at once; what is
+  already known (no push here, install the app first, blocked) is there immediately, and only the
+  Pushmeldingen row says "Even kijken…" for a moment. The lookup asks for the registration that
+  exists instead of waiting for one, and gives up after 1.5 seconds.
+- **The onboarding test screen (Admin → Preview: Onboarding) was a copy of the real onboarding,
+  not the real thing**, and had drifted: the progress bar was another colour, the done screen
+  another button. Both now render the same flow (`OnboardingFlow`); the test screen only differs in
+  that nothing is saved and "done" leads back to the admin panel.
+- **New members never saw the done screen ("Je bent er klaar voor!")**: saving marked them as
+  finished, and the page that sends finished members to the hub did so at once. It no longer does
+  while they are finishing it.
+- The done screen pointed to a "Meer" page that no longer exists; it says Instellingen under your
+  avatar now.
+
 ### Added
 
 - **Admins can get a notification for new feedback.** Under Instellingen → Notificaties admins have an
@@ -15,6 +74,10 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **A sheet that opens over another sheet no longer hides it.** The one underneath slides down to just above
+  the new one and shows only its top bar, dimmed, like a page laid over a page; closing the new sheet
+  (tap the dimmed area, Escape or back) brings the first one back. It applies to every sheet that opens over
+  another, such as "Ik rijd" in Vervoer or bulk rooms in Kamers.
 - **The admin CDN page loads a screenful at a time** (24 files, whole rows) and fetches more as you
   scroll down, instead of asking for 60 at once and then everything again on "Toon meer". Videos
   fetch their first frame only when they come near the screen. Paging through the viewer keeps

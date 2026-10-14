@@ -16,11 +16,8 @@ ticked off — `CHANGELOG.md` and git history are the record.
 Open items before or around the next deploy. New migrations go here until they are run, in
 the order they must be run, with the Supabase SQL editor; see
 [docs/deployment.md](docs/deployment.md#database-migrations) for how to check what has already
-been applied. (Migrations v2.19 (apart from its last line, below) and v2.25 up to v2.35 are done; v2.36 is below.)
+been applied. (Migrations v2.19 (apart from its last line, below) and v2.25 up to v2.40 are done.)
 
-- [ ] Run `db/migrations/migration_v2.36_meal_categories.sql` (`meal_categories`, `meals.category_id`)
-      **before** deploying the activities release: planning or editing an activity writes `category_id`
-      and answers 503 until then. Listing activities works without it.
 - [ ] Generate a VAPID key pair and set `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` on the
       backend and `VITE_VAPID_PUBLIC_KEY` on the frontend build — see docs/deployment.md#web-push. Until
       that is done, the "Pushmeldingen" toggle simply doesn't appear (harmless to leave for a while).
@@ -34,7 +31,7 @@ been applied. (Migrations v2.19 (apart from its last line, below) and v2.25 up t
       live stack already has the `git fetch` + `reset --hard` clone step.
 - [ ] Make sure the backend's MinIO access key is allowed to *list* the bucket. The
       admin CDN page (Admin → CDN) shows an error until it can.
-- [ ] For the admin quick upload of videos: raise `client_max_body_size` to 100M in the
+- [ ] For videos (admin quick upload and story videos, up to 80 MB): raise `client_max_body_size` to 100M in the
       SWAG confs for the API (dev.ankerd.org) and cdn (see docs/minio-setup.md), and reload
       nginx. Photos are fine without it; videos over 20 MB get a 413 until then.
 - [ ] Change the MinIO root password in Portainer, then test one upload. Only

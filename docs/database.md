@@ -44,12 +44,13 @@ Postgres on Supabase. Only the backend talks to it (see
 
 | Table | Purpose | Notes |
 | --- | --- | --- |
-| `profiles` | One row per member | `id` is the Supabase auth user id. `name`, `aliases` (former names), `discord_id`, `discord_username`, `email`, `avatar_url`, banner (`banner_color`, `banner_url`, `banner_position`), `color`, `font`, `bio`, `pronouns`, `phone_number`, `live_location_ping` (JSON text), `badge_ids`, `notification_categories`, `allow_dm`, `show_greeting`, `is_admin`, `is_active`, `is_first_login`, `onboarding_completed`, `avatar_synced_at` (when the avatar was
+| `profiles` | One row per member | `id` is the Supabase auth user id. `name`, `aliases` (former names), `discord_id`, `discord_username`, `email`, `avatar_url`, banner (`banner_color`, `banner_url`, `banner_position`), `color`, `font`, `bio`, `pronouns`, `phone_number`, `live_location_ping` (JSON text), `badge_ids`, `is_viewer` (read-only member, see [features.md](features.md#read-only-members-kijkers)), `notification_categories`, `notify_own_trips_only` (only hear about activities and expenses of trips you go on; default true), `allow_dm`, `show_greeting`, `is_admin`, `is_active`, `is_first_login`, `onboarding_completed`, `avatar_synced_at` (when the avatar was
 last refreshed from Discord/Google — see [security.md](security.md#authentication)), `avatar_custom`
 (true once a member uploads their own picture — stops the resync from overwriting it). Created by the backend after a whitelisted login, or by an admin as a stub that is claimed at first login. Never by a database trigger. |
-| `whitelist` | Who may log in | `discord_id` and/or `email`; one of them is required. |
+| `whitelist` | Who may log in | `discord_id` and/or `email`; one of them is required. `viewer`: whoever gets in through this entry gets a read-only account. |
 | `push_subscriptions` | Web push, per device | `user_name`, `endpoint` (unique — a device's own push-service URL, upserted on resubscribe, deleted when a push comes back 404/410), `p256dh`, `auth`. See [deployment.md#web-push](deployment.md#web-push). |
 | `parking_spots` | Where a driver's car is parked, for the crew map | `trip_id` (plain text, not a foreign key — see the migration's own header for why), `driver`, `lat`/`lng`, `placed_by`. `UNIQUE (trip_id, driver)`: one row per driver per trip, upserted. |
+| `ride_costs` | What a driver spent on a trip, for the ride-cost overview in Financiën | `trip_id` (plain text, like `parking_spots`), `driver`, `total_amount` (the one amount the trip cost the driver), `parking_amount` (unused since the amounts became one: always 0, an older value is added to `total_amount` when read), `updated_at`. `UNIQUE (trip_id, driver)`. `rides.distance_km` / `distance_source` are unused leftovers of an earlier by-distance version. |
 | `badges` | Badge definitions | `name`, `description`, `image_url`, `display_order`. Members reference them through `profiles.badge_ids`. |
 
 ### Events
@@ -152,6 +153,10 @@ order, not the number in the title.
 | `migration_v2.33_venue_geocoding` | `events.location_lat/lng`, `events.hotel_location_lat/lng`, `meals.location_lat/lng`, `meals.maps_url` — venue pins for the crew map. **Run before the deploy** — the backend writes these columns on every event/meal save. |
 | `migration_v2.34_venue_maps_url` | `events.location_maps_url`, `events.hotel_location_maps_url` — admin-set exact Maps links, for a venue (e.g. a hotel chain) whose address doesn't geocode reliably. **Run before the deploy**, same reason as v2.33. |
 | `migration_v2.35_parking_spots` | `parking_spots` table — one pin per (trip, driver) for the crew map. **Run before the deploy**: setting a spot writes to this table, and it doesn't exist until this runs. |
+| `migration_v2.40_story_video` | `story_photos.poster_url`, the still frame of a story video. Run before the deploy that lets members add videos; photos work without it. |
+| `migration_v2.39_viewer` | `profiles.is_viewer` and `whitelist.viewer` (read-only members). Safe to leave unrun: without the columns nobody is read-only. Only setting the flag needs them. |
+| `migration_v2.38_notify_own_trips` | `profiles.notify_own_trips_only`. Safe to run any time: the backend falls back to a query without it, treating everyone as on the default. |
+| `migration_v2.37_ride_costs` | `ride_costs` table, and `rides.distance_km` / `distance_source` (the latter are unused now). **Run before the deploy**: entering an amount writes to the table (the overview itself answers 503 until then). |
 | `migration_v2.36_meal_categories` | `meal_categories` table (Eten, Activiteit, Groepsfoto, Spel, Con, Concert) and `meals.category_id`, with every existing meal set to Eten. **Run before the deploy**: planning or editing an activity writes `category_id`. Reading works without it (the app falls back to the old behaviour). |
 | `migration_cosplays`, `add_whitelist_emails`, `remove_trigger` | one-offs: the cosplays table, a bulk-add template for the whitelist, removal of the old profile trigger |
 | `backfill_events_from_calendar.py`, `repoint_fks_to_new_events.py`, `calendar_id_mapping.json` | the one-time data move from `calendar` to `events`/`event_days` (kept for the record) |
@@ -182,6 +187,10 @@ Run in the SQL editor:
 | v2.34 | `select 1 from information_schema.columns where table_name = 'events' and column_name = 'location_maps_url'` returns a row |
 | v2.35 | `select to_regclass('public.parking_spots')` is not null |
 | v2.36 | `select to_regclass('public.meal_categories')` is not null |
+| v2.37 | `select to_regclass('public.ride_costs')` is not null |
+| v2.38 | `select 1 from information_schema.columns where table_name = 'profiles' and column_name = 'notify_own_trips_only'` returns a row |
+| v2.39 | `select 1 from information_schema.columns where table_name = 'profiles' and column_name = 'is_viewer'` returns a row |
+| v2.40 | `select 1 from information_schema.columns where table_name = 'story_photos' and column_name = 'poster_url'` returns a row |
 
 `db/check_schema.py` compares `db/schema.sql` with the live database, but
 `schema.sql` is out of date (see below), so it reports differences that are not
