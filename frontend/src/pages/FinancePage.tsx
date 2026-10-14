@@ -10,6 +10,7 @@ import { CreateExpenseDrawer } from "../components/finance/CreateExpenseDrawer";
 import { ExpenseDetailDrawer } from "../components/finance/ExpenseDetailDrawer";
 import { SettleUpCard, type SettleTarget } from "../components/finance/SettleUpCard";
 import { SettlementDrawer } from "../components/finance/SettlementDrawer";
+import { RideCostsCard } from "../components/finance/RideCostsCard";
 import { useSettleUp } from "../hooks/useSettlements";
 import { useExpenses } from "../hooks/useExpenses";
 import { useUsers } from "../hooks/useUsers";
@@ -248,6 +249,9 @@ export function FinancePage() {
 
           {/* ── Settle up (across all trips) ─────────────────── */}
           <SettleUpCard overview={settleUp} users={users} meId={me?.id} onOpen={setSettleTarget} />
+
+          {/* ── Ritkosten: what passengers owe the driver ────── */}
+          <RideCostsCard tripFilter={tripFilter} />
 
           {/* ── Group overview ───────────────────────────────── */}
           {expenses.length > 0 && (

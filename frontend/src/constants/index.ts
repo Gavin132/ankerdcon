@@ -8,6 +8,7 @@ export const STATUS_PAGE_URL = "https://status.ankerd.org/";
 
 export const QUERY_KEYS = {
   rides:     ["rides"]     as const,
+  rideCosts: ["ride-costs"] as const,
   meals:     ["meals"]     as const,
   calendar:  ["calendar"]  as const,
   users:     ["users"]     as const,

@@ -215,6 +215,39 @@ export interface RestaurantUnassignRequest {
 }
 
 // Meals
+// Ride costs: what passengers owe a driver for a trip (an overview, nothing is booked).
+// Everyone pays the driver of the first ride they took to the trip; the amount is shared equally.
+export interface RidePassengerCost {
+  name: string;
+  amount: number;
+}
+
+export interface DriverCostSheet {
+  trip_id: string;
+  driver: string;
+  /** Everything the trip cost the driver; null while nothing is entered. */
+  amount?: number | null;
+  /** Who shares it with the driver (the driver not included), also before an amount is entered. */
+  group: string[];
+  passengers: RidePassengerCost[];
+  own_share?: number | null;
+  /** How many rides the driver drove in this trip. */
+  rides: number;
+  /** The date of the last of them (YYYY-MM-DD). */
+  last_ride: string;
+}
+
+export interface PassengerCostLine {
+  trip_id: string;
+  driver: string;
+  amount: number;
+}
+
+export interface RideCostOverview {
+  as_driver: DriverCostSheet[];
+  as_passenger: PassengerCostLine[];
+}
+
 /** A kind of activity (Eten, Activiteit, Groepsfoto, ...), managed by admins. The flags
  * say which parts of the form and the page its items have. */
 export interface MealCategory {

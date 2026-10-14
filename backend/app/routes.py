@@ -144,6 +144,12 @@ class MealCategoryRoutes:
     LIST = ""
 
 
+class RideCostRoutes:
+    PREFIX = "/ride-costs"
+    LIST = ""
+    TRIP = "/{trip_id}"
+
+
 class AdminRoutes:
     PREFIX = "/admin"
     STATS = "/stats"

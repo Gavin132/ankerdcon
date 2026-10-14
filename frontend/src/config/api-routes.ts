@@ -43,6 +43,11 @@ export const apiRoutes = {
 
   mealCategories: "/api/meal-categories",
 
+  rideCosts: {
+    base:     "/api/ride-costs",
+    trip:     (tripId: string) => `/api/ride-costs/${encodeURIComponent(tripId)}`,
+  },
+
   // ── Payments ─────────────────────────────────────────────────────
 
   // ── Expenses ──────────────────────────────────────────────────────

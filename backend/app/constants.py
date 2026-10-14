@@ -27,6 +27,7 @@ class Tables:
     FEEDBACK       = "feedback"
     PUSH_SUBSCRIPTIONS = "push_subscriptions"
     PARKING_SPOTS  = "parking_spots"
+    RIDE_COSTS     = "ride_costs"
 
 
 # ── API ───────────────────────────────────────────────────────────
