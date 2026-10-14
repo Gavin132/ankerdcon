@@ -30,10 +30,10 @@ export function StoryUploadButton({ eventDayId, className }: StoryUploadButtonPr
         onClick={picker.open}
         title={
           progress
-            ? `Foto ${Math.min(progress.done + 1, progress.total)} van ${progress.total} wordt toegevoegd`
+            ? `${Math.min(progress.done + 1, progress.total)} van ${progress.total} wordt toegevoegd${progress.fraction !== undefined ? ` (${Math.round(progress.fraction * 100)}%)` : ""}`
             : pendingCount > 0
               ? `${pendingCount} foto('s) wachten op verbinding`
-              : "Foto's toevoegen aan story"
+              : "Foto's of video's toevoegen aan story"
         }
         className={`relative ${className ?? DEFAULT_CLASS}`}
       >

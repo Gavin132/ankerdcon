@@ -301,7 +301,11 @@ export interface StoryPhoto {
   event_day_id: string;
   seq: number;
   uploaded_by: string;
+  /** A photo, or the video file itself. */
   image_url: string;
+  /** The still frame of a video; null for photos. */
+  poster_url?: string | null;
+  media_type: "image" | "video";
   created_at: string;
 }
 
@@ -309,6 +313,8 @@ export interface StoryPhoto {
 export interface UserStoryPhoto {
   id: string;
   image_url: string;
+  poster_url?: string | null;
+  media_type: "image" | "video";
   created_at: string;
   event_day_id: string;
   event_id?: string | null;

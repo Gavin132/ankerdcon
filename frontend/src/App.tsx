@@ -11,6 +11,7 @@ import { ErrorBoundary } from "./components/common/ErrorBoundary";
 import { ImpersonationBanner } from "./components/common/ImpersonationBanner";
 import { OfflineBanner } from "./components/common/OfflineBanner";
 import { ViewerBanner } from "./components/common/ViewerBanner";
+import { ConfirmHost } from "./components/common/ConfirmHost";
 import { UpdateBanner } from "./components/layout/UpdateBanner";
 import { useThemeStore } from "./store/theme.store";
 import { useSplash } from "./hooks/useSplash";
@@ -292,6 +293,7 @@ export function App() {
           <RouterProvider router={router} />
         </Suspense>
         <ToastContainer />
+        <ConfirmHost />
         <UpdateBanner />
         <SplashController />
       </PersistQueryClientProvider>

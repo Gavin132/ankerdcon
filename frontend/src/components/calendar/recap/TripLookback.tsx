@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQueries } from "@tanstack/react-query";
-import { BedDouble, Camera, ChevronRight, MapPin, X } from "lucide-react";
+import { BedDouble, Camera, ChevronRight, MapPin, Play, X } from "lucide-react";
 import { UserAvatar } from "../../common/UserAvatar";
 import { StoryViewer } from "../../story/StoryViewer";
 import { TripPlanList } from "./TripPlanList";
@@ -195,7 +195,12 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
                         aria-label={`Foto ${i + 1} van ${shownTotal}`}
                         className="group relative aspect-square overflow-hidden rounded-lg bg-sunken"
                       >
-                        <img src={photo.image_url} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.04]" />
+                        <img src={photo.media_type === "video" ? (photo.poster_url ?? "") : photo.image_url} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.04]" />
+                        {photo.media_type === "video" && (
+                          <span className="pointer-events-none absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#0F1519]/65 text-white">
+                            <Play size={10} fill="currentColor" />
+                          </span>
+                        )}
                         {isLast ? (
                           <span className="absolute inset-0 flex items-center justify-center bg-[#0F1519]/65 font-display text-[24px] font-extrabold text-white">
                             +{shownTotal - tiles.length + 1}

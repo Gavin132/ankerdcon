@@ -2,7 +2,14 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
+
+VIDEO_EXTENSIONS = (".mp4", ".mov", ".webm")
+
+
+def media_type_of(url: str) -> str:
+    """"video" or "image", from the name of the stored file (no column: the name says it)."""
+    return "video" if url.lower().split("?", 1)[0].endswith(VIDEO_EXTENSIONS) else "image"
 
 
 class StoryPhoto(BaseModel):
@@ -11,7 +18,13 @@ class StoryPhoto(BaseModel):
     seq: int
     uploaded_by: str
     image_url: str
+    poster_url: Optional[str] = None
     created_at: str
+
+    @computed_field
+    @property
+    def media_type(self) -> str:
+        return media_type_of(self.image_url)
 
 
 class StorySeenState(BaseModel):
@@ -34,8 +47,14 @@ class UserStoryPhoto(BaseModel):
     """A photo on someone's profile: the photo plus which event it was taken at."""
     id: str
     image_url: str
+    poster_url: Optional[str] = None
     created_at: str
     event_day_id: str
     event_id: Optional[str] = None
     event_name: Optional[str] = None
     date: Optional[str] = None
+
+    @computed_field
+    @property
+    def media_type(self) -> str:
+        return media_type_of(self.image_url)

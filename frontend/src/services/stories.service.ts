@@ -1,4 +1,4 @@
-import { apiClient, UPLOAD_TIMEOUT_MS } from "../lib/api/client";
+import { apiClient, UPLOAD_TIMEOUT_MS, VIDEO_UPLOAD_TIMEOUT_MS } from "../lib/api/client";
 import { apiRoutes } from "../config/api-routes";
 import { filenameFromContentDisposition, triggerBlobDownload } from "../utils/downloadFile";
 import type { StoryPhoto, StoryDaySummary, UserStoryPhoto } from "../types";
@@ -19,6 +19,24 @@ export async function uploadStoryPhoto(eventDayId: string, blob: Blob): Promise<
   const { data } = await apiClient.post<StoryPhoto>(apiRoutes.stories.byDay(eventDayId), form, {
     headers: { "Content-Type": "multipart/form-data" },
     timeout: UPLOAD_TIMEOUT_MS,
+  });
+  return data;
+}
+
+/** A video as it came from the phone, with the still frame made of it. `onProgress` gets 0–1. */
+export async function uploadStoryVideo(
+  eventDayId: string,
+  video: File,
+  poster: Blob,
+  onProgress?: (fraction: number) => void,
+): Promise<StoryPhoto> {
+  const form = new FormData();
+  form.append("file", video, video.name);
+  form.append("poster", poster, "poster.jpg");
+  const { data } = await apiClient.post<StoryPhoto>(apiRoutes.stories.byDay(eventDayId), form, {
+    headers: { "Content-Type": "multipart/form-data" },
+    timeout: VIDEO_UPLOAD_TIMEOUT_MS,
+    onUploadProgress: (e) => e.total && onProgress?.(Math.min(1, e.loaded / e.total)),
   });
   return data;
 }

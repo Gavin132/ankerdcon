@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { animate, motion, AnimatePresence, useDragControls, useMotionValue, useTransform } from "framer-motion";
-import { X, Trash2, Share2, Download, FolderDown, Loader2 } from "lucide-react";
+import { X, Trash2, Share2, Download, FolderDown, Loader2, Volume2, VolumeX } from "lucide-react";
 import { useStoryPhotos, useMarkStorySeen, useDeleteStoryPhoto } from "../../hooks/useStories";
 import { useCurrentUser } from "../../hooks/useUsers";
 import { downloadAllStoryPhotos, downloadStoryPhoto } from "../../services/stories.service";
@@ -51,6 +51,14 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
   const dragBackground = useTransform(dragY, [0, 320], ["rgba(8,12,15,1)", "rgba(8,12,15,0.25)"]);
   const highestSeqRef = useRef(0);
 
+  // Video: sound on if the browser lets it (opening the story was a tap, so it usually does),
+  // otherwise muted with the speaker button to turn it on. One choice for the whole story.
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [muted, setMuted] = useState(false);
+  const [buffering, setBuffering] = useState(false);
+  const [failedVideoId, setFailedVideoId] = useState<string | null>(null);
+  const videoProgress = useMotionValue(0);
+
   useEffect(() => {
     if (open) {
       setIndex(initialIndex);
@@ -75,13 +83,49 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
   // Photos are big and the connection is often poor: start loading the next
   // two while this one is on screen, so tapping on doesn't leave the previous
   // photo sitting there (the <img> is keyed per photo, so a slow one shows
-  // black rather than the old picture).
+  // black rather than the old picture). A video only gets its still frame loaded
+  // ahead: the video itself is far too big to fetch on a guess.
   useEffect(() => {
     if (!open) return;
     for (const p of [photos[index + 1], photos[index + 2]]) {
-      if (p) new Image().src = p.image_url;
+      if (p) new Image().src = p.media_type === "video" ? (p.poster_url ?? "") : p.image_url;
     }
   }, [open, index, photos]);
+
+  const currentId = photos[index]?.id;
+  const currentIsVideo = photos[index]?.media_type === "video";
+
+  // The progress bar of a video follows the video itself, and the story moves on when it ends.
+  useEffect(() => {
+    videoProgress.set(0);
+    setBuffering(false);
+    if (!open || !currentIsVideo) return;
+    let frame = 0;
+    const tick = () => {
+      const v = videoRef.current;
+      if (v && v.duration) videoProgress.set(v.currentTime / v.duration);
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [open, currentId, currentIsVideo, videoProgress]);
+
+  // A video this device cannot play: say so, then carry on with the story.
+  useEffect(() => {
+    if (!failedVideoId || failedVideoId !== currentId) return;
+    const t = setTimeout(() => nextRef.current(), 4000);
+    return () => clearTimeout(t);
+  }, [failedVideoId, currentId]);
+
+  function startVideo(v: HTMLVideoElement) {
+    v.muted = muted;
+    v.play().catch(() => {
+      // Sound is not allowed without a tap on this page: play on mute, the speaker button undoes it.
+      v.muted = true;
+      setMuted(true);
+      v.play().catch(() => {});
+    });
+  }
 
   const flushSeen = useCallback(() => {
     if (highestSeqRef.current > 0) markSeen.mutate(highestSeqRef.current);
@@ -104,6 +148,9 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
     }
     setIndex(index + 1);
   }, [index, photos.length, flushSeen, onClose]);
+
+  const nextRef = useRef(next);
+  nextRef.current = next;
 
   const prev = useCallback(() => {
     setIndex((i) => Math.max(0, i - 1));
@@ -135,13 +182,14 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = blobUrl;
-      a.download = `ankerd-story-${photo.created_at.slice(0, 10)}.jpg`;
+      const ext = photo.image_url.split("?")[0].split(".").pop() || "jpg";
+      a.download = `ankerd-story-${photo.created_at.slice(0, 10)}.${ext}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(blobUrl);
     } catch {
-      toast("error", "Kon foto niet downloaden.");
+      toast("error", "Kon het bestand niet downloaden.");
     } finally {
       setDownloadingId(null);
     }
@@ -212,7 +260,10 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
             {photos.map((p, i) => (
               <div key={p.id} className="h-[3px] flex-1 rounded-full bg-white/25 overflow-hidden">
                 {i < index && <div className="h-full w-full bg-white" />}
-                {i === index && (
+                {i === index && p.media_type === "video" && failedVideoId !== p.id && (
+                  <motion.div className="h-full w-full bg-white origin-left" style={{ scaleX: videoProgress }} />
+                )}
+                {i === index && (p.media_type !== "video" || failedVideoId === p.id) && (
                   <motion.div
                     key={index}
                     className="h-full bg-white origin-left"
@@ -233,6 +284,20 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
               <p className="truncate text-xs font-semibold text-[#E6F0F3]">{current.uploaded_by}</p>
             </div>
             <div className="flex items-center gap-1">
+              {current.media_type === "video" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nowMuted = !muted;
+                    setMuted(nowMuted);
+                    if (videoRef.current) videoRef.current.muted = nowMuted;
+                  }}
+                  aria-label={muted ? "Geluid aan" : "Geluid uit"}
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
+                >
+                  {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => handleShare(current.image_url)}
@@ -283,13 +348,42 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
 
           {/* Photo + tap zones */}
           <div className="relative flex-1 min-h-0">
-            <img
-              key={current.id}
-              src={current.image_url}
-              alt=""
-              draggable={false}
-              className="absolute inset-0 h-full w-full select-none object-contain"
-            />
+            {current.media_type === "video" ? (
+              <>
+                <video
+                  key={current.id}
+                  ref={videoRef}
+                  src={current.image_url}
+                  poster={current.poster_url ?? undefined}
+                  playsInline
+                  preload="auto"
+                  disablePictureInPicture
+                  draggable={false}
+                  className="absolute inset-0 h-full w-full select-none object-contain"
+                  onLoadedMetadata={(e) => startVideo(e.currentTarget)}
+                  onWaiting={() => setBuffering(true)}
+                  onPlaying={() => setBuffering(false)}
+                  onEnded={next}
+                  onError={() => setFailedVideoId(current.id)}
+                />
+                {buffering && failedVideoId !== current.id && (
+                  <Loader2 size={28} className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-spin text-white/80" />
+                )}
+                {failedVideoId === current.id && (
+                  <p className="pointer-events-none absolute inset-x-6 top-1/2 -translate-y-1/2 text-center text-sm text-white/80">
+                    Deze video kan op dit apparaat niet worden afgespeeld. Je kunt hem wel downloaden.
+                  </p>
+                )}
+              </>
+            ) : (
+              <img
+                key={current.id}
+                src={current.image_url}
+                alt=""
+                draggable={false}
+                className="absolute inset-0 h-full w-full select-none object-contain"
+              />
+            )}
             <button type="button" aria-label="Vorige" onClick={prev} className="absolute inset-y-0 left-0 w-1/3" />
             <button type="button" aria-label="Volgende" onClick={next} className="absolute inset-y-0 right-0 w-2/3" />
           </div>

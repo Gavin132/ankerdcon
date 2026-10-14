@@ -12,7 +12,7 @@ from app.constants import Tables
 from app.core import minio_client
 from app.core.database import supabase
 from app.core.logging import get_logger
-from app.core.uploads import clean_image, read_capped
+from app.core.uploads import clean_image, read_capped, sniff_video
 from app.core.zip_stream import stream_zip
 from app.dependencies import get_current_user
 from app.models.story import MarkStorySeenRequest, StoryDaySummary, StoryPhoto, StorySeenState, UserStoryPhoto
@@ -28,7 +28,15 @@ _DB_ERROR = "Databasefout. Probeer het opnieuw."
 # normal ceiling.
 _MAX_BYTES = 15 * 1024 * 1024  # 15 MB
 _ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
-_EXT = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
+_EXT = {
+    "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp",
+    "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm",
+}
+# A video is stored as it comes (no re-encoding on this server), so the phone's file is the
+# limit: the same 80 MB as the admin quick upload, and below Cloudflare's 100 MB request cap.
+_VIDEO_MAX_BYTES = 80 * 1024 * 1024
+# The still frame the phone makes of a video (grids, the story ring, while it loads).
+_POSTER_MAX_BYTES = 2 * 1024 * 1024
 
 # A safety net on "download this day's photos as one zip", not the expected case: at
 # 15 MB (the per-photo cap) this bounds a zip at a few GB, not the ordinary size of a
@@ -62,7 +70,7 @@ def get_story_summary(
     try:
         photos = (
             supabase.table(Tables.STORY_PHOTOS)
-            .select("event_day_id, seq, image_url")
+            .select("*")
             .in_("event_day_id", day_ids)
             .execute()
             .data
@@ -97,7 +105,7 @@ def get_story_summary(
             photo_count=len(day_photos),
             latest_seq=newest["seq"],
             has_unseen=newest["seq"] > last_seen,
-            preview_url=newest["image_url"],
+            preview_url=newest.get("poster_url") or newest["image_url"],
         )
     return result
 
@@ -130,7 +138,7 @@ def list_user_photos(identifier: str, _: str = Depends(get_current_user)):
     try:
         photos = (
             supabase.table(Tables.STORY_PHOTOS)
-            .select("id, image_url, created_at, event_day_id")
+            .select("*")
             .in_("uploaded_by", names)
             .order("created_at", desc=True)
             .execute()
@@ -158,7 +166,8 @@ def list_user_photos(identifier: str, _: str = Depends(get_current_user)):
         day = day_by_id.get(p["event_day_id"], {})
         event_id = day.get("event_id")
         out.append(UserStoryPhoto(
-            id=p["id"], image_url=p["image_url"], created_at=p["created_at"], event_day_id=p["event_day_id"],
+            id=p["id"], image_url=p["image_url"], poster_url=p.get("poster_url"), created_at=p["created_at"],
+            event_day_id=p["event_day_id"],
             event_id=event_id, event_name=name_by_event.get(event_id), date=day.get("date"),
         ))
     return out
@@ -181,8 +190,26 @@ def list_story_photos(event_day_id: str, _: str = Depends(get_current_user)):
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
-def _store_story_photo(event_day_id: str, current_user: str, content: bytes) -> dict:
-    content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP"})
+def _key_of(url: str) -> str:
+    """The object key behind a stored public URL (everything after the bucket name)."""
+    return url.split(f"/{get_settings().minio_bucket}/", 1)[-1]
+
+
+def _store_story_photo(
+    event_day_id: str, current_user: str, content: bytes, poster: bytes | None = None,
+) -> dict:
+    """A photo, or (with `poster`) a video: both end up as one `story_photos` row."""
+    if poster is not None:
+        video = sniff_video(content)
+        if video is None:
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail="Dit bestand is geen geldige video. Gebruik MP4, MOV of WebM.",
+            )
+        content_type, ext = video
+        poster, poster_type, _ = clean_image(poster, {"JPEG", "WEBP", "PNG"})
+    else:
+        content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP"})
 
     # Nest under the parent event too (not just the day) so MinIO's own
     # browser groups a multi-day con's photos together instead of scattering
@@ -201,10 +228,15 @@ def _store_story_photo(event_day_id: str, current_user: str, content: bytes) -> 
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenementdag niet gevonden.")
     event_id = day_row.data[0]["event_id"]
 
-    key = f"{event_id}/{event_day_id}/{uuid.uuid4().hex}.{ext}"
+    base = f"{event_id}/{event_day_id}/{uuid.uuid4().hex}"
+    key = f"{base}.{ext}"
+    poster_key = f"{base}.poster.jpg" if poster is not None else None
 
+    poster_url = None
     try:
         image_url = minio_client.upload_bytes(key, content, content_type)
+        if poster_key is not None:
+            poster_url = minio_client.upload_bytes(poster_key, poster, poster_type)
     except RuntimeError as e:
         # MinIO not configured yet — a clear message instead of a generic 503.
         logger.error("Story photo upload failed (MinIO not configured): %s", e)
@@ -216,25 +248,23 @@ def _store_story_photo(event_day_id: str, current_user: str, content: bytes) -> 
             detail="Uploaden mislukt. Probeer het opnieuw.",
         )
 
+    row = {"event_day_id": event_day_id, "uploaded_by": current_user, "image_url": image_url}
+    if poster_url:
+        # Only a video has one, so photos keep working on a database without the column (v2.40).
+        row["poster_url"] = poster_url
     try:
-        resp = (
-            supabase.table(Tables.STORY_PHOTOS)
-            .insert({
-                "event_day_id": event_day_id,
-                "uploaded_by": current_user,
-                "image_url": image_url,
-            })
-            .execute()
-        )
+        resp = supabase.table(Tables.STORY_PHOTOS).insert(row).execute()
         return resp.data[0]
     except Exception as e:
         logger.error("Failed to save story photo row for day %s: %s", event_day_id, e)
         # The file is already in MinIO at this point but the DB insert failed —
         # best-effort cleanup so it isn't orphaned.
-        try:
-            minio_client.delete_object(key)
-        except Exception:
-            pass
+        for orphan in (key, poster_key):
+            if orphan:
+                try:
+                    minio_client.delete_object(orphan)
+                except Exception:
+                    pass
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
@@ -242,17 +272,24 @@ def _store_story_photo(event_day_id: str, current_user: str, content: bytes) -> 
 async def upload_story_photo(
     event_day_id: str,
     file: UploadFile = File(...),
+    poster: UploadFile | None = File(None),
     current_user: str = Depends(get_current_user),
 ):
+    """A photo, or a video with the still frame (`poster`) the phone made of it. What the bytes
+    really are is checked in `_store_story_photo`, not taken from the label the browser sent."""
     _require_day_id(event_day_id)
-    if file.content_type not in _ALLOWED_TYPES:
+    is_video = (file.content_type or "").startswith("video/")
+    if not is_video and file.content_type not in _ALLOWED_TYPES:
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail="Bestandstype niet toegestaan. Gebruik JPG, PNG of WebP.",
+            detail="Bestandstype niet toegestaan. Gebruik JPG, PNG, WebP, MP4, MOV of WebM.",
         )
+    if is_video and poster is None:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Bij een video hoort een stilstaand beeld.")
 
-    content = await read_capped(file, _MAX_BYTES)
-    return await run_in_threadpool(_store_story_photo, event_day_id, current_user, content)
+    content = await read_capped(file, _VIDEO_MAX_BYTES if is_video else _MAX_BYTES)
+    poster_bytes = await read_capped(poster, _POSTER_MAX_BYTES) if is_video and poster else None
+    return await run_in_threadpool(_store_story_photo, event_day_id, current_user, content, poster_bytes)
 
 
 @router.delete(StoryRoutes.DETAIL, status_code=status.HTTP_204_NO_CONTENT)
@@ -280,12 +317,13 @@ def delete_story_photo(photo_id: str, current_user: str = Depends(get_current_us
     # Best-effort storage cleanup — derive the object key from the stored URL's
     # path (everything after the bucket name), same non-fatal pattern as the
     # banner upload's old-file cleanup.
-    try:
-        settings = get_settings()
-        key = row.data[0]["image_url"].split(f"/{settings.minio_bucket}/", 1)[-1]
-        minio_client.delete_object(key)
-    except Exception:
-        pass
+    for url in (row.data[0]["image_url"], row.data[0].get("poster_url")):
+        if not url:
+            continue
+        try:
+            minio_client.delete_object(_key_of(url))
+        except Exception:
+            pass
 
 
 @router.get(StoryRoutes.DOWNLOAD)
@@ -314,7 +352,7 @@ def download_story_photo(photo_id: str, _: str = Depends(get_current_user)):
         logger.error("Failed to fetch story photo bytes for %s: %s", photo_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Downloaden mislukt. Probeer het opnieuw.")
 
-    ext = _EXT.get(content_type, "jpg")
+    ext = _EXT.get(content_type) or photo["image_url"].rsplit(".", 1)[-1]
     filename = f"story-{photo['created_at'][:10]}-{photo_id[:8]}.{ext}"
     return Response(
         content=content,
@@ -333,7 +371,7 @@ def _day_zip_entries(photos: list[dict]):
             # One unreadable photo shouldn't ruin the rest; the log says which.
             logger.error("Story zip: skipping %s: %s", p["id"], e)
             continue
-        ext = _EXT.get(content_type, "jpg")
+        ext = _EXT.get(content_type) or p["image_url"].rsplit(".", 1)[-1]
         yield f"{p['seq']:03d}-{p['uploaded_by']}.{ext}", content
 
 

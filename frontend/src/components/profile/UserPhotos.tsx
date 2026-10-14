@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight, Images, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Images, Play, X } from "lucide-react";
 import { useUserPhotos } from "../../hooks/useStories";
 import { formatDate } from "../../utils/format";
 import type { UserStoryPhoto } from "../../types";
@@ -82,12 +82,17 @@ export function UserPhotos({ identifier, whose }: { identifier: string; whose?: 
                   className="group relative aspect-square overflow-hidden rounded-lg bg-sunken"
                 >
                   <img
-                    src={p.image_url}
+                    src={p.media_type === "video" ? (p.poster_url ?? "") : p.image_url}
                     alt=""
                     loading="lazy"
                     decoding="async"
                     className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.04]"
                   />
+                  {p.media_type === "video" && (
+                    <span className="pointer-events-none absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#0F1519]/65 text-white">
+                      <Play size={10} fill="currentColor" />
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -156,7 +161,20 @@ function Lightbox({
         </button>
       </div>
       <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 pb-4">
-        <img src={photo.image_url} alt="" className="max-h-full max-w-full object-contain" onClick={(e) => e.stopPropagation()} />
+        {photo.media_type === "video" ? (
+          <video
+            key={photo.id}
+            src={photo.image_url}
+            poster={photo.poster_url ?? undefined}
+            controls
+            autoPlay
+            playsInline
+            className="max-h-full max-w-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <img src={photo.image_url} alt="" className="max-h-full max-w-full object-contain" onClick={(e) => e.stopPropagation()} />
+        )}
         {onPrev && (
           <button type="button" aria-label="Vorige" className={`${arrow} left-3`} onClick={(e) => { e.stopPropagation(); onPrev(); }}>
             <ChevronLeft size={22} />
