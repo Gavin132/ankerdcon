@@ -6,6 +6,7 @@ import { attemptAutoReload, resetAppAndReload } from "../../utils/errorRecovery"
 import { clearPersistedQueries } from "../../lib/queryPersist";
 import { StatusLink } from "./StatusLink";
 import { ChemistryJoke } from "./ChemistryJoke";
+import { CrashFeedback } from "./CrashFeedback";
 
 interface Props {
   children: ReactNode;
@@ -90,7 +91,8 @@ export function ErrorFallback({ error }: { error?: unknown }) {
             {detail}
           </p>
         )}
-        <StatusLink className="mt-6" />
+        <CrashFeedback detail={detail} />
+        <StatusLink className="mt-4" />
       </motion.div>
     </div>
   );
