@@ -1,8 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X, ChevronLeft } from "lucide-react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { AnimatedHeight } from "../common/AnimatedHeight";
+import { peekOffset, PEEK_PX, registerSheet, setSheetHeight, unregisterSheet, useSheetStack } from "./sheetStack";
 
 interface TripSheetProps {
   open: boolean;
@@ -12,10 +13,10 @@ interface TripSheetProps {
   /** Shown as a back-chevron in place of the close-adjacent gap; goes to a previous view within the same sheet instead of closing it. */
   onBack?: () => void;
   footer?: React.ReactNode;
+  /** For a sheet opened over something that is not itself a TripSheet (an admin drawer): sits above it. A sheet over another TripSheet needs nothing; it is stacked by itself. */
+  stacked?: boolean;
   /** Change this when the sheet swaps to another internal view (list ↔ form): the old view fades out, the new one slides in and the sheet eases to its new height. */
   viewKey?: string;
-  /** For a sheet opened on top of another (a confirmation over a form): sits above it. */
-  stacked?: boolean;
   children: React.ReactNode;
 }
 
@@ -53,6 +54,33 @@ export function TripSheet({ open, onClose, title, subtitle, onBack, footer, view
   // True while this sheet owns a history entry of its own (see below).
   const ownsEntry = useRef(false);
   const dragControls = useDragControls();
+
+  // A sheet opened while another is open lies on top of it. The one underneath stays in view as a
+  // dimmed strip just above, like a page under a page (see sheetStack.ts), so it is clear where
+  // "back" goes.
+  const sheetId = useId();
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const stack = useSheetStack();
+  const index = stack.findIndex((s) => s.id === sheetId);
+  const covered = index !== -1 && index < stack.length - 1;
+  const shift = covered ? peekOffset(stack, index) : 0;
+
+  useEffect(() => {
+    if (!open) return;
+    registerSheet(sheetId);
+    return () => unregisterSheet(sheetId);
+  }, [open, sheetId]);
+
+  // The offsets of the sheets underneath follow this sheet's height, which changes with its content.
+  useEffect(() => {
+    const el = sheetRef.current;
+    if (!open || !el) return;
+    const report = () => setSheetHeight(sheetId, el.offsetHeight);
+    report();
+    const observer = new ResizeObserver(report);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [open, sheetId]);
 
   // Every way of closing by hand (X, backdrop, Escape, a downward drag) goes
   // through the history entry when there is one: going back pops it and the
@@ -141,12 +169,12 @@ export function TripSheet({ open, onClose, title, subtitle, onBack, footer, view
   return createPortal(
     <AnimatePresence>
       {open && (
-        <div className={`fixed inset-0 ${stacked ? "z-[210]" : "z-[150]"}`}>
+        <div className="fixed inset-0" style={{ zIndex: index > 0 ? 200 + index * 10 : stacked ? 210 : 150 }}>
           {/* Backdrop */}
           {/* cursor-pointer: iOS Safari does not deliver a tap to a plain div
               unless it looks clickable. */}
           <motion.div
-            className="absolute inset-0 cursor-pointer bg-slate-950/50"
+            className={`absolute inset-0 cursor-pointer ${index > 0 ? "bg-slate-950/30" : "bg-slate-950/50"}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -154,10 +182,20 @@ export function TripSheet({ open, onClose, title, subtitle, onBack, footer, view
             onClick={requestClose}
           />
 
-          {/* Sheet. Dragged down by its handle (the pill and the header); a
-              long or quick pull closes it, a short one springs back. */}
+          {/* Slides up or down to leave the strip of the sheet above it showing, when there is one. */}
           <motion.div
-            className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[85vh] w-full flex-col overflow-hidden rounded-t-[20px] border-t-1.5 border-x-1.5 border-line bg-surface sm:max-w-xl sm:border-x-1.5"
+            className="absolute inset-x-0 bottom-0 mx-auto w-full sm:max-w-xl"
+            animate={{ y: shift }}
+            transition={{ type: "spring", damping: 32, stiffness: 320 }}
+            style={{ pointerEvents: covered ? "none" : undefined }}
+          >
+          {/* Sheet. Dragged down by its handle (the pill and the header); a
+              long or quick pull closes it, a short one springs back. A sheet on top of
+              others is shorter by one strip each, so theirs stay in view. */}
+          <motion.div
+            ref={sheetRef}
+            className="flex w-full flex-col overflow-hidden rounded-t-[20px] border-t-1.5 border-x-1.5 border-line bg-surface sm:border-x-1.5"
+            style={{ maxHeight: `calc(85vh - ${Math.max(index, 0) * PEEK_PX}px)` }}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -202,8 +240,9 @@ export function TripSheet({ open, onClose, title, subtitle, onBack, footer, view
               <button
                 type="button"
                 onClick={requestClose}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink ${covered ? "invisible" : ""}`}
                 aria-label="Sluiten"
+                tabIndex={covered ? -1 : undefined}
               >
                 <X size={16} />
               </button>
@@ -242,6 +281,7 @@ export function TripSheet({ open, onClose, title, subtitle, onBack, footer, view
                 {footer}
               </div>
             )}
+          </motion.div>
           </motion.div>
         </div>
       )}

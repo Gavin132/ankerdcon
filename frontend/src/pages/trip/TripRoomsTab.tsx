@@ -234,7 +234,7 @@ function BulkRoomModal({
   }
 
   return (
-    <TripSheet open={open} onClose={onClose} stacked title="Kamers in bulk toevoegen">
+    <TripSheet open={open} onClose={onClose} title="Kamers in bulk toevoegen">
       <form onSubmit={handleSubmit} className="space-y-4">
         <p className="text-sm text-ink-3">
           Bijv. 10 kamers voor 2 personen, 2 kamers voor 3 personen. Kamernummers vul je later in, als je inchecked.
