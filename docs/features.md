@@ -200,6 +200,16 @@ the form is open; saving waits until nothing is queued.
 - Anyone can add photos to a day, from the Hub, the trip ticket or the Foto's
   tile. Each is compressed in the browser (max 2560 px, JPEG 88 %), checked by the
   backend and stored in MinIO.
+- **Lighter copies, so it does not eat mobile data.** The original is up to 2560 px and easily a
+  megabyte; a grid of nine would be ten megabytes for pictures shown 100 px wide. When a photo is
+  uploaded the backend (`app/core/thumbnails.py`) also stores two WebP copies next to it: a **thumbnail**
+  (480 px) for grids, the story ring and profiles, and, for a photo bigger than about 1500 px, a **preview**
+  (1280 px) for the story viewer and the lightbox. A video's thumbnail is made from its still frame.
+  The **original is never touched**: Download, the day's zip and Delen still use the full file. Which file
+  goes where is decided in one place, `utils/storyMedia.ts` (`gridImage`, `fullImage`); photos added
+  before this existed have no copies and show the original until the backfill has made theirs. Deleting a
+  photo (yourself, or an admin on the CDN page) deletes its copies too, and the CDN page does not list them
+  as files of their own. Needs migration v2.41 (without it photos are still taken, just without copies).
 - **Several at once** (`hooks/useStoryPhotoPicker.ts`, shared by both entry points): up to
   30, uploaded one after the other, **oldest first by when they were taken**. The story shows
   upload order, so uploading in capture order is what sorts them. The date is the EXIF
@@ -333,6 +343,9 @@ by hand, by members or admins.
   trip, room. Others see a popup with a "Bekijk profiel" button
   (`components/common/UserProfilePopup.tsx`); it scrolls inside itself on small screens.
 - Renaming keeps history: old data stays under the old name, which becomes an alias.
+- **Profile pictures stay small.** A custom avatar is cropped to 384 px (was 512) before upload, and every
+  place that shows a Discord or Google picture asks for the size it needs (`avatarSrc()`, 64 to 256 px)
+  instead of the provider's full-size file: a screen can show dozens of avatars at 24 to 40 px.
 - **Profielfoto en banner**: a pencil badge on the avatar, and another on the banner itself
   (Profiel, own profile only; `prepareAvatarFile()` in `utils/imageCompression.ts` is the shared
   upload-prep logic) opens a picker — JPG/PNG/WebP (centre-cropped to a square client-side for
@@ -422,6 +435,12 @@ read-only account) or an admin switches **Alleen kijken** on a member under Gebr
 - They keep their own settings, notifications and feedback, and they appear in the crew list like anyone.
 
 ## Onboarding, settings and the changelog
+
+- **Put the app on the home screen.** On a phone that has not installed the app, the Hub shows a card "Zet
+  Ankerd Con op je beginscherm" and Instellingen has the same one: a one-tap *Installeren* where the browser
+  offers it (it is caught at start-up, `utils/install.ts`, because the browser fires the event once), the
+  Share-menu steps on iPhone, where it is also the only way to get push messages. "Sluiten" on the Hub card
+  hides it for 30 days. Not shown on a desktop, or once the app runs installed.
 
 - **Onboarding** (`pages/onboarding/`) runs on first login: a short dialogue with
   the mascot, profile, notifications and a feature tour. Admins can preview it.

@@ -85,6 +85,10 @@ Small **subtext under a title or on a card** (a hint, a status line, "Naar hotel
 plain Poppins in the text's own capitalisation: no `uppercase`, no letter-spacing. Reserve
 uppercase labels for `section-label` and chips.
 
+**Nothing the member has to read is smaller than 12px.** Use `text-xs` or `text-[12px]` as the floor for
+labels, chips, hints and the tab bar. Smaller is only for the initials and "+3" counters inside a small
+avatar circle, which are part of the picture. (Not enforced by a tool: check new `text-[…px]` classes.)
+
 Page head pattern (see `TripLayout`, `HubPage`):
 
 ```tsx
@@ -127,6 +131,30 @@ Page head pattern (see `TripLayout`, `HubPage`):
 - **Skeletons:** `bg-sunken animate-pulse`.
 - **Tables (admin):** header cells `font-mono text-[10.5px] uppercase tracking-[0.09em] text-ink-3 border-b-1.5 border-line`, cells `border-b border-line`, row hover `bg-sunken`, amounts right-aligned `font-mono tabular-nums`.
 - **Motion:** fades and height transitions are fine; no bouncy springs on content, no hover movement.
+
+## Touch (phones)
+
+- **A control is at least 44×44px to hit**, however small it looks. Add `hit-area` to a small icon button
+  (an `h-8 w-8` close or copy button): an invisible box grows its touch area to 44px without moving
+  anything. Not on a control with `overflow-hidden` (the box would be clipped). The class is in
+  `index.css`; adding it to many controls was done once with a script, so new ones need it by hand.
+- **Hover styles only apply where the device can hover** (`future.hoverOnlyWhenSupported` in
+  `tailwind.config.ts`), so a tap on a phone does not leave an element stuck in its hover state. Hand-written
+  `:hover` CSS goes inside `@media (hover: hover)` for the same reason.
+- **A press dims whatever is pressed** (`button`, `a[href]`, `role="button"`, 70% opacity, in
+  `index.css`), because on a touchscreen nothing hovers and a tap would otherwise show no feedback. It has
+  the lowest specificity: a component with its own pressed state (`active:scale-…`) wins.
+- **A text field is 16px or bigger** (`input-field` is `text-base`); below that iOS zooms the page in when
+  the field gets focus. Give fields the keyboard they need: `inputMode="decimal"` for amounts,
+  `"numeric"` for counts, `type="tel"` with `autoComplete="tel"`, `enterKeyHint="search"` on search boxes.
+- **Full-height screens use `min-h-dvh` / `h-dvh`**, not `min-h-screen` / `h-screen`: on iOS Safari `100vh`
+  is taller than what is visible and puts the bottom under the toolbar.
+- **Animations follow the device's "reduce motion" setting** (`MotionConfig reducedMotion="user"` in `App.tsx`:
+  transforms are skipped, fades stay). So **nothing the app depends on may be an animation**: a timer that
+  moves the story on, say, is driven by hand (see `StoryViewer.tsx`), or it would fire at once.
+- **Pictures are sized to where they are shown**: photos use their thumbnail in grids and the preview in the
+  viewer (`utils/storyMedia.ts`), profile pictures ask for their display size (`avatarSrc()` in
+  `utils/avatar.ts`), and below-the-fold images are `loading="lazy" decoding="async"`.
 
 ## Layout
 

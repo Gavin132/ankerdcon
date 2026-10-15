@@ -130,7 +130,7 @@ Best-effort throughout; neither resolving means no pin.
 | --- | --- | --- |
 | `GET /stories/summary?event_day_ids=a,b` | member | per day: photo count, newest photo, whether there is anything unseen |
 | `GET /stories/user/{id or name}` | member | every photo one member uploaded, with its event |
-| `GET /stories/{day}` | member | a day's photos in order |
+| `GET /stories/{day}` | member | a day's photos in order, each with `media_type` and, where they exist, `thumb_url` (grids), `preview_url` (the viewer, only for a big photo) and `poster_url` (a video's still frame); `image_url` is always the full original |
 | `GET /stories/{day}/download-all` | member | the day's photos as one zip, streamed while it is built (413 above 300 photos; a file MinIO can't read is skipped) |
 | `POST /stories/{day}` | member | upload a photo (multipart, field `file`, max 15 MB), or a video (`file` as MP4/MOV/WebM, max 80 MB, plus the still frame as field `poster`). Photos and videos come back with `media_type` (`image`/`video`, from the file name) and `poster_url` |
 | `GET /stories/{day}/seen`, `PUT /stories/{day}/seen` | member | your watch progress |

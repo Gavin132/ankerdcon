@@ -33,6 +33,9 @@ working from there.
 - **Short timeouts.** The backend gives MinIO 5 seconds to connect and 15 to answer, with
   one retry, and runs uploads in a worker thread. A wedged MinIO fails an upload in about
   half a minute instead of hanging the API (see [operations.md](operations.md#when-something-is-wrong)).
+- **A story photo is several files.** Next to `<uuid>.jpg` sit `<uuid>.thumb.webp`, and for big photos
+  `<uuid>.preview.webp`, and for a video `<uuid>.poster.jpg`. They are made and removed with the photo and
+  the admin CDN page does not list them. Do not delete them by hand: the app would show a broken image.
 - **One bucket.** Everything is in `story-photos`, one folder per kind (table above), so one
   policy covers all of it.
 

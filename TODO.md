@@ -18,6 +18,13 @@ the order they must be run, with the Supabase SQL editor; see
 [docs/deployment.md](docs/deployment.md#database-migrations) for how to check what has already
 been applied. (Migrations v2.19 (apart from its last line, below) and v2.25 up to v2.40 are done.)
 
+- [ ] Run `db/migrations/migration_v2.41_story_thumbnails.sql` (`story_photos.thumb_url`, `preview_url`), then make the
+      thumbnails of the photos already in stories: `cd backend && python -m scripts.backfill_story_previews`
+      (inside the backend container; add a number to try a few first). Until then grids load the full-size
+      photos, as before. Safe to run again.
+- [ ] Make the event covers that are already uploaded lighter (new ones are resized on upload): in `backend/`,
+      `python -m scripts.shrink_event_covers --dry-run` to see which, then without `--dry-run`; add
+      `--delete-old` to remove the big originals as well. Until then the Hub and agenda load them at full size.
 - [ ] Generate a VAPID key pair and set `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` on the
       backend and `VITE_VAPID_PUBLIC_KEY` on the frontend build — see docs/deployment.md#web-push. Until
       that is done, the "Pushmeldingen" toggle simply doesn't appear (harmless to leave for a while).

@@ -8,6 +8,48 @@ All notable changes to Ankerd Con are documented here.
 
 ---
 
+## [2.1.3] - 2026-10-15
+
+Photos and covers that load lighter, a phone pass (bigger touch areas, readable text, the right keyboards,
+press feedback), a card that helps put the app on the home screen, and a story timer that
+respects reduced motion. Needs migration v2.41 (see `TODO.md`) and, for what is already uploaded, two
+scripts (`scripts.backfill_story_previews`, `scripts.shrink_event_covers`).
+
+### Added
+
+- **"Zet Ankerd Con op je beginscherm."** On a phone, a card on the Hub (and a row in Instellingen) helps
+  install the app: one tap on Android, the two Share-menu steps on iPhone, where an installed app is also
+  what makes push messages possible. "Sluiten" hides it for 30 days.
+- **Swipe a message sideways to dismiss it.** The little messages ("Opgeslagen") can be swiped away, and a
+  screen reader reads them out.
+
+### Changed
+
+- **Easier to hit on a phone.** About 90 small buttons (close, copy, delete, switches) now have a touch
+  area of at least 44 px without looking any different. A tap on a phone no longer leaves a button looking
+  pressed (hover styles only apply where the device can hover), and whatever you press dims for a moment
+  so you can see it registered.
+- **Text is no longer tiny.** Labels, chips, hints and the tab bar were 9 to 11.5 px in about 150 places;
+  they are 12 px now. (The initials in a small avatar circle keep their size.)
+- **Lighter on mobile data.** Event covers are saved as at most 1600 px of WebP instead of the up to 10 MB
+  they came as; profile pictures ask Discord and Google for the size they are shown at instead of the
+  full-size file; and pictures lower on a page only load when you get there. Covers uploaded earlier shrink
+  with a script (see `TODO.md`).
+- **Fewer surprises with the keyboard.** Amount fields open a keypad with a decimal point, counts a plain
+  number pad, search boxes say "Zoek" on the Enter key, and the place fields of the quick ride and the
+  global search no longer make iPhones zoom in.
+- **Full-screen pages fit the visible screen on iPhone** (the meal and ride pages, the admin) instead of
+  running under Safari's toolbar.
+- **Animations follow "reduce motion".** If a phone is set to reduce motion, transitions are skipped. The
+  story timer, which used to be an animation, now runs on its own so it still moves on.
+- **Photos load much lighter.** Grids (profiles, the trip look-back, the story ring) used to load every
+  photo at full size, up to 2560 px and about a megabyte each, which adds up on mobile data. Each photo now
+  has a small thumbnail for grids and, when it is big, a 1280 px preview for the story viewer, made when it
+  is uploaded. Download, the day's zip and Delen still give the full original. Photos added before this show
+  the original until their copies have been made (see `TODO.md`). Needs migration v2.41.
+
+---
+
 ## [2.1.2] - 2026-10-15
 
 Videos in stories, read-only members (kijkers), what passengers owe the driver (ritkosten), calmer
