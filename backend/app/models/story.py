@@ -19,6 +19,10 @@ class StoryPhoto(BaseModel):
     uploaded_by: str
     image_url: str
     poster_url: Optional[str] = None
+    # Lighter copies for grids (thumb_url) and the story viewer (preview_url, only for a big photo);
+    # None for what was added before they existed. The original is `image_url`.
+    thumb_url: Optional[str] = None
+    preview_url: Optional[str] = None
     created_at: str
 
     @computed_field
@@ -48,6 +52,8 @@ class UserStoryPhoto(BaseModel):
     id: str
     image_url: str
     poster_url: Optional[str] = None
+    thumb_url: Optional[str] = None
+    preview_url: Optional[str] = None
     created_at: str
     event_day_id: str
     event_id: Optional[str] = None

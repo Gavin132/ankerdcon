@@ -305,6 +305,10 @@ export interface StoryPhoto {
   image_url: string;
   /** The still frame of a video; null for photos. */
   poster_url?: string | null;
+  /** A small copy for grids; null for what was added before they existed (use `image_url`). */
+  thumb_url?: string | null;
+  /** A 1280 px copy for the story viewer, only for a photo bigger than that (see `utils/storyMedia`). */
+  preview_url?: string | null;
   media_type: "image" | "video";
   created_at: string;
 }
@@ -314,6 +318,8 @@ export interface UserStoryPhoto {
   id: string;
   image_url: string;
   poster_url?: string | null;
+  thumb_url?: string | null;
+  preview_url?: string | null;
   media_type: "image" | "video";
   created_at: string;
   event_day_id: string;

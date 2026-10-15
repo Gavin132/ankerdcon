@@ -12,6 +12,7 @@ from app.constants import Tables
 from app.core import minio_client
 from app.core.database import supabase
 from app.core.logging import get_logger
+from app.core.thumbnails import POSTER_SUFFIX, PREVIEW_SUFFIX, THUMB_SUFFIX, derivative_urls, make_derivatives
 from app.core.uploads import clean_image, read_capped, sniff_video
 from app.core.zip_stream import stream_zip
 from app.dependencies import get_current_user
@@ -105,7 +106,8 @@ def get_story_summary(
             photo_count=len(day_photos),
             latest_seq=newest["seq"],
             has_unseen=newest["seq"] > last_seen,
-            preview_url=newest.get("poster_url") or newest["image_url"],
+            # Shown small (the ring, a trip's cover): the thumbnail, never the full-size photo.
+            preview_url=newest.get("thumb_url") or newest.get("poster_url") or newest["image_url"],
         )
     return result
 
@@ -166,7 +168,8 @@ def list_user_photos(identifier: str, _: str = Depends(get_current_user)):
         day = day_by_id.get(p["event_day_id"], {})
         event_id = day.get("event_id")
         out.append(UserStoryPhoto(
-            id=p["id"], image_url=p["image_url"], poster_url=p.get("poster_url"), created_at=p["created_at"],
+            id=p["id"], image_url=p["image_url"], poster_url=p.get("poster_url"), thumb_url=p.get("thumb_url"),
+            preview_url=p.get("preview_url"), created_at=p["created_at"],
             event_day_id=p["event_day_id"],
             event_id=event_id, event_name=name_by_event.get(event_id), date=day.get("date"),
         ))
@@ -195,10 +198,20 @@ def _key_of(url: str) -> str:
     return url.split(f"/{get_settings().minio_bucket}/", 1)[-1]
 
 
+def _discard(keys: list[str]) -> None:
+    """Best-effort removal of files stored for an upload that did not complete."""
+    for k in keys:
+        try:
+            minio_client.delete_object(k)
+        except Exception:
+            pass
+
+
 def _store_story_photo(
     event_day_id: str, current_user: str, content: bytes, poster: bytes | None = None,
 ) -> dict:
-    """A photo, or (with `poster`) a video: both end up as one `story_photos` row."""
+    """A photo, or (with `poster`) a video: both end up as one `story_photos` row, with the lighter
+    copies (thumbnail, and for a big photo a preview) that grids and the viewer show instead of the original."""
     if poster is not None:
         video = sniff_video(content)
         if video is None:
@@ -208,8 +221,10 @@ def _store_story_photo(
             )
         content_type, ext = video
         poster, poster_type, _ = clean_image(poster, {"JPEG", "WEBP", "PNG"})
+        thumb, preview = make_derivatives(poster, preview=False)
     else:
         content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP"})
+        thumb, preview = make_derivatives(content)
 
     # Nest under the parent event too (not just the day) so MinIO's own
     # browser groups a multi-day con's photos together instead of scattering
@@ -230,41 +245,65 @@ def _store_story_photo(
 
     base = f"{event_id}/{event_day_id}/{uuid.uuid4().hex}"
     key = f"{base}.{ext}"
-    poster_key = f"{base}.poster.jpg" if poster is not None else None
+    # key -> bytes, content type of everything stored for this item besides the file itself.
+    extras = {f"{base}{THUMB_SUFFIX}": (thumb, "image/webp")}
+    if preview is not None:
+        extras[f"{base}{PREVIEW_SUFFIX}"] = (preview, "image/webp")
+    if poster is not None:
+        extras[f"{base}{POSTER_SUFFIX}"] = (poster, poster_type)
 
-    poster_url = None
+    stored: list[str] = []
     try:
         image_url = minio_client.upload_bytes(key, content, content_type)
-        if poster_key is not None:
-            poster_url = minio_client.upload_bytes(poster_key, poster, poster_type)
+        stored.append(key)
+        urls = {}
+        for extra_key, (data, ctype) in extras.items():
+            urls[extra_key] = minio_client.upload_bytes(extra_key, data, ctype)
+            stored.append(extra_key)
     except RuntimeError as e:
         # MinIO not configured yet — a clear message instead of a generic 503.
         logger.error("Story photo upload failed (MinIO not configured): %s", e)
+        _discard(stored)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
     except Exception as e:
         logger.error("MinIO upload failed for day %s: %s", event_day_id, e)
+        _discard(stored)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Uploaden mislukt. Probeer het opnieuw.",
         )
 
-    row = {"event_day_id": event_day_id, "uploaded_by": current_user, "image_url": image_url}
-    if poster_url:
-        # Only a video has one, so photos keep working on a database without the column (v2.40).
-        row["poster_url"] = poster_url
+    base_row = {"event_day_id": event_day_id, "uploaded_by": current_user, "image_url": image_url}
+    derived = {
+        "poster_url": urls.get(f"{base}{POSTER_SUFFIX}"),
+        "thumb_url": urls.get(f"{base}{THUMB_SUFFIX}"),
+        "preview_url": urls.get(f"{base}{PREVIEW_SUFFIX}"),
+    }
+    row = {**base_row, **{c: v for c, v in derived.items() if v}}
     try:
-        resp = supabase.table(Tables.STORY_PHOTOS).insert(row).execute()
+        try:
+            resp = supabase.table(Tables.STORY_PHOTOS).insert(row).execute()
+        except Exception as first:
+            # A database that has not had migration v2.41 yet has no thumb_url / preview_url: keep taking
+            # photos without the lighter copies rather than refusing every upload until it has run.
+            lean = {c: v for c, v in row.items() if c not in ("thumb_url", "preview_url")}
+            if lean == row:
+                raise
+            logger.warning("Saving the story photo without thumbnails (migration v2.41 not run?): %s", first)
+            resp = supabase.table(Tables.STORY_PHOTOS).insert(lean).execute()
+            for extra_key in (f"{base}{THUMB_SUFFIX}", f"{base}{PREVIEW_SUFFIX}"):
+                if extra_key in stored:
+                    stored.remove(extra_key)
+                    try:
+                        minio_client.delete_object(extra_key)
+                    except Exception:
+                        pass
         return resp.data[0]
     except Exception as e:
         logger.error("Failed to save story photo row for day %s: %s", event_day_id, e)
-        # The file is already in MinIO at this point but the DB insert failed —
-        # best-effort cleanup so it isn't orphaned.
-        for orphan in (key, poster_key):
-            if orphan:
-                try:
-                    minio_client.delete_object(orphan)
-                except Exception:
-                    pass
+        # The files are already in MinIO at this point but the DB insert failed —
+        # best-effort cleanup so they are not orphaned.
+        _discard(stored)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
@@ -317,9 +356,7 @@ def delete_story_photo(photo_id: str, current_user: str = Depends(get_current_us
     # Best-effort storage cleanup — derive the object key from the stored URL's
     # path (everything after the bucket name), same non-fatal pattern as the
     # banner upload's old-file cleanup.
-    for url in (row.data[0]["image_url"], row.data[0].get("poster_url")):
-        if not url:
-            continue
+    for url in (row.data[0]["image_url"], *derivative_urls(row.data[0])):
         try:
             minio_client.delete_object(_key_of(url))
         except Exception:

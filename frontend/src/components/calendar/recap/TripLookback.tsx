@@ -6,6 +6,7 @@ import { UserAvatar } from "../../common/UserAvatar";
 import { StoryViewer } from "../../story/StoryViewer";
 import { TripPlanList } from "./TripPlanList";
 import { getStoryPhotos } from "../../../services/stories.service";
+import { gridImage } from "../../../utils/storyMedia";
 import { QUERY_KEYS, STALE_TIME } from "../../../constants";
 import { daysBetween, toDateKey, todayKey } from "../../../utils/date";
 import { dayShort, monthShort } from "../../../utils/multiDay";
@@ -195,7 +196,7 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
                         aria-label={`Foto ${i + 1} van ${shownTotal}`}
                         className="group relative aspect-square overflow-hidden rounded-lg bg-sunken"
                       >
-                        <img src={photo.media_type === "video" ? (photo.poster_url ?? "") : photo.image_url} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.04]" />
+                        <img src={gridImage(photo)} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.04]" />
                         {photo.media_type === "video" && (
                           <span className="pointer-events-none absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#0F1519]/65 text-white">
                             <Play size={10} fill="currentColor" />

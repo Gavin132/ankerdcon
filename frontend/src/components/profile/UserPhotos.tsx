@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Images, Play, X } from "lucide-react";
 import { useUserPhotos } from "../../hooks/useStories";
 import { formatDate } from "../../utils/format";
+import { fullImage, gridImage } from "../../utils/storyMedia";
 import type { UserStoryPhoto } from "../../types";
 
 const ALL = "all";
@@ -82,7 +83,7 @@ export function UserPhotos({ identifier, whose }: { identifier: string; whose?: 
                   className="group relative aspect-square overflow-hidden rounded-lg bg-sunken"
                 >
                   <img
-                    src={p.media_type === "video" ? (p.poster_url ?? "") : p.image_url}
+                    src={gridImage(p)}
                     alt=""
                     loading="lazy"
                     decoding="async"
@@ -173,7 +174,7 @@ function Lightbox({
             onClick={(e) => e.stopPropagation()}
           />
         ) : (
-          <img src={photo.image_url} alt="" className="max-h-full max-w-full object-contain" onClick={(e) => e.stopPropagation()} />
+          <img src={fullImage(photo)} alt="" className="max-h-full max-w-full object-contain" onClick={(e) => e.stopPropagation()} />
         )}
         {onPrev && (
           <button type="button" aria-label="Vorige" className={`${arrow} left-3`} onClick={(e) => { e.stopPropagation(); onPrev(); }}>

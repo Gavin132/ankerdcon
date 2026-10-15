@@ -15,7 +15,8 @@ from app.constants import Tables
 from app.core import minio_client
 from app.core.logging import get_logger
 from app.core.meal_categories import default_category_id, list_meals_with_category, require_category
-from app.core.uploads import clean_image, read_capped, sniff_video
+from app.core.thumbnails import derivative_urls, is_derivative
+from app.core.uploads import clean_image, read_capped, shrink_image, sniff_video
 from app.core.zip_stream import stream_zip
 from app.dependencies import _unique_profile_name, forget_viewer, get_admin_user
 from app.models.meal_category import CreateMealCategoryRequest, MealCategory, UpdateMealCategoryRequest
@@ -1505,6 +1506,9 @@ def _cdn_objects(kind: Optional[str], event: Optional[str]) -> tuple[list[dict],
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="De bucket kon niet worden uitgelezen. Controleer of MinIO bereikbaar is en de sleutel mag lijsten.",
         )
+    # A story photo's thumbnail, preview and video poster belong to it: they are made and removed with it,
+    # so they are not listed (or zipped, or counted) as files of their own.
+    objects = [o for o in objects if not is_derivative(o["key"])]
     for o in objects:
         o["kind"] = _cdn_kind(o["key"])
     return objects, capped
@@ -1587,7 +1591,7 @@ def admin_download_cdn(
     )
 
 
-def _forget_file(key: str, url: str) -> None:
+def _forget_file(key: str, url: str) -> list[str]:
     """Take every reference to a file out of the database before it is deleted,
     so nothing is left pointing at an image that is gone. A badge cannot do
     without its image, so a file a badge still uses is refused instead."""
@@ -1597,6 +1601,12 @@ def _forget_file(key: str, url: str) -> None:
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Deze afbeelding is het plaatje van de badge \"{badge[0]['name']}\". Vervang eerst de afbeelding van de badge.",
         )
+    # The lighter copies of a story photo go with it (read before its row is deleted).
+    derived = [
+        _key_of_url(u)
+        for row in supabase.table(Tables.STORY_PHOTOS).select("*").eq("image_url", url).execute().data or []
+        for u in derivative_urls(row)
+    ]
     supabase.table(Tables.STORY_PHOTOS).delete().eq("image_url", url).execute()
     supabase.table(Tables.EVENTS).update({"image_url": None}).eq("image_url", url).execute()
     supabase.table(Tables.PROFILES).update({"banner_url": None, "banner_position": None}).eq("banner_url", url).execute()
@@ -1604,6 +1614,11 @@ def _forget_file(key: str, url: str) -> None:
     for row in supabase.table(Tables.COSPLAYS).select("id, inspo_images").overlaps("inspo_images", [url]).execute().data or []:
         kept = [u for u in (row.get("inspo_images") or []) if u != url]
         supabase.table(Tables.COSPLAYS).update({"inspo_images": kept}).eq("id", row["id"]).execute()
+    return derived
+
+
+def _key_of_url(url: str) -> str:
+    return url.split(f"/{get_settings().minio_bucket}/", 1)[-1]
 
 
 @router.delete(AdminRoutes.CDN, status_code=status.HTTP_204_NO_CONTENT)
@@ -1621,7 +1636,7 @@ def admin_delete_cdn_file(
         logger.error("CDN delete: MinIO not configured: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Opslag is niet ingesteld.")
     try:
-        _forget_file(key, url)
+        derived = _forget_file(key, url)
     except HTTPException:
         raise
     except Exception as e:
@@ -1632,4 +1647,9 @@ def admin_delete_cdn_file(
     except Exception as e:
         logger.error("CDN delete of %s failed: %s", key, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Verwijderen mislukt. Probeer het opnieuw.")
+    for extra in derived:
+        try:
+            minio_client.delete_object(extra)
+        except Exception:
+            pass
     logger.warning("CDN: admin %s deleted %s", admin, key)

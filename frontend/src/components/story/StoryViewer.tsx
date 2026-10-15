@@ -7,6 +7,7 @@ import { useCurrentUser } from "../../hooks/useUsers";
 import { downloadAllStoryPhotos, downloadStoryPhoto } from "../../services/stories.service";
 import { toast } from "../../store/toast.store";
 import { UserAvatar } from "../common/UserAvatar";
+import { fullImage } from "../../utils/storyMedia";
 import type { StoryPhoto } from "../../types";
 
 const SLIDE_DURATION_MS = 5000;
@@ -88,7 +89,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
   useEffect(() => {
     if (!open) return;
     for (const p of [photos[index + 1], photos[index + 2]]) {
-      if (p) new Image().src = p.media_type === "video" ? (p.poster_url ?? "") : p.image_url;
+      if (p) new Image().src = p.media_type === "video" ? (p.poster_url ?? "") : fullImage(p);
     }
   }, [open, index, photos]);
 
@@ -378,7 +379,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
             ) : (
               <img
                 key={current.id}
-                src={current.image_url}
+                src={fullImage(current)}
                 alt=""
                 draggable={false}
                 className="absolute inset-0 h-full w-full select-none object-contain"
