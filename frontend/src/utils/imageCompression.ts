@@ -66,7 +66,7 @@ export async function prepareAvatarFile(file: File): Promise<Blob | File> {
  * so an arbitrary rectangle would just be cropped unpredictably by the
  * browser anyway) and resizes it down to `size`, never up. No manual crop
  * step — same "just handle it" approach as the story/cosplay upload. */
-export function cropSquareAndCompress(file: File, size = 512, quality = 0.88): Promise<Blob> {
+export function cropSquareAndCompress(file: File, size = 384, quality = 0.85): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file);
     const img = new Image();

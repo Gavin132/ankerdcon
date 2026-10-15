@@ -41,7 +41,7 @@ import {
 import { BannerCropModal } from "../components/profile/BannerCropModal";
 import { BadgeIcon } from "../components/common/BadgeIcon";
 import { useAuthStore } from "../store/auth.store";
-import { avatarColor } from "../utils/avatar";
+import { avatarColor, avatarSrc } from "../utils/avatar";
 import { prepareAvatarFile } from "../utils/imageCompression";
 import { toast } from "../store/toast.store";
 import { validateDisplayName, validatePhoneNumber } from "../utils/validation";
@@ -339,7 +339,7 @@ function ProfileHead({
             >
               {hasAvatar ? (
                 <img
-                  src={user.avatar_url}
+                  src={avatarSrc(user.avatar_url!, 112)}
                   alt={user.name}
                   className="h-full w-full object-cover"
                   onError={onAvatarError}

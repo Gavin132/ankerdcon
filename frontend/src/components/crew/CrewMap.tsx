@@ -5,7 +5,7 @@ import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import { Link } from "react-router-dom";
 import { ExternalLink } from "lucide-react";
 import { useThemeStore } from "../../store/theme.store";
-import { avatarColor, personInitial } from "../../utils/avatar";
+import { avatarColor, avatarSrc, personInitial } from "../../utils/avatar";
 import { parsePing, pingAgo, pingMapUrl } from "../../utils/locationPing";
 import { tripMeals, type Trip } from "../../utils/trips";
 import { useParkingSpots } from "../../hooks/useParking";
@@ -46,7 +46,7 @@ function avatarDisc(user: User, offset: number, z: number): string {
   const custom = user.color?.startsWith("#");
   const initial = `<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 15px/1 Poppins,system-ui,sans-serif;color:#fff">${escapeHtml(personInitial(user.name))}</span>`;
   const photo = user.avatar_url
-    ? `<img src="${escapeHtml(user.avatar_url)}" alt="${name}" onerror="this.style.display='none'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />`
+    ? `<img src="${escapeHtml(avatarSrc(user.avatar_url, 40))}" loading="lazy" decoding="async" alt="${name}" onerror="this.style.display='none'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />`
     : "";
   const bg = custom ? `background:${escapeHtml(user.color)};` : "";
   return `<div class="${custom ? "" : avatarColor(user.name)}" style="${bg}position:absolute;left:${offset}px;top:0;z-index:${z};width:40px;height:40px;border-radius:9999px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);overflow:hidden">${initial}${photo}</div>`;

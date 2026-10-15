@@ -37,7 +37,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
         className="relative h-32 bg-[#0F1519]"
         style={cover ? undefined : { backgroundImage: "radial-gradient(circle, rgb(var(--cyan) / .45) 1.4px, transparent 1.8px)", backgroundSize: "12px 12px" }}
       >
-        {cover && <img src={cover} alt="" className="h-full w-full object-cover" />}
+        {cover && <img src={cover} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />}
         <button
           type="button"
           onClick={onClose}

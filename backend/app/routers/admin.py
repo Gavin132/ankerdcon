@@ -1346,8 +1346,17 @@ def admin_delete_changelog_entry(entry_id: str, _: str = Depends(get_admin_user)
 
 # ── Image uploads ──────────────────────────────────────────────────────────────
 
+# An event cover is shown across a phone screen on the Hub, the agenda and the recap, and is usually
+# straight from a camera: stored at up to 1600 px of WebP, not as the 10 MB it came as.
+_COVER_MAX_SIDE = 1600
+
+
 def _store_admin_image(kind: str, folder: str, content: bytes) -> dict:
     content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP"})
+    if kind == "event-cover":
+        shrunk = shrink_image(content, max_side=_COVER_MAX_SIDE)
+        if shrunk:
+            content, content_type, ext = shrunk
     key = f"{folder}/{uuid.uuid4().hex}.{ext}"
     try:
         return {"url": minio_client.upload_bytes(key, content, content_type)}

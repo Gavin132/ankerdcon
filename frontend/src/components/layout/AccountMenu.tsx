@@ -7,7 +7,7 @@ import { useAuthStore } from "../../store/auth.store";
 import { useUser } from "../../hooks/useUsers";
 import { useBadges } from "../../hooks/useBadges";
 import { BadgeIcon } from "../common/BadgeIcon";
-import { avatarColor } from "../../utils/avatar";
+import { avatarColor, avatarSrc } from "../../utils/avatar";
 import { logout } from "../../services/auth.service";
 
 interface AccountMenuProps {
@@ -82,7 +82,7 @@ export function AccountMenu({ variant = "avatar" }: AccountMenuProps) {
         style={useInlineColor && !showDiscordAvatar ? { backgroundColor: me.color, backgroundImage: "none" } : undefined}
       >
         {showDiscordAvatar ? (
-          <img src={me.avatar_url} alt="" className="h-full w-full object-cover" onError={() => setAvatarImgError(true)} />
+          <img src={avatarSrc(me.avatar_url!, 40)} alt="" decoding="async" className="h-full w-full object-cover" onError={() => setAvatarImgError(true)} />
         ) : displayInitial}
       </span>
     );

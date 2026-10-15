@@ -91,7 +91,7 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
       {/* ── Cover with stamp ── */}
       <div className="relative h-32 bg-[#0F1519]">
         {cover && (
-          <img src={cover} alt="" className={`h-full w-full object-cover ${went ? "" : "opacity-60 grayscale"}`} />
+          <img src={cover} alt="" loading="lazy" decoding="async" className={`h-full w-full object-cover ${went ? "" : "opacity-60 grayscale"}`} />
         )}
         <button
           type="button"

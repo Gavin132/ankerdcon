@@ -70,7 +70,7 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
         className="relative block h-40 overflow-hidden bg-[#0F1519] sm:h-52 md:h-auto md:min-h-[300px]"
       >
         {image ? (
-          <img src={image} alt="" draggable={false} className="absolute inset-0 h-full w-full object-cover" />
+          <img src={image} alt="" draggable={false} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
         ) : (
           <span
             className="absolute inset-0 flex flex-col justify-end gap-1 p-4 text-[#E6F0F3]"

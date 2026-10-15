@@ -105,6 +105,31 @@ def clean_image(content: bytes, allowed: set[str]) -> tuple[bytes, str, str]:
     return out.getvalue(), content_type, ext
 
 
+def shrink_image(
+    content: bytes, *, max_side: int, keep_under: int = 400 * 1024, quality: int = 82,
+) -> tuple[bytes, str, str] | None:
+    """A lighter copy of a still image that was already checked by `clean_image`, or None when it is
+    light enough as it is (no longer than `max_side` and under `keep_under` bytes).
+
+    For pictures shown across a phone screen but uploaded straight from a camera or a design tool: a
+    10 MB cover becomes a few hundred kB of WebP. Returns (bytes, content type, extension)."""
+    img = Image.open(BytesIO(content))
+    longest = max(img.size)
+    if longest <= max_side and len(content) <= keep_under:
+        return None
+    img = ImageOps.exif_transpose(img)
+    if max(img.size) > max_side:
+        img.thumbnail((max_side, max_side), Image.LANCZOS)
+    if img.mode not in ("RGB", "RGBA", "L"):
+        img = img.convert("RGBA" if "A" in img.getbands() or "transparency" in img.info else "RGB")
+    out = BytesIO()
+    img.save(out, "WEBP", quality=quality, method=4)
+    smaller = out.getvalue()
+    if longest <= max_side and len(smaller) >= len(content):
+        return None  # already compact: re-encoding would only lose quality
+    return smaller, "image/webp", "webp"
+
+
 # ── Video ────────────────────────────────────────────────────────────────────
 # Videos are stored as they come (re-encoding is far too heavy here), so the
 # only defence is to check what the bytes really are: an MP4/MOV starts with an

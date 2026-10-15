@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../../config/routes";
 import { Phone, MapPin, Pencil, CalendarDays, User as UserIcon, BedDouble } from "lucide-react";
-import { avatarColor } from "../../utils/avatar";
+import { avatarColor, avatarSrc } from "../../utils/avatar";
 import { LocationPingDisplay } from "./LocationPingDisplay";
 import { isPingFresh } from "../../utils/locationPing";
 import { useCurrentTripRoomNumbers } from "../../hooks/useTripRooms";
@@ -174,7 +174,7 @@ export function UserProfilePopup({
                     >
                       {hasAvatar ? (
                         <img
-                          src={u!.avatar_url}
+                          src={avatarSrc(u!.avatar_url!, 96)}
                           alt={u!.name}
                           className="h-full w-full object-cover"
                           onError={() => setImgErr(true)}

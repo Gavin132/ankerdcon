@@ -111,7 +111,7 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
               </span>
               {thumb && (
                 <span className={`mt-2.5 block h-11 overflow-hidden rounded-md bg-[#0F1519] ${went ? "" : "opacity-50 grayscale"}`}>
-                  <img src={thumb} alt="" className="h-full w-full object-cover" />
+                  <img src={thumb} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                 </span>
               )}
               <span className={`mt-2 font-display text-[20px] font-extrabold uppercase leading-[0.95] [text-wrap:balance] ${went ? "text-ink" : "text-ink-3"}`}>

@@ -115,7 +115,7 @@ export function UpcomingEventCard({
           aria-label={`Open ${title}`}
         >
           {coverImage ? (
-            <img src={coverImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" />
+            <img src={coverImage} alt="" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-70" />
           ) : (
             <span
               aria-hidden

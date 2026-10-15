@@ -85,7 +85,7 @@ export function TicketStack({ trips, meals, users, myNames, justJoinedId, onJoin
     const img = tripImage(t);
     return (
       <>
-        {img && <img src={img} alt="" className="h-3.5 w-5 rounded-sm object-cover" />}
+        {img && <img src={img} alt="" loading="lazy" decoding="async" className="h-3.5 w-5 rounded-sm object-cover" />}
         <span className="truncate">{getGroupTitle(t.days)} · {t.dateRange}</span>
       </>
     );
