@@ -12,6 +12,7 @@ import { ImpersonationBanner } from "./components/common/ImpersonationBanner";
 import { OfflineBanner } from "./components/common/OfflineBanner";
 import { ViewerBanner } from "./components/common/ViewerBanner";
 import { ConfirmHost } from "./components/common/ConfirmHost";
+import { captureInstallPrompt } from "./utils/install";
 import { UpdateBanner } from "./components/layout/UpdateBanner";
 import { useThemeStore } from "./store/theme.store";
 import { useSplash } from "./hooks/useSplash";
@@ -24,6 +25,9 @@ import { ApiError } from "./lib/api/client";
 import { linkDiscordAccount } from "./services/users.service";
 import { QUERY_KEYS } from "./constants";
 import { toast } from "./store/toast.store";
+
+// The browser offers to install the app through an event that fires once, early: catch it before anything renders.
+captureInstallPrompt();
 
 const queryClient = new QueryClient({
   defaultOptions: {

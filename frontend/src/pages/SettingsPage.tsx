@@ -25,6 +25,7 @@ import { startDiscordLink } from "../services/auth.service";
 import { routes } from "../config/routes";
 import { listContainer, listItem } from "../utils/motion";
 import { toast } from "../store/toast.store";
+import { InstallHint, useInstallKind } from "../components/common/InstallHint";
 
 const ROW =
   "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-sunken active:bg-sunken";
@@ -67,6 +68,7 @@ export function SettingsPage() {
   const [linkingDiscord, setLinkingDiscord] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const { data: me } = useCurrentUser();
+  const installKind = useInstallKind();
   const updatePreferences = useUpdatePreferences();
   const isDark = useThemeStore((s) => s.isDark);
   const toggleTheme = useThemeStore((s) => s.toggle);
@@ -132,6 +134,13 @@ export function SettingsPage() {
             )}
           </div>
         </motion.section>
+
+        {/* App installeren: only on a phone that has not done so yet */}
+        {installKind && (
+          <motion.div variants={listItem}>
+            <InstallHint kind={installKind} />
+          </motion.div>
+        )}
 
         {/* Weergave */}
         <motion.section variants={listItem} className={PANEL}>

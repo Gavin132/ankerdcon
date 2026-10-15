@@ -27,7 +27,7 @@ export function isStandalone(): boolean {
   );
 }
 
-function isIOS(): boolean {
+export function isIOS(): boolean {
   return typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent) && !("MSStream" in window);
 }
 

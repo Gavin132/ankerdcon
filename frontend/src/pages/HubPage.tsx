@@ -17,6 +17,7 @@ import { groupCalendarEntries, dayShort } from "../utils/multiDay";
 import { UpcomingEventsCarousel } from "../components/hub/UpcomingEventsCarousel";
 import { QuickRideTiles } from "../components/hub/QuickRideTiles";
 import { useIsViewer } from "../hooks/useIsViewer";
+import { InstallHint, useShowInstallHint } from "../components/common/InstallHint";
 import { MealTodayCard } from "../components/hub/MealTodayCard";
 import { TicketShortcutCard } from "../components/hub/TicketShortcutCard";
 import { LocationPingModal } from "../components/hub/LocationPingModal";
@@ -39,6 +40,7 @@ const MONTHS_NL = ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","
 export function HubPage() {
   const navigate = useNavigate();
   const viewer = useIsViewer();
+  const installHint = useShowInstallHint();
   const currentUser = useAuthStore((s) => s.currentUser);
   const [popupUser, setPopupUser] = useState<User | null>(null);
   const [popupAnchorRect, setPopupAnchorRect] = useState<AnchorRect>({ top: 0, left: 0, right: 0, height: 0 });
@@ -183,6 +185,13 @@ export function HubPage() {
               );
             })}
           </div>
+        </motion.div>
+      )}
+
+      {/* ── Put the app on the home screen (phones, not when installed, not for 30 days after "Sluiten") ── */}
+      {installHint.visible && installHint.kind && (
+        <motion.div variants={listItem}>
+          <InstallHint kind={installHint.kind} onDismiss={installHint.dismiss} />
         </motion.div>
       )}
 
