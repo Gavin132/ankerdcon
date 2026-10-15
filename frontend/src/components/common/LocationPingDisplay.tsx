@@ -21,7 +21,7 @@ export function LocationPingDisplay({ raw, align = "end" }: Props) {
         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400 animate-pulse" />
         {label}
       </span>
-      <span className="flex items-center gap-1.5 whitespace-nowrap font-mono text-[11px] text-ink-3">
+      <span className="flex items-center gap-1.5 whitespace-nowrap font-mono text-[12px] text-ink-3">
         {meta}
         {hasPin && (
           <a

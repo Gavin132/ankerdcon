@@ -163,7 +163,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName }: ForYouPa
       <div className="flex items-center gap-2 px-4 pt-4 pb-2">
         <p id="for-you-title" className="section-label">Voor jou</p>
         {items.length > 0 && (
-          <span className="rounded-full bg-rose-600 px-2 font-mono text-[11px] font-semibold leading-[18px] text-white tabular-nums dark:bg-rose-500">
+          <span className="rounded-full bg-rose-600 px-2 font-mono text-[12px] font-semibold leading-[18px] text-white tabular-nums dark:bg-rose-500">
             {items.length}
           </span>
         )}
@@ -188,7 +188,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName }: ForYouPa
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[13px] font-semibold leading-snug text-ink">{item.title}</span>
-                  <span className="block truncate text-[11px] text-ink-3">{item.where}</span>
+                  <span className="block truncate text-[12px] text-ink-3">{item.where}</span>
                 </span>
                 <ChevronRight size={14} className="shrink-0 text-ink-3" />
               </button>

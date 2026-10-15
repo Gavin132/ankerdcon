@@ -329,7 +329,7 @@ export function UserProfilePopup({
                                 <p className="truncate text-[12px] font-semibold leading-tight text-ink">
                                   {name}
                                 </p>
-                                <p className="mt-0.5 font-mono text-[10px] leading-none text-ink-3">
+                                <p className="mt-0.5 font-mono text-[12px] leading-none text-ink-3">
                                   {dateLabel}
                                 </p>
                               </div>
@@ -337,7 +337,7 @@ export function UserProfilePopup({
                           );
                         })}
                         {hiddenCount > 0 && (
-                          <p className="pt-0.5 text-center text-[11px] text-ink-3">
+                          <p className="pt-0.5 text-center text-[12px] text-ink-3">
                             +{hiddenCount} meer evenement
                             {hiddenCount > 1 ? "en" : ""}
                           </p>

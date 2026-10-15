@@ -44,6 +44,9 @@ const blue = {
 const token = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
 
 const config: Config = {
+  // `hover:` styles apply only on devices that can hover. Without it a tap on a phone leaves the
+  // hover state stuck on the element until the next tap elsewhere.
+  future: { hoverOnlyWhenSupported: true },
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   darkMode: "class",
   theme: {

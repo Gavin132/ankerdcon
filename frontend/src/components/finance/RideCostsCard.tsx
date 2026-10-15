@@ -12,7 +12,7 @@ import { getNow } from "../../store/time.store";
 /** A trip stays on this card for this long after its last day. */
 const SHOW_DAYS_AFTER = 90;
 
-const PILL = "shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[11.5px] font-semibold";
+const PILL = "shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[12px] font-semibold";
 
 /**
  * Ritkosten on the Financiën page: for each recent trip, what passengers owe you for driving
@@ -95,7 +95,7 @@ export function RideCostsCard({ tripFilter }: { tripFilter: string | null }) {
               <>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[13.5px] font-semibold text-ink">{row.title}</span>
-                  <span className="block truncate text-[11.5px] text-ink-3">{row.sub}</span>
+                  <span className="block truncate text-[12px] text-ink-3">{row.sub}</span>
                 </span>
                 {row.amount !== null && (
                   <span className="shrink-0 font-mono text-[13.5px] font-semibold tabular-nums text-ink">{formatAmount(row.amount)}</span>
@@ -121,7 +121,7 @@ export function RideCostsCard({ tripFilter }: { tripFilter: string | null }) {
             );
           })}
         </ul>
-        <p className="border-t border-line bg-sunken px-4 py-2.5 text-[11.5px] leading-snug text-ink-3">
+        <p className="border-t border-line bg-sunken px-4 py-2.5 text-[12px] leading-snug text-ink-3">
           Een overzicht van wat het rijden kost, niet iets wat hier betaald wordt. Reken het af met een Tikkie.
         </p>
       </motion.section>

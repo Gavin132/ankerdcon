@@ -70,7 +70,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
         {onClose && (
           <button
             onClick={onClose}
-            className="ml-auto flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+            className="hit-area ml-auto flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
           >
             <Menu size={16} />
           </button>
@@ -224,7 +224,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
             <button
               title="Uitloggen"
               onClick={handleLogout}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-rose-600 dark:hover:text-rose-400"
+              className="hit-area flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-rose-600 dark:hover:text-rose-400"
             >
               <LogOut size={14} />
             </button>
@@ -243,7 +243,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
             <button
               title="Uitloggen"
               onClick={handleLogout}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-rose-600 dark:hover:text-rose-400"
+              className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-rose-600 dark:hover:text-rose-400"
             >
               <LogOut size={14} />
             </button>

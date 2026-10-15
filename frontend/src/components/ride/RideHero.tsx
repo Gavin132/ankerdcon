@@ -13,7 +13,7 @@ const CLOSED_RECT: AnchorRect = { top: 0, left: 0, right: 0, height: 0 };
 
 /** White-ish mono chip on the ink hero. */
 const CHIP =
-  "inline-flex items-center gap-1.5 rounded-md border border-white/25 bg-white/10 px-2 py-[3px] font-mono text-[10.5px] font-semibold uppercase tracking-[0.05em] text-[#E6F0F3]";
+  "inline-flex items-center gap-1.5 rounded-md border border-white/25 bg-white/10 px-2 py-[3px] font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-[#E6F0F3]";
 
 interface RideHeroProps {
   ride: Ride;
@@ -104,7 +104,7 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
             <span
               className={
                 ride.is_full
-                  ? "inline-flex items-center gap-1.5 rounded-md border border-rose-300/40 bg-rose-500/20 px-2 py-[3px] font-mono text-[10.5px] font-semibold uppercase tracking-[0.05em] text-rose-200"
+                  ? "inline-flex items-center gap-1.5 rounded-md border border-rose-300/40 bg-rose-500/20 px-2 py-[3px] font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-rose-200"
                   : CHIP
               }
             >
@@ -120,14 +120,14 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
         <div className="grid grid-cols-[12px_minmax(0,1fr)] gap-x-3">
           <i aria-hidden className="mt-[5px] block h-[11px] w-[11px] rounded-full border-2 border-[#E6F0F3]" />
           <div className="min-w-0">
-            <p className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-white/55">Van</p>
+            <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-white/55">Van</p>
             <p className="truncate text-[15px] font-semibold text-white/85">{fromLabel}</p>
           </div>
           <i aria-hidden className="ml-[4.5px] my-1 block h-4 w-0.5 bg-white/25" />
           <span aria-hidden />
           <i aria-hidden className="mt-[5px] block h-[11px] w-[11px] rounded-full border-2 border-[#E6F0F3] bg-[#E6F0F3]" />
           <div className="min-w-0">
-            <p className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-white/55">Naar</p>
+            <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-white/55">Naar</p>
             <h1
               className={`break-words font-display font-extrabold uppercase leading-[0.95] tracking-[0.005em] ${
                 toIsPlaceholder ? "text-[26px] text-white/55 sm:text-[30px]" : "text-[34px] text-[#E6F0F3] sm:text-[42px]"
@@ -144,9 +144,9 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
             <span
               className={
                 status === "urgent"
-                  ? "inline-flex items-center gap-1.5 rounded-md border border-rose-300/40 bg-rose-500/20 px-2 py-[3px] font-mono text-[10.5px] font-semibold uppercase tracking-[0.05em] text-rose-200"
+                  ? "inline-flex items-center gap-1.5 rounded-md border border-rose-300/40 bg-rose-500/20 px-2 py-[3px] font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-rose-200"
                   : status === "soon"
-                    ? "inline-flex items-center gap-1.5 rounded-md border border-amber-300/40 bg-amber-400/15 px-2 py-[3px] font-mono text-[10.5px] font-semibold uppercase tracking-[0.05em] text-amber-200"
+                    ? "inline-flex items-center gap-1.5 rounded-md border border-amber-300/40 bg-amber-400/15 px-2 py-[3px] font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-amber-200"
                     : CHIP
               }
             >
@@ -167,7 +167,7 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
               className="h-9 w-9 text-xs !border-[#0F1519]"
             />
             <div className="leading-tight">
-              <p className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-white/55">
+              <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-white/55">
                 {ride.direction === "Restaurant" ? "Organisator" : "Chauffeur"}
               </p>
               <p className="text-sm font-semibold text-[#E6F0F3]">{ride.driver}</p>
@@ -188,14 +188,14 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
                         <UserAvatar
                           name={u.name}
                           user={u}
-                          className="h-8 w-8 text-[10px] !border-[#0F1519]"
+                          className="h-8 w-8 text-[12px] !border-[#0F1519]"
                         />
                       </button>
                     ) : (
                       <UserAvatar
                         key={p}
                         name={p}
-                        className="h-8 w-8 text-[10px] !border-[#0F1519]"
+                        className="h-8 w-8 text-[12px] !border-[#0F1519]"
                       />
                     );
                   })}

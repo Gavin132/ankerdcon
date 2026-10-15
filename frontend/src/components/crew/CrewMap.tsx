@@ -399,7 +399,7 @@ export default function CrewMap({ users, onOpenProfile, trip, meals, rides, allU
                     <div className="min-w-0">
                       <p className="truncate font-semibold">{p.user.name}</p>
                       <p className="truncate text-neutral-600">{p.text || p.zone || "Locatie gedeeld"}</p>
-                      <p className="font-mono text-[11px] text-neutral-500">
+                      <p className="font-mono text-[12px] text-neutral-500">
                         {[p.text ? p.zone : null, p.at ? pingAgo(p.at) : null].filter(Boolean).join(" · ")}
                       </p>
                     </div>

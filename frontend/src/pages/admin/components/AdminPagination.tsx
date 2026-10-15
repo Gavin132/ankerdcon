@@ -43,7 +43,7 @@ export function AdminPagination({
         <button
           onClick={() => onPage(page - 1)}
           disabled={page === 0}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
+          className="hit-area flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
         >
           <ChevronLeft size={14} />
         </button>
@@ -59,7 +59,7 @@ export function AdminPagination({
             <button
               key={p}
               onClick={() => onPage(p)}
-              className={`flex h-8 w-8 items-center justify-center rounded-lg font-mono text-xs font-semibold tabular-nums transition-colors ${
+              className={`hit-area flex h-8 w-8 items-center justify-center rounded-lg font-mono text-xs font-semibold tabular-nums transition-colors ${
                 p === page
                   ? "bg-ink text-paper dark:bg-brand dark:text-brand-on"
                   : "text-ink-2 hover:bg-sunken hover:text-ink"
@@ -72,7 +72,7 @@ export function AdminPagination({
         <button
           onClick={() => onPage(page + 1)}
           disabled={page === totalPages - 1}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
+          className="hit-area flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
         >
           <ChevronRight size={14} />
         </button>

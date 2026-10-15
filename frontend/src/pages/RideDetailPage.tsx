@@ -107,7 +107,7 @@ export function RideDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-paper">
+      <div className="min-h-dvh bg-paper">
         <DetailTopbar title="Laden…" onBack={goBack} />
         <div className="flex items-center justify-center py-24">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-ink border-t-transparent" />
@@ -118,7 +118,7 @@ export function RideDetailPage() {
 
   if (!ride) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-paper px-4 text-center">
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-paper px-4 text-center">
         <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
           <Car size={22} />
         </span>
@@ -131,7 +131,7 @@ export function RideDetailPage() {
   const isPT = ride.is_public_transport;
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-dvh bg-paper">
       <DetailTopbar
         title={isRestaurant ? `Restaurant · ${ride.start_location}` : `${ride.direction === "Inbound" ? "Heen" : "Terug"} · ${ride.driver}`}
         onBack={goBack}

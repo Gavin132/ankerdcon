@@ -77,7 +77,7 @@ export function TimeTravelControl({ variant }: { variant: "sidebar" | "icon" }) 
           <Clock size={19} className="shrink-0 lg:h-4 lg:w-4" />
           <span className="hidden min-w-0 flex-1 lg:block">
             <span className="block text-[14px] font-medium leading-tight">Tijdreizen</span>
-            <span className="block truncate font-mono text-[10.5px] leading-tight opacity-80">
+            <span className="block truncate font-mono text-[12px] leading-tight opacity-80">
               {override ? formatOverride(override) : "Echte tijd"}
             </span>
           </span>
@@ -88,7 +88,7 @@ export function TimeTravelControl({ variant }: { variant: "sidebar" | "icon" }) 
           onClick={openPanel}
           title={override ? `Tijdreizen: ${formatOverride(override)}` : "Tijdreizen (testtool)"}
           aria-label="Tijdreizen (testtool)"
-          className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
+          className={`hit-area relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
             override
               ? "bg-amber-100 text-amber-900 dark:bg-amber-500/15 dark:text-amber-200"
               : "text-ink-2 hover:bg-sunken hover:text-ink"

@@ -175,7 +175,7 @@ function ColorPicker({
       <button
         type="button"
         onClick={() => onChange("")}
-        className={`flex h-7 w-7 items-center justify-center rounded-full border-1.5 border-line bg-sunken ring-2 ring-offset-2 ring-offset-surface transition-shadow ${
+        className={`hit-area flex h-7 w-7 items-center justify-center rounded-full border-1.5 border-line bg-sunken ring-2 ring-offset-2 ring-offset-surface transition-shadow ${
           value === "" ? "ring-outline" : "ring-transparent hover:ring-line"
         }`}
         title="Automatisch"
@@ -188,7 +188,7 @@ function ColorPicker({
           key={c}
           type="button"
           onClick={() => onChange(value === c ? "" : c)}
-          className={`flex h-7 w-7 items-center justify-center rounded-full ring-2 ring-offset-2 ring-offset-surface transition-shadow ${
+          className={`hit-area flex h-7 w-7 items-center justify-center rounded-full ring-2 ring-offset-2 ring-offset-surface transition-shadow ${
             value === c ? "ring-outline" : "ring-transparent hover:ring-line"
           }`}
           style={{ backgroundColor: c }}
@@ -303,7 +303,7 @@ function ProfileHead({
                 disabled={bannerDeleting}
                 aria-label="Banner verwijderen"
                 title="Banner verwijderen"
-                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-colors hover:bg-ink/90 disabled:opacity-60"
+                className="hit-area flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-colors hover:bg-ink/90 disabled:opacity-60"
               >
                 {bannerDeleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
               </button>
@@ -314,7 +314,7 @@ function ProfileHead({
               disabled={bannerUploading}
               aria-label="Banner wijzigen"
               title="Banner wijzigen"
-              className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-transform hover:bg-ink/90 active:scale-95 disabled:opacity-60"
+              className="hit-area flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-transform hover:bg-ink/90 active:scale-95 disabled:opacity-60"
             >
               {bannerUploading ? <Loader2 size={13} className="animate-spin" /> : <Pencil size={13} />}
             </button>
@@ -364,7 +364,7 @@ function ProfileHead({
                     disabled={avatarDeleting}
                     aria-label="Profielfoto verwijderen"
                     title="Profielfoto verwijderen"
-                    className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-colors hover:bg-ink/90 disabled:opacity-60"
+                    className="hit-area flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-colors hover:bg-ink/90 disabled:opacity-60"
                   >
                     {avatarDeleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
                   </button>
@@ -375,7 +375,7 @@ function ProfileHead({
                   disabled={avatarUploading}
                   aria-label="Profielfoto wijzigen"
                   title="Profielfoto wijzigen"
-                  className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper transition-transform active:scale-95 disabled:opacity-60"
+                  className="hit-area flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper transition-transform active:scale-95 disabled:opacity-60"
                 >
                   {avatarUploading ? (
                     <Loader2 size={13} className="animate-spin" />
@@ -898,6 +898,7 @@ export function ProfilePage() {
                 />
                 <input
                   type="tel"
+                  autoComplete="tel"
                   maxLength={20}
                   className={`input-field pl-9 ${phoneError && draftPhone ? "!border-rose-500 dark:!border-rose-400" : ""}`}
                   placeholder="+31 6 12345678"
@@ -923,7 +924,7 @@ export function ProfilePage() {
                   value={draftBio}
                   onChange={(e) => setDraftBio(e.target.value)}
                 />
-                <span className="pointer-events-none absolute bottom-3 right-3 select-none font-mono text-[11px] text-ink-3">
+                <span className="pointer-events-none absolute bottom-3 right-3 select-none font-mono text-[12px] text-ink-3">
                   {200 - draftBio.length}
                 </span>
               </div>
@@ -1051,7 +1052,7 @@ export function ProfilePage() {
                         Aa
                       </span>
                       <span
-                        className={`font-mono text-[10px] uppercase tracking-[0.05em] ${isActive ? "text-ink" : "text-ink-3"}`}
+                        className={`font-mono text-[12px] uppercase tracking-[0.05em] ${isActive ? "text-ink" : "text-ink-3"}`}
                       >
                         {label}
                       </span>

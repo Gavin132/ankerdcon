@@ -16,7 +16,7 @@ export function ProtectedRoute() {
   // Wait for Supabase session check and initial profile fetch
   if (initializing || (accessToken && !forbidden && meLoading)) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
+      <div className="flex min-h-dvh items-center justify-center bg-slate-950">
         <div className="h-8 w-8 rounded-full border-2 border-brand-text border-t-transparent animate-spin" />
       </div>
     );

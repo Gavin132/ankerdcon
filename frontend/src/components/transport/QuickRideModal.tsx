@@ -150,7 +150,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
             value={startLocation}
             onChange={(e) => { setStartLocation(e.target.value); setEdited((v) => ({ ...v, start: true })); }}
             placeholder="Onbekende locatie"
-            className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-3"
+            className="min-w-0 flex-1 bg-transparent text-base font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-3"
           />
           <ArrowRight size={14} className="shrink-0 text-ink-3" />
           <input
@@ -158,7 +158,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
             value={endLocation}
             onChange={(e) => { setEndLocation(e.target.value); setEdited((v) => ({ ...v, end: true })); }}
             placeholder="Onbekende locatie"
-            className="min-w-0 flex-1 bg-transparent text-right text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-3"
+            className="min-w-0 flex-1 bg-transparent text-right text-base font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-3"
           />
         </div>
         {missingLocation && (
@@ -216,7 +216,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
               <button
                 type="button"
                 onClick={() => setSeats((s) => Math.max(1, s - 1))}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+                className="hit-area flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
               >
                 −
               </button>
@@ -227,7 +227,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
               <button
                 type="button"
                 onClick={() => setSeats((s) => Math.min(99, s + 1))}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+                className="hit-area flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
               >
                 +
               </button>

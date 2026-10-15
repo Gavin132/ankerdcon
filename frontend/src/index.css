@@ -163,6 +163,12 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  /* On a touchscreen nothing hovers, so a tap needs its own feedback: whatever is pressed dims for a moment.
+     :where() keeps this at the lowest specificity, so a component with its own pressed state wins. */
+  :where(button:not(:disabled), a[href], [role="button"], summary):active {
+    opacity: 0.7;
+  }
+
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-thumb { border-radius: 9999px; background-color: rgb(var(--line)); }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -182,8 +188,10 @@
     transition: background-color 0.1s ease, border-color 0.1s ease;
   }
 
-  input[type="checkbox"].cb:hover {
-    border-color: rgb(var(--ink));
+  @media (hover: hover) {
+    input[type="checkbox"].cb:hover {
+      border-color: rgb(var(--ink));
+    }
   }
 
   input[type="checkbox"].cb:checked,
@@ -243,13 +251,31 @@
     transform: scale(0.985);
   }
 
-  .card-surface-hover:hover {
-    border-color: rgb(var(--ink-3));
+  @media (hover: hover) {
+    .card-surface-hover:hover {
+      border-color: rgb(var(--ink-3));
+    }
+  }
+
+  /* A small control (an icon button) that is still easy to hit with a thumb: an invisible box around it
+     grows its touch area to 44 px (never smaller than the control itself), without changing the layout.
+     Not for a control that clips its own overflow: the box would be cut off with it. */
+  .hit-area {
+    position: relative;
+  }
+
+  .hit-area::after {
+    content: "";
+    position: absolute;
+    top: min(0px, calc((100% - 44px) / 2));
+    bottom: min(0px, calc((100% - 44px) / 2));
+    left: min(0px, calc((100% - 44px) / 2));
+    right: min(0px, calc((100% - 44px) / 2));
   }
 
   /* Small uppercase mono label above a group ("Voor jou", "Deze week"). */
   .section-label {
-    @apply font-mono text-[11px] font-semibold uppercase tracking-[0.09em] text-ink-3;
+    @apply font-mono text-[12px] font-semibold uppercase tracking-[0.09em] text-ink-3;
   }
 
   .input-field {

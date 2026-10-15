@@ -280,7 +280,7 @@ export function FinancePage() {
                     const u   = resolveUser(name, users);
                     return (
                       <li key={name} className="flex items-center gap-2.5 border-t border-line px-2 py-2">
-                        <UserAvatar name={name} user={u} className="h-7 w-7 shrink-0 text-[10px]" />
+                        <UserAvatar name={name} user={u} className="h-7 w-7 shrink-0 text-[12px]" />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
                             <span className="truncate text-[13.5px] font-semibold text-ink">{name}</span>
@@ -307,7 +307,7 @@ export function FinancePage() {
         <div className="flex items-center justify-between gap-3">
           <p className="section-label flex items-center gap-2">
             Uitgaven
-            {expenses.length > 0 && <span className="font-mono text-[11px] tabular-nums text-ink-3">{expenses.length}</span>}
+            {expenses.length > 0 && <span className="font-mono text-[12px] tabular-nums text-ink-3">{expenses.length}</span>}
           </p>
           {!viewer && (
             <Button size="sm" onClick={() => setCreateOpen(true)}>

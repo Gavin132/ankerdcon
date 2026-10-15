@@ -218,16 +218,21 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
           ref={inputRef}
           autoFocus
           type="search"
+          enterKeyHint="search"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Zoek events, ritten, crew, of wat je wilt doen…"
-          className="min-w-0 flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-3"
+          className="min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-ink-3"
         />
         <button
           type="button"
           onClick={handleClose}
           aria-label="Zoeken sluiten"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+          className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
         >
           <X size={16} />
         </button>
@@ -243,7 +248,7 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
         <div className="space-y-5">
           {groups.map((group) => (
             <div key={group.label}>
-              <p className="mb-1.5 flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">
+              <p className="mb-1.5 flex items-center gap-1.5 font-mono text-[12px] font-semibold uppercase tracking-[0.06em] text-ink-3">
                 <group.icon size={12} />
                 {group.label}
               </p>
@@ -256,7 +261,7 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
                     className="card-surface-hover flex w-full items-center gap-3 p-3 text-left"
                   >
                     {group.label === "Crew" ? (
-                      <UserAvatar name={row.title} className="h-8 w-8 shrink-0 text-[11px]" />
+                      <UserAvatar name={row.title} className="h-8 w-8 shrink-0 text-[12px]" />
                     ) : (
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink-2">
                         {row.icon ? <row.icon size={14} /> : <group.icon size={14} />}

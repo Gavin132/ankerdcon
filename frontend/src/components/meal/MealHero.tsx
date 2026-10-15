@@ -16,7 +16,7 @@ const CLOSED_RECT: AnchorRect = { top: 0, left: 0, right: 0, height: 0 };
 
 /** White-ish mono chip on the ink hero. */
 const CHIP =
-  "inline-flex items-center gap-1.5 rounded-md border border-white/25 bg-white/10 px-2 py-[3px] font-mono text-[10.5px] font-semibold uppercase tracking-[0.05em] text-[#E6F0F3]";
+  "inline-flex items-center gap-1.5 rounded-md border border-white/25 bg-white/10 px-2 py-[3px] font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-[#E6F0F3]";
 
 interface MealHeroProps {
   meal: Meal;
@@ -118,10 +118,10 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
               <span className="flex -space-x-2">
                 {participants.slice(0, 6).map((p) => {
                   const u = resolveUser(p);
-                  return <UserAvatar key={p} name={u?.name ?? p} user={u} className="h-7 w-7 text-[10px] !border-[#0F1519]" />;
+                  return <UserAvatar key={p} name={u?.name ?? p} user={u} className="h-7 w-7 text-[12px] !border-[#0F1519]" />;
                 })}
                 {participants.length > 6 && (
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#0F1519] bg-white/15 font-mono text-[10px] font-semibold text-[#E6F0F3]">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#0F1519] bg-white/15 font-mono text-[12px] font-semibold text-[#E6F0F3]">
                     +{participants.length - 6}
                   </span>
                 )}

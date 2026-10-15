@@ -339,14 +339,14 @@ function Viewer({ item, position, onClose, onPrev, onNext, onDelete }: { item: C
               </button>
             </>
           ) : (
-            <button type="button" onClick={() => setConfirming(true)} aria-label="Verwijderen" title="Verwijderen" className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 hover:bg-rose-600">
+            <button type="button" onClick={() => setConfirming(true)} aria-label="Verwijderen" title="Verwijderen" className="hit-area flex h-9 w-9 items-center justify-center rounded-full bg-white/10 hover:bg-rose-600">
               <Trash2 size={16} />
             </button>
           )}
-          <a href={item.url} target="_blank" rel="noopener noreferrer" aria-label="Open in nieuw tabblad" className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 hover:bg-white/20">
+          <a href={item.url} target="_blank" rel="noopener noreferrer" aria-label="Open in nieuw tabblad" className="hit-area flex h-9 w-9 items-center justify-center rounded-full bg-white/10 hover:bg-white/20">
             <ExternalLink size={16} />
           </a>
-          <button type="button" onClick={onClose} aria-label="Sluiten" className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 hover:bg-white/20">
+          <button type="button" onClick={onClose} aria-label="Sluiten" className="hit-area flex h-9 w-9 items-center justify-center rounded-full bg-white/10 hover:bg-white/20">
             <X size={18} />
           </button>
         </div>

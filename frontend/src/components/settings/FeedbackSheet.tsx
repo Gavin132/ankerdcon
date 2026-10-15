@@ -90,7 +90,7 @@ export function FeedbackSheet({ open, onClose }: { open: boolean; onClose: () =>
             value={message}
             onChange={(e) => setMessage(e.target.value)}
           />
-          <p className="mt-1 text-right font-mono text-[11px] tabular-nums text-ink-3">{trimmed.length} / {MAX}</p>
+          <p className="mt-1 text-right font-mono text-[12px] tabular-nums text-ink-3">{trimmed.length} / {MAX}</p>
         </div>
 
         <label htmlFor="feedback-anonymous" className="flex cursor-pointer items-start gap-2.5 text-sm text-ink-2">

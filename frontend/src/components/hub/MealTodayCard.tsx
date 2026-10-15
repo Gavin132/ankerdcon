@@ -46,14 +46,14 @@ export function MealTodayCard({ meals, myNames }: MealTodayCardProps) {
               <Utensils size={16} />
             </span>
             <span className="min-w-0 flex-1 leading-tight">
-              <span className="block text-[11px] text-ink-3">
+              <span className="block text-[12px] text-ink-3">
                 Vandaag eten · {formatTime(meal.time)}
               </span>
               <span className="mt-0.5 block truncate text-[14px] font-semibold text-ink">{meal.meal_name}</span>
               {meal.location && <span className="block truncate text-[12px] text-ink-2">{meal.location}</span>}
             </span>
             <span
-              className={`shrink-0 rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${
+              className={`shrink-0 rounded-full px-2 py-0.5 text-[12px] font-semibold ${
                 eating
                   ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
                   : "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"

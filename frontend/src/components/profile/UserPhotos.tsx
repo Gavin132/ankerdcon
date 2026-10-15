@@ -36,7 +36,7 @@ export function UserPhotos({ identifier, whose }: { identifier: string; whose?: 
       <div className="flex items-center gap-2 border-b border-line px-5 pb-3 pt-4 sm:px-6">
         <Images size={14} className="text-ink-3" />
         <p className="section-label">Foto's</p>
-        {photos.length > 0 && <span className="font-mono text-[11px] tabular-nums text-ink-3">{photos.length}</span>}
+        {photos.length > 0 && <span className="font-mono text-[12px] tabular-nums text-ink-3">{photos.length}</span>}
       </div>
 
       <div className="space-y-4 p-5 sm:p-6">
@@ -68,7 +68,7 @@ export function UserPhotos({ identifier, whose }: { identifier: string; whose?: 
                       eventId === e.id ? "border-outline bg-brand text-brand-on" : "border-line bg-surface text-ink-2 hover:border-ink-3"
                     }`}
                   >
-                    {e.name} <span className="font-mono text-[11px] opacity-70">{e.count}</span>
+                    {e.name} <span className="font-mono text-[12px] opacity-70">{e.count}</span>
                   </button>
                 ))}
               </div>
@@ -156,7 +156,7 @@ function Lightbox({
           type="button"
           onClick={onClose}
           aria-label="Sluiten"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 hover:bg-white/20"
+          className="hit-area flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 hover:bg-white/20"
         >
           <X size={18} />
         </button>

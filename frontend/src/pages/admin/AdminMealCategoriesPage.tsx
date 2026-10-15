@@ -181,7 +181,7 @@ export function AdminMealCategoriesPage() {
                     aria-label={`${category.name} omhoog`}
                     disabled={index === 0 || updateMutation.isPending}
                     onClick={() => move(index, -1)}
-                    className="flex h-5 w-6 items-center justify-center rounded text-ink-3 hover:bg-sunken hover:text-ink disabled:opacity-30"
+                    className="hit-area flex h-5 w-6 items-center justify-center rounded text-ink-3 hover:bg-sunken hover:text-ink disabled:opacity-30"
                   >
                     <ArrowUp size={13} />
                   </button>
@@ -190,7 +190,7 @@ export function AdminMealCategoriesPage() {
                     aria-label={`${category.name} omlaag`}
                     disabled={index === categories.length - 1 || updateMutation.isPending}
                     onClick={() => move(index, 1)}
-                    className="flex h-5 w-6 items-center justify-center rounded text-ink-3 hover:bg-sunken hover:text-ink disabled:opacity-30"
+                    className="hit-area flex h-5 w-6 items-center justify-center rounded text-ink-3 hover:bg-sunken hover:text-ink disabled:opacity-30"
                   >
                     <ArrowDown size={13} />
                   </button>
@@ -222,7 +222,7 @@ export function AdminMealCategoriesPage() {
                       aria-label="Opslaan"
                       onClick={() => saveName(category.id)}
                       disabled={updateMutation.isPending}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg bg-ink text-paper transition-colors disabled:opacity-50 dark:bg-brand dark:text-brand-on"
+                      className="hit-area flex h-7 w-7 items-center justify-center rounded-lg bg-ink text-paper transition-colors disabled:opacity-50 dark:bg-brand dark:text-brand-on"
                     >
                       <Check size={13} />
                     </button>
@@ -230,7 +230,7 @@ export function AdminMealCategoriesPage() {
                       type="button"
                       aria-label="Annuleren"
                       onClick={() => setEditingId(null)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+                      className="hit-area flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
                     >
                       <X size={13} />
                     </button>

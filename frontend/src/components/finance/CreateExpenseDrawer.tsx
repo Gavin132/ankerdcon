@@ -217,6 +217,7 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
               <div className="flex gap-2">
                 <input
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   min="0"
                   className="input-field flex-1"
@@ -344,6 +345,7 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
                 <label className={SL}>Bedrag per persoon</label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   min="0"
                   className="input-field"
@@ -388,7 +390,7 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
                       <span className="shrink-0 font-mono text-[13px] font-semibold tabular-nums text-ink">
                         {formatAmount(row.amount, currency)}
                       </span>
-                      <button type="button" onClick={() => removeManualRow(i)} className="ml-1 flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300">
+                      <button type="button" onClick={() => removeManualRow(i)} className="hit-area ml-1 flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300">
                         <X size={13} />
                       </button>
                     </div>
@@ -422,6 +424,7 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
                   <div className="flex gap-2">
                     <input
                       type="number"
+                      inputMode="decimal"
                       step="0.01"
                       min="0"
                       className="input-field flex-1"

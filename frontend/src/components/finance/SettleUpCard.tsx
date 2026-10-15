@@ -15,7 +15,7 @@ interface Props {
   onOpen: (target: SettleTarget) => void;
 }
 
-const PILL = "shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[11.5px] font-semibold";
+const PILL = "shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[12px] font-semibold";
 const TONE = {
   owe:     "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
   owed:    "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
@@ -54,10 +54,10 @@ function Row({ user, name, title, sub, amount, currency, pill, tone, onClick, mu
         onClick={onClick}
         className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-sunken ${muted ? "opacity-60" : ""}`}
       >
-        <UserAvatar name={name} user={user} className="h-8 w-8 shrink-0 text-[11px]" />
+        <UserAvatar name={name} user={user} className="h-8 w-8 shrink-0 text-[12px]" />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[13.5px] font-semibold text-ink">{title}</span>
-          <span className="block truncate text-[11.5px] text-ink-3">{sub}</span>
+          <span className="block truncate text-[12px] text-ink-3">{sub}</span>
         </span>
         <span className="flex shrink-0 flex-col items-end gap-1">
           <span className="font-mono text-[14px] font-semibold tabular-nums text-ink">{formatAmount(amount, currency)}</span>
@@ -136,7 +136,7 @@ export function SettleUpCard({ overview, users, meId, onOpen }: Props) {
 
       {done.length > 0 && (
         <div className="border-t border-line px-4 pb-3 pt-2.5">
-          <p className="mb-1 text-[11.5px] font-semibold text-ink-3">Recent afgerond</p>
+          <p className="mb-1 text-[12px] font-semibold text-ink-3">Recent afgerond</p>
           <ul className="space-y-0.5">
             {done.map((s) => {
               const d = describeSettlement(s, meId);

@@ -333,7 +333,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
   const isFiltered = activeFilterCount > 0;
 
   const removableChip =
-    "inline-flex items-center gap-1.5 rounded-full border-1.5 border-line bg-surface py-1 pl-2.5 pr-1 text-[11.5px] font-semibold text-ink-2";
+    "inline-flex items-center gap-1.5 rounded-full border-1.5 border-line bg-surface py-1 pl-2.5 pr-1 text-[12px] font-semibold text-ink-2";
   const removeChipButton =
     "flex h-5 w-5 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-sunken hover:text-ink";
   const pageArrow =
@@ -443,7 +443,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                       <button
                         key={m} type="button" onClick={() => setImageField(index, { mode: m })}
                         aria-pressed={entry.mode === m}
-                        className={`rounded-[7px] px-2.5 py-1 text-[11.5px] font-semibold transition-colors ${
+                        className={`rounded-[7px] px-2.5 py-1 text-[12px] font-semibold transition-colors ${
                           entry.mode === m
                             ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]"
                             : "text-ink-2 hover:text-ink"
@@ -505,7 +505,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                       </label>
                     )}
                     {images.length > 1 && (
-                      <button type="button" onClick={() => removeImage(index)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400">
+                      <button type="button" onClick={() => removeImage(index)} className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400">
                         <X size={13} />
                       </button>
                     )}
@@ -553,7 +553,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                 </button>
 
                 {/* Result count */}
-                <span className="ml-auto truncate font-mono text-[11px] uppercase tracking-[0.05em] text-ink-3 tabular-nums">
+                <span className="ml-auto truncate font-mono text-[12px] uppercase tracking-[0.05em] text-ink-3 tabular-nums">
                   {isFiltered
                     ? `${filtered.length} van ${eventCosplays.length} cosplays`
                     : `${eventCosplays.length} ${eventCosplays.length === 1 ? "cosplay" : "cosplays"}`}

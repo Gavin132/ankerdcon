@@ -26,7 +26,7 @@ export function LinkedEventCard({ event }: LinkedEventCardProps) {
             <p className="truncate text-sm font-semibold text-ink">
               {event.event_name}
             </p>
-            <p className="font-mono text-[11px] uppercase tracking-[0.05em] text-ink-3">{formatDate(event.date)}</p>
+            <p className="font-mono text-[12px] uppercase tracking-[0.05em] text-ink-3">{formatDate(event.date)}</p>
           </div>
           <ExternalLink size={14} className="shrink-0 text-ink-3" />
         </Link>

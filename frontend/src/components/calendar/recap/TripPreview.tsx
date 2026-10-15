@@ -42,7 +42,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
           type="button"
           onClick={onClose}
           aria-label="Sluiten"
-          className="absolute left-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-[#0F1519]/70 text-white transition-colors hover:bg-[#0F1519]"
+          className="hit-area absolute left-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-[#0F1519]/70 text-white transition-colors hover:bg-[#0F1519]"
         >
           <X size={15} />
         </button>
@@ -83,11 +83,11 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
                   ev.has_con === false ? "bg-hatch-surface" : "bg-surface"
                 }`}
               >
-                <span className="block font-mono text-[10px] uppercase leading-none tracking-[0.06em] text-ink-3">
+                <span className="block font-mono text-[12px] uppercase leading-none tracking-[0.06em] text-ink-3">
                   {dayShort(date)} {monthShort(date)}
                 </span>
                 <span className="block font-display text-[22px] font-extrabold leading-none text-ink">{date.getDate()}</span>
-                <span className="mt-0.5 block truncate text-[10.5px] leading-none text-ink-2">
+                <span className="mt-0.5 block truncate text-[12px] leading-none text-ink-2">
                   {ev.has_con === false ? "Reisdag" : `${ev.participants.length} mee`}
                 </span>
               </Link>
@@ -101,7 +101,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
             <span className="flex -space-x-1.5">
               {names.slice(0, 6).map((p) => {
                 const u = findUser(p);
-                return <UserAvatar key={p} name={u?.name ?? p} user={u} className="h-7 w-7 text-[10px] !border-surface" />;
+                return <UserAvatar key={p} name={u?.name ?? p} user={u} className="h-7 w-7 text-[12px] !border-surface" />;
               })}
             </span>
           )}

@@ -105,7 +105,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
               {formatAmount(expense.amount, expense.currency)}
             </p>
             {totalShares > 0 && (
-              <p className="mt-1 font-mono text-[11.5px] tabular-nums text-ink-3">{confirmedCount}/{totalShares} verrekend</p>
+              <p className="mt-1 font-mono text-[12px] tabular-nums text-ink-3">{confirmedCount}/{totalShares} verrekend</p>
             )}
           </div>
         </div>
@@ -139,11 +139,11 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
                       <UserAvatar
                         name={share.participant}
                         user={resolveUser(share.participant, users)}
-                        className="h-7 w-7 shrink-0 text-[10px]"
+                        className="h-7 w-7 shrink-0 text-[12px]"
                       />
                       <span className="flex-1 truncate text-[13.5px] font-semibold text-ink">
                         {share.participant}
-                        {isMe && <span className="ml-1.5 text-[11px] font-medium text-ink-3">(jij)</span>}
+                        {isMe && <span className="ml-1.5 text-[12px] font-medium text-ink-3">(jij)</span>}
                       </span>
                       <span className="shrink-0 font-mono text-[14px] font-semibold tabular-nums text-ink">
                         {formatAmount(share.amount, expense.currency)}
@@ -152,7 +152,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
 
                     {/* Status + action */}
                     <div className="mt-2 flex items-center gap-2 flex-wrap">
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${cfg.pill}`}>
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[12px] font-semibold ${cfg.pill}`}>
                         <StatusIcon status={share.status} />
                         {cfg.label}
                       </span>

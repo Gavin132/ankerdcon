@@ -124,7 +124,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
             </div>
             <div className="shrink-0 text-right leading-tight">
               <p className="font-mono text-[15px] font-semibold tabular-nums text-ink">{formatTime(meal.time)}</p>
-              <p className="font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-3">{formatDate(meal.time)}</p>
+              <p className="font-mono text-[12px] uppercase tracking-[0.05em] text-ink-3">{formatDate(meal.time)}</p>
             </div>
           </div>
 
@@ -143,7 +143,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
                 </span>
               ) : null}
               {meal.transport_needed && (
-                <span className="inline-flex items-center gap-1 rounded-md border border-line px-1.5 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2">
+                <span className="inline-flex items-center gap-1 rounded-md border border-line px-1.5 py-0.5 font-mono text-[12px] uppercase tracking-[0.05em] text-ink-2">
                   <Bus size={11} />
                   Vervoer nodig
                 </span>
@@ -155,7 +155,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
             <Link
               to={routes.event.view(linkedEvent.id)}
               onClick={(e) => e.stopPropagation()}
-              className="inline-flex max-w-full items-center gap-1 self-start rounded-md border border-line px-1.5 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
+              className="inline-flex max-w-full items-center gap-1 self-start rounded-md border border-line px-1.5 py-0.5 font-mono text-[12px] uppercase tracking-[0.05em] text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
             >
               <Link2 size={10} className="shrink-0" />
               <span className="truncate">{linkedEvent.event_name}</span>
@@ -191,7 +191,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setCancelOpen(true); }}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
+                  className="hit-area flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
                   title="Afmelden"
                 >
                   <UserMinus size={14} />
@@ -201,7 +201,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); exportMealToIcs(meal); }}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+                className="hit-area flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
                 title="Exporteer naar kalender"
               >
                 <CalendarPlus size={14} />

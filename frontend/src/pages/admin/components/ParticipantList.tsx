@@ -34,7 +34,7 @@ export function ParticipantList({
               type="button"
               onClick={() => onRemove(p)}
               disabled={isPending}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 disabled:opacity-40 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
+              className="hit-area flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 disabled:opacity-40 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
             >
               <UserX size={13} />
             </button>

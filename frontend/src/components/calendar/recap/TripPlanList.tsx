@@ -80,7 +80,7 @@ export function TripPlanList({ trip, rides, meals, dayKey, past }: TripPlanListP
         return (
           <li key={item.id}>
             {showDay && !isNaN(date.getTime()) && (
-              <p className="pt-2 font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink-3">
+              <p className="pt-2 font-mono text-[12px] uppercase tracking-[0.06em] text-ink-3">
                 {DAYS[date.getDay()]} {date.getDate()} {MONTHS[date.getMonth()]}
               </p>
             )}
@@ -94,7 +94,7 @@ export function TripPlanList({ trip, rides, meals, dayKey, past }: TripPlanListP
               <Icon size={15} className="mt-0.5 text-ink-3" />
               <span className="min-w-0">
                 <span className="block truncate font-medium text-ink">{item.title}</span>
-                <span className="block truncate text-[11.5px] text-ink-3">{item.sub}</span>
+                <span className="block truncate text-[12px] text-ink-3">{item.sub}</span>
               </span>
             </Link>
           </li>

@@ -18,7 +18,7 @@ import type { Ride } from "../../types";
 /** The member's own ride. A deeper blue than the brand fill, so white text stays readable on it. */
 const MINE_CLASS = "bg-[#0D75D1] text-white dark:bg-[#1A6FC9]";
 
-const PILL = "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11.5px] font-semibold";
+const PILL = "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-semibold";
 
 const rangeText = (g: CarGuidance) => (g.low === g.high ? `${g.low}` : `${g.low}–${g.high}`);
 
@@ -202,7 +202,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
         </span>
         <span className="shrink-0 text-right leading-[1.3]">
           <span className={`block text-[12px] ${ride.is_full ? "font-semibold" : ""} ${mine ? "text-white/90" : "text-ink-2"}`}>{seatsText}</span>
-          {goalText && <span className={`block text-[11px] font-semibold ${mine ? "text-white" : goalTone}`}>{goalText}</span>}
+          {goalText && <span className={`block text-[12px] font-semibold ${mine ? "text-white" : goalTone}`}>{goalText}</span>}
         </span>
         <ChevronDown
           size={14}
@@ -305,7 +305,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
                   {confirmDelete ? (
                     <div className="space-y-1.5">
                       {otherPassengers.length > 0 && (
-                        <p className="text-[11.5px] text-rose-600 dark:text-rose-400">
+                        <p className="text-[12px] text-rose-600 dark:text-rose-400">
                           {otherPassengers.length === 1
                             ? "Er is al iemand bij deze rit ingedeeld — die persoon verliest zijn plek."
                             : `Er zijn al ${otherPassengers.length} mensen bij deze rit ingedeeld — zij verliezen hun plek.`}

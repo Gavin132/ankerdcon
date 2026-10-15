@@ -180,7 +180,7 @@ export function SettingsPage() {
                       title={a.label}
                       onClick={() => setAccent(a.id)}
                       style={{ backgroundColor: a.swatch }}
-                      className={`flex h-9 w-9 items-center justify-center rounded-full text-[#0F1519] transition-transform active:scale-95 ${
+                      className={`hit-area flex h-9 w-9 items-center justify-center rounded-full text-[#0F1519] transition-transform active:scale-95 ${
                         selected ? "border-2 border-outline" : "border-1.5 border-line"
                       }`}
                     >
@@ -328,7 +328,7 @@ export function SettingsPage() {
               <div className="flex-1 min-w-0">
                 <p className="text-[14px] font-semibold text-ink">Ankerd Con</p>
                 <p className="text-[12.5px] text-ink-3">Event portal · v{__APP_VERSION__}</p>
-                <p className="mt-0.5 text-[11px] text-ink-3">
+                <p className="mt-0.5 text-[12px] text-ink-3">
                   Powered by{" "}
                   <a href="https://ayoublfatmi.nl" target="_blank" rel="noopener noreferrer" className="font-semibold text-ink-2 hover:text-ink hover:underline">
                     ALFA

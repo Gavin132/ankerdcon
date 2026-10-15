@@ -105,7 +105,7 @@ export function RideCostSheet({ tripId, tripTitle, onClose }: { tripId: string |
               <ul className="card-surface divide-y divide-line overflow-hidden">
                 {sheet.group.map((name) => (
                   <li key={name} className="flex items-center gap-3 px-3.5 py-3">
-                    <UserAvatar name={name} user={resolve(name)} className="h-8 w-8 shrink-0 text-[11px]" />
+                    <UserAvatar name={name} user={resolve(name)} className="h-8 w-8 shrink-0 text-[12px]" />
                     <p className="min-w-0 flex-1 truncate text-[13.5px] font-semibold text-ink">{name}</p>
                   </li>
                 ))}
@@ -119,7 +119,7 @@ export function RideCostSheet({ tripId, tripTitle, onClose }: { tripId: string |
               <ul className="card-surface divide-y divide-line overflow-hidden">
                 {sheet.passengers.map((p) => (
                   <li key={p.name} className="flex items-center gap-3 px-3.5 py-3">
-                    <UserAvatar name={p.name} user={resolve(p.name)} className="h-8 w-8 shrink-0 text-[11px]" />
+                    <UserAvatar name={p.name} user={resolve(p.name)} className="h-8 w-8 shrink-0 text-[12px]" />
                     <p className="min-w-0 flex-1 truncate text-[13.5px] font-semibold text-ink">{p.name}</p>
                     <span className="font-mono text-[14px] font-semibold tabular-nums text-ink">{formatAmount(p.amount)}</span>
                     <button
@@ -127,7 +127,7 @@ export function RideCostSheet({ tripId, tripTitle, onClose }: { tripId: string |
                       onClick={() => void copy(p.name, p.amount)}
                       aria-label={`Kopieer ${asTyped(p.amount)} voor ${p.name}`}
                       title="Kopieer het bedrag"
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+                      className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
                     >
                       {copied === p.name ? <Check size={14} /> : <Copy size={14} />}
                     </button>

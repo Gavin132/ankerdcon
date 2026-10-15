@@ -3,7 +3,7 @@ import { RouterProvider } from "react-router-dom";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { QUERY_CACHE_MAX_AGE, clearPersistedQueries, queryPersister, shouldPersistQuery } from "./lib/queryPersist";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, MotionConfig } from "framer-motion";
 import { router } from "./router";
 import { ToastContainer } from "./components/common/Toast";
 import { SplashScreen } from "./components/splash/SplashScreen";
@@ -271,6 +271,9 @@ function RouteFallback() {
 export function App() {
   return (
     <ErrorBoundary>
+      {/* Animations follow the device's "reduce motion" setting: transforms are skipped, fades stay. Nothing
+          the app depends on may be an animation (the story timer is driven by hand for that reason). */}
+      <MotionConfig reducedMotion="user">
       {/* Restores the last known data from localStorage before the first paint,
           so the app opens on real content and revalidates behind it instead of
           showing skeletons until the network answers. `buster` is the app
@@ -301,6 +304,7 @@ export function App() {
         <UpdateBanner />
         <SplashController />
       </PersistQueryClientProvider>
+      </MotionConfig>
     </ErrorBoundary>
   );
 }

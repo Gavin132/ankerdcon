@@ -31,7 +31,7 @@ export function BottomNav() {
                 strokeWidth={isActive ? 2.4 : 1.9}
                 className={isActive ? "text-brand dark:text-brand-on" : ""}
               />
-              <span className="max-w-full truncate text-[10.5px] font-semibold leading-none">{item.label}</span>
+              <span className="max-w-full truncate text-[12px] font-semibold leading-none max-[339px]:text-[11px]">{item.label}</span>
             </NavLink>
           );
         })}

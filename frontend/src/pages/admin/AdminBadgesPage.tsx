@@ -400,7 +400,7 @@ function BadgeMembersDrawer({
                 type="button"
                 onClick={() => u.id && badge && unassign.mutate({ userId: u.id, badgeId: badge.id })}
                 disabled={unassign.isPending}
-                className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 disabled:opacity-40 transition-colors"
+                className="hit-area flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 disabled:opacity-40 transition-colors"
                 title="Badge verwijderen"
               >
                 <UserX size={13} />

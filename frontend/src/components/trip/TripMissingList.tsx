@@ -41,7 +41,7 @@ export function TripMissingList({ title, people }: TripMissingListProps) {
                 <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink">
                   {u?.name ?? name}
                 </span>
-                {detail && <span className="shrink-0 text-[11px] font-medium text-ink-3">{detail}</span>}
+                {detail && <span className="shrink-0 text-[12px] font-medium text-ink-3">{detail}</span>}
               </li>
             );
           })}

@@ -20,7 +20,7 @@ export function LoginPage() {
           <h1 className="font-display text-[52px] font-black uppercase leading-[0.88] tracking-[0.01em] text-ink">
             Ankerd Con
           </h1>
-          <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3">
+          <p className="mt-3 font-mono text-[12px] uppercase tracking-[0.08em] text-ink-3">
             Jouw leden portal voor het evenement
           </p>
         </motion.div>

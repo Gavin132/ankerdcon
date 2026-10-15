@@ -87,7 +87,7 @@ export function ErrorFallback({ error }: { error?: unknown }) {
           </button>
         </div>
         {detail && (
-          <p className="mt-5 max-w-[320px] break-words rounded-lg bg-sunken px-3 py-2 text-left font-mono text-[10.5px] leading-snug text-ink-3 select-text">
+          <p className="mt-5 max-w-[320px] break-words rounded-lg bg-sunken px-3 py-2 text-left font-mono text-[12px] leading-snug text-ink-3 select-text">
             {detail}
           </p>
         )}

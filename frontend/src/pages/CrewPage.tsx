@@ -213,6 +213,9 @@ export function CrewPage() {
           <input
             id="crew-search"
             type="search"
+            enterKeyHint="search"
+            autoCorrect="off"
+            autoCapitalize="off"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Zoek op naam, Discord of alias…"
@@ -224,7 +227,7 @@ export function CrewPage() {
             <button
               onClick={() => setQuery("")}
               aria-label="Zoekopdracht wissen"
-              className="absolute right-6 top-[calc(50%-6px)] flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+              className="hit-area absolute right-6 top-[calc(50%-6px)] flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
             >
               <X size={14} />
             </button>
@@ -288,7 +291,7 @@ export function CrewPage() {
                         <span className="truncate text-[12px] text-ink-3">{u.discord_username}</span>
                       )}
                       {room && (
-                        <span className="flex items-center gap-1 font-mono text-[11.5px] text-ink-2">
+                        <span className="flex items-center gap-1 font-mono text-[12px] text-ink-2">
                           <BedDouble size={11} />
                           {room}
                         </span>

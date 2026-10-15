@@ -59,10 +59,10 @@ export function CarCard({ driver, canAct, userNames, onJoin, onUnassign, isPendi
     >
       {/* ── Driver ── */}
       <div className="flex items-center gap-2.5">
-        <UserAvatar name={driver.name} className="h-8 w-8 shrink-0 text-[11px]" />
+        <UserAvatar name={driver.name} className="h-8 w-8 shrink-0 text-[12px]" />
         <div className="flex min-w-0 flex-col leading-tight">
           <span className="truncate text-[14px] font-semibold text-ink">{driver.name}</span>
-          <span className="flex items-center gap-1 text-[11.5px] text-ink-3">
+          <span className="flex items-center gap-1 text-[12px] text-ink-3">
             <CarIcon size={smallVehicle ? 10 : 12} className="shrink-0" />
             Chauffeur
           </span>
@@ -109,7 +109,7 @@ export function CarCard({ driver, canAct, userNames, onJoin, onUnassign, isPendi
                 disabled={isPending}
                 title="Uitstappen"
                 aria-expanded={action === "leave"}
-                className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                className={`hit-area flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
                   action === "leave"
                     ? "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300"
                     : "text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"

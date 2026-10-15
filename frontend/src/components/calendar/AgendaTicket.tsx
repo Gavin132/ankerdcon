@@ -120,10 +120,10 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
             <span className="flex -space-x-1.5">
               {participants.slice(0, 6).map((p) => {
                 const u = findUser(p);
-                return <UserAvatar key={p} name={u?.name ?? p} user={u} className="h-7 w-7 text-[10px] !border-surface" />;
+                return <UserAvatar key={p} name={u?.name ?? p} user={u} className="h-7 w-7 text-[12px] !border-surface" />;
               })}
               {participants.length > 6 && (
-                <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-sunken font-mono text-[10px] font-semibold text-ink-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-sunken font-mono text-[12px] font-semibold text-ink-2">
                   +{participants.length - 6}
                 </span>
               )}

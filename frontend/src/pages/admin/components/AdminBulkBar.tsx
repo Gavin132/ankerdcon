@@ -85,7 +85,7 @@ export function AdminBulkBar({
         <div className="mx-1 h-4 w-px bg-line" />
         <button
           onClick={() => { setConfirmDelete(false); onClear(); }}
-          className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+          className="hit-area flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
         >
           <X size={14} />
         </button>

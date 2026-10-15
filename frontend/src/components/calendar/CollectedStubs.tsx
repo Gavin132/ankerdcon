@@ -106,7 +106,7 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
                     : "border-1.5 border-dashed border-line hover:border-ink-3"
               }`}
             >
-              <span className="border-b-1.5 border-dashed border-line pb-1.5 font-mono text-[11px] uppercase tracking-[0.06em] text-ink-3">
+              <span className="border-b-1.5 border-dashed border-line pb-1.5 font-mono text-[12px] uppercase tracking-[0.06em] text-ink-3">
                 {t.dateRange}
               </span>
               {thumb && (
@@ -148,7 +148,7 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
                 className="flex items-center gap-2 text-[14px] font-semibold text-ink hover:underline"
               >
                 <span className="min-w-0 truncate">{open.title}</span>
-                <span className="shrink-0 font-mono text-[11.5px] uppercase text-ink-3">{open.dateRange}</span>
+                <span className="shrink-0 font-mono text-[12px] uppercase text-ink-3">{open.dateRange}</span>
                 <ChevronRight size={14} className="ml-auto shrink-0 text-ink-3" />
               </Link>
               {photosOf(open) > 0 ? (

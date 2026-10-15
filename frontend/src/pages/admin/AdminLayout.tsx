@@ -19,7 +19,7 @@ export function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-paper text-ink">
+    <div className="flex h-dvh overflow-hidden bg-paper text-ink">
       {/* Desktop sidebar */}
       <aside
         className={`hidden shrink-0 flex-col border-r-1.5 border-line bg-surface transition-[width] duration-300 ease-in-out lg:flex ${

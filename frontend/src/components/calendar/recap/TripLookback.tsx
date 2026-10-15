@@ -97,7 +97,7 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
           type="button"
           onClick={onClose}
           aria-label="Sluiten"
-          className="absolute left-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-[#0F1519]/70 text-white transition-colors hover:bg-[#0F1519]"
+          className="hit-area absolute left-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-[#0F1519]/70 text-white transition-colors hover:bg-[#0F1519]"
         >
           <X size={15} />
         </button>
@@ -130,7 +130,7 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
         <dl className="grid grid-cols-3 rounded-[10px] border-1.5 border-line">
           {stats.map((s, i) => (
             <div key={s.label} className={`flex flex-col-reverse px-2.5 py-2 ${i > 0 ? "border-l-1.5 border-line" : ""}`}>
-              <dt className="text-[11.5px] text-ink-2">{s.label}</dt>
+              <dt className="text-[12px] text-ink-2">{s.label}</dt>
               <dd className="font-display text-[26px] font-extrabold leading-none tabular-nums text-ink">{s.value}</dd>
             </div>
           ))}
@@ -152,11 +152,11 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
                     on ? "border-2 border-outline" : "border-1.5 border-line hover:border-ink-3"
                   } ${ev.has_con === false ? "bg-hatch-surface" : "bg-surface"}`}
                 >
-                  <span className="block font-mono text-[10px] uppercase leading-none tracking-[0.06em] text-ink-3">
+                  <span className="block font-mono text-[12px] uppercase leading-none tracking-[0.06em] text-ink-3">
                     {dayShort(date)} {monthShort(date)}
                   </span>
                   <span className="block font-display text-[22px] font-extrabold leading-none text-ink">{date.getDate()}</span>
-                  <span className="mt-0.5 flex items-center justify-center gap-1 text-[10.5px] leading-none text-ink-2">
+                  <span className="mt-0.5 flex items-center justify-center gap-1 text-[12px] leading-none text-ink-2">
                     <Camera size={10} /> {photoCount(ev.id)}
                   </span>
                 </button>

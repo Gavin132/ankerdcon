@@ -44,14 +44,14 @@ export function DeleteConfirmActions({
     <div className="flex items-center justify-end gap-0.5 sm:gap-1">
       <button
         onClick={onEdit}
-        className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink sm:h-8 sm:w-8"
+        className="hit-area flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink sm:h-8 sm:w-8"
         title="Bewerken"
       >
         <Pencil size={14} />
       </button>
       <button
         onClick={onRequestDelete}
-        className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 sm:h-8 sm:w-8"
+        className="hit-area flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 sm:h-8 sm:w-8"
         title="Verwijderen"
       >
         <Trash2 size={14} />

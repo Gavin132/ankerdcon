@@ -42,7 +42,7 @@ export function ChangelogPage() {
               key={entry.id}
               className="card-surface p-5"
             >
-              <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3">
+              <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink-3">
                 {formatReleaseDate(entry.released_at)}
               </p>
               <h2 className="mb-3 mt-1 font-display text-[24px] font-extrabold uppercase leading-[0.95] text-ink">{entry.title}</h2>

@@ -65,7 +65,7 @@ function AdminStatusPicker({
             disabled={pending}
             onClick={() => handleClick(s)}
             title={STATUS_CONFIG[s].label}
-            className={`flex h-6 w-6 items-center justify-center rounded-full border font-mono text-[9.5px] font-semibold transition-colors disabled:opacity-50 ${
+            className={`hit-area flex h-6 w-6 items-center justify-center rounded-full border font-mono text-[9.5px] font-semibold transition-colors disabled:opacity-50 ${
               active
                 ? STATUS_CONFIG[s].pill
                 : "border-line text-ink-3 hover:text-ink hover:border-ink-3"

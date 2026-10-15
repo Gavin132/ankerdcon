@@ -85,12 +85,12 @@ export const CosplayCard = forwardRef<HTMLDivElement, CosplayCardProps>(function
             {linkedEvents.map((e) => (
               <span
                 key={e.id}
-                className="rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2"
+                className="rounded-md border border-line px-1.5 font-mono text-[12px] uppercase tracking-[0.05em] text-ink-2"
               >
                 {formatDate(e.date)}
               </span>
             ))}
-            <span className="font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-3">
+            <span className="font-mono text-[12px] uppercase tracking-[0.05em] text-ink-3">
               {cosplay.inspo_images.length > 0
                 ? `${cosplay.inspo_images.length} foto${cosplay.inspo_images.length !== 1 ? "'s" : ""}`
                 : "Geen foto's"}

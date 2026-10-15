@@ -154,7 +154,7 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
                   type="button"
                   onClick={() => handleDeleteDay(day)}
                   disabled={deleteDay.isPending}
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 transition-colors disabled:opacity-40"
+                  className="hit-area flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 transition-colors disabled:opacity-40"
                 >
                   <Trash2 size={13} />
                 </button>
@@ -540,7 +540,7 @@ export function EventEditDrawer({
                 <button
                   type="button"
                   onClick={() => setValue("image_url", "", { shouldValidate: true })}
-                  className="absolute right-1.5 top-1.5 rounded-lg bg-[#0F1519]/70 p-1 text-white transition-colors hover:bg-[#0F1519]"
+                  className="hit-area absolute right-1.5 top-1.5 rounded-lg bg-[#0F1519]/70 p-1 text-white transition-colors hover:bg-[#0F1519]"
                 >
                   <XIcon size={12} />
                 </button>
@@ -625,7 +625,7 @@ export function EventEditDrawer({
                     <button
                       type="button"
                       onClick={() => setTicketTypes((p) => p.filter((_, idx) => idx !== i))}
-                      className="flex h-6 w-6 items-center justify-center rounded-lg text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 transition-colors"
+                      className="hit-area flex h-6 w-6 items-center justify-center rounded-lg text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 transition-colors"
                     >
                       <XIcon size={12} />
                     </button>

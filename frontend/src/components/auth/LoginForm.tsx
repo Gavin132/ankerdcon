@@ -78,7 +78,7 @@ export function LoginForm() {
           Inloggen met Discord
           {loading !== "discord" && <LogIn size={18} className="ml-2" />}
         </Button>
-        <span className="pointer-events-none absolute -top-2.5 right-3 rounded-md border-1.5 border-outline bg-surface px-1.5 py-px font-mono text-[10px] font-semibold uppercase tracking-[0.05em] text-ink">
+        <span className="pointer-events-none absolute -top-2.5 right-3 rounded-md border-1.5 border-outline bg-surface px-1.5 py-px font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-ink">
           Aanbevolen
         </span>
       </div>

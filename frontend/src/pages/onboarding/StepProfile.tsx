@@ -99,7 +99,7 @@ function ProfilePhotos({ bannerColor }: { bannerColor: string }) {
               disabled={deleteBannerMutation.isPending}
               aria-label="Banner verwijderen"
               title="Banner verwijderen"
-              className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-colors hover:bg-ink/90 disabled:opacity-60"
+              className="hit-area flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-colors hover:bg-ink/90 disabled:opacity-60"
             >
               {deleteBannerMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
             </button>
@@ -110,7 +110,7 @@ function ProfilePhotos({ bannerColor }: { bannerColor: string }) {
             disabled={uploadBannerMutation.isPending}
             aria-label="Banner wijzigen"
             title="Banner wijzigen"
-            className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-transform hover:bg-ink/90 active:scale-95 disabled:opacity-60"
+            className="hit-area flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-transform hover:bg-ink/90 active:scale-95 disabled:opacity-60"
           >
             {uploadBannerMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <Pencil size={12} />}
           </button>
@@ -137,7 +137,7 @@ function ProfilePhotos({ bannerColor }: { bannerColor: string }) {
             disabled={uploadAvatarMutation.isPending}
             aria-label="Profielfoto wijzigen"
             title="Profielfoto wijzigen"
-            className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper transition-transform active:scale-95 disabled:opacity-60"
+            className="hit-area absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper transition-transform active:scale-95 disabled:opacity-60"
           >
             {uploadAvatarMutation.isPending ? <Loader2 size={11} className="animate-spin" /> : <Pencil size={11} />}
           </button>
@@ -155,7 +155,7 @@ function ProfilePhotos({ bannerColor }: { bannerColor: string }) {
             disabled={deleteAvatarMutation.isPending}
             aria-label="Profielfoto verwijderen"
             title="Profielfoto verwijderen"
-            className="mb-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-sunken hover:text-ink disabled:opacity-60"
+            className="hit-area mb-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-sunken hover:text-ink disabled:opacity-60"
           >
             {deleteAvatarMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
           </button>
@@ -218,6 +218,7 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
             <Smartphone size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
             <input
               type="tel"
+              autoComplete="tel"
               maxLength={20}
               placeholder="+31 6 12345678"
               className={`input-field pl-9 ${phoneError && state.phone ? "!border-rose-500 dark:!border-rose-400" : ""}`}
@@ -249,7 +250,7 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
               value={state.bio}
               onChange={(e) => onChange({ bio: e.target.value })}
             />
-            <span className="pointer-events-none absolute bottom-3 right-3 select-none font-mono text-[11px] text-ink-3">
+            <span className="pointer-events-none absolute bottom-3 right-3 select-none font-mono text-[12px] text-ink-3">
               {200 - state.bio.length}
             </span>
           </div>

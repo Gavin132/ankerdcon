@@ -113,7 +113,7 @@ export function TileText({ children }: { children: ReactNode }) {
 /** Amber pill for something that still needs attention. */
 export function TilePill({ children }: { children: ReactNode }) {
   return (
-    <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[11.5px] font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+    <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[12px] font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
       {children}
     </span>
   );

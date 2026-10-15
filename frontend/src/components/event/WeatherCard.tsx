@@ -106,7 +106,7 @@ export function WeatherCard({ weather }: { weather: EventWeather }) {
             className="flex items-center justify-center gap-1 px-1.5 py-2"
           >
             <Icon size={12} className={`${cls} shrink-0`} />
-            <p className="truncate font-mono text-[11px] leading-none tabular-nums">
+            <p className="truncate font-mono text-[12px] leading-none tabular-nums">
               <span className="font-semibold text-ink">{value}</span>
               <span className="font-medium text-ink-3"> {sub}</span>
             </p>
@@ -123,7 +123,7 @@ export function WeatherCard({ weather }: { weather: EventWeather }) {
                 key={slot.hour}
                 className="flex flex-col items-center gap-0.5"
               >
-                <p className="font-mono text-[10px] font-medium tabular-nums text-ink-3">
+                <p className="font-mono text-[12px] font-medium tabular-nums text-ink-3">
                   {slot.hour}u
                 </p>
                 <span className="text-xl leading-none">{slot.icon}</span>
@@ -131,7 +131,7 @@ export function WeatherCard({ weather }: { weather: EventWeather }) {
                   {slot.temp}°
                 </p>
                 {slot.precip_prob > 0 && (
-                  <p className="font-mono text-[9px] font-semibold tabular-nums text-brand-text">
+                  <p className="font-mono text-[12px] font-semibold tabular-nums text-brand-text">
                     {slot.precip_prob}%
                   </p>
                 )}

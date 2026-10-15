@@ -176,7 +176,7 @@ function EventRow({ item, users, cosplayCount }: {
           <button
             type="button"
             onClick={() => navigate(routes.event.view(firstDay.id))}
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+            className="hit-area flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
           >
             <ChevronRight size={14} />
           </button>

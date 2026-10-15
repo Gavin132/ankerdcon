@@ -187,7 +187,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
               <span className="section-label">Mascotte</span>
             </div>
             {phase === "talking" && (
-              <span className="font-mono text-[11px] tabular-nums text-ink-3">{lineIndex + 1} / {introLines.length}</span>
+              <span className="font-mono text-[12px] tabular-nums text-ink-3">{lineIndex + 1} / {introLines.length}</span>
             )}
           </div>
 
@@ -210,9 +210,9 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
 
                 {showCaret && phase === "talking" && (
                   <div className="mt-3 flex items-center gap-1.5">
-                    <span className="text-[11px] text-ink-3">Tik om verder te gaan</span>
+                    <span className="text-[12px] text-ink-3">Tik om verder te gaan</span>
                     <motion.span
-                      className="text-[11px] text-ink-3"
+                      className="text-[12px] text-ink-3"
                       animate={{ opacity: [0.3, 0.9, 0.3] }}
                       transition={{ repeat: Infinity, duration: 1.2 }}
                     >▼</motion.span>
@@ -255,7 +255,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                       <span className="text-xl leading-none w-7 text-center">{stop.emoji}</span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-ink">{stop.label}</p>
-                        <p className="mt-0.5 text-[11px] text-ink-3">{stop.tag}</p>
+                        <p className="mt-0.5 text-[12px] text-ink-3">{stop.tag}</p>
                       </div>
                       <AnimatePresence>
                         {conIndex === i && (
@@ -325,7 +325,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                             {birthYear}
                           </motion.span>
                         </AnimatePresence>
-                        <span className="mt-1 font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">
+                        <span className="mt-1 font-mono text-[12px] uppercase tracking-[0.08em] text-ink-3">
                           {new Date().getFullYear() - birthYear} jaar oud
                         </span>
                       </div>
@@ -364,7 +364,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                       onKeyDown={e => { if (e.key === "Enter") { commitYearInput(); (e.target as HTMLInputElement).blur(); } }}
                       className="w-36 bg-transparent text-center font-display text-[56px] font-extrabold leading-none tabular-nums text-ink focus:outline-none"
                     />
-                    <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">
+                    <span className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink-3">
                       {new Date().getFullYear() - birthYear} jaar oud · {YEAR_MIN}–{YEAR_MAX}
                     </span>
                   </div>

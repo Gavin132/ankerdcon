@@ -88,7 +88,7 @@ export function CosplayDetailBody({ cosplay, events, users, onLeave: onClose }: 
               >
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-ink-3">
                   <ImageOff size={18} />
-                  <span className="text-[10px]">Niet beschikbaar</span>
+                  <span className="text-[12px]">Niet beschikbaar</span>
                 </div>
                 <img
                   src={url}
@@ -104,7 +104,7 @@ export function CosplayDetailBody({ cosplay, events, users, onLeave: onClose }: 
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#0F1519]/70 text-[#E6F0F3] hover:bg-[#0F1519]/90"
+                    className="hit-area flex h-6 w-6 items-center justify-center rounded-lg bg-[#0F1519]/70 text-[#E6F0F3] hover:bg-[#0F1519]/90"
                   >
                     <ExternalLink size={11} />
                   </a>
@@ -149,7 +149,7 @@ export function CosplayDetailBody({ cosplay, events, users, onLeave: onClose }: 
           onClick={() => setLightbox(null)}
         >
           <button
-            className="absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors"
+            className="hit-area absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors"
             onClick={() => setLightbox(null)}
           >
             <X size={18} />

@@ -197,6 +197,8 @@ export function NamePicker(props: NamePickerProps) {
         <input
           ref={inputRef}
           className="input-field pl-8"
+          enterKeyHint="search"
+          autoCorrect="off"
           placeholder={placeholder}
           value={open ? query : !isMulti && singleValue ? singleValue : query}
           onChange={(e) => {
@@ -262,7 +264,7 @@ export function NamePicker(props: NamePickerProps) {
                         ? user?.aliases?.find((a) => a.toLowerCase().includes(q))
                         : undefined;
                       return matchedAlias ? (
-                        <span className="block text-[11px] text-slate-400 truncate">ook bekend als &ldquo;{matchedAlias}&rdquo;</span>
+                        <span className="block text-[12px] text-slate-400 truncate">ook bekend als &ldquo;{matchedAlias}&rdquo;</span>
                       ) : null;
                     })()}
                   </span>

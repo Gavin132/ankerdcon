@@ -40,7 +40,7 @@ export function StoryRing({ label, hasPhotos, hasUnseen, previewUrl, onClick }: 
           )}
         </div>
       </div>
-      <span className="max-w-full truncate font-mono text-[10.5px] font-semibold uppercase tracking-[0.05em] text-ink-2">
+      <span className="max-w-full truncate font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-ink-2">
         {label}
       </span>
     </button>

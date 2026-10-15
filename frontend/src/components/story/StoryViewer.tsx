@@ -96,27 +96,38 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
   const currentId = photos[index]?.id;
   const currentIsVideo = photos[index]?.media_type === "video";
 
-  // The progress bar of a video follows the video itself, and the story moves on when it ends.
+  // The progress bar. A video's follows the video itself (the story moves on when it ends, see onEnded);
+  // a photo's, and that of a video this device cannot play, fills over SLIDE_DURATION_MS and then moves on.
+  // Driven by hand rather than by an animation: it is a timer the story depends on, which must not be
+  // skipped when the person asked their device for reduced motion (see MotionConfig in App.tsx).
+  const timed = !!currentId && (!currentIsVideo || failedVideoId === currentId);
   useEffect(() => {
     videoProgress.set(0);
     setBuffering(false);
-    if (!open || !currentIsVideo) return;
+    if (!open || !currentId) return;
     let frame = 0;
-    const tick = () => {
-      const v = videoRef.current;
-      if (v && v.duration) videoProgress.set(v.currentTime / v.duration);
+    if (timed) {
+      let elapsed = 0;
+      let last = performance.now();
+      const tick = (now: number) => {
+        // A hidden tab stops asking for frames; the gap after it must not count as time spent on the photo.
+        elapsed += Math.min(now - last, 250);
+        last = now;
+        videoProgress.set(Math.min(1, elapsed / SLIDE_DURATION_MS));
+        if (elapsed >= SLIDE_DURATION_MS) nextRef.current();
+        else frame = requestAnimationFrame(tick);
+      };
       frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
+    } else {
+      const tick = () => {
+        const v = videoRef.current;
+        if (v && v.duration) videoProgress.set(v.currentTime / v.duration);
+        frame = requestAnimationFrame(tick);
+      };
+      frame = requestAnimationFrame(tick);
+    }
     return () => cancelAnimationFrame(frame);
-  }, [open, currentId, currentIsVideo, videoProgress]);
-
-  // A video this device cannot play: say so, then carry on with the story.
-  useEffect(() => {
-    if (!failedVideoId || failedVideoId !== currentId) return;
-    const t = setTimeout(() => nextRef.current(), 4000);
-    return () => clearTimeout(t);
-  }, [failedVideoId, currentId]);
+  }, [open, currentId, timed, videoProgress]);
 
   function startVideo(v: HTMLVideoElement) {
     v.muted = muted;
@@ -261,19 +272,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
             {photos.map((p, i) => (
               <div key={p.id} className="h-[3px] flex-1 rounded-full bg-white/25 overflow-hidden">
                 {i < index && <div className="h-full w-full bg-white" />}
-                {i === index && p.media_type === "video" && failedVideoId !== p.id && (
-                  <motion.div className="h-full w-full bg-white origin-left" style={{ scaleX: videoProgress }} />
-                )}
-                {i === index && (p.media_type !== "video" || failedVideoId === p.id) && (
-                  <motion.div
-                    key={index}
-                    className="h-full bg-white origin-left"
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ duration: SLIDE_DURATION_MS / 1000, ease: "linear" }}
-                    onAnimationComplete={next}
-                  />
-                )}
+                {i === index && <motion.div className="h-full w-full bg-white origin-left" style={{ scaleX: videoProgress }} />}
               </div>
             ))}
           </div>
@@ -294,7 +293,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                     if (videoRef.current) videoRef.current.muted = nowMuted;
                   }}
                   aria-label={muted ? "Geluid aan" : "Geluid uit"}
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
+                  className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
                 >
                   {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
                 </button>
@@ -302,7 +301,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
               <button
                 type="button"
                 onClick={() => handleShare(current.image_url)}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
+                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
               >
                 <Share2 size={16} />
               </button>
@@ -312,7 +311,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                 onClick={handleDownloadAll}
                 title="Download alle foto's van deze dag als zip"
                 aria-label="Download alle foto's van deze dag"
-                className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3] disabled:opacity-50"
+                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3] disabled:opacity-50"
               >
                 {downloadingAll ? <Loader2 size={16} className="animate-spin" /> : <FolderDown size={16} />}
               </button>
@@ -320,7 +319,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                 type="button"
                 disabled={downloadingId === current.id}
                 onClick={() => handleDownload(current)}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3] disabled:opacity-50"
+                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3] disabled:opacity-50"
               >
                 {downloadingId === current.id ? (
                   <Loader2 size={16} className="animate-spin" />
@@ -332,7 +331,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                 <button
                   type="button"
                   onClick={() => handleDelete(current.id)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
+                  className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -340,7 +339,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
               <button
                 type="button"
                 onClick={handleClose}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
+                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
               >
                 <X size={20} />
               </button>

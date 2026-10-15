@@ -132,13 +132,13 @@ export function CalendarPage() {
             className="overflow-hidden"
           >
             <div className="card-surface flex items-center gap-2 px-3.5 py-2.5">
-              <p className="flex-1 truncate font-mono text-[11.5px] text-ink-2">
+              <p className="flex-1 truncate font-mono text-[12px] text-ink-2">
                 {feedUrl || "Link ophalen…"}
               </p>
               <button
                 onClick={copyFeedUrl}
                 title="Kopieer link"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+                className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
               >
                 {copied ? <Check size={14} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={14} />}
               </button>

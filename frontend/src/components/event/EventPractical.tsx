@@ -65,7 +65,7 @@ export function EventPractical({
                 <row.icon size={14} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="mb-1 font-mono text-[11px] font-semibold uppercase tracking-[0.09em] text-amber-800 dark:text-amber-300">
+                <p className="mb-1 font-mono text-[12px] font-semibold uppercase tracking-[0.09em] text-amber-800 dark:text-amber-300">
                   {row.label}
                 </p>
                 <p className="whitespace-pre-line text-sm font-medium leading-relaxed text-amber-900 dark:text-amber-200">

@@ -132,7 +132,7 @@ export function AdminFeedbackPage() {
                     onClick={() => setConfirmId(f.id)}
                     aria-label="Verwijderen"
                     title="Verwijderen"
-                    className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-rose-600"
+                    className="hit-area flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-rose-600"
                   >
                     <Trash2 size={15} />
                   </button>

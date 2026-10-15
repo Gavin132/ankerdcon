@@ -22,14 +22,14 @@ function TripRow({ trip, current, going, onPick }: { trip: Trip; current: boolea
       >
         <span className="min-w-0 flex-1 leading-tight">
           <span className="block truncate text-[14.5px] font-semibold text-ink">{trip.title}</span>
-          <span className="mt-0.5 block truncate font-mono text-[11px] text-ink-3">
+          <span className="mt-0.5 block truncate font-mono text-[12px] text-ink-3">
             {trip.dateRange}
             {trip.location ? ` · ${trip.location}` : ""}
           </span>
         </span>
-        {current && <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[10.5px] font-semibold text-brand-text">Dit event</span>}
-        {!current && PHASE_LABEL[phase] && <span className="shrink-0 rounded-full bg-brand px-2 py-0.5 text-[10.5px] font-semibold text-brand-on">{PHASE_LABEL[phase]}</span>}
-        {going && !current && <span className="shrink-0 text-[11px] font-semibold text-ink-3">Jij gaat mee</span>}
+        {current && <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[12px] font-semibold text-brand-text">Dit event</span>}
+        {!current && PHASE_LABEL[phase] && <span className="shrink-0 rounded-full bg-brand px-2 py-0.5 text-[12px] font-semibold text-brand-on">{PHASE_LABEL[phase]}</span>}
+        {going && !current && <span className="shrink-0 text-[12px] font-semibold text-ink-3">Jij gaat mee</span>}
         <ChevronRight size={14} className="shrink-0 text-ink-3" />
       </Link>
     </li>
@@ -87,7 +87,7 @@ export function TripSwitcherButton({ iconOnly, onClick }: { iconOnly?: boolean; 
       onClick={onClick}
       title="Andere evenementen"
       aria-label="Andere evenementen"
-      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+      className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
     >
       <CalendarRange size={17} />
     </button>

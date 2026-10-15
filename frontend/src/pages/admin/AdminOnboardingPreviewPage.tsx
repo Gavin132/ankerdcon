@@ -24,7 +24,7 @@ export function AdminOnboardingPreviewPage() {
         type="button"
         onClick={exitPreview}
         aria-label="Preview sluiten"
-        className="flex h-8 w-8 items-center justify-center rounded-full border-1.5 border-line bg-surface text-ink transition-colors hover:border-ink-3"
+        className="hit-area flex h-8 w-8 items-center justify-center rounded-full border-1.5 border-line bg-surface text-ink transition-colors hover:border-ink-3"
       >
         <X size={15} />
       </button>

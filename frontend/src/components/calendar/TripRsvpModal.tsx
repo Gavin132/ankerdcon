@@ -112,13 +112,13 @@ export function TripRsvpModal({ trip: openTrip, users, onClose, onConfirm }: Tri
                       >
                         {on && <Check size={9} strokeWidth={3} />}
                       </span>
-                      <span className="block font-mono text-[10px] uppercase leading-none tracking-[0.08em] text-ink-3">
+                      <span className="block font-mono text-[12px] uppercase leading-none tracking-[0.08em] text-ink-3">
                         {dayShort(date)} {monthShort(date)}
                       </span>
                       <span className="block font-display text-[24px] font-extrabold leading-none text-ink">
                         {date.getDate()}
                       </span>
-                      <span className="mt-1 block truncate text-[11px] leading-none text-ink-2">
+                      <span className="mt-1 block truncate text-[12px] leading-none text-ink-2">
                         {ev.has_con === false ? "Reisdag" : `${ev.participants.length} mee`}
                       </span>
                     </button>

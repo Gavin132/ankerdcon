@@ -102,7 +102,7 @@ export function ParkingSpotModal({ open, onClose, tripId, manageableDrivers }: P
               <Check size={16} className="shrink-0 text-emerald-700 dark:text-emerald-300" />
               <div className="min-w-0 flex-1 leading-tight">
                 <p className="text-[13px] font-semibold text-emerald-800 dark:text-emerald-300">Locatie gevonden</p>
-                <p className="font-mono text-[11px] text-emerald-700 dark:text-emerald-300">±{Math.round(coords.accuracy)} m</p>
+                <p className="font-mono text-[12px] text-emerald-700 dark:text-emerald-300">±{Math.round(coords.accuracy)} m</p>
               </div>
               <button type="button" onClick={locate} className="shrink-0 text-xs font-semibold text-brand-text hover:underline">
                 Opnieuw

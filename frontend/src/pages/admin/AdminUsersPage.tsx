@@ -126,7 +126,7 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
           <button
             type="button"
             onClick={() => setValue("is_admin", !isAdmin)}
-            className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${
+            className={`hit-area relative inline-flex h-5 w-9 rounded-full transition-colors ${
               isAdmin ? "bg-ink dark:bg-brand" : "bg-line"
             }`}
           >
@@ -151,7 +151,7 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
             aria-checked={!!isViewer}
             aria-label="Alleen kijken"
             onClick={() => setValue("is_viewer", !isViewer, { shouldDirty: true })}
-            className={`relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors ${
+            className={`hit-area relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors ${
               isViewer ? "bg-ink dark:bg-brand" : "bg-line"
             }`}
           >
@@ -401,7 +401,7 @@ function UserEditDrawer({
             <button
               type="button"
               onClick={() => setValue("is_admin", !isAdmin)}
-              className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${
+              className={`hit-area relative inline-flex h-5 w-9 rounded-full transition-colors ${
                 isAdmin ? "bg-ink dark:bg-brand" : "bg-line"
               }`}
             >
@@ -426,7 +426,7 @@ function UserEditDrawer({
               aria-checked={!!isViewer}
               aria-label="Alleen kijken"
               onClick={() => setValue("is_viewer", !isViewer, { shouldDirty: true })}
-              className={`relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors ${
+              className={`hit-area relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors ${
                 isViewer ? "bg-ink dark:bg-brand" : "bg-line"
               }`}
             >
@@ -660,7 +660,7 @@ export function AdminUsersPage() {
                           {user.discord_id && (
                             <button
                               onClick={() => handleCopyDiscordId(user.discord_id!, user.id!)}
-                              className="opacity-0 group-hover:opacity-100 flex h-6 w-6 items-center justify-center rounded-md text-ink-3 hover:bg-sunken hover:text-ink transition-all"
+                              className="hit-area opacity-0 group-hover:opacity-100 flex h-6 w-6 items-center justify-center rounded-md text-ink-3 hover:bg-sunken hover:text-ink transition-all"
                               title="Kopieer Discord ID"
                             >
                               {copiedId === user.id ? (
@@ -747,7 +747,7 @@ export function AdminUsersPage() {
                               }
                               disabled={updateMutation.isPending}
                               title={isActive ? "Deactiveren" : "Activeren"}
-                              className={`flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg transition-colors disabled:opacity-40 ${
+                              className={`hit-area flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg transition-colors disabled:opacity-40 ${
                                 isActive
                                   ? "text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-500/15"
                                   : "text-emerald-700 hover:bg-emerald-100 dark:text-emerald-300 dark:hover:bg-emerald-500/15"

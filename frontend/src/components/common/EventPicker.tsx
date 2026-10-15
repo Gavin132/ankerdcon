@@ -93,14 +93,14 @@ export function EventPicker({
                 <p className="text-sm font-semibold text-ink truncate">
                   {selectedEvent.event_name}
                 </p>
-                <p className="font-mono text-[11px] text-ink-3">
+                <p className="font-mono text-[12px] text-ink-3">
                   {formatDateWithDay(selectedEvent.date)}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={handleClear}
-                className="shrink-0 flex h-6 w-6 items-center justify-center rounded-md text-ink-3 hover:text-ink hover:bg-sunken transition-colors"
+                className="hit-area shrink-0 flex h-6 w-6 items-center justify-center rounded-md text-ink-3 hover:text-ink hover:bg-sunken transition-colors"
               >
                 <X size={12} />
               </button>
@@ -117,6 +117,7 @@ export function EventPicker({
         />
         <input
           className="input-field pl-8"
+          enterKeyHint="search"
           placeholder={placeholder}
           value={query}
           onChange={(e) => {
@@ -164,7 +165,7 @@ export function EventPicker({
                       <span className="block text-sm font-semibold text-ink truncate">
                         {event.event_name}
                       </span>
-                      <span className="block text-[11px] text-ink-3 truncate">
+                      <span className="block text-[12px] text-ink-3 truncate">
                         {formatDateWithDay(event.date)}
                         {event.location ? ` · ${event.location}` : ""}
                       </span>

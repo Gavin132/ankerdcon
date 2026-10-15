@@ -8,7 +8,7 @@ export function AdminRoute() {
   const { data: me, isLoading } = useUser(currentUser ?? "");
 
   if (!currentUser) return <Navigate to={routes.login} replace />;
-  if (isLoading) return <div className="min-h-screen bg-slate-950" />;
+  if (isLoading) return <div className="min-h-dvh bg-slate-950" />;
   if (!me?.is_admin) return <Navigate to={routes.hub} replace />;
 
   return <Outlet />;

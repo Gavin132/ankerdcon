@@ -454,7 +454,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
                 <button
                   type="button"
                   onClick={() => setValue("driver", "", { shouldValidate: true })}
-                  className="absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+                  className="hit-area absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
                   title="Chauffeur verwijderen"
                 >
                   <XIcon size={14} />
@@ -505,7 +505,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
               {formDirection !== "Restaurant" && (
                 <div>
                   <label className={SL}>Plekken in de auto</label>
-                  <input type="number" min={1} max={99} className="input-field" {...register("total_seats")} />
+                  <input type="number" inputMode="numeric" min={1} max={99} className="input-field" {...register("total_seats")} />
                   <p className="mt-1 text-xs text-ink-3">Incl. bestuurder</p>
                 </div>
               )}
@@ -582,7 +582,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
           {/* Restaurant opties */}
           {formDirection === "Restaurant" && (
             <div className="space-y-3 rounded-xl border-1.5 border-amber-200 bg-amber-50 p-4 dark:border-amber-500/25 dark:bg-amber-500/10">
-              <p className="mb-3 font-mono text-[11px] font-semibold uppercase tracking-[0.09em] text-amber-800 dark:text-amber-300">Restaurant opties</p>
+              <p className="mb-3 font-mono text-[12px] font-semibold uppercase tracking-[0.09em] text-amber-800 dark:text-amber-300">Restaurant opties</p>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" className="cb" {...register("action_required")} />
                 <div>

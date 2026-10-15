@@ -110,6 +110,8 @@ export function LocationSearchInput({
         </div>
         <input
           type="text"
+          enterKeyHint="search"
+          autoCorrect="off"
           value={query}
           onChange={(e) => handleInput(e.target.value)}
           onFocus={() => results.length > 0 && setOpen(true)}
@@ -153,7 +155,7 @@ export function LocationSearchInput({
               </button>
             );
           })}
-          <p className="px-3.5 py-2 text-[10px] text-ink-3 border-t border-line">
+          <p className="px-3.5 py-2 text-[12px] text-ink-3 border-t border-line">
             © OpenStreetMap contributors
           </p>
         </div>

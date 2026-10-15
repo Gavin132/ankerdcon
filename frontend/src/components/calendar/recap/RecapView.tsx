@@ -155,10 +155,10 @@ export function RecapView({ trips, myNames, users, rides, meals, onJoin, onLeave
         {/* Arrows sit together in front of the title, so they stay put however long the month name is. */}
         <div className="flex items-center gap-3">
           <div className="flex shrink-0 gap-1.5">
-            <button type="button" onClick={() => goToMonth(y, m - 1)} aria-label="Vorige maand" className="flex h-9 w-9 items-center justify-center rounded-[9px] border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink">
+            <button type="button" onClick={() => goToMonth(y, m - 1)} aria-label="Vorige maand" className="hit-area flex h-9 w-9 items-center justify-center rounded-[9px] border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink">
               <ChevronLeft size={17} />
             </button>
-            <button type="button" onClick={() => goToMonth(y, m + 1)} aria-label="Volgende maand" className="flex h-9 w-9 items-center justify-center rounded-[9px] border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink">
+            <button type="button" onClick={() => goToMonth(y, m + 1)} aria-label="Volgende maand" className="hit-area flex h-9 w-9 items-center justify-center rounded-[9px] border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink">
               <ChevronRight size={17} />
             </button>
           </div>
@@ -203,7 +203,7 @@ export function RecapView({ trips, myNames, users, rides, meals, onJoin, onLeave
         {stripYears.map(({ year, months }, gi) => (
           <div key={year} className={`flex shrink-0 items-stretch ${gi > 0 ? "ml-2 border-l-1.5 border-line pl-2" : ""}`}>
             {/* The year sticks to the left edge while its months scroll past. */}
-            <span className="sticky left-0 z-[1] flex items-center bg-paper pr-1.5 font-mono text-[11px] font-semibold tabular-nums text-ink-2">
+            <span className="sticky left-0 z-[1] flex items-center bg-paper pr-1.5 font-mono text-[12px] font-semibold tabular-nums text-ink-2">
               {year}
             </span>
             <div className="flex gap-[3px]">
@@ -220,7 +220,7 @@ export function RecapView({ trips, myNames, users, rides, meals, onJoin, onLeave
                     aria-current={active}
                     title={isNow ? "Deze maand" : undefined}
                     aria-label={`${MONTHS[sm]} ${year}${isNow ? " (deze maand)" : ""}, ${starts.length} ${starts.length === 1 ? "event" : "events"}`}
-                    className={`flex w-[44px] shrink-0 flex-col items-center gap-1 rounded-lg border-1.5 px-0.5 pb-1.5 pt-1.5 font-mono text-[10.5px] uppercase transition-colors ${
+                    className={`flex w-[44px] shrink-0 flex-col items-center gap-1 rounded-lg border-1.5 px-0.5 pb-1.5 pt-1.5 font-mono text-[12px] uppercase transition-colors ${
                       active ? "border-outline bg-surface text-ink" : "border-transparent hover:bg-surface"
                     } ${isNow ? "font-semibold text-ink" : active ? "" : "text-ink-3"}`}
                   >
@@ -250,7 +250,7 @@ export function RecapView({ trips, myNames, users, rides, meals, onJoin, onLeave
         <div className="overflow-hidden rounded-xl border-1.5 border-line bg-surface">
           <div className="grid grid-cols-7 border-b-1.5 border-line">
             {DAY_LABELS.map((d) => (
-              <span key={d} className="py-1.5 text-center font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">{d}</span>
+              <span key={d} className="py-1.5 text-center font-mono text-[12px] uppercase tracking-[0.08em] text-ink-3">{d}</span>
             ))}
           </div>
           <div className="divide-y divide-line">
@@ -272,7 +272,7 @@ export function RecapView({ trips, myNames, users, rides, meals, onJoin, onLeave
             />
           ))}
           </div>
-          <div className="flex flex-wrap gap-x-3 gap-y-1 border-t-1.5 border-line px-2.5 py-2 text-[11.5px] text-ink-3 sm:hidden">
+          <div className="flex flex-wrap gap-x-3 gap-y-1 border-t-1.5 border-line px-2.5 py-2 text-[12px] text-ink-3 sm:hidden">
             <span className="flex items-center gap-1.5"><i className="block h-2.5 w-3.5 rounded-[3px] bg-ink-2" />Geweest</span>
             <span className="flex items-center gap-1.5"><i className="block h-2.5 w-3.5 rounded-[3px] bg-brand shadow-[inset_0_0_0_1px_rgb(var(--outline))]" />Jij gaat</span>
             <span className="flex items-center gap-1.5"><i className="block h-2.5 w-3.5 rounded-[3px] shadow-[inset_0_0_0_1.5px_rgb(var(--ink-3))]" />Anderen gaan</span>
@@ -400,7 +400,7 @@ function Week({ week, monthPrefix, today, trips, tripByDay, selection, selectedT
                 }`}
               />
             )}
-            <span className={`relative z-[1] h-[18px] min-w-[20px] rounded-md px-[3px] text-center font-mono text-[11.5px] leading-[18px] tabular-nums sm:h-5 sm:min-w-[22px] sm:px-1 sm:text-[12.5px] sm:leading-5 ${number}`}>
+            <span className={`relative z-[1] h-[18px] min-w-[20px] rounded-md px-[3px] text-center font-mono text-[12px] leading-[18px] tabular-nums sm:h-5 sm:min-w-[22px] sm:px-1 sm:text-[12.5px] sm:leading-5 ${number}`}>
               {date.getDate()}
             </span>
           </button>
@@ -425,14 +425,14 @@ function Week({ week, monthPrefix, today, trips, tripByDay, selection, selectedT
             onClick={() => onTrip(trip)}
             style={{ gridColumn: `${col + 1} / span ${span}`, gridRow: 1 }}
             aria-label={`${trip.title}, ${trip.dateRange}`}
-            className={`relative z-[2] mx-[3px] flex h-[5px] min-w-0 items-center self-end overflow-hidden whitespace-nowrap rounded-[3px] text-[11.5px] font-semibold sm:mx-1.5 sm:h-[22px] sm:gap-1 sm:rounded-md sm:px-1.5 ${
+            className={`relative z-[2] mx-[3px] flex h-[5px] min-w-0 items-center self-end overflow-hidden whitespace-nowrap rounded-[3px] text-[12px] font-semibold sm:mx-1.5 sm:h-[22px] sm:gap-1 sm:rounded-md sm:px-1.5 ${
               lane > 0 ? "mb-3 sm:mb-[33px]" : "mb-1 sm:mb-[7px]"
             } ${tone} ${selectedTrip === trip ? "ring-2 ring-outline ring-offset-2 ring-offset-surface" : ""}`}
           >
             <span className="hidden min-w-0 items-center gap-1 sm:flex sm:w-full">
               {past && mine && <Check size={11} strokeWidth={3} className="shrink-0" />}
               <span className="truncate">{trip.title}</span>
-              <span className="ml-auto flex shrink-0 items-center gap-0.5 pl-1 font-mono text-[10.5px]">
+              <span className="ml-auto flex shrink-0 items-center gap-0.5 pl-1 font-mono text-[12px]">
                 {past ? <Camera size={11} /> : <Users size={11} />}
                 {past ? photos : trip.participants.length}
               </span>
@@ -503,10 +503,10 @@ function MonthOverview({ title, trips, lastYear, lastYearLabel, storySummary, is
                 </span>
                 <span className="min-w-0">
                   <span className="block truncate text-[14px] font-semibold text-ink">{t.title}</span>
-                  <span className="block truncate font-mono text-[11px] uppercase text-ink-3">{t.dateRange}</span>
+                  <span className="block truncate font-mono text-[12px] uppercase text-ink-3">{t.dateRange}</span>
                 </span>
                 <span
-                  className={`inline-flex h-[22px] items-center gap-1 whitespace-nowrap rounded-full px-2 text-[11.5px] font-semibold ${
+                  className={`inline-flex h-[22px] items-center gap-1 whitespace-nowrap rounded-full px-2 text-[12px] font-semibold ${
                     past
                       ? mine ? "bg-ink text-paper" : "bg-sunken text-ink-2"
                       : mine ? "bg-brand-soft text-brand-text" : "bg-sunken text-ink-2"

@@ -157,7 +157,7 @@ export function AdminWhitelistPage() {
                       <div className="flex items-center justify-end">
                         <button
                           onClick={() => setConfirmDeleteId(entry.id)}
-                          className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 transition-colors"
+                          className="hit-area flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 transition-colors"
                           title="Verwijderen"
                         >
                           <Trash2 size={14} />

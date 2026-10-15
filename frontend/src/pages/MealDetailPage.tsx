@@ -110,7 +110,7 @@ export function MealDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-paper">
+      <div className="min-h-dvh bg-paper">
         <DetailTopbar title="Laden…" onBack={goBack} />
         <div className="flex items-center justify-center py-24">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-ink border-t-transparent" />
@@ -121,7 +121,7 @@ export function MealDetailPage() {
 
   if (!meal) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-paper px-4 text-center">
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-paper px-4 text-center">
         <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
           <UtensilsCrossed size={22} />
         </span>
@@ -134,7 +134,7 @@ export function MealDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-dvh bg-paper">
       <DetailTopbar
         title={meal.meal_name}
         onBack={goBack}
@@ -146,7 +146,7 @@ export function MealDetailPage() {
               onClick={() => setEditOpen(true)}
               title="Activiteit bewerken"
               aria-label="Activiteit bewerken"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+              className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
             >
               <Pencil size={16} />
             </button>

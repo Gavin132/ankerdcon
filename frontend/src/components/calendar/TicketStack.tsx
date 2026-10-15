@@ -105,12 +105,12 @@ export function TicketStack({ trips, meals, users, myNames, justJoinedId, onJoin
     >
       <motion.div className="relative pb-11" initial={false} animate={{ height: boxHeight }} transition={{ duration: 0.24, ease: [0.2, 0.8, 0.2, 1] }}>
         {peeks[1] && (
-          <div aria-hidden className="absolute inset-x-8 bottom-0 top-20 flex items-end gap-2 rounded-[14px] border-1.5 border-line bg-sunken px-4 pb-1 font-mono text-[11px] uppercase tracking-[0.06em] text-ink-3">
+          <div aria-hidden className="absolute inset-x-8 bottom-0 top-20 flex items-end gap-2 rounded-[14px] border-1.5 border-line bg-sunken px-4 pb-1 font-mono text-[12px] uppercase tracking-[0.06em] text-ink-3">
             {peekLabel(peeks[1])}
           </div>
         )}
         {peeks[0] && (
-          <div aria-hidden className="absolute inset-x-4 bottom-[22px] top-10 flex items-end gap-2 rounded-[14px] border-1.5 border-line bg-surface px-4 pb-1 font-mono text-[11px] uppercase tracking-[0.06em] text-ink-3">
+          <div aria-hidden className="absolute inset-x-4 bottom-[22px] top-10 flex items-end gap-2 rounded-[14px] border-1.5 border-line bg-surface px-4 pb-1 font-mono text-[12px] uppercase tracking-[0.06em] text-ink-3">
             {peekLabel(peeks[0])}
           </div>
         )}
@@ -179,7 +179,7 @@ export function TicketStack({ trips, meals, users, myNames, justJoinedId, onJoin
                     aria-label={`${t.title}, ${t.dateRange}`}
                     aria-current={i === current}
                     title={`${t.title} · ${t.dateRange}`}
-                    className="flex h-6 w-6 items-center justify-center"
+                    className="hit-area flex h-6 w-6 items-center justify-center"
                   >
                     <span
                       className={`block h-2 rounded-full transition-all ${

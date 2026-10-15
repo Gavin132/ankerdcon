@@ -103,7 +103,7 @@ export function AccountMenu({ variant = "avatar" }: AccountMenuProps) {
           {avatar("h-8 w-8 text-[12px]")}
           <span className="min-w-0 flex-1 leading-tight">
             <span className="block truncate text-[13px] font-semibold text-ink">{displayName}</span>
-            <span className="block truncate text-[11px] text-ink-3">{me?.pronouns || "Ankerd Con"}</span>
+            <span className="block truncate text-[12px] text-ink-3">{me?.pronouns || "Ankerd Con"}</span>
           </span>
           <ChevronsUpDown size={14} className="shrink-0 text-ink-3" />
         </button>
@@ -114,7 +114,7 @@ export function AccountMenu({ variant = "avatar" }: AccountMenuProps) {
           aria-label="Accountmenu"
           aria-expanded={open}
         >
-          {avatar("h-8 w-8 text-[11px]")}
+          {avatar("h-8 w-8 text-[12px]")}
         </button>
       )}
 
@@ -153,7 +153,7 @@ export function AccountMenu({ variant = "avatar" }: AccountMenuProps) {
                   <BadgeIcon key={badge.id} badge={badge} size="sm" />
                 ))}
               </div>
-              <p className="mt-0.5 text-[11px] leading-none text-ink-3">{me?.pronouns || "Ankerd Con"}</p>
+              <p className="mt-0.5 text-[12px] leading-none text-ink-3">{me?.pronouns || "Ankerd Con"}</p>
             </div>
 
             <div className="p-1.5">

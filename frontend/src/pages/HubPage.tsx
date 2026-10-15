@@ -146,7 +146,7 @@ export function HubPage() {
         <motion.div variants={listItem}>
           <div>
             <div className="min-w-0">
-              <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3">
+              <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink-3">
                 {greeting} · {todayFormatted}
               </p>
               <h1 className="mt-1 truncate font-display text-[34px] font-extrabold uppercase leading-[0.95] tracking-[0.005em] text-ink md:text-[42px]">

@@ -41,7 +41,7 @@ export function Header() {
             {meta.title}
           </h1>
           {meta.subtitle && (
-            <p className="hidden truncate font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3 sm:block">
+            <p className="hidden truncate font-mono text-[12px] uppercase tracking-[0.08em] text-ink-3 sm:block">
               {meta.subtitle}
             </p>
           )}
@@ -51,7 +51,7 @@ export function Header() {
           type="button"
           onClick={() => setSearchOpen(true)}
           aria-label="Zoeken"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+          className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
         >
           <Search size={17} />
         </button>

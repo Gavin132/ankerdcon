@@ -124,6 +124,7 @@ function RoomModal({
             </label>
             <input
               type="number"
+              inputMode="numeric"
               min={1}
               className="input-field"
               placeholder="bijv. 2"
@@ -248,6 +249,7 @@ function BulkRoomModal({
                 </label>
                 <input
                   type="number"
+                  inputMode="numeric"
                   min={1}
                   className="input-field"
                   placeholder="10"
@@ -261,6 +263,7 @@ function BulkRoomModal({
                 </label>
                 <input
                   type="number"
+                  inputMode="numeric"
                   min={1}
                   className="input-field"
                   placeholder="2"
@@ -374,11 +377,11 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
           )}
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             {room.floor && (
-              <span className="inline-flex items-center rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2">
+              <span className="inline-flex items-center rounded-md border border-line px-1.5 font-mono text-[12px] uppercase tracking-[0.05em] text-ink-2">
                 {room.floor}
               </span>
             )}
-            <span className="font-mono text-[10.5px] uppercase tracking-[0.06em] tabular-nums text-ink-3">
+            <span className="font-mono text-[12px] uppercase tracking-[0.06em] tabular-nums text-ink-3">
               {room.capacity != null
                 ? `${room.occupants.length}/${room.capacity} bezet`
                 : room.occupants.length === 0
@@ -386,12 +389,12 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
                   : `${room.occupants.length} ${room.occupants.length === 1 ? "persoon" : "personen"}`}
             </span>
             {isMine && (
-              <span className="inline-flex items-center rounded-full bg-brand px-2 py-0.5 text-[11px] font-semibold text-brand-on">
+              <span className="inline-flex items-center rounded-full bg-brand px-2 py-0.5 text-[12px] font-semibold text-brand-on">
                 Jij
               </span>
             )}
             {isFull && (
-              <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+              <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[12px] font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
                 Vol
               </span>
             )}
@@ -404,7 +407,7 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
             <button
               type="button"
               onClick={() => onEdit(room)}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+              className="hit-area flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
               title="Bewerken"
             >
               <Pencil size={13} />
@@ -412,7 +415,7 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
             <button
               type="button"
               onClick={() => onDelete(room)}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
+              className="hit-area flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
               title="Verwijderen"
             >
               <Trash2 size={13} />
@@ -447,7 +450,7 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
               type="button"
               onClick={() => setExpanded((v) => !v)}
               aria-expanded={expanded}
-              className="mt-0.5 flex items-center gap-0.5 text-[11px] font-semibold text-brand-text hover:underline"
+              className="mt-0.5 flex items-center gap-0.5 text-[12px] font-semibold text-brand-text hover:underline"
             >
               {expanded ? <><ChevronUp size={11} /> Minder</> : <><ChevronDown size={11} /> Meer</>}
             </button>

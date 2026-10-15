@@ -45,12 +45,12 @@ export function StoryUploadButton({ eventDayId, className }: StoryUploadButtonPr
           <ImagePlus size={16} />
         )}
         {progress && progress.total > 1 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-ink px-1 font-mono text-[9px] font-bold text-paper">
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-ink px-1 font-mono text-[12px] font-bold text-paper">
             {progress.done}/{progress.total}
           </span>
         )}
         {!picker.busy && pendingCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 font-mono text-[9px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 font-mono text-[12px] font-bold text-white">
             {pendingCount}
           </span>
         )}

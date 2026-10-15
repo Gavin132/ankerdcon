@@ -68,7 +68,7 @@ export function CrashFeedback({ detail }: { detail: string | null }) {
         className="input-field resize-none select-text"
         placeholder="Bijv. ik tikte op Vervoer en kreeg dit scherm"
       />
-      <p className="text-[11.5px] leading-snug text-ink-3">De pagina en de technische melding gaan automatisch mee.</p>
+      <p className="text-[12px] leading-snug text-ink-3">De pagina en de technische melding gaan automatisch mee.</p>
       {state === "failed" && (
         <p className="text-[12px] font-semibold text-rose-700 dark:text-rose-300" role="alert">
           Versturen lukte niet. Probeer het later nog eens, via Instellingen → Feedback geven.

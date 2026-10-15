@@ -115,10 +115,10 @@ function ParticipantsSheet({
                   <span className="flex items-center gap-2">
                     <span className="truncate text-[14.5px] font-semibold text-ink">{display}</span>
                     {isMine(name) && (
-                      <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[10.5px] font-semibold text-brand-text">Jij</span>
+                      <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[12px] font-semibold text-brand-text">Jij</span>
                     )}
                   </span>
-                  {multiDay && <span className="mt-0.5 block truncate font-mono text-[11px] text-ink-3">{daysText(days)}</span>}
+                  {multiDay && <span className="mt-0.5 block truncate font-mono text-[12px] text-ink-3">{daysText(days)}</span>}
                 </span>
               </>
             );

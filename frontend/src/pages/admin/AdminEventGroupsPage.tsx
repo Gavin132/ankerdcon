@@ -192,13 +192,13 @@ export function AdminEventGroupsPage() {
                         <button
                           onClick={() => saveEdit(group.id)}
                           disabled={updateMutation.isPending}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg bg-ink text-paper transition-colors disabled:opacity-50 dark:bg-brand dark:text-brand-on"
+                          className="hit-area flex h-7 w-7 items-center justify-center rounded-lg bg-ink text-paper transition-colors disabled:opacity-50 dark:bg-brand dark:text-brand-on"
                         >
                           <Check size={13} />
                         </button>
                         <button
                           onClick={() => setEditingId(null)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink transition-colors"
+                          className="hit-area flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink transition-colors"
                         >
                           <X size={13} />
                         </button>

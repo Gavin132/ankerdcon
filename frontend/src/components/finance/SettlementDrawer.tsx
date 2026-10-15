@@ -85,7 +85,7 @@ function CopyField({ label, value, display }: { label: string; value: string; di
   return (
     <div className="flex items-center justify-between gap-3 px-3 py-2.5">
       <div className="min-w-0">
-        <p className="text-[11.5px] font-semibold text-ink-3">{label}</p>
+        <p className="text-[12px] font-semibold text-ink-3">{label}</p>
         <p className="truncate font-mono text-[13.5px] font-semibold tabular-nums text-ink">{display ?? value}</p>
       </div>
       <button
@@ -229,7 +229,7 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
               <p className="mt-1.5 text-xs text-ink-3">Maak in je bank-app een betaalverzoek van {formatAmount(amount, currency)} (Tikkie, bunq, PayPal, Revolut, Klarna, ING, Rabo, ABN AMRO, SNS, ASN, RegioBank, Knab) en plak de link hier.</p>
             )}
           </div>
-          <div className="flex items-center gap-3 text-[11.5px] font-semibold uppercase tracking-wide text-ink-3">
+          <div className="flex items-center gap-3 text-[12px] font-semibold uppercase tracking-wide text-ink-3">
             <span className="h-px flex-1 bg-line" /> of <span className="h-px flex-1 bg-line" />
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

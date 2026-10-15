@@ -70,7 +70,7 @@ function MissingPeopleSheet({
             <li key={name} className="flex items-center gap-3 px-2 py-2.5">
               <UserAvatar name={u?.name ?? name} user={u} className="h-9 w-9 shrink-0 text-xs" />
               <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-ink">{u?.name ?? name}</span>
-              {detail && <span className="shrink-0 text-[11.5px] font-medium text-ink-3">{detail}</span>}
+              {detail && <span className="shrink-0 text-[12px] font-medium text-ink-3">{detail}</span>}
             </li>
           );
         })}
@@ -149,7 +149,7 @@ export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Tr
           {total > 0 && (
             <div className="space-y-1.5 pt-1">
               {bars.map(([label, have]) => (
-                <div key={label} className="grid grid-cols-[40px_minmax(0,1fr)_40px] items-center gap-2 text-[11.5px] text-ink-3">
+                <div key={label} className="grid grid-cols-[40px_minmax(0,1fr)_40px] items-center gap-2 text-[12px] text-ink-3">
                   <span>{label}</span>
                   <span className="h-1.5 overflow-hidden rounded-full bg-line">
                     <span className="block h-full rounded-full bg-ink-2" style={{ width: `${Math.round((have / total) * 100)}%` }} />
@@ -236,7 +236,7 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
             onClick={() => setAddOpen(true)}
             title="Activiteit toevoegen"
             aria-label="Activiteit toevoegen"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-1.5 border-outline bg-brand text-brand-on transition-opacity hover:opacity-90"
+            className="hit-area flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-1.5 border-outline bg-brand text-brand-on transition-opacity hover:opacity-90"
           >
             <Plus size={15} strokeWidth={2.5} />
           </button>
@@ -254,7 +254,7 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
                 to={routes.meal.view(m.id)}
                 className="grid grid-cols-[62px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg px-1.5 py-1.5 text-[12.5px] transition-colors hover:bg-sunken"
               >
-                <span className="pt-px font-mono text-[11.5px] uppercase text-ink-3">{dayTime(m.time)}</span>
+                <span className="pt-px font-mono text-[12px] uppercase text-ink-3">{dayTime(m.time)}</span>
                 <span className="min-w-0">
                   <span className="block truncate font-semibold text-ink">{m.meal_name}</span>
                   <span className="block text-ink-3">
@@ -315,11 +315,11 @@ export function RoomsTile({ trip, phase, rooms, users, myNames }: { trip: Trip; 
                   const u = findUser(users, o);
                   return <UserAvatar key={o} name={u?.name ?? o} user={u} className="h-[18px] w-[18px] text-[7px] !border-[1.5px] !border-surface" />;
                 })}
-                {r.occupants.length === 0 && <span className="text-[11px] text-ink-3">leeg</span>}
+                {r.occupants.length === 0 && <span className="text-[12px] text-ink-3">leeg</span>}
               </span>
             </span>
           ))}
-          {rooms.length > 5 && <span className="self-center font-mono text-[11px] text-ink-3">+{rooms.length - 5}</span>}
+          {rooms.length > 5 && <span className="self-center font-mono text-[12px] text-ink-3">+{rooms.length - 5}</span>}
         </div>
       )}
       {phase !== "past" && tripInfo(trip).hotel_location && (
@@ -358,7 +358,7 @@ export function CosplayTile({ trip, cosplays, myNames }: { trip: Trip; cosplays:
         <span className="flex min-w-0 items-center gap-1 overflow-hidden">
           {images.map((src, i) => <img key={i} src={src} alt="" className="h-11 w-[34px] shrink-0 rounded-[5px] object-cover" />)}
           {moreCount > 0 && (
-            <span className="flex h-11 shrink-0 items-center justify-center rounded-[5px] bg-sunken px-1.5 font-mono text-[10.5px] text-ink-3">
+            <span className="flex h-11 shrink-0 items-center justify-center rounded-[5px] bg-sunken px-1.5 font-mono text-[12px] text-ink-3">
               +{moreCount}
             </span>
           )}
@@ -483,7 +483,7 @@ function DayForecast({ trip, day }: { trip: Trip; day: TripDay }) {
   const { data } = useEventWeather(trip.location, toDateKey(day.date), trip.locationCoords);
   const max = data ? Math.round(data.kind === "forecast" ? data.data.temp_max : data.data.temp_max_avg) : null;
   return (
-    <span className="flex flex-col items-center gap-0.5 text-[11px] text-ink-3">
+    <span className="flex flex-col items-center gap-0.5 text-[12px] text-ink-3">
       <span className="text-[17px] leading-none" aria-hidden>{data?.data.icon ?? "·"}</span>
       <b className="font-semibold tabular-nums text-ink">{max === null ? "–" : `${max}°`}</b>
       {dayShort(day.date)}
@@ -655,7 +655,7 @@ function TicketRow({ ticket, onDelete }: { ticket: LocalTicket; onDelete: () => 
         )}
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[13.5px] font-semibold text-ink">{ticket.fileName || "Ticket"}</span>
-          <span className="block text-[11.5px] text-ink-3">{formatBytes(ticket.size)} · tik om te bekijken</span>
+          <span className="block text-[12px] text-ink-3">{formatBytes(ticket.size)} · tik om te bekijken</span>
         </span>
       </a>
       {confirming ? (
@@ -676,7 +676,7 @@ function TicketRow({ ticket, onDelete }: { ticket: LocalTicket; onDelete: () => 
           type="button"
           onClick={() => setConfirming(true)}
           aria-label="Verwijderen"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
+          className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
         >
           <Trash2 size={15} />
         </button>

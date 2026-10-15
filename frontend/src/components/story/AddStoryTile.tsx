@@ -55,12 +55,12 @@ export function AddStoryTile({ eventDayId }: AddStoryTileProps) {
           <Plus size={12} strokeWidth={3} />
         </span>
         {pendingCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 font-mono text-[9px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 font-mono text-[12px] font-bold text-white">
             {pendingCount}
           </span>
         )}
       </button>
-      <span className="max-w-full truncate font-mono text-[10.5px] font-semibold uppercase text-ink-2">
+      <span className="max-w-full truncate font-mono text-[12px] font-semibold uppercase text-ink-2">
         {picker.progress?.fraction !== undefined
           ? `${Math.round(picker.progress.fraction * 100)}%`
           : picker.progress && picker.progress.total > 1
