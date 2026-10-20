@@ -15,7 +15,7 @@ from app.constants import Tables
 from app.core import minio_client
 from app.core.logging import get_logger
 from app.core.meal_categories import default_category_id, list_meals_with_category, require_category
-from app.core.thumbnails import derivative_urls, is_derivative
+from app.core.thumbnails import derivative_keys_by_name, derivative_urls, is_derivative
 from app.core.uploads import clean_image, read_capped, shrink_image, sniff_video
 from app.core.zip_stream import stream_zip
 from app.dependencies import _unique_profile_name, forget_viewer, get_admin_user
@@ -1656,7 +1656,10 @@ def admin_delete_cdn_file(
     except Exception as e:
         logger.error("CDN delete of %s failed: %s", key, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Verwijderen mislukt. Probeer het opnieuw.")
-    for extra in derived:
+    # The ones the database named, and (a story file whose row is already gone, say after its event was deleted,
+    # names nothing) the ones its file name implies.
+    extras = list(dict.fromkeys([*derived, *(derivative_keys_by_name(key) if _cdn_kind(key) == "story" else [])]))
+    for extra in extras:
         try:
             minio_client.delete_object(extra)
         except Exception:

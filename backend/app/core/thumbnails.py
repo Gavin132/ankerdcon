@@ -35,6 +35,16 @@ def is_derivative(key: str) -> bool:
     return key.endswith(DERIVATIVE_SUFFIXES)
 
 
+def derivative_keys_by_name(key: str) -> list[str]:
+    """The keys the lighter copies of the story file `key` would have, from its name alone (`<base>.thumb.webp`,
+    ...). For cleaning up when the database row that names them is already gone; deleting a key that does not
+    exist is harmless."""
+    if is_derivative(key) or "." not in key.rsplit("/", 1)[-1]:
+        return []
+    base = key.rsplit(".", 1)[0]
+    return [f"{base}{suffix}" for suffix in DERIVATIVE_SUFFIXES]
+
+
 _DERIVATIVE_COLUMNS = ("poster_url", "thumb_url", "preview_url")
 
 

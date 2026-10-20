@@ -340,3 +340,48 @@ def test_the_backfill_makes_them_for_a_photo_and_from_the_poster_for_a_video(mon
 
     # A video with no poster has nothing to make a thumbnail from.
     assert story_previews.make_for_row({"image_url": f"https://cdn.test/{BUCKET}/e/d/c.mp4"}) is None
+
+
+def test_deleting_an_orphaned_story_file_still_removes_the_copies_its_name_implies(monkeypatch):
+    """The row is gone (its event was deleted, say), so nothing names the copies: the file name does."""
+    removed = []
+    base = f"{EVENT}/{DAY}/abc"
+
+    class Table:
+        def __init__(self):
+            self.op = "select"
+
+        def select(self, *_):
+            return self
+
+        def delete(self):
+            self.op = "delete"
+            return self
+
+        def update(self, *_):
+            self.op = "update"
+            return self
+
+        def eq(self, *_):
+            return self
+
+        def overlaps(self, *_):
+            return self
+
+        def execute(self):
+            return _Result([])
+
+    monkeypatch.setattr(admin, "supabase", SimpleNamespace(table=lambda name: Table()))
+    monkeypatch.setattr(admin, "get_settings", lambda: SimpleNamespace(minio_bucket=BUCKET))
+    monkeypatch.setattr(admin.minio_client, "public_url", lambda key: f"https://cdn.test/{BUCKET}/{key}")
+    monkeypatch.setattr(admin.minio_client, "delete_object", lambda key: removed.append(key))
+    admin.admin_delete_cdn_file(key=f"{base}.jpg", admin="Sam")
+    assert removed == [f"{base}.jpg", f"{base}.thumb.webp", f"{base}.preview.webp", f"{base}.poster.jpg"]
+
+
+def test_the_names_of_the_copies_follow_from_the_original():
+    from app.core.thumbnails import derivative_keys_by_name
+
+    assert derivative_keys_by_name("e/d/abc.jpg") == ["e/d/abc.thumb.webp", "e/d/abc.preview.webp", "e/d/abc.poster.jpg"]
+    assert derivative_keys_by_name("e/d/abc.thumb.webp") == []  # a copy has none of its own
+    assert derivative_keys_by_name("e/d/noextension") == []
