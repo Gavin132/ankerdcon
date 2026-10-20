@@ -14,6 +14,7 @@ import { useBadges } from "../../hooks/useBadges";
 import { parseEventDate } from "../../utils/date";
 import { groupCalendarEntries, getGroupTitle, formatDateRange } from "../../utils/multiDay";
 import type { User, CalendarEvent } from "../../types";
+import { useBackClose } from "../../hooks/useBackClose";
 
 const FONT_MAP: Record<string, string> = {
   mono: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
@@ -65,6 +66,7 @@ export function UserProfilePopup({
   calendarEvents,
 }: UserProfilePopupProps) {
   const navigate = useNavigate();
+  useBackClose(open, onClose);
   const [imgErr, setImgErr] = useState(false);
   useEffect(() => {
     setImgErr(false);

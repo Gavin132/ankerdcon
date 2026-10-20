@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ZoomIn, ZoomOut, Upload } from "lucide-react";
 import { Button } from "../common/Button";
+import { useBackClose } from "../../hooks/useBackClose";
 
 const ASPECT  = 3;     // 3:1 banner ratio
 const OUT_W   = 1200;  // canvas output width
@@ -35,6 +36,8 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
   const [pos, setPos]         = useState({ x: 0, y: 0 });
   const [imgReady, setImgReady] = useState(false);
   const [saving, setSaving]   = useState(false);
+
+  useBackClose(open, onClose);
 
   const objUrl = useRef<string | null>(null);
   const isGif  = file?.type === "image/gif";

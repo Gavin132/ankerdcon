@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Images, Play, X } from "lucide-react";
 import { useUserPhotos } from "../../hooks/useStories";
 import { formatDate } from "../../utils/format";
+import { useBackClose } from "../../hooks/useBackClose";
 import { fullImage, gridImage } from "../../utils/storyMedia";
 import type { UserStoryPhoto } from "../../types";
 
@@ -127,6 +128,7 @@ function Lightbox({
   onPrev?: () => void;
   onNext?: () => void;
 }) {
+  useBackClose(true, onClose);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();

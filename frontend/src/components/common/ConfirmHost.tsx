@@ -2,12 +2,15 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
 import { useConfirmStore } from "../../store/confirm.store";
+import { useBackClose } from "../../hooks/useBackClose";
 import { Button } from "./Button";
 
 /** Shows the question `askConfirm()` was called with. Mounted once, in App. */
 export function ConfirmHost() {
   const request = useConfirmStore((s) => s.request);
   const answer = useConfirmStore((s) => s.answer);
+  // Going back answers "no".
+  useBackClose(!!request, () => answer(false));
 
   return createPortal(
     <AnimatePresence>

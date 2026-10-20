@@ -10,6 +10,7 @@ import { formatDate } from "../../utils/format";
 import { safeHref } from "../../utils/validation";
 import { routes } from "../../config/routes";
 import type { Cosplay, CalendarEvent, User } from "../../types";
+import { useBackClose } from "../../hooks/useBackClose";
 
 /**
  * One cosplay in full. Like the filter, this is a *view of the cosplay sheet*
@@ -26,6 +27,7 @@ interface CosplayDetailBodyProps {
 
 export function CosplayDetailBody({ cosplay, events, users, onLeave: onClose }: CosplayDetailBodyProps) {
   const [lightbox, setLightbox] = useState<string | null>(null);
+  useBackClose(!!lightbox, () => setLightbox(null));
 
   const user = users.find(
     (u) => u.name === cosplay.user_name || u.discord_username === cosplay.user_name,

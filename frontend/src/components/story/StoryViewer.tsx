@@ -4,6 +4,7 @@ import { animate, motion, AnimatePresence, useDragControls, useMotionValue, useT
 import { X, Trash2, Share2, Download, FolderDown, Loader2, Volume2, VolumeX } from "lucide-react";
 import { useStoryPhotos, useMarkStorySeen, useDeleteStoryPhoto } from "../../hooks/useStories";
 import { useCurrentUser } from "../../hooks/useUsers";
+import { useBackClose } from "../../hooks/useBackClose";
 import { downloadAllStoryPhotos, downloadStoryPhoto } from "../../services/stories.service";
 import { toast } from "../../store/toast.store";
 import { UserAvatar } from "../common/UserAvatar";
@@ -148,6 +149,10 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
     flushSeen();
     onClose();
   }, [flushSeen, onClose]);
+
+  // The back gesture closes the story. Without an entry of its own it left the app when the story was the first
+  // thing opened (a story is state, not a page, so there was nothing for the gesture to step back over).
+  useBackClose(open, handleClose);
 
   const next = useCallback(() => {
     // Side effects (flushSeen/onClose) belong here, in the event handler —
