@@ -38,6 +38,12 @@ export class ApiError extends Error {
  * gives up after 100 s anyway (a 524), so waiting longer than this never helps.
  */
 export const REQUEST_TIMEOUT_MS = 30_000;
+/**
+ * A read gives up sooner: when the server is off or the home network is down, the person is waiting on a spinner
+ * for the whole timeout (and a retry after it). Fifteen seconds is long even for a slow phone connection, and
+ * the call can simply be tried again; a change (POST, PUT) keeps the longer limit.
+ */
+export const GET_TIMEOUT_MS = 15_000;
 /** Uploads carry a photo over what may be a poor connection, so they get longer. */
 export const UPLOAD_TIMEOUT_MS = 60_000;
 /** A video from a phone can be tens of MB; Cloudflare itself allows a request 100 s. */
@@ -63,6 +69,10 @@ apiClient.interceptors.request.use((config) => {
   }
   const token = useAuthStore.getState().accessToken;
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  // Only the default is shortened: a call that set its own limit (an upload, a zip with none) keeps it.
+  if ((config.method ?? "get").toLowerCase() === "get" && config.timeout === REQUEST_TIMEOUT_MS) {
+    config.timeout = GET_TIMEOUT_MS;
+  }
   return config;
 });
 

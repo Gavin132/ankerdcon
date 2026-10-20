@@ -131,7 +131,7 @@ async function staleWhileRevalidate(request) {
 // accepting the connection but not yet answering can hang far longer than
 // this, and the tab is stuck on its own loading spinner with nothing to show
 // for it — worse than a few-seconds-stale shell.
-const SHELL_NETWORK_TIMEOUT_MS = 10000;
+const SHELL_NETWORK_TIMEOUT_MS = 6000;
 
 /**
  * Network-first for the HTML shell, falling back to cache when the request
@@ -152,6 +152,12 @@ async function shellFirst(request) {
   try {
     const response = await fetch(request, { signal: controller.signal });
     if (response.ok) cache.put("/", response.clone());
+    // The server (or Cloudflare in front of it) answered, but with an error page: the home server is off or
+    // restarting. The shell we have opens the app on its saved data, which beats an error page.
+    if (response.status >= 500) {
+      const saved = (await cache.match("/")) ?? (await cache.match(request));
+      if (saved) return saved;
+    }
     return response;
   } catch (err) {
     const cached = (await cache.match("/")) ?? (await cache.match(request));
