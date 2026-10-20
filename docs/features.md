@@ -436,6 +436,10 @@ read-only account) or an admin switches **Alleen kijken** on a member under Gebr
 
 ## Onboarding, settings and the changelog
 
+- **The back gesture closes what is on top.** A sheet, the story viewer, a photo lightbox, the profile popup, the
+  banner crop and a confirm dialog each take a history entry of their own (`utils/backStack.ts`,
+  `hooks/useBackClose.ts`; one shared stack, so one back press closes only the top one). Before, a story opened as the
+  first thing in the app had no entry, and back left the app.
 - **Put the app on the home screen.** On a phone that has not installed the app, the Hub shows a card "Zet
   Ankerd Con op je beginscherm" and Instellingen has the same one: a one-tap *Installeren* where the browser
   offers it (it is caught at start-up, `utils/install.ts`, because the browser fires the event once), the

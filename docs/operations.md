@@ -77,6 +77,7 @@ Levels to know:
 | `/api/admin/cdn` shows an error | MinIO is down, or its key may not list the bucket | see [minio-setup.md](minio-setup.md) |
 | A Tikkie or bank link is refused | it is outside the allowed providers | see [security.md](security.md#money-and-links) |
 | The whole site, or the admin CDN page, hangs for a while, a refresh does not help, then it recovers on its own | the database connection died quietly. The library shares one HTTP/2 connection for every query and waited up to 120 seconds on it. The backend now uses ordinary connections with a 5 s connect and 20 s read limit and re-sends reads once, so a stall is one slow request, not all of them. If it still happens, look for `Slow request` lines: they show whether it is the database, MinIO (the CDN page lists the whole bucket; the listing is kept for 45 s) or the network in front. |
+| The home server or the whole home network is off | users see the app on its saved data (installed or visited before) or the branded error page (first visit), within about 8 seconds, instead of a minute-long spinner | start the server or fix the connection. If a page load still hangs for a long time, the Worker is not deployed or its routes are missing: see [cloudflare-error-page.md](cloudflare-error-page.md#how-long-it-waits) |
 | Photos slow on first view only | normal: they are cached immutably after one download | nothing |
 
 ## Backups and recovery

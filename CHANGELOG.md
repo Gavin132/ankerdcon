@@ -8,6 +8,27 @@ All notable changes to Ankerd Con are documented here.
 
 ---
 
+## [2.1.4] - 2026-10-20
+
+The back gesture closes a story instead of leaving the app, and a home server that is off shows an error
+within seconds instead of after a minute. The Cloudflare Worker needs deploying again for the second one
+(`npx wrangler deploy` in `cloudflare/`). No migrations.
+
+### Fixed
+
+- **Back gesture closes the story instead of leaving the app.** A story, a photo opened big on a profile,
+  a profile card, the banner crop and the "Grote video" question now each take their own step in the history,
+  like a sheet already did. Before, opening a story as the first thing in the app left nothing for the back
+  gesture to step back over, so it left the app.
+- **A server that is off no longer means a minute of spinner.** The Cloudflare page now appears after 8
+  seconds instead of up to 100 (it needs `npx wrangler deploy` once). An installed app, or one visited before,
+  opens on its saved data instead of an error page. Reading from the app gives up after 15 seconds instead of 30,
+  and a long wait on the loading screen says "De server reageert traag" after 6.
+- **Deleting a story file from the admin CDN page also removes its thumbnails** when its database row is already
+  gone (after its event was deleted, say); the copies are found by name.
+
+---
+
 ## [2.1.3] - 2026-10-15
 
 Photos and covers that load lighter, a phone pass (bigger touch areas, readable text, the right keyboards,
