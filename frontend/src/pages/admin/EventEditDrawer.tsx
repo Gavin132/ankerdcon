@@ -31,8 +31,10 @@ import { LocationSearchInput } from "../../components/common/LocationSearchInput
 import { uploadEventCoverImage } from "../../services/storage.service";
 import { DrawerFooter } from "./components/DrawerFooter";
 import { DiscardChangesConfirm } from "./components/DiscardChangesConfirm";
+import { ConfirmInline } from "./components/ConfirmInline";
+import { askConfirm } from "../../store/confirm.store";
 import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
-import { formatDate } from "../../utils/format";
+import { formatAmount, formatDate } from "../../utils/format";
 import { parseEventDate } from "../../utils/date";
 
 const optStr = z.preprocess((v) => (v == null ? "" : v), z.string());
@@ -71,6 +73,8 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
   const deleteDay = useAdminDeleteEventDay();
   const removeParticipant = useAdminRemoveEventParticipant();
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
+  /** The participant whose removal is waiting for a yes: "dayId|name". */
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [newDate, setNewDate] = useState("");
   const [newHasCon, setNewHasCon] = useState(true);
 
@@ -99,6 +103,15 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
   }
 
   async function handleDeleteDay(day: EventDay) {
+    // Rides, meals and sign-ups hang on a day, so this one asks first.
+    const ok = await askConfirm({
+      title: "Dag verwijderen?",
+      message: `${formatDate(day.date)} wordt verwijderd. Aanmeldingen en ritten van deze dag gaan mee.`,
+      confirmLabel: "Verwijderen",
+      cancelLabel: "Annuleren",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await deleteDay.mutateAsync(day.id);
       toast("success", "Dag verwijderd.");
@@ -110,6 +123,7 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
   async function handleRemoveParticipant(dayId: string, name: string) {
     try {
       await removeParticipant.mutateAsync({ dayId, participant: name });
+      setConfirmRemove(null);
     } catch {
       toast("error", "Kon deelnemer niet verwijderen.");
     }
@@ -154,9 +168,10 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
                   type="button"
                   onClick={() => handleDeleteDay(day)}
                   disabled={deleteDay.isPending}
-                  className="hit-area flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 transition-colors disabled:opacity-40"
+                  aria-label={`Dag ${formatDate(day.date)} verwijderen`}
+                  className="hit-area flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-3 hover:bg-bad-soft hover:text-bad transition-colors disabled:opacity-40"
                 >
-                  <Trash2 size={13} />
+                  <Trash2 size={16} />
                 </button>
               </div>
               {isExpanded && (
@@ -164,20 +179,32 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
                   {day.participants.length === 0 ? (
                     <p className="text-xs text-ink-3">Nog geen aanmeldingen.</p>
                   ) : (
-                    day.participants.map((p) => (
-                      <div key={p} className="flex items-center gap-2 rounded-lg bg-sunken px-2.5 py-1.5">
-                        <UserAvatar name={p} className="h-5 w-5 text-[7px]" />
-                        <span className="flex-1 text-xs text-ink-2">{p}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveParticipant(day.id, p)}
-                          disabled={removeParticipant.isPending}
-                          className="text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 transition-colors disabled:opacity-40"
-                        >
-                          <XIcon size={12} />
-                        </button>
-                      </div>
-                    ))
+                    day.participants.map((p) =>
+                      confirmRemove === `${day.id}|${p}` ? (
+                        <div key={p} className="rounded-lg bg-sunken px-2.5 py-1.5">
+                          <ConfirmInline
+                            question={`${p} afmelden?`}
+                            confirmLabel="Afmelden"
+                            isPending={removeParticipant.isPending}
+                            onConfirm={() => handleRemoveParticipant(day.id, p)}
+                            onCancel={() => setConfirmRemove(null)}
+                          />
+                        </div>
+                      ) : (
+                        <div key={p} className="flex items-center gap-2 rounded-lg bg-sunken px-2.5 py-1.5">
+                          <UserAvatar name={p} className="h-5 w-5 text-[7px]" />
+                          <span className="flex-1 text-xs text-ink-2">{p}</span>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmRemove(`${day.id}|${p}`)}
+                            aria-label={`${p} afmelden voor deze dag`}
+                            className="hit-area flex h-6 w-6 items-center justify-center rounded text-ink-3 hover:text-bad transition-colors"
+                          >
+                            <XIcon size={14} />
+                          </button>
+                        </div>
+                      ),
+                    )
                   )}
                 </div>
               )}
@@ -620,11 +647,12 @@ export function EventEditDrawer({
                   >
                     <span className="flex-1 text-sm font-medium text-ink">{tt.title}</span>
                     <span className="font-mono text-sm font-semibold tabular-nums text-ink">
-                      € {tt.price.toFixed(2)}
+                      {formatAmount(tt.price)}
                     </span>
                     <button
                       type="button"
                       onClick={() => setTicketTypes((p) => p.filter((_, idx) => idx !== i))}
+                      aria-label={`Tickettype ${tt.title} verwijderen`}
                       className="hit-area flex h-6 w-6 items-center justify-center rounded-lg text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 transition-colors"
                     >
                       <XIcon size={12} />

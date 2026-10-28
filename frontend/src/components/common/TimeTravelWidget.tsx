@@ -27,7 +27,7 @@ function formatOverride(d: Date): string {
  * Lives in the app chrome instead of floating over content: `sidebar` is a row
  * at the bottom of the desktop sidebar (icon only on the tablet rail), `icon`
  * a top-bar button. Both turn amber while a time override is active. Renders
- * nothing unless the widget is switched on (Admin › Tijdreis-widget) and the
+ * nothing unless the widget is switched on (Admin › Tijdreis) and the
  * user is an admin.
  */
 export function TimeTravelControl({ variant }: { variant: "sidebar" | "icon" }) {

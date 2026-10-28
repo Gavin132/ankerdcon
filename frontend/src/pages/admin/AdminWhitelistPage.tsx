@@ -4,6 +4,7 @@ import { useAdminWhitelist, useCreateWhitelistEntry, useDeleteWhitelistEntry } f
 import { toast } from "../../store/toast.store";
 import { F } from "./styles";
 import { AdminPageHeader } from "./components/AdminPageHeader";
+import { ConfirmInline } from "./components/ConfirmInline";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 
 export function AdminWhitelistPage() {
@@ -137,30 +138,20 @@ export function AdminWhitelistPage() {
                   </td>
                   <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
                     {confirmDeleteId === entry.id ? (
-                      <div className="flex items-center justify-end gap-1.5 sm:gap-2">
-                        <span className="hidden sm:inline text-xs text-ink-3">Verwijderen?</span>
-                        <button
-                          onClick={() => handleDelete(entry.id)}
-                          disabled={deleteMutation.isPending}
-                          className="rounded-lg px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs font-semibold bg-rose-100 text-rose-700 hover:bg-rose-200 dark:bg-rose-500/15 dark:text-rose-300 dark:hover:bg-rose-500/25 disabled:opacity-50 transition-colors"
-                        >
-                          {deleteMutation.isPending ? "..." : "Ja"}
-                        </button>
-                        <button
-                          onClick={() => setConfirmDeleteId(null)}
-                          className="rounded-lg px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs font-semibold bg-sunken text-ink-2 hover:text-ink transition-colors"
-                        >
-                          Nee
-                        </button>
-                      </div>
+                      <ConfirmInline
+                        isPending={deleteMutation.isPending}
+                        onConfirm={() => handleDelete(entry.id)}
+                        onCancel={() => setConfirmDeleteId(null)}
+                      />
                     ) : (
                       <div className="flex items-center justify-end">
                         <button
                           onClick={() => setConfirmDeleteId(entry.id)}
-                          className="hit-area flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 transition-colors"
+                          className="hit-area flex h-9 w-9 items-center justify-center rounded-lg text-ink-3 hover:bg-bad-soft hover:text-bad transition-colors"
                           title="Verwijderen"
+                          aria-label="Verwijderen"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     )}

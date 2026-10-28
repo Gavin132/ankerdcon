@@ -19,11 +19,11 @@ export function DiscardChangesConfirm({ open, onCancel, onConfirm }: Props) {
       title="Niet-opgeslagen wijzigingen"
       footer={
         <div className="flex gap-2">
-          <button type="button" onClick={onCancel} className={`flex-1 ${BTN_SECONDARY}`}>
-            Blijf hier
-          </button>
-          <button type="button" onClick={onConfirm} className={`flex-1 ${BTN_PRIMARY}`}>
+          <button type="button" onClick={onConfirm} className={`flex-1 ${BTN_SECONDARY} text-bad`}>
             Sluiten zonder opslaan
+          </button>
+          <button type="button" onClick={onCancel} className={`flex-1 ${BTN_PRIMARY}`}>
+            Blijf hier
           </button>
         </div>
       }

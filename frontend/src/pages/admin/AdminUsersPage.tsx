@@ -24,6 +24,9 @@ import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 import { DrawerFooter } from "./components/DrawerFooter";
 import { DiscardChangesConfirm } from "./components/DiscardChangesConfirm";
 import { AdminBulkBar } from "./components/AdminBulkBar";
+import { RowCheckbox } from "./components/RowCheckbox";
+import { ConfirmInline } from "./components/ConfirmInline";
+import { ToggleRow } from "./components/ToggleRow";
 import { useTableSelection } from "../../hooks/useTableSelection";
 import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
 
@@ -118,50 +121,19 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
           </p>
         </div>
 
-        <div className="flex items-center justify-between rounded-xl border-1.5 border-line bg-paper px-4 py-3">
-          <div className="flex items-center gap-2">
-            <Shield size={15} className="text-ink-2" />
-            <span className="text-sm font-medium text-ink">Admin-rechten</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setValue("is_admin", !isAdmin)}
-            className={`hit-area relative inline-flex h-5 w-9 rounded-full transition-colors ${
-              isAdmin ? "bg-ink dark:bg-brand" : "bg-line"
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition-transform ${
-                isAdmin ? "translate-x-4 bg-paper" : "bg-white dark:bg-ink-3"
-              }`}
-            />
-          </button>
-        </div>
-        <div className="flex items-center justify-between rounded-xl border-1.5 border-line bg-paper px-4 py-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <Eye size={15} className="text-ink-2" />
-              <span className="text-sm font-medium text-ink">Alleen kijken</span>
-            </div>
-            <p className="mt-1 text-[11px] text-ink-3">Kan alles bekijken, maar niets aanpassen of zich ergens voor aanmelden.</p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={!!isViewer}
-            aria-label="Alleen kijken"
-            onClick={() => setValue("is_viewer", !isViewer, { shouldDirty: true })}
-            className={`hit-area relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors ${
-              isViewer ? "bg-ink dark:bg-brand" : "bg-line"
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition-transform ${
-                isViewer ? "translate-x-4 bg-paper" : "bg-white dark:bg-ink-3"
-              }`}
-            />
-          </button>
-        </div>
+        <ToggleRow
+          icon={<Shield size={16} />}
+          label="Admin-rechten"
+          checked={!!isAdmin}
+          onChange={() => setValue("is_admin", !isAdmin, { shouldDirty: true })}
+        />
+        <ToggleRow
+          icon={<Eye size={16} />}
+          label="Alleen kijken"
+          hint="Kan alles bekijken, maar niets aanpassen of zich ergens voor aanmelden."
+          checked={!!isViewer}
+          onChange={() => setValue("is_viewer", !isViewer, { shouldDirty: true })}
+        />
       </form>
     </AdminDrawer>
     <DiscardChangesConfirm open={confirming} onCancel={cancelDiscard} onConfirm={confirmDiscard} />
@@ -390,53 +362,19 @@ function UserEditDrawer({
             </p>
           </div>
 
-          {/* Admin toggle */}
-          <div className="flex items-center justify-between rounded-xl border-1.5 border-line bg-paper px-4 py-3">
-            <div className="flex items-center gap-2">
-              <Shield size={15} className="text-ink-2" />
-              <span className="text-sm font-medium text-ink">
-                Admin-rechten
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setValue("is_admin", !isAdmin)}
-              className={`hit-area relative inline-flex h-5 w-9 rounded-full transition-colors ${
-                isAdmin ? "bg-ink dark:bg-brand" : "bg-line"
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition-transform ${
-                  isAdmin ? "translate-x-4 bg-paper" : "bg-white dark:bg-ink-3"
-                }`}
-              />
-            </button>
-          </div>
-          <div className="flex items-center justify-between rounded-xl border-1.5 border-line bg-paper px-4 py-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <Eye size={15} className="text-ink-2" />
-                <span className="text-sm font-medium text-ink">Alleen kijken</span>
-              </div>
-              <p className="mt-1 text-[11px] text-ink-3">Kan alles bekijken, maar niets aanpassen of zich ergens voor aanmelden.</p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={!!isViewer}
-              aria-label="Alleen kijken"
-              onClick={() => setValue("is_viewer", !isViewer, { shouldDirty: true })}
-              className={`hit-area relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors ${
-                isViewer ? "bg-ink dark:bg-brand" : "bg-line"
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition-transform ${
-                  isViewer ? "translate-x-4 bg-paper" : "bg-white dark:bg-ink-3"
-                }`}
-              />
-            </button>
-          </div>
+          <ToggleRow
+            icon={<Shield size={16} />}
+            label="Admin-rechten"
+            checked={!!isAdmin}
+            onChange={() => setValue("is_admin", !isAdmin, { shouldDirty: true })}
+          />
+          <ToggleRow
+            icon={<Eye size={16} />}
+            label="Alleen kijken"
+            hint="Kan alles bekijken, maar niets aanpassen of zich ergens voor aanmelden."
+            checked={!!isViewer}
+            onChange={() => setValue("is_viewer", !isViewer, { shouldDirty: true })}
+          />
         </form>
       )}
     </AdminDrawer>
@@ -569,19 +507,31 @@ export function AdminUsersPage() {
         placeholder="Zoek op naam, Discord of alias..."
       />
 
+      <AdminBulkBar
+        itemsLabel="gebruikers"
+        count={selectedIds.size}
+        isPending={bulkIsPending}
+        onDelete={handleBulkDelete}
+        onClear={clearSelection}
+        extraActions={
+          <button
+            onClick={handleBulkDeactivate}
+            disabled={bulkIsPending}
+            className="btn-secondary px-3 text-sm"
+          >
+            <Ban size={16} />
+            Deactiveren
+          </button>
+        }
+      />
+
       <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
           <table className="stack-table w-full">
             <thead>
               <tr className="border-b-1.5 border-line text-left">
                 <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    ref={(el) => { if (el) el.indeterminate = indeterminate; }}
-                    onChange={selectAll}
-                    className="cb"
-                  />
+                  <RowCheckbox checked={allSelected} indeterminate={indeterminate} onChange={selectAll} label="Alles selecteren" />
                 </th>
                 <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Gebruiker
@@ -624,13 +574,7 @@ export function AdminUsersPage() {
                         className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3.5"
                         onClick={(e) => { e.stopPropagation(); toggleSelect(user.id!); }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.has(user.id!)}
-                          onChange={() => toggleSelect(user.id!)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="cb"
-                        />
+                        <RowCheckbox checked={selectedIds.has(user.id!)} onChange={() => toggleSelect(user.id!)} label={`Selecteer ${user.name}`} />
                       </td>
                       <td className="cell-main px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                         <div className="flex items-center gap-2 sm:gap-3">
@@ -722,22 +666,14 @@ export function AdminUsersPage() {
                         <div className="flex items-center justify-end gap-1 sm:gap-1.5">
                           {/* Deactivate confirmation inline */}
                           {confirmDeactivateId === user.id ? (
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-ink-3">Deactiveren?</span>
-                              <button
-                                onClick={() => handleDeactivate(user)}
-                                disabled={updateMutation.isPending}
-                                className="rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:hover:bg-amber-500/25 disabled:opacity-50 transition-colors"
-                              >
-                                {updateMutation.isPending ? "..." : "Ja"}
-                              </button>
-                              <button
-                                onClick={() => setConfirmDeactivateId(null)}
-                                className="rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-sunken text-ink-2 hover:text-ink transition-colors"
-                              >
-                                Nee
-                              </button>
-                            </div>
+                            <ConfirmInline
+                              calm
+                              question="Deactiveren?"
+                              confirmLabel="Deactiveren"
+                              isPending={updateMutation.isPending}
+                              onConfirm={() => handleDeactivate(user)}
+                              onCancel={() => setConfirmDeactivateId(null)}
+                            />
                           ) : (
                             <button
                               onClick={() =>
@@ -795,22 +731,6 @@ export function AdminUsersPage() {
         onClose={() => setEditing(null)}
       />
 
-      <AdminBulkBar
-        count={selectedIds.size}
-        isPending={bulkIsPending}
-        onDelete={handleBulkDelete}
-        onClear={clearSelection}
-        extraActions={
-          <button
-            onClick={handleBulkDeactivate}
-            disabled={bulkIsPending}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-100 disabled:opacity-40 dark:text-amber-300 dark:hover:bg-amber-500/15"
-          >
-            <Ban size={14} />
-            Deactiveer
-          </button>
-        }
-      />
     </div>
   );
 }

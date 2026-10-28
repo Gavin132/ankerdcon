@@ -2,6 +2,7 @@ import { useState } from "react";
 import { MessageSquareText, Trash2 } from "lucide-react";
 import { useAdminFeedback, useDeleteFeedback, useUpdateFeedback } from "../../hooks/useFeedback";
 import { AdminPageHeader } from "./components/AdminPageHeader";
+import { ConfirmInline } from "./components/ConfirmInline";
 import { FEEDBACK_KINDS } from "../../components/settings/FeedbackSheet";
 import { CHIP_OFF, CHIP_ON, PILL_BAD, PILL_NEUTRAL, PILL_OK, PILL_WARN } from "./styles";
 import { formatDateTime } from "../../utils/format";
@@ -108,24 +109,7 @@ export function AdminFeedbackPage() {
                   ))}
                 </div>
                 {confirmId === f.id ? (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-ink-3">Verwijderen?</span>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(f.id)}
-                      disabled={remove.isPending}
-                      className="rounded-lg bg-rose-100 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-200 disabled:opacity-50 dark:bg-rose-500/15 dark:text-rose-300"
-                    >
-                      Ja
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmId(null)}
-                      className="rounded-lg bg-sunken px-2.5 py-1.5 text-xs font-semibold text-ink-2 hover:text-ink"
-                    >
-                      Nee
-                    </button>
-                  </div>
+                  <ConfirmInline isPending={remove.isPending} onConfirm={() => handleDelete(f.id)} onCancel={() => setConfirmId(null)} />
                 ) : (
                   <button
                     type="button"

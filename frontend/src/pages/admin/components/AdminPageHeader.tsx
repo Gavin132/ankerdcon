@@ -10,9 +10,7 @@ export function AdminPageHeader({ title, subtitle, action, eyebrow = "Entiteiten
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink-3">
-          {eyebrow}
-        </p>
+        <p className="label-quiet">{eyebrow}</p>
         <h1 className="mt-1 font-display text-[34px] font-extrabold uppercase leading-[0.95] text-ink md:text-[42px]">
           {title}
         </h1>

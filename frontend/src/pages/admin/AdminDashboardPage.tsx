@@ -21,6 +21,7 @@ import { NamePicker } from "../../components/common/NamePicker";
 import { toast } from "../../store/toast.store";
 import { formatDate, formatAmount } from "../../utils/format";
 import { parseEventDate, todayKey, toDateKey } from "../../utils/date";
+import { getNow } from "../../store/time.store";
 import { groupCalendarEntries, getGroupTitle, formatDateRange, type CalendarItem } from "../../utils/multiDay";
 import type { CalendarEvent, User } from "../../types";
 
@@ -209,7 +210,7 @@ export function AdminDashboardPage() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const { data: me } = useUser(currentUser ?? "");
 
-  const now = new Date();
+  const now = getNow();
   const hour = now.getHours();
   const greeting = hour < 12 ? "Goedemorgen" : hour < 18 ? "Goedemiddag" : "Goedenavond";
   const dateLabel = `${DAYS_NL[now.getDay()]} ${now.getDate()} ${MONTHS_NL[now.getMonth()]}`;

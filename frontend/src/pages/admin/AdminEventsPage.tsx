@@ -21,9 +21,11 @@ import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 import { AdminPagination } from "./components/AdminPagination";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 import { AdminBulkBar } from "./components/AdminBulkBar";
+import { RowCheckbox } from "./components/RowCheckbox";
 import { useTableSelection } from "../../hooks/useTableSelection";
 import { formatDate } from "../../utils/format";
 import { parseEventDate } from "../../utils/date";
+import { getNow } from "../../store/time.store";
 
 const PAGE_SIZE = 15;
 
@@ -83,7 +85,7 @@ export function AdminEventsPage() {
         : null;
   const drawerDays = drawerId && drawerId !== "new" ? (daysByEvent.get(drawerId) ?? []) : [];
 
-  const today = new Date();
+  const today = new Date(getNow());
   today.setHours(0, 0, 0, 0);
 
   const enriched = useMemo(
@@ -231,19 +233,62 @@ export function AdminEventsPage() {
         />
       </div>
 
+      <AdminBulkBar
+        itemsLabel="evenementen"
+        count={selectedIds.size}
+        isPending={bulkIsPending}
+        onDelete={handleBulkDelete}
+        onClear={handleClearSelection}
+        extraActions={
+          <button
+            onClick={() => setBulkMode("set-group")}
+            disabled={bulkIsPending}
+            className="btn-secondary px-3 text-sm"
+          >
+            <Tag size={16} />
+            Label
+          </button>
+        }
+        overrideContent={
+          bulkMode === "set-group" ? (
+            <>
+              <select
+                value={pickedGroup}
+                onChange={(e) => setPickedGroup(e.target.value)}
+                className="input-field w-full rounded-lg px-3 py-2.5 sm:w-auto"
+              >
+                <option value="">— Geen groep —</option>
+                {eventGroups.map((g) => (
+                  <option key={g.id} value={g.name}>{g.name}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => { handleBulkSetGroup(pickedGroup || null); setPickedGroup(""); setBulkMode("idle"); }}
+                disabled={bulkIsPending}
+                className="btn-primary min-h-[44px] gap-1.5 px-3 py-1.5 text-sm"
+              >
+                <Check size={16} />
+                {bulkIsPending ? "Bezig…" : "Toepassen"}
+              </button>
+              <button
+                onClick={() => { setBulkMode("idle"); setPickedGroup(""); }}
+                disabled={bulkIsPending}
+                className="btn-secondary px-3 text-sm"
+              >
+                Annuleren
+              </button>
+            </>
+          ) : undefined
+        }
+      />
+
       <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
           <table className="stack-table w-full">
             <thead>
               <tr className="border-b-1.5 border-line">
                 <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    ref={(el) => { if (el) el.indeterminate = indeterminate; }}
-                    onChange={selectAll}
-                    className="cb"
-                  />
+                  <RowCheckbox checked={allSelected} indeterminate={indeterminate} onChange={selectAll} label="Alles selecteren" />
                 </th>
                 <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Evenement
@@ -287,13 +332,7 @@ export function AdminEventsPage() {
                       className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3.5"
                       onClick={(e) => { e.stopPropagation(); toggleSelect(ev.id); }}
                     >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleSelect(ev.id)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="cb"
-                      />
+                      <RowCheckbox checked={isSelected} onChange={() => toggleSelect(ev.id)} label={`Selecteer ${ev.event_name}`} />
                     </td>
                     <td className="cell-main px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                       <div className="flex items-center gap-2 sm:gap-2.5">
@@ -424,53 +463,6 @@ export function AdminEventsPage() {
         onCreated={(ev) => { setJustCreated(ev); setDrawerId(ev.id); }}
       />
 
-      <AdminBulkBar
-        count={selectedIds.size}
-        isPending={bulkIsPending}
-        onDelete={handleBulkDelete}
-        onClear={handleClearSelection}
-        extraActions={
-          <button
-            onClick={() => setBulkMode("set-group")}
-            disabled={bulkIsPending}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-ink-2 transition-colors hover:bg-sunken hover:text-ink disabled:opacity-40"
-          >
-            <Tag size={14} />
-            Label
-          </button>
-        }
-        overrideContent={
-          bulkMode === "set-group" ? (
-            <>
-              <select
-                value={pickedGroup}
-                onChange={(e) => setPickedGroup(e.target.value)}
-                className="input-field w-auto rounded-lg px-3 py-1.5 text-sm"
-              >
-                <option value="">— Geen groep —</option>
-                {eventGroups.map((g) => (
-                  <option key={g.id} value={g.name}>{g.name}</option>
-                ))}
-              </select>
-              <button
-                onClick={() => { handleBulkSetGroup(pickedGroup || null); setPickedGroup(""); setBulkMode("idle"); }}
-                disabled={bulkIsPending}
-                className="btn-primary min-h-[44px] gap-1.5 px-3 py-1.5 text-sm"
-              >
-                <Check size={14} />
-                {bulkIsPending ? "Bezig…" : "Toepassen"}
-              </button>
-              <button
-                onClick={() => { setBulkMode("idle"); setPickedGroup(""); }}
-                disabled={bulkIsPending}
-                className="rounded-lg px-3 py-1.5 text-sm font-medium text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
-              >
-                Annuleer
-              </button>
-            </>
-          ) : undefined
-        }
-      />
     </div>
   );
 }

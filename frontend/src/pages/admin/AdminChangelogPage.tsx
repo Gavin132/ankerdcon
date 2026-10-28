@@ -8,6 +8,8 @@ import {
 } from "../../hooks/useChangelog";
 import { AdminDrawer } from "./AdminDrawer";
 import { toDateKey } from "../../utils/date";
+import { getNow } from "../../store/time.store";
+import { formatDate } from "../../utils/format";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
@@ -18,7 +20,7 @@ import { toast } from "../../store/toast.store";
 import type { ChangelogEntry } from "../../types";
 
 function todayIso(): string {
-  return toDateKey(new Date());
+  return toDateKey(getNow());
 }
 
 // ── Drawer (create / edit) ──────────────────────────────────────────────────────
@@ -209,7 +211,7 @@ export function AdminChangelogPage() {
                 entries.map((entry) => (
                   <tr key={entry.id} className="hover:bg-sunken transition-colors">
                     <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
-                      <p className="whitespace-nowrap font-mono text-[12.5px] text-ink-2">{entry.released_at}</p>
+                      <p className="whitespace-nowrap font-mono text-[12.5px] text-ink-2">{formatDate(entry.released_at)}</p>
                     </td>
                     <td className="cell-main px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                       <p className="text-sm font-semibold text-ink max-w-[160px] sm:max-w-md truncate">

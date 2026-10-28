@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Euro, Clock, Bus, MapPin } from "lucide-react";
+import { Plus, Clock, Bus, MapPin } from "lucide-react";
 import { LocationSearchInput } from "../../components/common/LocationSearchInput";
-import { formatDateTime } from "../../utils/format";
+import { formatAmount, formatDateTime } from "../../utils/format";
 import {
   useAdminMeals,
   useAdminCreateMeal,
@@ -29,6 +29,7 @@ import { DrawerFooter } from "./components/DrawerFooter";
 import { DiscardChangesConfirm } from "./components/DiscardChangesConfirm";
 import { ParticipantList } from "./components/ParticipantList";
 import { AdminBulkBar } from "./components/AdminBulkBar";
+import { RowCheckbox } from "./components/RowCheckbox";
 import { useTableSelection } from "../../hooks/useTableSelection";
 import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
 
@@ -426,21 +427,21 @@ export function AdminMealsPage() {
         placeholder="Zoek op naam of locatie..."
       />
 
+      <AdminBulkBar
+        itemsLabel="activiteiten"
+        count={selectedIds.size}
+        isPending={bulkDeleteMutation.isPending}
+        onDelete={handleBulkDelete}
+        onClear={clearSelection}
+      />
+
       <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
           <table className="stack-table w-full">
             <thead>
               <tr className="border-b-1.5 border-line">
                 <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    ref={(el) => {
-                      if (el) el.indeterminate = indeterminate;
-                    }}
-                    onChange={selectAll}
-                    className="cb"
-                  />
+                  <RowCheckbox checked={allSelected} indeterminate={indeterminate} onChange={selectAll} label="Alles selecteren" />
                 </th>
                 <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Maaltijd
@@ -484,13 +485,7 @@ export function AdminMealsPage() {
                         toggleSelect(meal.id);
                       }}
                     >
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(meal.id)}
-                        onChange={() => toggleSelect(meal.id)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="cb"
-                      />
+                      <RowCheckbox checked={selectedIds.has(meal.id)} onChange={() => toggleSelect(meal.id)} label={`Selecteer ${meal.meal_name}`} />
                     </td>
                     <td className="cell-main px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                       <p className="text-sm font-semibold text-ink truncate max-w-[160px] sm:max-w-none">
@@ -514,12 +509,9 @@ export function AdminMealsPage() {
                       </div>
                     </td>
                     <td className="hidden sm:table-cell px-5 py-3.5">
-                      <div className="flex items-center gap-1">
-                        <Euro size={12} className="text-ink-3" />
-                        <span className="font-mono text-sm tabular-nums text-ink-2">
-                          {meal.cost.toFixed(2)}
-                        </span>
-                      </div>
+                      <span className="font-mono text-sm tabular-nums text-ink-2">
+                        {formatAmount(meal.cost)}
+                      </span>
                       {meal.transport_needed && (
                         <div className="flex items-center gap-1 mt-0.5">
                           <Bus size={10} className="text-ink-3" />
@@ -589,12 +581,6 @@ export function AdminMealsPage() {
         onClose={() => setDrawer(null)}
       />
 
-      <AdminBulkBar
-        count={selectedIds.size}
-        isPending={bulkDeleteMutation.isPending}
-        onDelete={handleBulkDelete}
-        onClear={clearSelection}
-      />
     </div>
   );
 }

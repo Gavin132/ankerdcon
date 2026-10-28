@@ -477,7 +477,7 @@ read-only account) or an admin switches **Alleen kijken** on a member under Gebr
 | Aankondigingen, Wijzigingslog | banners and release notes |
 | CDN | every file in the photo bucket, newest first (24 at a time, more as you scroll; videos load their first frame only near the screen), with its uploader; the "Uploaden" button puts an image or video there and gives a link to embed; the viewer's bin deletes a file, whoever uploaded it; "Download … (zip)" saves the current selection (a feature, or one event for story photos) as one zip |
 | Inloggen als gebruiker | act as a member for two hours ([security.md](security.md#log-in-as)) |
-| Tijdreis-widget | set the app's clock to test live or finished trips |
+| Tijdreis | set the app's clock to test live or finished trips |
 | Feedback | what members sent through Instellingen → Feedback geven, filtered by status (nieuw, gezien, opgelost); anonymous messages show "Anoniem" |
 | Schermen testen | preview the crash, unreachable, forbidden (Discord and Google), 404 and queued-upload screens |
 | Preview: Onboarding | walk through onboarding without touching a profile. It renders the same `OnboardingFlow` (`pages/onboarding/`) as the real `OnboardingPage`, so it cannot drift; only saving (nothing) and the done button differ |
