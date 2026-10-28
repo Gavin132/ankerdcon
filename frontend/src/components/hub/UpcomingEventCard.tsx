@@ -181,7 +181,7 @@ export function UpcomingEventCard({
                     <span className="mt-1 flex items-center justify-center gap-1 text-[12px] leading-none text-ink-2">
                       {isTravelDay ? <BedDouble size={11} className="shrink-0" /> : null}
                       {hasMeal(dayEv.id) && <Utensils size={11} className="shrink-0" />}
-                      <span className="truncate">{isTravelDay ? "Reisdag" : `${dayEv.participants.length} mee`}</span>
+                      <span className="truncate">{isTravelDay ? "Reisdag" : `${groupPeople(dayEv.participants ?? [], users).length} mee`}</span>
                     </span>
                   </button>
                 );

@@ -5,6 +5,7 @@ import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
 import { dayShort, monthShort } from "../../utils/multiDay";
 import type { Trip } from "../../utils/trips";
+import { groupPeople } from "../../utils/people";
 import type { User } from "../../types";
 
 interface TripRsvpModalProps {
@@ -119,7 +120,7 @@ export function TripRsvpModal({ trip: openTrip, users, onClose, onConfirm }: Tri
                         {date.getDate()}
                       </span>
                       <span className="mt-1 block truncate text-[12px] leading-none text-ink-2">
-                        {ev.has_con === false ? "Reisdag" : `${ev.participants.length} mee`}
+                        {ev.has_con === false ? "Reisdag" : `${groupPeople(ev.participants ?? [], users).length} mee`}
                       </span>
                     </button>
                   );

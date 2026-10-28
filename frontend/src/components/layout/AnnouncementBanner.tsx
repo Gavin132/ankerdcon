@@ -1,6 +1,6 @@
 import { useState, type ElementType, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, Info, Megaphone, X } from "lucide-react";
+import { AlertTriangle, ChevronRight, Info, Megaphone, X } from "lucide-react";
 import { useActiveAnnouncements } from "../../hooks/useAnnouncements";
 import { TripSheet } from "../trip/TripSheet";
 import type { Announcement, AnnouncementSeverity } from "../../types";
@@ -22,10 +22,12 @@ function persistDismissedIds(ids: Set<string>) {
   } catch {}
 }
 
-const SEVERITY_STYLE: Record<AnnouncementSeverity, { bg: string; icon: ElementType }> = {
-  info:    { bg: "bg-slate-900 dark:bg-slate-800", icon: Info },
-  warning: { bg: "bg-amber-500", icon: AlertTriangle },
-  urgent:  { bg: "bg-rose-600",  icon: Megaphone },
+// Info is a quiet strip (the loudest element on every page should not be a notice); warning is amber with dark
+// text (white on amber was 2.1:1); urgent keeps rose with white text.
+const SEVERITY_STYLE: Record<AnnouncementSeverity, { bar: string; hover: string; icon: ElementType }> = {
+  info:    { bar: "border-b-1.5 border-line bg-sunken text-ink", hover: "hover:bg-ink/5", icon: Info },
+  warning: { bar: "bg-amber-400 text-slate-950", hover: "hover:bg-black/10", icon: AlertTriangle },
+  urgent:  { bar: "bg-rose-600 text-white", hover: "hover:bg-black/10", icon: Megaphone },
 };
 
 /** Site-wide announcement bar(s), shown above the header on every page. `fallback` shows instead when there is
@@ -51,8 +53,8 @@ export function AnnouncementBanner({ fallback = null }: { fallback?: ReactNode }
   return (
     <div>
       <AnimatePresence initial={false}>
-        {visible.map((announcement) => {
-          const { bg, icon: Icon } = SEVERITY_STYLE[announcement.severity];
+        {visible.map((announcement, index) => {
+          const { bar, hover, icon: Icon } = SEVERITY_STYLE[announcement.severity];
           return (
             <motion.div
               key={announcement.id}
@@ -60,32 +62,35 @@ export function AnnouncementBanner({ fallback = null }: { fallback?: ReactNode }
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.25 }}
-              className={`overflow-hidden text-white ${bg}`}
+              className={`overflow-hidden ${bar}`}
             >
-              {/* Whole row opens the full message — a long one otherwise just
-                  wraps the banner taller and taller with nothing to tap. */}
-              <button
-                type="button"
-                onClick={() => { setExpanded(announcement); setSheetOpen(true); }}
-                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left hover:bg-black/10 transition-colors md:px-8 lg:px-10"
-              >
-                <Icon size={15} className="shrink-0" />
-                <p className="min-w-0 flex-1 text-xs font-semibold leading-snug truncate">
-                  {announcement.message}
-                </p>
+              {/* On a phone with a notch (installed app) the first bar starts under it. */}
+              {index === 0 && <div style={{ height: "env(safe-area-inset-top, 0px)" }} />}
+              <div className="flex items-center gap-1 px-4 md:px-8 lg:px-10">
+                {/* Opens the full message: a long one is cut off after two lines. The close button is a sibling,
+                    not inside this one (a button in a button is not valid and breaks keyboard and screen readers). */}
+                <button
+                  type="button"
+                  onClick={() => { setExpanded(announcement); setSheetOpen(true); }}
+                  className={`flex min-h-11 min-w-0 flex-1 items-center gap-2.5 rounded-md py-2 text-left transition-colors ${hover}`}
+                >
+                  <Icon size={16} className="shrink-0" />
+                  <p className="line-clamp-2 min-w-0 flex-1 text-xs font-semibold leading-snug">
+                    {announcement.message}
+                  </p>
+                  <ChevronRight size={16} className="shrink-0 opacity-70" />
+                </button>
                 {announcement.dismissible && (
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    onClick={(e) => { e.stopPropagation(); dismiss(announcement.id); }}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); dismiss(announcement.id); } }}
+                  <button
+                    type="button"
+                    onClick={() => dismiss(announcement.id)}
                     aria-label="Sluiten"
-                    className="hit-area -mr-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md hover:bg-white/20 transition-colors"
+                    className={`hit-area -mr-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition-colors ${hover}`}
                   >
-                    <X size={14} />
-                  </span>
+                    <X size={16} />
+                  </button>
                 )}
-              </button>
+              </div>
             </motion.div>
           );
         })}

@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { BedDouble, MapPin, Ticket, UserPlus } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
@@ -9,6 +10,35 @@ import { findUser as findMember } from "../../utils/people";
 import { getNow } from "../../store/time.store";
 import { useIsViewer } from "../../hooks/useIsViewer";
 import type { User } from "../../types";
+
+/** The trip's description: three lines, and "Meer" to read the rest when it is longer than that. */
+function Description({ text }: { text: string }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [open, setOpen] = useState(false);
+  const [clamped, setClamped] = useState(false);
+
+  // Measured while it is clamped: only a text that does not fit gets the toggle.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (el && !open) setClamped(el.scrollHeight > el.clientHeight + 1);
+  }, [text, open]);
+
+  return (
+    <div className="mt-2 max-w-2xl">
+      <p ref={ref} className={`text-[13px] leading-relaxed text-ink-2 ${open ? "" : "line-clamp-3"}`}>{text}</p>
+      {(clamped || open) && (
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="hit-area mt-1 text-[12.5px] font-semibold text-brand-text hover:underline"
+        >
+          {open ? "Minder" : "Meer"}
+        </button>
+      )}
+    </div>
+  );
+}
 
 interface TripTicketProps {
   trip: Trip;
@@ -114,7 +144,7 @@ export function TripTicket({
             )}
             {hotel && <span className="flex min-w-0 items-center gap-1.5"><BedDouble size={13} className="shrink-0" /> <span className="truncate">{hotel}</span></span>}
           </p>
-          {description && <p className="mt-2 line-clamp-3 max-w-2xl text-[13px] leading-relaxed text-ink-2">{description}</p>}
+          {description && <Description text={description} />}
         </div>
 
         {/* Days: tap one to sign up for it or off it, until it has passed */}

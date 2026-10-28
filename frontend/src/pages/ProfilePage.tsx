@@ -751,7 +751,22 @@ export function ProfilePage() {
 
   return (
     <div className="min-h-[100dvh] bg-paper">
-      <DetailTopbar title="Profiel" onBack={goBack} />
+      <DetailTopbar
+        title="Profiel"
+        onBack={goBack}
+        actions={
+          // Always in reach, and only blue when there is something to save.
+          <Button
+            size="sm"
+            onClick={onSave}
+            disabled={!isDirty}
+            loading={updateMutation.isPending || renameMutation.isPending}
+          >
+            <Save size={14} />
+            Opslaan
+          </Button>
+        }
+      />
 
       <motion.div
         className="mx-auto max-w-3xl space-y-5 px-4 py-5 sm:py-8"
@@ -804,17 +819,12 @@ export function ProfilePage() {
                 <Pencil size={13} />
                 Bekijk profiel
               </Button>
-              <Button
-                size="sm"
-                onClick={onSave}
-                loading={updateMutation.isPending || renameMutation.isPending}
-              >
-                <Save size={13} />
-                Opslaan
-              </Button>
             </>
           }
         />
+        <p className="-mt-2 px-1 text-xs text-ink-3">
+          Foto en banner worden meteen opgeslagen. De rest sla je op met Opslaan, bovenin.
+        </p>
 
         {/* ── Persoonlijke info ──────────────────────────────────────────── */}
         <Card

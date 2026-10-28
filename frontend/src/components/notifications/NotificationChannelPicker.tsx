@@ -69,7 +69,7 @@ export function NotificationChannelPicker({ allowDm, onAllowDmChange, hasDiscord
   if (!hasDiscord && !pushShown) {
     return (
       <div className="card-surface p-4 text-[12.5px] leading-relaxed text-ink-3">
-        Op dit apparaat kun je nu geen meldingen ontvangen: koppel Discord via je profiel, of voeg de app toe aan je
+        Op dit apparaat kun je nu geen meldingen ontvangen: koppel Discord via Instellingen, of voeg de app toe aan je
         beginscherm voor pushmeldingen.
       </div>
     );

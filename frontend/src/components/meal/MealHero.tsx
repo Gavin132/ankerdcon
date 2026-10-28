@@ -8,6 +8,7 @@ import { UserProfilePopup, type AnchorRect } from "../common/UserProfilePopup";
 import { useCalendar } from "../../hooks/useCalendar";
 import { useAuthStore } from "../../store/auth.store";
 import { formatAmount, formatDateTime } from "../../utils/format";
+import { groupPeople } from "../../utils/people";
 import { routes } from "../../config/routes";
 import { useIsViewer } from "../../hooks/useIsViewer";
 import { mealCategory } from "../../utils/mealCategory";
@@ -31,7 +32,8 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
   const [popupUser, setPopupUser] = useState<User | null>(null);
   const [popupAnchorRect, setPopupAnchorRect] = useState<AnchorRect>(CLOSED_RECT);
   const [namesOpen, setNamesOpen] = useState(false);
-  const participants = meal.participants ?? [];
+  // One entry per person, not per name they are on the list under (utils/people.ts).
+  const participants = groupPeople(meal.participants ?? [], users).map((person) => person.name);
   const category = mealCategory(meal);
 
   function resolveUser(stored: string) {

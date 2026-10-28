@@ -1,6 +1,6 @@
-import { MessageSquareOff } from "lucide-react";
 import { categoriesFor } from "../../constants/notifications";
 import { NotificationChannelPicker } from "../../components/notifications/NotificationChannelPicker";
+import { NoDiscordNotice } from "../../components/notifications/NoDiscordNotice";
 import type { ProfileState } from "./types";
 
 interface StepNotificationsProps {
@@ -27,22 +27,7 @@ export function StepNotifications({ state, onChange, hasDiscord }: StepNotificat
         </p>
       </div>
 
-      {!hasDiscord && (
-        <div className="flex items-start gap-3 notice-warn p-4">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg pill-warn">
-            <MessageSquareOff size={16} />
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-ink">
-              Je ontvangt nog geen Discord DM's
-            </p>
-            <p className="mt-0.5 text-xs leading-relaxed text-ink-2">
-              Je bent ingelogd met Google, dus de bot heeft geen Discord-account om naartoe te sturen.
-              Je kunt dit hierna alsnog koppelen via je profiel — de keuzes hieronder blijven bewaard voor als je dat doet.
-            </p>
-          </div>
-        </div>
-      )}
+      {!hasDiscord && <NoDiscordNotice extra="De keuzes hieronder blijven bewaard voor als je dat doet." />}
 
       <NotificationChannelPicker
         allowDm={state.allowDm}

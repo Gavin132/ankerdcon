@@ -6,6 +6,8 @@ import { getNow } from "../../store/time.store";
 import { todayKey } from "../../utils/date";
 import { formatTime } from "../../utils/format";
 import { listItem } from "../../utils/motion";
+import { groupPeople } from "../../utils/people";
+import { useUsers } from "../../hooks/useUsers";
 import type { Meal } from "../../types";
 
 /** How long after its start a meal stays on the hub. */
@@ -22,6 +24,7 @@ interface MealTodayCardProps {
  * to its page, with whether you're on the list. Sits above the quick-ride cards.
  */
 export function MealTodayCard({ meals, myNames }: MealTodayCardProps) {
+  const { data: users = [] } = useUsers();
   const now = getNow().getTime();
   const today = todayKey();
   const todays = meals
@@ -39,7 +42,7 @@ export function MealTodayCard({ meals, myNames }: MealTodayCardProps) {
     <motion.div variants={listItem} className="space-y-2">
       {todays.map((meal) => {
         const eating = (meal.participants ?? []).some((p) => myNames.includes(p));
-        const count = meal.participants?.length ?? 0;
+        const count = groupPeople(meal.participants ?? [], users).length;
         return (
           <Link key={meal.id} to={routes.meal.view(meal.id)} className="card-surface-hover flex items-center gap-3 p-3.5">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">

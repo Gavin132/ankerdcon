@@ -1,6 +1,8 @@
 import { Check } from "lucide-react";
 import { toDateKey, todayKey } from "../../utils/date";
 import { dayShort, monthShort } from "../../utils/multiDay";
+import { groupPeople } from "../../utils/people";
+import { useUsers } from "../../hooks/useUsers";
 import type { Trip, TripDay } from "../../utils/trips";
 
 interface TripDayPickerProps {
@@ -19,6 +21,7 @@ interface TripDayPickerProps {
  * only ones that fade.
  */
 export function TripDayPicker({ trip, myNames, readOnly = false, onToggleDay }: TripDayPickerProps) {
+  const { data: users = [] } = useUsers();
   const today = todayKey();
   const isMine = (p: string) => myNames.includes(p);
 
@@ -54,7 +57,7 @@ export function TripDayPicker({ trip, myNames, readOnly = false, onToggleDay }: 
               </span>
               <span className="block font-display text-[26px] font-extrabold leading-none text-ink">{date.getDate()}</span>
               <span className="mt-1 block truncate text-[12px] leading-none text-ink-2">
-                {isTravelDay ? "Reisdag" : `${ev.participants.length} mee`}
+                {isTravelDay ? "Reisdag" : `${groupPeople(ev.participants ?? [], users).length} mee`}
               </span>
             </>
           );

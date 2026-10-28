@@ -296,6 +296,7 @@ export function App() {
         <StaleResumeGuard />
         <PendingUploadsSync />
         <AppBackdrop />
+        <UpdateBanner />
         <ImpersonationBanner />
         <OfflineBanner />
         <ViewerBanner />
@@ -304,7 +305,6 @@ export function App() {
         </Suspense>
         <ToastContainer />
         <ConfirmHost />
-        <UpdateBanner />
         <SplashController />
       </PersistQueryClientProvider>
       </MotionConfig>

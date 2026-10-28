@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
-import { Save, MessageSquareOff, ArrowRight } from "lucide-react";
+import { Save } from "lucide-react";
 import { Button } from "../components/common/Button";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { UnsavedChangesModal } from "../components/common/UnsavedChangesModal";
@@ -12,6 +11,7 @@ import { useSmartBack } from "../hooks/useSmartBack";
 import { routes } from "../config/routes";
 import { activePreset, applyPreset, categoriesFor, NOTIFICATION_GROUPS, type NotificationPreset } from "../constants/notifications";
 import { NotificationChannelPicker } from "../components/notifications/NotificationChannelPicker";
+import { NoDiscordNotice } from "../components/notifications/NoDiscordNotice";
 import { toast } from "../store/toast.store";
 import { Switch } from "../components/common/Switch";
 
@@ -98,27 +98,7 @@ export function NotificationSettingsPage() {
       >
         {!user.discord_id && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
-            <div className="flex items-start gap-3 notice-warn p-4">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg pill-warn">
-                <MessageSquareOff size={16} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[14px] font-semibold text-ink">
-                  Je ontvangt nog geen Discord DM's
-                </p>
-                <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-2">
-                  Je bent ingelogd met Google, dus de bot heeft geen Discord-account om naartoe te sturen.
-                  Je kunt dit op elk moment alsnog koppelen via Instellingen.
-                </p>
-                <Link
-                  to={routes.settings}
-                  className="mt-2 inline-flex items-center gap-1 text-[12.5px] font-semibold text-amber-800 hover:underline dark:text-amber-300"
-                >
-                  Discord koppelen
-                  <ArrowRight size={11} />
-                </Link>
-              </div>
-            </div>
+            <NoDiscordNotice withLink />
           </motion.div>
         )}
 

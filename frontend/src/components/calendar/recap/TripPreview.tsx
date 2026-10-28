@@ -6,6 +6,7 @@ import { TripPlanList } from "./TripPlanList";
 import { daysBetween, toDateKey, todayKey } from "../../../utils/date";
 import { dayShort, monthShort } from "../../../utils/multiDay";
 import { tripImage, tripPeople, type Trip } from "../../../utils/trips";
+import { groupPeople } from "../../../utils/people";
 import { findUser as findMember } from "../../../utils/people";
 import { routes } from "../../../config/routes";
 import type { Meal, Ride, User } from "../../../types";
@@ -89,7 +90,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
                 </span>
                 <span className="block font-display text-[22px] font-extrabold leading-none text-ink">{date.getDate()}</span>
                 <span className="mt-0.5 block truncate text-[12px] leading-none text-ink-2">
-                  {ev.has_con === false ? "Reisdag" : `${ev.participants.length} mee`}
+                  {ev.has_con === false ? "Reisdag" : `${groupPeople(ev.participants ?? [], users).length} mee`}
                 </span>
               </Link>
             ))}

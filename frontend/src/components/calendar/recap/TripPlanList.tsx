@@ -3,7 +3,9 @@ import { Car, TrainFront, Utensils } from "lucide-react";
 import { tripMeals, tripRides, type Trip } from "../../../utils/trips";
 import { routes } from "../../../config/routes";
 import { splitDateTime } from "../../../utils/date";
-import type { Meal, Ride } from "../../../types";
+import { groupPeople } from "../../../utils/people";
+import { useUsers } from "../../../hooks/useUsers";
+import type { Meal, Ride, User } from "../../../types";
 
 interface PlanItem {
   id: string;
@@ -19,10 +21,10 @@ interface PlanItem {
 const DAYS = ["zondag", "maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag"];
 const MONTHS = ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 
-function planItems(trip: Trip, rides: Ride[], meals: Meal[], past: boolean): PlanItem[] {
+function planItems(trip: Trip, rides: Ride[], meals: Meal[], users: User[], past: boolean): PlanItem[] {
   const rideItems = tripRides(rides, meals, trip).map((r): PlanItem => {
     const [dayKey, time] = splitDateTime(r.departure_time);
-    const people = r.passengers.length;
+    const people = groupPeople(r.passengers, users).length;
     const label = r.direction === "Inbound" ? "Heen" : r.direction === "Outbound" ? "Terug" : "Naar het restaurant";
     const from = r.start_location ? ` vanuit ${r.start_location}` : "";
     return {
@@ -44,7 +46,7 @@ function planItems(trip: Trip, rides: Ride[], meals: Meal[], past: boolean): Pla
       time,
       kind: "meal",
       title: m.meal_name,
-      sub: `${m.participants.length} mee${m.location ? ` · ${m.location}` : ""}`,
+      sub: `${groupPeople(m.participants, users).length} mee${m.location ? ` · ${m.location}` : ""}`,
       to: routes.meal.view(m.id),
       icon: Utensils,
     };
@@ -63,7 +65,8 @@ interface TripPlanListProps {
 
 /** The rides and meals of a trip in time order, grouped per day. */
 export function TripPlanList({ trip, rides, meals, dayKey, past }: TripPlanListProps) {
-  const items = planItems(trip, rides, meals, past).filter((i) => !dayKey || i.dayKey === dayKey);
+  const { data: users = [] } = useUsers();
+  const items = planItems(trip, rides, meals, users, past).filter((i) => !dayKey || i.dayKey === dayKey);
 
   if (items.length === 0) {
     return <p className="text-[13px] text-ink-3">{past ? "Geen ritten of activiteiten vastgelegd." : "Nog geen ritten of activiteiten gepland."}</p>;

@@ -21,6 +21,7 @@ import { parseEventDate, splitDateTime, toDateKey, todayKey } from "../../utils/
 import { dayShort } from "../../utils/multiDay";
 import { formatAmount, formatBytes } from "../../utils/format";
 import { defaultTripDayId, tripPeople, tripGaps, tripInfo, tripMeals, tripRides, tripOutliers, tripRoomGaps, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
+import { groupPeople } from "../../utils/people";
 import { useLocalTicketsStore } from "../../store/localTickets.store";
 import type { LocalTicket } from "../../utils/localTickets";
 import type { CalendarEvent, Cosplay, Expense, HotelRoom, Meal, Ride, StoryDaySummary, User } from "../../types";
@@ -261,7 +262,7 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
                   <span className="block truncate font-semibold text-ink">{m.meal_name}</span>
                   <span className="block text-ink-3">
                     {mealCategory(m).has_signup
-                      ? `${m.participants.length} mee, ${m.participants.some(isMine) ? "jij ook" : "jij nog niet"}`
+                      ? `${groupPeople(m.participants, users).length} mee, ${m.participants.some(isMine) ? "jij ook" : "jij nog niet"}`
                       : mealCategory(m).name}
                   </span>
                 </span>
