@@ -272,6 +272,67 @@ the page afterwards.
 
 ---
 
+## Mock mode
+
+The app on made-up data, signed in as nobody, so every screen can be opened at a phone size without a login, the
+backend or a database. **Development only** (`npm run dev`): `main.tsx` loads `src/dev/` behind
+`import.meta.env.DEV`, so a production build has none of it, and nothing it does reaches a server.
+
+Open `http://localhost:5173/?mock`, and add what you want:
+
+| Option | Values | What it does |
+| --- | --- | --- |
+| `scenario` | `upcoming` (default), `live`, `past` | where the main trip (HMIA 2026 Brussel, three days) stands: coming up, on right now (day two is today), or over |
+| `role` | `member` (default), `admin`, `viewer` | who is signed in: an ordinary member, an admin (admin pages, extra buttons) or a read-only member |
+| `delay` | milliseconds | holds every answer back, to see loading and skeleton states |
+
+For example `/finance?mock&scenario=live&role=admin&delay=800`. The tab remembers the options (sessionStorage), so
+reloading or typing another path stays in mock mode; close the tab to leave it.
+
+What is where:
+
+- `src/dev/mock/fixtures.ts`: the data, typed with the app's own types. It is deliberately awkward: a very long name
+  and activity title, a full car, a trip only some people attend, an empty list, so layouts meet what real data
+  does. Dates are counted from today. `fixtures.test.ts` keeps it consistent (everyone named exists, links point at
+  something, seat counts add up).
+- `src/dev/mock/adapter.ts`: answers requests (it replaces axios's network adapter). A read with no entry answers
+  `[]` and is listed in `window.__mock.unhandled`; a change is accepted and forgotten, the next read shows the fixtures
+  again. Add a line to `GETS` when a new screen needs data.
+- `src/lib/mockMode.ts`: the one flag the rest of the app knows. It keeps the sign-in listener quiet and keeps made-up
+  data out of the saved query cache.
+
+### The mobile audit
+
+`npm run mobile-audit` opens every screen listed in `scripts/audit-screens.mjs` in mock mode at phone widths, runs
+the layout check in `src/dev/audit.ts` (`window.__audit()`, also usable from the console) and writes
+`playwright-out/audit/report.md` with a screenshot of every screen. It looks for:
+
+| Finding | Severity | What it means |
+| --- | --- | --- |
+| `clipped-text` | error | text an `overflow: hidden` parent cuts off, even by a pixel |
+| `clipped-box` | warn | a control, icon or picture an `overflow: hidden` parent shaves a corner, ring or badge off |
+| `offscreen`, `page-scrolls-sideways` | error / warn | text or a box past the screen edge; the page scrolls sideways |
+| `broken-image` | error | a picture that did not load |
+| `small-tap-target` | warn (info from 40 px) | a control under 44×44 px, counting the invisible `hit-area` box |
+| `small-text` | info | text under 12 px |
+| `truncated` | info | text shortened with "…" (one line or `line-clamp`), which is on purpose |
+
+A scroll box is not a problem (what is inside it can be reached), and neither is an ellipsis; both are only mentioned.
+
+```bash
+npm run mobile-audit                          # 320 and 390 px, light, "upcoming"
+npm run mobile-audit -- --full                # 320 360 390 430 px, light and dark, all three scenarios
+npm run mobile-audit -- --only trip,finance   # screens whose name contains one of these
+npm run mobile-audit -- --info                # also the small text and the truncations
+npm run mobile-audit -- --browser webkit      # Safari's engine
+npm run mobile-audit -- --selftest            # checks the check itself on deliberately broken elements
+```
+
+It needs the dev server and a Playwright browser (`npx playwright install chromium`); if only an older Chromium is
+installed it uses that. The exit code is 1 when there are errors. **Run it after changing layout, and add a screen to
+`audit-screens.mjs` for a new page or sheet.** It finds what can be measured; it cannot tell that something looks
+odd, so also look at the screenshots.
+
 ## Testing in WebKit (iPhone)
 
 Without an iPhone, `npm run ios-check` (in `frontend/`) opens the running app in Playwright's

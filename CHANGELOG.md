@@ -8,6 +8,68 @@ All notable changes to Ankerd Con are documented here.
 
 ---
 
+## [2.1.5] - 2026-10-28
+
+### Fixed
+
+- **Removing a car from a restaurant ride made the other cars jump.** The cars did not pass the browser what it
+  needs to keep the rest in place while one leaves (a React warning in the console said so); they do now.
+- **A member who was renamed (or signed up by their Discord username) showed up twice in "Wie gaan er mee".**
+  Sign-ups store names, so someone on Saturday under their Discord username and on Sunday under their name was two
+  names on the list, each with one day, instead of one person with "Alle dagen". They are now one person everywhere
+  a trip's people are shown or counted: the list, the avatars and "Jij en 3 anderen" on the tickets, the Hub card,
+  the recap, and the checks for who is missing a ride, a meal or a hotel room or is only there some days (a ride
+  or room listing them under either name counts).
+- **Reloading an admin page sent you to the Hub.** While the app was still restoring its saved data, the admin
+  check read "no answer yet" as "not an admin". It now waits for the answer.
+- **The "Iemand aanmelden" button in the participants list had no styling** (plain text on a bare strip); the
+  quiet button style it relied on did not exist. It does now, and so does the same button on the trip switcher
+  and the CDN page.
+- **The search no longer slides under the tab bar** on a phone, so the last results can be reached.
+- **Cut-off and squeezed bits on small phones (320 px wide):** the "Locatie pingen" button on Crew, the sign-up
+  count on an activity, the day cards (the tick no longer sits on "DI NOV"), the settle-up and ritkosten rows (the
+  title was cut to a dozen letters; the status pill now sits under it), the route card of a ride, the cosplay
+  toolbar and its date pills, the arrival and departure list of a hotel, the "Nieuw" label under your story.
+- **The story row now runs to the edge of the screen** instead of stopping 16 px short.
+- **The swipe hint for other trips sits above the tab bar** instead of over the banners at the top, and has no shadow.
+- **Admin on a phone:** the whitelist's delete buttons were pushed off the screen by long addresses, the new-day
+  row of the event drawer lost its buttons, event rows on the dashboard collapsed to one letter, the header
+  buttons wrapped and clipped, and the menu drawer left a shadow strip along the screen edge.
+- **A restaurant ride without a named organiser no longer shows an empty "?"** under the title.
+- **Compact density now also tightens half steps** (gaps and paddings like 1.5 and 2.5), which it silently skipped.
+
+### Changed
+
+- **Calmer screens:** the "what's new" bar is a soft blue strip instead of a solid blue one, and it only shows when
+  there is no announcement, so the top of a phone screen holds one bar at most; the hotel sheet is a plain list
+  divided by lines instead of a card inside the sheet; the "Installeren" button and the iPhone steps line up with
+  the text of the install card instead of sitting under its icon; the one-time swipe hint is a dark pill instead of
+  an outlined card; the Praktisch sheet has no icons in front of some of its headings and no extra side
+  indent, so every heading starts at the same edge and the text gets the full width; the days on the Hub card are written like the days on the event page (`DI OKT`); a cosplay
+  card lists its days in one line (`DI 27 · DO 29 OKT`) instead of a box per day; the place of an activity is no
+  longer in capitals; the profile page has the same title bar as the other pages ("Profiel") instead of repeating
+  the name; the admin dashboard's "Alle evenementen" no longer wraps and long places end in "…" instead of being
+  cut off. Warning and success notices share one look (`notice-warn`, `notice-ok`).
+- **Easier to hit:** the close button on the announcement and "what's new" bars, the dots and arrows of the Hub
+  carousel, "N gaan mee", "Nog N tonen", the back and home buttons, the avatar in the header and the switches
+  all have a 44 px area to tap (they look the same).
+- **Buttons that cannot be pressed yet look flat and grey** instead of a washed-out blue block with a grey outline.
+- **One switch everywhere** (Instellingen and Meldingen used two different ones).
+- **The admin tables turn into cards on a phone.** Users, rides, activities, events, badges, announcements and the
+  changelog no longer need sideways scrolling to reach edit and delete: each row is a card with the name on top and
+  the status and buttons below. The page headers say which part of the admin you are in, and their buttons share
+  the full width on a phone. Admin buttons are all at least 44 px tall.
+- **Greyer text is easier to read.** The muted grey is a shade darker (and lighter in dark mode), enough for small
+  text to be readable; the same grey as before, just with more contrast.
+- **The same look for the same thing:** one status pill (green = fine, amber = waiting for you, red = you owe),
+  one filter chip, one label and error style for forms. "Te betalen" is now red everywhere (it was grey in the
+  expense details). Popups ("Aanmelden", "Aankondiging", cancel a ride) are sheets like everything else, instead of
+  full-screen pages.
+- **The Hub card of a short event no longer has a big empty gap** (it was stretched to the height of the tallest one).
+- **Accent colours** no longer leave one lonely colour on the second row.
+
+---
+
 ## [2.1.4] - 2026-10-20
 
 The back gesture closes a story instead of leaving the app, and a home server that is off shows an error

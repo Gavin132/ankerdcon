@@ -342,7 +342,10 @@ by hand, by members or admins.
   pronouns, bio, badges, aliases (former names), phone number and, on the current
   trip, room. Others see a popup with a "Bekijk profiel" button
   (`components/common/UserProfilePopup.tsx`); it scrolls inside itself on small screens.
-- Renaming keeps history: old data stays under the old name, which becomes an alias.
+- Renaming keeps history: old data stays under the old name, which becomes an alias. A list that shows people
+  (who goes, the avatars, the counts, who is missing a ride) therefore groups the names that belong to one member
+  into one person (`utils/people.ts`: `groupPeople`, `tripPeople`), whichever name each day was signed up under;
+  taking someone off a list still removes the names as stored.
 - **Profile pictures stay small.** A custom avatar is cropped to 384 px (was 512) before upload, and every
   place that shows a Discord or Google picture asks for the size it needs (`avatarSrc()`, 64 to 256 px)
   instead of the provider's full-size file: a screen can show dozens of avatars at 24 to 40 px.
