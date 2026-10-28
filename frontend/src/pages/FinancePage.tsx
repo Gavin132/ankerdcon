@@ -18,7 +18,7 @@ import { useUsers } from "../hooks/useUsers";
 import { useCurrentUser } from "../hooks/useUsers";
 import { useCalendar } from "../hooks/useCalendar";
 import { buildTrip, tripIdOf, type Trip } from "../utils/trips";
-import { formatAmount, formatCurrency } from "../utils/format";
+import { formatAmount } from "../utils/format";
 import { listContainer } from "../utils/motion";
 import type { Expense, User } from "../types";
 
@@ -264,7 +264,7 @@ export function FinancePage() {
                   Groep totaal
                 </p>
                 <span className="font-mono text-[15px] font-semibold tabular-nums text-ink">
-                  {formatCurrency(totalGroup)}
+                  {formatAmount(totalGroup)}
                 </span>
               </div>
 
@@ -280,7 +280,7 @@ export function FinancePage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
                             <span className="truncate text-[13.5px] font-semibold text-ink">{name}</span>
-                            <span className="shrink-0 font-mono text-[13px] font-semibold tabular-nums text-ink">{formatCurrency(amount)}</span>
+                            <span className="shrink-0 font-mono text-[13px] font-semibold tabular-nums text-ink">{formatAmount(amount)}</span>
                           </div>
                           <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-sunken shadow-[inset_0_0_0_1px_rgb(var(--line))]">
                             <div

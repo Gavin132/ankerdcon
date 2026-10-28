@@ -14,9 +14,9 @@ import { routes } from "../../config/routes";
 import { useIsViewer } from "../../hooks/useIsViewer";
 import type { CarGuidance } from "../../utils/carBalance";
 import type { Ride } from "../../types";
+import { MINE_CLASS } from "./mine";
 
 /** The member's own ride. A deeper blue than the brand fill, so white text stays readable on it. */
-const MINE_CLASS = "bg-sky-600 text-white dark:bg-[#1A6FC9]";
 
 const PILL = "pill";
 
@@ -198,15 +198,15 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
         </span>
         <span className="min-w-0 flex-1 leading-[1.3]">
           <span className={`block truncate text-[14px] font-semibold ${mine ? "" : "text-ink-2"}`}>{resolveName(ride.driver)}</span>
-          <span className={`block truncate text-[12px] ${mine ? "text-white/85" : "text-ink-3"}`}>{sub}</span>
+          <span className={`block truncate text-[12px] ${mine ? "text-ink-2" : "text-ink-3"}`}>{sub}</span>
         </span>
         <span className="shrink-0 text-right leading-[1.3]">
-          <span className={`block text-[12px] ${ride.is_full ? "font-semibold" : ""} ${mine ? "text-white/90" : "text-ink-2"}`}>{seatsText}</span>
-          {goalText && <span className={`block text-[12px] font-semibold ${mine ? "text-white" : goalTone}`}>{goalText}</span>}
+          <span className={`block text-[12px] ${ride.is_full ? "font-semibold" : ""} ${mine ? "text-ink-2" : "text-ink-2"}`}>{seatsText}</span>
+          {goalText && <span className={`block text-[12px] font-semibold ${mine ? "text-ink" : goalTone}`}>{goalText}</span>}
         </span>
         <ChevronDown
           size={14}
-          className={`shrink-0 transition-transform duration-200 ${expanded ? "rotate-180" : ""} ${mine ? "text-white/85" : "text-ink-3"}`}
+          className={`shrink-0 transition-transform duration-200 ${expanded ? "rotate-180" : ""} ${mine ? "text-ink-2" : "text-ink-3"}`}
         />
       </button>
 

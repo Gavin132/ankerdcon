@@ -42,18 +42,32 @@ export function formatTime(dateStr: string): string {
   }
 }
 
-export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("nl-NL", {
-    style: "currency",
-    currency: "EUR",
-  }).format(amount);
-}
-
+/** Money, always the Dutch way: "€ 37,50". */
 export function formatAmount(amount: number, currency = "EUR"): string {
   return new Intl.NumberFormat("nl-NL", {
     style: "currency",
     currency,
   }).format(amount);
+}
+
+/** A date for a table or a list: "17 nov. 2026". `formatDate` is the long one ("17 november 2026"). */
+export function formatDateShort(dateStr: string): string {
+  try {
+    const parsed = parseISO(dateStr.replace(" ", "T"));
+    if (!isValid(parsed)) return dateStr;
+    return format(parsed, "d MMM yyyy", { locale: nl });
+  } catch {
+    return dateStr;
+  }
+}
+
+/** A file size: "512 B", "48 KB", "3,2 MB", "1,25 GB". */
+export function formatBytes(bytes: number): string {
+  const nl1 = (n: number, digits: number) => n.toLocaleString("nl-NL", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${nl1(bytes / 1024, 0)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${nl1(bytes / 1024 / 1024, 1)} MB`;
+  return `${nl1(bytes / 1024 / 1024 / 1024, 2)} GB`;
 }
 
 /** "dinsdag 30 juni om 05:28" — from a datetime-local string */

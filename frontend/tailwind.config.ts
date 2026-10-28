@@ -67,6 +67,10 @@ const config: Config = {
         sunken: token("sunken"),
         line: token("line"),
         outline: token("outline"),
+        // Status: text (`text-ok`) and its soft background (`bg-ok-soft`). They switch in dark mode by themselves.
+        ok: { DEFAULT: token("ok"), soft: token("ok-soft") },
+        warn: { DEFAULT: token("warn"), soft: token("warn-soft") },
+        bad: { DEFAULT: token("bad"), soft: token("bad-soft") },
         brand: {
           DEFAULT: token("cyan"),
           soft: token("cyan-soft"),

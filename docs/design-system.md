@@ -64,6 +64,7 @@ variant is needed with them.
 | `bg-brand`, `text-brand-on` | brand blue fill with ink text |
 | `bg-brand-soft`, `text-brand-text` | soft blue background, blue text/links |
 | `bg-hatch-surface` | striped surface for travel days |
+| `text-ok` / `text-warn` / `text-bad`, `bg-ok-soft` / `bg-warn-soft` / `bg-bad-soft` | status text and its tint (emerald / amber / rose); they switch in dark mode by themselves, so no `dark:` twin. Use these, not raw `emerald-*`, `amber-*` or `rose-*`, in new code |
 
 `slate-*` and `sky-*` are remapped to the new greys and the brand blue, so existing classes
 already look right; converting them to tokens is still preferred when you touch a
@@ -102,20 +103,21 @@ Page head pattern (see `TripLayout`, `HubPage`):
   `overflow-hidden`. Clickable: `card-surface-hover` (border darkens on hover).
 - **Panel header:** `section-label` on the left, an optional `text-[12.5px] font-semibold text-brand-text` link on the right.
 - **List rows inside a panel:** `divide-y divide-line` or `border-t border-line`, row hover `hover:bg-sunken`.
-- **Icon square: all or none.** Use it only where every item of the same list or grid has one (the tiles on the Event page, the rows in Instellingen); a heading with an icon next to a heading without one reads as a mistake, and the square pushes the text in. Inside a sheet (Hotel, Praktisch) the headings have no icon. `flex h-8 w-8 items-center justify-center rounded-lg bg-sunken text-ink`; status versions use `bg-rose-100 text-rose-700` / `bg-amber-100 text-amber-800` / `bg-emerald-100 text-emerald-700` with `dark:bg-*-500/15 dark:text-*-300`.
+- **Icon square: all or none.** Use it only where every item of the same list or grid has one (the tiles on the Event page, the rows in Instellingen); a heading with an icon next to a heading without one reads as a mistake, and the square pushes the text in. Inside a sheet (Hotel, Praktisch) the headings have no icon. `flex h-8 w-8 items-center justify-center rounded-lg bg-sunken text-ink`; status versions are `icon-tile-ok`, `icon-tile-warn` and `icon-tile-bad` (colours and shape; add the size, `h-8 w-8`).
 - **Pill (status):** `inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11.5px] font-semibold` in the status colours above; neutral: `bg-sunken text-ink-2`.
-- **Tag / chip:** `rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2`.
+- **Tag:** `tag` (`rounded-md border border-line px-1.5`, small uppercase label, 12px). A chip is the filter pill below.
 - **One blue button per view.** The main action of a screen or sheet is `btn-primary`; the same action repeated in each section of a list ("Rit aanbieden" for Heen and for Terug) is `btn-secondary`, so the eye has one place to go.
-- **Buttons:** use `<Button>` (`primary` blue with an ink outline, `secondary`, `ghost`, `danger`; all flat, no shadows). For a raw element: `btn-primary px-4 py-2.5 text-sm` or `btn-secondary px-4 text-sm` (both defined in `index.css`; a disabled `btn-primary` turns flat grey by itself). On/off settings use `components/common/Switch.tsx`. Shared classes in `index.css`: `.pill` + `.pill-ok|warn|bad|neutral` (status: fine / waiting for you / you owe / info), `.chip` + `.chip-on|off` (filters), `.notice-warn` / `.notice-ok` (a bordered message block), `.icon-btn`, `.field-label` and `.field-error` (forms), `.stack-table` with `cell-main` and `cell-actions` (a data table that becomes cards on a phone). Popups are `TripSheet` (`Modal` is a thin wrapper around it). A control under 44 px gets `hit-area`.
+- **Buttons:** use `<Button>` (`primary` blue with an ink outline, `secondary`, `ghost`, `danger`; all flat, no shadows). For a raw element: `btn-primary px-4 py-2.5 text-sm` or `btn-secondary px-4 text-sm` (both defined in `index.css`; a disabled `btn-primary` turns flat grey by itself). On/off settings use `components/common/Switch.tsx`. Shared classes in `index.css`: `.pill` + `.pill-ok|warn|bad|neutral` (status: fine / waiting for you / you owe / info), `.chip` + `.chip-on|off` (filters), `.notice-warn` / `.notice-ok` (a bordered message block), `.icon-btn`, `.field-label` and `.field-error` (forms), `.stack-table` with `cell-main` and `cell-actions` (a data table that becomes cards on a phone: the name cell takes what is left of the line and may shrink, the actions never shrink; a `ConfirmInline` in the actions cell takes a line of its own), `.btn-danger` (the red confirm, same as `<Button variant="danger">`) and `.btn-danger-soft` (the quiet red one that opens the question), both 44 px tall. Popups are `TripSheet` (`Modal` is a thin wrapper around it). A control under 44 px gets `hit-area`.
 - **Segmented control:** track `flex gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]`, item `rounded-[7px] px-3 py-1.5 text-[13px] font-semibold text-ink-2`, active item `bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]`.
 - **Selected chip (filters, day chips):** active `bg-ink text-paper` (in dark mode `bg-brand text-brand-on`), inactive `border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3`.
 - **Inputs:** `input-field`.
 - **Hero blocks** (event, ride, meal headers): a flat ink block (`bg-hero text-hero-ink`, tokens that stay dark in light mode too,
   rounded 14px, `border-2 border-outline`) or the event image with a flat dark overlay
-  (`bg-hero/60`, no gradient ramps). Title in the display face. White-ish chips:
-  `border border-white/25 bg-white/10 font-mono text-[10.5px] uppercase text-hero-ink`.
-  Primary action on it: `btn-primary`.
-- **Sheets** (`TripSheet`): the standard way to open something over a page. A bottom sheet with a
+  (`bg-hero/60`, no gradient ramps). Title in the display face. White-ish chips are `HeroChip`
+  (`components/common/HeroActions.tsx`, tones neutral / warn / bad; `heroChipClass()` when the chip is a link). The
+  actions on it are `HeroActions` with a `HeroSecondaryButton` (outlined) and the one `HeroPrimaryButton`, both 40 px
+  tall (`MealHero`, `RideHero`).
+- **Sheets** (`TripSheet`): the standard way to open something over a page. `Modal` is a thin wrapper and passes its `footer` on, so the main button of a small question sits under the scrolling body like everywhere else. A bottom sheet with a
   title, optional back arrow and a footer for the main action; several views (list, form, filter) swap
   inside one sheet with `viewKey`. Used for trip parts, expenses, settle-up, and more. There is no
   right-hand drawer any more: the admin panel's edit panels (`AdminDrawer`) and its
@@ -128,9 +130,11 @@ Page head pattern (see `TripLayout`, `HubPage`):
   A sheet over something that is not a `TripSheet` still needs `stacked`.
 - **Modals, menus, popovers:** `bg-surface border-1.5 border-line`, may keep
   `shadow-xl` (floating layers are the only thing with a shadow). Backdrop `bg-slate-950/50`, no blur.
-- **Empty states:** icon in an `h-12 w-12 rounded-xl bg-sunken text-ink-3` square, `text-sm font-semibold text-ink` title, `text-xs text-ink-3` body.
+- **Empty states:** `<EmptyState icon title description action>`: icon in an `h-12 w-12 rounded-xl bg-sunken text-ink-3` square, `text-sm font-semibold text-ink` title, `text-xs text-ink-3` body. `compact` (`py-8` instead of `py-16`) inside a card or a table cell.
+- **Asking before a delete:** a delete that takes other things with it (a day, a selection of rows) goes through `askConfirm` (`store/confirm.store.ts`, shown by `ConfirmHost`): a dialog with "Annuleren" and a red "Verwijderen" (`destructive: true`). Taking one row out of a list inside a card or table uses the two-step `ConfirmInline` (`pages/admin/components/`): the question, "Annuleren", the red confirm, all 44 px tall.
 - **Skeletons:** `bg-sunken animate-pulse`.
-- **Tables (admin):** header cells `font-mono text-[10.5px] uppercase tracking-[0.09em] text-ink-3 border-b-1.5 border-line`, cells `border-b border-line`, row hover `bg-sunken`, amounts right-aligned `font-mono tabular-nums`.
+- **Tables (admin):** header cells `th` (`label-quiet`, `border-b-1.5 border-line`; `TH` in `pages/admin/styles.ts`), cells `border-b border-line`, row hover `bg-sunken`, amounts right-aligned `font-mono tabular-nums`. The checkbox of a row is `RowCheckbox` (16 px to look at, 44 px to hit). The actions for the selected rows (`AdminBulkBar`) are a strip in the page right above the table, never a bar floating over it.
+- **Quiet uppercase label:** `label-quiet` (12px, medium weight) for the kicker above a title and for table headers; `section-label` (semibold) for the label above a group.
 - **Motion:** fades and height transitions are fine; no bouncy springs on content, no hover movement.
 
 ## Touch (phones)
@@ -160,6 +164,7 @@ Page head pattern (see `TripLayout`, `HubPage`):
 ## Layout
 
 - **Spacing:** the blocks of a page are `space-y-5` apart; detail and settings pages are `px-4 py-5 sm:py-8` (the same side padding as `DetailTopbar`, so the title lines up with the content). Inside a card, 3 or 4.
+- **The row of a car you ride in** (`MINE_CLASS`, `components/transport/mine.ts`): `bg-brand-soft`, a `border-l-4 border-brand-text` bar, ink text. It follows the accent colour; never a solid blue block.
 - **Banners above the header:** one at a time. An announcement shows; the "what's new" strip only when there is no announcement.
 - Desktop (lg, ≥1024px): sidebar (`Sidebar.tsx`), content up to `max-w-5xl` from xl.
 - Tablet (md): icon rail. Phone: bottom tab bar (`BottomNav.tsx`).

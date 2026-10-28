@@ -20,6 +20,8 @@ export interface EmptyStateProps {
   title: string;
   description?: string;
   action?: ReactNode;
+  /** Less air above and below, for use inside a card or a table cell. */
+  compact?: boolean;
 }
 
 export interface LoadingSpinnerProps {

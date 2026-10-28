@@ -143,6 +143,10 @@ Anything that depends on the present (is a ride past, is a trip over, which even
 nearest) must call `getNow()` from `store/time.store.ts` instead of `new Date()`, so the admin
 time-travel tool can test live and finished trips.
 
+Text for dates, money and sizes comes from `utils/format.ts` and nowhere else: `formatDate` ("17 november
+2026"), `formatDateShort` ("17 nov. 2026"), `formatDateTime`, `formatTime`, `formatAmount` ("€ 37,50", any
+currency) and `formatBytes` ("3,2 MB"). No hand-written `toFixed()` or `toLocale…String()` for these.
+
 ## Offline and updates
 
 The service worker caches the app shell and hashed assets; `useServiceWorker` and

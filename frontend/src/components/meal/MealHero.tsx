@@ -3,20 +3,17 @@ import { Link } from "react-router-dom";
 import { Clock, MapPin, Banknote, Bus, CalendarDays, ChevronDown, UserCheck, UserMinus } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { Collapse } from "../common/Collapse";
+import { HeroActions, HeroChip, HeroPrimaryButton, HeroSecondaryButton, heroChipClass } from "../common/HeroActions";
 import { UserProfilePopup, type AnchorRect } from "../common/UserProfilePopup";
 import { useCalendar } from "../../hooks/useCalendar";
 import { useAuthStore } from "../../store/auth.store";
-import { formatDateTime } from "../../utils/format";
+import { formatAmount, formatDateTime } from "../../utils/format";
 import { routes } from "../../config/routes";
 import { useIsViewer } from "../../hooks/useIsViewer";
 import { mealCategory } from "../../utils/mealCategory";
 import type { CalendarEvent, Meal, User } from "../../types";
 
 const CLOSED_RECT: AnchorRect = { top: 0, left: 0, right: 0, height: 0 };
-
-/** White-ish mono chip on the ink hero. */
-const CHIP =
-  "inline-flex items-center gap-1.5 rounded-md border border-white/25 bg-white/10 px-2 py-[3px] font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-hero-ink";
 
 interface MealHeroProps {
   meal: Meal;
@@ -57,11 +54,11 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
       <div className="px-5 py-5 sm:px-7 sm:py-6">
 
         <div className="mb-3 flex flex-wrap gap-1.5">
-          <span className={`${CHIP} !border-white/40 !bg-white/20`}>{category.name}</span>
+          <HeroChip className="!border-white/40 !bg-white/20">{category.name}</HeroChip>
           {linkedEvent && (
             <Link
               to={routes.event.view(linkedEvent.id)}
-              className={`${CHIP} transition-colors hover:bg-white/20`}
+              className={`${heroChipClass()} transition-colors hover:bg-white/20`}
             >
               <CalendarDays size={11} />
               {linkedEvent.event_name}
@@ -81,27 +78,27 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
 
         {/* Chips */}
         <div className="mt-4 flex flex-wrap gap-1.5">
-          <span className={CHIP}>
+          <HeroChip>
             <Clock size={11} />
             {formatDateTime(meal.time)}
-          </span>
+          </HeroChip>
           {meal.location && (
-            <span className={`${CHIP} min-w-0 !items-start normal-case tracking-normal`}>
+            <HeroChip className="min-w-0 !items-start normal-case tracking-normal">
               <MapPin size={11} className="mt-[3px] shrink-0" />
               {meal.location}
-            </span>
+            </HeroChip>
           )}
           {category.has_cost && meal.cost > 0 && (
-            <span className={`${CHIP} tabular-nums`}>
+            <HeroChip className="tabular-nums">
               <Banknote size={11} />
-              €{meal.cost.toFixed(2)} p.p.
-            </span>
+              {formatAmount(meal.cost)} p.p.
+            </HeroChip>
           )}
           {category.has_transport && meal.transport_needed && (
-            <span className={CHIP}>
+            <HeroChip>
               <Bus size={11} />
               Vervoer nodig
-            </span>
+            </HeroChip>
           )}
         </div>
 
@@ -134,24 +131,16 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
             </button>
           )}
           {!viewer && (
-          <div className="ml-auto flex items-center gap-2">
+          <HeroActions>
             {participants.length > 0 && (
-              <button
-                type="button"
-                onClick={onCancelClick}
-                className="flex items-center gap-1.5 rounded-xl border-1.5 border-white/25 px-3 py-2 text-xs font-semibold text-hero-ink transition-colors hover:border-white/50"
-              >
-                <UserMinus size={13} /> Afmelden
-              </button>
+              <HeroSecondaryButton onClick={onCancelClick}>
+                <UserMinus size={14} /> Afmelden
+              </HeroSecondaryButton>
             )}
-            <button
-              type="button"
-              onClick={onRsvpClick}
-              className="btn-primary px-3.5 py-2 text-xs"
-            >
-              <UserCheck size={13} /> Aanmelden
-            </button>
-          </div>
+            <HeroPrimaryButton onClick={onRsvpClick}>
+              <UserCheck size={14} /> Aanmelden
+            </HeroPrimaryButton>
+          </HeroActions>
           )}
         </div>
         )}

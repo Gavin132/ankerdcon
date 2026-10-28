@@ -5,9 +5,10 @@ export function EmptyState({
   title,
   description,
   action,
+  compact,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
+    <div className={`flex flex-col items-center justify-center text-center ${compact ? "py-8" : "py-16"}`}>
       <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
         {icon}
       </div>

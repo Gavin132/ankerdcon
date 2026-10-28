@@ -21,8 +21,7 @@ export const SECTION =
 export const PANEL = "card-surface overflow-hidden";
 
 /** Table header row cells (`<th>`). */
-export const TH =
-  "whitespace-nowrap border-b-1.5 border-line px-4 py-2 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3";
+export const TH = "th";
 
 /** Table body cells (`<td>`). Pair rows with `TR`. */
 export const TD = "border-b border-line px-4 py-3 align-middle text-[13.5px] text-ink";
@@ -36,9 +35,11 @@ export const BTN_PRIMARY = "btn-primary min-h-[44px] px-4 py-2.5 text-sm";
 /** Secondary action (see `.btn-secondary` in index.css). */
 export const BTN_SECONDARY = "btn-secondary px-4 py-2.5 text-sm";
 
+/** Destructive confirm (see `.btn-danger` in index.css): the red "Verwijderen". */
+export const BTN_DANGER = "btn-danger px-4 py-2.5 text-sm";
+
 /** Small uppercase mono tag. */
-export const TAG =
-  "inline-flex items-center rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2";
+export const TAG = "tag";
 
 /** Status pills (`.pill` in index.css). */
 export const PILL = "pill";

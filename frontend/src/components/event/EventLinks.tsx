@@ -1,5 +1,5 @@
 import { ExternalLink, Globe, Ticket } from "lucide-react";
-import { formatCurrency, formatTicketSaleStart } from "../../utils/format";
+import { formatAmount, formatTicketSaleStart } from "../../utils/format";
 import { safeHref } from "../../utils/validation";
 import type { CalendarEvent } from "../../types";
 
@@ -36,7 +36,7 @@ export function EventLinks({ event, bare = false }: EventLinksProps) {
                 <div key={i} className="flex items-center justify-between gap-4">
                   <span className="text-sm text-ink-2">{t.title}</span>
                   <span className="shrink-0 font-mono text-sm font-semibold tabular-nums text-ink">
-                    {formatCurrency(t.price)}
+                    {formatAmount(t.price)}
                   </span>
                 </div>
               ))}

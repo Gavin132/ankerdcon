@@ -19,7 +19,7 @@ import { routes } from "../../config/routes";
 import { getNow } from "../../store/time.store";
 import { parseEventDate, splitDateTime, toDateKey, todayKey } from "../../utils/date";
 import { dayShort } from "../../utils/multiDay";
-import { formatCurrency } from "../../utils/format";
+import { formatAmount, formatBytes } from "../../utils/format";
 import { defaultTripDayId, tripPeople, tripGaps, tripInfo, tripMeals, tripRides, tripOutliers, tripRoomGaps, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
 import { useLocalTicketsStore } from "../../store/localTickets.store";
 import type { LocalTicket } from "../../utils/localTickets";
@@ -469,11 +469,11 @@ export function ExpensesTile({ trip, phase, expenses, myNames }: { trip: Trip; p
       size={phase === "past" && open > 0 ? "wide" : "small"}
       pill={open > 0 && <TilePill>Open</TilePill>}
     >
-      <TileValue>{list.length === 0 ? "Nog niks" : open > 0 && phase === "past" ? `${formatCurrency(open)} open` : formatCurrency(total)}</TileValue>
+      <TileValue>{list.length === 0 ? "Nog niks" : open > 0 && phase === "past" ? `${formatAmount(open)} open` : formatAmount(total)}</TileValue>
       <TileText>
         {list.length === 0
           ? "Gedeelde kosten van deze trip komen hier."
-          : open > 0 ? `Jouw deel ${formatCurrency(myTotal)}, nog te betalen ${formatCurrency(open)}` : `Jouw deel ${formatCurrency(myTotal)}`}
+          : open > 0 ? `Jouw deel ${formatAmount(myTotal)}, nog te betalen ${formatAmount(open)}` : `Jouw deel ${formatAmount(myTotal)}`}
       </TileText>
     </TripTile>
   );
@@ -611,12 +611,6 @@ export function PracticalSheet({ open, onClose, info, trip }: { open: boolean; o
 
 const TICKET_MAX_BYTES = 15 * 1024 * 1024; // 15 MB — generous for a screenshot or a vendor PDF
 const TICKET_ACCEPT = "image/jpeg,image/png,image/webp,application/pdf";
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
 
 /** Answers "have I saved my ticket for this trip" — nothing here ever leaves the device. */
 export function TicketTile({ trip, onOpen }: { trip: Trip; onOpen: () => void }) {

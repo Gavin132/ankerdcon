@@ -34,8 +34,8 @@ export function ConfirmHost() {
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.18 }}
           >
-            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-500/15">
-              <AlertTriangle size={20} className="text-amber-600 dark:text-amber-400" />
+            <div className={`mb-4 h-10 w-10 ${request.destructive ? "icon-tile-bad" : "icon-tile-warn"}`}>
+              <AlertTriangle size={20} />
             </div>
             <h2 className="font-display text-2xl font-extrabold uppercase leading-none text-ink">{request.title}</h2>
             <p className="mt-2 text-sm leading-relaxed text-ink-2">{request.message}</p>
@@ -43,7 +43,7 @@ export function ConfirmHost() {
               <Button variant="ghost" size="sm" onClick={() => answer(false)}>
                 {request.cancelLabel}
               </Button>
-              <Button size="sm" onClick={() => answer(true)}>
+              <Button size="sm" variant={request.destructive ? "danger" : "primary"} onClick={() => answer(true)}>
                 {request.confirmLabel}
               </Button>
             </div>

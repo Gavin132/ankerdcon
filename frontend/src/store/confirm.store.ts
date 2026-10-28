@@ -5,6 +5,8 @@ export interface ConfirmRequest {
   message: string;
   confirmLabel: string;
   cancelLabel: string;
+  /** Deleting something: the confirm button is red and the icon says "problem" instead of "careful". */
+  destructive?: boolean;
 }
 
 interface ConfirmStore {

@@ -6,7 +6,7 @@ import { AdminPageHeader } from "./components/AdminPageHeader";
 import { deleteCdnFile, downloadCdnZip, getAdminCdn, quickUpload, type QuickUploadResult } from "../../services/admin.service";
 import { useAdminEvents } from "../../hooks/useAdmin";
 import { toast } from "../../store/toast.store";
-import { formatDateTime } from "../../utils/format";
+import { formatBytes, formatDateTime } from "../../utils/format";
 import type { CdnObject } from "../../types";
 
 // One screenful at a time, in whole rows at 2, 4 and 6 columns. More arrives while scrolling.
@@ -28,13 +28,6 @@ const isVideo = (key: string) => /\.(mp4|mov|webm)$/i.test(key);
 const ACCEPT = "image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm";
 const IMAGE_MAX = 10 * 1024 * 1024;
 const VIDEO_MAX = 80 * 1024 * 1024;
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-  return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
-}
 
 /** Everything in the photo bucket, newest first — to spot anything that shouldn't be there. */
 export function AdminCdnPage() {
@@ -148,7 +141,7 @@ export function AdminCdnPage() {
           <div className="flex flex-wrap items-center gap-2">
             <span className="flex items-center gap-1.5 font-mono text-[12px] tabular-nums text-ink-3">
               <HardDrive size={13} />
-              {data ? `${data.total} bestanden · ${formatSize(data.total_size)}` : "…"}
+              {data ? `${data.total} bestanden · ${formatBytes(data.total_size)}` : "…"}
               {data?.capped && " (afgekapt)"}
             </span>
             <span className="mx-1 hidden h-4 w-px bg-line sm:block" />
@@ -174,7 +167,7 @@ export function AdminCdnPage() {
               className="btn-secondary ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] disabled:opacity-50"
             >
               {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-              {downloading ? `Bezig… ${formatSize(downloaded ?? 0)}` : `Download ${scope} (zip)`}
+              {downloading ? `Bezig… ${formatBytes(downloaded ?? 0)}` : `Download ${scope} (zip)`}
             </button>
           </div>
 
@@ -196,7 +189,7 @@ export function AdminCdnPage() {
           )}
           {tooBig && (
             <p className="text-[12.5px] text-ink-3">
-              Dit is meer dan {formatSize(data?.download_limit_bytes ?? 0)}, te veel voor één zip. Kies een onderdeel{kind === "story" ? " of een event" : ""} en download die apart.
+              Dit is meer dan {formatBytes(data?.download_limit_bytes ?? 0)}, te veel voor één zip. Kies een onderdeel{kind === "story" ? " of een event" : ""} en download die apart.
             </p>
           )}
 
@@ -230,7 +223,7 @@ export function AdminCdnPage() {
                   )}
                   <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-2 pb-1.5 pt-6 text-[11px] font-semibold leading-tight text-white">
                     <span className="block truncate">{o.owner ?? KIND_LABEL[o.kind] ?? o.kind}</span>
-                    <span className="block truncate font-normal text-white/70">{formatSize(o.size)}</span>
+                    <span className="block truncate font-normal text-white/70">{formatBytes(o.size)}</span>
                   </span>
                 </button>
               ))}
@@ -316,7 +309,7 @@ function Viewer({ item, position, onClose, onPrev, onNext, onDelete }: { item: C
           <p className="truncate font-semibold">{item.owner ?? "Onbekende uploader"} · {KIND_LABEL[item.kind] ?? item.kind}</p>
           <p className="truncate font-mono text-[11.5px] text-white/60">{item.key}</p>
           <p className="text-xs text-white/60">
-            {formatSize(item.size)} · {item.last_modified ? formatDateTime(item.last_modified) : "onbekende datum"} · {position}
+            {formatBytes(item.size)} · {item.last_modified ? formatDateTime(item.last_modified) : "onbekende datum"} · {position}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -385,7 +378,7 @@ function QuickUpload({ onUploaded }: { onUploaded: () => void }) {
       return;
     }
     if (file.size > (video ? VIDEO_MAX : IMAGE_MAX)) {
-      setError(`Te groot: ${formatSize(file.size)}. Maximaal ${video ? "80" : "10"} MB voor ${video ? "video's" : "afbeeldingen"}.`);
+      setError(`Te groot: ${formatBytes(file.size)}. Maximaal ${video ? "80" : "10"} MB voor ${video ? "video's" : "afbeeldingen"}.`);
       return;
     }
     setProgress(0);
@@ -438,7 +431,7 @@ function QuickUpload({ onUploaded }: { onUploaded: () => void }) {
       {result && (
         <div className="space-y-2">
           <p className="text-xs text-ink-3">
-            {result.media === "video" ? "Video" : "Afbeelding"} geüpload · {formatSize(result.size)}
+            {result.media === "video" ? "Video" : "Afbeelding"} geüpload · {formatBytes(result.size)}
           </p>
           <div className="flex items-center gap-2">
             <input

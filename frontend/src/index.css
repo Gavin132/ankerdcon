@@ -24,6 +24,13 @@
   --on-cyan: 15 21 25;
   --nav-active-bg: 15 21 25;
   --nav-active-fg: 245 248 249;
+  /* Status text and its soft background: emerald / amber / rose. Text is at least 4.5:1 on white and on --sunken. */
+  --ok: 4 120 87;            /* #047857 */
+  --ok-soft: 209 250 229;    /* #D1FAE5 */
+  --warn: 146 64 14;         /* #92400E */
+  --warn-soft: 254 243 199;  /* #FEF3C7 */
+  --bad: 190 18 60;          /* #BE123C */
+  --bad-soft: 255 228 230;   /* #FFE4E6 */
 }
 
 .dark {
@@ -39,6 +46,12 @@
   --cyan-text: 137 202 254;  /* #89CAFE */
   --nav-active-bg: 87 178 249; /* #57B2F9 — matches the light-mode --cyan */
   --nav-active-fg: 15 21 25;
+  --ok: 110 231 183;         /* #6EE7B7 */
+  --ok-soft: 19 51 47;       /* emerald at 15% on --surface */
+  --warn: 252 211 77;        /* #FCD34D */
+  --warn-soft: 54 47 29;     /* amber at 15% on --surface */
+  --bad: 253 164 175;        /* #FDA4AF */
+  --bad-soft: 54 32 41;      /* rose at 15% on --surface */
 }
 
 /* ─── Accent colours ─────────────────────────────────────────────────────────
@@ -309,14 +322,19 @@
       padding: 2rem 0;
     }
     .stack-table .cell-main {
-      flex: 1 1 11rem;
+      flex: 1 1 0;
       min-width: 0;
     }
     .stack-table .cell-main p {
       max-width: none;
     }
     .stack-table .cell-actions {
+      flex-shrink: 0;
       margin-left: auto;
+    }
+    /* "Verwijderen? Annuleren Verwijderen" (ConfirmInline) is wide: it gets a line of its own. */
+    .stack-table .cell-actions:has([data-confirm]) {
+      flex: 1 1 100%;
     }
   }
 
@@ -339,6 +357,23 @@
   .notice-warn { @apply rounded-xl border-1.5 border-amber-300 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10; }
   .notice-ok { @apply rounded-xl border-1.5 border-emerald-200 bg-emerald-50 dark:border-emerald-400/30 dark:bg-emerald-500/10; }
 
+  /* Square icon tile in a status colour (add the size, e.g. `h-8 w-8`). The neutral one is `bg-sunken text-ink`. */
+  .icon-tile-ok,
+  .icon-tile-warn,
+  .icon-tile-bad { @apply flex shrink-0 items-center justify-center rounded-lg; }
+  .icon-tile-ok { @apply bg-ok-soft text-ok; }
+  .icon-tile-warn { @apply bg-warn-soft text-warn; }
+  .icon-tile-bad { @apply bg-bad-soft text-bad; }
+
+  /* The two destructive buttons, same look as <Button variant="danger">. `.btn-danger` is the confirm
+     ("Verwijderen"), `.btn-danger-soft` the quiet one that opens the question. Both are 44 px tall. */
+  .btn-danger {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-xl border-2 border-rose-800 bg-rose-600 font-semibold text-white transition-opacity duration-75 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-400;
+  }
+  .btn-danger-soft {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-bad-soft font-semibold text-bad transition-opacity duration-75 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
   /* Filter chip: pick one of a few. 36 px to look at, 44 px to hit (see .hit-area). */
   .chip {
     @apply inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border-1.5 px-3.5 py-1.5 text-xs font-semibold transition-colors;
@@ -357,6 +392,21 @@
   /* Small uppercase mono label above a group ("Voor jou", "Deze week"). */
   .section-label {
     @apply font-mono text-[12px] font-semibold uppercase tracking-[0.09em] text-ink-3;
+  }
+
+  /* The quieter sibling of `.section-label`: kickers above a title and table headers. */
+  .label-quiet {
+    @apply font-mono text-xs font-medium uppercase tracking-[0.06em] text-ink-3;
+  }
+
+  /* Table header cell (admin tables). */
+  .th {
+    @apply label-quiet whitespace-nowrap border-b-1.5 border-line px-4 py-2 text-left;
+  }
+
+  /* Small uppercase tag next to a name ("Gast", "Kijker"). */
+  .tag {
+    @apply inline-flex items-center rounded-md border border-line px-1.5 font-mono text-xs uppercase tracking-[0.05em] text-ink-2;
   }
 
   .input-field {
