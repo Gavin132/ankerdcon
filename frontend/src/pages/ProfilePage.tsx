@@ -754,7 +754,7 @@ export function ProfilePage() {
       <DetailTopbar title="Profiel" onBack={goBack} />
 
       <motion.div
-        className="mx-auto max-w-3xl space-y-5 px-4 py-5 sm:px-6 sm:py-8"
+        className="mx-auto max-w-3xl space-y-5 px-4 py-5 sm:py-8"
         style={{ paddingBottom: "max(3rem, env(safe-area-inset-bottom, 0px))" }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

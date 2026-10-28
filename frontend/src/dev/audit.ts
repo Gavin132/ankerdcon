@@ -48,6 +48,8 @@ function visible(el: Element): boolean {
   // Parked wholly left of the screen on purpose, such as a menu drawer that slides in from the side: nobody
   // sees it. (Wholly past the right edge is not exempt: a page cannot be scrolled left, so that is a lost control.)
   if (r.right <= 0) return false;
+  // Not for a person to use right now (a carousel card out of view), so not for the layout check either.
+  if (el.closest("[inert]")) return false;
   // A screen-reader-only helper, or something parked off screen on purpose.
   if (/\bsr-only\b/.test(typeof el.className === "string" ? el.className : "")) return false;
   return true;

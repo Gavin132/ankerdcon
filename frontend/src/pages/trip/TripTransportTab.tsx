@@ -346,7 +346,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
             <button
               type="button"
               onClick={() => openCreate(direction, activeDayId)}
-              className="btn-primary h-[34px] shrink-0 px-3 text-[12.5px]"
+              className="btn-secondary shrink-0 px-3 text-[12.5px]"
             >
               <Car size={14} /> Rit aanbieden
             </button>
@@ -355,7 +355,10 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
 
         {missingDrivers.length > 0 && (
           <p className="text-[12.5px] leading-snug text-ink-2">
-            <span className="font-semibold text-ink">{direction === "Outbound" ? "Nog geen terugrit" : "Nog geen heenrit"}:</span>{" "}
+            {/* With no ride at all the line below says "Nog geen rit"; say it once, here. */}
+            <span className="font-semibold text-ink">
+              {!isEten && active.length === 0 ? "Nog geen rit, zonder vervoer" : direction === "Outbound" ? "Nog geen terugrit" : "Nog geen heenrit"}:
+            </span>{" "}
             {missingDrivers.join(", ")}
           </p>
         )}
@@ -370,7 +373,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
             </motion.div>
           )
         ) : active.length === 0 ? (
-          <p className="py-1 text-xs text-ink-3">Nog geen rit.</p>
+          missingDrivers.length > 0 ? null : <p className="py-1 text-xs text-ink-3">Nog geen rit.</p>
         ) : (
           <div className="card-surface divide-y divide-line overflow-hidden">{active.map((ride) => renderRow(ride, plan))}</div>
         )}

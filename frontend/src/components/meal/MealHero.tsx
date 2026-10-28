@@ -16,7 +16,7 @@ const CLOSED_RECT: AnchorRect = { top: 0, left: 0, right: 0, height: 0 };
 
 /** White-ish mono chip on the ink hero. */
 const CHIP =
-  "inline-flex items-center gap-1.5 rounded-md border border-white/25 bg-white/10 px-2 py-[3px] font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-[#E6F0F3]";
+  "inline-flex items-center gap-1.5 rounded-md border border-white/25 bg-white/10 px-2 py-[3px] font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-hero-ink";
 
 interface MealHeroProps {
   meal: Meal;
@@ -53,7 +53,7 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
   }
 
   return (
-    <section className="overflow-hidden rounded-[14px] border-2 border-outline bg-[#0F1519] text-[#E6F0F3]">
+    <section className="overflow-hidden rounded-[14px] border-2 border-outline bg-hero text-hero-ink">
       <div className="px-5 py-5 sm:px-7 sm:py-6">
 
         <div className="mb-3 flex flex-wrap gap-1.5">
@@ -69,7 +69,7 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
           )}
         </div>
 
-        <h1 className="break-words font-display text-[34px] font-extrabold uppercase leading-[0.95] tracking-[0.005em] text-[#E6F0F3] sm:text-[42px]">
+        <h1 className="break-words font-display text-[34px] font-extrabold uppercase leading-[0.95] tracking-[0.005em] text-hero-ink sm:text-[42px]">
           {meal.meal_name}
         </h1>
 
@@ -118,16 +118,16 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
               <span className="flex shrink-0 -space-x-2">
                 {participants.slice(0, 6).map((p) => {
                   const u = resolveUser(p);
-                  return <UserAvatar key={p} name={u?.name ?? p} user={u} className="h-7 w-7 text-[12px] !border-[#0F1519]" />;
+                  return <UserAvatar key={p} name={u?.name ?? p} user={u} className="h-7 w-7 text-[12px] !border-hero" />;
                 })}
                 {participants.length > 6 && (
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#0F1519] bg-white/15 font-mono text-[12px] font-semibold text-[#E6F0F3]">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-hero bg-white/15 font-mono text-[12px] font-semibold text-hero-ink">
                     +{participants.length - 6}
                   </span>
                 )}
               </span>
               <span className="flex min-w-0 items-center gap-1 text-xs font-medium text-white/65">
-                <span className="font-mono font-semibold tabular-nums text-[#E6F0F3]">{participants.length}</span>{" "}
+                <span className="font-mono font-semibold tabular-nums text-hero-ink">{participants.length}</span>{" "}
                 {participants.length === 1 ? "aanmelding" : "aanmeldingen"}
                 <ChevronDown size={13} className={`transition-transform ${namesOpen ? "rotate-180" : ""}`} />
               </span>
@@ -139,7 +139,7 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
               <button
                 type="button"
                 onClick={onCancelClick}
-                className="flex items-center gap-1.5 rounded-xl border-1.5 border-white/25 px-3 py-2 text-xs font-semibold text-[#E6F0F3] transition-colors hover:border-white/50"
+                className="flex items-center gap-1.5 rounded-xl border-1.5 border-white/25 px-3 py-2 text-xs font-semibold text-hero-ink transition-colors hover:border-white/50"
               >
                 <UserMinus size={13} /> Afmelden
               </button>
@@ -167,7 +167,7 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
                   {u?.name ?? p}
                 </>
               );
-              const cls = "inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 py-1 pl-1 pr-2.5 text-xs font-medium text-[#E6F0F3]";
+              const cls = "inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 py-1 pl-1 pr-2.5 text-xs font-medium text-hero-ink";
               return u ? (
                 <button key={p} type="button" onClick={(e) => openPopup(u, e)} className={`${cls} transition-colors hover:bg-white/20`}>
                   {chip}

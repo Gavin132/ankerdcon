@@ -102,17 +102,18 @@ Page head pattern (see `TripLayout`, `HubPage`):
   `overflow-hidden`. Clickable: `card-surface-hover` (border darkens on hover).
 - **Panel header:** `section-label` on the left, an optional `text-[12.5px] font-semibold text-brand-text` link on the right.
 - **List rows inside a panel:** `divide-y divide-line` or `border-t border-line`, row hover `hover:bg-sunken`.
-- **Icon square:** `flex h-8 w-8 items-center justify-center rounded-lg bg-sunken text-ink`; status versions use `bg-rose-100 text-rose-700` / `bg-amber-100 text-amber-800` / `bg-emerald-100 text-emerald-700` with `dark:bg-*-500/15 dark:text-*-300`.
+- **Icon square: all or none.** Use it only where every item of the same list or grid has one (the tiles on the Event page, the rows in Instellingen); a heading with an icon next to a heading without one reads as a mistake, and the square pushes the text in. Inside a sheet (Hotel, Praktisch) the headings have no icon. `flex h-8 w-8 items-center justify-center rounded-lg bg-sunken text-ink`; status versions use `bg-rose-100 text-rose-700` / `bg-amber-100 text-amber-800` / `bg-emerald-100 text-emerald-700` with `dark:bg-*-500/15 dark:text-*-300`.
 - **Pill (status):** `inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11.5px] font-semibold` in the status colours above; neutral: `bg-sunken text-ink-2`.
 - **Tag / chip:** `rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2`.
+- **One blue button per view.** The main action of a screen or sheet is `btn-primary`; the same action repeated in each section of a list ("Rit aanbieden" for Heen and for Terug) is `btn-secondary`, so the eye has one place to go.
 - **Buttons:** use `<Button>` (`primary` blue with an ink outline, `secondary`, `ghost`, `danger`; all flat, no shadows). For a raw element: `btn-primary px-4 py-2.5 text-sm` or `btn-secondary px-4 text-sm` (both defined in `index.css`; a disabled `btn-primary` turns flat grey by itself). On/off settings use `components/common/Switch.tsx`. Shared classes in `index.css`: `.pill` + `.pill-ok|warn|bad|neutral` (status: fine / waiting for you / you owe / info), `.chip` + `.chip-on|off` (filters), `.notice-warn` / `.notice-ok` (a bordered message block), `.icon-btn`, `.field-label` and `.field-error` (forms), `.stack-table` with `cell-main` and `cell-actions` (a data table that becomes cards on a phone). Popups are `TripSheet` (`Modal` is a thin wrapper around it). A control under 44 px gets `hit-area`.
 - **Segmented control:** track `flex gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]`, item `rounded-[7px] px-3 py-1.5 text-[13px] font-semibold text-ink-2`, active item `bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]`.
 - **Selected chip (filters, day chips):** active `bg-ink text-paper` (in dark mode `bg-brand text-brand-on`), inactive `border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3`.
 - **Inputs:** `input-field`.
-- **Hero blocks** (event, ride, meal headers): a flat ink block (`bg-[#0F1519] text-[#E6F0F3]`,
+- **Hero blocks** (event, ride, meal headers): a flat ink block (`bg-hero text-hero-ink`, tokens that stay dark in light mode too,
   rounded 14px, `border-2 border-outline`) or the event image with a flat dark overlay
-  (`bg-[#0F1519]/60`, no gradient ramps). Title in the display face. White-ish chips:
-  `border border-white/25 bg-white/10 font-mono text-[10.5px] uppercase text-[#E6F0F3]`.
+  (`bg-hero/60`, no gradient ramps). Title in the display face. White-ish chips:
+  `border border-white/25 bg-white/10 font-mono text-[10.5px] uppercase text-hero-ink`.
   Primary action on it: `btn-primary`.
 - **Sheets** (`TripSheet`): the standard way to open something over a page. A bottom sheet with a
   title, optional back arrow and a footer for the main action; several views (list, form, filter) swap
@@ -158,6 +159,8 @@ Page head pattern (see `TripLayout`, `HubPage`):
 
 ## Layout
 
+- **Spacing:** the blocks of a page are `space-y-5` apart; detail and settings pages are `px-4 py-5 sm:py-8` (the same side padding as `DetailTopbar`, so the title lines up with the content). Inside a card, 3 or 4.
+- **Banners above the header:** one at a time. An announcement shows; the "what's new" strip only when there is no announcement.
 - Desktop (lg, ≥1024px): sidebar (`Sidebar.tsx`), content up to `max-w-5xl` from xl.
 - Tablet (md): icon rail. Phone: bottom tab bar (`BottomNav.tsx`).
 - The top bar takes one page action through `HeaderAction`. Detail and settings pages (outside

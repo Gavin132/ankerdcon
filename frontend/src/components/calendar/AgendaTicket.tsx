@@ -69,13 +69,13 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
         to={routes.trip.view(trip.id)}
         draggable={false}
         aria-label={`Open ${trip.title}`}
-        className="relative block h-40 overflow-hidden bg-[#0F1519] sm:h-52 md:h-auto md:min-h-[300px]"
+        className="relative block h-40 overflow-hidden bg-hero sm:h-52 md:h-auto md:min-h-[300px]"
       >
         {image ? (
           <img src={image} alt="" draggable={false} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
         ) : (
           <span
-            className="absolute inset-0 flex flex-col justify-end gap-1 p-4 text-[#E6F0F3]"
+            className="absolute inset-0 flex flex-col justify-end gap-1 p-4 text-hero-ink"
             style={{
               backgroundImage: "radial-gradient(circle, rgb(var(--cyan) / .45) 1.4px, transparent 1.8px)",
               backgroundSize: "12px 12px",
@@ -173,7 +173,7 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
               <button
                 type="button"
                 onClick={onLeave}
-                className="text-[12.5px] font-semibold text-ink-3 transition-colors hover:text-ink hover:underline md:text-left"
+                className="hit-area text-[12.5px] font-semibold text-ink-3 transition-colors hover:text-ink hover:underline md:text-left"
               >
                 Toch niet? Afmelden
               </button>

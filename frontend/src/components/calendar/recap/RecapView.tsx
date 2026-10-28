@@ -377,7 +377,7 @@ function Week({ week, monthPrefix, today, trips, tripByDay, selection, selectedT
           : isSelected
             ? "bg-[rgb(var(--nav-active-bg))] text-[rgb(var(--nav-active-fg))] font-semibold"
             : preview
-              ? "bg-[#0F1519]/70 text-white"
+              ? "bg-hero/70 text-white"
               : outside ? "text-ink-3 opacity-60" : key < today ? "text-ink-2" : "text-ink";
 
         return (
@@ -415,8 +415,8 @@ function Week({ week, monthPrefix, today, trips, tripByDay, selection, selectedT
         const photos = trip.eventIds.reduce((sum, id) => sum + (storySummary?.[id]?.photo_count ?? 0), 0);
         const tone = past
           ? mine
-            ? "bg-[#F5F8F9] shadow-[0_0_0_1px_rgba(15,21,25,.6)] sm:bg-[#0F1519]/80 sm:text-[#F5F8F9] sm:shadow-none"
-            : "bg-ink-3 sm:bg-[#0F1519]/55 sm:text-[#C9D4D9]"
+            ? "bg-[#F5F8F9] shadow-[0_0_0_1px_rgba(15,21,25,.6)] sm:bg-hero/80 sm:text-[#F5F8F9] sm:shadow-none"
+            : "bg-ink-3 sm:bg-hero/55 sm:text-[#C9D4D9]"
           : mine
             ? "border-1.5 border-outline bg-brand text-brand-on"
             : "border-1.5 border-ink-3 bg-surface text-ink-2";
@@ -501,7 +501,7 @@ function MonthOverview({ title, trips, lastYear, lastYearLabel, storySummary, is
                 onClick={() => onOpen(t)}
                 className="grid w-full grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-2.5 rounded-[10px] p-2 text-left transition-colors hover:bg-sunken"
               >
-                <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-lg bg-[#0F1519] font-display text-[14px] font-extrabold uppercase text-[#E6F0F3]">
+                <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-lg bg-hero font-display text-[14px] font-extrabold uppercase text-hero-ink">
                   {image ? <img src={image} alt="" loading="lazy" decoding="async" className={`h-full w-full object-cover ${past && !mine ? "opacity-60 grayscale" : ""}`} /> : t.title.slice(0, 3)}
                 </span>
                 <span className="min-w-0">
@@ -538,7 +538,7 @@ function MonthOverview({ title, trips, lastYear, lastYearLabel, storySummary, is
                 onClick={() => onOpen(t)}
                 className="grid w-full grid-cols-[72px_minmax(0,1fr)] items-center gap-3 rounded-xl bg-sunken p-2.5 text-left transition-shadow hover:shadow-[inset_0_0_0_1.5px_rgb(var(--ink-3))]"
               >
-                <span className={`grid h-[72px] w-[72px] gap-0.5 overflow-hidden rounded-[9px] bg-[#0F1519] ${thumbs.length > 1 ? "grid-cols-2" : ""}`}>
+                <span className={`grid h-[72px] w-[72px] gap-0.5 overflow-hidden rounded-[9px] bg-hero ${thumbs.length > 1 ? "grid-cols-2" : ""}`}>
                   {thumbs.map((src, i) => <img key={i} src={src} loading="lazy" decoding="async" alt="" className="h-full w-full object-cover" />)}
                 </span>
                 <span className="min-w-0">

@@ -35,7 +35,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
   return (
     <article className="overflow-hidden rounded-[14px] border-2 border-outline bg-surface">
       <div
-        className="relative h-32 bg-[#0F1519]"
+        className="relative h-32 bg-hero"
         style={cover ? undefined : { backgroundImage: "radial-gradient(circle, rgb(var(--cyan) / .45) 1.4px, transparent 1.8px)", backgroundSize: "12px 12px" }}
       >
         {cover && <img src={cover} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />}
@@ -43,7 +43,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
           type="button"
           onClick={onClose}
           aria-label="Sluiten"
-          className="hit-area absolute left-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-[#0F1519]/70 text-white transition-colors hover:bg-[#0F1519]"
+          className="hit-area absolute left-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-hero/70 text-white transition-colors hover:bg-hero"
         >
           <X size={15} />
         </button>
@@ -116,7 +116,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           {going ? (
-            <button type="button" onClick={onLeave} className="text-[13px] font-semibold text-ink-3 hover:text-ink hover:underline">
+            <button type="button" onClick={onLeave} className="hit-area text-[13px] font-semibold text-ink-3 hover:text-ink hover:underline">
               Toch niet? Afmelden
             </button>
           ) : (

@@ -540,7 +540,7 @@ export function EventEditDrawer({
                 <button
                   type="button"
                   onClick={() => setValue("image_url", "", { shouldValidate: true })}
-                  className="hit-area absolute right-1.5 top-1.5 rounded-lg bg-[#0F1519]/70 p-1 text-white transition-colors hover:bg-[#0F1519]"
+                  className="hit-area absolute right-1.5 top-1.5 rounded-lg bg-hero/70 p-1 text-white transition-colors hover:bg-hero"
                 >
                   <XIcon size={12} />
                 </button>

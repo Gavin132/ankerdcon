@@ -37,7 +37,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <motion.button
-      className={`inline-flex items-center justify-center whitespace-nowrap transition-[transform,box-shadow,background-color,border-color,color] duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`hit-area inline-flex items-center justify-center whitespace-nowrap transition-[transform,box-shadow,background-color,border-color,color] duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       disabled={disabled || loading}
       {...(props as object)}
     >

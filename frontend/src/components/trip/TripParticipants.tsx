@@ -40,7 +40,7 @@ export function TripParticipants({ trip, users, myNames, phase, onManage, childr
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
         aria-label={`Bekijk wie er ${phase === "past" ? "waren" : "meegaan"} (${count})`}
-        className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg text-left transition-opacity hover:opacity-80 active:opacity-70"
+        className="hit-area flex min-w-0 flex-1 items-center gap-2.5 rounded-lg text-left transition-opacity hover:opacity-80 active:opacity-70"
       >
         {children}
         <ChevronRight size={14} className="shrink-0 text-ink-3" aria-hidden />

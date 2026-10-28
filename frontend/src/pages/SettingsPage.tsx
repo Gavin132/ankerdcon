@@ -77,7 +77,7 @@ export function SettingsPage() {
       <DetailTopbar title="Instellingen" onBack={goBack} width="2xl" />
 
       <motion.div
-        className="mx-auto max-w-2xl space-y-5 px-4 py-6 md:py-10"
+        className="mx-auto max-w-2xl space-y-5 px-4 py-5 sm:py-8"
         style={{ paddingBottom: "max(3rem, env(safe-area-inset-bottom, 0px))" }}
         variants={listContainer}
         initial="hidden"
@@ -160,7 +160,7 @@ export function SettingsPage() {
                       title={a.label}
                       onClick={() => setAccent(a.id)}
                       style={{ backgroundColor: a.swatch }}
-                      className={`hit-area flex h-9 w-9 items-center justify-center rounded-full text-[#0F1519] transition-transform active:scale-95 ${
+                      className={`hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero transition-transform active:scale-95 ${
                         selected ? "border-2 border-outline" : "border-1.5 border-line"
                       }`}
                     >

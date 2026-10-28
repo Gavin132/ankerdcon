@@ -236,7 +236,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
             <div className="p-4 pb-3">
               <div
                 ref={containerRef}
-                className="relative overflow-hidden rounded-xl bg-[#0F1519] select-none touch-none"
+                className="relative overflow-hidden rounded-xl bg-hero select-none touch-none"
                 style={{
                   aspectRatio: `${ASPECT} / 1`,
                   cursor: dragging.current ? "grabbing" : "grab",

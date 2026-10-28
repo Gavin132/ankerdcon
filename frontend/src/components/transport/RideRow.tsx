@@ -16,7 +16,7 @@ import type { CarGuidance } from "../../utils/carBalance";
 import type { Ride } from "../../types";
 
 /** The member's own ride. A deeper blue than the brand fill, so white text stays readable on it. */
-const MINE_CLASS = "bg-[#0D75D1] text-white dark:bg-[#1A6FC9]";
+const MINE_CLASS = "bg-sky-600 text-white dark:bg-[#1A6FC9]";
 
 const PILL = "pill";
 

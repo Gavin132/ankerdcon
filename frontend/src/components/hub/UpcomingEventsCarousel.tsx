@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { UpcomingEventCard, type EventUrgency } from "./UpcomingEventCard";
 import { parseEventDate } from "../../utils/date";
@@ -108,6 +108,21 @@ export function UpcomingEventsCarousel({
 
   const itemCount = items.length;
 
+  // The row is as tall as the card in view, not the tallest card: otherwise a short card sits above an
+  // empty gap on its way to the dots. Re-measured when the card changes size (a list of names opening).
+  const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [height, setHeight] = useState<number | undefined>(undefined);
+  useLayoutEffect(() => {
+    const slide = slideRefs.current[index];
+    if (!slide) return;
+    const measure = () => setHeight(Math.ceil(slide.getBoundingClientRect().height));
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(slide);
+    return () => observer.disconnect();
+  }, [index, itemCount]);
+
   useEffect(() => {
     if (itemCount <= 1) return;
     // A carousel that moves on its own is exactly what this preference asks
@@ -155,10 +170,17 @@ export function UpcomingEventsCarousel({
           ref={scrollRef}
           onScroll={handleScroll}
           onPointerDown={() => setAutoAdvanceKey((k) => k + 1)}
-          className="flex items-start overflow-x-auto snap-x snap-mandatory gap-3 scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          style={{ height }}
+          className="flex items-start overflow-x-auto overflow-y-hidden snap-x snap-mandatory gap-3 scroll-smooth transition-[height] duration-200 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {items.map((item) => (
-            <div key={keyFor(item)} className="w-full shrink-0 snap-center">
+          {items.map((item, i) => (
+            // The cards out of view are cut off by the row's height, so they are not for the keyboard or a screen reader either.
+            <div
+              key={keyFor(item)}
+              ref={(el) => { slideRefs.current[i] = el; }}
+              className="w-full shrink-0 snap-center"
+              {...(i !== index ? ({ inert: "" } as object) : {})}
+            >
               <UpcomingEventCard
                 {...cardPropsFor(item, allEvents)}
                 meals={meals}
@@ -180,7 +202,7 @@ export function UpcomingEventsCarousel({
               type="button"
               onClick={() => scrollToIndexManually(i)}
               aria-label={`Ga naar evenement ${i + 1}`}
-              className="flex h-10 items-center px-[3px]"
+              className="flex h-11 items-center px-[3px]"
             >
               <span className={`block h-1.5 rounded-full transition-all ${
                 i === index ? "w-5 bg-ink" : "w-1.5 bg-line hover:bg-ink-3"

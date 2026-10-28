@@ -18,7 +18,7 @@ function Chip({ children, tone = "plain" }: { children: React.ReactNode; tone?: 
       className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-[3px] text-[12px] font-semibold ${
         tone === "live"
           ? "border-brand bg-brand text-brand-on"
-          : "border-white/25 bg-white/10 text-[#E6F0F3]"
+          : "border-white/25 bg-white/10 text-hero-ink"
       }`}
     >
       {children}
@@ -36,7 +36,7 @@ function Stub({ urgency, daysUntil, dayCount }: { urgency: EventUrgency; daysUnt
     <div className="flex items-center justify-center gap-3 border-t-2 border-dashed border-outline bg-brand px-4 py-2.5 text-brand-on sm:flex-col sm:gap-2 sm:border-l-2 sm:border-t-0 sm:px-4 sm:py-5 sm:text-center">
       <span className="text-[12px] font-semibold">{label}</span>
       <span className="font-display text-[52px] font-black leading-[0.8] sm:text-[88px]">{big}</span>
-      <span className="text-[12px] leading-snug sm:w-full sm:border-t-1.5 sm:border-ink/35 sm:pt-2 dark:sm:border-[#0F1519]/35">
+      <span className="text-[12px] leading-snug sm:w-full sm:border-t-1.5 sm:border-ink/35 sm:pt-2 dark:sm:border-hero/35">
         <b className="block text-[13px]">{unit}</b>
         {dayCount > 1 ? `${dayCount} dagen event` : "1 dag event"}
       </span>
@@ -113,7 +113,7 @@ export function UpcomingEventCard({
         <button
           type="button"
           onClick={() => onNavigate(event.id)}
-          className="relative h-16 overflow-hidden bg-[#0F1519] text-left sm:h-20"
+          className="relative h-16 overflow-hidden bg-hero text-left sm:h-20"
           aria-label={`Open ${title}`}
         >
           {coverImage ? (
@@ -128,7 +128,7 @@ export function UpcomingEventCard({
               }}
             />
           )}
-          <span aria-hidden className={`absolute inset-0 ${coverImage ? "bg-[#0F1519]/45" : ""}`} />
+          <span aria-hidden className={`absolute inset-0 ${coverImage ? "bg-hero/45" : ""}`} />
           <span className="absolute left-4 top-3 flex flex-wrap gap-1.5 sm:left-5 sm:top-4">
             {urgency === "today" && <Chip tone="live">Vandaag</Chip>}
             {urgency === "tomorrow" && <Chip>Morgen</Chip>}

@@ -18,7 +18,7 @@ import { useIsViewer } from "../../hooks/useIsViewer";
 import type { Meal, Ride, RestaurantDriver } from "../../types";
 
 /** The member's own car. Same blue as their row under Heen and Terug (RideRow). */
-const MINE_CLASS = "bg-[#0D75D1] text-white dark:bg-[#1A6FC9]";
+const MINE_CLASS = "bg-sky-600 text-white dark:bg-[#1A6FC9]";
 
 /** "Timo, Els en Noor" */
 function listNames(names: string[]): string {

@@ -286,7 +286,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
           <div className="flex items-center justify-between px-4 py-3 shrink-0">
             <div className="flex items-center gap-2 min-w-0">
               <UserAvatar name={current.uploaded_by} className="h-6 w-6 text-[9px] !border-0" />
-              <p className="truncate text-xs font-semibold text-[#E6F0F3]">{current.uploaded_by}</p>
+              <p className="truncate text-xs font-semibold text-hero-ink">{current.uploaded_by}</p>
             </div>
             <div className="flex items-center gap-1">
               {current.media_type === "video" && (
@@ -298,7 +298,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                     if (videoRef.current) videoRef.current.muted = nowMuted;
                   }}
                   aria-label={muted ? "Geluid aan" : "Geluid uit"}
-                  className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
+                  className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-white/10 hover:text-hero-ink"
                 >
                   {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
                 </button>
@@ -306,7 +306,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
               <button
                 type="button"
                 onClick={() => handleShare(current.image_url)}
-                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
+                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-white/10 hover:text-hero-ink"
               >
                 <Share2 size={16} />
               </button>
@@ -316,7 +316,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                 onClick={handleDownloadAll}
                 title="Download alle foto's van deze dag als zip"
                 aria-label="Download alle foto's van deze dag"
-                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3] disabled:opacity-50"
+                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-white/10 hover:text-hero-ink disabled:opacity-50"
               >
                 {downloadingAll ? <Loader2 size={16} className="animate-spin" /> : <FolderDown size={16} />}
               </button>
@@ -324,7 +324,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                 type="button"
                 disabled={downloadingId === current.id}
                 onClick={() => handleDownload(current)}
-                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3] disabled:opacity-50"
+                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-white/10 hover:text-hero-ink disabled:opacity-50"
               >
                 {downloadingId === current.id ? (
                   <Loader2 size={16} className="animate-spin" />
@@ -336,7 +336,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                 <button
                   type="button"
                   onClick={() => handleDelete(current.id)}
-                  className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
+                  className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-white/10 hover:text-hero-ink"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -344,7 +344,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
               <button
                 type="button"
                 onClick={handleClose}
-                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
+                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-white/10 hover:text-hero-ink"
               >
                 <X size={20} />
               </button>

@@ -112,7 +112,7 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
                 {t.dateRange}
               </span>
               {thumb && (
-                <span className={`mt-2.5 block h-11 overflow-hidden rounded-md bg-[#0F1519] ${went ? "" : "opacity-50 grayscale"}`}>
+                <span className={`mt-2.5 block h-11 overflow-hidden rounded-md bg-hero ${went ? "" : "opacity-50 grayscale"}`}>
                   <img src={thumb} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                 </span>
               )}

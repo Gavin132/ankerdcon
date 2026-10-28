@@ -7,8 +7,8 @@ import { useLocalTicketsStore } from "../../store/localTickets.store";
 import type { CalendarEvent } from "../../types";
 
 /**
- * A shortcut to "Mijn ticket" for whichever trip is current — same card
- * style as "Locatie pingen" below it. Dynamic in the sense that its text
+ * A shortcut to "Mijn ticket" for whichever trip is current — a row in the
+ * Hub's "shortcuts" card, next to "Locatie pingen". Dynamic in the sense that its text
  * (and whether it shows at all) follows what's actually saved on this
  * device, not a fixed label: nothing to save yet nudges you to add one,
  * already having one turns it into a quick way to pull it back up.
@@ -32,7 +32,7 @@ export function TicketShortcutCard({ events }: { events: CalendarEvent[] }) {
     <button
       type="button"
       onClick={() => navigate(`${routes.trip.view(trip.id)}?openTicket=1`)}
-      className="card-surface-hover flex w-full items-center gap-3 px-4 py-3.5 text-left"
+      className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-sunken"
     >
       <span
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${

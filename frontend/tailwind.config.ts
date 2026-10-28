@@ -55,6 +55,8 @@ const config: Config = {
         slate,
         sky: blue,
         ankerd: blue,
+        // The always-dark panel of a hero (meal, ride, cover) and its text, the same in light and dark mode.
+        hero: { DEFAULT: "#0F1519", ink: "#E6F0F3" },
         ink: {
           DEFAULT: token("ink"),
           2: token("ink-2"),

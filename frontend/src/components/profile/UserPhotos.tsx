@@ -91,7 +91,7 @@ export function UserPhotos({ identifier, whose }: { identifier: string; whose?: 
                     className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.04]"
                   />
                   {p.media_type === "video" && (
-                    <span className="pointer-events-none absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#0F1519]/65 text-white">
+                    <span className="pointer-events-none absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-hero/65 text-white">
                       <Play size={10} fill="currentColor" />
                     </span>
                   )}

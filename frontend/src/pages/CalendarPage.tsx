@@ -90,7 +90,7 @@ export function CalendarPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center justify-between gap-2">
         <button
           onClick={() => setSubscribeOpen((v) => !v)}

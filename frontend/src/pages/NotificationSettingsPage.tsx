@@ -93,7 +93,7 @@ export function NotificationSettingsPage() {
       <DetailTopbar title="Notificaties" onBack={goBack} width="2xl" />
 
       <div
-        className="mx-auto max-w-2xl space-y-5 px-4 py-6 md:py-10"
+        className="mx-auto max-w-2xl space-y-5 px-4 py-5 sm:py-8"
         style={{ paddingBottom: "max(3rem, env(safe-area-inset-bottom, 0px))" }}
       >
         {!user.discord_id && (

@@ -157,7 +157,7 @@ export function MealDetailPage() {
       {(() => {
         const hasSidePanel = !!linkedEvent;
         return (
-          <div className="mx-auto max-w-3xl space-y-5 px-4 pb-10 pt-4 sm:pt-6">
+          <div className="mx-auto max-w-3xl space-y-5 px-4 pb-10 pt-5 sm:pt-8">
             <MealHero
               meal={meal}
               linkedEvent={linkedEvent}

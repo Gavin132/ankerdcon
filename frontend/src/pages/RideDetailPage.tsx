@@ -137,7 +137,7 @@ export function RideDetailPage() {
         onBack={goBack}
         onShare={onShare}
       />
-      <div className="mx-auto max-w-3xl space-y-5 px-4 pb-10 pt-4 sm:pt-6">
+      <div className="mx-auto max-w-3xl space-y-5 px-4 pb-10 pt-5 sm:pt-8">
         <RideHero
           ride={ride}
           linkedEvent={linkedEvent}

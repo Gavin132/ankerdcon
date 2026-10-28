@@ -13,7 +13,7 @@ const CLOSED_RECT: AnchorRect = { top: 0, left: 0, right: 0, height: 0 };
 
 /** White-ish mono chip on the ink hero. */
 const CHIP =
-  "inline-flex items-center gap-1.5 rounded-md border border-white/25 bg-white/10 px-2 py-[3px] font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-[#E6F0F3]";
+  "inline-flex items-center gap-1.5 rounded-md border border-white/25 bg-white/10 px-2 py-[3px] font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-hero-ink";
 
 interface RideHeroProps {
   ride: Ride;
@@ -70,7 +70,7 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
 
   return (
     <section
-      className={`overflow-hidden rounded-[14px] border-2 border-outline bg-[#0F1519] text-[#E6F0F3] ${isRecent || isPast ? "opacity-80" : ""}`}
+      className={`overflow-hidden rounded-[14px] border-2 border-outline bg-hero text-hero-ink ${isRecent || isPast ? "opacity-80" : ""}`}
     >
       <div className="px-5 py-5 sm:px-7 sm:py-6">
 
@@ -118,19 +118,19 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
 
         {/* Route: from (small) → to (title) */}
         <div className="grid grid-cols-[12px_minmax(0,1fr)] gap-x-3">
-          <i aria-hidden className="mt-[5px] block h-[11px] w-[11px] rounded-full border-2 border-[#E6F0F3]" />
+          <i aria-hidden className="mt-[5px] block h-[11px] w-[11px] rounded-full border-2 border-hero-ink" />
           <div className="min-w-0">
             <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-white/55">Van</p>
             <p className="truncate text-[15px] font-semibold text-white/85">{fromLabel}</p>
           </div>
           <i aria-hidden className="ml-[4.5px] my-1 block h-4 w-0.5 bg-white/25" />
           <span aria-hidden />
-          <i aria-hidden className="mt-[5px] block h-[11px] w-[11px] rounded-full border-2 border-[#E6F0F3] bg-[#E6F0F3]" />
+          <i aria-hidden className="mt-[5px] block h-[11px] w-[11px] rounded-full border-2 border-hero-ink bg-hero-ink" />
           <div className="min-w-0">
             <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-white/55">Naar</p>
             <h1
               className={`break-words font-display font-extrabold uppercase leading-[0.95] tracking-[0.005em] ${
-                toIsPlaceholder ? "text-[26px] text-white/55 sm:text-[30px]" : "text-[34px] text-[#E6F0F3] sm:text-[42px]"
+                toIsPlaceholder ? "text-[26px] text-white/55 sm:text-[30px]" : "text-[34px] text-hero-ink sm:text-[42px]"
               }`}
             >
               {toLabel}
@@ -164,13 +164,13 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
             <UserAvatar
               name={ride.driver}
               user={resolveUser(ride.driver)}
-              className="h-9 w-9 text-xs !border-[#0F1519]"
+              className="h-9 w-9 text-xs !border-hero"
             />
             <div className="leading-tight">
               <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-white/55">
                 {ride.direction === "Restaurant" ? "Organisator" : "Chauffeur"}
               </p>
-              <p className="text-sm font-semibold text-[#E6F0F3]">{ride.driver}</p>
+              <p className="text-sm font-semibold text-hero-ink">{ride.driver}</p>
             </div>
           </div>
         )}
@@ -188,20 +188,20 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
                         <UserAvatar
                           name={u.name}
                           user={u}
-                          className="h-8 w-8 text-[12px] !border-[#0F1519]"
+                          className="h-8 w-8 text-[12px] !border-hero"
                         />
                       </button>
                     ) : (
                       <UserAvatar
                         key={p}
                         name={p}
-                        className="h-8 w-8 text-[12px] !border-[#0F1519]"
+                        className="h-8 w-8 text-[12px] !border-hero"
                       />
                     );
                   })}
                 </div>
                 <p className="text-sm text-white/65">
-                  <span className="font-mono font-semibold tabular-nums text-[#E6F0F3]">{ride.passengers.length}</span>{" "}
+                  <span className="font-mono font-semibold tabular-nums text-hero-ink">{ride.passengers.length}</span>{" "}
                   {ride.passengers.length === 1 ? "meerijder" : "meerijders"}
                 </p>
               </div>
@@ -212,7 +212,7 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
                   <button
                     type="button"
                     onClick={onLeaveClick}
-                    className="flex items-center gap-1.5 rounded-xl border-1.5 border-white/25 px-3 py-2 text-xs font-semibold text-[#E6F0F3] transition-colors hover:border-white/50"
+                    className="flex items-center gap-1.5 rounded-xl border-1.5 border-white/25 px-3 py-2 text-xs font-semibold text-hero-ink transition-colors hover:border-white/50"
                   >
                     <UserMinus size={13} /> Uitstappen
                   </button>

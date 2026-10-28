@@ -135,7 +135,7 @@ export function HubPage() {
   return (
     <>
     <motion.div
-      className="space-y-6"
+      className="space-y-5"
       variants={listContainer}
       initial="hidden"
       animate="show"
@@ -196,8 +196,8 @@ export function HubPage() {
       )}
 
       {/* Two columns on wide screens: the trip on the left, what needs doing on the right. */}
-      <div className="space-y-6 xl:grid xl:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] xl:items-start xl:gap-8 xl:space-y-0">
-        <div className="min-w-0 space-y-6">
+      <div className="space-y-5 xl:grid xl:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] xl:items-start xl:gap-8 xl:space-y-0">
+        <div className="min-w-0 space-y-5">
           {/* ── Upcoming events carousel ───────────────────────────────── */}
           {upcomingItems.length > 0 && (
             <motion.div variants={listItem}>
@@ -227,7 +227,7 @@ export function HubPage() {
           )}
         </div>
 
-        <div className="min-w-0 space-y-6">
+        <div className="min-w-0 space-y-5">
           {/* ── Voor jou ─────────────────────────────────────────────────── */}
           <ForYouPanel
             events={events ?? []}
@@ -237,15 +237,13 @@ export function HubPage() {
             myName={me?.name}
           />
 
-          {/* ── Mijn ticket shortcut ─────────────────────────────────────── */}
-          <TicketShortcutCard events={events ?? []} />
-
-          {/* ── Locatie pingen ───────────────────────────────────────────── */}
-          <motion.div variants={listItem}>
+          {/* ── Shortcuts: one card with a row each, not a card per shortcut ── */}
+          <motion.div variants={listItem} className="card-surface divide-y divide-line overflow-hidden">
+            <TicketShortcutCard events={events ?? []} />
             <button
               type="button"
               onClick={() => setPingOpen(true)}
-              className="card-surface-hover flex w-full items-center gap-3 px-4 py-3.5 text-left"
+              className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-sunken"
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
                 <MapPin size={15} />

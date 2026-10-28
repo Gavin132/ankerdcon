@@ -134,7 +134,7 @@ export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Tr
                 setMissingOpen(true);
               }
             }}
-            className="shrink-0 cursor-pointer rounded-full transition-opacity hover:opacity-80"
+            className="hit-area shrink-0 cursor-pointer rounded-full transition-opacity hover:opacity-80"
           >
             <TilePill>{missing} zonder rit</TilePill>
           </span>
@@ -225,7 +225,7 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
             type="button"
             onClick={() => setMissingOpen(true)}
             aria-label={`Bekijk wie nergens bij zit (${missing})`}
-            className="shrink-0 rounded-full transition-opacity hover:opacity-80"
+            className="hit-area shrink-0 rounded-full transition-opacity hover:opacity-80"
           >
             <TilePill>{missing} nergens bij</TilePill>
           </button>

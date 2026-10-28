@@ -73,12 +73,12 @@ export function TripTicket({
   return (
     <article className="ticket-notch grid grid-cols-[minmax(0,1fr)] overflow-hidden rounded-[14px] border-2 border-outline bg-surface md:grid-cols-[200px_minmax(0,1fr)_168px] lg:grid-cols-[240px_minmax(0,1fr)_188px]">
       {/* ── Cover ── */}
-      <div className="relative h-40 overflow-hidden bg-[#0F1519] sm:h-52 md:h-auto md:min-h-[280px]">
+      <div className="relative h-40 overflow-hidden bg-hero sm:h-52 md:h-auto md:min-h-[280px]">
         {image ? (
           <img src={image} alt="" className={`absolute inset-0 h-full w-full object-cover ${phase === "past" ? "saturate-50" : ""}`} />
         ) : (
           <span
-            className="absolute inset-0 flex flex-col justify-end p-4 text-[#E6F0F3]"
+            className="absolute inset-0 flex flex-col justify-end p-4 text-hero-ink"
             style={{
               backgroundImage: "radial-gradient(circle, rgb(var(--cyan) / .45) 1.4px, transparent 1.8px)",
               backgroundSize: "12px 12px",
@@ -107,7 +107,7 @@ export function TripTicket({
                 href={`https://maps.google.com/?q=${encodeURIComponent(trip.location)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex min-w-0 items-center gap-1.5 hover:text-ink hover:underline"
+                className="hit-area flex min-w-0 items-center gap-1.5 hover:text-ink hover:underline"
               >
                 <MapPin size={13} className="shrink-0" /> <span className="truncate">{trip.location}</span>
               </a>
@@ -158,7 +158,7 @@ export function TripTicket({
           <button
             type="button"
             onClick={onManage}
-            className="flex items-center gap-1 text-left text-[12.5px] font-semibold text-brand-text hover:underline"
+            className="hit-area flex items-center gap-1 text-left text-[12.5px] font-semibold text-brand-text hover:underline"
           >
             <UserPlus size={13} className="shrink-0" />
             {phase === "past" ? "Aanmeldingen aanpassen" : "Iemand aanmelden"}
@@ -187,7 +187,7 @@ export function TripTicket({
               <button
                 type="button"
                 onClick={onLeave}
-                className="text-[12.5px] font-semibold text-ink-3 transition-colors hover:text-ink hover:underline md:text-left"
+                className="hit-area text-[12.5px] font-semibold text-ink-3 transition-colors hover:text-ink hover:underline md:text-left"
               >
                 Toch niet? Afmelden
               </button>

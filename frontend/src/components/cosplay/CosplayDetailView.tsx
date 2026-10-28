@@ -106,7 +106,7 @@ export function CosplayDetailBody({ cosplay, events, users, onLeave: onClose }: 
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="hit-area flex h-6 w-6 items-center justify-center rounded-lg bg-[#0F1519]/70 text-[#E6F0F3] hover:bg-[#0F1519]/90"
+                    className="hit-area flex h-6 w-6 items-center justify-center rounded-lg bg-hero/70 text-hero-ink hover:bg-hero/90"
                   >
                     <ExternalLink size={11} />
                   </a>

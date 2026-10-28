@@ -262,13 +262,15 @@
      Not for a control that clips its own overflow: the box would be cut off with it. */
   .hit-area,
   .chip,
-  .icon-btn {
+  .icon-btn,
+  .btn-primary {
     position: relative;
   }
 
   .hit-area::after,
   .chip::after,
-  .icon-btn::after {
+  .icon-btn::after,
+  .btn-primary::after {
     content: "";
     position: absolute;
     top: min(0px, calc((100% - 44px) / 2));

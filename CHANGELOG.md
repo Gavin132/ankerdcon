@@ -6,6 +6,18 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- **Hub:** "Ticket opgeslagen" and "Locatie pingen" are two rows of one card instead of two cards, and the row of
+  event cards is as tall as the card you are looking at (no empty gap above the dots when a shorter card is shown).
+  The cards out of view can no longer be reached with the keyboard.
+- **Transport:** "Rit aanbieden" for Heen and Terug is the quiet button, so "Ik rijd" is the one blue button; with no
+  ride yet the sheet says "Nog geen rit, zonder vervoer: …" once instead of twice.
+- **Spacing:** the Hub, Agenda, profile, settings, meal and ride pages use the same space between blocks and the
+  same page padding, which also lines the content up with the title bar.
+- **Easier to hit:** blue buttons, the "Toch niet? Afmelden" links, "Iemand aanmelden", the "zonder rit" and "nergens
+  bij" pills, the location link and the list of who is going all have a 44 px area to tap.
+
 ---
 
 ## [2.1.5] - 2026-10-28
