@@ -35,7 +35,7 @@ function UploadQueuedPreview() {
         </p>
       </div>
 
-      <div className="flex w-full max-w-xs items-center gap-2 rounded-xl border-1.5 border-amber-300 bg-amber-50 px-3 py-2.5 dark:border-amber-500/40 dark:bg-amber-500/10">
+      <div className="flex w-full max-w-xs items-center gap-2 notice-warn px-3 py-2.5">
         <UploadCloud size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
         <span className="truncate text-xs font-medium text-amber-700 dark:text-amber-400">Wacht op verbinding…</span>
       </div>
@@ -55,6 +55,7 @@ export function AdminScreensPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
       <AdminPageHeader
+        eyebrow="Testen"
         title="Schermen testen"
         subtitle="Bekijk de schermen die gebruikers zien als er iets misgaat. Knoppen in de preview doen niets echts."
       />

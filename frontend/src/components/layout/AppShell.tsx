@@ -30,8 +30,7 @@ export function AppShell() {
     <div className="flex min-h-[100dvh] flex-col md:pl-[76px] lg:pl-60">
       <ScrollToTop />
       <Sidebar />
-      <AnnouncementBanner />
-      <ChangelogBanner />
+      <AnnouncementBanner fallback={<ChangelogBanner />} />
       <Header />
       <PullToRefresh />
       <motion.main

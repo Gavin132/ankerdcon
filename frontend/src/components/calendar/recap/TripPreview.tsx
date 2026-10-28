@@ -5,7 +5,8 @@ import { UserAvatar } from "../../common/UserAvatar";
 import { TripPlanList } from "./TripPlanList";
 import { daysBetween, toDateKey, todayKey } from "../../../utils/date";
 import { dayShort, monthShort } from "../../../utils/multiDay";
-import { tripImage, type Trip } from "../../../utils/trips";
+import { tripImage, tripPeople, type Trip } from "../../../utils/trips";
+import { findUser as findMember } from "../../../utils/people";
 import { routes } from "../../../config/routes";
 import type { Meal, Ride, User } from "../../../types";
 
@@ -27,8 +28,8 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
   const daysUntil = daysBetween(todayKey(), toDateKey(trip.days[0].date));
   const going = trip.participants.some((p) => myNames.includes(p));
   const hotel = trip.days.map((d) => d.ev.hotel_location).find(Boolean);
-  const names = [...trip.participants].sort((a, b) => Number(myNames.includes(b)) - Number(myNames.includes(a)));
-  const findUser = (p: string) => users.find((u) => u.name === p || u.discord_username === p || u.aliases?.includes(p));
+  const names = tripPeople(trip, users).map((person) => person.name).sort((a, b) => Number(myNames.includes(b)) - Number(myNames.includes(a)));
+  const findUser = (p: string) => findMember(users, p);
   const others = names.filter((p) => !myNames.includes(p)).length;
 
   return (

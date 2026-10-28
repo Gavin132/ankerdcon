@@ -4,6 +4,7 @@ import { BedDouble, CalendarDays, MapPin, Music2, PartyPopper, Utensils } from "
 import { UserAvatar } from "../common/UserAvatar";
 import { formatDate } from "../../utils/format";
 import { dayShort, monthShort } from "../../utils/multiDay";
+import { findUser as findMember, groupPeople } from "../../utils/people";
 import type { CalendarEvent, Meal, User } from "../../types";
 import type { AnchorRect } from "../common/UserProfilePopup";
 
@@ -96,16 +97,17 @@ export function UpcomingEventCard({
   const isTravelOnly = !isGroupEvent && event.has_con === false && !event.event_type;
   const title = isGroupEvent ? groupTitle : event.event_name;
   const when = isGroupEvent ? groupDateRange : formatDate(event.date);
-  const participants = [...new Set(dayEvents.flatMap((ev) => ev.participants ?? []))];
+  // One person per entry, not per name they are signed up under (see utils/people.ts).
+  const participants = groupPeople(dayEvents.flatMap((ev) => ev.participants ?? []), users).map((person) => person.name);
 
   function findUser(p: string) {
-    return users.find((u) => u.name === p || u.discord_username === p || u.aliases?.includes(p));
+    return findMember(users, p);
   }
 
   return (
     // `relative`: the title link stretches over the whole card (its ::after), so tapping anywhere
     // opens the event; the buttons inside sit above it (`relative z-10`) and keep their own action.
-    <div className="relative grid h-full overflow-hidden rounded-[14px] border-2 border-outline bg-surface sm:grid-cols-[minmax(0,1fr)_152px]">
+    <div className="relative grid h-full grid-rows-[1fr_auto] overflow-hidden rounded-[14px] border-2 border-outline bg-surface sm:grid-cols-[minmax(0,1fr)_152px] sm:grid-rows-none">
       <div className="flex min-w-0 flex-col">
         {/* ── Cover ── */}
         <button
@@ -172,7 +174,7 @@ export function UpcomingEventCard({
                       isTravelDay ? "bg-hatch-surface" : "bg-surface"
                     }`}
                   >
-                    <span className="block text-[12px] leading-none text-ink-3">
+                    <span className="block font-mono text-[12px] uppercase leading-none tracking-[0.08em] text-ink-3">
                       {dayShort(date)} {monthShort(date)}
                     </span>
                     <span className="block font-display text-[26px] font-extrabold leading-none text-ink">{date.getDate()}</span>
@@ -193,7 +195,7 @@ export function UpcomingEventCard({
               <button
                 type="button"
                 onClick={() => setParticipantsExpanded((v) => !v)}
-                className="relative z-10 inline-flex items-center gap-2 text-left"
+                className="hit-area relative z-10 inline-flex items-center gap-2 py-1 text-left"
                 aria-expanded={participantsExpanded}
               >
                 <span className="flex -space-x-1.5">

@@ -15,12 +15,12 @@ interface Props {
   onOpen: (target: SettleTarget) => void;
 }
 
-const PILL = "shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[12px] font-semibold";
+const PILL = "pill";
 const TONE = {
-  owe:     "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
-  owed:    "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  waiting: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
-  muted:   "bg-sunken text-ink-2",
+  owe:     "pill-bad",
+  owed:    "pill-ok",
+  waiting: "pill-warn",
+  muted:   "pill-neutral",
 } as const;
 
 /** What a settlement row says, from the current member's side. */
@@ -56,13 +56,11 @@ function Row({ user, name, title, sub, amount, currency, pill, tone, onClick, mu
       >
         <UserAvatar name={name} user={user} className="h-8 w-8 shrink-0 text-[12px]" />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13.5px] font-semibold text-ink">{title}</span>
+          <span className="line-clamp-2 break-words text-[13.5px] font-semibold text-ink">{title}</span>
           <span className="block truncate text-[12px] text-ink-3">{sub}</span>
+          <span className={`${PILL} ${tone} mt-1 inline-block`}>{pill}</span>
         </span>
-        <span className="flex shrink-0 flex-col items-end gap-1">
-          <span className="font-mono text-[14px] font-semibold tabular-nums text-ink">{formatAmount(amount, currency)}</span>
-          <span className={`${PILL} ${tone}`}>{pill}</span>
-        </span>
+        <span className="shrink-0 font-mono text-[14px] font-semibold tabular-nums text-ink">{formatAmount(amount, currency)}</span>
         <ChevronRight size={14} className="shrink-0 text-ink-3" />
       </button>
     </li>

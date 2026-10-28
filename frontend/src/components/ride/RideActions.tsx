@@ -34,12 +34,12 @@ export function RideActions({ ride }: RideActionsProps) {
             </div>
             <div className="min-w-0">
               <p className="section-label">Route</p>
-              <p className="truncate text-sm font-semibold text-ink">
+              <p className="line-clamp-2 break-words text-sm font-semibold text-ink">
                 {fromLabel}{toLabel !== fromLabel ? ` → ${toLabel}` : ""}
               </p>
-              <p className="mt-0.5 flex items-center gap-1 text-xs text-ink-2">
-                <Clock size={11} className="shrink-0 text-ink-3" />
-                Vertrekt om: <span className="font-mono tabular-nums text-ink">{formatDateTime(ride.departure_time)}</span>
+              <p className="mt-0.5 flex items-start gap-1 text-xs text-ink-2">
+                <Clock size={11} className="mt-0.5 shrink-0 text-ink-3" />
+                <span>Vertrekt om: <span className="font-mono tabular-nums text-ink">{formatDateTime(ride.departure_time)}</span></span>
               </p>
             </div>
           </div>

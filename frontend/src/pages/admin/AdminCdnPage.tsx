@@ -115,6 +115,7 @@ export function AdminCdnPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
       <AdminPageHeader
+        eyebrow="Beheer"
         title="CDN"
         subtitle="Elk bestand in de foto-bucket, nieuwste eerst. Bekijk of er niets tussen staat dat er niet hoort."
         action={
@@ -122,7 +123,7 @@ export function AdminCdnPage() {
             type="button"
             onClick={() => setUploading((v) => !v)}
             aria-expanded={uploading}
-            className="btn-primary inline-flex items-center gap-1.5 px-4 py-2.5 text-sm"
+            className="btn-primary min-h-[44px] inline-flex items-center gap-1.5 px-4 py-2.5 text-sm"
           >
             {uploading ? <X size={16} /> : <Plus size={16} />}
             {uploading ? "Sluiten" : "Uploaden"}

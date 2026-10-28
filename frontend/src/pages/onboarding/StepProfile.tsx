@@ -227,7 +227,7 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
             />
           </div>
           {phoneError && state.phone && (
-            <p className="mt-1.5 flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400">
+            <p className="field-error flex items-center gap-1">
               <AlertTriangle size={11} /> {phoneError}
             </p>
           )}

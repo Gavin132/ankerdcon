@@ -8,7 +8,7 @@ export const F =
 export const FS =
   "input-field rounded-[9px] px-3 py-2.5 text-base sm:text-sm";
 
-export const L = "mb-1 block text-xs font-medium text-ink-2";
+export const L = "field-label";
 
 /** Uppercase section title inside a SECTION card. */
 export const SECTION_TITLE =
@@ -30,29 +30,27 @@ export const TD = "border-b border-line px-4 py-3 align-middle text-[13.5px] tex
 /** Table body row: hover sunken, no border on the last row. */
 export const TR = "transition-colors hover:bg-sunken [&:last-child>td]:border-b-0";
 
-/** Primary action (brand blue, ink outline, hard shadow). Add padding and text size. */
-export const BTN_PRIMARY = "btn-primary px-4 py-2.5 text-sm disabled:opacity-50";
+/** Primary action (brand blue, ink outline, flat). At least 44 px tall. */
+export const BTN_PRIMARY = "btn-primary min-h-[44px] px-4 py-2.5 text-sm";
 
-/** Secondary action. */
-export const BTN_SECONDARY =
-  "inline-flex items-center justify-center gap-2 rounded-xl border-1.5 border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-3 disabled:opacity-50";
+/** Secondary action (see `.btn-secondary` in index.css). */
+export const BTN_SECONDARY = "btn-secondary px-4 py-2.5 text-sm";
 
 /** Small uppercase mono tag. */
 export const TAG =
   "inline-flex items-center rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2";
 
-/** Status pills. */
-export const PILL = "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11.5px] font-semibold";
-export const PILL_OK = `${PILL} bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300`;
-export const PILL_WARN = `${PILL} bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300`;
-export const PILL_BAD = `${PILL} bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300`;
-export const PILL_NEUTRAL = `${PILL} bg-sunken text-ink-2`;
+/** Status pills (`.pill` in index.css). */
+export const PILL = "pill";
+export const PILL_OK = "pill pill-ok";
+export const PILL_WARN = "pill pill-warn";
+export const PILL_BAD = "pill pill-bad";
+export const PILL_NEUTRAL = "pill pill-neutral";
 
-/** Selected / unselected filter chip. */
-export const CHIP = "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors";
-export const CHIP_ON = `${CHIP} border-1.5 border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on`;
-export const CHIP_OFF = `${CHIP} border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3`;
+/** Selected / unselected filter chip (`.chip` in index.css). */
+export const CHIP = "chip";
+export const CHIP_ON = "chip chip-on";
+export const CHIP_OFF = "chip chip-off";
 
-/** Square icon button (edit, delete, close). */
-export const ICON_BTN =
-  "flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink disabled:opacity-40";
+/** Square icon button (edit, delete, close): `.icon-btn` in index.css. */
+export const ICON_BTN = "icon-btn";

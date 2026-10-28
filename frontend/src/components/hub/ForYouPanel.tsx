@@ -6,7 +6,7 @@ import { listItem } from "../../utils/motion";
 import { routes } from "../../config/routes";
 import { computeAllActions } from "../../utils/actionItems";
 import { useSettleUp } from "../../hooks/useSettlements";
-import { useCurrentUser } from "../../hooks/useUsers";
+import { useCurrentUser, useUsers } from "../../hooks/useUsers";
 import { buildTrip, currentTripId, isTripOver, tripGaps } from "../../utils/trips";
 import { formatAmount, formatTime } from "../../utils/format";
 import type { CalendarEvent, Expense, Meal, Ride } from "../../types";
@@ -32,8 +32,8 @@ interface ForYouItem {
 const COLLAPSED_COUNT = 4;
 
 const TONE = {
-  bad:  "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
-  warn: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
+  bad:  "pill-bad",
+  warn: "pill-warn",
   info: "bg-brand-soft text-brand-text",
 };
 
@@ -51,13 +51,14 @@ export function ForYouPanel({ events, rides, meals, expenses, myName }: ForYouPa
   const [expanded, setExpanded] = useState(false);
   const { data: settleUp } = useSettleUp();
   const { data: me } = useCurrentUser();
+  const { data: users = [] } = useUsers();
   const items: ForYouItem[] = [];
 
   // ── The current trip's sign-up gaps ────────────────────────────────────────
   const tripId = currentTripId(events);
   const trip = tripId ? buildTrip(events, tripId) : null;
   if (trip && !isTripOver(trip)) {
-    const gaps = tripGaps(trip, rides, meals);
+    const gaps = tripGaps(trip, rides, meals, users);
     const meMissing = gaps.transport.find((g) => g.name === myName);
     if (meMissing) {
       items.push({
@@ -199,7 +200,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName }: ForYouPa
               <button
                 type="button"
                 onClick={() => setExpanded((v) => !v)}
-                className="flex w-full items-center justify-center gap-1 rounded-lg py-2 text-xs font-semibold text-ink-3 hover:text-ink"
+                className="flex min-h-11 w-full items-center justify-center gap-1 rounded-lg py-2 text-xs font-semibold text-ink-3 hover:text-ink"
               >
                 <ChevronDown size={13} className={expanded ? "rotate-180" : ""} />
                 {expanded ? "Minder tonen" : `Nog ${hidden} tonen`}

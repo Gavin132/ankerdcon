@@ -115,13 +115,13 @@ function BadgeDrawer({
           <button
             onClick={handleSave}
             disabled={!isValid || isPending}
-            className="btn-primary flex-1 py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-primary min-h-[44px] flex-1 py-2.5 text-sm"
           >
             {isSaving ? "Opslaan..." : isEdit ? "Bijwerken" : "Aanmaken"}
           </button>
           <button
             onClick={requestClose}
-            className="rounded-xl border-1.5 border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-3"
+            className="btn-secondary px-4 py-2.5 text-sm"
           >
             Annuleren
           </button>
@@ -503,17 +503,17 @@ export function AdminBadgesPage() {
         title="Badges"
         subtitle={`${badges.length} badge${badges.length !== 1 ? "s" : ""}`}
         action={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setAssignOpen(true)}
-              className="flex items-center gap-2 rounded-xl border-1.5 border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-3"
+              className="btn-secondary px-4 py-2.5 text-sm"
             >
               <Users size={15} />
               Toewijzen
             </button>
             <button
               onClick={() => setDrawer("new")}
-              className="btn-primary gap-2 px-4 py-2.5 text-sm"
+              className="btn-primary min-h-[44px] gap-2 px-4 py-2.5 text-sm"
             >
               <Plus size={16} />
               Nieuwe badge
@@ -530,7 +530,7 @@ export function AdminBadgesPage() {
 
       <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="stack-table w-full">
             <thead>
               <tr className="border-b-1.5 border-line">
                 <th className="w-6 sm:w-8 px-1.5 sm:px-3 py-2.5 sm:py-3" />
@@ -581,7 +581,7 @@ export function AdminBadgesPage() {
                       <td className="pl-1.5 sm:pl-3 pr-0.5 sm:pr-1 py-2.5 sm:py-3.5 cursor-grab active:cursor-grabbing">
                         <GripVertical size={16} className="text-ink-3" />
                       </td>
-                      <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                      <td className="cell-main px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                         <div className="flex items-center gap-2 sm:gap-3">
                           <img
                             src={badge.image_url}
@@ -616,7 +616,7 @@ export function AdminBadgesPage() {
                         )}
                       </td>
                       <td
-                        className="px-2 sm:px-5 py-2.5 sm:py-3.5"
+                        className="cell-actions px-2 sm:px-5 py-2.5 sm:py-3.5"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <DeleteConfirmActions

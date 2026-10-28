@@ -86,8 +86,8 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
             {formatDateTime(meal.time)}
           </span>
           {meal.location && (
-            <span className={CHIP}>
-              <MapPin size={11} />
+            <span className={`${CHIP} min-w-0 !items-start normal-case tracking-normal`}>
+              <MapPin size={11} className="mt-[3px] shrink-0" />
               {meal.location}
             </span>
           )}
@@ -113,9 +113,9 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
               type="button"
               onClick={() => setNamesOpen((v) => !v)}
               aria-expanded={namesOpen}
-              className="flex items-center gap-3 rounded-lg text-left"
+              className="flex min-w-0 max-w-full items-center gap-3 rounded-lg text-left"
             >
-              <span className="flex -space-x-2">
+              <span className="flex shrink-0 -space-x-2">
                 {participants.slice(0, 6).map((p) => {
                   const u = resolveUser(p);
                   return <UserAvatar key={p} name={u?.name ?? p} user={u} className="h-7 w-7 text-[12px] !border-[#0F1519]" />;
@@ -126,7 +126,7 @@ export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick 
                   </span>
                 )}
               </span>
-              <span className="flex items-center gap-1 text-xs font-medium text-white/65">
+              <span className="flex min-w-0 items-center gap-1 text-xs font-medium text-white/65">
                 <span className="font-mono font-semibold tabular-nums text-[#E6F0F3]">{participants.length}</span>{" "}
                 {participants.length === 1 ? "aanmelding" : "aanmeldingen"}
                 <ChevronDown size={13} className={`transition-transform ${namesOpen ? "rotate-180" : ""}`} />

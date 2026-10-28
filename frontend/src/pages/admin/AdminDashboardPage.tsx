@@ -90,14 +90,14 @@ function BulkRsvpPanel({ event, users, onDone }: {
           type="button"
           onClick={submit}
           disabled={!selected.length || bulkRsvp.isPending}
-          className="btn-primary flex-1 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+          className="btn-primary min-h-[44px] flex-1 py-2 text-sm"
         >
           {bulkRsvp.isPending ? "Aanmelden…" : `${selected.length || 0} aanmelden`}
         </button>
         <button
           type="button"
           onClick={onDone}
-          className="rounded-xl border-1.5 border-line bg-surface px-4 py-2 text-sm font-semibold text-ink transition-colors hover:border-ink-3"
+          className="btn-secondary px-4 py-2.5 text-sm"
         >
           Sluiten
         </button>
@@ -126,7 +126,7 @@ function EventRow({ item, users, cosplayCount }: {
 
   return (
     <div className="border-b border-line last:border-0">
-      <div className="flex items-center gap-3 px-4 py-3">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
         {/* Cover thumbnail */}
         {image ? (
           <img src={image} alt="" className="h-9 w-14 rounded-lg object-cover shrink-0" />
@@ -137,20 +137,20 @@ function EventRow({ item, users, cosplayCount }: {
         )}
 
         {/* Info */}
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1 basis-40">
           <p className="truncate text-sm font-semibold text-ink">{title}</p>
           <div className="mt-0.5 flex items-center gap-3 text-[11px] text-ink-3">
             <span className="whitespace-nowrap font-mono">{dateLabel}</span>
             {firstDay.location && (
-              <span className="flex items-center gap-0.5 truncate max-w-[120px]">
-                <MapPin size={9} /> {firstDay.location}
+              <span className="flex min-w-0 items-center gap-1">
+                <MapPin size={9} className="shrink-0" /> <span className="truncate">{firstDay.location}</span>
               </span>
             )}
           </div>
         </div>
 
         {/* Metrics */}
-        <div className="flex items-center gap-3 shrink-0 text-xs">
+        <div className="ml-auto flex shrink-0 items-center gap-3 text-xs">
           <span className="font-mono tabular-nums text-ink-3">
             <span className="font-semibold text-ink">{participants.length}</span>
             <span>/{totalActive}</span>
@@ -300,9 +300,9 @@ export function AdminDashboardPage() {
           <button
             type="button"
             onClick={() => navigate(routes.admin.events)}
-            className="text-[12.5px] font-semibold text-brand-text hover:underline"
+            className="shrink-0 whitespace-nowrap text-[12.5px] font-semibold text-brand-text hover:underline"
           >
-            Alle evenementen →
+            Alle<span className="hidden sm:inline"> evenementen</span> →
           </button>
         </div>
 

@@ -163,7 +163,6 @@ export function RideDetailPage() {
             onClose={() => { setClaimOpen(false); setClaimNames([]); }}
             title="Stap in"
             description={`${ride.start_location} → ${ride.end_location || "Bestemming"}${isPT ? "" : ` · ${ride.seats_left} ${ride.seats_left === 1 ? "plek" : "plekken"} vrij`}`}
-            accent="from-brand"
           >
             <div className="space-y-3">
               <NamePicker
@@ -196,7 +195,6 @@ export function RideDetailPage() {
             onClose={() => { setLeaveOpen(false); setLeaveNames([]); }}
             title="Uitstappen"
             description="Wie stappen er uit?"
-            accent="from-rose-500"
           >
             <div className="space-y-3">
               <NamePicker

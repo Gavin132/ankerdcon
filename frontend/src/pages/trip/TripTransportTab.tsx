@@ -139,7 +139,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
 
   const dayRides = tripRides(allRides ?? [], meals, trip, activeDayId);
   const tripAllRides = tripRides(allRides ?? [], meals, trip);
-  const gaps = tripGaps(trip, allRides ?? [], meals);
+  const gaps = tripGaps(trip, allRides ?? [], meals, users ?? []);
   const missingPeople = gaps.transport.map((g) => ({ name: g.name, detail: g.items.join(" & ") }));
   const tripMealIds = new Set(meals.filter((m) => m.linked_event_id && trip.eventIds.includes(m.linked_event_id)).map((m) => m.id));
   const tripMealOptions = meals.filter((m) => tripMealIds.has(m.id));
@@ -462,7 +462,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
               )}
             </div>
             {errors.driver && (
-              <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400">{errors.driver.message}</p>
+              <p className="field-error">{errors.driver.message}</p>
             )}
           </div>
 
@@ -497,7 +497,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
                   <input type="time" className="input-field" {...register("ride_time")} />
                 )}
                 {(errors.departure_time || errors.ride_time) && (
-                  <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400">
+                  <p className="field-error">
                     {(errors.departure_time ?? errors.ride_time)?.message}
                   </p>
                 )}
@@ -530,7 +530,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
                 )}
               />
               {errors.start_location && (
-                <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400">{errors.start_location.message}</p>
+                <p className="field-error">{errors.start_location.message}</p>
               )}
               {formDirection === "Restaurant" && (
                 <p className="mt-1.5 text-xs text-ink-3">
@@ -581,7 +581,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
 
           {/* Restaurant opties */}
           {formDirection === "Restaurant" && (
-            <div className="space-y-3 rounded-xl border-1.5 border-amber-200 bg-amber-50 p-4 dark:border-amber-500/25 dark:bg-amber-500/10">
+            <div className="space-y-3 notice-warn p-4">
               <p className="mb-3 font-mono text-[12px] font-semibold uppercase tracking-[0.09em] text-amber-800 dark:text-amber-300">Restaurant opties</p>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" className="cb" {...register("action_required")} />

@@ -86,7 +86,7 @@ export function AdminWhitelistPage() {
         <button
           type="submit"
           disabled={(!discordId.trim() && !email.trim()) || createMutation.isPending}
-          className="btn-primary shrink-0 px-4 py-2.5 text-sm disabled:opacity-50"
+          className="btn-primary min-h-[44px] shrink-0 px-4 py-2.5 text-sm"
         >
           <Plus size={15} />
           Toevoegen
@@ -95,13 +95,13 @@ export function AdminWhitelistPage() {
 
       {/* Entries table */}
       <div className="card-surface overflow-hidden">
-        <table className="w-full">
+        <table className="w-full table-fixed">
           <thead>
             <tr className="border-b-1.5 border-line">
               <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                 Identificatie
               </th>
-              <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
+              <th className="w-24 px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                 Acties
               </th>
             </tr>
@@ -119,13 +119,13 @@ export function AdminWhitelistPage() {
               entries.map((entry) => (
                 <tr key={entry.id} className="hover:bg-sunken transition-colors">
                   <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
-                    <div className="flex items-center gap-2 sm:gap-2.5">
+                    <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
                       <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink sm:h-7 sm:w-7">
                         {entry.discord_id
                           ? <MessageSquare size={13} />
                           : <Mail size={13} />}
                       </div>
-                      <span className="truncate font-mono text-[13px] font-medium text-ink">
+                      <span className="min-w-0 truncate font-mono text-[13px] font-medium text-ink">
                         {entry.discord_id || entry.email}
                       </span>
                       {entry.viewer && (

@@ -132,7 +132,7 @@ export function CrewPage() {
             Waar is iedereen
           </p>
           {!viewer && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* aria-disabled instead of disabled: a disabled button swallows the
                 tap, and on a phone there is no hover tooltip to say why. */}
             <button
@@ -218,7 +218,7 @@ export function CrewPage() {
             autoCapitalize="off"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Zoek op naam, Discord of alias…"
+            placeholder="Zoek op naam of alias…"
             aria-label="Zoek leden"
             className="input-field pl-10 pr-9"
             autoComplete="off"

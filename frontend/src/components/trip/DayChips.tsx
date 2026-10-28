@@ -16,11 +16,7 @@ interface DayChipsProps {
 /** Day filter for a multi-day trip — travel (hotel-only) days get a bed icon. */
 export function DayChips({ days, value, onChange, allowAll = false, attention }: DayChipsProps) {
   const chip = (active: boolean) =>
-    `shrink-0 flex items-center gap-1.5 rounded-[10px] border-1.5 px-3 py-1.5 text-[13px] font-semibold whitespace-nowrap transition-colors ${
-      active
-        ? "border-outline bg-ink text-paper dark:bg-brand dark:text-brand-on"
-        : "border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
-    }`;
+    `chip ${active ? "chip-on" : "chip-off"}`;
 
   return (
     <div

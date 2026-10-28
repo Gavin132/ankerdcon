@@ -99,7 +99,7 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
             autoFocus
           />
           {errors.name && (
-            <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.name.message}</p>
+            <p className="field-error">{errors.name.message}</p>
           )}
           <p className="mt-1.5 text-[11px] text-ink-3">
             Zichtbaar voor de hele groep bij ritten, maaltijden, kamers en uitgaven.
@@ -302,7 +302,7 @@ function UserEditDrawer({
               placeholder="hij/hem"
             />
             {errors.pronouns && (
-              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
+              <p className="field-error">
                 {errors.pronouns.message}
               </p>
             )}
@@ -317,7 +317,7 @@ function UserEditDrawer({
               placeholder="Over mij..."
             />
             {errors.bio && (
-              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.bio.message}</p>
+              <p className="field-error">{errors.bio.message}</p>
             )}
           </div>
 
@@ -329,7 +329,7 @@ function UserEditDrawer({
               placeholder="#3b82f6"
             />
             {errors.color && (
-              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
+              <p className="field-error">
                 {errors.color.message}
               </p>
             )}
@@ -361,7 +361,7 @@ function UserEditDrawer({
                   aliases.includes(aliasInput.trim()) ||
                   aliases.length >= 10
                 }
-                className="btn-primary h-[42px] w-10 shrink-0 disabled:opacity-50"
+                className="btn-primary h-11 w-11 shrink-0"
               >
                 <Plus size={14} />
               </button>
@@ -555,7 +555,7 @@ export function AdminUsersPage() {
         action={
           <button
             onClick={() => setCreating(true)}
-            className="btn-primary px-4 py-2 text-sm"
+            className="btn-primary min-h-[44px] px-4 py-2 text-sm"
           >
             <UserPlus size={15} />
             Nieuwe gebruiker
@@ -571,7 +571,7 @@ export function AdminUsersPage() {
 
       <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="stack-table w-full">
             <thead>
               <tr className="border-b-1.5 border-line text-left">
                 <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
@@ -632,7 +632,7 @@ export function AdminUsersPage() {
                           className="cb"
                         />
                       </td>
-                      <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                      <td className="cell-main px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                         <div className="flex items-center gap-2 sm:gap-3">
                           <UserAvatar
                             name={user.name}
@@ -718,7 +718,7 @@ export function AdminUsersPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
+                      <td className="cell-actions px-2 sm:px-5 py-2.5 sm:py-3.5">
                         <div className="flex items-center justify-end gap-1 sm:gap-1.5">
                           {/* Deactivate confirmation inline */}
                           {confirmDeactivateId === user.id ? (

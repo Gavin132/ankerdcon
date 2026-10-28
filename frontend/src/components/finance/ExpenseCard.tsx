@@ -17,12 +17,12 @@ function resolveUser(name: string, users: User[]) {
   return users.find((u) => u.name === name || u.discord_username === name || u.aliases?.includes(name));
 }
 
-const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-[12px] font-semibold before:h-1.5 before:w-1.5 before:rounded-full before:bg-current before:content-['']";
+const PILL = "pill gap-1.5 before:h-1.5 before:w-1.5 before:rounded-full before:bg-current before:content-['']";
 
 const STATUS_PILL = {
-  confirmed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  claimed:   "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
-  pending:   "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
+  confirmed: "pill-ok",
+  claimed:   "pill-warn",
+  pending:   "pill-bad",
 } as const;
 
 /** One expense as a row in the Financiën list panel. */

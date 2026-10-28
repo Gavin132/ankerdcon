@@ -33,7 +33,7 @@ export function TripDayPicker({ trip, myNames, readOnly = false, onToggleDay }: 
           const canToggle = !readOnly && toDateKey(date) >= today;
           const label = `${dayShort(date)} ${date.getDate()}`;
 
-          const className = `relative min-w-0 rounded-[10px] border-1.5 px-1.5 pb-2 pt-3 text-center transition-[colors,transform] ${
+          const className = `relative min-w-0 rounded-[10px] border-1.5 px-1.5 pb-2 pt-5 text-center transition-[colors,transform] ${
             imGoing ? "border-brand-text bg-brand-soft" : `border-line ${isTravelDay ? "bg-hatch-surface" : "bg-surface"}`
           } ${canToggle ? "hover:border-ink-3 active:scale-[0.97]" : imGoing ? "" : "opacity-60"}`;
 
@@ -42,7 +42,7 @@ export function TripDayPicker({ trip, myNames, readOnly = false, onToggleDay }: 
               {(canToggle || imGoing) && (
                 <span
                   aria-hidden
-                  className={`absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full border-1.5 ${
+                  className={`absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full border-1.5 ${
                     imGoing ? "border-brand-text bg-brand text-brand-on" : "border-ink-3 bg-surface"
                   }`}
                 >

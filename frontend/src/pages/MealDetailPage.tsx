@@ -214,7 +214,6 @@ export function MealDetailPage() {
         onClose={() => { setRsvpOpen(false); setRsvpNames([]); }}
         title={`Aanmelden — ${meal.meal_name}`}
         description={meal.location || undefined}
-        accent="from-emerald-500"
       >
         <div className="space-y-3">
           <NamePicker
@@ -246,7 +245,6 @@ export function MealDetailPage() {
         onClose={() => { setCancelOpen(false); setCancelNames([]); }}
         title="Aanmelding annuleren"
         description={meal.meal_name}
-        accent="from-rose-500"
       >
         <div className="space-y-3">
           <NamePicker

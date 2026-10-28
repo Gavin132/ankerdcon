@@ -20,7 +20,7 @@ import { getNow } from "../../store/time.store";
 import { parseEventDate, splitDateTime, toDateKey, todayKey } from "../../utils/date";
 import { dayShort } from "../../utils/multiDay";
 import { formatCurrency } from "../../utils/format";
-import { defaultTripDayId, tripGaps, tripInfo, tripMeals, tripRides, tripOutliers, tripRoomGaps, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
+import { defaultTripDayId, tripPeople, tripGaps, tripInfo, tripMeals, tripRides, tripOutliers, tripRoomGaps, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
 import { useLocalTicketsStore } from "../../store/localTickets.store";
 import type { LocalTicket } from "../../utils/localTickets";
 import type { CalendarEvent, Cosplay, Expense, HotelRoom, Meal, Ride, StoryDaySummary, User } from "../../types";
@@ -82,8 +82,9 @@ function MissingPeopleSheet({
 /* ── Vervoer ─────────────────────────────────────────────────────────────── */
 
 export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Trip; phase: TripPhase; rides: Ride[]; meals: Meal[]; myNames: string[] }) {
+  const { data: users = [] } = useUsers();
   const tripRideList = tripRides(rides, meals, trip).filter((r) => r.direction !== "Restaurant");
-  const gaps = tripGaps(trip, rides, meals).transport;
+  const gaps = tripGaps(trip, rides, meals, users).transport;
   const isMine = sameName(myNames);
   const mine = (direction: Ride["direction"]) => tripRideList.find((r) => r.direction === direction && [r.driver, ...r.passengers].some(isMine));
   const describe = (r: Ride | undefined, label: string) => {
@@ -92,7 +93,7 @@ export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Tr
     return `${label} ${how}, ${dayTime(r.departure_time)}`;
   };
 
-  const total = trip.participants.length;
+  const total = tripPeople(trip, users).length;
   const missingBack = gaps.filter((g) => g.items.includes("Terug")).length;
   const missing = phase === "live" ? missingBack : gaps.length;
   // Who the pill counts: once the trip is on, only the ones still without a ride back.
@@ -202,7 +203,8 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
     return isNaN(start) || start >= now;
   });
   const shown = phase === "live" && ahead.length > 0 ? ahead : current;
-  const missingNames = phase === "upcoming" ? tripGaps(trip, [], meals).food : [];
+  const { data: users = [] } = useUsers();
+  const missingNames = phase === "upcoming" ? tripGaps(trip, [], meals, users).food : [];
   const missing = missingNames.length;
   const [addOpen, setAddOpen] = useState(false);
   const [missingOpen, setMissingOpen] = useState(false);
@@ -288,7 +290,7 @@ export function RoomsTile({ trip, phase, rooms, users, myNames }: { trip: Trip; 
   const isMine = sameName(myNames);
   const myRoom = rooms.find((r) => r.occupants.some(isMine));
   const roommates = myRoom?.occupants.filter((o) => !isMine(o)) ?? [];
-  const missing = phase === "upcoming" ? tripRoomGaps(trip, rooms).length : 0;
+  const missing = phase === "upcoming" ? tripRoomGaps(trip, rooms, users).length : 0;
   const numbered = (r: HotelRoom) => (r.room_number ? `Kamer ${r.room_number}` : "een kamer");
 
   return (
@@ -545,13 +547,14 @@ export function hasPracticalInfo(info: CalendarEvent): boolean {
 }
 
 export function PracticalTile({ info, trip, onOpen }: { info: CalendarEvent; trip: Trip; onOpen: () => void }) {
+  const { data: users = [] } = useUsers();
   const topics = [
     info.parking_info && "parkeren",
     info.what_to_bring && "meenemen",
     info.locker_info && "lockers",
     (info.ticket_url || (info.ticket_types?.length ?? 0) > 0) && "tickets",
     info.website && "website",
-    tripOutliers(trip).length > 0 && "aanwezigheid",
+    tripOutliers(trip, users).length > 0 && "aanwezigheid",
   ].filter(Boolean) as string[];
 
   return (
@@ -577,27 +580,28 @@ const OUTLIER_TEXT = {
 
 /** Opened from the Praktisch tile — who's missing which days, plus parking, tickets and the rest. */
 export function PracticalSheet({ open, onClose, info, trip }: { open: boolean; onClose: () => void; info: CalendarEvent; trip: Trip }) {
-  const outliers = tripOutliers(trip);
+  const { data: users = [] } = useUsers();
+  const outliers = tripOutliers(trip, users);
   const hasRows = !!(info.special_instructions || info.parking_info || info.what_to_bring || info.locker_info);
   const hasLinks = !!(info.website || info.ticket_url || info.ticket_sale_start || (info.ticket_types?.length ?? 0) > 0);
   return (
     <TripSheet open={open} onClose={onClose} title="Praktisch" subtitle={trip.title}>
       {outliers.length > 0 && (
         <div className="pb-4">
-          <p className="text-[12.5px] font-semibold text-ink-2">Niet alle dagen erbij</p>
+          <p className="section-label">Niet alle dagen erbij</p>
           <ul className="mt-1.5 space-y-1">
             {outliers.map((o) => (
               <li key={o.name} className="flex items-baseline justify-between gap-3 text-[13px]">
-                <span className="font-medium text-ink">{o.name}</span>
-                <span className="text-ink-3">{OUTLIER_TEXT[o.kind](o.days)}</span>
+                <span className="min-w-0 break-words font-medium text-ink">{o.name}</span>
+                <span className="shrink-0 whitespace-nowrap text-ink-3">{OUTLIER_TEXT[o.kind](o.days)}</span>
               </li>
             ))}
           </ul>
         </div>
       )}
-      {outliers.length > 0 && (hasRows || hasLinks) && <div className="mb-4 h-px bg-line" />}
+      {outliers.length > 0 && (hasRows || hasLinks) && <div className="h-px bg-line" />}
       {hasRows && <EventPractical event={info} bare />}
-      {hasRows && hasLinks && <div className="my-4 h-px bg-line" />}
+      {hasRows && hasLinks && <div className="h-px bg-line" />}
       {hasLinks && <EventLinks event={info} bare />}
     </TripSheet>
   );

@@ -28,8 +28,8 @@ export function StepNotifications({ state, onChange, hasDiscord }: StepNotificat
       </div>
 
       {!hasDiscord && (
-        <div className="flex items-start gap-3 rounded-xl border-1.5 border-amber-300 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+        <div className="flex items-start gap-3 notice-warn p-4">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg pill-warn">
             <MessageSquareOff size={16} />
           </div>
           <div className="min-w-0">

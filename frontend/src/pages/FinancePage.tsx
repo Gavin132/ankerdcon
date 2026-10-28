@@ -184,11 +184,7 @@ export function FinancePage() {
                   type="button"
                   aria-pressed={active}
                   onClick={() => setTripFilter(id)}
-                  className={`shrink-0 whitespace-nowrap rounded-full border-1.5 px-3 py-1.5 text-[13px] font-semibold transition-colors ${
-                    active
-                      ? "border-ink bg-ink text-paper dark:border-brand dark:bg-brand dark:text-brand-on"
-                      : "border-line bg-surface text-ink-2 hover:border-ink-3"
-                  }`}
+                  className={`chip ${active ? "chip-on" : "chip-off"}`}
                 >
                   {label}
                 </button>
@@ -212,7 +208,7 @@ export function FinancePage() {
 
             {allSettled ? (
               <div className="flex items-center gap-3 px-4 pb-[18px] pt-1">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg pill-ok">
                   <CheckCircle2 size={20} />
                 </span>
                 <div>

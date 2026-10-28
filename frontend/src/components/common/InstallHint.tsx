@@ -58,6 +58,26 @@ export function InstallHint({ kind, onDismiss }: { kind: InstallKind; onDismiss?
             Opent sneller, zonder de browserbalken
             {kind === "ios" ? " en alleen zo kun je meldingen krijgen op een iPhone." : ", en je krijgt meldingen als je ze aanzet."}
           </p>
+          {kind === "ios" ? (
+            <ol className="mt-3 space-y-2 text-[13px] text-ink-2">
+              <li className="flex items-center gap-2.5">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sunken font-mono text-[12px] font-semibold text-ink">1</span>
+                <span>
+                  Tik op <Share size={14} className="mx-0.5 inline -translate-y-px" aria-label="Delen" /> onderin Safari
+                </span>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sunken font-mono text-[12px] font-semibold text-ink">2</span>
+                <span>
+                  Kies <PlusSquare size={14} className="mx-0.5 inline -translate-y-px" aria-hidden /> <b className="font-semibold">Zet op beginscherm</b>
+                </span>
+              </li>
+            </ol>
+          ) : (
+            <Button size="sm" onClick={install} loading={busy} className="mt-3">
+              Installeren
+            </Button>
+          )}
         </div>
         {onDismiss && (
           <button type="button" onClick={onDismiss} aria-label="Sluiten" className="hit-area -mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink">
@@ -65,29 +85,6 @@ export function InstallHint({ kind, onDismiss }: { kind: InstallKind; onDismiss?
           </button>
         )}
       </div>
-
-      {kind === "ios" ? (
-        <ol className="mt-3 space-y-2 text-[13px] text-ink-2">
-          <li className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sunken font-mono text-[12px] font-semibold text-ink">1</span>
-            <span>
-              Tik op <Share size={14} className="mx-0.5 inline -translate-y-px" aria-label="Delen" /> onderin Safari
-            </span>
-          </li>
-          <li className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sunken font-mono text-[12px] font-semibold text-ink">2</span>
-            <span>
-              Kies <PlusSquare size={14} className="mx-0.5 inline -translate-y-px" aria-hidden /> <b className="font-semibold">Zet op beginscherm</b>
-            </span>
-          </li>
-        </ol>
-      ) : (
-        <div className="mt-3 flex items-center gap-2">
-          <Button size="sm" onClick={install} loading={busy}>
-            Installeren
-          </Button>
-        </div>
-      )}
     </section>
   );
 }

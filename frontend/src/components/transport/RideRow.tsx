@@ -18,7 +18,7 @@ import type { Ride } from "../../types";
 /** The member's own ride. A deeper blue than the brand fill, so white text stays readable on it. */
 const MINE_CLASS = "bg-[#0D75D1] text-white dark:bg-[#1A6FC9]";
 
-const PILL = "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-semibold";
+const PILL = "pill";
 
 const rangeText = (g: CarGuidance) => (g.low === g.high ? `${g.low}` : `${g.low}–${g.high}`);
 
@@ -32,9 +32,9 @@ function joinNames(names: string[]): string {
 function LoadPill({ guidance: g }: { guidance: CarGuidance }) {
   const tone =
     g.status === "short"
-      ? "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"
+      ? "pill-warn"
       : g.status === "ok"
-        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+        ? "pill-ok"
         : "bg-sunken text-ink-2";
   const text =
     g.status === "short"
@@ -129,9 +129,9 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
   const statusPill = status === "urgent" || status === "soon" || status === "recent";
   const statusPillClass =
     status === "urgent"
-      ? "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300"
+      ? "pill-bad"
       : status === "soon"
-        ? "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"
+        ? "pill-warn"
         : "bg-sunken text-ink-2";
 
   function openAction(next: "claim" | "leave") {
@@ -222,7 +222,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
                 </span>
               )}
               {ride.action_required && !isPast && (
-                <span className={`${PILL} bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300`}>
+                <span className={`${PILL} pill-warn`}>
                   <AlertCircle size={11} className="shrink-0" />
                   Actie vereist
                 </span>

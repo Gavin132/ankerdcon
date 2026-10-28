@@ -5,7 +5,8 @@ import { TripPreview } from "./TripPreview";
 import { useStorySummary } from "../../../hooks/useStories";
 import { getNow } from "../../../store/time.store";
 import { toDateKey, todayKey } from "../../../utils/date";
-import { tripImage, type Trip } from "../../../utils/trips";
+import { tripImage, tripPeople, type Trip } from "../../../utils/trips";
+import { useUsers } from "../../../hooks/useUsers";
 import { DAY_LABELS } from "../../../constants";
 import type { Meal, Ride, StoryDaySummary, User } from "../../../types";
 
@@ -348,6 +349,7 @@ interface WeekProps {
 }
 
 function Week({ week, monthPrefix, today, trips, tripByDay, selection, selectedTrip, storySummary, isMine, isPast, onDay, onTrip }: WeekProps) {
+  const { data: users = [] } = useUsers();
   const segments: { trip: Trip; col: number; span: number; lane: number }[] = [];
   for (const t of trips) {
     const keys = t.days.map((d) => toDateKey(d.date)).filter((k) => week.includes(k));
@@ -434,7 +436,7 @@ function Week({ week, monthPrefix, today, trips, tripByDay, selection, selectedT
               <span className="truncate">{trip.title}</span>
               <span className="ml-auto flex shrink-0 items-center gap-0.5 pl-1 font-mono text-[12px]">
                 {past ? <Camera size={11} /> : <Users size={11} />}
-                {past ? photos : trip.participants.length}
+                {past ? photos : tripPeople(trip, users).length}
               </span>
             </span>
           </button>
@@ -476,6 +478,7 @@ interface MonthOverviewProps {
 }
 
 function MonthOverview({ title, trips, lastYear, lastYearLabel, storySummary, isMine, isPast, onOpen }: MonthOverviewProps) {
+  const { data: users = [] } = useUsers();
   const previews = (t: Trip) =>
     [...t.eventIds.map((id) => storySummary?.[id]?.preview_url), tripImage(t)].filter((u): u is string => !!u).slice(0, 4);
   const photoCount = (t: Trip) => t.eventIds.reduce((sum, id) => sum + (storySummary?.[id]?.photo_count ?? 0), 0);
@@ -513,7 +516,7 @@ function MonthOverview({ title, trips, lastYear, lastYearLabel, storySummary, is
                   }`}
                 >
                   {mine && <Check size={11} strokeWidth={3} />}
-                  {past ? (mine ? "Geweest" : "Gemist") : mine ? "Jij gaat" : `${t.participants.length} gaan`}
+                  {past ? (mine ? "Geweest" : "Gemist") : mine ? "Jij gaat" : `${tripPeople(t, users).length} gaan`}
                 </span>
               </button>
             );

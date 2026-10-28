@@ -2,10 +2,10 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { routes } from "../config/routes";
 import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
-import { useSmartBack, isFreshEntry } from "../hooks/useSmartBack";
+import { useSmartBack } from "../hooks/useSmartBack";
 import { useCurrentTripRoomNumbers } from "../hooks/useTripRooms";
 import { useBadges } from "../hooks/useBadges";
-import { HomeLinkButton } from "../components/common/HomeLinkButton";
+import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { DiscordIcon } from "../components/common/DiscordIcon";
 import { UserPhotos } from "../components/profile/UserPhotos";
 import { UnsavedChangesModal } from "../components/common/UnsavedChangesModal";
@@ -104,35 +104,6 @@ function getBannerStyle(
     };
   if (bannerColor) return { backgroundColor: bannerColor };
   return { backgroundColor: "#0F1519" };
-}
-
-const topBarButtonClass =
-  "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink";
-
-// ─── Sticky top bar ───────────────────────────────────────────────────────────
-
-function TopBar({ title, onBack }: { title: string; onBack: () => void }) {
-  return (
-    <div
-      className="sticky top-0 z-10 border-b-1.5 border-line bg-surface px-3 sm:px-5"
-      style={{
-        paddingTop: "max(0.625rem, env(safe-area-inset-top, 0px))",
-        paddingBottom: "0.625rem",
-      }}
-    >
-      <div className="mx-auto flex max-w-3xl items-center gap-2">
-        <button onClick={onBack} aria-label="Terug" className={topBarButtonClass}>
-          <ArrowLeft size={18} />
-        </button>
-        <p className="min-w-0 flex-1 truncate text-[15px] font-semibold text-ink">
-          {title}
-        </p>
-        {isFreshEntry() && (
-          <HomeLinkButton size={16} className={topBarButtonClass} />
-        )}
-      </div>
-    </div>
-  );
 }
 
 // ─── Field wrapper ────────────────────────────────────────────────────────────
@@ -483,7 +454,7 @@ function ViewProfile({
           )}
           {isPingFresh(user.live_location_ping) && (
             <div className="flex items-center gap-2.5 text-sm text-ink-2">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg pill-ok">
                 <MapPin size={15} />
               </span>
               <LocationPingDisplay
@@ -745,7 +716,7 @@ export function ProfilePage() {
   if (!isOwn) {
     return (
       <div className="min-h-[100dvh] bg-paper">
-        <TopBar title={user.name} onBack={goBack} />
+        <DetailTopbar title="Profiel" onBack={goBack} />
         <div
           className="mx-auto max-w-3xl px-4 py-5 sm:px-6 sm:py-8"
           style={{
@@ -780,7 +751,7 @@ export function ProfilePage() {
 
   return (
     <div className="min-h-[100dvh] bg-paper">
-      <TopBar title={user.name} onBack={goBack} />
+      <DetailTopbar title="Profiel" onBack={goBack} />
 
       <motion.div
         className="mx-auto max-w-3xl space-y-5 px-4 py-5 sm:px-6 sm:py-8"
@@ -864,7 +835,7 @@ export function ProfilePage() {
                 onChange={(e) => setDraftName(e.target.value)}
               />
               {nameError && draftName !== user.name && (
-                <p className="mt-1.5 flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400">
+                <p className="field-error flex items-center gap-1">
                   <AlertTriangle size={11} /> {nameError}
                 </p>
               )}
@@ -907,7 +878,7 @@ export function ProfilePage() {
                 />
               </div>
               {phoneError && draftPhone && (
-                <p className="mt-1.5 flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400">
+                <p className="field-error flex items-center gap-1">
                   <AlertTriangle size={11} /> {phoneError}
                 </p>
               )}

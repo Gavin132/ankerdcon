@@ -8,6 +8,7 @@ import {
   MessageSquare,
   MessageSquareHeart,
   Sun,
+  Hand,
   Moon,
   Github,
   Youtube,
@@ -26,6 +27,7 @@ import { routes } from "../config/routes";
 import { listContainer, listItem } from "../utils/motion";
 import { toast } from "../store/toast.store";
 import { InstallHint, useInstallKind } from "../components/common/InstallHint";
+import { Switch } from "../components/common/Switch";
 
 const ROW =
   "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-sunken active:bg-sunken";
@@ -33,28 +35,6 @@ const PANEL = "card-surface overflow-hidden";
 const PANEL_ROWS = "divide-y divide-line border-t border-line";
 /** Flat top bar for the pages outside the app shell: back, title, and home on a fresh entry. */
 
-
-function Switch({ checked, onChange, disabled, label }: { checked: boolean; onChange: () => void; disabled?: boolean; label: string }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      disabled={disabled}
-      onClick={onChange}
-      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-1.5 transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-60 ${
-        checked ? "border-outline bg-brand" : "border-line bg-sunken"
-      }`}
-    >
-      <span
-        className={`pointer-events-none inline-block h-4 w-4 rounded-full transition-transform duration-200 ${
-          checked ? "translate-x-[22px] bg-brand-on" : "translate-x-[3px] bg-ink-3"
-        }`}
-      />
-    </button>
-  );
-}
 
 /**
  * Instellingen, opened from the avatar menu: the one place for personal
@@ -167,7 +147,7 @@ export function SettingsPage() {
                   <p className="text-[12.5px] text-ink-3">Geldt voor dit apparaat</p>
                 </div>
               </div>
-              <div className="mt-3 flex flex-wrap gap-2.5 pl-11" role="radiogroup" aria-label="Accentkleur">
+              <div className="mt-3 grid w-fit grid-cols-4 gap-2.5 pl-11 min-[430px]:grid-cols-7" role="radiogroup" aria-label="Accentkleur">
                 {ACCENTS.map((a) => {
                   const selected = accent === a.id;
                   return (
@@ -211,9 +191,7 @@ export function SettingsPage() {
                       role="radio"
                       aria-checked={selected}
                       onClick={() => setDensity(o.id)}
-                      className={`rounded-xl px-3 py-2 text-[13px] font-semibold transition-colors ${
-                        selected ? "border-2 border-outline bg-brand text-brand-on" : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"
-                      }`}
+                      className={`chip ${selected ? "chip-on" : "chip-off"}`}
                     >
                       {o.label}
                     </button>
@@ -225,7 +203,7 @@ export function SettingsPage() {
             {me && (
               <div className="flex w-full items-center gap-3 px-4 py-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-                  <Sun size={16} />
+                  <Hand size={16} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[14px] font-semibold text-ink">Begroeting tonen</p>

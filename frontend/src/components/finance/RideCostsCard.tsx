@@ -12,7 +12,7 @@ import { getNow } from "../../store/time.store";
 /** A trip stays on this card for this long after its last day. */
 const SHOW_DAYS_AFTER = 90;
 
-const PILL = "shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[12px] font-semibold";
+const PILL = "pill";
 
 /**
  * Ritkosten on the Financiën page: for each recent trip, what passengers owe you for driving
@@ -60,7 +60,7 @@ export function RideCostsCard({ tripFilter }: { tripFilter: string | null }) {
               : `${s.passengers.length} ${s.passengers.length === 1 ? "persoon betaalt" : "personen betalen"} jou`,
           amount: !waiting && s.passengers.length > 0 ? owed : null,
           pill: waiting ? "Invullen" : "Bekijken",
-          tone: waiting ? "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300" : "bg-sunken text-ink-2",
+          tone: waiting ? "pill-warn" : "pill-neutral",
           owed: true,
         };
       });
@@ -73,7 +73,7 @@ export function RideCostsCard({ tripFilter }: { tripFilter: string | null }) {
         sub: title(l.trip_id),
         amount: l.amount,
         pill: "Te betalen",
-        tone: "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
+        tone: "pill-bad",
         owed: false,
       }));
     return [...driving, ...riding];
@@ -94,13 +94,13 @@ export function RideCostsCard({ tripFilter }: { tripFilter: string | null }) {
             const body = (
               <>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[13.5px] font-semibold text-ink">{row.title}</span>
+                  <span className="line-clamp-2 break-words text-[13.5px] font-semibold text-ink">{row.title}</span>
                   <span className="block truncate text-[12px] text-ink-3">{row.sub}</span>
+                  <span className={`${PILL} ${row.tone} mt-1 inline-block`}>{row.pill}</span>
                 </span>
                 {row.amount !== null && (
                   <span className="shrink-0 font-mono text-[13.5px] font-semibold tabular-nums text-ink">{formatAmount(row.amount)}</span>
                 )}
-                <span className={`${PILL} ${row.tone}`}>{row.pill}</span>
                 {row.tripId && <ChevronRight size={15} className="shrink-0 text-ink-3" />}
               </>
             );

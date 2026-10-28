@@ -11,6 +11,7 @@ export function AdminTimeTravelPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
       <AdminPageHeader
+        eyebrow="Testen"
         title="Tijdreis-widget"
         subtitle="Het zwevende knopje waarmee je de tijd van de app kunt overschrijven om te testen"
       />
@@ -47,7 +48,7 @@ export function AdminTimeTravelPage() {
       </div>
 
       {override && (
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border-1.5 border-amber-300 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
+        <div className="flex flex-wrap items-center justify-between gap-4 notice-warn p-4">
           <div className="min-w-0">
             <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Tijd staat nog overschreven</p>
             <p className="mt-0.5 text-xs text-amber-800/80 dark:text-amber-300/80">

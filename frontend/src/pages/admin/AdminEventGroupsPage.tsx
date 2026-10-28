@@ -107,7 +107,7 @@ export function AdminEventGroupsPage() {
         <button
           type="submit"
           disabled={!newName.trim() || createMutation.isPending}
-          className="btn-primary gap-2 px-4 py-2.5 text-sm disabled:opacity-50"
+          className="btn-primary min-h-[44px] gap-2 px-4 py-2.5 text-sm"
         >
           <Plus size={15} />
           Aanmaken

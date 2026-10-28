@@ -74,7 +74,7 @@ export function JoinRideModal({ open, onClose, event, initialDirection, onOfferI
   const activeKey = activeDay ? toDateKey(activeDay.date) : toDateKey(parseEventDate(event.date) ?? getNow());
 
   // A day with someone still without Heen or Terug gets the amber dot, as in the Vervoer sheet.
-  const gaps = trip ? tripGaps(trip, rides, meals).transport : [];
+  const gaps = trip ? tripGaps(trip, rides, meals, users).transport : [];
   const dayNeedsAttention = (id: string) =>
     !!trip &&
     ((id === days[0]?.ev.id && gaps.some((g) => g.items.includes("Heen"))) ||

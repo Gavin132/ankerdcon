@@ -157,7 +157,7 @@ export function TripOverviewTab() {
     cosplay: trip.hasCon && <CosplayTile trip={trip} cosplays={cosplays} myNames={myNames} />,
     weather: trip.location && phase !== "past" && <WeatherTile trip={trip} onOpen={() => setWeatherOpen(true)} />,
     photos: <PhotosTile trip={trip} phase={phase} summary={storySummary} onOpenDay={setViewDayId} uploadDayId={uploadDay?.ev.id} />,
-    practical: phase !== "past" && (hasPracticalInfo(info) || tripOutliers(trip).length > 0) && (
+    practical: phase !== "past" && (hasPracticalInfo(info) || tripOutliers(trip, users).length > 0) && (
       <PracticalTile info={info} trip={trip} onOpen={() => setPracticalOpen(true)} />
     ),
     expenses: <ExpensesTile trip={trip} phase={phase} expenses={expenses} myNames={myNames} />,

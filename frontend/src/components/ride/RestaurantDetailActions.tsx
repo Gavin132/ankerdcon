@@ -170,7 +170,7 @@ export function RestaurantDetailActions({
           </div>
         )}
         {allClear && canAct && (
-          <div className="flex items-center gap-2 rounded-xl border-1.5 border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+          <div className="flex items-center gap-2 notice-ok px-4 py-3 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
             <CheckCircle2 size={15} className="shrink-0" />
             Iedereen heeft een rit — alles geregeld!
           </div>

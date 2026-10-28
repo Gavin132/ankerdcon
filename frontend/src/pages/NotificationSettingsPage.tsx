@@ -13,6 +13,7 @@ import { routes } from "../config/routes";
 import { activePreset, applyPreset, categoriesFor, NOTIFICATION_GROUPS, type NotificationPreset } from "../constants/notifications";
 import { NotificationChannelPicker } from "../components/notifications/NotificationChannelPicker";
 import { toast } from "../store/toast.store";
+import { Switch } from "../components/common/Switch";
 
 /** Flat top bar for the pages outside the app shell: back, title, and home on a fresh entry. */
 
@@ -97,8 +98,8 @@ export function NotificationSettingsPage() {
       >
         {!user.discord_id && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
-            <div className="flex items-start gap-3 rounded-xl border-1.5 border-amber-200 bg-amber-50 p-4 dark:border-amber-500/25 dark:bg-amber-500/10">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+            <div className="flex items-start gap-3 notice-warn p-4">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg pill-warn">
                 <MessageSquareOff size={16} />
               </div>
               <div className="min-w-0">
@@ -136,11 +137,7 @@ export function NotificationSettingsPage() {
                   type="button"
                   aria-pressed={chosenPreset === preset.id}
                   onClick={() => setDraftCategories((prev) => applyPreset(preset.id, prev, isAdmin))}
-                  className={`rounded-full border-1.5 px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
-                    chosenPreset === preset.id
-                      ? "border-ink bg-ink text-paper dark:border-brand dark:bg-brand dark:text-brand-on"
-                      : "border-line bg-surface text-ink-2 hover:border-ink-3"
-                  }`}
+                  className={`chip ${chosenPreset === preset.id ? "chip-on" : "chip-off"}`}
                 >
                   {preset.label}
                 </button>
@@ -167,18 +164,7 @@ export function NotificationSettingsPage() {
                         naar wie die dag meegaat.
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={draftOwnTrips}
-                      aria-labelledby="own-trips-label"
-                      onClick={() => setDraftOwnTrips((v) => !v)}
-                      className={`relative h-7 w-12 shrink-0 rounded-full border-2 border-outline transition-colors duration-200 ${draftOwnTrips ? "bg-brand" : "bg-sunken"}`}
-                    >
-                      <span
-                        className={`absolute top-0.5 h-5 w-5 rounded-full border-2 border-outline bg-surface transition-[left] duration-200 ${draftOwnTrips ? "left-[22px]" : "left-0.5"}`}
-                      />
-                    </button>
+                    <Switch checked={draftOwnTrips} onChange={() => setDraftOwnTrips((v) => !v)} labelledBy="own-trips-label" />
                   </div>
                 )}
 

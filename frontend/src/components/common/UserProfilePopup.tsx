@@ -293,7 +293,7 @@ export function UserProfilePopup({
                         )}
                         {isPingFresh(u?.live_location_ping) && (
                           <div className="flex items-center gap-2.5">
-                            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md pill-ok">
                               <MapPin size={11} />
                             </div>
                             <LocationPingDisplay

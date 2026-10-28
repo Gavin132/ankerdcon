@@ -10,7 +10,8 @@ import { gridImage } from "../../../utils/storyMedia";
 import { QUERY_KEYS, STALE_TIME } from "../../../constants";
 import { daysBetween, toDateKey, todayKey } from "../../../utils/date";
 import { dayShort, monthShort } from "../../../utils/multiDay";
-import { tripImage, type Trip } from "../../../utils/trips";
+import { tripImage, tripPeople, type Trip } from "../../../utils/trips";
+import { findUser as findMember } from "../../../utils/people";
 import { routes } from "../../../config/routes";
 import type { Meal, Ride, StoryDaySummary, User } from "../../../types";
 
@@ -75,11 +76,11 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
     : totalPhotos;
   const loading = photoQueries.some((q) => q.isLoading);
   const tiles = photos.slice(0, GRID_SIZE);
-  const names = [...trip.participants].sort((a, b) => Number(myNames.includes(b)) - Number(myNames.includes(a)));
-  const findUser = (p: string) => users.find((u) => u.name === p || u.discord_username === p || u.aliases?.includes(p));
+  const names = tripPeople(trip, users).map((person) => person.name).sort((a, b) => Number(myNames.includes(b)) - Number(myNames.includes(a)));
+  const findUser = (p: string) => findMember(users, p);
 
   const stats = [
-    { value: trip.participants.length, label: went ? "waren erbij" : "gingen" },
+    { value: names.length, label: went ? "waren erbij" : "gingen" },
     { value: totalPhotos, label: totalPhotos === 1 ? "foto" : "foto's" },
     nights > 0
       ? { value: nights, label: nights === 1 ? "hotelnacht" : "hotelnachten" }

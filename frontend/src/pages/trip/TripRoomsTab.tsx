@@ -526,7 +526,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
   // Stats
   const assignedNames = new Set(rooms.flatMap((r) => r.occupants));
   const eventAttendees = trip.participants;
-  const unassigned = tripRoomGaps(trip, rooms);
+  const unassigned = tripRoomGaps(trip, rooms, users);
   const info = tripInfo(trip);
 
   if (!event) {
@@ -656,7 +656,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
 
         {/* ── Unassigned strip ──────────────────────────────────────── */}
         {unassigned.length > 0 && (
-          <div className="rounded-xl border-1.5 border-amber-200 bg-amber-50 dark:border-amber-500/25 dark:bg-amber-500/10">
+          <div className="notice-warn">
             <button
               type="button"
               onClick={() => setUnassignedOpen((v) => !v)}

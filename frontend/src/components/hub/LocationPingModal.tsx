@@ -120,7 +120,7 @@ export function LocationPingModal({ open, onClose, userNames }: Props) {
           <div>
             <p className="section-label mb-2">Jouw positie</p>
             {coords ? (
-              <div className="flex items-center gap-3 rounded-xl border-1.5 border-emerald-200 bg-emerald-50 px-3.5 py-3 dark:border-emerald-400/30 dark:bg-emerald-500/10">
+              <div className="flex items-center gap-3 notice-ok px-3.5 py-3">
                 <Check size={16} className="shrink-0 text-emerald-700 dark:text-emerald-300" />
                 <div className="min-w-0 flex-1 leading-tight">
                   <p className="text-[13px] font-semibold text-emerald-800 dark:text-emerald-300">Locatie gevonden</p>

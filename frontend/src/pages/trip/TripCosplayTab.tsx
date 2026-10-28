@@ -64,7 +64,7 @@ interface ImageEntry {
 // Flat form sections separated by a divider; labels follow the design system.
 const SF = "space-y-3 border-t-1.5 border-line pt-5 first:border-t-0 first:pt-0";
 const ST = "section-label";
-const SL = "mb-1.5 block text-[12.5px] font-semibold text-ink-2";
+const SL = "field-label";
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -408,7 +408,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
             <div>
               <label className={SL}>Karakter naam *</label>
               <input className="input-field" placeholder="Bijv. Luffy, Batman, Pikachu…" autoComplete="off" {...register("character_name")} />
-              {errors.character_name && <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400">{errors.character_name.message}</p>}
+              {errors.character_name && <p className="field-error">{errors.character_name.message}</p>}
             </div>
             <div>
               <label className={SL}>Serie / film / game (optioneel)</label>
@@ -429,7 +429,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                 }}
                 label="Welke dagen draag je dit?"
               />
-              {selectedDays.length === 0 && <p className="text-xs text-rose-600 dark:text-rose-400">Selecteer minimaal één dag.</p>}
+              {selectedDays.length === 0 && <p className="field-error">Selecteer minimaal één dag.</p>}
             </div>
           )}
 
@@ -533,11 +533,11 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
           {/* Filter toolbar */}
           {!isLoading && eventCosplays.length > 0 && (
             <div className="mb-5 space-y-3">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 {/* Filter trigger */}
                 <button
                   onClick={() => setView("filter")}
-                  className={`relative flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
+                  className={`relative flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
                     activeFilterCount > 0
                       ? "border-1.5 border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
                       : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"
@@ -552,21 +552,21 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                   )}
                 </button>
 
-                {/* Result count */}
-                <span className="ml-auto truncate font-mono text-[12px] uppercase tracking-[0.05em] text-ink-3 tabular-nums">
-                  {isFiltered
-                    ? `${filtered.length} van ${eventCosplays.length} cosplays`
-                    : `${eventCosplays.length} ${eventCosplays.length === 1 ? "cosplay" : "cosplays"}`}
-                </span>
-
                 <button
                   onClick={openCreate}
-                  className="btn-primary shrink-0 px-3 py-2 text-xs"
+                  className="btn-primary ml-auto min-h-11 shrink-0 px-3 py-2 text-xs"
                 >
                   <Plus size={14} />
                   Toevoegen
                 </button>
               </div>
+
+              {/* Result count */}
+              <p className="font-mono text-[12px] uppercase tracking-[0.05em] text-ink-3 tabular-nums">
+                {isFiltered
+                  ? `${filtered.length} van ${eventCosplays.length} cosplays`
+                  : `${eventCosplays.length} ${eventCosplays.length === 1 ? "cosplay" : "cosplays"}`}
+              </p>
 
               {/* Active filter chips */}
               <AnimatePresence>

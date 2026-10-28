@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Plus, UserMinus } from "lucide-react";
 import { Button } from "../common/Button";
@@ -24,7 +24,12 @@ interface CarCardProps {
  * driver on top, riders as an avatar stack in the footer, and "Stap in" /
  * "Uitstappen" expanding in place instead of opening a popup.
  */
-export function CarCard({ driver, canAct, userNames, onJoin, onUnassign, isPending }: CarCardProps) {
+// forwardRef: it sits directly inside AnimatePresence (mode="popLayout"), which measures its child to keep the
+// others in place while a car leaves, and can only do that through a ref.
+export const CarCard = forwardRef<HTMLDivElement, CarCardProps>(function CarCard(
+  { driver, canAct, userNames, onJoin, onUnassign, isPending },
+  ref,
+) {
   const { data: users = [] } = useUsers();
   const [action, setAction] = useState<"join" | "leave" | null>(null);
   const [joinNames, setJoinNames] = useState<string[]>([]);
@@ -51,6 +56,7 @@ export function CarCard({ driver, canAct, userNames, onJoin, onUnassign, isPendi
 
   return (
     <motion.div
+      ref={ref}
       layout
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -111,7 +117,7 @@ export function CarCard({ driver, canAct, userNames, onJoin, onUnassign, isPendi
                 aria-expanded={action === "leave"}
                 className={`hit-area flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
                   action === "leave"
-                    ? "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300"
+                    ? "pill-bad"
                     : "text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
                 }`}
               >
@@ -174,4 +180,4 @@ export function CarCard({ driver, canAct, userNames, onJoin, onUnassign, isPendi
       </AnimatePresence>
     </motion.div>
   );
-}
+});

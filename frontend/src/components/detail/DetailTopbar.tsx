@@ -17,7 +17,7 @@ interface DetailTopbarProps {
 }
 
 const ICON_BUTTON =
-  "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-sunken hover:text-ink";
+  "icon-btn";
 
 /** Flat surface bar on top of a detail page (these render outside the app shell). */
 export function DetailTopbar({ title, onBack, onShare, actions, width = "3xl" }: DetailTopbarProps) {

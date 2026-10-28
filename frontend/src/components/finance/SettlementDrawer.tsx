@@ -213,7 +213,7 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
             <CopyField label="Omschrijving" value={`Ankerd afrekening ${otherName}`} />
           </div>
           <div>
-            <label className="mb-1.5 block text-[12.5px] font-semibold text-ink-2" htmlFor="settle-link">Betaallink</label>
+            <label className="field-label" htmlFor="settle-link">Betaallink</label>
             <input
               id="settle-link"
               type="url"
@@ -224,7 +224,7 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
               onChange={(e) => setRequestUrl(e.target.value)}
             />
             {linkProblem ? (
-              <p className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">{linkProblem}</p>
+              <p className="field-error font-medium">{linkProblem}</p>
             ) : (
               <p className="mt-1.5 text-xs text-ink-3">Maak in je bank-app een betaalverzoek van {formatAmount(amount, currency)} (Tikkie, bunq, PayPal, Revolut, Klarna, ING, Rabo, ABN AMRO, SNS, ASN, RegioBank, Knab) en plak de link hier.</p>
             )}
@@ -234,12 +234,12 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-[12.5px] font-semibold text-ink-2" htmlFor="settle-iban">IBAN</label>
+              <label className="field-label" htmlFor="settle-iban">IBAN</label>
               <input id="settle-iban" className="input-field font-mono" placeholder="NL00 BANK 0123 4567 89" autoComplete="off"
                 value={iban} onChange={(e) => setIban(e.target.value)} />
             </div>
             <div>
-              <label className="mb-1.5 block text-[12.5px] font-semibold text-ink-2" htmlFor="settle-name">Op naam van</label>
+              <label className="field-label" htmlFor="settle-name">Op naam van</label>
               <input id="settle-name" className="input-field" placeholder="Naam rekeninghouder" maxLength={70}
                 value={accountName} onChange={(e) => setAccountName(e.target.value)} />
             </div>

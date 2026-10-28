@@ -4,7 +4,8 @@ import { UserAvatar } from "../common/UserAvatar";
 import { TripDayPicker } from "./TripDayPicker";
 import { TripParticipants } from "./TripParticipants";
 import { daysBetween, toDateKey, todayKey } from "../../utils/date";
-import { tripImage, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
+import { tripImage, tripPeople, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
+import { findUser as findMember } from "../../utils/people";
 import { getNow } from "../../store/time.store";
 import { useIsViewer } from "../../hooks/useIsViewer";
 import type { User } from "../../types";
@@ -52,8 +53,9 @@ export function TripTicket({
     trip.isHotel ? "hotel" : null,
   ].filter(Boolean).join(" · ");
 
-  const participants = [...trip.participants].sort((a, b) => Number(isMine(b)) - Number(isMine(a)));
-  const findUser = (p: string) => users.find((u) => u.name === p || u.discord_username === p || u.aliases?.includes(p));
+  // One avatar per person, not per name they happen to be signed up under (see utils/people.ts).
+  const participants = tripPeople(trip, users).map((person) => person.name).sort((a, b) => Number(isMine(b)) - Number(isMine(a)));
+  const findUser = (p: string) => findMember(users, p);
   const others = participants.filter((p) => !isMine(p)).length;
   const verb = phase === "past" ? "waren er" : "gaan mee";
   const crewText = going

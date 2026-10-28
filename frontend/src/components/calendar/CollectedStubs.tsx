@@ -6,7 +6,8 @@ import { useStorySummary } from "../../hooks/useStories";
 import { StoryRing } from "../story/StoryRing";
 import { StoryViewer } from "../story/StoryViewer";
 import { dayShort } from "../../utils/multiDay";
-import { tripImage, type Trip } from "../../utils/trips";
+import { tripImage, tripPeople, type Trip } from "../../utils/trips";
+import { useUsers } from "../../hooks/useUsers";
 import { routes } from "../../config/routes";
 
 interface CollectedStubsProps {
@@ -22,6 +23,7 @@ interface CollectedStubsProps {
  * photos and a link to the trip.
  */
 export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
+  const { data: users = [] } = useUsers();
   const years = [...new Set(trips.map((t) => t.days[0].date.getFullYear()))];
   const [pickedYear, setYear] = useState<number | null>(null);
   const year = pickedYear !== null && years.includes(pickedYear) ? pickedYear : years[0];
@@ -118,7 +120,7 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
                 {t.title}
               </span>
               <span className="mt-auto pt-2 text-[12px] text-ink-2">
-                {t.participants.length} gingen{tripPhotos > 0 ? ` · ${tripPhotos} foto's` : ""}
+                {tripPeople(t, users).length} gingen{tripPhotos > 0 ? ` · ${tripPhotos} foto's` : ""}
               </span>
               <span
                 className={`absolute right-2.5 top-10 -rotate-[10deg] rounded-md border-2 bg-surface/80 px-1.5 pt-0.5 font-display text-[14px] font-black uppercase leading-tight ${

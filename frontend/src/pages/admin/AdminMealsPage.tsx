@@ -165,7 +165,7 @@ function MealDrawer({
             placeholder="Pizzeria Roma"
           />
           {errors.meal_name && (
-            <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
+            <p className="field-error">
               {errors.meal_name.message}
             </p>
           )}
@@ -176,7 +176,7 @@ function MealDrawer({
             <label className={L}>Datum & tijd *</label>
             <input {...register("time")} type="datetime-local" className={F} />
             {errors.time && (
-              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
+              <p className="field-error">
                 {errors.time.message}
               </p>
             )}
@@ -412,7 +412,7 @@ export function AdminMealsPage() {
         action={
           <button
             onClick={() => setDrawer("new")}
-            className="btn-primary gap-2 px-4 py-2.5 text-sm"
+            className="btn-primary min-h-[44px] gap-2 px-4 py-2.5 text-sm"
           >
             <Plus size={16} />
             Nieuwe maaltijd
@@ -428,7 +428,7 @@ export function AdminMealsPage() {
 
       <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="stack-table w-full">
             <thead>
               <tr className="border-b-1.5 border-line">
                 <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
@@ -492,7 +492,7 @@ export function AdminMealsPage() {
                         className="cb"
                       />
                     </td>
-                    <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                    <td className="cell-main px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                       <p className="text-sm font-semibold text-ink truncate max-w-[160px] sm:max-w-none">
                         {meal.meal_name}
                       </p>
@@ -551,7 +551,7 @@ export function AdminMealsPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
+                    <td className="cell-actions px-2 sm:px-5 py-2.5 sm:py-3.5">
                       <DeleteConfirmActions
                         id={meal.id}
                         confirmId={confirmDeleteId}

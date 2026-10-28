@@ -110,13 +110,13 @@ function AnnouncementDrawer({
           <button
             onClick={handleSave}
             disabled={!isValid || isSaving}
-            className="btn-primary flex-1 py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-primary min-h-[44px] flex-1 py-2.5 text-sm"
           >
             {isSaving ? "Opslaan..." : isEdit ? "Bijwerken" : "Plaatsen"}
           </button>
           <button
             onClick={requestClose}
-            className="rounded-xl border-1.5 border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-3"
+            className="btn-secondary px-4 py-2.5 text-sm"
           >
             Annuleren
           </button>
@@ -220,7 +220,7 @@ export function AdminAnnouncementsPage() {
         action={
           <button
             onClick={() => setDrawer("new")}
-            className="btn-primary gap-2 px-4 py-2.5 text-sm"
+            className="btn-primary min-h-[44px] gap-2 px-4 py-2.5 text-sm"
           >
             <Plus size={16} />
             Nieuwe aankondiging
@@ -230,7 +230,7 @@ export function AdminAnnouncementsPage() {
 
       <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="stack-table w-full">
             <thead>
               <tr className="border-b-1.5 border-line">
                 <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
@@ -281,7 +281,7 @@ export function AdminAnnouncementsPage() {
                           <span className="hidden sm:inline">{a.active ? "Actief" : "Inactief"}</span>
                         </button>
                       </td>
-                      <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                      <td className="cell-main px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                         <p className="text-sm text-ink max-w-[160px] sm:max-w-md truncate">
                           {a.message}
                         </p>
@@ -300,7 +300,7 @@ export function AdminAnnouncementsPage() {
                           {a.created_by ?? "—"}
                         </p>
                       </td>
-                      <td className="px-2 sm:px-5 py-2.5 sm:py-3.5" onClick={(e) => e.stopPropagation()}>
+                      <td className="cell-actions px-2 sm:px-5 py-2.5 sm:py-3.5" onClick={(e) => e.stopPropagation()}>
                         <DeleteConfirmActions
                           id={a.id}
                           confirmId={confirmDeleteId}

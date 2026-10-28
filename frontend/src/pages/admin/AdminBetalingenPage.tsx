@@ -21,9 +21,9 @@ function formatDate(iso: string) {
 // ── Status config ─────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG = {
-  pending:   { label: "Openstaand", pill: "border border-transparent bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",       dot: "bg-amber-500" },
+  pending:   { label: "Openstaand", pill: "border border-transparent pill-warn",       dot: "bg-amber-500" },
   claimed:   { label: "Geclaimd",   pill: "border border-transparent bg-sunken text-ink-2",                                                   dot: "bg-ink-3"     },
-  confirmed: { label: "Bevestigd",  pill: "border border-transparent bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300", dot: "bg-emerald-500" },
+  confirmed: { label: "Bevestigd",  pill: "border border-transparent pill-ok", dot: "bg-emerald-500" },
 } as const;
 
 function StatusBadge({ status }: { status: ExpenseShare["status"] }) {
@@ -394,11 +394,11 @@ function buildPersonData(expenses: Expense[]): PersonBalance[] {
 
 type StatusFilter = "all" | ExpenseShare["status"];
 
-const STATUS_CHIPS: { key: StatusFilter; label: string; activeClass: string }[] = [
-  { key: "all",       label: "Alles",       activeClass: "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on" },
-  { key: "pending",   label: "Openstaand",  activeClass: "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on" },
-  { key: "claimed",   label: "Geclaimd",    activeClass: "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on" },
-  { key: "confirmed", label: "Bevestigd",   activeClass: "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on" },
+const STATUS_CHIPS: { key: StatusFilter; label: string }[] = [
+  { key: "all",       label: "Alles" },
+  { key: "pending",   label: "Openstaand" },
+  { key: "claimed",   label: "Geclaimd" },
+  { key: "confirmed", label: "Bevestigd" },
 ];
 
 // ── Main page ─────────────────────────────────────────────────────────────────
@@ -507,15 +507,11 @@ export function AdminBetalingenPage() {
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-2">
         {/* Status chips */}
-        {STATUS_CHIPS.map(({ key, label, activeClass }) => (
+        {STATUS_CHIPS.map(({ key, label }) => (
           <button
             key={key}
             onClick={() => setStatusFilter(key)}
-            className={`rounded-full border-1.5 px-3 py-1 text-xs font-semibold transition-colors ${
-              statusFilter === key
-                ? activeClass
-                : "border-line bg-surface text-ink-2 hover:border-ink-3"
-            }`}
+            className={`chip ${statusFilter === key ? "chip-on" : "chip-off"}`}
           >
             {label}
           </button>
@@ -531,11 +527,7 @@ export function AdminBetalingenPage() {
           <button
             key={e.id}
             onClick={() => setExpenseFilter(expenseFilter === e.id ? null : e.id)}
-            className={`rounded-full border-1.5 px-3 py-1 text-xs font-semibold transition-colors ${
-              expenseFilter === e.id
-                ? "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
-                : "border-line bg-surface text-ink-2 hover:border-ink-3"
-            }`}
+            className={`chip ${expenseFilter === e.id ? "chip-on" : "chip-off"}`}
           >
             {e.description}
           </button>

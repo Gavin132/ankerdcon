@@ -61,7 +61,7 @@ export function ErrorFallback({ error }: { error?: unknown }) {
           draggable={false}
         />
 
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl pill-bad">
           <AlertTriangle size={24} />
         </div>
 
@@ -82,7 +82,7 @@ export function ErrorFallback({ error }: { error?: unknown }) {
           >
             {busy ? "Even geduld…" : "Probeer opnieuw"}
           </button>
-          <button type="button" disabled={busy} onClick={() => reset(routes.hub)} className="btn-primary px-4 py-2.5 text-sm disabled:opacity-60">
+          <button type="button" disabled={busy} onClick={() => reset(routes.hub)} className="btn-primary px-4 py-2.5 text-sm">
             Terug naar start
           </button>
         </div>

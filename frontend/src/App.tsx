@@ -21,6 +21,7 @@ import { usePendingStoryUploadsFlusher } from "./hooks/usePendingStoryUploads";
 // Add these two imports!
 import { supabase } from "./services/supabase";
 import { useAuthStore, PENDING_LOGIN_REDIRECT_KEY, PENDING_DISCORD_LINK_KEY } from "./store/auth.store";
+import { isMockMode } from "./lib/mockMode";
 import { ApiError } from "./lib/api/client";
 import { linkDiscordAccount } from "./services/users.service";
 import { QUERY_KEYS } from "./constants";
@@ -87,6 +88,8 @@ function AuthSync() {
       setInitialized();
       return;
     }
+    // Mock mode (development only) is signed in already and has no Supabase session to listen to.
+    if (isMockMode()) return;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {

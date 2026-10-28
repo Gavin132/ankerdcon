@@ -159,7 +159,7 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
         )}
 
         {/* Driver / Organizer */}
-        {!isPT && (
+        {!isPT && ride.driver && (
           <div className="mt-5 flex items-center gap-2.5">
             <UserAvatar
               name={ride.driver}

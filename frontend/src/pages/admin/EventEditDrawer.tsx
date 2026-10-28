@@ -127,9 +127,9 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
           const isExpanded = expandedDay === day.id;
           return (
             <div key={day.id} className="overflow-hidden rounded-xl border border-line bg-paper">
-              <div className="flex items-center gap-3 px-3 py-2.5">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2.5">
                 <CalendarDays size={14} className="text-ink-3 shrink-0" />
-                <span className="flex-1 font-mono text-[13px] font-semibold text-ink">
+                <span className="min-w-0 flex-1 basis-36 font-mono text-[13px] font-semibold text-ink">
                   {formatDate(day.date)}
                 </span>
                 <label className="flex items-center gap-1.5 text-[11px] text-ink-3 cursor-pointer whitespace-nowrap">
@@ -187,13 +187,13 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
       </div>
 
       <div className="flex items-end gap-2 pt-1">
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <label className="mb-1 block text-xs font-medium text-ink-2">Nieuwe dag</label>
           <input
             type="date"
             value={newDate}
             onChange={(e) => setNewDate(e.target.value)}
-            className={F}
+            className={`${F} min-w-0`}
           />
         </div>
         <label className="flex items-center gap-1.5 text-xs text-ink-3 pb-2.5 cursor-pointer whitespace-nowrap">
@@ -204,7 +204,7 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
           type="button"
           onClick={handleAddDay}
           disabled={!newDate || createDay.isPending}
-          className="btn-primary h-10 shrink-0 gap-1.5 px-3 text-sm disabled:opacity-50"
+          className="btn-primary h-11 shrink-0 gap-1.5 px-3 text-sm"
         >
           <Plus size={14} />
           Toevoegen
@@ -376,7 +376,7 @@ export function EventEditDrawer({
             <label className="mb-1 block text-xs font-medium text-ink-2">Naam *</label>
             <input {...register("event_name")} className={F} placeholder="DoKomi 2027" />
             {errors.event_name && (
-              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.event_name.message}</p>
+              <p className="field-error">{errors.event_name.message}</p>
             )}
           </div>
           <div>
@@ -531,7 +531,7 @@ export function EventEditDrawer({
             )}
 
             {errors.image_url && (
-              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.image_url.message}</p>
+              <p className="field-error">{errors.image_url.message}</p>
             )}
 
             {currentImageUrl && (
@@ -589,14 +589,14 @@ export function EventEditDrawer({
               <label className="mb-1 block text-xs font-medium text-ink-2">Website</label>
               <input {...register("website")} className={F} placeholder="https://..." />
               {errors.website && (
-                <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.website.message}</p>
+                <p className="field-error">{errors.website.message}</p>
               )}
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-ink-2">Tickets URL</label>
               <input {...register("ticket_url")} className={F} placeholder="https://..." />
               {errors.ticket_url && (
-                <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.ticket_url.message}</p>
+                <p className="field-error">{errors.ticket_url.message}</p>
               )}
             </div>
           </div>
@@ -660,7 +660,7 @@ export function EventEditDrawer({
                 type="button"
                 onClick={addTicketType}
                 disabled={!ttTitle.trim() || !ttPrice}
-                className="btn-primary h-10 w-10 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary h-11 w-11 shrink-0"
               >
                 <Plus size={15} />
               </button>

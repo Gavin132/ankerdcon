@@ -9,8 +9,7 @@ interface Props {
   onToggleMobile: () => void;
 }
 
-const ICON_BTN =
-  "flex h-9 w-9 items-center justify-center rounded-[9px] text-ink-2 transition-colors hover:bg-sunken hover:text-ink";
+const ICON_BTN = "icon-btn";
 
 export function AdminTopbar({ onToggleDesktop, onToggleMobile }: Props) {
   const { pathname } = useLocation();

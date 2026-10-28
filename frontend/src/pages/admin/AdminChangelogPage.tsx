@@ -88,13 +88,13 @@ function ChangelogDrawer({
           <button
             onClick={handleSave}
             disabled={!isValid || isSaving}
-            className="btn-primary flex-1 py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-primary min-h-[44px] flex-1 py-2.5 text-sm"
           >
             {isSaving ? "Opslaan..." : isEdit ? "Bijwerken" : "Plaatsen"}
           </button>
           <button
             onClick={requestClose}
-            className="rounded-xl border-1.5 border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-3"
+            className="btn-secondary px-4 py-2.5 text-sm"
           >
             Annuleren
           </button>
@@ -166,7 +166,7 @@ export function AdminChangelogPage() {
         action={
           <button
             onClick={() => setDrawer("new")}
-            className="btn-primary gap-2 px-4 py-2.5 text-sm"
+            className="btn-primary min-h-[44px] gap-2 px-4 py-2.5 text-sm"
           >
             <Plus size={16} />
             Nieuw item
@@ -176,7 +176,7 @@ export function AdminChangelogPage() {
 
       <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="stack-table w-full">
             <thead>
               <tr className="border-b-1.5 border-line">
                 <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
@@ -211,7 +211,7 @@ export function AdminChangelogPage() {
                     <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                       <p className="whitespace-nowrap font-mono text-[12.5px] text-ink-2">{entry.released_at}</p>
                     </td>
-                    <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                    <td className="cell-main px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                       <p className="text-sm font-semibold text-ink max-w-[160px] sm:max-w-md truncate">
                         {entry.title}
                       </p>
@@ -219,7 +219,7 @@ export function AdminChangelogPage() {
                     <td className="hidden sm:table-cell px-5 py-3.5">
                       <p className="text-sm text-ink-3">{entry.items.length}</p>
                     </td>
-                    <td className="px-2 sm:px-5 py-2.5 sm:py-3.5" onClick={(e) => e.stopPropagation()}>
+                    <td className="cell-actions px-2 sm:px-5 py-2.5 sm:py-3.5" onClick={(e) => e.stopPropagation()}>
                       <DeleteConfirmActions
                         id={entry.id}
                         confirmId={confirmDeleteId}

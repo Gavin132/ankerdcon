@@ -1,5 +1,6 @@
-import { BedDouble, CalendarDays, MapPin, StickyNote, Users } from "lucide-react";
+import { CalendarDays, MapPin, StickyNote, Users } from "lucide-react";
 import { dayShort, monthShort } from "../../utils/multiDay";
+import { useUsers } from "../../hooks/useUsers";
 import { tripOutliers, type Trip, type TripDay, type TripOutlier } from "../../utils/trips";
 import type { CalendarEvent } from "../../types";
 
@@ -18,14 +19,11 @@ const outlierText: Record<TripOutlier["kind"], (days: TripDay[]) => string> = {
 
 function Row({ icon: Icon, label, children }: { icon: typeof MapPin; label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-4 px-5 py-3">
-      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-        <Icon size={14} />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="section-label mb-1">{label}</p>
-        {children}
-      </div>
+    <div className="py-3 first:pt-0 last:pb-0">
+      <dt className="section-label flex items-center gap-1.5">
+        <Icon size={12} className="shrink-0" /> {label}
+      </dt>
+      <dd className="mt-1">{children}</dd>
     </div>
   );
 }
@@ -41,15 +39,12 @@ export function HotelInfoCard({ event, trip }: HotelInfoCardProps) {
   const nights = stay.length > 0 ? stay : trip.days;
   const first = nights[0];
   const last = nights[nights.length - 1];
-  const outliers = tripOutliers(trip);
+  const { data: users = [] } = useUsers();
+  const outliers = tripOutliers(trip, users);
 
   return (
-    <div className="card-surface overflow-hidden">
-      <div className="flex items-center gap-2 px-5 pb-1 pt-4">
-        <BedDouble size={13} className="text-ink-3" />
-        <p className="section-label">Hotel &amp; overnachting</p>
-      </div>
-
+    // The sheet is already called "Hotel", so this is just the facts, divided by lines: no card of its own.
+    <dl className="divide-y divide-line border-b border-line pb-3">
       {location && (
         <Row icon={MapPin} label="Adres">
           <a
@@ -73,11 +68,11 @@ export function HotelInfoCard({ event, trip }: HotelInfoCardProps) {
 
       {outliers.length > 0 && (
         <Row icon={Users} label="Aankomst & vertrek">
-          <ul className="space-y-1">
+          <ul className="space-y-2">
             {outliers.map((o) => (
-              <li key={o.name} className="flex items-baseline justify-between gap-3 text-sm">
-                <span className="font-medium text-ink">{o.name}</span>
-                <span className="text-ink-3">{outlierText[o.kind](o.days)}</span>
+              <li key={o.name} className="text-sm leading-snug">
+                <span className="break-words font-medium text-ink">{o.name}</span>
+                <span className="block text-[13px] text-ink-3">{outlierText[o.kind](o.days)}</span>
               </li>
             ))}
           </ul>
@@ -90,7 +85,6 @@ export function HotelInfoCard({ event, trip }: HotelInfoCardProps) {
         </Row>
       )}
 
-      <div className="h-2" />
-    </div>
+    </dl>
   );
 }

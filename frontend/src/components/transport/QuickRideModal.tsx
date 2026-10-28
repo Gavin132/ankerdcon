@@ -216,7 +216,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
               <button
                 type="button"
                 onClick={() => setSeats((s) => Math.max(1, s - 1))}
-                className="hit-area flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+                className="icon-btn"
               >
                 −
               </button>
@@ -227,7 +227,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
               <button
                 type="button"
                 onClick={() => setSeats((s) => Math.min(99, s + 1))}
-                className="hit-area flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+                className="icon-btn"
               >
                 +
               </button>

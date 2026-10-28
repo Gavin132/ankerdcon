@@ -55,8 +55,8 @@ export function MealTodayCard({ meals, myNames }: MealTodayCardProps) {
             <span
               className={`shrink-0 rounded-full px-2 py-0.5 text-[12px] font-semibold ${
                 eating
-                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
-                  : "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"
+                  ? "pill-ok"
+                  : "pill-warn"
               }`}
             >
               {eating ? "Je eet mee" : count > 0 ? `${count} eten mee` : "Nog niemand"}

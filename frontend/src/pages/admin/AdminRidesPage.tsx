@@ -188,7 +188,7 @@ function RideDrawer({
             )}
           />
           {errors.driver && (
-            <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
+            <p className="field-error">
               {errors.driver.message}
             </p>
           )}
@@ -198,7 +198,7 @@ function RideDrawer({
           <label className={L}>Vertrektijd</label>
           <input {...register("departure_time")} type="datetime-local" className={F} />
           {errors.departure_time && (
-            <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
+            <p className="field-error">
               {errors.departure_time.message}
             </p>
           )}
@@ -219,7 +219,7 @@ function RideDrawer({
             )}
           />
           {errors.start_location && (
-            <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.start_location.message}</p>
+            <p className="field-error">{errors.start_location.message}</p>
           )}
         </div>
 
@@ -371,7 +371,7 @@ export function AdminRidesPage() {
         action={
           <button
             onClick={() => setDrawer("new")}
-            className="btn-primary gap-2 px-4 py-2.5 text-sm"
+            className="btn-primary min-h-[44px] gap-2 px-4 py-2.5 text-sm"
           >
             <Plus size={16} />
             Nieuwe rit
@@ -386,11 +386,7 @@ export function AdminRidesPage() {
             <button
               key={d}
               onClick={() => handleFilter(d)}
-              className={`shrink-0 rounded-full border-1.5 px-3.5 py-1.5 text-sm font-semibold transition-colors ${
-                dirFilter === d
-                  ? "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
-                  : "border-line bg-surface text-ink-2 hover:border-ink-3"
-              }`}
+              className={`chip ${dirFilter === d ? "chip-on" : "chip-off"}`}
             >
               {d === "All" ? "Alle" : d}
             </button>
@@ -405,7 +401,7 @@ export function AdminRidesPage() {
 
       <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="stack-table w-full">
             <thead>
               <tr className="border-b-1.5 border-line">
                 <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
@@ -464,7 +460,7 @@ export function AdminRidesPage() {
                         className="cb"
                       />
                     </td>
-                    <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                    <td className="cell-main px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                       <div className="flex items-center gap-2 sm:gap-2.5">
                         <div
                           className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink sm:h-7 sm:w-7"
@@ -532,7 +528,7 @@ export function AdminRidesPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
+                    <td className="cell-actions px-2 sm:px-5 py-2.5 sm:py-3.5">
                       <DeleteConfirmActions
                         id={ride.id}
                         confirmId={confirmDeleteId}

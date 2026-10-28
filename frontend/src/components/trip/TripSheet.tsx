@@ -183,7 +183,7 @@ export function TripSheet({ open, onClose, title, subtitle, onBack, footer, view
               <button
                 type="button"
                 onClick={requestClose}
-                className={`hit-area flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink ${covered ? "invisible" : ""}`}
+                className={`icon-btn ${covered ? "invisible" : ""}`}
                 aria-label="Sluiten"
                 tabIndex={covered ? -1 : undefined}
               >

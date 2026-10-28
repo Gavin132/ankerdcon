@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { formatDate } from "../../utils/format";
+import { parseEventDate } from "../../utils/date";
+import { dayShort, monthShort } from "../../utils/multiDay";
 import { listItem } from "../../utils/motion";
 import type { Cosplay, CalendarEvent, User } from "../../types";
 
@@ -16,6 +18,14 @@ interface CosplayCardProps {
 /** A cosplay as a flat tile: inspiration image (or an empty well), character, series, who and which days. */
 // forwardRef: TripCosplayTab's <AnimatePresence mode="popLayout"> measures each
 // card through a ref to animate it out when a cosplay is removed.
+/** "di 27 · do 29 okt": the days a cosplay is worn, with the month once at the end. */
+function daysLabel(events: CalendarEvent[]): string {
+  const dates = events.map((e) => parseEventDate(e.date));
+  if (dates.some((d) => !d)) return events.map((e) => formatDate(e.date)).join(" · ");
+  const days = dates as Date[];
+  return `${days.map((d) => `${dayShort(d)} ${d.getDate()}`).join(" · ")} ${monthShort(days[days.length - 1])}`;
+}
+
 export const CosplayCard = forwardRef<HTMLDivElement, CosplayCardProps>(function CosplayCard(
   { cosplay, events, users, onClick },
   ref,
@@ -80,16 +90,13 @@ export const CosplayCard = forwardRef<HTMLDivElement, CosplayCardProps>(function
             </span>
           </div>
 
-          {/* Days + photo count */}
-          <div className="mt-auto flex flex-wrap items-center gap-1.5">
-            {linkedEvents.map((e) => (
-              <span
-                key={e.id}
-                className="rounded-md border border-line px-1.5 font-mono text-[12px] uppercase tracking-[0.05em] text-ink-2"
-              >
-                {formatDate(e.date)}
+          {/* Days + photo count: plain text lines, not a pill per day */}
+          <div className="mt-auto flex flex-col gap-0.5">
+            {linkedEvents.length > 0 && (
+              <span className="font-mono text-[12px] uppercase tracking-[0.05em] text-ink-2">
+                {daysLabel(linkedEvents)}
               </span>
-            ))}
+            )}
             <span className="font-mono text-[12px] uppercase tracking-[0.05em] text-ink-3">
               {cosplay.inspo_images.length > 0
                 ? `${cosplay.inspo_images.length} foto${cosplay.inspo_images.length !== 1 ? "'s" : ""}`

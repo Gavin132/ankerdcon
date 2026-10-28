@@ -44,11 +44,12 @@ export function AdminImpersonatePage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
       <AdminPageHeader
+        eyebrow="Testen"
         title="Inloggen als gebruiker"
         subtitle="Bekijk en gebruik de app als een andere gebruiker — handig voor gasten zonder eigen account"
       />
 
-      <div className="flex items-start gap-2.5 rounded-xl border-1.5 border-amber-300 bg-amber-50 px-4 py-3 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+      <div className="flex items-start gap-2.5 notice-warn px-4 py-3 text-xs text-amber-800 dark:text-amber-300">
         <ShieldAlert size={15} className="shrink-0 mt-0.5" />
         <p>
           Alles wat je doet terwijl je bent ingelogd als iemand anders — RSVP&apos;s, ritten, betalingen — gebeurt écht
@@ -98,7 +99,7 @@ export function AdminImpersonatePage() {
               type="button"
               disabled={pendingId === user.id || user.is_active === false}
               onClick={() => handleImpersonate(user.id!, user.name)}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border-1.5 border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-ink-3 disabled:cursor-not-allowed disabled:opacity-40"
+              className="btn-secondary shrink-0 px-3 text-xs"
             >
               {pendingId === user.id ? (
                 <>

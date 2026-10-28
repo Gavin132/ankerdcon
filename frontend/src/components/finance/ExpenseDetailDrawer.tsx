@@ -20,13 +20,13 @@ function resolveUser(name: string, users: User[]) {
 }
 
 const STATUS_CONFIG = {
-  pending:   { label: "Te betalen",           pill: "bg-sunken text-ink-2" },
-  claimed:   { label: "Wacht op bevestiging", pill: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300" },
-  confirmed: { label: "Verrekend",            pill: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" },
+  pending:   { label: "Te betalen",           pill: "pill-bad" },
+  claimed:   { label: "Wacht op bevestiging", pill: "pill-warn" },
+  confirmed: { label: "Verrekend",            pill: "pill-ok" },
 } as const;
 
 const OWN_PART_CONFIG = { label: "Eigen deel", pill: "bg-sunken text-ink-2" };
-const IN_SETTLEMENT_CONFIG = { label: "In afrekening", pill: "bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300" };
+const IN_SETTLEMENT_CONFIG = { label: "In afrekening", pill: "bg-brand-soft text-brand-text" };
 
 function StatusIcon({ status }: { status: ExpenseShare["status"] }) {
   if (status === "confirmed") return <CheckCircle2 size={12} />;
@@ -163,7 +163,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
                           type="button"
                           onClick={() => handleClaim(share.id)}
                           disabled={isLoading}
-                          className="btn-primary ml-auto rounded-lg px-3 py-1 text-[12px] disabled:opacity-50"
+                          className="btn-primary ml-auto rounded-lg px-3 py-1 text-[12px]"
                         >
                           Ik heb betaald
                         </button>

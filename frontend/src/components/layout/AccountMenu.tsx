@@ -110,7 +110,7 @@ export function AccountMenu({ variant = "avatar" }: AccountMenuProps) {
       ) : (
         <button
           onClick={() => setOpen((v) => !v)}
-          className="flex rounded-full transition-opacity hover:opacity-80"
+          className="hit-area flex rounded-full transition-opacity hover:opacity-80"
           aria-label="Accountmenu"
           aria-expanded={open}
         >

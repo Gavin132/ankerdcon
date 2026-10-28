@@ -5,11 +5,9 @@ import { UserAvatar } from "../common/UserAvatar";
 import { TripSheet } from "./TripSheet";
 import { routes } from "../../config/routes";
 import { dayShort } from "../../utils/multiDay";
-import type { Trip, TripPhase } from "../../utils/trips";
+import { findUser } from "../../utils/people";
+import { tripPeople, type Trip, type TripPhase } from "../../utils/trips";
 import type { User } from "../../types";
-
-const findUser = (users: User[], name: string) =>
-  users.find((u) => u.name === name || u.discord_username === name || u.aliases?.includes(name));
 
 interface TripParticipantsProps {
   trip: Trip;
@@ -31,7 +29,7 @@ interface TripParticipantsProps {
  */
 export function TripParticipants({ trip, users, myNames, phase, onManage, children }: TripParticipantsProps) {
   const [open, setOpen] = useState(false);
-  const count = trip.participants.length;
+  const count = tripPeople(trip, users).length;
 
   if (count === 0) return <>{children}</>;
 
@@ -61,16 +59,17 @@ function ParticipantsSheet({
   phase,
   onManage,
 }: Omit<TripParticipantsProps, "children"> & { open: boolean; onClose: () => void }) {
-  const isMine = (name: string) => myNames.includes(name);
+  // Whichever name someone goes by counts: a member signed up as "Sam" on Friday and under their old name on
+  // Saturday is one row that says "Alle dagen", not two rows with a day each.
+  const isMine = (names: string[]) => names.some((n) => myNames.includes(n));
   const multiDay = trip.days.length > 1;
 
-  const people = [...trip.participants]
-    .map((name) => {
-      const user = findUser(users, name);
-      const days = trip.days.filter((d) => (d.ev.participants ?? []).includes(name));
-      return { name, user, days, display: user?.name ?? name };
+  const people = tripPeople(trip, users)
+    .map((person) => {
+      const days = trip.days.filter((d) => (d.ev.participants ?? []).some((n) => person.names.includes(n)));
+      return { key: person.names[0], names: person.names, user: person.user ?? findUser(users, person.name), days, display: person.name };
     })
-    .sort((a, b) => Number(isMine(b.name)) - Number(isMine(a.name)) || a.display.localeCompare(b.display, "nl"));
+    .sort((a, b) => Number(isMine(b.names)) - Number(isMine(a.names)) || a.display.localeCompare(b.display, "nl"));
 
   const daysText = (days: typeof people[number]["days"]) =>
     days.length === trip.days.length ? "Alle dagen" : days.map((d) => `${dayShort(d.date)} ${d.date.getDate()}`).join(" · ");
@@ -107,14 +106,14 @@ function ParticipantsSheet({
         </div>
       ) : (
         <ul className="-mx-2 divide-y divide-line">
-          {people.map(({ name, user, days, display }) => {
+          {people.map(({ key, names, user, days, display }) => {
             const row = (
               <>
                 <UserAvatar name={display} user={user} className="h-10 w-10 shrink-0 text-sm" />
                 <span className="min-w-0 flex-1 leading-tight">
                   <span className="flex items-center gap-2">
                     <span className="truncate text-[14.5px] font-semibold text-ink">{display}</span>
-                    {isMine(name) && (
+                    {isMine(names) && (
                       <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[12px] font-semibold text-brand-text">Jij</span>
                     )}
                   </span>
@@ -123,7 +122,7 @@ function ParticipantsSheet({
               </>
             );
             return (
-              <li key={name}>
+              <li key={key}>
                 {user?.id ? (
                   <Link
                     to={routes.profile.view(user.id)}

@@ -173,7 +173,7 @@ export function OnboardingFlow({ me, onFinish, doneLabel, onDone, overlay }: Onb
                   type="button"
                   disabled={!canSave || submitting}
                   onClick={() => handleFinish(false)}
-                  className="btn-primary h-11 flex-1 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                  className="btn-primary h-11 flex-1 text-sm"
                 >
                   {submitting ? (
                     <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />

@@ -15,7 +15,7 @@
   --sunken: 235 241 243;     /* #EBF1F3  wells, hover rows */
   --ink: 15 21 25;           /* #0F1519  text, outlines */
   --ink-2: 74 90 99;         /* #4A5A63  secondary text */
-  --ink-3: 116 131 138;      /* #74838A  muted text */
+  --ink-3: 96 111 119;       /* #606F77  muted text (4.6:1 on --sunken, 5.2:1 on white) */
   --line: 213 222 226;       /* #D5DEE2  borders */
   --outline: 15 21 25;       /* #0F1519  bold outline */
   --cyan: 87 178 249;        /* #57B2F9  the one brand fill (brand blue, +18 saturation) */
@@ -32,7 +32,7 @@
   --sunken: 16 22 26;        /* #10161A */
   --ink: 230 240 243;        /* #E6F0F3 */
   --ink-2: 160 176 184;      /* #A0B0B8 */
-  --ink-3: 110 126 134;      /* #6E7E86 */
+  --ink-3: 125 141 149;      /* #7D8D95  (5.1:1 on --surface) */
   --line: 36 48 57;          /* #243039 */
   --outline: 191 211 218;    /* #BFD3DA */
   --cyan-soft: 15 42 64;     /* #0F2A40 */
@@ -70,60 +70,60 @@
    touched; page-level spacing (6 and up) is left alone so density doesn't reflow
    whole pages, only the density of what's on them. Applied via
    store/theme.store.ts (`density-compact` class on <html>). */
-.density-compact .gap-1.5 { gap: 0.25rem; }
+.density-compact .gap-1\.5 { gap: 0.25rem; }
 .density-compact .gap-2 { gap: 0.375rem; }
-.density-compact .gap-2.5 { gap: 0.5rem; }
+.density-compact .gap-2\.5 { gap: 0.5rem; }
 .density-compact .gap-3 { gap: 0.5rem; }
-.density-compact .gap-3.5 { gap: 0.625rem; }
+.density-compact .gap-3\.5 { gap: 0.625rem; }
 .density-compact .gap-4 { gap: 0.75rem; }
 .density-compact .gap-5 { gap: 0.875rem; }
-.density-compact .gap-x-1.5 { column-gap: 0.25rem; }
+.density-compact .gap-x-1\.5 { column-gap: 0.25rem; }
 .density-compact .gap-x-2 { column-gap: 0.375rem; }
-.density-compact .gap-x-2.5 { column-gap: 0.5rem; }
+.density-compact .gap-x-2\.5 { column-gap: 0.5rem; }
 .density-compact .gap-x-3 { column-gap: 0.5rem; }
-.density-compact .gap-x-3.5 { column-gap: 0.625rem; }
+.density-compact .gap-x-3\.5 { column-gap: 0.625rem; }
 .density-compact .gap-x-4 { column-gap: 0.75rem; }
 .density-compact .gap-x-5 { column-gap: 0.875rem; }
-.density-compact .gap-y-1.5 { row-gap: 0.25rem; }
+.density-compact .gap-y-1\.5 { row-gap: 0.25rem; }
 .density-compact .gap-y-2 { row-gap: 0.375rem; }
-.density-compact .gap-y-2.5 { row-gap: 0.5rem; }
+.density-compact .gap-y-2\.5 { row-gap: 0.5rem; }
 .density-compact .gap-y-3 { row-gap: 0.5rem; }
-.density-compact .gap-y-3.5 { row-gap: 0.625rem; }
+.density-compact .gap-y-3\.5 { row-gap: 0.625rem; }
 .density-compact .gap-y-4 { row-gap: 0.75rem; }
 .density-compact .gap-y-5 { row-gap: 0.875rem; }
-.density-compact .space-y-1.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.25rem; }
+.density-compact .space-y-1\.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.25rem; }
 .density-compact .space-y-2 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.375rem; }
-.density-compact .space-y-2.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.5rem; }
+.density-compact .space-y-2\.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.5rem; }
 .density-compact .space-y-3 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.5rem; }
-.density-compact .space-y-3.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.625rem; }
+.density-compact .space-y-3\.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.625rem; }
 .density-compact .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.75rem; }
 .density-compact .space-y-5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.875rem; }
-.density-compact .space-x-1.5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.25rem; }
+.density-compact .space-x-1\.5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.25rem; }
 .density-compact .space-x-2 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.375rem; }
-.density-compact .space-x-2.5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.5rem; }
+.density-compact .space-x-2\.5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.5rem; }
 .density-compact .space-x-3 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.5rem; }
-.density-compact .space-x-3.5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.625rem; }
+.density-compact .space-x-3\.5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.625rem; }
 .density-compact .space-x-4 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.75rem; }
 .density-compact .space-x-5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.875rem; }
-.density-compact .p-1.5 { padding: 0.25rem; }
+.density-compact .p-1\.5 { padding: 0.25rem; }
 .density-compact .p-2 { padding: 0.375rem; }
-.density-compact .p-2.5 { padding: 0.5rem; }
+.density-compact .p-2\.5 { padding: 0.5rem; }
 .density-compact .p-3 { padding: 0.5rem; }
-.density-compact .p-3.5 { padding: 0.625rem; }
+.density-compact .p-3\.5 { padding: 0.625rem; }
 .density-compact .p-4 { padding: 0.75rem; }
 .density-compact .p-5 { padding: 0.875rem; }
-.density-compact .px-1.5 { padding-left: 0.25rem; padding-right: 0.25rem; }
+.density-compact .px-1\.5 { padding-left: 0.25rem; padding-right: 0.25rem; }
 .density-compact .px-2 { padding-left: 0.375rem; padding-right: 0.375rem; }
-.density-compact .px-2.5 { padding-left: 0.5rem; padding-right: 0.5rem; }
+.density-compact .px-2\.5 { padding-left: 0.5rem; padding-right: 0.5rem; }
 .density-compact .px-3 { padding-left: 0.5rem; padding-right: 0.5rem; }
-.density-compact .px-3.5 { padding-left: 0.625rem; padding-right: 0.625rem; }
+.density-compact .px-3\.5 { padding-left: 0.625rem; padding-right: 0.625rem; }
 .density-compact .px-4 { padding-left: 0.75rem; padding-right: 0.75rem; }
 .density-compact .px-5 { padding-left: 0.875rem; padding-right: 0.875rem; }
-.density-compact .py-1.5 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+.density-compact .py-1\.5 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
 .density-compact .py-2 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
-.density-compact .py-2.5 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.density-compact .py-2\.5 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
 .density-compact .py-3 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-.density-compact .py-3.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+.density-compact .py-3\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
 .density-compact .py-4 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
 .density-compact .py-5 { padding-top: 0.875rem; padding-bottom: 0.875rem; }
 
@@ -260,17 +260,96 @@
   /* A small control (an icon button) that is still easy to hit with a thumb: an invisible box around it
      grows its touch area to 44 px (never smaller than the control itself), without changing the layout.
      Not for a control that clips its own overflow: the box would be cut off with it. */
-  .hit-area {
+  .hit-area,
+  .chip,
+  .icon-btn {
     position: relative;
   }
 
-  .hit-area::after {
+  .hit-area::after,
+  .chip::after,
+  .icon-btn::after {
     content: "";
     position: absolute;
     top: min(0px, calc((100% - 44px) / 2));
     bottom: min(0px, calc((100% - 44px) / 2));
     left: min(0px, calc((100% - 44px) / 2));
     right: min(0px, calc((100% - 44px) / 2));
+  }
+
+  /* A data table that turns into a list of cards on a phone: no sideways scrolling to reach the edit and delete
+     buttons. Put it on the <table>, `cell-main` on the cell that names the row (it takes the first line) and
+     `cell-actions` on the cell with the buttons (pushed to the right). Cells with `hidden` stay hidden. */
+  @media (max-width: 639px) {
+    .stack-table,
+    .stack-table tbody {
+      display: block;
+      width: 100%;
+    }
+    .stack-table thead {
+      display: none;
+    }
+    .stack-table tbody tr {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 0.75rem;
+      padding: 0.75rem 1rem;
+    }
+    .stack-table tbody td:not(.hidden) {
+      display: block;
+      width: auto;
+      padding: 0;
+      border: 0;
+    }
+    .stack-table tbody td[colspan] {
+      flex: 1 1 100%;
+      padding: 2rem 0;
+    }
+    .stack-table .cell-main {
+      flex: 1 1 11rem;
+      min-width: 0;
+    }
+    .stack-table .cell-main p {
+      max-width: none;
+    }
+    .stack-table .cell-actions {
+      margin-left: auto;
+    }
+  }
+
+  /* Square icon-only button (back, close, edit, delete): 36 px to look at, 44 px to hit. */
+  .icon-btn {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink disabled:opacity-40;
+  }
+
+  /* Status pill. The meaning is the colour, one set everywhere: ok = done/fine, warn = waiting or needs you,
+     bad = you owe / went wrong, neutral = information. */
+  .pill {
+    @apply inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[12px] font-semibold;
+  }
+  .pill-ok { @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300; }
+  .pill-warn { @apply bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300; }
+  .pill-bad { @apply bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300; }
+  .pill-neutral { @apply bg-sunken text-ink-2; }
+
+  /* Notice box: a short message in a bordered block. warn = needs your attention, ok = all fine. */
+  .notice-warn { @apply rounded-xl border-1.5 border-amber-300 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10; }
+  .notice-ok { @apply rounded-xl border-1.5 border-emerald-200 bg-emerald-50 dark:border-emerald-400/30 dark:bg-emerald-500/10; }
+
+  /* Filter chip: pick one of a few. 36 px to look at, 44 px to hit (see .hit-area). */
+  .chip {
+    @apply inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border-1.5 px-3.5 py-1.5 text-xs font-semibold transition-colors;
+  }
+  .chip-on { @apply border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on; }
+  .chip-off { @apply border-line bg-surface text-ink-2 hover:border-ink-3; }
+
+  /* Label above a form field, and the message under it when it is wrong. */
+  .field-label {
+    @apply mb-1.5 block text-[12.5px] font-semibold text-ink-2;
+  }
+  .field-error {
+    @apply mt-1.5 text-xs text-rose-600 dark:text-rose-400;
   }
 
   /* Small uppercase mono label above a group ("Voor jou", "Deze week"). */
@@ -327,10 +406,18 @@
   /* The one bold call to action on a screen: brand blue, ink outline, flat.
      Nothing moves on hover; a light opacity dip on click is the only feedback. */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border-2 border-outline bg-brand font-semibold text-brand-on transition-opacity duration-75;
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border-2 border-outline bg-brand font-semibold text-brand-on transition-opacity duration-75;
   }
   .btn-primary:active:not(:disabled) {
     opacity: 0.9;
+  }
+  /* The quiet sibling: flat surface, hairline border (same as <Button variant="secondary">). */
+  .btn-secondary {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-xl border-1.5 border-line bg-surface font-semibold text-ink transition-colors duration-75 hover:border-ink-3 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  /* Disabled reads as disabled, not as a pale blue button: flat, grey, no outline. */
+  .btn-primary:disabled {
+    @apply cursor-not-allowed border-line bg-sunken text-ink-3 opacity-100;
   }
 }
 

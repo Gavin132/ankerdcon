@@ -43,7 +43,7 @@ export function ChangelogBanner() {
         animate={{ height: "auto", opacity: 1 }}
         exit={{ height: 0, opacity: 0 }}
         transition={{ duration: 0.25 }}
-        className="overflow-hidden border-b-1.5 border-outline bg-brand text-brand-on"
+        className="overflow-hidden border-b border-line bg-brand-soft text-brand-text"
       >
         {/* The whole row is the tap target (not just an inline "bekijk alles"
             link) — a long title otherwise pushes that link off past the edge
@@ -51,7 +51,7 @@ export function ChangelogBanner() {
         <Link
           to={routes.changelog}
           onClick={dismiss}
-          className="flex items-center gap-2.5 px-4 py-2.5 hover:bg-black/5 transition-colors md:px-8 lg:px-10"
+          className="flex items-center gap-2.5 px-4 py-2 hover:bg-brand/10 transition-colors md:px-8 lg:px-10"
         >
           <Sparkles size={15} className="shrink-0" />
           <p className="min-w-0 flex-1 text-xs font-semibold leading-snug truncate">
@@ -63,7 +63,7 @@ export function ChangelogBanner() {
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); dismiss(); }}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); dismiss(); } }}
             aria-label="Sluiten"
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md hover:bg-black/10 transition-colors"
+            className="hit-area -mr-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md hover:bg-brand/15 transition-colors"
           >
             <X size={14} />
           </span>

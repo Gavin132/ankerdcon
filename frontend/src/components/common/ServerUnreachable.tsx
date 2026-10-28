@@ -18,7 +18,7 @@ export function ServerUnreachable({ onRetry }: { onRetry: () => void }) {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl pill-warn">
           <WifiOff size={24} />
         </div>
         <h1 className="mt-4 font-display text-[36px] font-extrabold uppercase leading-[0.95] text-ink">

@@ -146,7 +146,7 @@ export function UpcomingEventsCarousel({
   }
 
   const arrowClass =
-    "flex h-8 w-8 items-center justify-center rounded-lg border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink disabled:opacity-40 disabled:hover:border-line transition-colors";
+    "hit-area flex h-8 w-8 items-center justify-center rounded-lg border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink disabled:opacity-40 disabled:hover:border-line transition-colors";
 
   return (
     <div>
@@ -155,7 +155,7 @@ export function UpcomingEventsCarousel({
           ref={scrollRef}
           onScroll={handleScroll}
           onPointerDown={() => setAutoAdvanceKey((k) => k + 1)}
-          className="flex overflow-x-auto snap-x snap-mandatory gap-3 scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex items-start overflow-x-auto snap-x snap-mandatory gap-3 scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {items.map((item) => (
             <div key={keyFor(item)} className="w-full shrink-0 snap-center">
@@ -173,17 +173,19 @@ export function UpcomingEventsCarousel({
       </div>
 
       <div className="mt-3 flex items-center gap-3">
-        <div className="flex flex-1 items-center gap-1.5">
+        <div className="-ml-[3px] flex flex-1 items-center">
           {items.map((item, i) => (
             <button
               key={keyFor(item)}
               type="button"
               onClick={() => scrollToIndexManually(i)}
               aria-label={`Ga naar evenement ${i + 1}`}
-              className={`h-1.5 rounded-full transition-all ${
+              className="flex h-10 items-center px-[3px]"
+            >
+              <span className={`block h-1.5 rounded-full transition-all ${
                 i === index ? "w-5 bg-ink" : "w-1.5 bg-line hover:bg-ink-3"
-              }`}
-            />
+              }`} />
+            </button>
           ))}
         </div>
         <button

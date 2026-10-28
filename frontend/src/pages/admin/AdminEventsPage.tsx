@@ -178,10 +178,10 @@ export function AdminEventsPage() {
         title="Evenementen"
         subtitle={`${filtered.length} ${showHistory ? "historische" : "aankomende"} items`}
         action={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => { setShowHistory((v) => !v); setPage(0); clearSelection(); }}
-              className={`flex items-center gap-2 rounded-xl border-1.5 px-4 py-2.5 text-sm font-semibold transition-colors ${
+              className={`flex min-h-[44px] items-center gap-2 rounded-xl border-1.5 px-4 py-2.5 text-sm font-semibold transition-colors ${
                 showHistory
                   ? "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
                   : "border-line bg-surface text-ink hover:border-ink-3"
@@ -192,7 +192,7 @@ export function AdminEventsPage() {
             </button>
             <button
               onClick={() => setDrawerId("new")}
-              className="btn-primary gap-2 px-4 py-2.5 text-sm"
+              className="btn-primary min-h-[44px] gap-2 px-4 py-2.5 text-sm"
             >
               <Plus size={16} />
               Nieuw evenement
@@ -206,11 +206,7 @@ export function AdminEventsPage() {
           <div className="flex gap-1.5 overflow-x-auto pb-1">
             <button
               onClick={() => { setGroupFilter("All"); setPage(0); }}
-              className={`shrink-0 rounded-full border-1.5 px-3.5 py-1.5 text-sm font-semibold transition-colors ${
-                groupFilter === "All"
-                  ? "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
-                  : "border-line bg-surface text-ink-2 hover:border-ink-3"
-              }`}
+              className={`chip ${groupFilter === "All" ? "chip-on" : "chip-off"}`}
             >
               Alle
             </button>
@@ -220,11 +216,7 @@ export function AdminEventsPage() {
                 <button
                   key={g.id}
                   onClick={() => { setGroupFilter(g.name); setPage(0); }}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full border-1.5 px-3.5 py-1.5 text-sm font-semibold transition-colors ${
-                    isActive
-                      ? "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
-                      : "border-line bg-surface text-ink-2 hover:border-ink-3"
-                  }`}
+                  className={`chip ${isActive ? "chip-on" : "chip-off"}`}
                 >
                   {g.name}
                 </button>
@@ -241,7 +233,7 @@ export function AdminEventsPage() {
 
       <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="stack-table w-full">
             <thead>
               <tr className="border-b-1.5 border-line">
                 <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
@@ -303,7 +295,7 @@ export function AdminEventsPage() {
                         className="cb"
                       />
                     </td>
-                    <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                    <td className="cell-main px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                       <div className="flex items-center gap-2 sm:gap-2.5">
                         <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink sm:h-7 sm:w-7">
                           <CalendarDays size={13} />
@@ -395,7 +387,7 @@ export function AdminEventsPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-2 sm:px-5 py-2.5 sm:py-3.5" onClick={(e) => e.stopPropagation()}>
+                    <td className="cell-actions px-2 sm:px-5 py-2.5 sm:py-3.5" onClick={(e) => e.stopPropagation()}>
                       <DeleteConfirmActions
                         id={ev.id}
                         confirmId={confirmDeleteId}
@@ -463,7 +455,7 @@ export function AdminEventsPage() {
               <button
                 onClick={() => { handleBulkSetGroup(pickedGroup || null); setPickedGroup(""); setBulkMode("idle"); }}
                 disabled={bulkIsPending}
-                className="btn-primary gap-1.5 px-3 py-1.5 text-sm disabled:opacity-50"
+                className="btn-primary min-h-[44px] gap-1.5 px-3 py-1.5 text-sm"
               >
                 <Check size={14} />
                 {bulkIsPending ? "Bezig…" : "Toepassen"}

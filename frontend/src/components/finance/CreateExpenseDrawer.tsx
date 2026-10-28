@@ -28,7 +28,7 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-const ERR = "mt-1.5 text-xs text-rose-600 dark:text-rose-400";
+const ERR = "field-error";
 
 const CURRENCIES = ["EUR", "USD", "GBP", "JPY"] as const;
 
@@ -40,7 +40,7 @@ const SPLIT_MODES: { id: SplitMode; label: string; icon: React.ReactNode }[] = [
   { id: "handmatig", label: "Handmatig", icon: <SlidersHorizontal size={13} /> },
 ];
 
-const SL = "mb-1.5 block text-[12.5px] font-semibold text-ink-2";
+const SL = "field-label";
 const SF = "space-y-3 rounded-xl border-1.5 border-line bg-surface p-4";
 const ST = "section-label";
 
@@ -437,7 +437,7 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
                       type="button"
                       onClick={addManualRow}
                       disabled={!manualName || !manualAmountStr}
-                      className="btn-primary w-12 shrink-0 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="btn-primary w-12 shrink-0 disabled:opacity-40"
                     >
                       <Plus size={15} />
                     </button>

@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Search, X, CalendarDays, Car, Utensils, Sparkles, Users, Zap, MapPin, BedDouble, Camera, Wallet } from "lucide-react";
 import { useCalendar } from "../../hooks/useCalendar";
@@ -210,7 +211,8 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
   const hasQuery = query.trim().length > 0;
   const hasResults = groups.length > 0;
 
-  return (
+  // In a portal: the header is a stacking context of its own, which would keep this under the tab bar.
+  return createPortal(
     <div className="fixed inset-0 z-[450] flex flex-col bg-paper" style={{ paddingTop: "env(safe-area-inset-top,0px)" }}>
       <div className="flex shrink-0 items-center gap-2 border-b-1.5 border-line px-4 py-3">
         <Search size={16} className="shrink-0 text-ink-3" />
@@ -225,14 +227,14 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
           spellCheck={false}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Zoek events, ritten, crew, of wat je wilt doen…"
+          placeholder="Zoek in de app…"
           className="min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-ink-3"
         />
         <button
           type="button"
           onClick={handleClose}
           aria-label="Zoeken sluiten"
-          className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+          className="icon-btn"
         >
           <X size={16} />
         </button>
@@ -278,6 +280,7 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
