@@ -157,7 +157,7 @@ export function buildFixtures(scenario: Scenario, role: Role): Fixtures {
     withSeats(ride({ id: "r-5", driver: "Sam", direction: "Outbound", departure_time: rideTime(start + 2, 17, 0), start_location: "Brussels Expo", end_location: "Lelystad Centrum", passengers: ["Alex", ME], total_seats: 4, linked_event_id: "d-hmia-3" })),
     withSeats(ride({ id: "r-6", driver: "Daan", direction: "Outbound", departure_time: rideTime(start + 2, 18, 30), start_location: "Brussels Expo", end_location: "Utrecht", passengers: [], total_seats: 3, linked_event_id: "d-hmia-3" })),
     withSeats(ride({
-      id: "r-7", driver: "", direction: "Restaurant", departure_time: rideTime(start, 18, 30), start_location: "Hotel Ibis Brussels Expo Atomium", end_location: "Ristorante Da Marco",
+      id: "r-7", driver: "", direction: "Restaurant", departure_time: rideTime(start, 18, 30), start_location: "Ristorante Da Marco, Rue Haute 40, Brussel", end_location: null,
       total_seats: 0, linked_meal_id: "m-dinner", linked_event_id: undefined,
       restaurant_drivers: [{ name: "Sam", seats: 4, passengers: ["Alex", "Noor", "Jelle"] }, { name: "Bram", seats: 3, passengers: [ME] }],
     })),
@@ -213,6 +213,7 @@ export function buildFixtures(scenario: Scenario, role: Role): Fixtures {
 
   const announcements: Announcement[] = [
     { id: "a-1", message: "Vrijdag verzamelen we om 07:15 bij het tankstation. Wie later komt rijdt zelf achter ons aan.", severity: "info", active: true, dismissible: true, notify_discord: false, created_at: ago(1), created_by: "Sam" },
+    { id: "a-2", message: "Let op: de ingang aan de zuidkant is dicht door werkzaamheden. Loop via het hoofdgebouw, dat is ongeveer tien minuten extra.", severity: "warning", active: true, dismissible: true, notify_discord: false, created_at: ago(1), created_by: "Sam" },
   ];
 
   const changelog: ChangelogEntry[] = [

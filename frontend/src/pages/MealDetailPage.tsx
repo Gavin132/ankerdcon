@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Car, ChevronRight, Pencil, UserCheck, UserMinus, UtensilsCrossed } from "lucide-react";
+import { Car, Pencil, UserCheck, UserMinus, UtensilsCrossed } from "lucide-react";
 import { useMeals, useRsvpMeal, useCancelRsvp } from "../hooks/useMeals";
 import { useCalendar } from "../hooks/useCalendar";
 import { useRides } from "../hooks/useRides";
 import { useUsers, useCurrentUser } from "../hooks/useUsers";
 import { useSmartBack } from "../hooks/useSmartBack";
+import { useIsViewer } from "../hooks/useIsViewer";
 import { toast } from "../store/toast.store";
 import { routes } from "../config/routes";
 import { DetailTopbar } from "../components/detail/DetailTopbar";
@@ -32,6 +33,7 @@ export function MealDetailPage() {
   const { data: rides = [] } = useRides();
   const { data: users = [] } = useUsers();
   const { data: me } = useCurrentUser();
+  const viewer = useIsViewer();
 
   const [rsvpOpen, setRsvpOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -171,19 +173,20 @@ export function MealDetailPage() {
             {restaurantRide ? (
               <RestaurantDetailActions ride={restaurantRide} userNames={userNames} users={users} linkedMeal={meal} />
             ) : (
-              mealCategory(meal).has_transport && meal.transport_needed && linkedEvent && (
-                <button
-                  type="button"
-                  onClick={() => setQuickRideOpen(true)}
-                  className="flex w-full items-center gap-3 rounded-[12px] border-1.5 border-dashed border-rose-400 bg-rose-50 px-4 py-5 text-left text-sm font-semibold text-rose-700 transition-colors hover:border-rose-500 hover:bg-rose-100 active:scale-[0.99] dark:border-rose-400/60 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/15"
-                >
-                  <Car size={18} className="shrink-0" />
-                  <span className="flex-1">
-                    Nog geen rit georganiseerd
-                    <span className="block font-normal text-rose-600 dark:text-rose-300/80">Tik om een auto aan te bieden</span>
+              // A read-only member cannot offer a ride, so there is nothing to ask of them.
+              mealCategory(meal).has_transport && meal.transport_needed && linkedEvent && !viewer && (
+                <div className="card-surface flex items-center gap-3 p-4">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                    <Car size={18} />
                   </span>
-                  <ChevronRight size={16} className="shrink-0" />
-                </button>
+                  <span className="min-w-0 flex-1 leading-tight">
+                    <span className="block text-sm font-semibold text-ink">Nog geen rit</span>
+                    <span className="block text-xs text-ink-3">Bied een rit aan</span>
+                  </span>
+                  <button type="button" onClick={() => setQuickRideOpen(true)} className="btn-secondary px-4 text-sm">
+                    Ik rijd
+                  </button>
+                </div>
               )
             )}
 
@@ -214,15 +217,7 @@ export function MealDetailPage() {
         onClose={() => { setRsvpOpen(false); setRsvpNames([]); }}
         title={`Aanmelden — ${meal.meal_name}`}
         description={meal.location || undefined}
-      >
-        <div className="space-y-3">
-          <NamePicker
-            multiple
-            options={userNames.filter((n) => !participants.includes(n))}
-            value={rsvpNames}
-            onChange={setRsvpNames}
-            color="green"
-          />
+        footer={
           <Button
             onClick={onRsvp}
             loading={rsvpMutation.isPending}
@@ -236,7 +231,15 @@ export function MealDetailPage() {
                 ? `${rsvpNames[0]} aanmelden`
                 : `${rsvpNames.length} personen aanmelden`}
           </Button>
-        </div>
+        }
+      >
+        <NamePicker
+          multiple
+          options={userNames.filter((n) => !participants.includes(n))}
+          value={rsvpNames}
+          onChange={setRsvpNames}
+          color="sky"
+        />
       </Modal>
 
       {/* Afmelden modal */}
@@ -245,15 +248,7 @@ export function MealDetailPage() {
         onClose={() => { setCancelOpen(false); setCancelNames([]); }}
         title="Aanmelding annuleren"
         description={meal.meal_name}
-      >
-        <div className="space-y-3">
-          <NamePicker
-            multiple
-            options={participants}
-            value={cancelNames}
-            onChange={setCancelNames}
-            color="rose"
-          />
+        footer={
           <Button
             variant="danger"
             onClick={onCancel}
@@ -268,7 +263,15 @@ export function MealDetailPage() {
                 ? `${cancelNames[0]} afmelden`
                 : `${cancelNames.length} personen afmelden`}
           </Button>
-        </div>
+        }
+      >
+        <NamePicker
+          multiple
+          options={participants}
+          value={cancelNames}
+          onChange={setCancelNames}
+          color="rose"
+        />
       </Modal>
 
       {canEdit && (

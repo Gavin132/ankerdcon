@@ -1,19 +1,18 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Clock, Timer, AlertCircle, CalendarDays, Users, Utensils, Plus, UserMinus } from "lucide-react";
+import { Clock, Timer, AlertCircle, CalendarDays, MapPin, Users, Utensils, Plus, UserMinus } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
+import { HeroActions, HeroChip, HeroPrimaryButton, HeroSecondaryButton, heroChipClass } from "../common/HeroActions";
 import { UserProfilePopup, type AnchorRect } from "../common/UserProfilePopup";
 import { useCalendar } from "../../hooks/useCalendar";
 import { useAuthStore } from "../../store/auth.store";
+import { useIsViewer } from "../../hooks/useIsViewer";
+import { groupPeople } from "../../utils/people";
 import { getRideStatus, formatCountdown, rideLocationLabel, rideVehicleIcon } from "../../utils/rides";
 import { routes } from "../../config/routes";
 import type { CalendarEvent, Meal, Ride, User } from "../../types";
 
 const CLOSED_RECT: AnchorRect = { top: 0, left: 0, right: 0, height: 0 };
-
-/** White-ish mono chip on the ink hero. */
-const CHIP =
-  "inline-flex items-center gap-1.5 rounded-md border border-white/25 bg-white/10 px-2 py-[3px] font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-hero-ink";
 
 interface RideHeroProps {
   ride: Ride;
@@ -30,10 +29,13 @@ interface RideHeroProps {
 export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, onLeaveClick }: RideHeroProps) {
   const { data: calendarEvents } = useCalendar();
   const currentUser = useAuthStore((s) => s.currentUser);
+  const viewer = useIsViewer();
   const [popupUser, setPopupUser] = useState<User | null>(null);
   const [popupAnchorRect, setPopupAnchorRect] = useState<AnchorRect>(CLOSED_RECT);
   const { status, minutesUntil } = getRideStatus(ride.departure_time);
   const isPT = ride.is_public_transport;
+  // One entry per person, not per name they are on the list under (utils/people.ts).
+  const passengers = groupPeople(ride.passengers, users).map((person) => person.name);
   const isRecent = status === "recent";
   const isPast = status === "past";
 
@@ -47,6 +49,9 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
     ? linkedMeal?.location || "Onbekende locatie"
     : rideLocationLabel(ride.end_location, linkedEvent, isInbound ? "Con locatie" : "Bestemming");
   const toIsPlaceholder = isRestaurant ? !linkedMeal?.location : !ride.end_location;
+  // A restaurant ride has no route: it is "the way to the meal". The meal is the title, its place a small line under it.
+  const restaurantTitle = linkedMeal?.meal_name ?? ride.start_location;
+  const restaurantPlace = linkedMeal?.location || ride.start_location;
 
   const { Icon: TransportIcon, small: smallVehicle } = rideVehicleIcon(ride.driver, users, ride.total_seats, isPT);
 
@@ -65,8 +70,9 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
     setPopupUser(user);
   }
 
-  const canAct = status !== "recent" && status !== "past";
-  const showSignup = !isRestaurant && (onClaimClick || onLeaveClick);
+  // A viewer (read-only member) sees who is in the car, but gets no buttons.
+  const canAct = status !== "recent" && status !== "past" && !viewer;
+  const showSignup = !isRestaurant && (onClaimClick || onLeaveClick) && (ride.passengers.length > 0 || canAct);
 
   return (
     <section
@@ -85,76 +91,76 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
         {/* Chips row */}
         <div className="mb-4 flex flex-wrap items-center gap-1.5">
           {linkedMeal && (
-            <Link to={routes.meal.view(linkedMeal.id)} className={`${CHIP} transition-colors hover:bg-white/20`}>
+            <Link to={routes.meal.view(linkedMeal.id)} className={`${heroChipClass()} transition-colors hover:bg-white/20`}>
               <Utensils size={11} />
               {linkedMeal.meal_name}
             </Link>
           )}
           {linkedEvent && !linkedMeal && (
-            <Link to={routes.event.view(linkedEvent.id)} className={`${CHIP} transition-colors hover:bg-white/20`}>
+            <Link to={routes.event.view(linkedEvent.id)} className={`${heroChipClass()} transition-colors hover:bg-white/20`}>
               <CalendarDays size={11} />
               {linkedEvent.event_name}
             </Link>
           )}
-          <span className={CHIP}>
+          <HeroChip>
             <TransportIcon size={smallVehicle ? 9 : 11} />
             {isPT ? "Openbaar vervoer" : ride.direction === "Inbound" ? "Heen" : ride.direction === "Outbound" ? "Terug" : "Restaurant"}
-          </span>
+          </HeroChip>
           {!isPT && !isRecent && !isPast && ride.direction !== "Restaurant" && (
-            <span
-              className={
-                ride.is_full
-                  ? "inline-flex items-center gap-1.5 rounded-md border border-rose-300/40 bg-rose-500/20 px-2 py-[3px] font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-rose-200"
-                  : CHIP
-              }
-            >
+            <HeroChip tone={ride.is_full ? "bad" : "neutral"}>
               <Users size={11} />
               {ride.is_full
                 ? "Vol"
                 : `${ride.seats_left} ${ride.seats_left === 1 ? "plek" : "plekken"} vrij`}
-            </span>
+            </HeroChip>
           )}
         </div>
 
-        {/* Route: from (small) → to (title) */}
-        <div className="grid grid-cols-[12px_minmax(0,1fr)] gap-x-3">
-          <i aria-hidden className="mt-[5px] block h-[11px] w-[11px] rounded-full border-2 border-hero-ink" />
+        {isRestaurant ? (
           <div className="min-w-0">
-            <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-white/55">Van</p>
-            <p className="truncate text-[15px] font-semibold text-white/85">{fromLabel}</p>
-          </div>
-          <i aria-hidden className="ml-[4.5px] my-1 block h-4 w-0.5 bg-white/25" />
-          <span aria-hidden />
-          <i aria-hidden className="mt-[5px] block h-[11px] w-[11px] rounded-full border-2 border-hero-ink bg-hero-ink" />
-          <div className="min-w-0">
-            <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-white/55">Naar</p>
-            <h1
-              className={`break-words font-display font-extrabold uppercase leading-[0.95] tracking-[0.005em] ${
-                toIsPlaceholder ? "text-[26px] text-white/55 sm:text-[30px]" : "text-[34px] text-hero-ink sm:text-[42px]"
-              }`}
-            >
-              {toLabel}
+            <h1 className="break-words font-display text-[34px] font-extrabold uppercase leading-[0.95] tracking-[0.005em] text-hero-ink sm:text-[42px]">
+              {restaurantTitle}
             </h1>
+            {restaurantPlace !== restaurantTitle && (
+              <p className="mt-2 flex items-start gap-1.5 text-sm leading-snug text-white/65">
+                <MapPin size={14} className="mt-[3px] shrink-0" />
+                {restaurantPlace}
+              </p>
+            )}
           </div>
-        </div>
+        ) : (
+          // Route: from (small) → to (title)
+          <div className="grid grid-cols-[12px_minmax(0,1fr)] gap-x-3">
+            <i aria-hidden className="mt-[5px] block h-[11px] w-[11px] rounded-full border-2 border-hero-ink" />
+            <div className="min-w-0">
+              <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-white/55">Van</p>
+              <p className="truncate text-[15px] font-semibold text-white/85">{fromLabel}</p>
+            </div>
+            <i aria-hidden className="ml-[4.5px] my-1 block h-4 w-0.5 bg-white/25" />
+            <span aria-hidden />
+            <i aria-hidden className="mt-[5px] block h-[11px] w-[11px] rounded-full border-2 border-hero-ink bg-hero-ink" />
+            <div className="min-w-0">
+              <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-white/55">Naar</p>
+              <h1
+                className={`break-words font-display font-extrabold uppercase leading-[0.95] tracking-[0.005em] ${
+                  toIsPlaceholder ? "text-[26px] text-white/55 sm:text-[30px]" : "text-[34px] text-hero-ink sm:text-[42px]"
+                }`}
+              >
+                {toLabel}
+              </h1>
+            </div>
+          </div>
+        )}
 
         {/* Countdown */}
         {(status === "urgent" || status === "soon" || status === "recent") && (
           <div className="mt-4 flex flex-wrap gap-1.5">
-            <span
-              className={
-                status === "urgent"
-                  ? "inline-flex items-center gap-1.5 rounded-md border border-rose-300/40 bg-rose-500/20 px-2 py-[3px] font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-rose-200"
-                  : status === "soon"
-                    ? "inline-flex items-center gap-1.5 rounded-md border border-amber-300/40 bg-amber-400/15 px-2 py-[3px] font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-amber-200"
-                    : CHIP
-              }
-            >
+            <HeroChip tone={status === "urgent" ? "bad" : status === "soon" ? "warn" : "neutral"}>
               {status === "recent" ? <Clock size={11} /> : <Timer size={11} />}
               {status === "urgent" && `Vertrekt over ${formatCountdown(minutesUntil)}!`}
               {status === "soon" && `Vertrekt over ${formatCountdown(minutesUntil)}`}
               {status === "recent" && "Vertrokken"}
-            </span>
+            </HeroChip>
           </div>
         )}
 
@@ -181,7 +187,7 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
             {ride.passengers.length > 0 && (
               <div className="flex items-center gap-3">
                 <div className="flex -space-x-2">
-                  {ride.passengers.slice(0, 8).map((p) => {
+                  {passengers.slice(0, 8).map((p) => {
                     const u = resolveUser(p);
                     return u ? (
                       <button key={p} type="button" onClick={(e) => openPopup(u, e)} className="rounded-full" aria-label={u.name}>
@@ -201,32 +207,24 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
                   })}
                 </div>
                 <p className="text-sm text-white/65">
-                  <span className="font-mono font-semibold tabular-nums text-hero-ink">{ride.passengers.length}</span>{" "}
-                  {ride.passengers.length === 1 ? "meerijder" : "meerijders"}
+                  <span className="font-mono font-semibold tabular-nums text-hero-ink">{passengers.length}</span>{" "}
+                  {passengers.length === 1 ? "meerijder" : "meerijders"}
                 </p>
               </div>
             )}
             {canAct && (
-              <div className="ml-auto flex items-center gap-2">
+              <HeroActions>
                 {onLeaveClick && ride.passengers.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={onLeaveClick}
-                    className="flex items-center gap-1.5 rounded-xl border-1.5 border-white/25 px-3 py-2 text-xs font-semibold text-hero-ink transition-colors hover:border-white/50"
-                  >
-                    <UserMinus size={13} /> Uitstappen
-                  </button>
+                  <HeroSecondaryButton onClick={onLeaveClick}>
+                    <UserMinus size={14} /> Uitstappen
+                  </HeroSecondaryButton>
                 )}
                 {onClaimClick && !ride.is_full && (
-                  <button
-                    type="button"
-                    onClick={onClaimClick}
-                    className="btn-primary px-3.5 py-2 text-xs"
-                  >
-                    <Plus size={13} /> Stap in
-                  </button>
+                  <HeroPrimaryButton onClick={onClaimClick}>
+                    <Plus size={14} /> Stap in
+                  </HeroPrimaryButton>
                 )}
-              </div>
+              </HeroActions>
             )}
           </div>
         )}

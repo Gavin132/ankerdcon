@@ -7,6 +7,7 @@ import { useRsvpMeal } from "../../hooks/useMeals";
 import { useCreateRide, useAddRestaurantDriver, useClaimSeat } from "../../hooks/useRides";
 import { toast } from "../../store/toast.store";
 import { splitDateTime, toDateTimeLocal } from "../../utils/date";
+import { getNow } from "../../store/time.store";
 import type { CalendarEvent, Meal, Ride } from "../../types";
 
 interface RestaurantQuickDriverModalProps {
@@ -41,7 +42,7 @@ export function RestaurantQuickDriverModal({ open, onClose, event, meal, existin
     if (!open) return;
     setSeats(5);
     const fallback = new Date(meal.time.replace(" ", "T"));
-    setDepartureTime(toDateTimeLocal(isNaN(fallback.getTime()) ? new Date() : fallback));
+    setDepartureTime(toDateTimeLocal(isNaN(fallback.getTime()) ? getNow() : fallback));
   }, [open, meal.time]);
 
   const alreadyDriving = !!existingRide?.restaurant_drivers?.some((d) => d.name === driver);

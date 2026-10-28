@@ -20,7 +20,7 @@ import { toast } from "../../store/toast.store";
 import { getRideStatus } from "../../utils/rides";
 import { planDirection } from "../../utils/carBalance";
 import { toDateKey, todayKey, parseEventDate, splitDateTime } from "../../utils/date";
-import { useTimeStore } from "../../store/time.store";
+import { getNow, useTimeStore } from "../../store/time.store";
 import { isTripOver, tripGaps, tripRides } from "../../utils/trips";
 import { defaultTransportView, driversMissing } from "../../utils/transportView";
 import { defaultRideEnds } from "../../utils/rideLocations";
@@ -274,7 +274,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
       end_location: direction === "Restaurant" ? defaultMeal?.location ?? "" : ends.end,
       parking_info: defaultDay?.parking_info ?? "",
       departure_time: direction === "Restaurant"
-        ? `${toDateKey(parseEventDate(defaultDay?.date ?? "") ?? new Date())}T${defaultMeal ? splitDateTime(defaultMeal.time)[1] : "18:00"}`
+        ? `${toDateKey(parseEventDate(defaultDay?.date ?? "") ?? getNow())}T${defaultMeal ? splitDateTime(defaultMeal.time)[1] : "18:00"}`
         : undefined,
     });
     setView("form");

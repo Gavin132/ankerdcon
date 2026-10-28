@@ -1,5 +1,6 @@
 import { ParkingSquare, Leaf, StickyNote, Bus, MapPin, ExternalLink, Navigation } from "lucide-react";
 import { buildEmbedUrl, buildMapsOpenUrl } from "../../utils/maps";
+import { safeHref } from "../../utils/validation";
 import { mealCategory } from "../../utils/mealCategory";
 import type { Meal } from "../../types";
 
@@ -30,9 +31,11 @@ export function MealPractical({ meal }: MealPracticalProps) {
 
   const hasLocation = !!(meal.location?.trim());
   const embedUrl = hasLocation ? buildEmbedUrl(meal.location) : null;
-  const mapsUrl = hasLocation ? buildMapsOpenUrl("", meal.location) : null;
+  // The exact Google Maps link the organiser pasted wins over a search for the address.
+  const customUrl = safeHref(meal.maps_url);
+  const mapsUrl = hasLocation || customUrl ? buildMapsOpenUrl(customUrl ?? "", meal.location) : null;
 
-  if (!hasPractical && !hasLocation) return null;
+  if (!hasPractical && !hasLocation && !customUrl) return null;
 
   return (
     <div className="space-y-4">
@@ -72,6 +75,22 @@ export function MealPractical({ meal }: MealPracticalProps) {
             referrerPolicy="no-referrer-when-downgrade"
             loading="lazy"
           />
+        </div>
+      )}
+
+      {/* A link but no address: no map to embed, only the way there. */}
+      {!hasLocation && mapsUrl && (
+        <div className="card-surface flex items-center justify-between gap-3 px-4 py-3">
+          <p className="section-label">Locatie</p>
+          <a
+            href={mapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-secondary px-3.5 text-sm"
+          >
+            <Navigation size={14} />
+            Route
+          </a>
         </div>
       )}
 

@@ -89,7 +89,7 @@ export function RideDetailPage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: ride ? (isRestaurant ? `Restaurant · ${ride.start_location}` : `${ride.direction} · ${ride.driver}`) : undefined,
+          title: ride ? (isRestaurant ? `Rit naar ${linkedMeal?.meal_name ?? "restaurant"}` : `${ride.direction} · ${ride.driver}`) : undefined,
           url,
         });
       } catch {
@@ -133,7 +133,7 @@ export function RideDetailPage() {
   return (
     <div className="min-h-dvh bg-paper">
       <DetailTopbar
-        title={isRestaurant ? `Restaurant · ${ride.start_location}` : `${ride.direction === "Inbound" ? "Heen" : "Terug"} · ${ride.driver}`}
+        title={isRestaurant ? `Rit naar ${linkedMeal?.meal_name ?? "restaurant"}` : `${ride.direction === "Inbound" ? "Heen" : "Terug"} · ${ride.driver}`}
         onBack={goBack}
         onShare={onShare}
       />
@@ -162,17 +162,8 @@ export function RideDetailPage() {
             open={claimOpen}
             onClose={() => { setClaimOpen(false); setClaimNames([]); }}
             title="Stap in"
-            description={`${ride.start_location} → ${ride.end_location || "Bestemming"}${isPT ? "" : ` · ${ride.seats_left} ${ride.seats_left === 1 ? "plek" : "plekken"} vrij`}`}
-          >
-            <div className="space-y-3">
-              <NamePicker
-                multiple
-                options={availableToJoin}
-                value={claimNames}
-                onChange={setClaimNames}
-                maxSelect={isPT ? undefined : ride.seats_left}
-                color="sky"
-              />
+            description={isPT ? undefined : `${ride.seats_left} ${ride.seats_left === 1 ? "plek" : "plekken"} vrij`}
+            footer={
               <Button
                 onClick={handleClaim}
                 loading={claimMutation.isPending}
@@ -186,7 +177,16 @@ export function RideDetailPage() {
                     ? `${claimNames[0]} stapt in`
                     : `${claimNames.length} personen stappen in`}
               </Button>
-            </div>
+            }
+          >
+            <NamePicker
+              multiple
+              options={availableToJoin}
+              value={claimNames}
+              onChange={setClaimNames}
+              maxSelect={isPT ? undefined : ride.seats_left}
+              color="sky"
+            />
           </Modal>
 
           {/* Uitstappen modal */}
@@ -194,16 +194,8 @@ export function RideDetailPage() {
             open={leaveOpen}
             onClose={() => { setLeaveOpen(false); setLeaveNames([]); }}
             title="Uitstappen"
-            description="Wie stappen er uit?"
-          >
-            <div className="space-y-3">
-              <NamePicker
-                multiple
-                options={ride.passengers}
-                value={leaveNames}
-                onChange={setLeaveNames}
-                color="rose"
-              />
+            description="Wie stapt er uit?"
+            footer={
               <Button
                 onClick={handleLeave}
                 variant="danger"
@@ -217,7 +209,15 @@ export function RideDetailPage() {
                     ? `${leaveNames[0]} uitstappen`
                     : `${leaveNames.length} personen uitstappen`}
               </Button>
-            </div>
+            }
+          >
+            <NamePicker
+              multiple
+              options={ride.passengers}
+              value={leaveNames}
+              onChange={setLeaveNames}
+              color="rose"
+            />
           </Modal>
         </>
       )}
