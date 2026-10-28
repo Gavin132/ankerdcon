@@ -6,7 +6,56 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- **A restaurant ride named the restaurant twice.** Its page said "Van: <restaurant>" and "Naar: <restaurant>" and
+  put the full address in the big title. It now shows the meal's name as the title, the address under it, and the
+  top bar says "Rit naar <meal>".
+- **Betalingen overflowed on a phone.** The rows of an expanded expense ran past the edge of the screen; they are two
+  lines now (who and how much, then the status). The filter is the four status buttons plus one list of expenses
+  instead of a button per expense.
+- **Deleting a day of an event had no question.** It also took the sign-ups and rides of that day with it. It now asks
+  first, and taking someone off a day asks too.
+- **The row checkboxes in the admin tables were 16 px to hit** on a phone; they are 44 px now.
+- **The admin "Admin-rechten" switch did not count as a change**, so closing the sheet after only toggling it gave no
+  warning about unsaved changes.
+- **Counts of people used the number of names.** Someone signed up under two names (a rename or a Discord username)
+  counted twice in "N mee" on the day tiles, the meal and ride sign-ups and the plan of a trip. They count once now.
+- **A long description of an event was cut off** with no way to read it; "Meer" opens the rest.
+- **The Google Maps link of an activity was saved but never used.** The Route button now opens it, also for an
+  activity without an address.
+- **A read-only member was offered "Nog geen rit… Tik om een auto aan te bieden"** on an activity and could press
+  "Uitstappen" on a ride; both are left out for them now.
+- **The Discord hint pointed at the profile** ("koppel Discord via je profiel"). Linking Discord is in Instellingen.
+- **Time travel was ignored in the admin dashboard greeting, the events list (upcoming or history), the changelog's
+  default date and the default time of a restaurant ride.** They follow the app's clock now.
+- **The time-travel page described a floating button that is no longer there.** It is called "Tijdreis" and talks about
+  the clock in the bar.
+- **The changelog page of the admin panel printed the date as 2026-10-22.**
+
 ### Changed
+
+- **Announcement bar:** a warning is amber with dark text (it was white on amber, hard to read), an info message is a
+  quiet strip instead of a near-black bar, a long message shows two lines instead of one and has an arrow to open it,
+  and the close button no longer sits inside the button that opens the message. On a phone with a notch the text no
+  longer starts under it.
+- **"Nieuwe versie beschikbaar"** is a strip at the top of the screen (with "Herladen") instead of a bar floating
+  over the tab bar with a bouncy entrance.
+- **Admin, selecting rows:** "N geselecteerd" with Deactiveren / Verwijderen is a block above the table, not a bar
+  floating over the last rows and the page buttons. Deleting asks in a dialog.
+- **Admin, deleting one row** asks "Verwijderen? Annuleren Verwijderen" with big buttons; the red button is red
+  everywhere (and "Sluiten zonder opslaan" is no longer the blue one).
+- **Admin top bar:** the page name is no longer written twice (top bar and title); the bar says "Admin".
+- **Admin tables on a phone:** a row's name takes what is left of the line and its buttons stay where they are, so
+  rows no longer wrap differently depending on how long a name is.
+- **Profile:** "Opslaan" is in the top bar, grey while nothing has changed and blue when there is something to save;
+  a line under the head says that the photo and banner are saved right away.
+- **Rides and activities:** the buttons in the dark header (Afmelden, Uitstappen, Aanmelden, Stap in) are the same
+  height on both pages; the main button of the Aanmelden, Afmelden, Stap in and Uitstappen sheets sits at the bottom
+  of the sheet; "Nog geen rit" is a calm row with an "Ik rijd" button instead of a red dashed button.
+- **The car you ride in** is a soft tint with a bar on the left, in your accent colour, instead of a solid blue block.
+- Prices are always written "€ 37,50" and file sizes "3,2 MB".
+
 
 - **Hub:** "Ticket opgeslagen" and "Locatie pingen" are two rows of one card instead of two cards, and the row of
   event cards is as tall as the card you are looking at (no empty gap above the dots when a shorter card is shown).

@@ -16,6 +16,10 @@ const click = (matcher) => async (page) => {
 const byLabel = (re) => (page) => page.getByRole("button", { name: re });
 const byText = (re) => (page) => page.locator("button, a").filter({ hasText: re });
 
+const checkbox = (re) => (page) => page.getByRole("checkbox", { name: re });
+/** Several steps one after the other: each one is a `click(...)` or any async (page) => {}. */
+const then = (...steps) => async (page) => { for (const step of steps) await step(page); };
+
 const TRIP = "/trips/trip-hmia";
 
 export const screens = [
@@ -47,9 +51,14 @@ export const screens = [
   // ── Detail pages ───────────────────────────────────────────────────────────
   { name: "meal", path: "/meals/m-dinner" },
   { name: "meal-long-title", path: "/meals/m-escape" },
+  { name: "meal-viewer", path: "/meals/m-escape", role: "viewer" },
+  { name: "meal-rsvp-sheet", path: "/meals/m-dinner", steps: click(byText(/Aanmelden/)) },
   { name: "ride", path: "/rides/r-1" },
   { name: "ride-restaurant", path: "/rides/r-7" },
+  { name: "ride-viewer", path: "/rides/r-1", role: "viewer" },
+  { name: "ride-claim-sheet", path: "/rides/r-1", steps: click(byText(/Stap in/)) },
   { name: "profile-me", path: "/profile/u-gavin" },
+  { name: "profile-me-dirty", path: "/profile/u-gavin", steps: async (page) => { await page.locator("textarea").first().fill("Nieuwe tekst"); await page.waitForTimeout(400); } },
   { name: "profile-other", path: "/profile/u-sam" },
   { name: "profile-long-name", path: "/profile/u-long" },
 
@@ -72,15 +81,21 @@ export const screens = [
   { name: "admin-dashboard", path: "/admin", role: "admin" },
   { name: "admin-users", path: "/admin/users", role: "admin" },
   { name: "admin-users-add", path: "/admin/users", role: "admin", steps: click(byText(/nieuwe gebruiker/i)) },
+  { name: "admin-users-selected", path: "/admin/users", role: "admin", steps: click(checkbox(/Selecteer /)) },
+  { name: "admin-users-bulk-delete", path: "/admin/users", role: "admin", steps: then(click(checkbox(/Selecteer /)), click(byText(/^Verwijderen$/))) },
+  { name: "admin-users-edit", path: "/admin/users", role: "admin", steps: click(byLabel(/^Bewerken$/)) },
   { name: "admin-whitelist", path: "/admin/whitelist", role: "admin" },
   { name: "admin-rides", path: "/admin/rides", role: "admin" },
   { name: "admin-meals", path: "/admin/meals", role: "admin" },
   { name: "admin-meal-categories", path: "/admin/meal-categories", role: "admin" },
   { name: "admin-events", path: "/admin/events", role: "admin" },
   { name: "admin-events-edit", path: "/admin/events", role: "admin", steps: click((p) => p.locator("button[title=Bewerken]")) },
+  { name: "admin-events-delete-day", path: "/admin/events", role: "admin", steps: then(click((p) => p.locator("button[title=Bewerken]")), click(byLabel(/^Dag .* verwijderen$/))) },
   { name: "admin-event-groups", path: "/admin/event-groups", role: "admin" },
   { name: "admin-badges", path: "/admin/badges", role: "admin" },
   { name: "admin-betalingen", path: "/admin/betalingen", role: "admin" },
+  { name: "admin-betalingen-open", path: "/admin/betalingen", role: "admin", steps: click(byText(/Hotel, 2 nachten/)) },
+  { name: "admin-betalingen-person-open", path: "/admin/betalingen", role: "admin", steps: click(byText(/66,40/)) },
   { name: "admin-announcements", path: "/admin/announcements", role: "admin" },
   { name: "admin-changelog", path: "/admin/changelog", role: "admin" },
   { name: "admin-impersonate", path: "/admin/impersonate", role: "admin" },
