@@ -1,6 +1,4 @@
-// Flat fills for people without their own colour or Discord avatar. Callers
-// may still add `bg-gradient-to-br`; without gradient stops that draws nothing,
-// so the fill shows.
+// Flat fills (`bg-avatar-1` .. `bg-avatar-6`) for people without their own colour or Discord avatar.
 const AVATAR_COLORS = ["bg-avatar-1", "bg-avatar-2", "bg-avatar-3", "bg-avatar-4", "bg-avatar-5", "bg-avatar-6"];
 
 /** The width in CSS pixels a Tailwind `h-N` / `h-[Npx]` class asks for (4 px per step), for sizing the file to it. */

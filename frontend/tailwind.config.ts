@@ -113,8 +113,8 @@ const config: Config = {
         "3": "3px",
       },
       // Flat: no soft card shadows, no hard offset button shadows either.
-      // Only floating layers (menus, drawers, modals) keep a quiet shadow so
-      // they separate from the page.
+      // Only floating layers (menus, popovers) keep a quiet shadow so they separate
+      // from the page; sm, md and the plain `shadow` are switched off so a stray one draws nothing.
       boxShadow: {
         sm: "none",
         DEFAULT: "none",
@@ -122,12 +122,6 @@ const config: Config = {
         lg: "0 8px 24px rgb(15 21 25 / 0.10)",
         xl: "0 12px 32px rgb(15 21 25 / 0.14)",
         "2xl": "0 16px 48px rgb(15 21 25 / 0.18)",
-        card: "none",
-        "card-hover": "none",
-        hero: "none",
-        modal: "0 16px 48px rgb(15 21 25 / 0.18)",
-        stat: "none",
-        glow: "none",
       },
       backgroundImage: {
         hatch: "repeating-linear-gradient(135deg, rgb(var(--ink) / 0.07) 0 6px, transparent 6px 12px)",

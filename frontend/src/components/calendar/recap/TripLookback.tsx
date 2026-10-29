@@ -195,9 +195,9 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
                         type="button"
                         onClick={() => setViewer({ dayId, index })}
                         aria-label={`Foto ${i + 1} van ${shownTotal}`}
-                        className="group relative aspect-square overflow-hidden rounded-lg bg-sunken"
+                        className="relative aspect-square overflow-hidden rounded-lg bg-sunken"
                       >
-                        <img src={gridImage(photo)} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.04]" />
+                        <img src={gridImage(photo)} alt="" loading="lazy" className="h-full w-full object-cover" />
                         {photo.media_type === "video" && (
                           <span className="pointer-events-none absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-hero/65 text-hero-ink">
                             <Play size={12} fill="currentColor" />

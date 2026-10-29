@@ -265,11 +265,7 @@
   }
 
   .card-surface-hover {
-    @apply card-surface transition-[colors,transform] duration-150;
-  }
-
-  .card-surface-hover:active {
-    transform: scale(0.985);
+    @apply card-surface transition-colors duration-150;
   }
 
   @media (hover: hover) {
@@ -497,12 +493,6 @@
 }
 
 @layer utilities {
-  .shadow-card,
-  .shadow-elevated,
-  .shadow-hero {
-    box-shadow: none;
-  }
-
   .focus-ring {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-2;
   }

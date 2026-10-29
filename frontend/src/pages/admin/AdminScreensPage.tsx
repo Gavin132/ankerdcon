@@ -115,7 +115,7 @@ export function AdminScreensPage() {
             type="button"
             onClick={() => setOpen(null)}
             aria-label="Preview sluiten"
-            className="fixed right-4 top-4 z-[410] flex h-10 w-10 items-center justify-center rounded-full border-1.5 border-line bg-surface text-ink shadow-sm"
+            className="fixed right-4 top-4 z-[410] flex h-10 w-10 items-center justify-center rounded-full border-1.5 border-line bg-surface text-ink"
             style={{ marginTop: "env(safe-area-inset-top, 0px)" }}
           >
             <X size={16} />

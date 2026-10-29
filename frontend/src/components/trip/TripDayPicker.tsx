@@ -36,9 +36,9 @@ export function TripDayPicker({ trip, myNames, readOnly = false, onToggleDay }: 
           const canToggle = !readOnly && toDateKey(date) >= today;
           const label = `${dayShort(date)} ${date.getDate()} ${monthShort(date)}`;
 
-          const className = `relative min-w-0 rounded-xl border-1.5 px-1.5 pb-2 pt-5 text-center transition-[colors,transform] ${
+          const className = `relative min-w-0 rounded-xl border-1.5 px-1.5 pb-2 pt-5 text-center transition-colors ${
             imGoing ? "border-outline bg-brand-soft" : `border-line ${isTravelDay ? "bg-hatch-surface" : "bg-surface"}`
-          } ${canToggle ? "hover:border-ink-3 active:scale-[0.97]" : imGoing ? "" : "opacity-60"}`;
+          } ${canToggle ? "hover:border-ink-3" : imGoing ? "" : "opacity-60"}`;
 
           const content = (
             <>

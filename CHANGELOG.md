@@ -35,6 +35,9 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **Nothing shrinks or zooms when you press or point at it.** The day tiles of a trip and the clickable cards no longer
+  shrink under your finger, and the photos in the recap no longer zoom on hover; a press dims the thing like it does
+  elsewhere.
 - **All text fields in the admin panel are as big as the ones in the rest of the app** (16 px text and the same
   height, on a computer too). The fields in the sheets, the search boxes and the filters of Betalingen used to be
   smaller on a wide screen.

@@ -32,7 +32,7 @@ export function SelectableDayCards({ days, selected, onToggle, caption, label = 
             onClick={() => onToggle(ev.id)}
             aria-pressed={on}
             aria-label={`${dayShort(date)} ${date.getDate()} ${monthShort(date)}: ${on ? "gekozen" : "niet gekozen"}`}
-            className={`relative min-w-0 rounded-xl border-1.5 px-1.5 pb-2 pt-5 text-center transition-[colors,transform] hover:border-ink-3 active:scale-[0.97] ${
+            className={`relative min-w-0 rounded-xl border-1.5 px-1.5 pb-2 pt-5 text-center transition-colors hover:border-ink-3 ${
               on ? "border-outline bg-brand-soft" : `border-line ${travel ? "bg-hatch-surface" : "bg-surface"}`
             }`}
           >

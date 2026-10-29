@@ -196,7 +196,7 @@ function ProfileHead({
           <div className="relative -mt-[44px] shrink-0">
             <div
               className={`flex h-[88px] w-[88px] items-center justify-center overflow-hidden rounded-full border-4 border-surface ${
-                !hasAvatar ? `bg-gradient-to-br ${avatarColor(user.name)}` : ""
+                !hasAvatar ? avatarColor(user.name) : ""
               }`}
               style={
                 !hasAvatar && avatarColorValue

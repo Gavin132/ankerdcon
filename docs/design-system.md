@@ -11,8 +11,11 @@ components in use, look at `pages/trip/TripOverviewTab.tsx` and `components/trip
 
 - **Flat.** No gradients, no `backdrop-blur`, no glass, no soft card shadows, no
   glows or decorative blurred circles. Nothing lifts or scales on hover
-  (`whileHover`, `hover:-translate-y`, `hover:scale`). Hover changes a border or
-  background colour only.
+  (`whileHover`, `hover:-translate-y`, `hover:scale`), and nothing shrinks when pressed
+  (`active:scale-*`, `:active { transform }`): the press feedback is the dim in `index.css`. Hover changes a border or
+  background colour only. The only shadow is `shadow-xl` on a menu or popover (`tailwind.config.ts` switches `shadow-sm`,
+  `shadow` and `shadow-md` off, and there are no `shadow-card`, `shadow-hero` or `gradient-card-*` classes). The dotted
+  cover pattern of a ticket is the one radial gradient left, and it is a pattern, not a fade.
 - **One bold element per screen** gets the 2px ink outline (`border-2 border-outline`),
   for example the Hub ticket or a trip's headline block. Everything else uses the
   1.5px `border-line`. `border-2` is for exactly four things: the primary button, a hero or ticket, a dialog

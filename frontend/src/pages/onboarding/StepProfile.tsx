@@ -116,7 +116,7 @@ function ProfilePhotos({ bannerColor }: { bannerColor: string }) {
           <input ref={avatarInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={onAvatarFileChange} />
           <div
             className={`flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full border-4 border-surface ${
-              !hasAvatar ? `bg-gradient-to-br ${avatarColor(me?.name ?? "")}` : ""
+              !hasAvatar ? avatarColor(me?.name ?? "") : ""
             }`}
           >
             {hasAvatar ? (
