@@ -90,7 +90,7 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `DELETE /rides/{id}` | owner | remove a ride |
 | `POST /rides/{id}/claim`, `…/leave` | member | take or leave a seat |
 | `POST /rides/{id}/restaurant-driver`, `…/leave` | member | join or leave as a driver of a restaurant ride |
-| `POST /rides/{id}/restaurant-driver/assign`, `…/unassign` | member | put a passenger in or out of a car |
+| `POST /rides/{id}/restaurant-driver/assign`, `…/unassign` | member | put a passenger in or out of a car (400 "Deze auto is vol." when no seat is left) |
 
 Creating a ride broadcasts `ride_created` (`app/routers/rides.py`'s `_notify_ride_created`, also used by
 `admin_create_ride`), narrowed by `_day_ride_eligible_names` beyond the usual category opt-in: only a
