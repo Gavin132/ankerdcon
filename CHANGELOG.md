@@ -6,6 +6,10 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+---
+
+## [2.2.0] - 2026-10-30
+
 ### Added
 - **Admins can get a heads-up when somebody logs in for the first time.** Instellingen > Meldingen has a new switch
   "Nieuwe gebruiker" for admins (off until you switch it on, not visible to members). When someone logs in for the first
