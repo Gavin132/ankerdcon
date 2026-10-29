@@ -47,7 +47,7 @@ export function RideActions({ ride }: RideActionsProps) {
             href={openUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex shrink-0 items-center gap-1.5 rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-ink-3"
+            className="hit-area flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-ink-3"
           >
             <Navigation size={11} />
             Route

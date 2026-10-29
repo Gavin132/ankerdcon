@@ -165,7 +165,7 @@ function EventRow({ item, users, cosplayCount }: {
           <button
             type="button"
             onClick={() => setShowRsvp((v) => !v)}
-            className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+            className={`hit-area flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
               showRsvp
                 ? "border-1.5 border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
                 : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
@@ -177,9 +177,10 @@ function EventRow({ item, users, cosplayCount }: {
           <button
             type="button"
             onClick={() => navigate(routes.event.view(firstDay.id))}
-            className="hit-area flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+            aria-label={`Open ${title}`}
+            className="hit-area flex h-9 w-9 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
           >
-            <ChevronRight size={14} />
+            <ChevronRight size={16} />
           </button>
         </div>
       </div>
@@ -271,25 +272,30 @@ export function AdminDashboardPage() {
 
       {/* ── Metrics strip ───────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
-        {METRICS.map(({ label, value, icon: Icon, path }) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => path && navigate(path)}
-            disabled={!path}
-            className={`card-surface flex min-w-0 flex-col gap-2.5 p-3.5 text-left ${path ? "transition-colors hover:border-ink-3" : "cursor-default"}`}
-          >
-            <span className="flex w-full items-center justify-between gap-2">
-              <span className="truncate font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">{label}</span>
-              <Icon size={14} className="shrink-0 text-ink-3" />
-            </span>
-            {statsLoading && typeof value === "number" ? (
-              <div className="h-7 w-10 animate-pulse rounded bg-sunken" />
-            ) : (
-              <span className="max-w-full truncate font-display text-[28px] font-extrabold leading-[0.95] tabular-nums text-ink">{value ?? 0}</span>
-            )}
-          </button>
-        ))}
+        {METRICS.map(({ label, value, icon: Icon, path }) => {
+          const body = (
+            <>
+              <span className="flex w-full items-center justify-between gap-2">
+                <span className="truncate font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">{label}</span>
+                <Icon size={14} className="shrink-0 text-ink-3" />
+              </span>
+              {statsLoading && typeof value === "number" ? (
+                <div className="h-7 w-10 animate-pulse rounded bg-sunken" />
+              ) : (
+                <span className="max-w-full truncate font-display text-[28px] font-extrabold leading-[0.95] tabular-nums text-ink">{value ?? 0}</span>
+              )}
+            </>
+          );
+          const box = "card-surface flex min-w-0 flex-col gap-2.5 p-3.5 text-left";
+          // A metric with nowhere to go is a plain box, not a button that does nothing.
+          return path ? (
+            <button key={label} type="button" onClick={() => navigate(path)} className={`${box} transition-colors hover:border-ink-3`}>
+              {body}
+            </button>
+          ) : (
+            <div key={label} className={box}>{body}</div>
+          );
+        })}
       </div>
 
       {/* ── Upcoming events ─────────────────────────────────────────────────── */}
@@ -301,7 +307,7 @@ export function AdminDashboardPage() {
           <button
             type="button"
             onClick={() => navigate(routes.admin.events)}
-            className="shrink-0 whitespace-nowrap text-[12.5px] font-semibold text-brand-text hover:underline"
+            className="hit-area shrink-0 whitespace-nowrap text-[12.5px] font-semibold text-brand-text hover:underline"
           >
             Alle<span className="hidden sm:inline"> evenementen</span> →
           </button>

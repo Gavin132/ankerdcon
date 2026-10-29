@@ -135,7 +135,7 @@ export function SettleUpCard({ overview, users, meId, onOpen }: Props) {
       {done.length > 0 && (
         <div className="border-t border-line px-4 pb-3 pt-2.5">
           <p className="mb-1 text-[12px] font-semibold text-ink-3">Recent verrekend</p>
-          <ul className="space-y-0.5">
+          <ul>
             {done.map((s) => {
               const d = describeSettlement(s, meId);
               return (
@@ -143,7 +143,7 @@ export function SettleUpCard({ overview, users, meId, onOpen }: Props) {
                   <button
                     type="button"
                     onClick={() => onOpen({ kind: "settlement", settlement: s })}
-                    className="flex w-full items-center justify-between gap-2 text-left text-[12px] text-ink-2 hover:text-ink"
+                    className="flex min-h-11 w-full items-center justify-between gap-2 py-2.5 text-left text-[12px] text-ink-2 hover:text-ink"
                   >
                     <span className="truncate">{d.title}{s.confirmed_at ? ` · ${formatDate(s.confirmed_at)}` : ""}</span>
                     <span className="shrink-0 font-mono tabular-nums">{formatAmount(s.amount, s.currency)}</span>

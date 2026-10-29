@@ -78,7 +78,7 @@ export function ErrorFallback({ error }: { error?: unknown }) {
             type="button"
             disabled={busy}
             onClick={() => reset()}
-            className="rounded-xl border-1.5 border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-3 disabled:opacity-60"
+            className="btn-secondary px-4 text-sm"
           >
             {busy ? "Even geduld…" : "Probeer opnieuw"}
           </button>

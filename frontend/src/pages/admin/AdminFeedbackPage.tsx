@@ -4,7 +4,7 @@ import { useAdminFeedback, useDeleteFeedback, useUpdateFeedback } from "../../ho
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { ConfirmInline } from "./components/ConfirmInline";
 import { FEEDBACK_KINDS } from "../../components/settings/FeedbackSheet";
-import { CHIP_OFF, CHIP_ON, PILL_BAD, PILL_NEUTRAL, PILL_OK, PILL_WARN } from "./styles";
+import { CHIP_OFF, CHIP_ON, PILL_BAD, PILL_NEUTRAL, PILL_OK } from "./styles";
 import { formatDateTime } from "../../utils/format";
 import { toast } from "../../store/toast.store";
 import type { Feedback, FeedbackStatus } from "../../types";
@@ -98,11 +98,7 @@ export function AdminFeedbackPage() {
                       type="button"
                       onClick={() => f.status !== s && setStatus(f, s)}
                       aria-pressed={f.status === s}
-                      className={
-                        f.status === s
-                          ? `${s === "new" ? PILL_WARN : PILL_OK} ring-1 ring-current`
-                          : `${PILL_NEUTRAL} hover:text-ink`
-                      }
+                      className={f.status === s ? CHIP_ON : CHIP_OFF}
                     >
                       {STATUS_LABEL[s]}
                     </button>
@@ -116,7 +112,7 @@ export function AdminFeedbackPage() {
                     onClick={() => setConfirmId(f.id)}
                     aria-label="Verwijderen"
                     title="Verwijderen"
-                    className="hit-area flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-rose-600"
+                    className="icon-btn hover:text-bad"
                   >
                     <Trash2 size={15} />
                   </button>

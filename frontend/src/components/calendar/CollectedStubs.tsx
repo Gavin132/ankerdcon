@@ -65,7 +65,7 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
                 type="button"
                 onClick={() => { setYear(y); setOpenId(null); }}
                 aria-pressed={y === year}
-                className={`shrink-0 rounded-[7px] px-2.5 py-1 font-mono text-[12px] font-semibold transition-colors ${
+                className={`min-h-9 shrink-0 rounded-[7px] px-3 py-1 font-mono text-[12px] font-semibold transition-colors ${
                   y === year ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]" : "text-ink-2 hover:text-ink"
                 }`}
               >

@@ -160,9 +160,10 @@ export function NamePicker(props: NamePickerProps) {
                           e.stopPropagation();
                           handleDeselect(name);
                         }}
-                        className={`ml-0.5 transition-colors ${tk.chipX}`}
+                        aria-label={`${name} verwijderen`}
+                        className={`hit-area -mr-1 p-1 transition-colors ${tk.chipX}`}
                       >
-                        <X size={11} />
+                        <X size={12} />
                       </button>
                     </motion.div>
                   ))}
@@ -171,7 +172,7 @@ export function NamePicker(props: NamePickerProps) {
 
               {maxSelect !== undefined && (
                 <div className="flex items-center gap-2">
-                  <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div className="h-1 flex-1 overflow-hidden rounded-full bg-sunken">
                     <motion.div
                       className={`h-full rounded-full transition-colors ${atMax ? tk.barFull : tk.bar}`}
                       animate={{ width: `${(selected.length / maxSelect) * 100}%` }}
@@ -179,7 +180,7 @@ export function NamePicker(props: NamePickerProps) {
                     />
                   </div>
                   <span className={`shrink-0 text-xs font-bold tabular-nums ${atMax ? tk.counterFull : tk.counter}`}>
-                    {selected.length}/{maxSelect}
+                    {atMax ? `Vol · ${selected.length}/${maxSelect}` : `${selected.length}/${maxSelect}`}
                   </span>
                 </div>
               )}
@@ -192,7 +193,7 @@ export function NamePicker(props: NamePickerProps) {
       <div ref={wrapperRef} className="relative">
         <Search
           size={13}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3"
         />
         <input
           ref={inputRef}
@@ -224,7 +225,7 @@ export function NamePicker(props: NamePickerProps) {
           className="z-[300] max-h-[220px] overflow-y-auto overscroll-contain rounded-xl border-1.5 border-line divide-y divide-line bg-surface shadow-xl"
         >
           {filtered.length === 0 ? (
-            <p className="px-4 py-4 text-center text-xs text-slate-400">
+            <p className="px-4 py-4 text-center text-xs text-ink-3">
               Geen resultaten voor &ldquo;{query}&rdquo;
             </p>
           ) : (
@@ -249,12 +250,12 @@ export function NamePicker(props: NamePickerProps) {
                       ? tk.activeRow
                       : isDisabled
                         ? "cursor-not-allowed opacity-35"
-                        : "hover:bg-slate-50 active:bg-slate-50 dark:hover:bg-slate-800/60 dark:active:bg-slate-800/60"
+                        : "hover:bg-sunken active:bg-sunken"
                   }`}
                 >
                   <UserAvatar name={name} className="h-7 w-7 text-xs" />
                   <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    <span className="block text-sm font-semibold text-ink">
                       {name}
                     </span>
                     {(() => {
@@ -264,7 +265,7 @@ export function NamePicker(props: NamePickerProps) {
                         ? user?.aliases?.find((a) => a.toLowerCase().includes(q))
                         : undefined;
                       return matchedAlias ? (
-                        <span className="block text-[12px] text-slate-400 truncate">ook bekend als &ldquo;{matchedAlias}&rdquo;</span>
+                        <span className="block text-[12px] text-ink-3 truncate">ook bekend als &ldquo;{matchedAlias}&rdquo;</span>
                       ) : null;
                     })()}
                   </span>

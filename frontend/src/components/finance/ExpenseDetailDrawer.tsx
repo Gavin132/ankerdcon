@@ -197,7 +197,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
               <button
                 type="button"
                 onClick={() => setConfirmDelete(true)}
-                className="flex items-center gap-2 text-sm font-semibold text-ink-3 transition-colors hover:text-rose-600 dark:hover:text-rose-400"
+                className="flex min-h-11 items-center gap-2 text-sm font-semibold text-ink-3 transition-colors hover:text-rose-600 dark:hover:text-rose-400"
               >
                 <Trash2 size={14} />
                 Uitgave verwijderen

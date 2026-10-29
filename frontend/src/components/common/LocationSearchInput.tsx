@@ -124,9 +124,10 @@ export function LocationSearchInput({
           <button
             type="button"
             onClick={clear}
-            className="absolute right-3 text-ink-3 hover:text-ink transition-colors"
+            aria-label="Zoekopdracht wissen"
+            className="hit-area absolute right-1.5 flex h-9 w-9 items-center justify-center text-ink-3 hover:text-ink transition-colors"
           >
-            <X size={13} />
+            <X size={14} />
           </button>
         )}
       </div>

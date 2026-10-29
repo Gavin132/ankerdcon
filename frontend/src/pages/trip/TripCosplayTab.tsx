@@ -335,9 +335,9 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
   const removableChip =
     "inline-flex items-center gap-1.5 rounded-full border-1.5 border-line bg-surface py-1 pl-2.5 pr-1 text-[12px] font-semibold text-ink-2";
   const removeChipButton =
-    "flex h-5 w-5 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-sunken hover:text-ink";
+    "hit-area flex h-5 w-5 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-sunken hover:text-ink";
   const pageArrow =
-    "flex h-8 w-8 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-line";
+    "hit-area flex h-9 w-9 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-line";
 
   return (
     <TripSheet
@@ -505,7 +505,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                       </label>
                     )}
                     {images.length > 1 && (
-                      <button type="button" onClick={() => removeImage(index)} className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400">
+                      <button type="button" onClick={() => removeImage(index)} aria-label="Afbeelding verwijderen" className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400">
                         <X size={13} />
                       </button>
                     )}
@@ -580,7 +580,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                     {filters.persons.map((name) => (
                       <span key={name} className={removableChip}>
                         {name}
-                        <button onClick={() => removePersonFilter(name)} className={removeChipButton}>
+                        <button onClick={() => removePersonFilter(name)} aria-label={`Filter ${name} verwijderen`} className={removeChipButton}>
                           <X size={11} />
                         </button>
                       </span>
@@ -588,7 +588,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                     {filters.days.length > 0 && (
                       <span className={removableChip}>
                         {filters.days.length} {filters.days.length === 1 ? "dag" : "dagen"}
-                        <button onClick={removeDayFilter} className={removeChipButton}>
+                        <button onClick={removeDayFilter} aria-label="Dagfilter verwijderen" className={removeChipButton}>
                           <X size={11} />
                         </button>
                       </span>
@@ -596,7 +596,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                     {filters.sort !== "newest" && (
                       <span className={removableChip}>
                         {SORT_LABELS[filters.sort]}
-                        <button onClick={removeSortFilter} className={removeChipButton}>
+                        <button onClick={removeSortFilter} aria-label="Sortering verwijderen" className={removeChipButton}>
                           <X size={11} />
                         </button>
                       </span>
@@ -716,6 +716,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
+                aria-label="Vorige pagina"
                 className={pageArrow}
               >
                 <ChevronLeft size={15} />
@@ -730,7 +731,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                 const showEllipsisAfter  = p === page + 2 && page < totalPages - 2;
                 if (showEllipsisBefore || showEllipsisAfter) {
                   return (
-                    <span key={p} className="w-8 text-center text-xs text-ink-3">…</span>
+                    <span key={p} className="w-9 text-center text-xs text-ink-3">…</span>
                   );
                 }
                 if (!show) return null;
@@ -738,7 +739,9 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                   <button
                     key={p}
                     onClick={() => setPage(p)}
-                    className={`h-8 min-w-[2rem] rounded-xl px-2 font-mono text-xs font-semibold tabular-nums transition-colors ${
+                    aria-label={`Pagina ${p}`}
+                    aria-current={active ? "page" : undefined}
+                    className={`hit-area h-9 min-w-[2.25rem] rounded-xl px-2 font-mono text-xs font-semibold tabular-nums transition-colors ${
                       active
                         ? "border-1.5 border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
                         : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
@@ -752,6 +755,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
+                aria-label="Volgende pagina"
                 className={pageArrow}
               >
                 <ChevronRight size={15} />

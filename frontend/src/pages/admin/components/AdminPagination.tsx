@@ -43,7 +43,8 @@ export function AdminPagination({
         <button
           onClick={() => onPage(page - 1)}
           disabled={page === 0}
-          className="hit-area flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
+          aria-label="Vorige pagina"
+          className="hit-area flex h-9 w-9 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
         >
           <ChevronLeft size={14} />
         </button>
@@ -51,7 +52,7 @@ export function AdminPagination({
           p === "…" ? (
             <span
               key={`ellipsis-${i}`}
-              className="flex h-8 w-8 items-center justify-center text-xs text-ink-3"
+              className="flex h-9 w-9 items-center justify-center text-xs text-ink-3"
             >
               …
             </span>
@@ -59,7 +60,9 @@ export function AdminPagination({
             <button
               key={p}
               onClick={() => onPage(p)}
-              className={`hit-area flex h-8 w-8 items-center justify-center rounded-lg font-mono text-xs font-semibold tabular-nums transition-colors ${
+              aria-label={`Pagina ${p + 1}`}
+              aria-current={p === page ? "page" : undefined}
+              className={`hit-area flex h-9 w-9 items-center justify-center rounded-lg font-mono text-xs font-semibold tabular-nums transition-colors ${
                 p === page
                   ? "bg-ink text-paper dark:bg-brand dark:text-brand-on"
                   : "text-ink-2 hover:bg-sunken hover:text-ink"
@@ -72,7 +75,8 @@ export function AdminPagination({
         <button
           onClick={() => onPage(page + 1)}
           disabled={page === totalPages - 1}
-          className="hit-area flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
+          aria-label="Volgende pagina"
+          className="hit-area flex h-9 w-9 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
         >
           <ChevronRight size={14} />
         </button>

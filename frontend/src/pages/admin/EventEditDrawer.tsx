@@ -146,7 +146,7 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
                 <span className="min-w-0 flex-1 basis-36 font-mono text-[13px] font-semibold text-ink">
                   {formatDate(day.date)}
                 </span>
-                <label className="flex items-center gap-1.5 text-[11px] text-ink-3 cursor-pointer whitespace-nowrap">
+                <label className="hit-area flex items-center gap-1.5 text-xs text-ink-3 cursor-pointer whitespace-nowrap">
                   <input
                     type="checkbox"
                     checked={day.has_con}
@@ -158,11 +158,11 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
                 <button
                   type="button"
                   onClick={() => setExpandedDay(isExpanded ? null : day.id)}
-                  className="flex items-center gap-1 text-[11px] text-ink-3 hover:text-ink transition-colors whitespace-nowrap"
+                  className="hit-area flex items-center gap-1 text-xs text-ink-3 hover:text-ink transition-colors whitespace-nowrap"
                 >
-                  <UserPlus size={12} />
+                  <UserPlus size={14} />
                   {day.participants.length}
-                  {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                  {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                 </button>
                 <button
                   type="button"
@@ -496,11 +496,11 @@ export function EventEditDrawer({
               <button
                 type="button"
                 onClick={() => setImageUrlMode((v) => !v)}
-                className="flex items-center gap-1 text-[10px] text-ink-3 hover:text-brand-text transition-colors"
+                className="hit-area flex items-center gap-1 text-xs text-ink-3 hover:text-brand-text transition-colors"
               >
                 {imageUrlMode
-                  ? <><Upload size={10} /> Upload</>
-                  : <><Link2 size={10} /> URL invoeren</>}
+                  ? <><Upload size={14} /> Upload</>
+                  : <><Link2 size={14} /> URL invoeren</>}
               </button>
             </div>
 
@@ -550,7 +550,7 @@ export function EventEditDrawer({
                     <>
                       <Upload size={18} className="mx-auto mb-1.5 text-ink-3" />
                       <p className="text-xs font-medium text-ink-3">Klik of sleep een afbeelding hierheen</p>
-                      <p className="text-[10px] text-ink-3 mt-0.5">PNG, JPG, WebP · liggend formaat aanbevolen</p>
+                      <p className="text-xs text-ink-3 mt-0.5">PNG, JPG, WebP · liggend formaat aanbevolen</p>
                     </>
                   )}
                 </button>

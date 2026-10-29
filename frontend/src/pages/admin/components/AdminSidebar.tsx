@@ -4,7 +4,7 @@ import {
   ChevronDown,
   ArrowLeft,
   LogOut,
-  Menu,
+  X,
 } from "lucide-react";
 import { routes } from "../../../config/routes";
 import { useAuthStore } from "../../../store/auth.store";
@@ -48,6 +48,10 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
     }
   }
 
+  // In the phone drawer every row is 44 px tall; the desktop sidebar stays compact.
+  const tall = onClose ? "min-h-11" : "";
+  const tallChild = onClose ? "min-h-10 hit-area" : "";
+
   return (
     <div className="flex h-full flex-col">
       {/* Logo */}
@@ -70,9 +74,10 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
         {onClose && (
           <button
             onClick={onClose}
-            className="hit-area ml-auto flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+            aria-label="Menu sluiten"
+            className="icon-btn ml-auto"
           >
-            <Menu size={16} />
+            <X size={18} />
           </button>
         )}
       </div>
@@ -84,9 +89,9 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
             {!collapsed && (
               <button
                 onClick={() => toggleGroup(group.key)}
-                className="flex w-full items-center justify-between px-2.5 pb-1.5 pt-3"
+                className={`flex w-full items-center justify-between px-2.5 pb-1.5 pt-3 ${tall}`}
               >
-                <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-3">
+                <span className="font-mono text-xs uppercase tracking-[0.1em] text-ink-3">
                   {group.label}
                 </span>
                 <ChevronDown
@@ -117,7 +122,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
                       <div key={path}>
                         <button
                           onClick={() => setExpandedItems((prev) => ({ ...prev, [path]: !isExpanded }))}
-                          className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] transition-colors ${
+                          className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] transition-colors ${tall} ${
                             isChildActive ? "font-semibold text-ink" : `font-medium ${IDLE}`
                           }`}
                         >
@@ -137,7 +142,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
                                 end={cEnd}
                                 onClick={onClose}
                                 className={({ isActive }) =>
-                                  `flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors ${
+                                  `flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors ${tallChild} ${
                                     isActive ? ACTIVE : IDLE
                                   }`
                                 }
@@ -172,7 +177,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
                           ? `flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${
                               isActive ? ACTIVE : IDLE
                             }`
-                          : `flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] font-medium transition-colors ${
+                          : `flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] font-medium transition-colors ${tall} ${
                               isActive ? ACTIVE : IDLE
                             }`
                       }
@@ -203,6 +208,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
         {collapsed ? (
           <button
             title="Terug naar app"
+            aria-label="Terug naar app"
             onClick={() => { navigate(routes.hub); onClose?.(); }}
             className={`mx-auto flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${IDLE}`}
           >
@@ -211,7 +217,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
         ) : (
           <button
             onClick={() => { navigate(routes.hub); onClose?.(); }}
-            className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] font-medium transition-colors ${IDLE}`}
+            className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] font-medium transition-colors ${tall} ${IDLE}`}
           >
             <ArrowLeft size={16} className="shrink-0" />
             Terug naar app
@@ -223,6 +229,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
             <UserAvatar name={me?.name ?? ""} className="h-7 w-7 text-[9px]" />
             <button
               title="Uitloggen"
+              aria-label="Uitloggen"
               onClick={handleLogout}
               className="hit-area flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-rose-600 dark:hover:text-rose-400"
             >
@@ -242,6 +249,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
             </div>
             <button
               title="Uitloggen"
+              aria-label="Uitloggen"
               onClick={handleLogout}
               className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-rose-600 dark:hover:text-rose-400"
             >

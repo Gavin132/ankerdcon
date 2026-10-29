@@ -159,6 +159,17 @@ Page head pattern (see `TripLayout`, `HubPage`):
   (an `h-8 w-8` close or copy button): an invisible box grows its touch area to 44px without moving
   anything. Not on a control with `overflow-hidden` (the box would be clipped). The class is in
   `index.css`; adding it to many controls was done once with a script, so new ones need it by hand.
+  **Re-space what would overlap:** two `hit-area` controls closer than 44px centre to centre fight over the
+  overlap (the later one in the DOM wins), so a row of small icon buttons is `h-9 w-9` with `gap-2` (pitch 44),
+  not `h-7 w-7` with `gap-1`. A row of chips or swatches the same: 36px items with at least 8px between them.
+- **An icon-only button has an `aria-label`** (a `title` is not read by every screen reader and does not exist on
+  a phone). The label says what it does to what: "Alias Sam verwijderen", "Kamer 214 bewerken".
+- **A tile or card that opens something is one link, not a box that holds other buttons.** `TripTile` makes its
+  label the `Link` (or the button) and stretches it over the tile with `after:absolute after:inset-0`; the pill,
+  the "+" and the thumbnails are `relative` siblings that stay tappable on top. Never put an `<a>` or a
+  `role="button"` inside another one.
+- **Full-screen layers are dialogs:** `role="dialog" aria-modal="true" aria-label="…"` on the story viewer, the
+  search and the cosplay lightbox, Escape closes them, and focus goes back to what opened them.
 - **Hover styles only apply where the device can hover** (`future.hoverOnlyWhenSupported` in
   `tailwind.config.ts`), so a tap on a phone does not leave an element stuck in its hover state. Hand-written
   `:hover` CSS goes inside `@media (hover: hover)` for the same reason.

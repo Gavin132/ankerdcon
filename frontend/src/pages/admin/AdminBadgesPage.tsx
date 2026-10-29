@@ -150,9 +150,9 @@ function BadgeDrawer({
             <button
               type="button"
               onClick={() => setUrlMode((v) => !v)}
-              className="flex items-center gap-1 text-[10px] text-ink-3 hover:text-brand-text transition-colors"
+              className="hit-area flex items-center gap-1 text-xs text-ink-3 hover:text-brand-text transition-colors"
             >
-              {urlMode ? <><Upload size={10} /> Upload</> : <><Link size={10} /> URL invoeren</>}
+              {urlMode ? <><Upload size={14} /> Upload</> : <><Link size={14} /> URL invoeren</>}
             </button>
           </div>
 
@@ -202,7 +202,7 @@ function BadgeDrawer({
                     <p className="text-xs font-medium text-ink-3">
                       Klik of sleep een afbeelding hierheen
                     </p>
-                    <p className="text-[10px] text-ink-3 mt-0.5">PNG, JPG, GIF, WebP</p>
+                    <p className="text-xs text-ink-3 mt-0.5">PNG, JPG, GIF, WebP</p>
                   </>
                 )}
               </button>
@@ -213,7 +213,7 @@ function BadgeDrawer({
             <div className="mt-2 flex items-center gap-2">
               <img
                 src={form.image_url}
-                alt="preview"
+                alt="Voorbeeld"
                 className="h-9 w-9 rounded-full object-cover border border-line"
               />
               <span className="text-xs text-ink-3">Preview</span>
@@ -347,7 +347,7 @@ function AssignDrawer({
                     <div className="min-w-0">
                       <p className="truncate text-xs font-semibold text-ink">{badge.name}</p>
                       {has && (
-                        <p className="text-[10px] font-medium text-ink-2">Toegewezen</p>
+                        <p className="text-xs font-medium text-ink-2">Toegewezen</p>
                       )}
                     </div>
                   </button>
@@ -400,8 +400,9 @@ function BadgeMembersDrawer({
                 type="button"
                 onClick={() => u.id && badge && unassign.mutate({ userId: u.id, badgeId: badge.id })}
                 disabled={unassign.isPending}
-                className="hit-area flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 disabled:opacity-40 transition-colors"
+                className="hit-area flex h-9 w-9 items-center justify-center rounded-lg text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 disabled:opacity-40 transition-colors"
                 title="Badge verwijderen"
+                aria-label="Badge verwijderen"
               >
                 <UserX size={13} />
               </button>
@@ -606,7 +607,7 @@ export function AdminBadgesPage() {
                           <button
                             type="button"
                             onClick={() => setViewingBadge(badge)}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-sunken px-2 py-0.5 font-mono text-[11.5px] font-semibold tabular-nums text-ink-2 transition-colors hover:bg-line hover:text-ink"
+                            className="hit-area inline-flex items-center gap-1.5 rounded-full bg-sunken px-2 py-0.5 font-mono text-[11.5px] font-semibold tabular-nums text-ink-2 transition-colors hover:bg-line hover:text-ink"
                           >
                             <Users size={10} />
                             {assignedCount}

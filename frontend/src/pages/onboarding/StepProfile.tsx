@@ -305,6 +305,7 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
               type="button"
               onClick={addAlias}
               disabled={!aliasInput.trim() || state.aliases.length >= 10}
+              aria-label="Alias toevoegen"
               className="flex w-[50px] shrink-0 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink transition-colors hover:border-ink-3 disabled:opacity-40"
             >
               <Plus size={15} />
@@ -321,7 +322,8 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
                   <button
                     type="button"
                     onClick={() => removeAlias(alias)}
-                    className="ml-0.5 text-ink-3 transition-colors hover:text-ink"
+                    aria-label={`Alias ${alias} verwijderen`}
+                    className="hit-area -mr-1 p-1 text-ink-3 transition-colors hover:text-ink"
                   >
                     <X size={11} />
                   </button>

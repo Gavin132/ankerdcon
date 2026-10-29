@@ -171,7 +171,7 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
           <div className="mb-1.5 flex items-baseline justify-between gap-2">
             <p className="section-label">Foto's{dayKey ? ` · ${DAYS[new Date(`${dayKey}T00:00:00`).getDay()]}` : ""}</p>
             {dayKey && (
-              <button type="button" onClick={() => onDayChange(null)} className="section-label !text-brand-text hover:underline">
+              <button type="button" onClick={() => onDayChange(null)} className="hit-area text-[12.5px] font-semibold text-brand-text hover:underline">
                 Alle dagen
               </button>
             )}

@@ -200,7 +200,7 @@ export function RestaurantDetailActions({
                       setLeaveName("");
                       setLeaveOpen(true);
                     }}
-                    className="flex h-9 items-center gap-1.5 rounded-xl border-1.5 border-line px-3 text-xs font-semibold text-ink transition-colors hover:border-ink-3"
+                    className="hit-area flex min-h-10 items-center gap-1.5 rounded-xl border-1.5 border-line px-3 text-xs font-semibold text-ink transition-colors hover:border-ink-3"
                   >
                     <UserMinus size={13} /> Afmelden
                   </button>
@@ -212,7 +212,7 @@ export function RestaurantDetailActions({
                       setDriverName("");
                       setDriverOpen(true);
                     }}
-                    className="btn-primary h-9 px-3.5 text-xs"
+                    className="btn-primary min-h-10 px-3.5 text-xs"
                   >
                     <Car size={13} /> Ik rijd
                   </button>
@@ -310,7 +310,7 @@ export function RestaurantDetailActions({
                         setAssignPersonDriver("");
                         setAssignPersonOpen(true);
                       }}
-                      className="shrink-0 rounded-lg border-1.5 border-rose-300 bg-surface px-2.5 py-1 text-xs font-semibold text-rose-700 transition-colors hover:border-rose-500 dark:border-rose-400/40 dark:text-rose-300 dark:hover:border-rose-400"
+                      className="hit-area shrink-0 rounded-lg border-1.5 border-rose-300 bg-surface px-2.5 py-1 text-xs font-semibold text-rose-700 transition-colors hover:border-rose-500 dark:border-rose-400/40 dark:text-rose-300 dark:hover:border-rose-400"
                     >
                       Wijs toe
                     </button>

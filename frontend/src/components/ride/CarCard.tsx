@@ -84,7 +84,7 @@ export const CarCard = forwardRef<HTMLDivElement, CarCardProps>(function CarCard
               onClick={() => setNamesOpen((v) => !v)}
               aria-expanded={namesOpen}
               title="Wie rijden er mee?"
-              className="flex items-center gap-1 rounded-lg"
+              className="hit-area flex items-center gap-1 rounded-lg"
             >
               <span className="flex -space-x-1.5">
                 {driver.passengers.slice(0, 6).map((p) => (
@@ -114,14 +114,15 @@ export const CarCard = forwardRef<HTMLDivElement, CarCardProps>(function CarCard
                 onClick={() => toggle("leave")}
                 disabled={isPending}
                 title="Uitstappen"
+                aria-label="Uitstappen"
                 aria-expanded={action === "leave"}
-                className={`hit-area flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                className={`hit-area flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
                   action === "leave"
                     ? "pill-bad"
                     : "text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
                 }`}
               >
-                <UserMinus size={14} />
+                <UserMinus size={16} />
               </button>
             )}
             {!isFull && (

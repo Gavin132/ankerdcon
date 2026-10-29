@@ -25,6 +25,12 @@ interface TripTileProps {
 
 const SPAN = { small: "", wide: "col-span-2", full: "col-span-2 lg:col-span-4" };
 
+const LABEL = "section-label min-w-0 flex-1 truncate text-ink-2";
+/** Makes the label's own link or button cover the whole tile, so the tile is one tap target without being an
+ * interactive element that holds other interactive ones. Whatever has to stay tappable on top of it (the pill,
+ * the "+", a photo) is `relative` and comes later in the DOM. */
+const STRETCH = "after:absolute after:inset-0 after:content-['']";
+
 /**
  * One tile on Event › Overzicht. The tile answers the question (6 rides, 3
  * people without a ride back); editing happens on the page it links to.
@@ -34,36 +40,35 @@ export function TripTile({ icon: Icon, label, to, onToggle, expanded, onOpen, sh
     to || onToggle || onOpen ? "hover:border-ink-3" : ""
   }`;
 
-  const header = (
+  const header = (labelEl: ReactNode) => (
     <span className="flex w-full items-center gap-2">
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
         <Icon size={15} />
       </span>
-      <span className="section-label min-w-0 flex-1 truncate text-ink-2">{label}</span>
-      {pill}
-      {action}
+      {labelEl}
+      {(pill || action) && <span className="relative flex shrink-0 items-center gap-2">{pill}{action}</span>}
       {(to || onOpen) && <ChevronRight size={15} className="shrink-0 text-ink-3 transition-colors group-hover:text-ink" />}
     </span>
   );
 
   if (to) {
     return (
-      <Link to={to} className={className}>
-        {header}
+      <div className={`relative ${className}`}>
+        {header(<Link to={to} className={`${LABEL} ${STRETCH}`}>{label}</Link>)}
         {children}
         {!sheet && (
-          <span className="mt-auto flex items-center gap-1 pt-1 text-[12.5px] font-semibold text-brand-text">
+          <span aria-hidden className="mt-auto flex items-center gap-1 pt-1 text-[12.5px] font-semibold text-brand-text">
             Naar {label.toLowerCase()} <ArrowRight size={13} />
           </span>
         )}
-      </Link>
+      </div>
     );
   }
 
   if (onToggle) {
     return (
       <button type="button" onClick={onToggle} aria-expanded={expanded} className={className}>
-        {header}
+        {header(<span className={LABEL}>{label}</span>)}
         {children}
         <span className="mt-auto flex items-center gap-1 pt-1 text-[12.5px] font-semibold text-brand-text">
           {expanded ? "Inklappen" : "Uitklappen"} <ChevronDown size={13} className={expanded ? "rotate-180" : ""} />
@@ -73,31 +78,17 @@ export function TripTile({ icon: Icon, label, to, onToggle, expanded, onOpen, sh
   }
 
   if (onOpen) {
-    // A real <button>, not a <div role="button">, would be nicer — but some
-    // tiles (PhotosTile) put their own buttons in `children` (the upload
-    // button), and a <button> can't legally contain another one: the browser
-    // silently splits the DOM to fix it, which desyncs it from what React
-    // thinks it rendered. A div stays correct either way.
+    // Some tiles (Foto's) put their own buttons in `children`, and a <button> cannot hold another one. So the
+    // label is the button and stretches over the tile.
     return (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={onOpen}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onOpen();
-          }
-        }}
-        className={className}
-      >
-        {header}
+      <div className={`relative ${className}`}>
+        {header(<button type="button" onClick={onOpen} className={`${LABEL} text-left ${STRETCH}`}>{label}</button>)}
         {children}
       </div>
     );
   }
 
-  return <div className={className}>{header}{children}</div>;
+  return <div className={className}>{header(<span className={LABEL}>{label}</span>)}{children}</div>;
 }
 
 /** The big one-line answer on a tile. */

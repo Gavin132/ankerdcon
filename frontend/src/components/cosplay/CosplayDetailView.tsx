@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Sparkles, Calendar, ImageOff, ExternalLink, Trash2, X } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -28,6 +28,16 @@ interface CosplayDetailBodyProps {
 export function CosplayDetailBody({ cosplay, events, users, onLeave: onClose }: CosplayDetailBodyProps) {
   const [lightbox, setLightbox] = useState<string | null>(null);
   useBackClose(!!lightbox, () => setLightbox(null));
+  useEffect(() => {
+    if (!lightbox) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      e.stopPropagation(); // the sheet underneath stays open
+      setLightbox(null);
+    }
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [lightbox]);
 
   const user = users.find(
     (u) => u.name === cosplay.user_name || u.discord_username === cosplay.user_name,
@@ -100,17 +110,6 @@ export function CosplayDetailBody({ cosplay, events, users, onLeave: onClose }: 
                     e.currentTarget.style.display = "none";
                   }}
                 />
-                <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <a
-                    href={safeHref(url)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="hit-area flex h-6 w-6 items-center justify-center rounded-lg bg-hero/70 text-hero-ink hover:bg-hero/90"
-                  >
-                    <ExternalLink size={11} />
-                  </a>
-                </div>
               </button>
             ))}
           </div>
@@ -144,6 +143,9 @@ export function CosplayDetailBody({ cosplay, events, users, onLeave: onClose }: 
       <AnimatePresence>
         <motion.div
           key="lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Inspiratie"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -151,17 +153,30 @@ export function CosplayDetailBody({ cosplay, events, users, onLeave: onClose }: 
           onClick={() => setLightbox(null)}
         >
           <button
+            type="button"
+            aria-label="Sluiten"
             className="hit-area absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors"
             onClick={() => setLightbox(null)}
           >
             <X size={18} />
           </button>
-          <img
-            src={lightbox}
-            alt="Inspiratie"
-            className="max-h-full max-w-full rounded-xl object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
+          <div className="flex max-h-full max-w-full flex-col items-center gap-3" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={lightbox}
+              alt="Inspiratie"
+              className="min-h-0 max-w-full flex-1 rounded-xl object-contain"
+            />
+            {safeHref(lightbox) && (
+              <a
+                href={safeHref(lightbox)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hit-area inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-white/85 hover:text-white"
+              >
+                <ExternalLink size={14} /> Bekijk origineel
+              </a>
+            )}
+          </div>
         </motion.div>
       </AnimatePresence>,
       document.body,

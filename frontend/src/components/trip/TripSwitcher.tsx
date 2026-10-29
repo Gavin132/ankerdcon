@@ -68,7 +68,7 @@ export function TripSwitcher({ open, onClose, currentId, myNames }: { open: bool
             {pastShown.map((t) => <TripRow key={t.id} trip={t} current={t.id === currentId} going={goingTo(t)} onPick={onClose} />)}
           </ul>
           {past.length > PAST_SHOWN && !showAllPast && (
-            <button type="button" onClick={() => setShowAllPast(true)} className="mt-2 text-xs font-semibold text-brand-text hover:underline">
+            <button type="button" onClick={() => setShowAllPast(true)} className="hit-area mt-2 text-xs font-semibold text-brand-text hover:underline">
               Toon alle {past.length}
             </button>
           )}

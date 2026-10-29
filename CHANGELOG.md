@@ -35,6 +35,18 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **Easier to hit on a phone.** Small controls are 44 px to hit now, and spaced so two of them no longer share a
+  touch area: the edit and delete buttons of a hotel room, the colour swatches and alias chips on your profile, the
+  paging buttons and search clear button in the admin panel, the arrows of an activity category, the delete
+  buttons of a ride and a room, "Sluiten" and "Alle dagen" in the recap, the buttons of the crew and crash screens, the account
+  menu rows and the onboarding footer.
+- **Screen readers:** icon-only buttons now have a name (story viewer, search, tiles, admin tables, alias and name
+  chips), the story viewer, the search and the cosplay picture are dialogs that close with Escape, a tile of the
+  Event page is one link instead of a link with buttons inside it, and the account menu is a real menu.
+- **Admin: activity categories** use the same on/off chips as the rest of the app, the up and down arrows sit side
+  by side, the feedback status buttons are chips, and a metric on the dashboard that goes nowhere is no longer a button.
+- **Cosplay inspiration:** the link to the original picture is in the picture's own view ("Bekijk origineel") instead
+  of a hover-only corner icon that did not exist on a phone.
 - **One word for everything.** "Evenement" everywhere instead of the English "event" (the agenda, the recap, finance,
   admin, a few error messages), "Meldingen" instead of "Notificaties", "Toegangslijst" instead of
   "Whitelist", "Beheer" instead of "Admin portal". Buttons say "Annuleren", "Verwijderen" and "Kopiëren"; "1 groep"

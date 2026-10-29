@@ -48,7 +48,7 @@ export function CrashFeedback({ detail }: { detail: string | null }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-5 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-brand-text hover:underline"
+        className="mt-5 inline-flex min-h-11 items-center gap-1.5 py-2.5 text-[12.5px] font-semibold text-brand-text hover:underline"
       >
         <MessageSquarePlus size={13} />
         Vertel wat er gebeurde
@@ -78,7 +78,7 @@ export function CrashFeedback({ detail }: { detail: string | null }) {
         type="button"
         onClick={send}
         disabled={!canSend}
-        className="btn-primary h-10 w-full gap-2 px-4 text-sm"
+        className="btn-primary h-11 w-full gap-2 px-4 text-sm"
       >
         <Send size={14} />
         {state === "sending" ? "Versturen…" : "Versturen"}

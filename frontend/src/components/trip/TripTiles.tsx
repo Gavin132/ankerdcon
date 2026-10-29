@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertCircle, BedDouble, Camera, Car, ChevronRight, CloudSun, FileText, Plus, Sparkles, Ticket as TicketIcon, Trash2, Upload, Utensils, Wallet } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
+import { Button } from "../common/Button";
 import { StoryUploadButton } from "../story/StoryUploadButton";
 import { DayChips } from "./DayChips";
 import { TripSheet } from "./TripSheet";
@@ -119,26 +120,14 @@ export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Tr
         phase !== "past" &&
         missing > 0 && (
           // The tile itself links to the transport sheet; the pill opens the names instead.
-          <span
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
             aria-label={`Bekijk wie nog geen rit heeft (${missing})`}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setMissingOpen(true);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                e.stopPropagation();
-                setMissingOpen(true);
-              }
-            }}
+            onClick={() => setMissingOpen(true)}
             className="hit-area shrink-0 cursor-pointer rounded-full transition-opacity hover:opacity-80"
           >
             <TilePill>{missing} zonder rit</TilePill>
-          </span>
+          </button>
         )
       }
     >
@@ -377,7 +366,7 @@ export function CosplayTile({ trip, cosplays, myNames }: { trip: Trip; cosplays:
 // neutral icon-button StoryUploadButton normally wears — this one needs to
 // read as a pressable action at a glance, not blend in like the ticket's.
 const UPLOAD_BUTTON_CLASS =
-  "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-1.5 border-outline bg-brand text-brand-on transition-opacity hover:opacity-90";
+  "hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-1.5 border-outline bg-brand text-brand-on transition-opacity hover:opacity-90";
 
 /**
  * Opens the story viewer directly on the most relevant day instead of
@@ -408,7 +397,7 @@ export function PhotosTile({ trip, phase, summary, onOpenDay, uploadDayId }: { t
           <div className="flex items-center justify-between gap-2">
             <TileValue>Foto's</TileValue>
             {uploadDayId && !viewer && (
-              <span onClick={(e) => e.stopPropagation()} className="shrink-0">
+              <span className="relative shrink-0">
                 <StoryUploadButton eventDayId={uploadDayId} className={UPLOAD_BUTTON_CLASS} />
               </span>
             )}
@@ -422,7 +411,7 @@ export function PhotosTile({ trip, phase, summary, onOpenDay, uploadDayId }: { t
           <div className="flex items-center justify-between gap-2">
             <TileValue>{phase === "live" && todayCount > 0 ? `${todayCount} vandaag` : `${total} foto's`}</TileValue>
             {uploadDayId && !viewer && (
-              <span onClick={(e) => e.stopPropagation()} className="shrink-0">
+              <span className="relative shrink-0">
                 <StoryUploadButton eventDayId={uploadDayId} className={UPLOAD_BUTTON_CLASS} />
               </span>
             )}
@@ -434,15 +423,15 @@ export function PhotosTile({ trip, phase, summary, onOpenDay, uploadDayId }: { t
           </TileText>
           <span className="flex items-center gap-1.5">
             {previews.map((x) => (
-              <span
+              <button
                 key={x.day.ev.id}
-                role="button"
-                tabIndex={0}
-                onClick={(e) => { e.stopPropagation(); onOpenDay(x.day.ev.id); }}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); onOpenDay(x.day.ev.id); } }}
+                type="button"
+                onClick={() => onOpenDay(x.day.ev.id)}
+                aria-label={`Foto's van ${dayShort(x.day.date)}`}
+                className="relative rounded-md"
               >
                 <img src={x.s!.preview_url} alt="" className="h-16 w-12 rounded-md object-cover" />
-              </span>
+              </button>
             ))}
           </span>
         </>
@@ -659,16 +648,12 @@ function TicketRow({ ticket, onDelete }: { ticket: LocalTicket; onDelete: () => 
       </a>
       {confirming ? (
         <span className="flex shrink-0 items-center gap-1.5">
-          <button type="button" onClick={() => setConfirming(false)} className="rounded-lg px-2 py-1.5 text-xs font-semibold text-ink-2 hover:bg-sunken">
-            Nee
-          </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            className="rounded-lg border-2 border-rose-800 bg-rose-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 dark:border-rose-400"
-          >
-            Verwijder
-          </button>
+          <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
+            Annuleren
+          </Button>
+          <Button size="sm" variant="danger" onClick={onDelete}>
+            Verwijderen
+          </Button>
         </span>
       ) : (
         <button

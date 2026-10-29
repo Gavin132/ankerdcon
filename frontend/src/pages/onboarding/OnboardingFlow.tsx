@@ -150,6 +150,7 @@ export function OnboardingFlow({ me, onFinish, doneLabel, onDone, overlay }: Onb
                 <button
                   type="button"
                   onClick={() => goTo(step - 1)}
+                  aria-label="Vorige stap"
                   className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
                 >
                   <ArrowLeft size={17} />
@@ -159,7 +160,7 @@ export function OnboardingFlow({ me, onFinish, doneLabel, onDone, overlay }: Onb
               {isDoneStep ? (
                 <motion.button
                   type="button"
-                  className="btn-primary h-12 w-full text-sm"
+                  className="btn-primary h-11 w-full text-sm"
                   onClick={onDone}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -198,7 +199,7 @@ export function OnboardingFlow({ me, onFinish, doneLabel, onDone, overlay }: Onb
                   type="button"
                   disabled={submitting}
                   onClick={() => handleFinish(true)}
-                  className="py-1 text-xs text-ink-3 transition-colors hover:text-ink disabled:opacity-50"
+                  className="min-h-11 px-3 py-3 text-xs text-ink-3 transition-colors hover:text-ink disabled:opacity-50"
                 >
                   Sla over voor nu
                 </button>

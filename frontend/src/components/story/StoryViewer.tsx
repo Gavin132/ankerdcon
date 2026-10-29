@@ -154,6 +154,18 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
   // thing opened (a story is state, not a page, so there was nothing for the gesture to step back over).
   useBackClose(open, handleClose);
 
+  // Escape closes it, as it does every other layer over a page.
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      e.stopPropagation(); // a sheet underneath should stay open
+      handleClose();
+    }
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [open, handleClose]);
+
   const next = useCallback(() => {
     // Side effects (flushSeen/onClose) belong here, in the event handler —
     // not inside the setIndex updater, which StrictMode double-invokes in
@@ -246,6 +258,9 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
         // a short one springs back. The tap zones and buttons still work for
         // plain taps (a drag past the threshold cancels the click itself).
         <motion.div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Story"
           className="fixed inset-0 z-[600] flex flex-col"
           style={{ y: dragY, backgroundColor: dragBackground }}
           initial={{ opacity: 0 }}
@@ -288,7 +303,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
               <UserAvatar name={current.uploaded_by} className="h-6 w-6 text-[9px] !border-0" />
               <p className="truncate text-xs font-semibold text-hero-ink">{current.uploaded_by}</p>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               {current.media_type === "video" && (
                 <button
                   type="button"
@@ -306,6 +321,8 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
               <button
                 type="button"
                 onClick={() => handleShare(current.image_url)}
+                aria-label="Delen"
+                title="Delen"
                 className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-white/10 hover:text-hero-ink"
               >
                 <Share2 size={16} />
@@ -324,6 +341,8 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                 type="button"
                 disabled={downloadingId === current.id}
                 onClick={() => handleDownload(current)}
+                aria-label="Foto downloaden"
+                title="Foto downloaden"
                 className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-white/10 hover:text-hero-ink disabled:opacity-50"
               >
                 {downloadingId === current.id ? (
@@ -336,6 +355,8 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                 <button
                   type="button"
                   onClick={() => handleDelete(current.id)}
+                  aria-label="Foto verwijderen"
+                  title="Foto verwijderen"
                   className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-white/10 hover:text-hero-ink"
                 >
                   <Trash2 size={16} />
@@ -344,6 +365,8 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
               <button
                 type="button"
                 onClick={handleClose}
+                aria-label="Sluiten"
+                title="Sluiten"
                 className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-white/10 hover:text-hero-ink"
               >
                 <X size={20} />

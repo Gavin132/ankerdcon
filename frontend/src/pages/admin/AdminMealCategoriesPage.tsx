@@ -42,9 +42,7 @@ function FlagToggle({
       title={flag.hint}
       disabled={disabled}
       onClick={onToggle}
-      className={`rounded-full border-1.5 px-3 py-1 text-[12.5px] font-semibold transition-colors disabled:opacity-50 ${
-        on ? "border-outline bg-brand text-brand-on" : "border-line bg-surface text-ink-3 hover:border-ink-3"
-      }`}
+      className={`chip disabled:opacity-50 ${on ? "chip-on" : "chip-off"}`}
     >
       {flag.label}
     </button>
@@ -143,7 +141,7 @@ export function AdminMealCategoriesPage() {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             className={`${F} flex-1`}
-            placeholder="Nieuwe categorie, bijv. Bowlen…"
+            placeholder="Nieuwe naam"
             maxLength={40}
           />
           <button
@@ -169,30 +167,30 @@ export function AdminMealCategoriesPage() {
           </div>
         ) : categories.length === 0 ? (
           <p className="px-5 py-10 text-center text-sm text-ink-3">
-            Nog geen categorieën. Als dit er al hoort te zijn: draai migration v2.36 eerst.
+            Nog geen categorieën. Voeg de eerste toe.
           </p>
         ) : (
           categories.map((category, index) => (
             <div key={category.id} className="space-y-2.5 px-4 py-3.5">
               <div className="flex items-center gap-2">
-                <div className="flex shrink-0 flex-col">
+                <div className="flex shrink-0 gap-0.5">
                   <button
                     type="button"
                     aria-label={`${category.name} omhoog`}
                     disabled={index === 0 || updateMutation.isPending}
                     onClick={() => move(index, -1)}
-                    className="hit-area flex h-5 w-6 items-center justify-center rounded text-ink-3 hover:bg-sunken hover:text-ink disabled:opacity-30"
+                    className="icon-btn"
                   >
-                    <ArrowUp size={13} />
+                    <ArrowUp size={16} />
                   </button>
                   <button
                     type="button"
                     aria-label={`${category.name} omlaag`}
                     disabled={index === categories.length - 1 || updateMutation.isPending}
                     onClick={() => move(index, 1)}
-                    className="hit-area flex h-5 w-6 items-center justify-center rounded text-ink-3 hover:bg-sunken hover:text-ink disabled:opacity-30"
+                    className="icon-btn"
                   >
-                    <ArrowDown size={13} />
+                    <ArrowDown size={16} />
                   </button>
                 </div>
 
@@ -216,23 +214,25 @@ export function AdminMealCategoriesPage() {
                 </div>
 
                 {editingId === category.id ? (
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     <button
                       type="button"
                       aria-label="Opslaan"
+                      title="Opslaan"
                       onClick={() => saveName(category.id)}
                       disabled={updateMutation.isPending}
-                      className="hit-area flex h-7 w-7 items-center justify-center rounded-lg bg-ink text-paper transition-colors disabled:opacity-50 dark:bg-brand dark:text-brand-on"
+                      className="icon-btn"
                     >
-                      <Check size={13} />
+                      <Check size={16} />
                     </button>
                     <button
                       type="button"
                       aria-label="Annuleren"
+                      title="Annuleren"
                       onClick={() => setEditingId(null)}
-                      className="hit-area flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+                      className="icon-btn"
                     >
-                      <X size={13} />
+                      <X size={16} />
                     </button>
                   </div>
                 ) : (
@@ -251,7 +251,7 @@ export function AdminMealCategoriesPage() {
                 )}
               </div>
 
-              <div className="flex flex-wrap gap-1.5 pl-8" role="group" aria-label={`Wat heeft ${category.name}`}>
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label={`Wat heeft ${category.name}`}>
                 {FLAGS.map((f) => (
                   <FlagToggle
                     key={f.key}

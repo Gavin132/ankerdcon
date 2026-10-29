@@ -91,8 +91,8 @@ function CopyField({ label, value, display }: { label: string; value: string; di
       <button
         type="button"
         onClick={copy}
-        className="inline-flex shrink-0 items-center gap-1 rounded-lg border-1.5 border-line px-2 py-1 text-[12px] font-semibold text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
-        aria-label={`Kopieer ${label.toLowerCase()}`}
+        className="hit-area inline-flex shrink-0 items-center gap-1 rounded-lg border-1.5 border-line px-2 py-1 text-[12px] font-semibold text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
+        aria-label={`${label} kopiëren`}
       >
         {copied ? <Check size={12} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={12} />}
         {copied ? "Gekopieerd" : "Kopiëren"}

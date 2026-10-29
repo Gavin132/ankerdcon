@@ -271,7 +271,8 @@ export function AdminAnnouncementsPage() {
                         <button
                           onClick={() => toggleActive(a)}
                           title={a.active ? "Actief" : "Inactief"}
-                          className={`inline-flex items-center gap-1.5 rounded-full p-1.5 sm:px-2 sm:py-0.5 text-[11.5px] font-semibold transition-colors ${
+                          aria-label={a.active ? "Actief, tik om uit te zetten" : "Inactief, tik om aan te zetten"}
+                          className={`hit-area inline-flex items-center gap-1.5 rounded-full p-1.5 sm:px-2 sm:py-0.5 text-[11.5px] font-semibold transition-colors ${
                             a.active
                               ? "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/25"
                               : "bg-sunken text-ink-2 hover:text-ink"

@@ -26,9 +26,10 @@ export function AdminSearch({
       {value && (
         <button
           onClick={() => onChange("")}
-          className="hit-area absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded text-ink-3 transition-colors hover:text-ink"
+          aria-label="Zoekopdracht wissen"
+          className="hit-area absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-ink-3 transition-colors hover:text-ink"
         >
-          <X size={12} />
+          <X size={14} />
         </button>
       )}
     </div>

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Search, X, CalendarDays, Car, Utensils, Sparkles, Users, Zap, MapPin, BedDouble, Camera, Wallet } from "lucide-react";
@@ -195,6 +195,17 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
     return out.filter((g) => g.rows.length > 0);
   }, [query, events, rides, meals, cosplays, users]);
 
+  // Give focus back to what opened the search when it closes. The opener is read while rendering the opening:
+  // by the time an effect runs, the search box has already taken the focus.
+  const openerRef = useRef<HTMLElement | null>(null);
+  const wasOpen = useRef(false);
+  if (open && !wasOpen.current) openerRef.current = document.activeElement as HTMLElement | null;
+  wasOpen.current = open;
+  useEffect(() => {
+    if (!open) return;
+    return () => openerRef.current?.focus?.();
+  }, [open]);
+
   function go(to: string, state?: RouteActionState) {
     setQuery("");
     onClose();
@@ -213,7 +224,14 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
 
   // In a portal: the header is a stacking context of its own, which would keep this under the tab bar.
   return createPortal(
-    <div className="fixed inset-0 z-[450] flex flex-col bg-paper" style={{ paddingTop: "env(safe-area-inset-top,0px)" }}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Zoeken"
+      onKeyDown={(e) => { if (e.key === "Escape") handleClose(); }}
+      className="fixed inset-0 z-[450] flex flex-col bg-paper"
+      style={{ paddingTop: "env(safe-area-inset-top,0px)" }}
+    >
       <div className="flex shrink-0 items-center gap-2 border-b-1.5 border-line px-4 py-3">
         <Search size={16} className="shrink-0 text-ink-3" />
         <input
@@ -228,7 +246,7 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Zoek in de app…"
-          className="min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-ink-3"
+          className="h-11 min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-ink-3"
         />
         <button
           type="button"

@@ -39,16 +39,16 @@ export function AccountMenu({ variant = "avatar" }: AccountMenuProps) {
   // Close on outside click and Escape
   useEffect(() => {
     if (!open) return;
-    function handleClick(e: MouseEvent) {
+    function handleClick(e: PointerEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpen(false);
     }
     function handleKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
     }
-    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("pointerdown", handleClick);
     document.addEventListener("keydown", handleKey);
     return () => {
-      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("pointerdown", handleClick);
       document.removeEventListener("keydown", handleKey);
     };
   }, [open]);
@@ -89,7 +89,7 @@ export function AccountMenu({ variant = "avatar" }: AccountMenuProps) {
   }
 
   const itemClass =
-    "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-[13px] font-medium text-ink-2 hover:bg-sunken hover:text-ink transition-colors";
+    "flex min-h-11 w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-[13px] font-medium text-ink-2 hover:bg-sunken hover:text-ink transition-colors";
 
   return (
     <div className={`relative ${variant === "row" ? "w-full" : ""}`} ref={menuRef}>
@@ -98,6 +98,7 @@ export function AccountMenu({ variant = "avatar" }: AccountMenuProps) {
           onClick={() => setOpen((v) => !v)}
           className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left hover:bg-sunken transition-colors"
           aria-label="Accountmenu"
+          aria-haspopup="menu"
           aria-expanded={open}
         >
           {avatar("h-8 w-8 text-[12px]")}
@@ -112,6 +113,7 @@ export function AccountMenu({ variant = "avatar" }: AccountMenuProps) {
           onClick={() => setOpen((v) => !v)}
           className="hit-area flex rounded-full transition-opacity hover:opacity-80"
           aria-label="Accountmenu"
+          aria-haspopup="menu"
           aria-expanded={open}
         >
           {avatar("h-8 w-8 text-[12px]")}
@@ -122,6 +124,8 @@ export function AccountMenu({ variant = "avatar" }: AccountMenuProps) {
         {open && (
           <motion.div
             key="account-menu"
+            role="menu"
+            aria-label="Accountmenu"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -133,7 +137,7 @@ export function AccountMenu({ variant = "avatar" }: AccountMenuProps) {
             {/* Banner + avatar header */}
             <div className="relative">
               <div
-                className="h-20 w-full"
+                className="h-14 w-full"
                 style={
                   me?.banner_url
                     ? { backgroundImage: `url(${me.banner_url})`, backgroundSize: "cover", backgroundPosition: "center" }
@@ -157,20 +161,20 @@ export function AccountMenu({ variant = "avatar" }: AccountMenuProps) {
             </div>
 
             <div className="p-1.5">
-              <button onClick={() => go(routes.profile.view(currentUser))} className={itemClass}>
+              <button role="menuitem" onClick={() => go(routes.profile.view(currentUser))} className={itemClass}>
                 <User size={14} className="shrink-0 text-ink-3" />
                 Mijn profiel
               </button>
-              <button onClick={() => go(routes.settings)} className={itemClass}>
+              <button role="menuitem" onClick={() => go(routes.settings)} className={itemClass}>
                 <Settings size={14} className="shrink-0 text-ink-3" />
                 Instellingen
               </button>
-              <button onClick={() => go(routes.changelog)} className={itemClass}>
+              <button role="menuitem" onClick={() => go(routes.changelog)} className={itemClass}>
                 <Sparkles size={14} className="shrink-0 text-ink-3" />
                 Wat is nieuw
               </button>
               {me?.is_admin && (
-                <button onClick={() => go(routes.admin.base)} className={itemClass}>
+                <button role="menuitem" onClick={() => go(routes.admin.base)} className={itemClass}>
                   <Shield size={14} className="shrink-0 text-brand-text" />
                   Beheer
                 </button>
@@ -179,8 +183,9 @@ export function AccountMenu({ variant = "avatar" }: AccountMenuProps) {
               <div className="mx-1 my-1 h-px bg-line" />
 
               <button
+                role="menuitem"
                 onClick={handleLogout}
-                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-[13px] font-medium text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10 transition-colors"
+                className="flex min-h-11 w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-[13px] font-medium text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10 transition-colors"
               >
                 <LogOut size={14} className="shrink-0" />
                 Uitloggen

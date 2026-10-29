@@ -403,22 +403,24 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
 
         {/* Admin action buttons */}
         {isAdmin && (
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
               onClick={() => onEdit(room)}
-              className="hit-area flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+              className="hit-area flex h-9 w-9 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
               title="Bewerken"
+              aria-label={`Kamer ${room.room_number ?? ""} bewerken`.replace("  ", " ")}
             >
-              <Pencil size={13} />
+              <Pencil size={16} />
             </button>
             <button
               type="button"
               onClick={() => onDelete(room)}
-              className="hit-area flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
+              className="hit-area flex h-9 w-9 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
               title="Verwijderen"
+              aria-label={`Kamer ${room.room_number ?? ""} verwijderen`.replace("  ", " ")}
             >
-              <Trash2 size={13} />
+              <Trash2 size={16} />
             </button>
           </div>
         )}
@@ -563,23 +565,20 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
     <div className="flex items-center gap-3">
       <AlertCircle size={16} className="shrink-0 text-rose-600 dark:text-rose-400" />
       <p className="flex-1 text-sm font-semibold text-ink">Kamer verwijderen?</p>
-      <button
-        type="button"
-        onClick={() => setConfirmDeleteId(null)}
-        className="rounded-xl px-3 py-1.5 text-xs font-semibold text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
-      >
+      <Button size="sm" variant="ghost" onClick={() => setConfirmDeleteId(null)}>
         Annuleren
-      </button>
-      <button
+      </Button>
+      <Button
+        size="sm"
+        variant="danger"
+        loading={deleteRoom.isPending}
         onClick={() => {
           const room = rooms.find((r) => r.id === confirmDeleteId);
           if (room) handleDelete(room);
         }}
-        disabled={deleteRoom.isPending}
-        className="rounded-xl border-2 border-rose-800 bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors disabled:opacity-50 dark:border-rose-400"
       >
-        {deleteRoom.isPending ? "Bezig…" : "Verwijderen"}
-      </button>
+        Verwijderen
+      </Button>
     </div>
   ) : undefined;
 

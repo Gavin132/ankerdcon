@@ -176,7 +176,7 @@ export function RecapView({ trips, myNames, users, rides, meals, onJoin, onLeave
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {!isCurrentMonth && (
-            <button type="button" onClick={() => goToMonth(now.getFullYear(), now.getMonth())} className="flex h-9 items-center gap-1.5 rounded-[9px] border-1.5 border-line bg-surface px-3 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3">
+            <button type="button" onClick={() => goToMonth(now.getFullYear(), now.getMonth())} className="hit-area flex h-9 items-center gap-1.5 rounded-[9px] border-1.5 border-line bg-surface px-3 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3">
               <Undo2 size={14} />
               Vandaag
             </button>
@@ -188,7 +188,7 @@ export function RecapView({ trips, myNames, users, rides, meals, onJoin, onLeave
                 type="button"
                 onClick={() => { setMineOnly(mine); if (mine && selectedTrip && !isMine(selectedTrip)) setSelection(null); }}
                 aria-pressed={mineOnly === mine}
-                className={`rounded-[7px] px-2.5 py-1 text-[13px] font-semibold transition-colors ${
+                className={`hit-area min-h-9 rounded-[7px] px-3 py-1 text-[13px] font-semibold transition-colors ${
                   mineOnly === mine ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]" : "text-ink-2 hover:text-ink"
                 }`}
               >
@@ -456,7 +456,7 @@ function EmptyDay({ dayKey, today, onClose }: { dayKey: string; today: string; o
     <div className="card-surface flex flex-col gap-1.5 p-4">
       <div className="flex items-baseline justify-between gap-2">
         <p className="section-label">{relative}</p>
-        <button type="button" onClick={onClose} className="section-label !text-brand-text hover:underline">Sluiten</button>
+        <button type="button" onClick={onClose} className="hit-area text-[12.5px] font-semibold text-brand-text hover:underline">Sluiten</button>
       </div>
       <h3 className="font-display text-[26px] font-extrabold uppercase leading-none text-ink">
         {WEEKDAYS[date.getDay()]} {date.getDate()} {MONTHS[date.getMonth()]}

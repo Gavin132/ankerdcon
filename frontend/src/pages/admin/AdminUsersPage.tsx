@@ -349,7 +349,8 @@ function UserEditDrawer({
                     <button
                       type="button"
                       onClick={() => setAliases(aliases.filter((x) => x !== a))}
-                      className="text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                      aria-label={`Alias ${a} verwijderen`}
+                      className="hit-area -mr-1 p-1 text-ink-3 hover:text-bad transition-colors"
                     >
                       <X size={11} />
                     </button>
@@ -606,6 +607,7 @@ export function AdminUsersPage() {
                               onClick={() => handleCopyDiscordId(user.discord_id!, user.id!)}
                               className="hit-area opacity-0 group-hover:opacity-100 flex h-6 w-6 items-center justify-center rounded-md text-ink-3 hover:bg-sunken hover:text-ink transition-all"
                               title="Discord ID kopiëren"
+                              aria-label="Discord ID kopiëren"
                             >
                               {copiedId === user.id ? (
                                 <Check size={11} className="text-emerald-600 dark:text-emerald-400" />
@@ -683,7 +685,8 @@ export function AdminUsersPage() {
                               }
                               disabled={updateMutation.isPending}
                               title={isActive ? "Deactiveren" : "Activeren"}
-                              className={`hit-area flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg transition-colors disabled:opacity-40 ${
+                              aria-label={isActive ? "Deactiveren" : "Activeren"}
+                              className={`hit-area flex h-9 w-9 items-center justify-center rounded-lg transition-colors disabled:opacity-40 ${
                                 isActive
                                   ? "text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-500/15"
                                   : "text-emerald-700 hover:bg-emerald-100 dark:text-emerald-300 dark:hover:bg-emerald-500/15"

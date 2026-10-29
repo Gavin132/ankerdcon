@@ -45,9 +45,9 @@ export function TripLayout() {
       return <Navigate to={routes.trip.view(dayEvent.multi_day_id, activeTab, dayEvent.id)} replace />;
     }
     return (
-      <div className="flex flex-col items-center gap-3 py-20 text-center text-slate-400">
+      <div className="flex flex-col items-center gap-3 py-20 text-center text-ink-3">
         <CalendarDays size={40} className="opacity-30" />
-        <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Evenement niet gevonden</p>
+        <p className="text-sm font-semibold text-ink-2">Evenement niet gevonden</p>
         <Link to={routes.calendar} className="text-xs font-semibold text-brand-text hover:underline">
           Bekijk de agenda
         </Link>

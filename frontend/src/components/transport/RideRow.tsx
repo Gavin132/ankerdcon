@@ -312,31 +312,18 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
                         </p>
                       )}
                       <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setConfirmDelete(false)}
-                          className="h-8 rounded-lg px-2 text-xs font-semibold text-ink-2 hover:text-ink"
-                        >
+                        <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)}>
                           Annuleren
-                        </button>
-                        <button
-                          type="button"
-                          disabled={deleteMutation.isPending}
-                          onClick={handleDelete}
-                          className="flex h-8 items-center gap-1 rounded-lg bg-rose-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-rose-700 disabled:opacity-60"
-                        >
+                        </Button>
+                        <Button size="sm" variant="danger" loading={deleteMutation.isPending} onClick={handleDelete}>
                           <Trash2 size={13} /> Zeker weten?
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDelete(true)}
-                      className="flex h-8 items-center gap-1 rounded-lg border-1.5 border-line px-3 text-xs font-semibold text-ink-2 transition-colors hover:border-rose-300 hover:text-rose-600 dark:hover:border-rose-500/40 dark:hover:text-rose-400"
-                    >
+                    <Button size="sm" variant="secondary" onClick={() => setConfirmDelete(true)}>
                       <Trash2 size={13} /> Rit verwijderen
-                    </button>
+                    </Button>
                   )}
                 </div>
               )}

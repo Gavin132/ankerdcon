@@ -146,7 +146,9 @@ function ColorPicker({
       <button
         type="button"
         onClick={() => onChange("")}
-        className={`hit-area flex h-7 w-7 items-center justify-center rounded-full border-1.5 border-line bg-sunken ring-2 ring-offset-2 ring-offset-surface transition-shadow ${
+        aria-pressed={value === ""}
+        aria-label="Automatische kleur"
+        className={`hit-area flex h-9 w-9 items-center justify-center rounded-full border-1.5 border-line bg-sunken ring-2 ring-offset-2 ring-offset-surface transition-shadow ${
           value === "" ? "ring-outline" : "ring-transparent hover:ring-line"
         }`}
         title="Automatisch"
@@ -159,7 +161,9 @@ function ColorPicker({
           key={c}
           type="button"
           onClick={() => onChange(value === c ? "" : c)}
-          className={`hit-area flex h-7 w-7 items-center justify-center rounded-full ring-2 ring-offset-2 ring-offset-surface transition-shadow ${
+          aria-pressed={value === c}
+          aria-label={`Kleur ${c}`}
+          className={`hit-area flex h-9 w-9 items-center justify-center rounded-full ring-2 ring-offset-2 ring-offset-surface transition-shadow ${
             value === c ? "ring-outline" : "ring-transparent hover:ring-line"
           }`}
           style={{ backgroundColor: c }}
@@ -169,15 +173,16 @@ function ColorPicker({
         </button>
       ))}
 
-      <div className="relative h-7 w-7">
+      <div className="relative h-9 w-9">
         <input
           type="color"
           value={value || fallback}
           onChange={(e) => onChange(e.target.value)}
+          aria-label="Aangepaste kleur"
           className="absolute inset-0 z-10 h-full w-full cursor-pointer rounded-full opacity-0"
           title="Aangepaste kleur"
         />
-        <div className="flex h-7 w-7 items-center justify-center rounded-full border-1.5 border-dashed border-ink-3 bg-surface text-ink-2">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full border-1.5 border-dashed border-ink-3 bg-surface text-ink-2">
           <Plus size={13} />
         </div>
       </div>
@@ -939,6 +944,7 @@ export function ProfilePage() {
                 <button
                   type="button"
                   disabled={!aliasInput.trim() || draftAliases.includes(aliasInput.trim()) || draftAliases.length >= 10}
+                  aria-label="Alias toevoegen"
                   onClick={() => {
                     const trimmed = aliasInput.trim();
                     if (trimmed && !draftAliases.includes(trimmed) && draftAliases.length < 10) {
@@ -962,7 +968,8 @@ export function ProfilePage() {
                       <button
                         type="button"
                         onClick={() => setDraftAliases(draftAliases.filter((a) => a !== alias))}
-                        className="text-ink-3 transition-colors hover:text-rose-600 dark:hover:text-rose-400"
+                        aria-label={`Alias ${alias} verwijderen`}
+                        className="hit-area -mr-1 p-1 text-ink-3 transition-colors hover:text-bad"
                       >
                         <X size={11} />
                       </button>

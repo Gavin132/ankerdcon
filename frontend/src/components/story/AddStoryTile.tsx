@@ -38,6 +38,7 @@ export function AddStoryTile({ eventDayId }: AddStoryTileProps) {
         type="button"
         disabled={busy}
         onClick={handleClick}
+        aria-label="Foto's of video's toevoegen aan de story"
         className="relative flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-ink-3/60 transition-colors hover:border-ink-3 disabled:cursor-not-allowed"
       >
         {busy ? (
@@ -65,7 +66,7 @@ export function AddStoryTile({ eventDayId }: AddStoryTileProps) {
           ? `${Math.round(picker.progress.fraction * 100)}%`
           : picker.progress && picker.progress.total > 1
             ? `${picker.progress.done}/${picker.progress.total}`
-            : "Nieuw"}
+            : "Toevoegen"}
       </span>
     </div>
   );
