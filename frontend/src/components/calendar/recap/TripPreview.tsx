@@ -55,7 +55,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
 
       <div className="flex flex-col gap-3.5 p-4">
         <div>
-          <p className="font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-ink">
+          <p className="font-mono text-xs font-semibold text-ink">
             {trip.dateRange}{" "}
             <span className="font-normal text-ink-3">
               · {daysUntil <= 0 ? "nu bezig" : daysUntil === 1 ? "morgen" : `over ${daysUntil} dagen`}
@@ -83,7 +83,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
                   ev.has_con === false ? "bg-hatch-surface" : "bg-surface"
                 }`}
               >
-                <span className="block font-mono text-[12px] uppercase leading-none tracking-[0.06em] text-ink-3">
+                <span className="block font-mono text-xs leading-none text-ink-3">
                   {dayShort(date)} {monthShort(date)}
                 </span>
                 <span className="block font-display text-[22px] font-extrabold leading-none text-ink">{date.getDate()}</span>

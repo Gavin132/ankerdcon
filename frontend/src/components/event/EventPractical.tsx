@@ -59,7 +59,7 @@ export function EventPractical({
             /* Special instructions — amber accent row */
             <div key={i} className={bare ? "py-3.5" : ""}>
               <div className={`${bare ? "notice-warn px-4 py-3" : "bg-warn-soft px-5 py-4"}`}>
-                <p className="mb-1 font-mono text-[12px] font-semibold uppercase tracking-[0.09em] text-warn">
+                <p className="section-label mb-1 text-warn">
                   {row.label}
                 </p>
                 <p className="whitespace-pre-line text-sm font-medium leading-relaxed text-warn">

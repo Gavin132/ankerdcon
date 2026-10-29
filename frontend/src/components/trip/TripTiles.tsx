@@ -232,7 +232,7 @@ export function FoodTile({ trip, phase, meals, myNames, wide }: { trip: Trip; ph
                 to={routes.meal.view(m.id)}
                 className="grid grid-cols-[62px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg px-1.5 py-1.5 text-[12.5px] transition-colors hover:bg-sunken"
               >
-                <span className="pt-px font-mono text-[12px] uppercase text-ink-3">{dayTime(m.time)}</span>
+                <span className="pt-px font-mono text-xs text-ink-3">{dayTime(m.time)}</span>
                 <span className="min-w-0">
                   <span className="block truncate font-semibold text-ink">{m.meal_name}</span>
                   <span className="block text-ink-3">

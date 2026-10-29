@@ -913,7 +913,7 @@ export function ProfilePage() {
                         Aa
                       </span>
                       <span
-                        className={`font-mono text-[12px] uppercase tracking-[0.05em] ${isActive ? "text-ink" : "text-ink-3"}`}
+                        className={`font-mono text-xs ${isActive ? "text-ink" : "text-ink-3"}`}
                       >
                         {label}
                       </span>

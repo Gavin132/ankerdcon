@@ -325,7 +325,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                             {birthYear}
                           </motion.span>
                         </AnimatePresence>
-                        <span className="mt-1 font-mono text-[12px] uppercase tracking-[0.08em] text-ink-3">
+                        <span className="mt-1 font-mono text-xs text-ink-3">
                           {new Date().getFullYear() - birthYear} jaar oud
                         </span>
                       </div>
@@ -364,7 +364,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                       onKeyDown={e => { if (e.key === "Enter") { commitYearInput(); (e.target as HTMLInputElement).blur(); } }}
                       className="w-36 bg-transparent text-center font-display text-[56px] font-extrabold leading-none tabular-nums text-ink focus:outline-none"
                     />
-                    <span className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink-3">
+                    <span className="font-mono text-xs text-ink-3">
                       {new Date().getFullYear() - birthYear} jaar oud · {YEAR_MIN}–{YEAR_MAX}
                     </span>
                   </div>

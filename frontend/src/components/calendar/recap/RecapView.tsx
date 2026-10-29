@@ -213,7 +213,7 @@ export function RecapView({ trips, myNames, users, rides, meals, onJoin, onLeave
                     aria-current={active}
                     title={isNow ? "Deze maand" : undefined}
                     aria-label={`${MONTHS[sm]} ${year}${isNow ? " (deze maand)" : ""}, ${starts.length} ${starts.length === 1 ? "evenement" : "evenementen"}`}
-                    className={`flex w-[44px] shrink-0 flex-col items-center gap-1 rounded-lg border-1.5 px-0.5 pb-1.5 pt-1.5 font-mono text-[12px] uppercase transition-colors ${
+                    className={`flex w-[44px] shrink-0 flex-col items-center gap-1 rounded-lg border-1.5 px-0.5 pb-1.5 pt-1.5 font-mono text-xs transition-colors ${
                       active ? "border-outline bg-surface text-ink" : "border-transparent hover:bg-surface"
                     } ${isNow ? "font-semibold text-ink" : active ? "" : "text-ink-3"}`}
                   >
@@ -243,7 +243,7 @@ export function RecapView({ trips, myNames, users, rides, meals, onJoin, onLeave
         <div className="overflow-hidden rounded-xl border-1.5 border-line bg-surface">
           <div className="grid grid-cols-7 border-b-1.5 border-line">
             {DAY_LABELS.map((d) => (
-              <span key={d} className="py-1.5 text-center font-mono text-[12px] uppercase tracking-[0.08em] text-ink-3">{d}</span>
+              <span key={d} className="label-quiet py-1.5 text-center">{d}</span>
             ))}
           </div>
           <div className="divide-y divide-line">
@@ -498,7 +498,7 @@ function MonthOverview({ title, trips, lastYear, lastYearLabel, storySummary, is
                 </span>
                 <span className="min-w-0">
                   <span className="block truncate text-[14px] font-semibold text-ink">{t.title}</span>
-                  <span className="block truncate font-mono text-[12px] uppercase text-ink-3">{t.dateRange}</span>
+                  <span className="block truncate font-mono text-xs text-ink-3">{t.dateRange}</span>
                 </span>
                 <span
                   className={`inline-flex h-[22px] items-center gap-1 whitespace-nowrap rounded-full px-2 text-[12px] font-semibold ${

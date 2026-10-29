@@ -35,6 +35,12 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **Dates and counts are written like a sentence, labels in capitals.** The date of an event on the ticket, in the
+  recap and in the sidebar, the day tiles of the recap, the date of a meal, the opening line of the login page and
+  the sentences on the splash and onboarding screens no longer shout in capitals; capitals are kept for the labels
+  that name a group or a field ("Van", "Naar", "Chauffeur", the table headers) and for tags and chips.
+- **Nothing is smaller than 12 px any more**: the counters on the filters of the cosplay page and the warning badge of
+  the admin panel are bigger, and the tab bar keeps its 12 px labels on the narrowest phones.
 - **Colours are the same everywhere, in light and in dark mode.** Warnings, errors, "ok" messages, the red delete
   buttons, the coloured banners, the chips on the dark headers and the initials of members without a photo now use one
   shared set of colours instead of being coloured one by one, so a screen can no longer look different in dark mode

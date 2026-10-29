@@ -83,7 +83,7 @@ export function TripPlanList({ trip, rides, meals, dayKey, past }: TripPlanListP
         return (
           <li key={item.id}>
             {showDay && !isNaN(date.getTime()) && (
-              <p className="pt-2 font-mono text-[12px] uppercase tracking-[0.06em] text-ink-3">
+              <p className="pt-2 font-mono text-xs font-semibold text-ink-3">
                 {DAYS[date.getDay()]} {date.getDate()} {MONTHS[date.getMonth()]}
               </p>
             )}

@@ -229,7 +229,7 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
               <p className="mt-1.5 text-xs text-ink-3">Maak in je bank-app een betaalverzoek van {formatAmount(amount, currency)} (Tikkie, bunq, PayPal, Revolut, Klarna, ING, Rabo, ABN AMRO, SNS, ASN, RegioBank, Knab) en plak de link hier.</p>
             )}
           </div>
-          <div className="flex items-center gap-3 text-[12px] font-semibold uppercase tracking-wide text-ink-3">
+          <div className="flex items-center gap-3 text-xs font-semibold text-ink-3">
             <span className="h-px flex-1 bg-line" /> of <span className="h-px flex-1 bg-line" />
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

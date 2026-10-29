@@ -138,11 +138,14 @@ Two typefaces, loaded from Google Fonts in `index.html`: **Poppins** for everyth
 | `font-display font-extrabold uppercase leading-[0.95]` | Big Shoulders Display | page and hero titles, event names, big numbers (countdowns, room numbers, day numbers). 34–42px page titles, 22–26px section/card titles. |
 | `font-sans` (default) | Poppins | all UI and body text. Headings inside cards: `font-semibold`. Avoid `font-black` on Poppins (it is mapped one step lighter). |
 | `font-mono` | **Poppins** | times, dates, amounts (`tabular-nums`), and small labels. The class name is kept from when this was a monospaced face; it now only says "this is a label or a figure". |
-| `section-label` | Poppins, small, uppercase, tracked | the label above a group ("Voor jou") |
+| `section-label` | Poppins 12px semibold, uppercase, tracked | the label above a group ("Voor jou") |
+| `label-quiet` | Poppins 12px medium, uppercase, tracked less | a kicker above a title, a table header (`th`), the column heads of a calendar |
 
 Small **subtext under a title or on a card** (a hint, a status line, "Naar hotel · nu") is
-plain Poppins in the text's own capitalisation: no `uppercase`, no letter-spacing. Reserve
-uppercase labels for `section-label`, `label-quiet` kickers, chips and tags.
+plain Poppins in the text's own capitalisation: no `uppercase`, no letter-spacing. **Uppercase mono exists in exactly
+four forms:** `.section-label`, `.label-quiet`, `.tag` and a chip (`.chip`, `HeroChip`, `.pill`'s cousins). Nothing
+writes `uppercase tracking-[…]` by hand; if a line of text is not one of the four, it is sentence case. The display
+face's `uppercase` (titles, big numbers) is a different thing.
 
 **Data is sentence case, labels are uppercase.** A date, a count or a name that is *content* ("di 17 · do 19 nov",
 "Di" above a day number, the date line of a cosplay, "1 van 2 bezet") is written the way you would say it. Only a
@@ -233,7 +236,7 @@ Page head pattern (see `TripLayout`, `HubPage`):
 - **Tables (admin):** the class strings in `pages/admin/styles.ts`: `TH` (header cell, `th`: 12 px `label-quiet`), `TD` (cell, `px-5 py-3.5`; the `<tbody>` carries `divide-y divide-line`), `TR` / `TR_SELECTED` (row, hover or the tinted ticked row), `TAG`, `PILL_*`. Amounts are right-aligned `font-mono tabular-nums`. The checkbox of a row is `RowCheckbox` (16 px to look at, 44 px to hit). The actions for the selected rows (`AdminBulkBar`) are a strip in the page right above the table, never a bar floating over it. The edit and delete buttons at the end of a row are `DeleteConfirmActions` (`icon-btn`s, 44 px pitch; pass `editLabel` / `deleteLabel` naming the row); "delete" turns into `ConfirmInline` in place.
 - **A table on a phone is two lines per row** (`.stack-table`): the name (`cell-main`) and the buttons (`cell-actions`) on the first line, and *one* line of facts under the name (date, place, price) that is `sm:hidden`. Every other column is `hidden sm:table-cell`, header included. Never leave several columns visible on a phone: the name cell is `flex: 1 1 0`, so it is squeezed to a few letters by whatever else is in the row. Show a pill only for what is not normal (a plain member has no pill, Gebruikers shows Admin, Kijker, Inactief).
 - **A block of fields in an admin sheet** is `AdminSection` (`pages/admin/components/AdminSection.tsx`, `SECTION` in `styles.ts`): a `section-label` title and the fields, a divider between blocks, no card inside the sheet. `collapsible` folds a rarely used block behind its title (`<details>`; Evenement: "Tickets & links" and "Praktische info" start closed for an existing event). Yes/no fields in a sheet are `ToggleRow` (a `Switch`), not a checkbox; a checkbox that has to stay (the "Con" of a day) is a `CHECK_ROW` line, 44 px tall. The footer is `DrawerFooter` (`submitLabel`, `disabled`): the main button says "Opslaan" for an edit and "Toevoegen" for a new one; "Plaatsen" only when the text goes live (an announcement or changelog item).
-- **Quiet uppercase label:** `label-quiet` (12px, medium weight) for the kicker above a title and for table headers; `section-label` (semibold) for the label above a group.
+- **Quiet uppercase label:** `label-quiet` (12px, medium weight) for the kicker above a title and for table headers; `section-label` (semibold) for the label above a group. Put the colour next to it when the surface is not the page (`label-quiet text-hero-ink/70` on the hero, `section-label text-warn` in a warning).
 - **Motion:** fades and height transitions are fine; no bouncy springs on content, no hover movement.
 
 ## Touch (phones)

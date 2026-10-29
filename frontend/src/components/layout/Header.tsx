@@ -42,7 +42,7 @@ export function Header() {
           {/* The Hub has its own heading (the greeting), so there the bar's title is not a second h1. */}
           {pathname === "/" ? <p className={TITLE_CLASS}>{meta.title}</p> : <h1 className={TITLE_CLASS}>{meta.title}</h1>}
           {meta.subtitle && (
-            <p className="hidden truncate font-mono text-[12px] uppercase tracking-[0.08em] text-ink-3 sm:block">
+            <p className="hidden truncate font-mono text-xs text-ink-3 sm:block">
               {meta.subtitle}
             </p>
           )}

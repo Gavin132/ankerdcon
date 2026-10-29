@@ -128,14 +128,14 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
           <div className="grid grid-cols-[12px_minmax(0,1fr)] gap-x-3">
             <i aria-hidden className="mt-[5px] block h-[11px] w-[11px] rounded-full border-2 border-hero-ink" />
             <div className="min-w-0">
-              <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-hero-ink/70">Van</p>
+              <p className="label-quiet text-hero-ink/70">Van</p>
               <p className="truncate text-[15px] font-semibold text-hero-ink/90">{fromLabel}</p>
             </div>
             <i aria-hidden className="ml-[4.5px] my-1 block h-4 w-0.5 bg-hero-ink/25" />
             <span aria-hidden />
             <i aria-hidden className="mt-[5px] block h-[11px] w-[11px] rounded-full border-2 border-hero-ink bg-hero-ink" />
             <div className="min-w-0">
-              <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-hero-ink/70">Naar</p>
+              <p className="label-quiet text-hero-ink/70">Naar</p>
               <h1
                 className={`line-clamp-3 break-words font-display font-extrabold uppercase leading-[0.95] tracking-[0.005em] sm:line-clamp-none ${
                   toIsPlaceholder ? "text-[26px] text-hero-ink/70 sm:text-[30px]" : "text-[30px] text-hero-ink sm:text-[42px]"
@@ -156,7 +156,7 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
               className="h-9 w-9 text-xs !border-hero"
             />
             <div className="leading-tight">
-              <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-hero-ink/70">Chauffeur</p>
+              <p className="label-quiet text-hero-ink/70">Chauffeur</p>
               <p className="text-sm font-semibold text-hero-ink">{ride.driver}</p>
             </div>
           </div>

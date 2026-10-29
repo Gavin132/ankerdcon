@@ -107,7 +107,7 @@ export function OnboardingFlow({ me, onFinish, doneLabel, onDone, overlay }: Onb
         <div className="relative z-10 px-5 pt-5 pb-2">
           <div className="mx-auto max-w-sm">
             <div className="mb-2 flex items-center justify-between">
-              <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.09em] text-ink-3">
+              <span className="section-label">
                 Stap {step} van {TOTAL_STEPS - 1}
               </span>
             </div>

@@ -80,7 +80,7 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
 
       {/* ── Body ── */}
       <div className="flex min-w-0 flex-col gap-3.5 p-4 sm:p-5 md:px-6">
-        <p className="font-mono text-[12px] font-semibold uppercase tracking-[0.06em] text-ink">
+        <p className="font-mono text-xs font-semibold text-ink">
           {when} <span className="font-normal text-ink-3">· {summary}</span>
         </p>
 
