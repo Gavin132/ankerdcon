@@ -225,16 +225,16 @@ export function AdminCdnPage() {
                   {isVideo(o.key) ? (
                     <>
                       <VideoThumb url={o.url} />
-                      <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white">
+                      <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-scrim/60 text-hero-ink">
                         <Play size={12} fill="currentColor" />
                       </span>
                     </>
                   ) : (
                     <img src={o.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                   )}
-                  <span className="absolute inset-x-0 bottom-0 bg-black/60 px-2 py-1.5 text-xs font-semibold leading-tight text-white">
+                  <span className="absolute inset-x-0 bottom-0 bg-scrim/60 px-2 py-1.5 text-xs font-semibold leading-tight text-hero-ink">
                     <span className="block truncate">{o.owner ?? KIND_LABEL[o.kind] ?? o.kind}</span>
-                    <span className="block truncate font-normal text-white/70">{formatBytes(o.size)}</span>
+                    <span className="block truncate font-normal text-hero-ink/70">{formatBytes(o.size)}</span>
                   </span>
                 </button>
               ))}
@@ -323,25 +323,25 @@ function Viewer({ item, position, onClose, onPrev, onNext, onDelete }: { item: C
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose, onPrev, onNext]);
 
-  const arrow = "absolute top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20";
+  const arrow = "absolute top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-hero-ink/10 text-hero-ink transition-colors hover:bg-hero-ink/20";
   return createPortal(
-    <div className="fixed inset-0 z-[500] flex flex-col bg-black/95" onClick={onClose} role="dialog" aria-modal="true" aria-label="Bestand">
-      <div className="flex shrink-0 items-start justify-between gap-3 px-4 py-3 text-white" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[500] flex flex-col bg-scrim/95" onClick={onClose} role="dialog" aria-modal="true" aria-label="Bestand">
+      <div className="flex shrink-0 items-start justify-between gap-3 px-4 py-3 text-hero-ink" onClick={(e) => e.stopPropagation()}>
         <div className="min-w-0 text-sm">
           <p className="truncate font-semibold">{item.owner ?? "Onbekende uploader"} · {KIND_LABEL[item.kind] ?? item.kind}</p>
-          <p className="truncate font-mono text-xs text-white/60">{item.key}</p>
-          <p className="text-xs text-white/60">
+          <p className="truncate font-mono text-xs text-hero-ink/60">{item.key}</p>
+          <p className="text-xs text-hero-ink/60">
             {formatBytes(item.size)} · {item.last_modified ? formatDateTime(item.last_modified) : "onbekende datum"} · {position}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button type="button" onClick={() => void askDelete()} disabled={deleting} aria-label="Verwijderen" title="Verwijderen" className="hit-area flex h-9 w-9 items-center justify-center rounded-full bg-white/10 hover:bg-rose-600 disabled:opacity-50">
+          <button type="button" onClick={() => void askDelete()} disabled={deleting} aria-label="Verwijderen" title="Verwijderen" className="hit-area flex h-9 w-9 items-center justify-center rounded-full bg-hero-ink/10 hover:bg-bad-fill disabled:opacity-50">
             <Trash2 size={16} />
           </button>
-          <a href={item.url} target="_blank" rel="noopener noreferrer" aria-label="Open in nieuw tabblad" className="hit-area flex h-9 w-9 items-center justify-center rounded-full bg-white/10 hover:bg-white/20">
+          <a href={item.url} target="_blank" rel="noopener noreferrer" aria-label="Open in nieuw tabblad" className="hit-area flex h-9 w-9 items-center justify-center rounded-full bg-hero-ink/10 hover:bg-hero-ink/20">
             <ExternalLink size={16} />
           </a>
-          <button type="button" onClick={onClose} aria-label="Sluiten" className="hit-area flex h-9 w-9 items-center justify-center rounded-full bg-white/10 hover:bg-white/20">
+          <button type="button" onClick={onClose} aria-label="Sluiten" className="hit-area flex h-9 w-9 items-center justify-center rounded-full bg-hero-ink/10 hover:bg-hero-ink/20">
             <X size={18} />
           </button>
         </div>

@@ -571,7 +571,7 @@ export function EventEditDrawer({
                   type="button"
                   onClick={() => setValue("image_url", "", { shouldValidate: true })}
                   aria-label="Afbeelding verwijderen"
-                  className="icon-btn absolute right-1.5 top-1.5 !h-8 !w-8 bg-hero/70 !text-white hover:!bg-hero"
+                  className="icon-btn absolute right-1.5 top-1.5 !h-8 !w-8 bg-hero/70 !text-hero-ink hover:!bg-hero"
                 >
                   <XIcon size={14} />
                 </button>

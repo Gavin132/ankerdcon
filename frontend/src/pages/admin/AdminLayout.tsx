@@ -42,7 +42,7 @@ export function AdminLayout() {
       {/* Mobile drawer backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-950/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-scrim/50 lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}

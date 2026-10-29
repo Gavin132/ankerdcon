@@ -28,7 +28,7 @@ function UploadQueuedPreview() {
   return (
     <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-6 bg-paper px-6 py-12">
       <div className="flex flex-col items-center gap-2 text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400">
+        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-warn-soft text-warn">
           <UploadCloud size={22} />
         </span>
         <p className="max-w-[280px] text-sm text-ink-2">
@@ -37,13 +37,13 @@ function UploadQueuedPreview() {
       </div>
 
       <div className="flex w-full max-w-xs items-center gap-2 notice-warn px-3 py-2.5">
-        <UploadCloud size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
-        <span className="truncate text-xs font-medium text-amber-700 dark:text-amber-400">Wacht op verbinding…</span>
+        <UploadCloud size={14} className="shrink-0 text-warn" />
+        <span className="truncate text-xs font-medium text-warn">Wacht op verbinding…</span>
       </div>
 
       <div className="relative flex h-9 w-9 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink-2">
-        <UploadCloud size={16} className="text-amber-600 dark:text-amber-400" />
-        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 font-mono text-[9px] font-bold text-white">1</span>
+        <UploadCloud size={16} className="text-warn" />
+        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-warn-fill px-1 font-mono text-[9px] font-bold text-warn-on">1</span>
       </div>
     </div>
   );
