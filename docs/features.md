@@ -419,7 +419,7 @@ appear when the server cannot be reached, the member is not signed in, or the ap
   who asked. **Testmelding** (`POST /users/me/test-notification`, 5 an hour) sends one message through the
   saved channel(s);
 - **payment requests and confirmations**, the same way;
-- the in-app **announcement banner** and **changelog banner** (admin-written).
+- the in-app **announcement banner** (stacked urgent first, then warning, then info, newest first within each; `utils/announcements.ts`) and **changelog banner** (both admin-written).
 
 **Pushmeldingen**: per device, independent of Discord — the one channel available to a
 Google-only member. Works on Android and desktop from the browser directly; on iOS it needs the

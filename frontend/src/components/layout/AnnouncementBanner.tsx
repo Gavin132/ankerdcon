@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, ChevronRight, Info, Megaphone, X } from "lucide-react";
 import { useActiveAnnouncements } from "../../hooks/useAnnouncements";
 import { TripSheet } from "../trip/TripSheet";
+import { sortAnnouncements } from "../../utils/announcements";
 import type { Announcement, AnnouncementSeverity } from "../../types";
 
 const DISMISSED_KEY = "ankerd-dismissed-announcements";
@@ -39,7 +40,7 @@ export function AnnouncementBanner({ fallback = null }: { fallback?: ReactNode }
   const [expanded, setExpanded] = useState<Announcement | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const visible = (announcements ?? []).filter((a) => !dismissed.has(a.id));
+  const visible = sortAnnouncements((announcements ?? []).filter((a) => !dismissed.has(a.id)));
   if (visible.length === 0) return <>{fallback}</>;
 
   function dismiss(id: string) {
