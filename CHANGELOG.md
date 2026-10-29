@@ -45,6 +45,7 @@ All notable changes to Ankerd Con are documented here.
 - **The changelog page of the admin panel printed the date as 2026-10-22.**
 
 ### Changed
+- **The add buttons on the Event page tiles (the "+" on Activiteiten, the camera on Foto's) are blue** like the other action buttons.
 - **The two ride buttons on the Hub are straight under the trip**, above "Voor jou".
 - **All buttons are the same height everywhere:** 44 px on a phone and 40 px on a computer (a few tight places, such
   as the buttons on a meal or ride header, a confirm in a table row or a small button in a card, use a slightly
