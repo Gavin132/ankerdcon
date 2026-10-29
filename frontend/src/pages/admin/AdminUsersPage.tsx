@@ -604,10 +604,22 @@ export function AdminUsersPage() {
                       </td>
                       <td className={`cell-main ${TD}`}>
                         <div className="flex items-center gap-2 sm:gap-3">
-                          <UserAvatar
-                            name={user.name}
-                            className="h-7 w-7 sm:h-8 sm:w-8 text-[9px] sm:text-[10px] shrink-0"
-                          />
+                          <span className="relative shrink-0">
+                            <UserAvatar
+                              name={user.name}
+                              className="h-7 w-7 sm:h-8 sm:w-8 text-[9px] sm:text-[10px]"
+                            />
+                            {/* Admin is a shield on the corner of the picture: it does not need a word of its own. */}
+                            {user.is_admin && (
+                              <span
+                                title="Admin"
+                                className="absolute -bottom-1.5 -right-1.5 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-ink text-paper ring-2 ring-surface"
+                              >
+                                <Shield size={12} aria-hidden />
+                                <span className="sr-only">Admin</span>
+                              </span>
+                            )}
+                          </span>
                           <div className="min-w-0">
                             <p className="truncate text-sm font-semibold text-ink">{user.name}</p>
                             {user.discord_username && (
@@ -615,10 +627,10 @@ export function AdminUsersPage() {
                             )}
                             {/* Under the name, not in the status column: a wide pill there squeezes the name to nothing on a phone. */}
                             {user.is_placeholder && (
-                              <span className={`${PILL_NEUTRAL} mt-1`} title="Nog niemand heeft hiermee ingelogd">
-                                <Hourglass size={14} />
+                              <p className="mt-0.5 flex items-center gap-1 text-xs text-ink-3" title="Nog niemand heeft hiermee ingelogd">
+                                <Hourglass size={12} aria-hidden />
                                 Placeholder
-                              </span>
+                              </p>
                             )}
                           </div>
                         </div>
@@ -645,12 +657,6 @@ export function AdminUsersPage() {
                             <span className={PILL_NEUTRAL}>
                               <Ban size={14} />
                               Inactief
-                            </span>
-                          )}
-                          {user.is_admin && (
-                            <span className="pill border border-line bg-surface text-ink">
-                              <Shield size={14} />
-                              Admin
                             </span>
                           )}
                           {user.is_viewer && !user.is_admin && (
