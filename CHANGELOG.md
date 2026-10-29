@@ -17,6 +17,9 @@ All notable changes to Ankerd Con are documented here.
   placeholder's name one of the member's former names and removes the placeholder. Placeholders have a pill and a filter.
 
 ### Fixed
+- **The list of names slid out of sight when you searched near the bottom of the window.** In "Wie gaat er mee?" and
+  every other name search, the list now opens above the field when there is no room under it, and is never taller
+  than the room it has.
 
 - **"Nog geen auto" for a restaurant counted names, not people.** Someone on the list under two names (a rename or their Discord username) was counted twice, or shown without a car while they sat in one under their other name. The Hub, the ride page and the Vervoer sheet now work it out the same way, per person.
 - **Search still found cosplays of a concert**, and led to a page without a Cosplay sheet. A concert has no cosplay, so those no longer show up, and an old link to one opens the event's overview.

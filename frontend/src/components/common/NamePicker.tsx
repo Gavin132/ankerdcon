@@ -7,6 +7,24 @@ import { TOKENS } from "../../constants";
 import { NamePickerProps, MultiProps, SingleProps } from "../../types";
 import { useUsers } from "../../hooks/useUsers";
 
+/** The most the list of names is tall, the gap to the input and the space kept free at the edge of the window. */
+const MENU_MAX_HEIGHT = 220;
+const MENU_GAP = 4;
+const MENU_EDGE = 8;
+const MENU_MIN_HEIGHT = 96;
+
+/**
+ * Where the list of names goes relative to its input: under it, unless it does not fit there and there is more room
+ * above (a field near the bottom of the window). Never taller than the room it has (but at least `MENU_MIN_HEIGHT`).
+ */
+export function menuPlacement(inputTop: number, inputBottom: number, viewportHeight: number): { side: "below" | "above"; maxHeight: number } {
+  const below = viewportHeight - inputBottom - MENU_GAP - MENU_EDGE;
+  const above = inputTop - MENU_GAP - MENU_EDGE;
+  const side = below >= MENU_MAX_HEIGHT || below >= above ? "below" : "above";
+  const room = side === "below" ? below : above;
+  return { side, maxHeight: Math.max(MENU_MIN_HEIGHT, Math.min(MENU_MAX_HEIGHT, room)) };
+}
+
 export function NamePicker(props: NamePickerProps) {
   const { options, placeholder = "Zoek naam…", color = "sky" } = props;
   const tk = TOKENS[color];
@@ -17,7 +35,8 @@ export function NamePicker(props: NamePickerProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [menuRect, setMenuRect] = useState<{ top: number; left: number; width: number } | null>(null);
+  // Where the menu sits: under the input, or above it when there is not enough room below, never taller than the room it has.
+  const [menuRect, setMenuRect] = useState<{ top?: number; bottom?: number; left: number; width: number; maxHeight: number } | null>(null);
   const { data: users = [] } = useUsers();
 
   const isMulti = props.multiple === true;
@@ -81,7 +100,13 @@ export function NamePicker(props: NamePickerProps) {
     if (!showMenu) return;
     function updatePosition() {
       const rect = wrapperRef.current?.getBoundingClientRect();
-      if (rect) setMenuRect({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+      if (!rect) return;
+      const { side, maxHeight } = menuPlacement(rect.top, rect.bottom, window.innerHeight);
+      setMenuRect(
+        side === "below"
+          ? { top: rect.bottom + MENU_GAP, left: rect.left, width: rect.width, maxHeight }
+          : { bottom: window.innerHeight - rect.top + MENU_GAP, left: rect.left, width: rect.width, maxHeight },
+      );
     }
     updatePosition();
     window.addEventListener("resize", updatePosition);
@@ -221,8 +246,8 @@ export function NamePicker(props: NamePickerProps) {
       {showMenu && menuRect && createPortal(
         <div
           ref={menuRef}
-          style={{ position: "fixed", top: menuRect.top, left: menuRect.left, width: menuRect.width }}
-          className="z-[300] max-h-[220px] overflow-y-auto overscroll-contain rounded-xl border-1.5 border-line divide-y divide-line bg-surface shadow-xl"
+          style={{ position: "fixed", top: menuRect.top, bottom: menuRect.bottom, left: menuRect.left, width: menuRect.width, maxHeight: menuRect.maxHeight }}
+          className="z-[300] overflow-y-auto overscroll-contain rounded-xl border-1.5 border-line divide-y divide-line bg-surface shadow-xl"
         >
           {filtered.length === 0 ? (
             <p className="px-4 py-4 text-center text-xs text-ink-3">
