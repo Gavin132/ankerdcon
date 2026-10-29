@@ -26,6 +26,8 @@ class User(BaseModel):
     is_viewer: bool = False
     is_active: bool = True
     is_first_login: bool = True
+    # Made by an admin and never logged in to (app/services/profile_merge.py, is_placeholder).
+    is_placeholder: bool = False
     onboarding_completed: bool = False
     allow_dm: bool = True
     show_greeting: bool = True

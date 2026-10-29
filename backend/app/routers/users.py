@@ -17,6 +17,7 @@ from app.dependencies import _is_admin, act_as, get_current_user, _strip_discrim
 from app.models.user import CompleteOnboardingRequest, LocationPingRequest, UpdateNameRequest, UpdatePreferencesRequest, User
 from app.routes import UserRoutes
 from app.services import notification_service
+from app.services.profile_merge import is_placeholder
 from app.services.notification_service import ADMIN_ONLY_CATEGORIES
 from app.core.database import supabase
 
@@ -103,6 +104,7 @@ def list_all_users_safely(_: str = Depends(get_current_user)) -> list[User]:
     safe_users = []
     for user in response.data:
         user.pop("passcode", None)
+        user["is_placeholder"] = is_placeholder(user)
         safe_users.append(user)
     return safe_users
 

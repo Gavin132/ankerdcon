@@ -40,6 +40,8 @@ from app.models.admin import (
     BulkDeleteMealsRequest,
     BulkDeleteEventGroupsRequest,
     BulkRsvpRequest,
+    MergeUserRequest,
+    MergeUserResult,
     BulkSetEventGroupRequest,
     CreateEventDayRequest,
     UpdateEventDayRequest,
@@ -62,7 +64,7 @@ from app.models.rides import CreateRideRequest, Ride
 from app.models.user import User
 from app.routes import AdminRoutes
 import app.services.discord_service as discord_service
-from app.services import discord_bot, notification_service
+from app.services import discord_bot, notification_service, profile_merge
 from app import messages as M
 from app.core.database import supabase
 
@@ -152,6 +154,7 @@ def admin_list_users(_: str = Depends(get_admin_user)) -> list[User]:
     users = []
     for user in resp.data:
         user.pop("passcode", None)
+        user["is_placeholder"] = profile_merge.is_placeholder(user)
         users.append(user)
     return users
 
@@ -177,6 +180,54 @@ def admin_create_user(body: AdminCreateUserRequest, _: str = Depends(get_admin_u
     if not resp.data:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kon gebruiker niet aanmaken.")
     return resp.data[0]
+
+
+@router.post(AdminRoutes.USER_MERGE, response_model=MergeUserResult)
+def admin_merge_user(source_id: str, body: MergeUserRequest, admin: str = Depends(get_admin_user)) -> MergeUserResult:
+    """Folds a placeholder profile into the real member it was made for: everything the placeholder was
+    on (rides, meals, trip days, expenses, ...) goes to the member, the placeholder's name becomes one of
+    the member's aliases and the placeholder is deleted. `dry_run` (the default) only says what would
+    move. See app/services/profile_merge.py for what is touched and in which order."""
+    if source_id == body.target_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Je kunt een profiel niet met zichzelf samenvoegen. Kies een ander lid.",
+        )
+    try:
+        rows = supabase.table(Tables.PROFILES).select("*").in_("id", [source_id, body.target_id]).execute().data or []
+    except Exception as e:
+        logger.error("Failed to fetch profiles %s and %s for a merge: %s", source_id, body.target_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    by_id = {r["id"]: r for r in rows}
+    source, target = by_id.get(source_id), by_id.get(body.target_id)
+    if not source or not target:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden. Ververs de pagina en probeer het opnieuw.")
+    if not profile_merge.is_placeholder(source):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{source['name']} is al ingelogd en is geen placeholder. Je kunt alleen een placeholder samenvoegen: kies een ander profiel.",
+        )
+    if profile_merge.is_placeholder(target):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{target['name']} is zelf een placeholder en heeft nog niet ingelogd. Kies een lid dat al is ingelogd.",
+        )
+    if target.get("is_active") is False:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{target['name']} is gedeactiveerd. Activeer het lid eerst, of kies een ander lid.",
+        )
+
+    plan = profile_merge.plan_merge(source, target)
+    if not body.dry_run:
+        # The server log is the audit trail for admin actions (see also impersonation and CDN deletes).
+        logger.warning(
+            "Merge: admin %s merges placeholder %s (%s) into %s (%s): %s, dropped %s",
+            admin, source["name"], source["id"], target["name"], target["id"], plan.counts, plan.dropped,
+        )
+        profile_merge.execute(plan)
+        forget_viewer(source["name"])
+    return MergeUserResult(dry_run=body.dry_run, **plan.summary())
 
 
 @router.post(AdminRoutes.IMPERSONATE)

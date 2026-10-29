@@ -164,6 +164,7 @@ class AdminRoutes:
     USERS_BULK_DELETE = "/users/bulk-delete"
     USERS_BULK_DEACTIVATE = "/users/bulk-deactivate"
     USER_BADGE = "/users/{user_id}/badges/{badge_id}"
+    USER_MERGE = "/users/{source_id}/merge"
     IMPERSONATE = "/impersonate/{user_id}"
 
     # Images (event covers, badges) — uploaded through the backend, never

@@ -14,6 +14,25 @@ class AdminCreateUserRequest(BaseModel):
     is_viewer: bool = False
 
 
+class MergeUserRequest(BaseModel):
+    """Fold a placeholder profile (the one in the URL) into a real member."""
+    target_id: str
+    # A preview unless asked otherwise: nothing is moved or deleted on a request that forgot the field.
+    dry_run: bool = True
+
+
+class MergeUserResult(BaseModel):
+    dry_run: bool
+    source_name: str
+    target_name: str
+    # What moves, per kind (rides, meals, ...), and what is dropped instead because it would be a
+    # duplicate or a payment to oneself. See app/services/profile_merge.py.
+    counts: dict[str, int]
+    dropped: dict[str, int]
+    # The placeholder's names that become aliases of the member.
+    alias_names: list[str]
+
+
 class AdminUpdateUserRequest(BaseModel):
     hotel_room: Optional[str] = None
     phone_number: Optional[str] = None
