@@ -21,12 +21,8 @@ const slate = {
   950: "#080C0F",
 };
 
-// 400 is the brand blue (#57B2F9, a more saturated pass on the lightened
-// #67B0E9, which itself lightened Gavin's original #48A0E5). 200-600 got the
-// same +18 HSL-saturation bump at their own lightness, contrast-checked so
-// the many existing `bg-sky-500 text-white` buttons stay readable (500 still
-// clears 3:1, 600 still clears 4.5:1 against white); 700+ are untouched
-// since they're already high-contrast and rarely the color someone notices.
+// The legacy `sky-*` / `ankerd-*` scale. Nothing in the app uses it any more (the `brand` tokens in index.css do), so it
+// was not moved when the brand fill became the deeper #0078D4 for white labels; 400 is the old, paler brand blue.
 const blue = {
   50: "#EEF6FD",
   100: "#DCEEFB",

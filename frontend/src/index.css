@@ -18,10 +18,10 @@
   --ink-3: 96 111 119;       /* #606F77  muted text (4.6:1 on --sunken, 5.2:1 on white) */
   --line: 213 222 226;       /* #D5DEE2  borders */
   --outline: 15 21 25;       /* #0F1519  bold outline */
-  --cyan: 87 178 249;        /* #57B2F9  the one brand fill (brand blue, +18 saturation) */
+  --cyan: 0 120 212;         /* #0078D4  the one brand fill: deep enough for a white label (4.53:1) */
   --cyan-soft: 220 238 251;  /* #DCEEFB */
   --cyan-text: 12 105 187;   /* #0C69BB  brand as text on light (5.6:1 on white, 4.7:1 on --cyan-soft) */
-  --on-cyan: 15 21 25;
+  --on-cyan: 255 255 255;    /* the label on every brand fill, accents included */
   /* The raised edge of a button (`.btn-bevel`; floating menus keep their own shadow, nothing else has one): a light edge on top,
      a darker one below as the thickness of the plate, and a soft shadow round it. Channels plus an opacity each,
      because the opacity differs per theme: light mode needs a strong highlight on pale grounds and a gentle
@@ -32,11 +32,11 @@
   --btn-shade-a: 0.12;
   --btn-shadow: 15 21 25;
   --btn-shadow-a: 0.12;
-  /* A chosen chip, the active tab: the ink fill with paper text (brand fill with ink text in dark mode, where ink is
-     light). `--selected-icon` is the icon on it: the accent colour on the ink, ink on the accent. */
+  /* A chosen chip, the active tab: the ink fill with paper text (the brand fill with a white label in dark mode, where
+     ink is light). `--selected-icon` is the icon on it: a light tint of the accent on the ink, white on the accent. */
   --selected: 15 21 25;
   --selected-on: 245 248 249;
-  --selected-icon: var(--cyan);
+  --selected-icon: 137 202 254;  /* #89CAFE, the accent's dark-mode text colour */
   /* The faint anchor marks in the corners of the app (App.tsx), a touch stronger on dark. */
   --watermark: 0.045;
   --watermark-small: 0.035;
@@ -91,9 +91,9 @@
   --outline: 191 211 218;    /* #BFD3DA */
   --cyan-soft: 15 42 64;     /* #0F2A40 */
   --cyan-text: 137 202 254;  /* #89CAFE */
-  --selected: 87 178 249;    /* #57B2F9, the accent fill (the accent blocks below change it) */
-  --selected-on: 15 21 25;
-  --selected-icon: 15 21 25;
+  --selected: 0 120 212;     /* #0078D4, the accent fill (the accent blocks below change it) */
+  --selected-on: 255 255 255;
+  --selected-icon: 255 255 255;
   --watermark: 0.055;
   --watermark-small: 0.045;
   --ok: 110 231 183;         /* #6EE7B7 */
@@ -120,23 +120,25 @@
 
 /* ─── Accent colours ─────────────────────────────────────────────────────────
    Instellingen › Accentkleur. Only the brand tokens change (fill, tint, text
-   colour); paper, surface, ink and every status colour stay put. Blue, the
-   default, is the :root/.dark values above and sets no attribute. Fill and
-   `--on-cyan` (dark ink) work on every fill; --cyan-text is at least 4.5:1 on
-   white, its dark counterpart on --surface. Ids are mirrored in
-   store/theme.store.ts. */
-[data-accent="teal"] { --cyan: 45 212 191; --cyan-soft: 213 245 240; --cyan-text: 11 122 110; }   /* #2DD4BF */
-.dark[data-accent="teal"] { --cyan-soft: 14 51 48; --cyan-text: 126 234 219; --selected: 45 212 191; }
-[data-accent="green"] { --cyan: 79 195 138; --cyan-soft: 221 243 231; --cyan-text: 23 120 74; }   /* #4FC38A */
-.dark[data-accent="green"] { --cyan-soft: 15 46 32; --cyan-text: 143 221 181; --selected: 79 195 138; }
-[data-accent="gold"] { --cyan: 250 204 21; --cyan-soft: 254 243 199; --cyan-text: 146 97 10; }   /* #FACC15 */
-.dark[data-accent="gold"] { --cyan-soft: 61 46 8; --cyan-text: 253 224 71; --selected: 250 204 21; }
-[data-accent="orange"] { --cyan: 251 146 60; --cyan-soft: 254 233 214; --cyan-text: 170 73 8; }   /* #FB923C */
-.dark[data-accent="orange"] { --cyan-soft: 68 36 17; --cyan-text: 253 186 116; --selected: 251 146 60; }
-[data-accent="pink"] { --cyan: 244 114 182; --cyan-soft: 252 228 241; --cyan-text: 184 35 111; }   /* #F472B6 */
-.dark[data-accent="pink"] { --cyan-soft: 69 22 47; --cyan-text: 249 168 212; --selected: 244 114 182; }
-[data-accent="purple"] { --cyan: 167 139 250; --cyan-soft: 237 231 254; --cyan-text: 109 63 216; }   /* #A78BFA */
-.dark[data-accent="purple"] { --cyan-soft: 36 26 69; --cyan-text: 196 181 253; --selected: 167 139 250; }
+   colour, the icon on the light-mode active tab); paper, surface, ink and every
+   status colour stay put. Blue, the default, is the :root/.dark values above and
+   sets no attribute. Every fill is deep enough for the white `--on-cyan` label
+   (at least 4.5:1, guarded by styles.tokens.test.ts); --cyan-text is at least
+   4.5:1 on white, its dark counterpart on --surface. Ids and swatches are
+   mirrored in store/theme.store.ts. The dark blocks restate --selected-icon,
+   because a [data-accent] block alone would beat `.dark` (same specificity, later). */
+[data-accent="teal"] { --cyan: 13 124 114; --cyan-soft: 213 245 240; --cyan-text: 11 122 110; --selected-icon: 126 234 219; }   /* #0D7C72 */
+.dark[data-accent="teal"] { --cyan-soft: 14 51 48; --cyan-text: 126 234 219; --selected: 13 124 114; --selected-icon: 255 255 255; }
+[data-accent="green"] { --cyan: 21 128 61; --cyan-soft: 221 243 231; --cyan-text: 23 120 74; --selected-icon: 143 221 181; }   /* #15803D */
+.dark[data-accent="green"] { --cyan-soft: 15 46 32; --cyan-text: 143 221 181; --selected: 21 128 61; --selected-icon: 255 255 255; }
+[data-accent="gold"] { --cyan: 166 101 6; --cyan-soft: 254 243 199; --cyan-text: 146 97 10; --selected-icon: 253 224 71; }   /* #A66506 */
+.dark[data-accent="gold"] { --cyan-soft: 61 46 8; --cyan-text: 253 224 71; --selected: 166 101 6; --selected-icon: 255 255 255; }
+[data-accent="orange"] { --cyan: 202 72 14; --cyan-soft: 254 233 214; --cyan-text: 170 73 8; --selected-icon: 253 186 116; }   /* #CA480E */
+.dark[data-accent="orange"] { --cyan-soft: 68 36 17; --cyan-text: 253 186 116; --selected: 202 72 14; --selected-icon: 255 255 255; }
+[data-accent="pink"] { --cyan: 219 39 119; --cyan-soft: 252 228 241; --cyan-text: 184 35 111; --selected-icon: 249 168 212; }   /* #DB2777 */
+.dark[data-accent="pink"] { --cyan-soft: 69 22 47; --cyan-text: 249 168 212; --selected: 219 39 119; --selected-icon: 255 255 255; }
+[data-accent="purple"] { --cyan: 130 66 240; --cyan-soft: 237 231 254; --cyan-text: 109 63 216; --selected-icon: 196 181 253; }   /* #8242F0 */
+.dark[data-accent="purple"] { --cyan-soft: 36 26 69; --cyan-text: 196 181 253; --selected: 130 66 240; --selected-icon: 255 255 255; }
 
 /* ─── Compact density ────────────────────────────────────────────────────────
    Instellingen › Weergave › Compact. Tightens the app's own gap/space-y/padding
@@ -281,11 +283,11 @@
   }
 
   input[type="checkbox"].cb:checked {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3e%3cpath d='M2.5 6.5l2.5 2.5 4.5-5.5' stroke='%230F1519' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3e%3cpath d='M2.5 6.5l2.5 2.5 4.5-5.5' stroke='%23FFFFFF' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
   }
 
   input[type="checkbox"].cb:indeterminate {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3e%3cpath d='M2.5 6h7' stroke='%230F1519' stroke-width='1.8' stroke-linecap='round'/%3e%3c/svg%3e");
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3e%3cpath d='M2.5 6h7' stroke='%23FFFFFF' stroke-width='1.8' stroke-linecap='round'/%3e%3c/svg%3e");
   }
 
   .card-surface {
