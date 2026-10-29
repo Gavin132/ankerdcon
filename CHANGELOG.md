@@ -7,6 +7,11 @@ All notable changes to Ankerd Con are documented here.
 ## [Unreleased]
 
 ### Added
+- **Admins can get a heads-up when somebody logs in for the first time.** Instellingen > Meldingen has a new switch
+  "Nieuwe gebruiker" for admins (off until you switch it on, not visible to members). When someone logs in for the first
+  time and gets a new profile, you get a message "Sam heeft voor het eerst ingelogd. Is dit iemand van een placeholder?
+  Voeg samen via Admin > Gebruikers.", as a Discord message or a push, whichever you have chosen. It does not appear when a
+  placeholder is linked to a login automatically or when you add a profile yourself.
 - **The event's website is linked in the top card of an event**, on the line with the location and the hotel
   (a globe and the address, for example "dokomi.de"). It opens in a new tab.
 

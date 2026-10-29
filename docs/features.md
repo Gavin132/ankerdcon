@@ -448,7 +448,27 @@ appear when the server cannot be reached, the member is not signed in, or the ap
   who asked. **Testmelding** (`POST /users/me/test-notification`, 5 an hour) sends one message through the
   saved channel(s);
 - **payment requests and confirmations**, the same way;
+- **Nieuwe gebruiker**, for admins only, see below;
 - the in-app **announcement banner** (stacked urgent first, then warning, then info, newest first within each; `utils/announcements.ts`) and **changelog banner** (both admin-written).
+
+### Nieuwe gebruiker (melding voor admins)
+
+An admin merges a placeholder profile into the real member by hand (Admin → Gebruikers), and needs to know when there
+is a new profile to merge. Under Instellingen → Meldingen → "Voor beheerders" an admin can switch on **Nieuwe gebruiker**:
+a message "{naam} heeft voor het eerst ingelogd. Is dit iemand van een placeholder? Voeg samen via Admin → Gebruikers."
+(a Discord DM with a link to Admin → Gebruikers when `APP_URL` is set, and/or a push that opens that page).
+
+- **Off by default and admins only.** It is a notification category (`new_user`) like Nieuwe feedback: it sits in
+  `profiles.notification_categories`, so there is no migration, and a profile starts without it. The row is not shown to
+  members, and the backend refuses it from anyone who is not an admin (403, [security.md](security.md#authorization)).
+- **Fires** when a profile is *created* by a first login, after a Discord or Google sign-in that was on the whitelist
+  (`_create_profile` in `app/dependencies.py`). It does not fire when a login claims an existing stub profile
+  (`_claim_stub_profile`), for a returning member, or when an admin adds a profile by hand.
+- **Goes to** every active admin who switched it on, through their own channel choice (DM needs `allow_dm` and a linked
+  Discord account, push needs a subscription), checked at send time: someone who stopped being an admin or was deactivated
+  gets nothing even if they still carry the choice. Never to the new user.
+- **Best effort:** sent from its own thread after the profile is saved, errors are logged and never reach the login. It is tied
+  to the insert that created the profile, so a retried or simultaneous login announces once.
 
 **Pushmeldingen**: per device, independent of Discord — the one channel available to a
 Google-only member. Works on Android and desktop from the browser directly; on iOS it needs the
@@ -498,6 +518,8 @@ read-only account) or an admin switches **Alleen kijken** on a member under Gebr
   Admin → Feedback. Admins can also switch on **Nieuwe feedback** in their notification settings
   (category `feedback_submitted`, in `ADMIN_ONLY_CATEGORIES`): a DM or push per message, anonymous ones
   without a name; only an admin can choose it and a broadcast skips a profile that no longer is one.
+  The same group, "Voor beheerders", holds **Nieuwe gebruiker** (category `new_user`, off by default, see
+  [Nieuwe gebruiker](#nieuwe-gebruiker-melding-voor-admins) below).
 - **Wijzigingslog** (`pages/ChangelogPage.tsx`): release notes written in the admin
   panel and stored in the database (not `CHANGELOG.md`, which is for developers).
 

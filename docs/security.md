@@ -79,6 +79,7 @@ Everything that is not "any signed-in member may do this" is a line in a router.
 | --- | --- | --- |
 | member | `get_current_user` | any whitelisted, active member. A **read-only member ("kijker", `profiles.is_viewer`)** gets a 403 (without `X-Access`) on every request that changes something, except their own account (preferences, onboarding, test notification, avatar, banner, Discord link, push subscribe, feedback) and marking a story seen (`_VIEWER_WRITABLE`). Enforced here for every route at once, with the flag looked up only for writes and remembered 30 s. An admin is never read-only. A database without the column is treated as "nobody is read-only". |
 | admin | `get_admin_user` | additionally `profiles.is_admin`, read from the database (never from the token) |
+| admin-only notifications | `ADMIN_ONLY_CATEGORIES` in `services/notification_service.py` | `feedback_submitted` and `new_user` ("Nieuwe gebruiker": a first login created a profile). A member who sends one of them in `notification_categories` (preferences or onboarding) gets a 403 `Deze melding is alleen voor admins.` (`_require_admin_for_categories`), and the choice is checked again when sending: `broadcast_category_dm` skips an inactive profile and one that is no longer an admin, so a demoted admin stops receiving it. The frontend only hides the row (`adminOnly`). |
 | hotel rooms | `routers/calendar.py` | any member (not a read-only one) creates, edits (number, floor, notes, capacity and who sleeps in it) and signs people up or off; only an admin deletes a room. Names put in a room must be members and the room may not exceed its capacity. A person sleeps in one room of a hotel: putting someone in a room moves them out of the others (`services/hotel_rooms.py`), under all the names they go by. |
 | acting for someone | `act_as` / `act_for_anyone` | sign-ups (meals, seats, trip days, hotel rooms) may name anyone; `paid_by`, location pings and cosplays only yourself (admins anyone). See [acting-for-others.md](acting-for-others.md). |
 | creator or admin | `require_owner_or_admin` | deleting things you made, claiming and confirming expense shares. "You" is the member's current name, Discord username and former names (aliases), minus any name another profile goes by (`_own_names`), because rows keep the name they were made under. Story photos use the same names but stay owner-only (`is_own_name`). |
@@ -117,7 +118,10 @@ authentication and keep the secret out of screenshots and chat.
 A **placeholder** is a profile nobody has ever logged in to: an admin made it (Admin > Gebruikers > Nieuwe gebruiker) so
 the person can already be put on rides, meals and expenses. There is deliberately **no self-claim**: a member who logs in
 for the first time gets a new profile (the one exception is the automatic claim of a stub whose name equals the Discord
-username, see [The whitelist](#the-whitelist)), and an admin merges the placeholder into it by hand.
+username, see [The whitelist](#the-whitelist)), and an admin merges the placeholder into it by hand. So that the admin
+knows when there is a profile to merge, admins can switch on the "Nieuwe gebruiker" notification (off by default, admins
+only, see [Authorization](#authorization)): a profile *created* by a first login tells those admins once, from a background
+thread that can never fail the login. Claiming a stub and an admin adding a profile by hand do not.
 
 - **What counts as a placeholder** is one function, `is_placeholder` in `backend/app/services/profile_merge.py`: no `email`,
   no `discord_username` and no `avatar_url`, which is what every login fills in. `is_first_login` is not used because "log

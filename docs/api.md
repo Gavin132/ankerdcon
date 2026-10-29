@@ -60,9 +60,9 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `GET /users/` | member | all members |
 | `GET /users/me` | member | your own profile |
 | `GET /users/{id or name}` | member | one profile, by id or name |
-| `PUT /users/preferences` | member | edit your profile (colour, bio, notifications, …) |
+| `PUT /users/preferences` | member | edit your profile (colour, bio, notifications, …). `notification_categories` containing an admin-only category (`feedback_submitted`, `new_user`) is a 403 for anyone who is not an admin; an unknown category is a 422 |
 | `PATCH /users/name` | member | rename yourself (the old name becomes an alias) |
-| `POST /users/me/onboarding` | member | finish onboarding |
+| `POST /users/me/onboarding` | member | finish onboarding (same rule for admin-only notification categories) |
 | `POST /users/me/link-discord` | member | link a Discord account to a Google login |
 | `POST /users/me/test-notification` | member | send yourself one message through your saved channel(s); 5 an hour |
 | `PUT /users/{id}/location` | member | set a location ping (for yourself, via `act_as`) |
