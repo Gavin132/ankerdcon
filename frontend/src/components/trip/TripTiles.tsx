@@ -527,13 +527,15 @@ export function PracticalTile({ info, trip, onOpen, wide }: { info: CalendarEven
           <TileText><span className="line-clamp-2">{info.special_instructions}</span></TileText>
         </>
       ) : (
+        // Without a "Let op" the tile is a count, and the topics say what is inside. With one, the warning is the
+        // answer and a list of the sheet's headings under it would only repeat what opening the tile shows.
         <>
           <TileValue>{topics.length}</TileValue>
           <TileText>{topics.length === 1 ? "onderwerp" : "onderwerpen"}</TileText>
+          {topics.length > 0 && (
+            <TileText><span className="line-clamp-2 break-words">{topics.join(", ").replace(/^./, (c) => c.toUpperCase())}</span></TileText>
+          )}
         </>
-      )}
-      {topics.length > 0 && (
-        <TileText><span className="line-clamp-2 break-words">{topics.join(", ").replace(/^./, (c) => c.toUpperCase())}</span></TileText>
       )}
     </TripTile>
   );

@@ -71,6 +71,8 @@ All notable changes to Ankerd Con are documented here.
 - **The changelog page of the admin panel printed the date as 2026-10-22.**
 
 ### Changed
+- **The Info tile with a "Let op" no longer lists the topics under the warning.** It repeated the headings you see
+  when you open the tile. Without a "Let op" the tile still shows the count and the topics.
 - **On a computer, the cards in the Hub carousel are all the same height**, so the dots, the arrows and the ride
   buttons below no longer jump when you page. On a phone the row still follows the card in view.
 - **The add buttons on the Event page tiles (the "+" on Activiteiten, the camera on Foto's) are blue** like the other action buttons.
