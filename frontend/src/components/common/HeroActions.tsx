@@ -34,7 +34,7 @@ export function HeroSecondaryButton({ className = "", ...props }: ButtonHTMLAttr
   return (
     <button
       type="button"
-      className={`hit-area inline-flex min-h-[40px] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-hero-ink/25 bg-transparent px-3.5 py-2 text-xs font-bold text-hero-ink transition-colors duration-75 hover:border-hero-ink/50 hover:bg-hero-ink/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hero-ink focus-visible:ring-offset-2 focus-visible:ring-offset-hero ${className}`}
+      className={`btn-bevel btn-on-hero hit-area inline-flex min-h-[40px] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-hero-ink/25 bg-transparent px-3.5 py-2 text-xs font-bold text-hero-ink transition-[background-color,border-color,box-shadow,transform] duration-75 hover:border-hero-ink/50 hover:bg-hero-ink/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hero-ink focus-visible:ring-offset-2 focus-visible:ring-offset-hero ${className}`}
       {...props}
     />
   );
@@ -42,5 +42,5 @@ export function HeroSecondaryButton({ className = "", ...props }: ButtonHTMLAttr
 
 /** "Aanmelden", "Stap in": the one blue button of the hero (the primary tier, no outline). */
 export function HeroPrimaryButton({ className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button type="button" className={`btn-primary min-h-[40px] px-3.5 py-2 text-xs focus-visible:ring-hero-ink focus-visible:ring-offset-hero ${className}`} {...props} />;
+  return <button type="button" className={`btn-primary btn-on-hero min-h-[40px] px-3.5 py-2 text-xs focus-visible:ring-hero-ink focus-visible:ring-offset-hero ${className}`} {...props} />;
 }
