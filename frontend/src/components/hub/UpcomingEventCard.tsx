@@ -20,7 +20,7 @@ function Chip({ children, tone = "plain" }: { children: React.ReactNode; tone?: 
       className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-[3px] text-[12px] font-semibold ${
         tone === "live"
           ? "border-brand bg-brand text-brand-on"
-          : "border-white/25 bg-white/10 text-hero-ink"
+          : "border-hero-ink/25 bg-hero-ink/10 text-hero-ink"
       }`}
     >
       {children}

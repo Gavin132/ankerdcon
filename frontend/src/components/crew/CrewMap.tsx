@@ -375,7 +375,7 @@ export default function CrewMap({ users, onOpenProfile, trip, meals, rides, allU
                 </p>
                 {p.outboundRide ? (
                   <>
-                    <p className="text-neutral-600">Vertrekt om {formatTime(p.outboundRide.departure_time)}</p>
+                    <p className="text-hero/70">Vertrekt om {formatTime(p.outboundRide.departure_time)}</p>
                     <Link
                       to={routes.ride.view(p.outboundRide.id)}
                       className="mt-1 inline-flex items-center gap-0.5 text-[12px] font-semibold text-brand-text hover:underline"
@@ -384,7 +384,7 @@ export default function CrewMap({ users, onOpenProfile, trip, meals, rides, allU
                     </Link>
                   </>
                 ) : (
-                  <p className="text-neutral-600">Nog geen terugrit gepland.</p>
+                  <p className="text-hero/70">Nog geen terugrit gepland.</p>
                 )}
               </div>
             </Popup>
@@ -398,8 +398,8 @@ export default function CrewMap({ users, onOpenProfile, trip, meals, rides, allU
                   <div key={p.user.name} className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate font-semibold">{p.user.name}</p>
-                      <p className="truncate text-neutral-600">{p.text || p.zone || "Locatie gedeeld"}</p>
-                      <p className="font-mono text-[12px] text-neutral-500">
+                      <p className="truncate text-hero/70">{p.text || p.zone || "Locatie gedeeld"}</p>
+                      <p className="font-mono text-[12px] text-hero/70">
                         {[p.text ? p.zone : null, p.at ? pingAgo(p.at) : null].filter(Boolean).join(" · ")}
                       </p>
                     </div>

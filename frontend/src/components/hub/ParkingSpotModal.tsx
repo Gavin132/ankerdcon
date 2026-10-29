@@ -99,10 +99,10 @@ export function ParkingSpotModal({ open, onClose, tripId, manageableDrivers }: P
           <p className="section-label mb-2">Positie</p>
           {coords ? (
             <div className="flex items-center gap-3 notice-ok px-3.5 py-3">
-              <Check size={16} className="shrink-0 text-emerald-700 dark:text-emerald-300" />
+              <Check size={16} className="shrink-0 text-ok" />
               <div className="min-w-0 flex-1 leading-tight">
-                <p className="text-[13px] font-semibold text-emerald-800 dark:text-emerald-300">Locatie gevonden</p>
-                <p className="font-mono text-[12px] text-emerald-700 dark:text-emerald-300">±{Math.round(coords.accuracy)} m</p>
+                <p className="text-[13px] font-semibold text-ok">Locatie gevonden</p>
+                <p className="font-mono text-[12px] text-ok">±{Math.round(coords.accuracy)} m</p>
               </div>
               <button type="button" onClick={locate} className="shrink-0 text-xs font-semibold text-brand-text hover:underline">
                 Opnieuw
@@ -114,7 +114,7 @@ export function ParkingSpotModal({ open, onClose, tripId, manageableDrivers }: P
               Gebruik mijn locatie
             </Button>
           )}
-          {geoError && <p className="mt-2 text-xs text-rose-600 dark:text-rose-300">{geoError}</p>}
+          {geoError && <p className="mt-2 text-xs text-bad">{geoError}</p>}
         </div>
 
         <div>

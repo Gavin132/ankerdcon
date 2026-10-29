@@ -274,7 +274,7 @@ export function CrewPage() {
                   <div className="relative shrink-0">
                     <UserAvatar name={u.name} user={u} className="h-9 w-9 text-sm" />
                     {isPingFresh(u.live_location_ping) && (
-                      <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-surface">
+                      <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-ok-fill ring-2 ring-surface">
                         <span className="sr-only">Locatie gedeeld</span>
                       </span>
                     )}
