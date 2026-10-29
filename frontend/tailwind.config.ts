@@ -56,7 +56,12 @@ const config: Config = {
         sky: blue,
         ankerd: blue,
         // The always-dark panel of a hero (meal, ride, cover) and its text, the same in light and dark mode.
-        hero: { DEFAULT: "#0F1519", ink: "#E6F0F3" },
+        // `warn` and `bad` are the chip text colours on it (the status tokens switch with the theme).
+        hero: { DEFAULT: token("hero"), ink: token("hero-ink"), warn: token("hero-warn"), bad: token("hero-bad") },
+        // The dark layer behind sheets, dialogs and viewers: `bg-scrim/50`.
+        scrim: token("scrim"),
+        // The fill of the initial of someone without a photo or colour of their own: `bg-avatar-1` .. `bg-avatar-6`.
+        avatar: { 1: token("avatar-1"), 2: token("avatar-2"), 3: token("avatar-3"), 4: token("avatar-4"), 5: token("avatar-5"), 6: token("avatar-6") },
         ink: {
           DEFAULT: token("ink"),
           2: token("ink-2"),
@@ -67,10 +72,11 @@ const config: Config = {
         sunken: token("sunken"),
         line: token("line"),
         outline: token("outline"),
-        // Status: text (`text-ok`) and its soft background (`bg-ok-soft`). They switch in dark mode by themselves.
-        ok: { DEFAULT: token("ok"), soft: token("ok-soft") },
-        warn: { DEFAULT: token("warn"), soft: token("warn-soft") },
-        bad: { DEFAULT: token("bad"), soft: token("bad-soft") },
+        // Status: text (`text-ok`), soft background (`bg-ok-soft`), border (`border-ok-line`), solid fill
+        // (`bg-ok-fill`) and the text on that fill (`text-ok-on`). They switch in dark mode by themselves.
+        ok: { DEFAULT: token("ok"), soft: token("ok-soft"), line: token("ok-line"), fill: token("ok-fill"), on: token("ok-on") },
+        warn: { DEFAULT: token("warn"), soft: token("warn-soft"), line: token("warn-line"), fill: token("warn-fill"), on: token("warn-on") },
+        bad: { DEFAULT: token("bad"), soft: token("bad-soft"), line: token("bad-line"), fill: token("bad-fill"), on: token("bad-on") },
         brand: {
           DEFAULT: token("cyan"),
           soft: token("cyan-soft"),

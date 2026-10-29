@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { parseHex, readableOn, toHex, type Rgb } from "./color";
 
 /** The font stacks of the profile name styles ("default" is the app's own font). Shared by the profile page,
  * onboarding and the profile popup. */
@@ -37,11 +38,32 @@ export const BANNER_COLORS = [
   "#292524",
 ];
 
+/** The banner when nobody picked a colour: the hero ink (`--hero` in index.css). */
+export const HERO_COLOR = "rgb(var(--hero))";
+
 /** The banner of a profile: the picture if there is one (cropped around `bannerPosition`), else the colour. */
 export function getBannerStyle(bannerColor: string, bannerUrl?: string, bannerPosition?: string): CSSProperties {
   if (bannerUrl) {
     return { backgroundImage: `url(${bannerUrl})`, backgroundSize: "cover", backgroundPosition: bannerPosition || "center" };
   }
   if (bannerColor) return { backgroundColor: bannerColor };
-  return { backgroundColor: "#0F1519" };
+  return { backgroundColor: HERO_COLOR };
+}
+
+/**
+ * The page behind a name, per theme: the darker of `--paper` / `--surface` in light mode, the lighter in dark
+ * mode (`src/utils/profile.test.ts` checks these against index.css). A stored name colour is only a
+ * preference of its owner and the other theme can make it vanish.
+ */
+export const NAME_BACKDROP: { light: Rgb; dark: Rgb } = { light: [245, 248, 249], dark: [20, 27, 32] };
+
+/**
+ * A stored name colour as text on the page: unchanged when it is readable (4.5:1) in the current theme, else
+ * the same hue moved lighter or darker until it is. Nothing is saved; the owner's choice stays as picked.
+ * No colour (or one that is not a hex colour) gives undefined, so the text keeps `text-ink`.
+ */
+export function readableNameColor(color: string | null | undefined, isDark: boolean): string | undefined {
+  const rgb = parseHex(color);
+  if (!rgb) return undefined;
+  return toHex(readableOn(rgb, isDark ? NAME_BACKDROP.dark : NAME_BACKDROP.light));
 }

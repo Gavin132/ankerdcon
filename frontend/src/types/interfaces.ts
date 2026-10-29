@@ -1,12 +1,5 @@
 import { ReactNode } from "react";
 
-export interface BadgeProps {
-  children: ReactNode;
-  variant?: "blue" | "green" | "yellow" | "red" | "gray" | "violet" | "teal" | "white";
-  className?: string;
-  dot?: boolean;
-}
-
 export interface CardProps {
   children: ReactNode;
   className?: string;

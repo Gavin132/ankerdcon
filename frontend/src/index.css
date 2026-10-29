@@ -20,17 +20,47 @@
   --outline: 15 21 25;       /* #0F1519  bold outline */
   --cyan: 87 178 249;        /* #57B2F9  the one brand fill (brand blue, +18 saturation) */
   --cyan-soft: 220 238 251;  /* #DCEEFB */
-  --cyan-text: 13 117 209;   /* #0D75D1  brand as text on light (4.7:1 on white) */
+  --cyan-text: 12 105 187;   /* #0C69BB  brand as text on light (5.6:1 on white, 4.7:1 on --cyan-soft) */
   --on-cyan: 15 21 25;
   --nav-active-bg: 15 21 25;
   --nav-active-fg: 245 248 249;
-  /* Status text and its soft background: emerald / amber / rose. Text is at least 4.5:1 on white and on --sunken. */
+  /* Status: emerald / amber / rose, five tokens each.
+       text  (`text-ok`)       at least 4.5:1 on --surface, --sunken and its own -soft
+       soft  (`bg-ok-soft`)    tinted background of a pill, notice or tile
+       line  (`border-ok-line`) border of a notice
+       fill  (`bg-ok-fill`)    solid colour for dots, bars, banners and the destructive button
+       on    (`text-ok-on`)    text or icon on the fill, at least 4.5:1 */
   --ok: 4 120 87;            /* #047857 */
   --ok-soft: 209 250 229;    /* #D1FAE5 */
+  --ok-line: 167 243 208;    /* #A7F3D0 */
+  --ok-fill: 16 185 129;     /* #10B981 */
+  --ok-on: 15 21 25;
   --warn: 146 64 14;         /* #92400E */
   --warn-soft: 254 243 199;  /* #FEF3C7 */
+  --warn-line: 252 211 77;   /* #FCD34D */
+  --warn-fill: 251 191 36;   /* #FBBF24 */
+  --warn-on: 15 21 25;
   --bad: 190 18 60;          /* #BE123C */
   --bad-soft: 255 228 230;   /* #FFE4E6 */
+  --bad-line: 253 164 175;   /* #FDA4AF */
+  --bad-fill: 225 29 72;     /* #E11D48 */
+  --bad-on: 255 255 255;
+  /* The always-dark hero panel and what sits on it: same in light and dark mode (never use the status text
+     tokens there, they switch with the theme). */
+  --hero: 15 21 25;          /* #0F1519 */
+  --hero-ink: 230 240 243;   /* #E6F0F3 */
+  --hero-warn: 253 230 138;  /* #FDE68A  amber chip text on the hero */
+  --hero-bad: 254 205 211;   /* #FECDD3  rose chip text on the hero */
+  /* Dark layer behind sheets, dialogs and viewers (`bg-scrim/50`), and under a caption on a photo. */
+  --scrim: 8 12 15;          /* #080C0F */
+  /* Fill behind the initial of someone without a photo or colour of their own, picked by name.
+     White text is at least 4.5:1 on all six, in both themes. */
+  --avatar-1: 13 117 209;    /* #0D75D1 */
+  --avatar-2: 4 120 87;      /* #047857 */
+  --avatar-3: 180 83 9;      /* #B45309 */
+  --avatar-4: 190 18 60;     /* #BE123C */
+  --avatar-5: 74 90 99;      /* #4A5A63 */
+  --avatar-6: 162 28 175;    /* #A21CAF */
 }
 
 .dark {
@@ -48,10 +78,13 @@
   --nav-active-fg: 15 21 25;
   --ok: 110 231 183;         /* #6EE7B7 */
   --ok-soft: 19 51 47;       /* emerald at 15% on --surface */
+  --ok-line: 29 82 68;       /* emerald at 30% on --surface */
   --warn: 252 211 77;        /* #FCD34D */
   --warn-soft: 54 47 29;     /* amber at 15% on --surface */
+  --warn-line: 88 66 26;     /* amber at 30% on --surface */
   --bad: 253 164 175;        /* #FDA4AF */
   --bad-soft: 54 32 41;      /* rose at 15% on --surface */
+  --bad-line: 112 61 72;     /* rose at 40% on --surface */
 }
 
 /* ─── Accent colours ─────────────────────────────────────────────────────────
@@ -350,14 +383,15 @@
   .pill {
     @apply inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[12px] font-semibold;
   }
-  .pill-ok { @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300; }
-  .pill-warn { @apply bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300; }
-  .pill-bad { @apply bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300; }
+  .pill-ok { @apply bg-ok-soft text-ok; }
+  .pill-warn { @apply bg-warn-soft text-warn; }
+  .pill-bad { @apply bg-bad-soft text-bad; }
   .pill-neutral { @apply bg-sunken text-ink-2; }
 
   /* Notice box: a short message in a bordered block. warn = needs your attention, ok = all fine. */
-  .notice-warn { @apply rounded-xl border-1.5 border-amber-300 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10; }
-  .notice-ok { @apply rounded-xl border-1.5 border-emerald-200 bg-emerald-50 dark:border-emerald-400/30 dark:bg-emerald-500/10; }
+  .notice-warn { @apply rounded-xl border-1.5 border-warn-line bg-warn-soft; }
+  .notice-ok { @apply rounded-xl border-1.5 border-ok-line bg-ok-soft; }
+  .notice-bad { @apply rounded-xl border-1.5 border-bad-line bg-bad-soft; }
 
   /* Square icon tile in a status colour (add the size, e.g. `h-8 w-8`). The neutral one is `bg-sunken text-ink`. */
   .icon-tile-ok,
@@ -370,7 +404,7 @@
   /* The two destructive buttons, same look as <Button variant="danger">. `.btn-danger` is the confirm
      ("Verwijderen"), `.btn-danger-soft` the quiet one that opens the question. Both are 44 px tall. */
   .btn-danger {
-    @apply inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-xl border-2 border-rose-800 bg-rose-600 font-semibold text-white transition-opacity duration-75 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-400;
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-xl border-2 border-bad bg-bad-fill font-semibold text-bad-on transition-opacity duration-75 disabled:cursor-not-allowed disabled:opacity-60;
   }
   .btn-danger-soft {
     @apply inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-bad-soft font-semibold text-bad transition-opacity duration-75 disabled:cursor-not-allowed disabled:opacity-60;
@@ -400,7 +434,7 @@
     @apply mb-1.5 block text-[12.5px] font-semibold text-ink-2;
   }
   .field-error {
-    @apply mt-1.5 text-xs text-rose-600 dark:text-rose-400;
+    @apply mt-1.5 text-xs text-bad;
   }
 
   /* Small uppercase mono label above a group ("Voor jou", "Deze week"). */
@@ -499,7 +533,7 @@
   }
 
   .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-2;
   }
 
   .safe-bottom {
