@@ -42,6 +42,7 @@ All notable changes to Ankerd Con are documented here.
 - **The changelog page of the admin panel printed the date as 2026-10-22.**
 
 ### Changed
+- **Search no longer lists old rides.** Searching for a driver or a place finds rides from today onwards only.
 - **A concert has no Cosplay card, tab or search suggestion.** Other events (cons, gatherings, trips) keep them.
 - **In the admin users list, an admin is a shield on the corner of the profile picture**, in your accent colour, instead
   of an "Admin" label, and "Placeholder" is a small grey line under the name.

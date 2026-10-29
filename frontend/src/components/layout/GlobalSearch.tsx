@@ -10,6 +10,7 @@ import { useUsers } from "../../hooks/useUsers";
 import { UserAvatar } from "../common/UserAvatar";
 import { EmptyState } from "../common/EmptyState";
 import { routes } from "../../config/routes";
+import { isBeforeToday } from "../../utils/date";
 import { buildTrip, buildTrips, currentTripId, isTripOver, tripIdForEvent } from "../../utils/trips";
 import { matchSearchActions, type SearchActionId } from "../../utils/searchActions";
 import type { RouteActionState } from "../../hooks/useRouteAction";
@@ -82,8 +83,9 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
     if (!q) return [];
 
     const trips = buildTrips(events).filter((t) => matches(q, t.title, t.location));
+    // Old rides would bury the ones that matter: only today and later are found here.
     const rideRows = rides.filter((r) =>
-      matches(q, resolveDriverName(r.driver, users), r.start_location, r.end_location),
+      !isBeforeToday(r.departure_time) && matches(q, resolveDriverName(r.driver, users), r.start_location, r.end_location),
     );
     const mealRows = meals.filter((m) => matches(q, m.meal_name, m.location));
     const cosplayRows = cosplays.filter((c) => matches(q, c.character_name, c.series, c.user_name));
