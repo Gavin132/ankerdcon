@@ -453,3 +453,16 @@ def test_a_failure_halfway_leaves_the_placeholder_to_try_again(env, monkeypatch)
     assert [c["user_name"] for c in fake.db["cosplays"]] == ["Timo", "Zoe"]
     assert next(p for p in fake.db["profiles"] if p["id"] == "t")["aliases"] == ["Tim", "Pip"]
     assert {s["id"] for s in fake.db["settlements"]} == {"s-zoe"}
+
+
+def test_a_restaurant_car_after_the_first_still_knows_the_members_former_names():
+    """Timo is on the second car as "Tim" (a former name) next to Pip: he must not end up on it twice."""
+    cars = [
+        {"name": "Yan", "seats": 3, "passengers": ["Yan"]},
+        {"name": "Xen", "seats": 3, "passengers": ["Xen", "Pip", "Tim"]},
+    ]
+    out = profile_merge._swap_cars(cars, {"Pip"}, "Timo", {"Timo", "Tim"})
+    assert out == [
+        {"name": "Yan", "seats": 3, "passengers": ["Yan"]},
+        {"name": "Xen", "seats": 3, "passengers": ["Xen", "Tim"]},
+    ]

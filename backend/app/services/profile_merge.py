@@ -161,10 +161,11 @@ def _swap_cars(cars: list[dict] | None, old: set[str], new: str, same: set[str] 
         car["passengers"] = _swap(car.get("passengers"), old, new, same) or list(car.get("passengers") or [])
         if car.get("name") in old:
             car["name"] = new
-        same = next((c for c in out if c.get("name") == new), None) if car["name"] == new else None
-        if same is not None:
-            same["passengers"] = list(dict.fromkeys([*same["passengers"], *car["passengers"]]))
-            same["seats"] = max(same.get("seats") or 0, car.get("seats") or 0)
+        # (not called `same`: that is the set of the member's names, still needed for the next car)
+        twin = next((c for c in out if c.get("name") == new), None) if car["name"] == new else None
+        if twin is not None:
+            twin["passengers"] = list(dict.fromkeys([*twin["passengers"], *car["passengers"]]))
+            twin["seats"] = max(twin.get("seats") or 0, car.get("seats") or 0)
             continue
         out.append(car)
     if any(c.get("name") == new for c in out):
