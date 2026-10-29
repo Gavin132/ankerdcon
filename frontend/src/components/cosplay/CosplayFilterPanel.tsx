@@ -3,6 +3,7 @@ import { NamePicker } from "../common/NamePicker";
 import { Button } from "../common/Button";
 import { SelectableDayCards } from "../trip/SelectableDayCards";
 import type { TripDay } from "../../utils/trips";
+import { EmptyState } from "../common/EmptyState";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -168,12 +169,7 @@ export function CosplayFilterPanel({ filters, onChange, personOptions, days, cou
 
         {/* No filter options available */}
         {personOptions.length === 0 && days.length <= 1 && (
-          <div className="flex flex-col items-center gap-3 py-10 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
-              <ArrowUpDown size={22} />
-            </div>
-            <p className="text-xs text-ink-3">Alleen sortering beschikbaar.<br />Voeg meer cosplays toe om filteropties te zien.</p>
-          </div>
+          <EmptyState compact icon={<ArrowUpDown size={22} />} title="Alleen sortering beschikbaar" description="Voeg meer cosplays toe om filteropties te zien." />
         )}
       </div>
   );

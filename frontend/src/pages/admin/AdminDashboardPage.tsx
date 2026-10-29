@@ -26,6 +26,7 @@ import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { groupCalendarEntries, getGroupTitle, formatDateRange, type CalendarItem } from "../../utils/multiDay";
 import type { CalendarEvent, User } from "../../types";
+import { EmptyState } from "../../components/common/EmptyState";
 
 const DAYS_NL = ["zo","ma","di","wo","do","vr","za"];
 const MONTHS_NL = ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
@@ -314,7 +315,7 @@ export function AdminDashboardPage() {
           {eventsLoading ? (
             <div className="space-y-3 p-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-10 animate-pulse rounded-lg bg-sunken" />
+                <div key={i} className="h-10 animate-pulse rounded-xl bg-sunken" />
               ))}
             </div>
           ) : upcomingItems.length === 0 ? (
@@ -342,9 +343,9 @@ export function AdminDashboardPage() {
           <p className="section-label">Gebruikersgroei</p>
         </div>
         {usersLoading ? (
-          <div className="h-40 animate-pulse rounded-lg bg-sunken" />
+          <div className="h-40 animate-pulse rounded-xl bg-sunken" />
         ) : userGrowthData.length === 0 ? (
-          <p className="py-6 text-center text-sm text-ink-3">Geen data beschikbaar</p>
+          <EmptyState compact icon={<TrendingUp size={22} />} title="Geen data beschikbaar" />
         ) : (
           <>
             <ResponsiveContainer width="100%" height={160}>

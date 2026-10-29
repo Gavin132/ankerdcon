@@ -4,11 +4,13 @@ import { LoadingSpinnerProps } from "../../types/interfaces";
 export function LoadingSpinner({
   size = "md",
   className = "",
+  onDark = false,
 }: LoadingSpinnerProps) {
   return (
-    <div className={`flex items-center justify-center ${className}`}>
+    <div role="status" aria-label="Laden…" className={`flex items-center justify-center ${className}`}>
       <svg
-        className={`${sizeClasses[size]} animate-spin text-ink-3`}
+        aria-hidden
+        className={`${sizeClasses[size]} animate-spin ${onDark ? "text-brand" : "text-brand-text"}`}
         fill="none"
         viewBox="0 0 24 24"
       >

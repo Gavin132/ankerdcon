@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LogIn, ShieldAlert, UserCog } from "lucide-react";
+import { LogIn, ShieldAlert, UserCog, Users } from "lucide-react";
 import { useAdminUsers, useAdminImpersonateUser } from "../../hooks/useAdmin";
 import { ApiError } from "../../lib/api/client";
 import { useCurrentUser } from "../../hooks/useUsers";
@@ -10,6 +10,7 @@ import { AdminPageHeader } from "./components/AdminPageHeader";
 import { TAG, PILL_BAD } from "./styles";
 import { AdminSearch } from "./components/AdminSearch";
 import { toast } from "../../store/toast.store";
+import { EmptyState } from "../../components/common/EmptyState";
 
 export function AdminImpersonatePage() {
   const { data: users = [], isLoading } = useAdminUsers();
@@ -70,8 +71,8 @@ export function AdminImpersonatePage() {
       )}
 
       {!isLoading && filtered.length === 0 && (
-        <div className="card-surface px-4 py-8 text-center text-sm text-ink-3">
-          Geen gebruikers gevonden.
+        <div className="card-surface">
+          <EmptyState compact icon={<Users size={22} />} title="Geen gebruikers gevonden" />
         </div>
       )}
 

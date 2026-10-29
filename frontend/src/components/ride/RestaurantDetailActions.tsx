@@ -27,6 +27,7 @@ import { exportRideToIcs } from "../../utils/ics";
 import { getRideStatus } from "../../utils/rides";
 import { toast } from "../../store/toast.store";
 import type { Meal, Ride, User } from "../../types";
+import { EmptyState } from "../common/EmptyState";
 
 interface Props {
   ride: Ride;
@@ -213,30 +214,25 @@ export function RestaurantDetailActions({
 
             {/* Car cards */}
             {drivers.length === 0 ? (
-              <div className="flex flex-col items-center gap-4 py-10 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
-                  <Car size={22} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-ink">
-                    Nog geen auto's aangemeld
-                  </p>
-                  <p className="mt-1 text-xs text-ink-3">
-                    Wie rijdt er mee naar {ride.start_location}?
-                  </p>
-                </div>
-                {canAct && (
-                  <Button
-                    onClick={() => {
-                      setDriverName("");
-                      setDriverOpen(true);
-                    }}
-                  >
-                    <Car size={15} />
-                    Eerste auto aanmelden
-                  </Button>
-                )}
-              </div>
+              <EmptyState
+                compact
+                icon={<Car size={22} />}
+                title="Nog geen auto's aangemeld"
+                description={`Wie rijdt er mee naar ${ride.start_location}?`}
+                action={
+                  canAct && (
+                    <Button
+                      onClick={() => {
+                        setDriverName("");
+                        setDriverOpen(true);
+                      }}
+                    >
+                      <Car size={15} />
+                      Eerste auto aanmelden
+                    </Button>
+                  )
+                }
+              />
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <AnimatePresence mode="popLayout">

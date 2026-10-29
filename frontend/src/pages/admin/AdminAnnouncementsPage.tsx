@@ -19,6 +19,7 @@ import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
 import { F, FS, L, TH, TD, TR, PILL_NEUTRAL, PILL_WARN, PILL_BAD } from "./styles";
 import { toast } from "../../store/toast.store";
 import type { Announcement, AnnouncementSeverity } from "../../types";
+import { EmptyState } from "../../components/common/EmptyState";
 
 const SEVERITY_LABEL: Record<AnnouncementSeverity, string> = {
   info: "Info",
@@ -234,11 +235,8 @@ export function AdminAnnouncementsPage() {
                 <AdminTableSkeleton cols={5} />
               ) : announcements.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center">
-                    <div className="flex flex-col items-center gap-2 text-ink-3">
-                      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3"><Megaphone size={22} /></span>
-                      <p className="text-sm">Nog geen aankondigingen geplaatst.</p>
-                    </div>
+                  <td colSpan={5}>
+                    <EmptyState compact icon={<Megaphone size={22} />} title="Nog geen aankondigingen geplaatst" />
                   </td>
                 </tr>
               ) : (

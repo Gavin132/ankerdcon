@@ -26,6 +26,7 @@ import { ApiError } from "./lib/api/client";
 import { linkDiscordAccount } from "./services/users.service";
 import { QUERY_KEYS } from "./constants";
 import { toast } from "./store/toast.store";
+import { LoadingSpinner } from "./components/common/LoadingSpinner";
 
 // The browser offers to install the app through an event that fires once, early: catch it before anything renders.
 captureInstallPrompt();
@@ -266,7 +267,7 @@ function PendingUploadsSync() {
 function RouteFallback() {
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-paper">
-      <div className="h-8 w-8 rounded-full border-2 border-ink-3 border-t-transparent animate-spin" />
+      <LoadingSpinner />
     </div>
   );
 }

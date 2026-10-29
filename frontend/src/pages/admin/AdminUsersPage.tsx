@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Shield, Plus, X, UserPlus, Ban, Copy, Check, Eye } from "lucide-react";
+import { Shield, Plus, X, UserPlus, Ban, Copy, Check, Eye, Users } from "lucide-react";
 import {
   useAdminUsers,
   useAdminCreateUser,
@@ -30,6 +30,7 @@ import { ToggleRow } from "./components/ToggleRow";
 import { useTableSelection } from "../../hooks/useTableSelection";
 import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
 import { askConfirm } from "../../store/confirm.store";
+import { EmptyState } from "../../components/common/EmptyState";
 
 const PAGE_SIZE = 15;
 
@@ -556,8 +557,8 @@ export function AdminUsersPage() {
                 <AdminTableSkeleton cols={5} />
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-10 text-center text-sm text-ink-3">
-                    Geen gebruikers gevonden.
+                  <td colSpan={5}>
+                    <EmptyState compact icon={<Users size={22} />} title="Geen gebruikers gevonden" />
                   </td>
                 </tr>
               ) : (

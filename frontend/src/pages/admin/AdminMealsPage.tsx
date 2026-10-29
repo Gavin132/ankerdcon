@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Clock, Bus, MapPin } from "lucide-react";
+import { Plus, Clock, Bus, MapPin, UtensilsCrossed } from "lucide-react";
 import { LocationSearchInput } from "../../components/common/LocationSearchInput";
 import { formatAmount, formatDateTime } from "../../utils/format";
 import {
@@ -34,6 +34,7 @@ import { AdminBulkBar } from "./components/AdminBulkBar";
 import { RowCheckbox } from "./components/RowCheckbox";
 import { useTableSelection } from "../../hooks/useTableSelection";
 import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
+import { EmptyState } from "../../components/common/EmptyState";
 
 const PAGE_SIZE = 15;
 
@@ -458,11 +459,8 @@ export function AdminMealsPage() {
                 <AdminTableSkeleton cols={6} rows={3} />
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-5 py-10 text-center text-sm text-ink-3"
-                  >
-                    Geen activiteiten gevonden.
+                  <td colSpan={6}>
+                    <EmptyState compact icon={<UtensilsCrossed size={22} />} title="Geen activiteiten gevonden" />
                   </td>
                 </tr>
               ) : (

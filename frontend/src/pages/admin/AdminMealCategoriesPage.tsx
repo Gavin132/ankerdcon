@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowDown, ArrowUp, Check, Plus, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Plus, X, Layers } from "lucide-react";
 import {
   useAdminMealCategories,
   useAdminCreateMealCategory,
@@ -13,6 +13,7 @@ import { F } from "./styles";
 import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
+import { EmptyState } from "../../components/common/EmptyState";
 
 type Flag = "has_signup" | "has_cost" | "has_transport" | "is_meal";
 
@@ -170,9 +171,7 @@ export function AdminMealCategoriesPage() {
             {[0, 1, 2].map((i) => <div key={i} className="h-14 animate-pulse rounded-xl bg-sunken" />)}
           </div>
         ) : categories.length === 0 ? (
-          <p className="px-5 py-10 text-center text-sm text-ink-3">
-            Nog geen categorieën. Voeg de eerste toe.
-          </p>
+          <EmptyState compact icon={<Layers size={22} />} title="Nog geen categorieën" description="Voeg de eerste toe." />
         ) : (
           categories.map((category, index) => (
             <div key={category.id} className="space-y-2.5 px-4 py-3.5">

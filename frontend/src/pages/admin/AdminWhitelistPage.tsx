@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, ShieldCheck, MessageSquare, Mail, Trash2, Eye } from "lucide-react";
+import { Plus, ShieldCheck, MessageSquare, Mail, Trash2, Eye, ListChecks } from "lucide-react";
 import { useAdminWhitelist, useCreateWhitelistEntry, useDeleteWhitelistEntry } from "../../hooks/useWhitelist";
 import { toast } from "../../store/toast.store";
 import { F, L, TH, TD, TR, PILL_NEUTRAL } from "./styles";
@@ -8,6 +8,7 @@ import { AdminPageHeader } from "./components/AdminPageHeader";
 import { ToggleRow } from "./components/ToggleRow";
 import { ConfirmInline } from "./components/ConfirmInline";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
+import { EmptyState } from "../../components/common/EmptyState";
 
 export function AdminWhitelistPage() {
   const { data: entries = [], isLoading } = useAdminWhitelist();
@@ -122,8 +123,8 @@ export function AdminWhitelistPage() {
               <AdminTableSkeleton cols={2} />
             ) : entries.length === 0 ? (
               <tr>
-                <td colSpan={2} className="px-5 py-10 text-center text-sm text-ink-3">
-                  Nog niemand op de toegangslijst.
+                <td colSpan={2}>
+                  <EmptyState compact icon={<ListChecks size={22} />} title="Nog niemand op de toegangslijst" />
                 </td>
               </tr>
             ) : (

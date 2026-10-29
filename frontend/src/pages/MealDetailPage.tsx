@@ -21,6 +21,7 @@ import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { mealCategory } from "../utils/mealCategory";
 import { NamePicker } from "../components/common/NamePicker";
+import { DetailSkeleton } from "../components/common/Skeleton";
 
 export function MealDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -114,9 +115,7 @@ export function MealDetailPage() {
     return (
       <div className="min-h-dvh bg-paper">
         <DetailTopbar title="Laden…" onBack={goBack} />
-        <div className="flex items-center justify-center py-24">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-ink border-t-transparent" />
-        </div>
+        <DetailSkeleton />
       </div>
     );
   }

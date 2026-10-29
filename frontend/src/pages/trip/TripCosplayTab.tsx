@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Sparkles, Plus, Image, Upload, UploadCloud, X,
   CheckCircle2, SlidersHorizontal, ChevronLeft, ChevronRight,
+  Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
@@ -461,7 +462,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                           : "border-line bg-surface hover:border-ink-3"
                       }`}>
                         {entry.uploading
-                          ? <div className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-ink-3 border-t-transparent" />
+                          ? <Loader2 size={14} className="shrink-0 animate-spin text-ink-3" />
                           : entry.url
                           ? <CheckCircle2 size={14} className="shrink-0 text-ok" />
                           : entry.queued

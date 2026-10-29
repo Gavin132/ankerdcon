@@ -9,6 +9,7 @@ import { AnnouncementBanner } from "./AnnouncementBanner";
 import { ChangelogBanner } from "./ChangelogBanner";
 import { ScrollToTop } from "../common/ScrollToTop";
 import { PullToRefresh } from "../common/PullToRefresh";
+import { LoadingSpinner } from "../common/LoadingSpinner";
 
 // A lightweight in-place loader for switching between lazy-loaded tabs — no
 // background of its own, so it never flashes a different color than the
@@ -20,7 +21,7 @@ import { PullToRefresh } from "../common/PullToRefresh";
 function TabFallback() {
   return (
     <div className="flex items-center justify-center py-24">
-      <div className="h-8 w-8 rounded-full border-2 border-ink-3 border-t-transparent animate-spin" />
+      <LoadingSpinner />
     </div>
   );
 }

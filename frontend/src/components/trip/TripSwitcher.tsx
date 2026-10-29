@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { CalendarRange, ChevronRight } from "lucide-react";
+import { CalendarRange, ChevronRight, CalendarDays } from "lucide-react";
 import { useCalendar } from "../../hooks/useCalendar";
 import { routes } from "../../config/routes";
 import { buildTrips, tripPhase, type Trip, type TripPhase } from "../../utils/trips";
 import { TripSheet } from "./TripSheet";
+import { EmptyState } from "../common/EmptyState";
 
 const PAST_SHOWN = 8;
 
@@ -74,7 +75,7 @@ export function TripSwitcher({ open, onClose, currentId, myNames }: { open: bool
           )}
         </section>
       )}
-      {trips.length === 0 && <p className="py-8 text-center text-sm text-ink-3">Nog geen evenementen.</p>}
+      {trips.length === 0 && <EmptyState compact icon={<CalendarDays size={22} />} title="Nog geen evenementen" />}
     </TripSheet>
   );
 }

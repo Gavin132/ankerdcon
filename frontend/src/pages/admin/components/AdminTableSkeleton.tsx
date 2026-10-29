@@ -10,7 +10,7 @@ export function AdminTableSkeleton({ cols, rows = 4 }: Props) {
       {Array.from({ length: rows }).map((_, i) => (
         <tr key={i}>
           <td colSpan={cols} className="!p-3">
-            <div className="h-8 animate-pulse rounded-lg bg-sunken" />
+            <div className="h-8 animate-pulse rounded-xl bg-sunken" />
           </td>
         </tr>
       ))}

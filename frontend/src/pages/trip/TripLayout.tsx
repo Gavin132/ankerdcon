@@ -5,6 +5,7 @@ import { useCalendar } from "../../hooks/useCalendar";
 import { routes } from "../../config/routes";
 import { buildTrip, isTripTabId, visibleTripTabs, type TripTabId } from "../../utils/trips";
 import { rememberTripTab, type TripOutletContext } from "./tripContext";
+import { EmptyState } from "../../components/common/EmptyState";
 
 /**
  * Shell for the Event tab. Overzicht is the only real page — every other
@@ -45,13 +46,15 @@ export function TripLayout() {
       return <Navigate to={routes.trip.view(dayEvent.multi_day_id, activeTab, dayEvent.id)} replace />;
     }
     return (
-      <div className="flex flex-col items-center gap-3 py-20 text-center text-ink-3">
-        <CalendarDays size={40} className="opacity-30" />
-        <p className="text-sm font-semibold text-ink-2">Evenement niet gevonden</p>
-        <Link to={routes.calendar} className="text-xs font-semibold text-brand-text hover:underline">
-          Bekijk de agenda
-        </Link>
-      </div>
+      <EmptyState
+        icon={<CalendarDays size={22} />}
+        title="Evenement niet gevonden"
+        action={
+          <Link to={routes.calendar} className="text-xs font-semibold text-brand-text hover:underline">
+            Bekijk de agenda
+          </Link>
+        }
+      />
     );
   }
 

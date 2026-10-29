@@ -37,6 +37,7 @@ import { AdminBulkBar } from "./components/AdminBulkBar";
 import { RowCheckbox } from "./components/RowCheckbox";
 import { useTableSelection } from "../../hooks/useTableSelection";
 import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
+import { EmptyState } from "../../components/common/EmptyState";
 
 const PAGE_SIZE = 15;
 const DIRECTIONS = ["Inbound", "Outbound", "Restaurant"] as const;
@@ -429,11 +430,8 @@ export function AdminRidesPage() {
                 <AdminTableSkeleton cols={6} />
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-5 py-10 text-center text-sm text-ink-3"
-                  >
-                    Geen ritten gevonden.
+                  <td colSpan={6}>
+                    <EmptyState compact icon={<Car size={22} />} title="Geen ritten gevonden" />
                   </td>
                 </tr>
               ) : (

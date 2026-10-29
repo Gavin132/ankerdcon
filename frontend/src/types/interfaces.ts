@@ -19,6 +19,8 @@ export interface EmptyStateProps {
 
 export interface LoadingSpinnerProps {
   size?: "sm" | "md" | "lg";
+  /** On the always-dark hero background: the brand fill instead of the brand text colour. */
+  onDark?: boolean;
   className?: string;
 }
 

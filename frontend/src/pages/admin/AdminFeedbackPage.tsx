@@ -9,6 +9,7 @@ import { CHIP_OFF, CHIP_ON, PILL_BAD, PILL_NEUTRAL, PILL_OK } from "./styles";
 import { formatDateTime } from "../../utils/format";
 import { toast } from "../../store/toast.store";
 import type { Feedback, FeedbackStatus } from "../../types";
+import { EmptyState } from "../../components/common/EmptyState";
 
 const STATUS_LABEL: Record<FeedbackStatus, string> = { new: "Nieuw", seen: "Gezien", done: "Opgelost" };
 const STATUS_ORDER: FeedbackStatus[] = ["new", "seen", "done"];
@@ -72,12 +73,7 @@ export function AdminFeedbackPage() {
           ))}
         </div>
       ) : shown.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-12 text-ink-3">
-          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken">
-            <MessageSquareText size={22} />
-          </span>
-          <p className="text-sm">{items.length === 0 ? "Nog geen feedback ontvangen." : "Niets in deze lijst."}</p>
-        </div>
+        <EmptyState icon={<MessageSquareText size={22} />} title={items.length === 0 ? "Nog geen feedback ontvangen" : "Niets in deze lijst"} />
       ) : (
         <ul className="space-y-3">
           {shown.map((f) => (

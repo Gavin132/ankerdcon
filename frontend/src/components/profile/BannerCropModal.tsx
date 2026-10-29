@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ZoomIn, ZoomOut, Upload } from "lucide-react";
+import { X, ZoomIn, ZoomOut, Upload, Loader2 } from "lucide-react";
 import { Button } from "../common/Button";
 import { useBackClose } from "../../hooks/useBackClose";
 
@@ -266,7 +266,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
                 {/* Loading spinner */}
                 {!imgReady && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="h-6 w-6 rounded-full border-2 border-hero-ink/20 border-t-hero-ink/70 animate-spin" />
+                    <Loader2 size={20} className="animate-spin text-hero-ink/70" />
                   </div>
                 )}
 

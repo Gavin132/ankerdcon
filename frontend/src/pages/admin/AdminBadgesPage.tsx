@@ -25,6 +25,7 @@ import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
 import { F, L, SECTION, SECTION_TITLE, TH, TD, TR, PILL_NEUTRAL } from "./styles";
 import { toast } from "../../store/toast.store";
 import type { Badge, User } from "../../types";
+import { EmptyState } from "../../components/common/EmptyState";
 
 const PAGE_SIZE = 15;
 
@@ -542,13 +543,8 @@ export function AdminBadgesPage() {
                 <AdminTableSkeleton cols={5} />
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center">
-                    <div className="flex flex-col items-center gap-2 text-ink-3">
-                      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3"><ShieldCheck size={22} /></span>
-                      <p className="text-sm">
-                        {search ? "Geen badges gevonden." : "Nog geen badges aangemaakt."}
-                      </p>
-                    </div>
+                  <td colSpan={5}>
+                    <EmptyState compact icon={<ShieldCheck size={22} />} title={search ? "Geen badges gevonden" : "Nog geen badges aangemaakt"} />
                   </td>
                 </tr>
               ) : (

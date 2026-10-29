@@ -12,6 +12,7 @@ import { useAdminEvents } from "../../hooks/useAdmin";
 import { toast } from "../../store/toast.store";
 import { formatBytes, formatDateTime } from "../../utils/format";
 import type { CdnObject } from "../../types";
+import { EmptyState } from "../../components/common/EmptyState";
 
 // One screenful at a time, in whole rows at 2, 4 and 6 columns. More arrives while scrolling.
 const PAGE = 24;
@@ -211,7 +212,7 @@ export function AdminCdnPage() {
               ))}
             </div>
           ) : items.length === 0 ? (
-            <p className="py-10 text-center text-sm text-ink-3">Geen bestanden.</p>
+            <EmptyState compact icon={<HardDrive size={22} />} title="Geen bestanden" />
           ) : (
             <div className={`grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6 ${isFetching && !isFetchingNextPage ? "opacity-70" : ""}`}>
               {items.map((o, i) => (

@@ -29,6 +29,7 @@ import { useTableSelection } from "../../hooks/useTableSelection";
 import { formatDateRangeShort } from "../../utils/format";
 import { parseEventDate } from "../../utils/date";
 import { getNow } from "../../store/time.store";
+import { EmptyState } from "../../components/common/EmptyState";
 
 const PAGE_SIZE = 15;
 
@@ -319,8 +320,8 @@ export function AdminEventsPage() {
                 <AdminTableSkeleton cols={6} />
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-10 text-center text-sm text-ink-3">
-                    {showHistory ? "Geen evenementen in de geschiedenis." : "Geen aankomende evenementen gevonden."}
+                  <td colSpan={6}>
+                    <EmptyState compact icon={<CalendarDays size={22} />} title={showHistory ? "Geen evenementen in de geschiedenis" : "Geen aankomende evenementen gevonden"} />
                   </td>
                 </tr>
               ) : (

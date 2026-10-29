@@ -17,6 +17,7 @@ import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 import { AdminBulkBar } from "./components/AdminBulkBar";
 import { RowCheckbox } from "./components/RowCheckbox";
 import { useTableSelection } from "../../hooks/useTableSelection";
+import { EmptyState } from "../../components/common/EmptyState";
 
 const PAGE_SIZE = 15;
 
@@ -142,8 +143,8 @@ export function AdminEventGroupsPage() {
               <AdminTableSkeleton cols={3} />
             ) : groups.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-5 py-10 text-center text-sm text-ink-3">
-                  Nog geen groepen aangemaakt.
+                <td colSpan={3}>
+                  <EmptyState compact icon={<Layers size={22} />} title="Nog geen groepen aangemaakt" />
                 </td>
               </tr>
             ) : (

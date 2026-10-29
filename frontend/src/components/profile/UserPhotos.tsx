@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight, Play, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, X, Image } from "lucide-react";
 import { useUserPhotos } from "../../hooks/useStories";
 import { formatDate } from "../../utils/format";
 import { useBackClose } from "../../hooks/useBackClose";
 import { fullImage, gridImage } from "../../utils/storyMedia";
 import type { UserStoryPhoto } from "../../types";
+import { EmptyState } from "../common/EmptyState";
 
 const ALL = "all";
 
@@ -47,9 +48,7 @@ export function UserPhotos({ identifier, whose }: { identifier: string; whose?: 
             ))}
           </div>
         ) : photos.length === 0 ? (
-          <p className="py-4 text-center text-sm text-ink-3">
-            {whose ? `${whose} heeft nog geen foto's toegevoegd.` : "Nog geen foto's toegevoegd."}
-          </p>
+          <EmptyState compact icon={<Image size={22} />} title={whose ? `${whose} heeft nog geen foto's toegevoegd` : "Nog geen foto's toegevoegd"} />
         ) : (
           <>
             {events.length > 1 && (

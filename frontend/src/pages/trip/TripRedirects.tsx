@@ -4,11 +4,13 @@ import { useCalendar } from "../../hooks/useCalendar";
 import { routes } from "../../config/routes";
 import { currentTripId, isTripTabId, tripIdOf, type TripTabId } from "../../utils/trips";
 import { lastTripTab } from "./tripContext";
+import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 
 function Loading() {
   return (
     <div className="flex items-center justify-center py-24">
-      <div className="h-8 w-8 rounded-full border-2 border-brand-text border-t-transparent animate-spin" />
+      <LoadingSpinner />
     </div>
   );
 }
@@ -28,13 +30,15 @@ export function CurrentTripRedirect() {
   const tripId = currentTripId(events);
   if (!tripId) {
     return (
-      <div className="flex flex-col items-center gap-3 py-20 text-center text-ink-3">
-        <CalendarDays size={40} className="opacity-30" />
-        <p className="text-sm font-semibold text-ink-2">Nog geen evenementen gepland</p>
-        <Link to={routes.calendar} className="text-xs font-semibold text-brand-text hover:underline">
-          Bekijk de agenda
-        </Link>
-      </div>
+      <EmptyState
+        icon={<CalendarDays size={22} />}
+        title="Nog geen evenementen gepland"
+        action={
+          <Link to={routes.calendar} className="text-xs font-semibold text-brand-text hover:underline">
+            Bekijk de agenda
+          </Link>
+        }
+      />
     );
   }
 

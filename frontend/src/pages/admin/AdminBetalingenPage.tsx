@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle2, Clock, AlertCircle, ChevronDown, ChevronUp, Trash2, History } from "lucide-react";
+import { CheckCircle2, Clock, AlertCircle, ChevronDown, ChevronUp, Trash2, History, Euro } from "lucide-react";
 import { useExpenses } from "../../hooks/useExpenses";
 import { useAdminUpdateExpense, useAdminDeleteExpense, useAdminSetShareStatus } from "../../hooks/useAdmin";
 import { useCalendar } from "../../hooks/useCalendar";
@@ -10,6 +10,7 @@ import { AdminPageHeader } from "./components/AdminPageHeader";
 import { ConfirmInline } from "./components/ConfirmInline";
 import { toast } from "../../store/toast.store";
 import type { CalendarEvent, Expense, ExpenseShare } from "../../types";
+import { EmptyState } from "../../components/common/EmptyState";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -556,14 +557,14 @@ export function AdminBetalingenPage() {
         )}
 
         {!isLoading && expenses.length === 0 && (
-          <div className="card-surface px-4 py-8 text-center text-sm text-ink-3">
-            Geen uitgaven gevonden.
+          <div className="card-surface">
+            <EmptyState compact icon={<Euro size={22} />} title="Geen uitgaven gevonden" />
           </div>
         )}
 
         {!isLoading && expenses.length > 0 && openExpenses.length === 0 && (
-          <div className="card-surface px-4 py-8 text-center text-sm text-ink-3">
-            Alles is verrekend. De geschiedenis staat hieronder.
+          <div className="card-surface">
+            <EmptyState compact icon={<CheckCircle2 size={22} />} title="Alles is verrekend" description="De geschiedenis staat hieronder." />
           </div>
         )}
 

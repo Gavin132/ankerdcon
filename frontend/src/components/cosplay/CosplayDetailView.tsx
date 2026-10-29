@@ -11,6 +11,7 @@ import { safeHref } from "../../utils/validation";
 import { routes } from "../../config/routes";
 import type { Cosplay, CalendarEvent, User } from "../../types";
 import { useBackClose } from "../../hooks/useBackClose";
+import { EmptyState } from "../common/EmptyState";
 
 /**
  * One cosplay in full. Like the filter, this is a *view of the cosplay sheet*
@@ -117,12 +118,7 @@ export function CosplayDetailBody({ cosplay, events, users, onLeave: onClose }: 
       )}
 
       {cosplay.inspo_images.length === 0 && (
-        <div className="flex flex-col items-center gap-2.5 rounded-xl border-1.5 border-dashed border-line py-8 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
-            <Sparkles size={22} />
-          </div>
-          <p className="text-xs text-ink-3">Geen inspiratieafbeeldingen</p>
-        </div>
+        <EmptyState compact icon={<Sparkles size={22} />} title="Geen inspiratieafbeeldingen" />
       )}
 
       {/* ── Notes ── */}

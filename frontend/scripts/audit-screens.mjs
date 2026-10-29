@@ -96,6 +96,8 @@ export const screens = [
   // ── The admin panel ────────────────────────────────────────────────────────
   { name: "admin-dashboard", path: "/admin", role: "admin" },
   { name: "admin-users", path: "/admin/users", role: "admin" },
+  { name: "admin-users-empty", path: "/admin/users", role: "admin", steps: async (page) => { await page.getByPlaceholder(/Zoek/).first().fill("zzzz"); await page.waitForTimeout(600); } },
+  { name: "admin-rides-empty", path: "/admin/rides", role: "admin", steps: async (page) => { await page.getByPlaceholder(/Zoek/).first().fill("zzzz"); await page.waitForTimeout(600); } },
   { name: "admin-users-add", path: "/admin/users", role: "admin", steps: click(byText(/nieuwe gebruiker/i)) },
   { name: "admin-users-selected", path: "/admin/users", role: "admin", steps: click(checkbox(/Selecteer /)) },
   { name: "admin-users-bulk-delete", path: "/admin/users", role: "admin", steps: then(click(checkbox(/Selecteer /)), click(byText(/^Verwijderen$/))) },

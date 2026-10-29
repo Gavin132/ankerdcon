@@ -329,7 +329,7 @@
     }
     .stack-table tbody td[colspan] {
       flex: 1 1 100%;
-      padding: 2rem 0;
+      padding: 0;
     }
     .stack-table .cell-main {
       flex: 1 1 0;

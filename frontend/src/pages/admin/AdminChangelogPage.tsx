@@ -20,6 +20,7 @@ import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
 import { F, L, TH, TD, TR } from "./styles";
 import { toast } from "../../store/toast.store";
 import type { ChangelogEntry } from "../../types";
+import { EmptyState } from "../../components/common/EmptyState";
 
 function todayIso(): string {
   return toDateKey(getNow());
@@ -187,11 +188,8 @@ export function AdminChangelogPage() {
                 <AdminTableSkeleton cols={4} />
               ) : entries.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-5 py-12 text-center">
-                    <div className="flex flex-col items-center gap-2 text-ink-3">
-                      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3"><Sparkles size={22} /></span>
-                      <p className="text-sm">Nog geen items in de wijzigingslog.</p>
-                    </div>
+                  <td colSpan={4}>
+                    <EmptyState compact icon={<Sparkles size={22} />} title="Nog geen items in de wijzigingslog" />
                   </td>
                 </tr>
               ) : (

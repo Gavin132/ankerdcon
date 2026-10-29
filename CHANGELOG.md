@@ -35,6 +35,11 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **Empty lists look the same everywhere.** "Geen gebruikers gevonden", "Nog geen groepen", "Nog geen auto's aangemeld"
+  and the other empty lists in the admin panel, the cosplay filters, the profile photos and the trip pages are one
+  empty state: an icon, a short title, sometimes one line of help or a button.
+- **Detail pages of an activity and a ride show a grey outline of the page while they load** instead of a lone spinner,
+  and the spinner you see when the app starts is blue everywhere (also on the dark start screen).
 - **A chosen option looks the same everywhere.** The zone of a location ping, the driver of a parking spot and the kind
   of feedback are chips that turn dark when chosen (like the filters); the day tiles, the sort options and the
   accent colours keep their thin border and get a tinted background. Nothing is drawn with a thick outline for being
