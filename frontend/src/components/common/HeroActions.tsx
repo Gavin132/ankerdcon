@@ -29,7 +29,7 @@ export function HeroActions({ children }: { children: ReactNode }) {
   return <div className="ml-auto flex flex-wrap items-center justify-end gap-2">{children}</div>;
 }
 
-/** "Aanmelden", "Afmelden", "Iemand aanmelden", "Stap in", "Uitstappen": every action on the hero is the standard blue button, 40 px tall. */
+/** "Aanmelden", "Afmelden", "Iemand aanmelden", "Stap in", "Uitstappen": every action on the hero is the compact blue button (`btn-compact`: 40 px, 36 px from `lg` up). */
 export function HeroButton({ className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button type="button" className={`btn-primary btn-on-hero min-h-[40px] px-3.5 py-2 text-xs focus-visible:ring-hero-ink focus-visible:ring-offset-hero ${className}`} {...props} />;
+  return <button type="button" className={`btn-primary btn-on-hero btn-compact px-3.5 focus-visible:ring-hero-ink focus-visible:ring-offset-hero ${className}`} {...props} />;
 }

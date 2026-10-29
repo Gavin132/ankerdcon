@@ -102,7 +102,7 @@ export function AdminWhitelistPage() {
         <button
           type="submit"
           disabled={(!discordId.trim() && !email.trim()) || createMutation.isPending}
-          className="btn-primary min-h-[44px] w-full px-4 py-2.5 text-sm sm:w-auto"
+          className="btn-primary w-full px-4 sm:w-auto"
         >
           <Plus size={16} />
           Toevoegen

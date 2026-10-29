@@ -59,7 +59,7 @@ export function AdminBulkBar({
           ) : (
             <>
               {extraActions}
-              <button type="button" onClick={requestDelete} disabled={isPending} className="btn-danger-soft px-3 text-sm">
+              <button type="button" onClick={requestDelete} disabled={isPending} className="btn-danger-soft px-3">
                 <Trash2 size={16} />
                 {isPending ? "Bezig…" : "Verwijderen"}
               </button>

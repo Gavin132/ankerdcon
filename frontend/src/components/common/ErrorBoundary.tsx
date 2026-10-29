@@ -53,10 +53,10 @@ export function ErrorFallback({ error }: { error?: unknown }) {
       statusLink
       actions={
         <>
-          <button type="button" disabled={busy} onClick={() => reset()} className="btn-primary px-4 text-sm">
+          <button type="button" disabled={busy} onClick={() => reset()} className="btn-primary px-4">
             {busy ? "Even geduld…" : "Probeer opnieuw"}
           </button>
-          <button type="button" disabled={busy} onClick={() => reset(routes.hub)} className="btn-primary px-4 py-2.5 text-sm">
+          <button type="button" disabled={busy} onClick={() => reset(routes.hub)} className="btn-primary px-4">
             Terug naar start
           </button>
         </>

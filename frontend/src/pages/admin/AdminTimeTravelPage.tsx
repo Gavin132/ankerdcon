@@ -34,7 +34,7 @@ export function AdminTimeTravelPage() {
               De app denkt nog steeds dat het een andere tijd is, ook met het klokje verborgen.
             </p>
           </div>
-          <button type="button" onClick={() => setOverride(null)} className="btn-primary shrink-0 px-4 text-sm">
+          <button type="button" onClick={() => setOverride(null)} className="btn-primary shrink-0 px-4">
             Terug naar echte tijd
           </button>
         </div>

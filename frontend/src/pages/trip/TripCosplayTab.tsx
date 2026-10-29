@@ -542,7 +542,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                 </button>
 
                 {!viewer && (
-                  <button onClick={openCreate} className="btn-primary ml-auto min-h-11 shrink-0 px-3 py-2 text-xs">
+                  <button onClick={openCreate} className="btn-primary ml-auto shrink-0 px-3">
                     <Plus size={14} />
                     Toevoegen
                   </button>
@@ -623,7 +623,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
               description="Laat anderen weten wat je draagt!"
               action={
                 !viewer && (
-                  <button onClick={openCreate} className="btn-primary px-4 py-2.5 text-sm">
+                  <button onClick={openCreate} className="btn-primary px-4">
                     <Plus size={16} />
                     Eerste cosplay toevoegen
                   </button>

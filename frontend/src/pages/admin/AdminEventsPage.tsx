@@ -206,7 +206,7 @@ export function AdminEventsPage() {
         action={
           <button
             onClick={() => setDrawerId("new")}
-            className="btn-primary min-h-[44px] gap-2 px-4 py-2.5 text-sm"
+            className="btn-primary gap-2 px-4"
           >
             <Plus size={16} />
             Nieuw evenement
@@ -261,7 +261,7 @@ export function AdminEventsPage() {
           <button
             onClick={() => setBulkMode("set-group")}
             disabled={bulkIsPending}
-            className="btn-primary px-3 text-sm"
+            className="btn-primary px-3"
           >
             <Tag size={16} />
             Groep
@@ -283,7 +283,7 @@ export function AdminEventsPage() {
               <button
                 onClick={() => { handleBulkSetGroup(pickedGroup || null); setPickedGroup(""); setBulkMode("idle"); }}
                 disabled={bulkIsPending}
-                className="btn-primary min-h-[44px] gap-1.5 px-3 py-1.5 text-sm"
+                className="btn-primary gap-1.5 px-3"
               >
                 <Check size={16} />
                 {bulkIsPending ? "Bezig…" : "Toepassen"}
@@ -291,7 +291,7 @@ export function AdminEventsPage() {
               <button
                 onClick={() => { setBulkMode("idle"); setPickedGroup(""); }}
                 disabled={bulkIsPending}
-                className="btn-secondary px-3 text-sm"
+                className="btn-secondary px-3"
               >
                 Annuleren
               </button>

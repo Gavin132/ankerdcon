@@ -94,7 +94,7 @@ export function AdminImpersonatePage() {
               type="button"
               disabled={pendingId === user.id || user.is_active === false}
               onClick={() => handleImpersonate(user.id!, user.name)}
-              className="btn-primary shrink-0 px-4 text-sm"
+              className="btn-primary shrink-0 px-4"
             >
               {pendingId === user.id ? (
                 <>

@@ -67,7 +67,6 @@ export function LoginForm() {
       <div className="space-y-2">
         <Button
           type="button"
-          size="lg"
           onClick={() => handleOAuthLogin("discord")}
           loading={loading === "discord"}
           disabled={loading !== null}
@@ -85,7 +84,6 @@ export function LoginForm() {
 
       <Button
         type="button"
-        size="lg"
         variant="tonal"
         onClick={() => handleOAuthLogin("google")}
         loading={loading === "google"}

@@ -25,7 +25,7 @@ export function RideActions({ ride }: RideActionsProps) {
             href={openUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-primary min-h-10 shrink-0 px-3 text-xs"
+            className="btn-primary btn-compact shrink-0 px-3"
           >
             <Navigation size={12} />
             Route openen

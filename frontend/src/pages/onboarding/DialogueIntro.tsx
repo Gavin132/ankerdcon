@@ -225,7 +225,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.4, duration: 0.25 }}
                     onClick={e => { e.stopPropagation(); onDone(); }}
-                    className="btn-primary mt-4 px-5 py-2.5 text-sm"
+                    className="btn-primary mt-4 px-5"
                   >
                     Aan de slag! <ArrowRight size={14} />
                   </motion.button>
@@ -278,7 +278,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                 <div className="flex justify-end">
                   <motion.button
                     onClick={handleConConfirm}
-                    className="btn-primary px-5 py-2.5 text-sm"
+                    className="btn-primary px-5"
                   >
                     Volgende <ArrowRight size={14} />
                   </motion.button>
@@ -381,7 +381,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                 <div className="flex justify-end">
                   <motion.button
                     onClick={handleYearConfirm}
-                    className="btn-primary px-5 py-2.5 text-sm"
+                    className="btn-primary px-5"
                   >
                     Klaar! <ArrowRight size={14} />
                   </motion.button>

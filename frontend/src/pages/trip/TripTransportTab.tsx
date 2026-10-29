@@ -350,7 +350,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
             <button
               type="button"
               onClick={() => openCreate(direction, activeDayId)}
-              className="btn-primary shrink-0 px-3 text-[12.5px]"
+              className="btn-primary shrink-0 px-3"
             >
               <Car size={14} /> Rit aanbieden
             </button>

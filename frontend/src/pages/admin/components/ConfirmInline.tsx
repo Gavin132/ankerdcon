@@ -26,14 +26,14 @@ export function ConfirmInline({
   return (
     <div data-confirm className="flex flex-wrap items-center justify-end gap-2">
       <span className="mr-auto text-sm font-medium text-ink">{question}</span>
-      <button type="button" onClick={onCancel} disabled={isPending} className="btn-secondary px-3 text-sm">
+      <button type="button" onClick={onCancel} disabled={isPending} className="btn-secondary btn-compact px-3">
         Annuleren
       </button>
       <button
         type="button"
         onClick={onConfirm}
         disabled={isPending}
-        className={`${calm ? "btn-primary" : "btn-danger"} px-3 text-sm`}
+        className={`${calm ? "btn-primary" : "btn-danger"} btn-compact px-3`}
       >
         {isPending ? "Bezig…" : confirmLabel}
       </button>

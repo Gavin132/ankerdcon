@@ -177,7 +177,7 @@ export function RecapView({ trips, myNames, users, rides, meals, onJoin, onLeave
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {!isCurrentMonth && (
-            <button type="button" onClick={() => goToMonth(now.getFullYear(), now.getMonth())} className="btn-primary min-h-9 px-3 text-[13px]">
+            <button type="button" onClick={() => goToMonth(now.getFullYear(), now.getMonth())} className="btn-primary btn-compact px-3">
               <Undo2 size={14} />
               Vandaag
             </button>

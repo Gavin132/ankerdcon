@@ -352,7 +352,7 @@ function UserEditDrawer({
                   aliases.length >= 10
                 }
                 aria-label="Alias toevoegen"
-                className="btn-primary h-11 w-11 shrink-0"
+                className="btn-primary w-11 shrink-0 self-center lg:w-10"
               >
                 <Plus size={16} />
               </button>
@@ -514,7 +514,7 @@ export function AdminUsersPage() {
         action={
           <button
             onClick={() => setCreating(true)}
-            className="btn-primary min-h-[44px] px-4 py-2 text-sm"
+            className="btn-primary px-4"
           >
             <UserPlus size={16} />
             Nieuwe gebruiker
@@ -559,7 +559,7 @@ export function AdminUsersPage() {
           <button
             onClick={handleBulkDeactivate}
             disabled={bulkIsPending}
-            className="btn-primary px-3 text-sm"
+            className="btn-primary px-3"
           >
             <Ban size={16} />
             Deactiveren

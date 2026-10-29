@@ -164,7 +164,7 @@ export function AdminChangelogPage() {
         action={
           <button
             onClick={() => setDrawer("new")}
-            className="btn-primary min-h-[44px] gap-2 px-4 py-2.5 text-sm"
+            className="btn-primary gap-2 px-4"
           >
             <Plus size={16} />
             Nieuw item

@@ -207,7 +207,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
                 <CalendarPlus size={14} />
               </button>
 
-              <Button size="sm" variant="primary" className="ml-1 !min-h-[36px] !py-1.5" onClick={(e) => { e.stopPropagation(); setRsvpOpen(true); }}>
+              <Button size="sm" variant="primary" className="ml-1" onClick={(e) => { e.stopPropagation(); setRsvpOpen(true); }}>
                 <UserCheck size={14} />
                 Aanmelden
               </Button>

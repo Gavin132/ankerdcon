@@ -3,7 +3,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "tonal" | "ghost" | "danger";
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md";
   loading?: boolean;
   children: ReactNode;
 }
@@ -18,10 +18,11 @@ const variantClasses: Record<NonNullable<ButtonProps["variant"]>, string> = {
   danger: "btn-danger",
 };
 
+// The height is not set here but in index.css: `md` is the standard button (44 px on a phone, 40 px from `lg` up) and `sm` the compact
+// one (`.btn-compact`: 40 px, 36 px from `lg` up). There is no third size.
 const sizeClasses: Record<NonNullable<ButtonProps["size"]>, string> = {
-  sm: "px-3.5 py-2 min-h-[40px] text-xs",
-  md: "px-5 py-2.5 text-sm",
-  lg: "px-6 py-3.5 text-sm",
+  sm: "btn-compact px-3.5",
+  md: "px-5",
 };
 
 export function Button({
@@ -35,7 +36,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <motion.button
-      className={`hit-area ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       {...(props as object)}

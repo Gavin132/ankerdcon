@@ -112,12 +112,12 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
               Toch niet? Afmelden
             </button>
           ) : (
-            <button type="button" onClick={onJoin} className="btn-primary h-11 px-4 text-[14px]">
+            <button type="button" onClick={onJoin} className="btn-primary px-4">
               <Ticket size={16} />
               Ik ga mee
             </button>
           )}
-          <button type="button" onClick={onManage} className="btn-primary min-h-10 px-3.5 text-xs">
+          <button type="button" onClick={onManage} className="btn-primary btn-compact px-3.5">
             Anderen aanmelden
           </button>
         </div>

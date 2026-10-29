@@ -161,7 +161,7 @@ export function OnboardingFlow({ me, onFinish, doneLabel, onDone, overlay }: Onb
               {isDoneStep ? (
                 <motion.button
                   type="button"
-                  className="btn-primary h-11 w-full text-sm"
+                  className="btn-primary w-full"
                   onClick={onDone}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -184,7 +184,7 @@ export function OnboardingFlow({ me, onFinish, doneLabel, onDone, overlay }: Onb
                 <button
                   type="button"
                   onClick={() => goTo(step + 1)}
-                  className="btn-primary h-11 flex-1 text-sm"
+                  className="btn-primary flex-1"
                 >
                   Volgende <ArrowRight size={16} />
                 </button>

@@ -192,7 +192,7 @@ export function RestaurantDetailActions({
                       setLeaveName("");
                       setLeaveOpen(true);
                     }}
-                    className="btn-primary min-h-10 px-3.5 text-xs"
+                    className="btn-primary btn-compact px-3.5"
                   >
                     <UserMinus size={14} /> Afmelden
                   </button>
@@ -204,7 +204,7 @@ export function RestaurantDetailActions({
                       setDriverName("");
                       setDriverOpen(true);
                     }}
-                    className="btn-primary min-h-10 px-3.5 text-xs"
+                    className="btn-primary btn-compact px-3.5"
                   >
                     <Car size={14} /> Ik rijd
                   </button>
@@ -279,7 +279,7 @@ export function RestaurantDetailActions({
                         setAssignPersonDriver("");
                         setAssignPersonOpen(true);
                       }}
-                      className="btn-primary shrink-0 px-3 text-xs"
+                      className="btn-primary shrink-0 px-3"
                     >
                       Wijs toe
                     </button>
@@ -293,7 +293,7 @@ export function RestaurantDetailActions({
         {/* Calendar export */}
         <button
           onClick={() => exportRideToIcs(ride)}
-          className="btn-primary w-full px-4 text-xs"
+          className="btn-primary w-full px-4"
         >
           <CalendarPlus size={14} />
           Toevoegen aan kalender

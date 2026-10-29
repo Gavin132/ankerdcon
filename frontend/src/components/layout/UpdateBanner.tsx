@@ -25,7 +25,7 @@ export function UpdateBanner() {
           <div style={{ height: "env(safe-area-inset-top, 0px)" }} />
           <div className="flex items-center justify-between gap-3 px-4 py-1.5 md:px-8 lg:px-10">
             <span className="text-sm font-semibold">Nieuwe versie beschikbaar</span>
-            <button type="button" onClick={applyUpdate} className="btn-primary px-3.5 text-sm">
+            <button type="button" onClick={applyUpdate} className="btn-primary px-3.5">
               <RefreshCw size={16} />
               Herladen
             </button>

@@ -286,7 +286,7 @@ function ExpenseCard({
             ) : (
               <button
                 onClick={() => onRequestDelete(expense.id)}
-                className="btn-danger-soft px-3 text-sm"
+                className="btn-danger-soft px-3"
               >
                 <Trash2 size={16} />
                 Verwijderen

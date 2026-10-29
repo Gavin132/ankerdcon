@@ -154,7 +154,7 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
                 Toch niet? Afmelden
               </button>
             ) : (
-              <button type="button" onClick={onJoin} className="btn-primary h-11 px-4 text-[14px]">
+              <button type="button" onClick={onJoin} className="btn-primary px-4">
                 <Ticket size={16} />
                 Ik ga mee
               </button>

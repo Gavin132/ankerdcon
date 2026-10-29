@@ -18,7 +18,7 @@ export function EventLinks({ event, bare = false }: EventLinksProps) {
   const hasSaleInfo = !!event.ticket_sale_start;
 
   const linkButton =
-    "btn-primary flex-1 px-4 text-sm";
+    "btn-primary flex-1 px-4";
 
   // Inside a sheet the sheet already has its own side padding; in a card the rows bring theirs.
   const pad = bare ? "py-3.5" : "px-5 py-4";

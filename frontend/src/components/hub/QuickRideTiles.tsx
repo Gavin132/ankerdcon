@@ -26,7 +26,7 @@ interface QuickRideTilesProps {
  * height whatever the label says. */
 function QuickButton({ icon, title, onClick }: { icon: React.ReactNode; title: string; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="btn-primary gap-2 px-2 text-sm">
+    <button type="button" onClick={onClick} className="btn-primary gap-2 px-2">
       {icon}
       {title}
     </button>

@@ -91,7 +91,7 @@ function CopyField({ label, value, display }: { label: string; value: string; di
       <button
         type="button"
         onClick={copy}
-        className="hit-area inline-flex shrink-0 items-center gap-1 rounded-lg border-1.5 border-line px-2 py-1 text-[12px] font-semibold text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
+        className="btn-secondary btn-compact shrink-0 gap-1 px-3"
         aria-label={`${label} kopiëren`}
       >
         {copied ? <Check size={12} className="text-ok" /> : <Copy size={12} />}
@@ -281,7 +281,7 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
             href={s.request_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-primary flex w-full items-center justify-center gap-2 px-4 text-[14px]"
+            className="btn-primary flex w-full items-center justify-center gap-2 px-4"
           >
             <ExternalLink size={16} />
             Betalen via {link.provider ?? "betaallink"}

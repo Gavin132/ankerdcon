@@ -312,7 +312,12 @@
   .chip,
   .icon-btn,
   .segmented-item,
-  .btn-primary {
+  .btn-primary,
+  .btn-secondary,
+  .btn-tonal,
+  .btn-ghost,
+  .btn-danger,
+  .btn-danger-soft {
     position: relative;
   }
 
@@ -320,7 +325,12 @@
   .chip::after,
   .icon-btn::after,
   .segmented-item::after,
-  .btn-primary::after {
+  .btn-primary::after,
+  .btn-secondary::after,
+  .btn-tonal::after,
+  .btn-ghost::after,
+  .btn-danger::after,
+  .btn-danger-soft::after {
     content: "";
     position: absolute;
     top: min(0px, calc((100% - 44px) / 2));
@@ -496,8 +506,13 @@
       radial-gradient(circle 7px at 100% 36px, transparent 97%, black) right / 51% 100% no-repeat;
   }
 
-  /* Buttons: one family, five tiers, flat except the blue one (a slightly raised plate, see `.btn-primary` below), 10 px radius, bold label,
-     44 px tall (a smaller one adds `min-h-*` and `hit-area`). <Button variant="..."> uses these same classes.
+  /* Buttons: one family, five tiers, flat except the blue one (a slightly raised plate, see `.btn-primary` below), 10 px radius, bold label.
+     <Button variant="..."> uses these same classes. ONE height scale for every tier, set here and nowhere else:
+       standard   44 px on a phone, 40 px from the `lg` breakpoint (1024 px) up; 14 px label
+       compact    `.btn-compact` on top: 40 px, 36 px from `lg` up; 13 px label. For a tight place (a hero's action row, a table
+                  row, a tile header, an inline confirm pair); <Button size="sm"> is this one.
+     A caller adds layout only (width, `flex-1`, `shrink-0`, margin, horizontal padding), never a height (`min-h-*`, `h-*`), vertical
+     padding or text size. The 44 px a thumb needs is kept by the invisible box of `::after` above, so a 40 px button is still easy to hit.
        .btn-primary      solid brand fill, white label: the standard action button, alone or in a row
        .btn-secondary    transparent, 1px hairline: only the cancelling partner of a confirm (Annuleren) and a quiet extra
        .btn-tonal        lifted `bg-surface` fill with a hairline: a neutral action with a bit more body (sign in with Google)
@@ -513,9 +528,13 @@
   .btn-ghost,
   .btn-danger,
   .btn-danger-soft {
-    @apply inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-xl font-bold transition-[opacity,background-color,border-color,color] duration-75;
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-bold transition-[opacity,background-color,border-color,color] duration-75 lg:min-h-10;
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-2 focus-visible:ring-offset-paper;
     @apply disabled:cursor-not-allowed;
+  }
+  /* The compact modifier. Defined right after the family so it wins over the standard height, on a phone and on a computer. */
+  .btn-compact {
+    @apply min-h-10 text-[13px] lg:min-h-9;
   }
   .btn-primary { @apply bg-brand text-brand-on hover:enabled:opacity-90; }
   /* The raised plate of the blue button. It sets Tailwind's own `--tw-shadow`, so the focus ring still stacks on top. */

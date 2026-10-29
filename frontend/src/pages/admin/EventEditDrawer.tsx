@@ -234,7 +234,7 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
           type="button"
           onClick={handleAddDay}
           disabled={!newDate || createDay.isPending}
-          className="btn-primary h-11 shrink-0 gap-1.5 px-3 text-sm"
+          className="btn-primary shrink-0 gap-1.5 px-3"
         >
           <Plus size={16} />
           Toevoegen
@@ -692,7 +692,7 @@ export function EventEditDrawer({
                 onClick={addTicketType}
                 disabled={!ttTitle.trim() || !ttPrice}
                 aria-label="Tickettype toevoegen"
-                className="btn-primary h-11 w-11 shrink-0"
+                className="btn-primary w-11 shrink-0 self-center lg:w-10"
               >
                 <Plus size={16} />
               </button>

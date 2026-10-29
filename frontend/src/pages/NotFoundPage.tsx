@@ -12,7 +12,7 @@ export function NotFoundPage() {
       mark="logo"
       title="Pagina niet gevonden"
       actions={
-        <button onClick={() => navigate(routes.hub, { replace: true })} className="btn-primary px-5 py-2.5 text-sm">
+        <button onClick={() => navigate(routes.hub, { replace: true })} className="btn-primary px-5">
           Terug naar hub
         </button>
       }

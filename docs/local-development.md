@@ -329,6 +329,7 @@ npm run mobile-audit -- --only trip,finance   # screens whose name contains one 
 npm run mobile-audit -- --info                # also the small text and the truncations
 npm run mobile-audit -- --browser webkit      # Safari's engine
 npm run mobile-audit -- --selftest            # checks the check itself on deliberately broken elements
+npm run mobile-audit -- --buttons             # button heights on every screen at 390 and 1280 px, dark: standard 44 / 40, compact 40 / 36
 ```
 
 It needs the dev server and a Playwright browser (`npx playwright install chromium`); if only an older Chromium is

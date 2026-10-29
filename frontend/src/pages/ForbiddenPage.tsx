@@ -34,7 +34,7 @@ export function ForbiddenPage({ onSignOut, previewProvider }: { onSignOut?: () =
       mark={{ icon: <ShieldX size={24} />, tone: "bad" }}
       title="Geen toegang"
       actions={
-        <button onClick={handleSignOut} className="btn-primary px-5 py-2.5 text-sm">
+        <button onClick={handleSignOut} className="btn-primary px-5">
           Uitloggen
         </button>
       }

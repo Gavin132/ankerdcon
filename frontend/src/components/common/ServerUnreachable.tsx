@@ -14,7 +14,7 @@ export function ServerUnreachable({ onRetry }: { onRetry: () => void }) {
       title="Kan de server niet bereiken"
       statusLink
       actions={
-        <button type="button" onClick={onRetry} className="btn-primary px-5 py-2.5 text-sm">
+        <button type="button" onClick={onRetry} className="btn-primary px-5">
           Opnieuw proberen
         </button>
       }

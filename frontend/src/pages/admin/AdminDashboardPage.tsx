@@ -94,14 +94,14 @@ function BulkRsvpPanel({ event, users, onDone }: {
           type="button"
           onClick={submit}
           disabled={!selected.length || bulkRsvp.isPending}
-          className="btn-primary min-h-[44px] flex-1 py-2 text-sm"
+          className="btn-primary flex-1"
         >
           {bulkRsvp.isPending ? "Aanmelden…" : `${selected.length || 0} aanmelden`}
         </button>
         <button
           type="button"
           onClick={onDone}
-          className="btn-secondary px-4 py-2.5 text-sm"
+          className="btn-secondary px-4"
         >
           Sluiten
         </button>
@@ -169,7 +169,7 @@ function EventRow({ item, users, cosplayCount }: {
             type="button"
             onClick={() => setShowRsvp((v) => !v)}
             aria-expanded={showRsvp}
-            className="btn-primary hit-area min-h-9 px-3 text-xs"
+            className="btn-primary btn-compact px-3"
           >
             <UserPlus size={14} />
             Aanmelden

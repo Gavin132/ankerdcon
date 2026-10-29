@@ -27,11 +27,11 @@ export const TD = "px-5 py-3.5 align-middle";
 export const TR = "group transition-colors hover:bg-sunken";
 export const TR_SELECTED = "group transition-colors bg-brand-soft/50 hover:bg-brand-soft/70";
 
-/** Primary action (`.btn-primary`: brand fill, no outline, flat). 44 px tall by itself. */
-export const BTN_PRIMARY = "btn-primary px-4 py-2.5 text-sm";
+/** Primary action (`.btn-primary`: brand fill, no outline, flat). Its height is the standard one of the button scale (index.css). */
+export const BTN_PRIMARY = "btn-primary px-4";
 
 /** Secondary action (`.btn-secondary`: transparent, 1px hairline). */
-export const BTN_SECONDARY = "btn-secondary px-4 py-2.5 text-sm";
+export const BTN_SECONDARY = "btn-secondary px-4";
 
 /** A checkbox with its text: the whole line is the hit area (44 px). */
 export const CHECK_ROW = "flex min-h-11 cursor-pointer items-center gap-2.5 text-sm text-ink-2";

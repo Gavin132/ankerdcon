@@ -457,11 +457,11 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
       {currentUserName && (isMine || !isFull) && (
         <div className="mt-auto pt-1">
           {isMine ? (
-            <button type="button" onClick={handleSelfLeave} disabled={isPending} className="btn-primary w-full text-sm">
+            <button type="button" onClick={handleSelfLeave} disabled={isPending} className="btn-primary w-full">
               {isPending ? "Bezig…" : "Verlaat kamer"}
             </button>
           ) : (
-            <button type="button" onClick={handleSelfAssign} disabled={isPending} className="btn-primary w-full text-sm">
+            <button type="button" onClick={handleSelfAssign} disabled={isPending} className="btn-primary w-full">
               {isPending ? "Bezig…" : "Ik slaap hier"}
             </button>
           )}
@@ -556,11 +556,11 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
     </div>
   ) : (
     <div className="grid grid-cols-2 gap-2">
-      <button type="button" onClick={() => setBulkModalOpen(true)} className="btn-primary min-w-0 px-3 text-[13px]">
+      <button type="button" onClick={() => setBulkModalOpen(true)} className="btn-primary min-w-0 px-3">
         <Layers size={16} className="shrink-0" />
         Meerdere
       </button>
-      <Button onClick={() => setModalRoom("new")} className="min-w-0 px-3 text-[13px]">
+      <Button onClick={() => setModalRoom("new")} className="min-w-0 px-3">
         <Plus size={16} className="shrink-0" />
         Nieuwe kamer
       </Button>

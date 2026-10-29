@@ -78,7 +78,7 @@ export function CrashFeedback({ detail }: { detail: string | null }) {
         type="button"
         onClick={send}
         disabled={!canSend}
-        className="btn-primary h-11 w-full gap-2 px-4 text-sm"
+        className="btn-primary w-full gap-2 px-4"
       >
         <Send size={14} />
         {state === "sending" ? "Versturen…" : "Versturen"}

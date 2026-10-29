@@ -163,7 +163,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
                           type="button"
                           onClick={() => handleClaim(share.id)}
                           disabled={isLoading}
-                          className="btn-primary hit-area ml-auto min-h-9 px-3 text-[12px]"
+                          className="btn-primary btn-compact ml-auto px-3"
                         >
                           Ik heb betaald
                         </button>
@@ -173,7 +173,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
                           type="button"
                           onClick={() => handleConfirm(share.id)}
                           disabled={isLoading}
-                          className="btn-primary hit-area ml-auto min-h-9 px-3 text-[12px]"
+                          className="btn-primary btn-compact ml-auto px-3"
                         >
                           <Check size={12} />
                           Ontvangen
@@ -208,12 +208,12 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
                   Weet je zeker dat je "{expense.description}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.
                 </p>
                 <div className="flex gap-2">
-                  <Button variant="secondary" className="flex-1 text-xs" onClick={() => setConfirmDelete(false)}>
+                  <Button variant="secondary" className="flex-1" onClick={() => setConfirmDelete(false)}>
                     Annuleren
                   </Button>
                   <Button
                     variant="danger"
-                    className="flex-1 text-xs"
+                    className="flex-1"
                     loading={deleteMutation.isPending}
                     onClick={handleDelete}
                   >
