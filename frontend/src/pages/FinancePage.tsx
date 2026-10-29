@@ -14,11 +14,11 @@ import { RideCostsCard } from "../components/finance/RideCostsCard";
 import { useIsViewer } from "../hooks/useIsViewer";
 import { useSettleUp } from "../hooks/useSettlements";
 import { useExpenses } from "../hooks/useExpenses";
-import { useUsers } from "../hooks/useUsers";
-import { useCurrentUser } from "../hooks/useUsers";
+import { useMyNames, useUsers } from "../hooks/useUsers";
 import { useCalendar } from "../hooks/useCalendar";
 import { buildTrip, tripIdOf, type Trip } from "../utils/trips";
 import { formatAmount } from "../utils/format";
+import { paidPerPerson, personalBalance } from "../utils/finance";
 import { listContainer } from "../utils/motion";
 import type { Expense, User } from "../types";
 
@@ -89,7 +89,7 @@ export function FinancePage() {
     }
   }
   const { data: users    = [] }            = useUsers();
-  const { data: me }                       = useCurrentUser();
+  const { me, myNames }                    = useMyNames();
   const { data: settleUp }                 = useSettleUp();
 
   const linkedSettlement = settleUp?.settlements.find((s) => s.id === linkedSettlementId);
@@ -108,36 +108,18 @@ export function FinancePage() {
   const myName = me?.name;
 
   // ── Personal balance ─────────────────────────────────────────
-  const { iOwe, othersOweMe } = useMemo(() => {
-    let iOwe        = 0;
-    let othersOweMe = 0;
-    for (const exp of expenses) {
-      for (const share of exp.shares) {
-        if (share.status === "confirmed") continue;
-        if (share.participant === myName) {
-          iOwe += share.amount;
-        } else if (exp.paid_by === myName) {
-          othersOweMe += share.amount;
-        }
-      }
-    }
-    return { iOwe, othersOweMe };
-  }, [expenses, myName]);
+  // By any of the member's own names: after a rename their old expenses and shares still carry the old one.
+  const { iOwe, othersOweMe } = useMemo(() => personalBalance(expenses, myNames), [expenses, myNames]);
 
   const allSettled = iOwe < 0.01 && othersOweMe < 0.01;
 
   // ── Group summary ─────────────────────────────────────────────
   const { totalGroup, topSpenders } = useMemo(() => {
-    const totals: Record<string, number> = {};
-    for (const exp of expenses) {
-      totals[exp.paid_by] = (totals[exp.paid_by] ?? 0) + exp.amount;
-    }
-    const totalGroup  = Object.values(totals).reduce((s, n) => s + n, 0);
-    const topSpenders = Object.entries(totals)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3);
+    const perPerson = paidPerPerson(expenses, users);
+    const totalGroup = perPerson.reduce((s, p) => s + p.amount, 0);
+    const topSpenders = perPerson.slice(0, 3).map((p) => [p.name, p.amount] as const);
     return { totalGroup, topSpenders };
-  }, [expenses]);
+  }, [expenses, users]);
 
   // ── Loading ───────────────────────────────────────────────────
   if (isLoading) {
@@ -335,7 +317,7 @@ export function FinancePage() {
                 key={expense.id}
                 expense={expense}
                 users={users}
-                me={myName}
+                myNames={myNames}
                 onClick={() => openExpense(expense.id)}
                 tripTitle={selectedTrip ? undefined : tripOfExpense.get(expense.id)?.title}
               />
@@ -356,7 +338,7 @@ export function FinancePage() {
         expense={detailExpense}
         onClose={closeExpense}
         users={users}
-        me={myName}
+        myNames={myNames}
       />
       <SettlementDrawer
         target={openSettleTarget}

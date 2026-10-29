@@ -9,7 +9,7 @@ import {
   useLeaveHotelRoom,
 } from "../../hooks/useCalendar";
 import { useAdminUpdateHotelRoom, useAdminDeleteHotelRoom } from "../../hooks/useAdmin";
-import { useUsers, useCurrentUser } from "../../hooks/useUsers";
+import { useUsers, useCurrentUser, useMyNames } from "../../hooks/useUsers";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { AvatarStack } from "../../components/common/AvatarStack";
 import { EmptyState } from "../../components/common/EmptyState";
@@ -291,6 +291,8 @@ interface RoomCardProps {
   eventId: string;
   users: ReturnType<typeof useUsers>["data"] & {};
   currentUserName: string | undefined;
+  /** Every name the signed-in member can be on this room under (`useMyNames`). */
+  myNames: string[];
   isAdmin: boolean;
   onEdit: (room: HotelRoom) => void;
   onDelete: (room: HotelRoom) => void;
@@ -303,6 +305,7 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
   eventId,
   users,
   currentUserName,
+  myNames,
   isAdmin,
   onEdit,
   onDelete,
@@ -311,7 +314,9 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
   const assignRoom = useAssignHotelRoom();
   const leaveRoom = useLeaveHotelRoom();
 
-  const isMine = !!currentUserName && room.occupants.includes(currentUserName);
+  // On the room under the current name or under a former one (a rename, a Discord username).
+  const myStoredNames = room.occupants.filter((o) => myNames.includes(o));
+  const isMine = myStoredNames.length > 0;
   const isFull = room.capacity != null && room.occupants.length >= room.capacity;
   const resolveUser = (name: string) =>
     (users ?? []).find((u) => u.name === name || u.discord_username === name || u.aliases?.includes(name));
@@ -326,9 +331,9 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
   }
 
   async function handleSelfLeave() {
-    if (!currentUserName) return;
+    if (myStoredNames.length === 0) return;
     try {
-      await leaveRoom.mutateAsync({ eventId, roomId: room.id, userName: currentUserName });
+      for (const userName of myStoredNames) await leaveRoom.mutateAsync({ eventId, roomId: room.id, userName });
     } catch {
       toast("error", "Kon je niet afmelden van deze kamer.");
     }
@@ -403,7 +408,7 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
             return (
               <span key={name}>
                 {i > 0 && ", "}
-                <span className={name === currentUserName ? "font-semibold text-ink" : undefined}>{displayName}</span>
+                <span className={myNames.includes(name) ? "font-semibold text-ink" : undefined}>{displayName}</span>
               </span>
             );
           })}
@@ -470,6 +475,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
 
   const isAdmin = currentUser?.is_admin ?? false;
   const currentUserName = currentUser?.name;
+  const { myNames } = useMyNames();
 
   const deleteRoom = useAdminDeleteHotelRoom();
 
@@ -588,6 +594,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
                   eventId={id!}
                   users={users}
                   currentUserName={currentUserName}
+                  myNames={myNames}
                   isAdmin={isAdmin}
                   onEdit={(r) => setModalRoom(r)}
                   onDelete={handleDelete}

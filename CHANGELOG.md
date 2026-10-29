@@ -16,6 +16,9 @@ All notable changes to Ankerd Con are documented here.
 
 ### Fixed
 
+- **After a rename you could no longer delete your own old things.** An old ride, expense, cosplay or photo of yours, and the
+  shares on your old expenses, stayed out of reach (and out of the Financiën totals) because they carry your old name. Your
+  former names and Discord username count as yours now; other members' names never do.
 - **The Info tile said "0 onderwerpen" for an event with only a ticket sale date.** It counts that as tickets now.
 - **Admin: deleting an activity left its ride to the restaurant behind**, with the people still signed up in it. The ride goes
   with the activity, as when its maker deletes it.

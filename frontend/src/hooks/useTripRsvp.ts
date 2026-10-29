@@ -1,5 +1,4 @@
-import { useMemo } from "react";
-import { useCurrentUser } from "./useUsers";
+import { useCurrentUser, useMyNames } from "./useUsers";
 import { useLeaveCalendarEventBulk, useRsvpCalendarEventBulk } from "./useCalendar";
 import { toast } from "../store/toast.store";
 import { dayShort } from "../utils/multiDay";
@@ -21,10 +20,7 @@ export function useTripRsvp() {
   const leaveMutation = useLeaveCalendarEventBulk();
 
   /** Every name the signed-in user can appear under in `participants`. */
-  const myNames = useMemo(
-    () => (me ? [me.name, me.discord_username, ...(me.aliases ?? [])].filter((n): n is string => !!n) : []),
-    [me],
-  );
+  const { myNames } = useMyNames();
 
   async function rsvp(id: string, userNames: string[]) {
     if (userNames.length === 0) return;

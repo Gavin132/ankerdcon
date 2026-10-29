@@ -6,13 +6,15 @@ import { UserAvatar } from "../common/UserAvatar";
 import { useClaimShare, useConfirmShare, useDeleteExpense } from "../../hooks/useExpenses";
 import { formatAmount, formatDate } from "../../utils/format";
 import { toast } from "../../store/toast.store";
+import { findUser, isOwnName } from "../../utils/people";
 import type { Expense, ExpenseShare, User } from "../../types";
 
 interface Props {
   expense: Expense | null;
   onClose: () => void;
   users: User[];
-  me: string | undefined;
+  /** Every name the signed-in member is stored under (`useMyNames`). */
+  myNames: string[];
 }
 
 function resolveUser(name: string, users: User[]) {
@@ -34,14 +36,15 @@ function StatusIcon({ status }: { status: ExpenseShare["status"] }) {
   return                             <Circle       size={12} />;
 }
 
-export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
+export function ExpenseDetailDrawer({ expense, onClose, users, myNames }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const claimMutation   = useClaimShare();
   const confirmMutation = useConfirmShare();
   const deleteMutation  = useDeleteExpense();
 
-  const isPayer = expense?.paid_by === me;
+  const isPayer = isOwnName(myNames, expense?.paid_by);
+  const payer   = expense ? findUser(users, expense.paid_by) : undefined;
 
   async function handleClaim(shareId: string) {
     try {
@@ -62,7 +65,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
   }
 
   async function handleDelete() {
-    if (!expense || !me) return;
+    if (!expense || myNames.length === 0) return;
     try {
       await deleteMutation.mutateAsync(expense.id);
       toast("success", `"${expense.description}" verwijderd.`);
@@ -119,11 +122,11 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
             <div className="card-surface divide-y divide-line overflow-hidden">
               {expense.shares.map((share) => {
                 // The payer's own part of the bill — settled from the start, nothing to pay or confirm.
-                const isOwnPart = share.participant === expense.paid_by;
+                const isOwnPart = share.participant === expense.paid_by || (!!payer && findUser(users, share.participant) === payer);
                 // Being paid as part of a settle-up payment (Afrekenen) — handled there.
                 const inSettlement = !!share.settlement_id && share.status !== "confirmed";
                 const cfg       = isOwnPart ? OWN_PART_CONFIG : inSettlement ? IN_SETTLEMENT_CONFIG : STATUS_CONFIG[share.status];
-                const isMe      = share.participant === me;
+                const isMe      = isOwnName(myNames, share.participant);
                 const canClaim  = isMe && !isOwnPart && !inSettlement && share.status === "pending";
                 // Straight from pending too, for cash handed over in person.
                 const canConfirm = isPayer && !isOwnPart && !inSettlement && share.status !== "confirmed";

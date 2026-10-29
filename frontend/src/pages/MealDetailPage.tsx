@@ -4,7 +4,7 @@ import { Car, Pencil, UserCheck, UserMinus, UtensilsCrossed } from "lucide-react
 import { useMeals, useRsvpMeal, useCancelRsvp } from "../hooks/useMeals";
 import { useCalendar } from "../hooks/useCalendar";
 import { useRides } from "../hooks/useRides";
-import { useUsers, useCurrentUser } from "../hooks/useUsers";
+import { useUsers, useCurrentUser, useMyNames } from "../hooks/useUsers";
 import { useSmartBack } from "../hooks/useSmartBack";
 import { useIsViewer } from "../hooks/useIsViewer";
 import { toast } from "../store/toast.store";
@@ -34,6 +34,7 @@ export function MealDetailPage() {
   const { data: rides = [] } = useRides();
   const { data: users = [] } = useUsers();
   const { data: me } = useCurrentUser();
+  const { isMine } = useMyNames();
   const viewer = useIsViewer();
 
   const [rsvpOpen, setRsvpOpen] = useState(false);
@@ -53,7 +54,7 @@ export function MealDetailPage() {
 
   const userNames = users.map((u) => u.name);
   const participants = meal?.participants ?? [];
-  const canEdit = !!meal && !!me && (me.is_admin || meal.created_by === me.name);
+  const canEdit = !!meal && !!me && (me.is_admin || isMine(meal.created_by));
 
   async function onShare() {
     const url = window.location.href;

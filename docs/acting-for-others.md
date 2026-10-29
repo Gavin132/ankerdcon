@@ -20,14 +20,14 @@ is described at the bottom, in case it needs to come back.
     rooms (create with occupants, assign, leave).
   Adding a name (as opposed to taking one off) must be a member's name, checked against the
     profiles, so nobody can fill a ride or a room with made-up names.
-  - `act_as(current_user, requested)` is the strict one: your own name (or a former name
+  - `act_as(current_user, requested)` is the strict one: your own name (or a former name or Discord username
     of yours that no other profile uses), or anyone for an admin. Used for `paid_by` on an
     expense, location pings, creating a cosplay and the driver of a new ride.
   - Settle-up (`/api/settlements`) uses neither: a settlement is always started, paid and
     confirmed as the signed-in member, because it involves their bank details. An admin who
     needs to act there has to use "log in as" ([security.md](security.md#log-in-as)).
 - **Frontend:** the name pickers for the sign-ups offer every name. `useActingPermissions()`
-  in `frontend/src/hooks/useUsers.ts` mirrors `act_as` and is still used by the pickers
+  in `frontend/src/hooks/useUsers.ts` mirrors `act_as` (with `useMyNames()`: every name of the signed-in member) and is still used by the pickers
   for the restricted things (`CreateExpenseDrawer`, `LocationPingModal`, `TripCosplayTab`,
   `CosplayDetailView`):
   - `actable(names)` filters a list of names;

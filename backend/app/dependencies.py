@@ -830,24 +830,47 @@ def act_for_anyone_bulk(current_user: str, requested: list[str], *, adding: bool
     return names
 
 
+def _own_names(current_user: str) -> set[str]:
+    """Every name a stored row can carry for this member: their current name, their Discord username and their
+    former names (aliases). Older rows keep the name from before a rename, and a Discord username is what
+    someone was signed up under before they had a name of their own. Members edit their own alias list, so a
+    name only counts while no other profile goes by it (as its name, Discord username or alias), the same rule
+    the frontend applies (`ownIdentities` in utils/people.ts). Empty when the lookup fails: ownership is never
+    granted on a guess."""
+    try:
+        rows = supabase.table("profiles").select("name, discord_username, aliases").execute().data or []
+    except Exception as e:
+        logger.error("Own-names lookup failed for %s: %s", current_user, e)
+        return set()
+    mine: set[str] = set()
+    taken: set[str] = set()
+    for row in rows:
+        names = [n for n in [row.get("name"), row.get("discord_username"), *(row.get("aliases") or [])] if n]
+        if row.get("name") == current_user:
+            mine.update(names)
+        else:
+            taken.update(n.casefold() for n in names)
+    return {n for n in mine if n == current_user or n.casefold() not in taken}
+
+
 def _is_own_former_name(current_user: str, name: str) -> bool:
     """Older RSVPs and seats still carry someone's name from before a rename,
-    which lives on in their aliases — leaving a trip clears those too. Members
-    edit their own alias list, so an alias only counts while no other profile
-    goes by that name."""
-    try:
-        me = supabase.table("profiles").select("aliases").eq("name", current_user).execute()
-        if name not in ((me.data[0].get("aliases") or []) if me.data else []):
-            return False
-        return not supabase.table("profiles").select("name").eq("name", name).execute().data
-    except Exception as e:
-        logger.error("Alias check failed for %s: %s", current_user, e)
+    which lives on in their aliases — leaving a trip clears those too."""
+    return name in _own_names(current_user)
+
+
+def is_own_name(current_user: str, owner: str | None) -> bool:
+    """Whether a row owned by `owner` is the signed-in member's: under their current name or under a name of
+    theirs from before (see `_own_names`). The current name is checked first, with no lookup."""
+    if not owner:
         return False
+    return owner == current_user or owner in _own_names(current_user)
 
 
 def require_owner_or_admin(current_user: str, owner: str | None, detail: str) -> None:
-    """For changing or deleting something someone else created."""
-    if owner and owner == current_user:
+    """For changing or deleting something someone else created. The owner may be stored under a name the
+    member had before a rename, or under their Discord username."""
+    if is_own_name(current_user, owner):
         return
     if _is_admin(current_user):
         return

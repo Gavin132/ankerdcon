@@ -6,7 +6,7 @@ import { Collapse } from "../common/Collapse";
 import { NamePicker } from "../common/NamePicker";
 import { useClaimSeat, useDeleteRide, useLeaveSeat } from "../../hooks/useRides";
 import { useCalendar } from "../../hooks/useCalendar";
-import { useCurrentUser, useUsers } from "../../hooks/useUsers";
+import { useCurrentUser, useMyNames, useUsers } from "../../hooks/useUsers";
 import { formatTime } from "../../utils/format";
 import { formatCountdown, getRideStatus, rideLocationLabel } from "../../utils/rides";
 import { toast } from "../../store/toast.store";
@@ -80,6 +80,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
   const deleteMutation = useDeleteRide();
   const { data: users = [] } = useUsers();
   const { data: me } = useCurrentUser();
+  const { isMine } = useMyNames();
   const { data: events = [] } = useCalendar();
 
   useEffect(() => {
@@ -107,7 +108,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
   const isPast = status === "past";
   const canAct = !isRecent && !isPast;
   const dim = ride.is_full || isRecent || isPast;
-  const isMyRide = !!me && ride.driver === me.name;
+  const isMyRide = isMine(ride.driver);
 
   const fromLabel = rideLocationLabel(ride.start_location, linkedEvent, "Onbekende locatie");
   const toLabel = rideLocationLabel(ride.end_location, linkedEvent, "Bestemming");

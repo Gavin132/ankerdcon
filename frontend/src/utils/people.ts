@@ -1,8 +1,11 @@
 import type { User } from "../types";
 
-/** The member a stored name belongs to: by current name, Discord username or a former name (alias). */
+/**
+ * The member a stored name belongs to: by current name, else Discord username, else a former name (alias). In that
+ * order, so a name that is one member's current name is never taken for another member's former one.
+ */
 export const findUser = (users: User[], name: string): User | undefined =>
-  users.find((u) => u.name === name || u.discord_username === name || u.aliases?.includes(name));
+  users.find((u) => u.name === name) ?? users.find((u) => u.discord_username === name) ?? users.find((u) => u.aliases?.includes(name));
 
 /**
  * One person on a list of stored names. Lists (a trip's sign-ups, a ride's passengers) store *names*, and a member
@@ -24,13 +27,27 @@ export interface Person {
 function ownIdentities(user: User, users: User[]): string[] {
   const taken = new Set<string>();
   for (const other of users) {
-    if (other === user) continue;
+    if (other === user || other.name === user.name) continue; // `user` may be a copy (the signed-in member)
     taken.add(other.name);
     if (other.discord_username) taken.add(other.discord_username);
     for (const alias of other.aliases ?? []) taken.add(alias);
   }
   return [user.name, user.discord_username, ...(user.aliases ?? [])].filter((n): n is string => !!n && !taken.has(n));
 }
+
+/**
+ * Every name a stored row can carry for the signed-in member: their current name, their Discord username and their
+ * former names (aliases), minus any name another member goes by. Rows keep the name they were made under, so after a
+ * rename a member still owns their old ride, expense or photo. Mirrors `_own_names` in `backend/app/dependencies.py`,
+ * which is what actually decides who may delete what.
+ */
+export function ownNames(me: User | null | undefined, users: User[] = []): string[] {
+  if (!me) return [];
+  return [me.name, ...ownIdentities(me, users).filter((n) => n !== me.name)];
+}
+
+/** Whether a row owned by `owner` (a stored name) is the member's, under any of `myNames`. */
+export const isOwnName = (myNames: string[], owner: string | null | undefined): boolean => !!owner && myNames.includes(owner);
 
 /** The people behind a list of stored names, in the order they first appear, each once. */
 export function groupPeople(names: string[], users: User[]): Person[] {

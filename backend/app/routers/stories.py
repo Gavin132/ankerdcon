@@ -15,7 +15,7 @@ from app.core.logging import get_logger
 from app.core.thumbnails import POSTER_SUFFIX, PREVIEW_SUFFIX, THUMB_SUFFIX, derivative_urls, make_derivatives
 from app.core.uploads import clean_image, read_capped, sniff_video
 from app.core.zip_stream import stream_zip
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, is_own_name
 from app.models.story import MarkStorySeenRequest, StoryDaySummary, StoryPhoto, StorySeenState, UserStoryPhoto
 from app.routes import StoryRoutes
 
@@ -341,7 +341,7 @@ def delete_story_photo(photo_id: str, current_user: str = Depends(get_current_us
 
     if not row.data:
         return
-    if row.data[0]["uploaded_by"] != current_user:
+    if not is_own_name(current_user, row.data[0]["uploaded_by"]):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Je kan alleen je eigen foto's verwijderen.",

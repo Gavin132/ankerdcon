@@ -2,12 +2,14 @@ import { motion } from "framer-motion";
 import { UserAvatar } from "../common/UserAvatar";
 import { formatAmount, formatDate } from "../../utils/format";
 import { listItem } from "../../utils/motion";
+import { isOwnName } from "../../utils/people";
 import type { Expense, User } from "../../types";
 
 interface Props {
   expense: Expense;
   users: User[];
-  me: string | undefined;
+  /** Every name the signed-in member is stored under (`useMyNames`). */
+  myNames: string[];
   onClick: () => void;
   /** Name of the trip the expense is linked to, if any. */
   tripTitle?: string;
@@ -26,13 +28,13 @@ const STATUS_PILL = {
 } as const;
 
 /** One expense as a row in the Financiën list panel. */
-export function ExpenseCard({ expense, users, me, onClick, tripTitle }: Props) {
+export function ExpenseCard({ expense, users, myNames, onClick, tripTitle }: Props) {
   const confirmedCount = expense.shares.filter((s) => s.status === "confirmed").length;
   const totalShares    = expense.shares.length;
   const allConfirmed   = totalShares > 0 && confirmedCount === totalShares;
 
-  const myShare = expense.shares.find((s) => s.participant === me);
-  const iAm    = expense.paid_by === me;
+  const myShare = expense.shares.find((s) => isOwnName(myNames, s.participant));
+  const iAm    = isOwnName(myNames, expense.paid_by);
 
   return (
     <motion.div variants={listItem}>

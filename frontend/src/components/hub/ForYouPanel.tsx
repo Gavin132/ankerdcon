@@ -6,7 +6,7 @@ import { listItem } from "../../utils/motion";
 import { routes } from "../../config/routes";
 import { computeAllActions } from "../../utils/actionItems";
 import { useSettleUp } from "../../hooks/useSettlements";
-import { useCurrentUser, useUsers } from "../../hooks/useUsers";
+import { useCurrentUser, useMyNames, useUsers } from "../../hooks/useUsers";
 import { buildTrip, currentTripId, isTripOver, tripGaps } from "../../utils/trips";
 import { formatAmount, formatTime } from "../../utils/format";
 import type { CalendarEvent, Expense, Meal, Ride } from "../../types";
@@ -55,6 +55,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName, className 
   const { data: settleUp } = useSettleUp();
   const { data: me } = useCurrentUser();
   const { data: users = [] } = useUsers();
+  const { myNames } = useMyNames();
   const items: ForYouItem[] = [];
 
   // ── The current trip's sign-up gaps ────────────────────────────────────────
@@ -100,7 +101,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName, className 
   }
 
   // ── Restaurant rides and payments ─────────────────────────────────────────
-  for (const action of computeAllActions({ rides, meals, expenses, myName })) {
+  for (const action of computeAllActions({ rides, meals, expenses, myNames })) {
     if (action.kind === "restaurant_gap") {
       const { gap } = action;
       items.push({

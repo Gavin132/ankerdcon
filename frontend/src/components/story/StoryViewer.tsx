@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { animate, motion, AnimatePresence, useDragControls, useMotionValue, useTransform } from "framer-motion";
 import { X, Trash2, Share2, Download, FolderDown, Loader2, Volume2, VolumeX } from "lucide-react";
 import { useStoryPhotos, useMarkStorySeen, useDeleteStoryPhoto } from "../../hooks/useStories";
-import { useCurrentUser } from "../../hooks/useUsers";
+import { useMyNames } from "../../hooks/useUsers";
 import { useBackClose } from "../../hooks/useBackClose";
 import { downloadAllStoryPhotos, downloadStoryPhoto } from "../../services/stories.service";
 import { toast } from "../../store/toast.store";
@@ -41,7 +41,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
   // "" (a 404, since the backend route needs a real id segment). Requiring
   // a non-empty id too keeps the query disabled until the effect catches up.
   const { data: photos = [] } = useStoryPhotos(activeEventDayId, { enabled: open && !!activeEventDayId, alwaysFresh: true });
-  const { data: me } = useCurrentUser();
+  const { isMine } = useMyNames();
   const markSeen = useMarkStorySeen(activeEventDayId);
   const deletePhoto = useDeleteStoryPhoto(activeEventDayId);
 
@@ -351,7 +351,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                   <Download size={16} />
                 )}
               </button>
-              {me?.name === current.uploaded_by && (
+              {isMine(current.uploaded_by) && (
                 <button
                   type="button"
                   onClick={() => handleDelete(current.id)}

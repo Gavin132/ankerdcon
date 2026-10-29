@@ -14,7 +14,7 @@ import { SeatPicker } from "../../components/common/SeatPicker";
 import { RideRow } from "../../components/transport/RideRow";
 import { RestaurantMealPrompt, RestaurantRideGroup } from "../../components/transport/RestaurantRideGroup";
 import { useRides, useCreateRide } from "../../hooks/useRides";
-import { useUsers, useCurrentUser } from "../../hooks/useUsers";
+import { useUsers, useCurrentUser, useMyNames } from "../../hooks/useUsers";
 import { useCalendar } from "../../hooks/useCalendar";
 import { useMeals } from "../../hooks/useMeals";
 import { toast } from "../../store/toast.store";
@@ -117,6 +117,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
   const { data: allRides, isLoading } = useRides();
   const { data: users } = useUsers();
   const { data: currentUser } = useCurrentUser();
+  const { isMine: isMyName } = useMyNames();
   const { data: events = [] } = useCalendar();
   const { data: meals = [] } = useMeals();
   const userNames = (users ?? []).map((u) => u.name);
@@ -188,7 +189,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
     // Someone can only be the driver of one ride per direction per day, so once
     // they have one, offering another would just invite a duplicate: the button
     // goes, and the ride itself offers to be taken back.
-    const myDriverRide = direction !== "Restaurant" ? active.find((r) => r.driver === currentUser?.name) : undefined;
+    const myDriverRide = direction !== "Restaurant" ? active.find((r) => isMyName(r.driver)) : undefined;
     const canOffer = direction !== "Restaurant" && !isTripOver(trip) && !myDriverRide && !viewer;
     // How full each car should leave so nobody is left behind (Heen and Terug, per day).
     const plan =
