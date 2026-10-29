@@ -8,6 +8,8 @@
  *   npm run mobile-audit -- --widths 360 --themes dark --info
  *   npm run mobile-audit -- --browser webkit     Safari's engine (default: chromium)
  *   npm run mobile-audit -- --selftest           checks the check itself on deliberately broken elements
+ *   npm run mobile-audit -- --buttons            button heights on every screen at 390 and 1280 px (dark): standard 44 / 40,
+ *                                                compact 40 / 36 (docs/design-system.md#buttons); exit 1 on a deviation
  *   npm run mobile-audit -- --url http://localhost:5173 --out playwright-out/audit
  *
  * Needs the dev server (`npm run dev`) and a browser for Playwright (`npx playwright install chromium`).
@@ -27,9 +29,10 @@ const option = (name, fallback) => {
 const list = (name, fallback) => String(option(name, fallback)).split(",").map((s) => s.trim()).filter(Boolean);
 
 const full = flag("--full");
+const buttonsMode = flag("--buttons");
 const base = option("--url", "http://localhost:5173").replace(/\/$/, "");
-const widths = list("--widths", full ? "320,360,390,430" : "320,390").map(Number);
-const themes = list("--themes", full ? "light,dark" : "light");
+const widths = list("--widths", buttonsMode ? "390,1280" : full ? "320,360,390,430" : "320,390").map(Number);
+const themes = list("--themes", buttonsMode ? "dark" : full ? "light,dark" : "light");
 const scenarios = list("--scenarios", full ? "upcoming,live,past" : "upcoming");
 const only = list("--only", "");
 const out = option("--out", "playwright-out/audit");
@@ -108,14 +111,16 @@ if (flag("--selftest")) await selftest();
 
 const results = [];
 let next = 0;
+/** The `lg` breakpoint of Tailwind: from here on the app is laid out (and its buttons sized) for a computer. */
+const DESKTOP_FROM = 1024;
 
 async function run({ screen, scenario, width, theme }) {
   const label = `${screen.name} @${width} ${theme} ${scenario}`;
   const context = await browser.newContext({
     viewport: { width, height: 844 },
     deviceScaleFactor: 2,
-    isMobile: true,
-    hasTouch: true,
+    isMobile: width < DESKTOP_FROM,
+    hasTouch: width < DESKTOP_FROM,
     colorScheme: theme,
   });
   await context.addInitScript((t) => {
@@ -128,7 +133,7 @@ async function run({ screen, scenario, width, theme }) {
   const problems = [];
   page.on("pageerror", (e) => problems.push(`script error: ${e.message}`));
   page.on("console", (m) => m.type() === "error" && !/interactive-widget|favicon|Failed to load resource/.test(m.text()) && problems.push(`console: ${m.text().slice(0, 160)}`));
-  const result = { label, screen: screen.name, scenario, width, theme, findings: [], problems, stepError: null, unhandled: [] };
+  const result = { label, screen: screen.name, scenario, width, theme, findings: [], buttons: [], problems, stepError: null, unhandled: [] };
   try {
     const sep = screen.path.includes("?") ? "&" : "?";
     await page.goto(`${base}${screen.path}${sep}mock&scenario=${scenario}&role=${screen.role ?? "member"}`, { waitUntil: "domcontentloaded" });
@@ -144,6 +149,7 @@ async function run({ screen, scenario, width, theme }) {
     }
     await page.waitForTimeout(600);
     result.findings = await page.evaluate(() => window.__audit());
+    if (buttonsMode) result.buttons = await page.evaluate(() => window.__buttons());
     result.unhandled = await page.evaluate(() => window.__mock?.unhandled ?? []);
     await page.screenshot({ path: `${out}/shots/${screen.name}-${width}-${theme}-${scenario}.png`, fullPage: false });
   } catch (e) {
@@ -161,6 +167,44 @@ await Promise.all(
   }),
 );
 await browser.close();
+
+// ── --buttons: heights of every button, by tier × size × width ─────────────────────────────────────────────────
+/** The one scale: [phone, computer] heights in px, the same for every tier. */
+const SCALE = { standard: [44, 40], compact: [40, 36] };
+if (buttonsMode) {
+  const groups = new Map();
+  for (const r of results) {
+    for (const b of r.buttons) {
+      const key = `${b.tier}|${b.size}|${r.width}`;
+      const g = groups.get(key) ?? { tier: b.tier, size: b.size, width: r.width, heights: new Map() };
+      groups.set(key, g);
+      const h = g.heights.get(b.height) ?? { n: 0, examples: new Set() };
+      h.n++;
+      if (h.examples.size < 4) h.examples.add(`${r.screen}: "${b.text}"`);
+      g.heights.set(b.height, h);
+    }
+  }
+  const lines = [`# Button heights`, ``, `${new Date().toISOString()} · widths ${widths.join(", ")} · themes ${themes.join(", ")} · ${results.length} pages`, ``,
+    `Expected: standard ${SCALE.standard[0]} px on a phone / ${SCALE.standard[1]} px from ${DESKTOP_FROM} px up, compact ${SCALE.compact[0]} / ${SCALE.compact[1]}. "hand-made" = a look-alike without a \`.btn-*\` class, listed to be looked at (filter chips, tiles), not counted.`, ``,
+    `| tier | size | width | expected | heights found (count) | off-scale examples |`, `|---|---|---|---|---|---|`];
+  let deviations = 0;
+  for (const g of [...groups.values()].sort((a, b) => a.tier.localeCompare(b.tier) || a.size.localeCompare(b.size) || a.width - b.width)) {
+    const want = SCALE[g.size][g.width >= DESKTOP_FROM ? 1 : 0];
+    const heights = [...g.heights].sort(([a], [b]) => a - b);
+    const handMade = g.tier === "hand-made";
+    const off = heights.filter(([h]) => handMade || Math.abs(h - want) > 0.5);
+    // A hand-made look-alike is listed to be looked at (a filter chip is not a button) but does not fail the run.
+    if (!handMade) deviations += off.reduce((n, [, v]) => n + v.n, 0);
+    lines.push(`| ${g.tier} | ${g.size} | ${g.width} | ${want} | ${heights.map(([h, v]) => `${h} (${v.n})`).join(", ")} | ${off.map(([h, v]) => `${h}: ${[...v.examples].join("; ")}`).join(" / ")} |`);
+  }
+  lines.push(``, `${deviations} button(s) off the scale.`);
+  writeFileSync(`${out}/buttons.json`, JSON.stringify(results.map((r) => ({ screen: r.screen, width: r.width, buttons: r.buttons })), null, 1));
+  writeFileSync(`${out}/button-heights.md`, lines.join("\n"));
+  console.log(lines.join("\n"));
+  const problems = results.flatMap((r) => [...r.problems.map((p) => `${r.label}: ${p}`), ...(r.stepError ? [`${r.label}: step failed: ${r.stepError}`] : [])]);
+  if (problems.length) console.log(`\n${problems.length} page problem(s), e.g. ${problems.slice(0, 3).join(" | ")}`);
+  process.exit(deviations > 0 ? 1 : 0);
+}
 
 // ── The report: each finding once per screen, with the widths and themes it appeared at ─────────────────────
 const wanted = (f) => showInfo || f.severity !== "info";

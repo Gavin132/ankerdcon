@@ -218,3 +218,56 @@ declare global {
   }
 }
 window.__audit = audit;
+
+// ── Button heights ───────────────────────────────────────────────────────────────────────────────────────────────
+// `window.__buttons()` lists every visible element that is a button (the `.btn-*` family, `<Button>`, `HeroButton`,
+// and a hand-made `button` or `a` that looks like one) with its rendered height, so `mobile-audit --buttons` can
+// check that they follow the one scale (docs/design-system.md#buttons): standard 44 px on a phone and 40 px from
+// the `lg` breakpoint up, compact (`.btn-compact`) 40 and 36.
+
+export interface ButtonRecord {
+  /** `primary`, `secondary`, `tonal`, `ghost`, `danger`, `danger-soft`, or `hand-made` (no `.btn-*` class). */
+  tier: string;
+  /** `compact` when it carries `.btn-compact`, otherwise `standard`. */
+  size: "standard" | "compact";
+  height: number;
+  width: number;
+  where: string;
+  text: string;
+  /** The classes, to find out why a button is not the height it should be. */
+  classes: string;
+}
+
+const BUTTON_TIERS = ["primary", "secondary", "tonal", "ghost", "danger-soft", "danger"] as const;
+/** Not part of the scale: icon buttons, filter chips, segmented items, tabs, switches, menu rows and the like. */
+const NOT_A_BUTTON = ".icon-btn, .chip, .segmented-item, .tag, [role=tab], [role=switch], [role=radio], [role=menuitem], [role=option], [role=checkbox], nav, [data-not-a-button]";
+
+export function buttons(): ButtonRecord[] {
+  const out: ButtonRecord[] = [];
+  for (const el of Array.from(document.body.querySelectorAll("button, a[href], [role=button]"))) {
+    if (!visible(el) || el.closest("[aria-hidden=true]")) continue;
+    const classes = typeof el.className === "string" ? el.className : "";
+    const tier = BUTTON_TIERS.find((t) => el.classList.contains(`btn-${t}`));
+    if (!tier && (el.matches(NOT_A_BUTTON) || el.closest(NOT_A_BUTTON))) continue;
+    const cs = getComputedStyle(el);
+    const r = el.getBoundingClientRect();
+    const text = (el.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 30);
+    if (!tier) {
+      // A hand-made one: a box with a fill or an outline, rounded, of button size, with a label.
+      if (!text || cs.display === "inline" || r.height < 26 || r.height > 56 || r.width > 420) continue;
+      const filled = cs.backgroundColor !== "rgba(0, 0, 0, 0)" && cs.backgroundColor !== "transparent";
+      const outlined = parseFloat(cs.borderTopWidth) > 0 && cs.borderTopStyle !== "none";
+      if (!filled && !outlined) continue;
+      if (parseFloat(cs.borderTopLeftRadius) < 6 || parseFloat(cs.borderTopLeftRadius) > 20) continue;
+    }
+    out.push({ tier: tier ?? "hand-made", size: el.classList.contains("btn-compact") ? "compact" : "standard", height: Math.round(r.height * 10) / 10, width: Math.round(r.width), where: describe(el), text, classes: classes.slice(0, 160) });
+  }
+  return out;
+}
+
+declare global {
+  interface Window {
+    __buttons?: typeof buttons;
+  }
+}
+window.__buttons = buttons;
