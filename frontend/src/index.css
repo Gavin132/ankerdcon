@@ -7,8 +7,8 @@
    Channels without rgb() so Tailwind can add opacity: `bg-ink/10`.
    Ink outline from the mascot, one brand blue; status colours are only
    for status. The brand tokens keep their old `--cyan` names so existing
-   `rgb(var(--cyan))` references keep working. Nothing lifts on hover. Cards, sheets
-   and chips are flat; only buttons carry a slight raised edge (the `--btn-*` tokens below). */
+   `rgb(var(--cyan))` references keep working. Nothing lifts on hover, and
+   buttons are flat — no offset shadow, just a slight opacity dip on click. */
 :root {
   --paper: 245 248 249;      /* #F5F8F9  page background */
   --surface: 255 255 255;    /* #FFFFFF  cards, panels */
@@ -22,16 +22,6 @@
   --cyan-soft: 220 238 251;  /* #DCEEFB */
   --cyan-text: 12 105 187;   /* #0C69BB  brand as text on light (5.6:1 on white, 4.7:1 on --cyan-soft) */
   --on-cyan: 255 255 255;    /* the label on every brand fill, accents included */
-  /* The raised edge of a button (`.btn-bevel`; floating menus keep their own shadow, nothing else has one): a light edge on top,
-     a darker one below as the thickness of the plate, and a soft shadow round it. Channels plus an opacity each,
-     because the opacity differs per theme: light mode needs a strong highlight on pale grounds and a gentle
-     shadow, dark mode the other way round. */
-  --btn-edge: 255 255 255;
-  --btn-edge-a: 0.5;
-  --btn-shade: 15 21 25;
-  --btn-shade-a: 0.12;
-  --btn-shadow: 15 21 25;
-  --btn-shadow-a: 0.12;
   /* A chosen chip, the active tab: the ink fill with paper text (the brand fill with a white label in dark mode, where
      ink is light). `--selected-icon` is the icon on it: a light tint of the accent on the ink, white on the accent. */
   --selected: 15 21 25;
@@ -105,17 +95,6 @@
   --bad: 253 164 175;        /* #FDA4AF */
   --bad-soft: 54 32 41;      /* rose at 15% on --surface */
   --bad-line: 112 61 72;     /* rose at 40% on --surface */
-}
-
-/* The same raised edge for dark mode, and for buttons on the always-dark hero (`.btn-on-hero`, in either theme). */
-.dark,
-.btn-on-hero {
-  --btn-edge: 255 255 255;
-  --btn-edge-a: 0.16;
-  --btn-shade: 0 0 0;
-  --btn-shade-a: 0.28;
-  --btn-shadow: 0 0 0;
-  --btn-shadow-a: 0.25;
 }
 
 /* ─── Accent colours ─────────────────────────────────────────────────────────
@@ -420,7 +399,7 @@
     @apply inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1 text-[13px] font-semibold text-ink-2 transition-colors hover:text-ink;
   }
   .segmented-item[aria-pressed="true"] {
-    @apply bg-surface text-ink;
+    @apply bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))];
   }
 
   /* Label above a form field, and the message under it when it is wrong. */
@@ -497,7 +476,7 @@
       radial-gradient(circle 7px at 100% 36px, transparent 97%, black) right / 51% 100% no-repeat;
   }
 
-  /* Buttons: one family, five tiers, 10 px radius, bold label,
+  /* Buttons: one family, five tiers, all flat (no shadow, nothing moves or scales), 10 px radius, bold label,
      44 px tall (a smaller one adds `min-h-*` and `hit-area`). <Button variant="..."> uses these same classes.
        .btn-primary      solid brand fill, no outline: the one main action of a view
        .btn-secondary    transparent, 1px hairline: every other action
@@ -505,69 +484,18 @@
        .btn-ghost        no fill, no border, quiet text: Annuleren, Terug
        .btn-danger       solid red fill: the confirm of a destructive action ("Verwijderen")
        .btn-danger-soft  red text on a soft red tint: the quiet one that only opens the question
-     Primary, secondary, tonal and danger are a slightly raised plate (`.btn-bevel`: a light 1px edge on top, a
-     1px darker edge below, a soft shadow); ghost and danger-soft are flat. States, the same for every tier:
-     hover is a small shift (primary and danger a touch lighter, the outlined tiers a darker border, the plate
-     does not move), pressed sinks (no edge, no shadow, an inset shade, 1px down), keyboard focus is the brand
-     ring with an offset, disabled is flat grey (`bg-sunken text-ink-3`, no outline, no bevel, cursor-not-allowed). */
+     States, the same for every tier: hover is a small shift (primary and danger a touch lighter, the outlined
+     tiers a darker border), pressed dims, keyboard focus is the brand ring with an offset, disabled is flat grey
+     (`bg-sunken text-ink-3`, no outline, cursor-not-allowed). */
   .btn-primary,
   .btn-secondary,
   .btn-tonal,
   .btn-ghost,
   .btn-danger,
   .btn-danger-soft {
-    @apply inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-xl font-bold transition-[opacity,background-color,border-color,color,box-shadow,transform] duration-75;
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-xl font-bold transition-[opacity,background-color,border-color,color] duration-75;
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-2 focus-visible:ring-offset-paper;
     @apply disabled:cursor-not-allowed;
-  }
-  /* The raised plate of the four filled tiers (and of anything that adds `btn-bevel`, like the hero buttons).
-     It sets Tailwind's own `--tw-shadow`, so the focus ring (`ring-2`) still stacks on top of it. */
-  .btn-primary,
-  .btn-secondary,
-  .btn-tonal,
-  .btn-danger,
-  .btn-bevel {
-    --tw-shadow:
-      inset 0 1px 0 rgb(var(--btn-edge) / var(--btn-edge-a)),
-      inset 0 -1px 0 rgb(var(--btn-shade) / var(--btn-shade-a)),
-      0 1px 2px rgb(var(--btn-shadow) / var(--btn-shadow-a));
-    --tw-shadow-colored: var(--tw-shadow);
-    box-shadow: var(--tw-ring-offset-shadow, 0 0 transparent), var(--tw-ring-shadow, 0 0 transparent), var(--tw-shadow);
-  }
-  /* The same plate on the things you pick or read as a block: cards and the open filter chips and segmented item. The chosen
-     chip is pressed in, the segmented track is a well the chosen item sits on. Everything else stays flat. */
-  .card-surface,
-  .chip-off {
-    box-shadow:
-      inset 0 1px 0 rgb(var(--btn-edge) / var(--btn-edge-a)),
-      inset 0 -1px 0 rgb(var(--btn-shade) / var(--btn-shade-a)),
-      0 1px 2px rgb(var(--btn-shadow) / var(--btn-shadow-a));
-  }
-  .segmented-item[aria-pressed="true"] {
-    box-shadow:
-      0 0 0 1.5px rgb(var(--outline)),
-      inset 0 1px 0 rgb(var(--btn-edge) / var(--btn-edge-a)),
-      inset 0 -1px 0 rgb(var(--btn-shade) / var(--btn-shade-a)),
-      0 1px 2px rgb(var(--btn-shadow) / var(--btn-shadow-a));
-  }
-  .chip-on,
-  .segmented {
-    box-shadow: inset 0 1px 2px rgb(var(--btn-shade) / calc(var(--btn-shade-a) * 1.5));
-  }
-  .btn-primary:active:not(:disabled),
-  .btn-secondary:active:not(:disabled),
-  .btn-tonal:active:not(:disabled),
-  .btn-danger:active:not(:disabled),
-  .btn-bevel:active:not(:disabled) {
-    --tw-shadow: inset 0 2px 3px rgb(var(--btn-shade) / calc(var(--btn-shade-a) * 1.5));
-    transform: translateY(1px);
-  }
-  .btn-primary:disabled,
-  .btn-secondary:disabled,
-  .btn-tonal:disabled,
-  .btn-danger:disabled,
-  .btn-bevel:disabled {
-    --tw-shadow: 0 0 transparent;
   }
   .btn-primary { @apply bg-brand text-brand-on hover:enabled:opacity-90; }
   .btn-secondary { @apply border border-line bg-transparent text-ink hover:enabled:border-ink-3 hover:enabled:bg-sunken/60; }
