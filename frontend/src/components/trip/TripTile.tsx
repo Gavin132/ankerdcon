@@ -16,7 +16,8 @@ interface TripTileProps {
   onOpen?: () => void;
   /** A status pill next to the label, e.g. how many people still miss a ride. */
   pill?: ReactNode;
-  /** A small button at the end of the header, e.g. the "+" that adds something to this tile. */
+  /** A small button at the end of the header, e.g. the "+" that adds something to this tile. It takes the place of the
+   * chevron, so a tile with an action has no arrow. */
   action?: ReactNode;
   /** Two columns wide; `full` takes the whole row. */
   size?: "small" | "wide" | "full";
@@ -47,7 +48,7 @@ export function TripTile({ icon: Icon, label, to, onToggle, expanded, onOpen, sh
       </span>
       {labelEl}
       {(pill || action) && <span className="relative flex shrink-0 items-center gap-2">{pill}{action}</span>}
-      {(to || onOpen) && <ChevronRight size={16} className="shrink-0 text-ink-3 transition-colors group-hover:text-ink" />}
+      {(to || onOpen) && !action && <ChevronRight size={16} className="shrink-0 text-ink-3 transition-colors group-hover:text-ink" />}
     </span>
   );
 

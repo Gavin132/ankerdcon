@@ -94,11 +94,12 @@ export function TransportTile({ trip, phase, rides, meals, myNames, wide }: { tr
   const gaps = tripGaps(trip, rides, meals, users).transport;
   const isMine = sameName(myNames);
   const mine = (direction: Ride["direction"]) => tripRideList.find((r) => r.direction === direction && [r.driver, ...r.passengers].some(isMine));
-  const describe = (r: Ride | undefined, label: string) => {
-    if (!r) return `${label}: nog geen rit`;
-    const how = isMine(r.driver) ? "rij je zelf" : r.is_public_transport ? "met het ov" : `met ${r.driver}`;
-    return `${label}: ${how}, ${dayTime(r.departure_time)}`;
-  };
+  /** One line per direction: who you ride with and when, or that there is no ride yet. */
+  const legs: { label: string; ride: Ride | undefined }[] = [
+    ...(phase === "live" ? [] : [{ label: "Heen", ride: mine("Inbound") }]),
+    { label: "Terug", ride: mine("Outbound") },
+  ];
+  const how = (r: Ride) => (isMine(r.driver) ? "Jij rijdt" : r.is_public_transport ? "Met het ov" : `Met ${r.driver}`);
 
   const missingBack = gaps.filter((g) => g.items.includes("Terug")).length;
   const missing = phase === "live" ? missingBack : gaps.length;
@@ -134,9 +135,15 @@ export function TransportTile({ trip, phase, rides, meals, myNames, wide }: { tr
     >
       <TileValue>{tripRideList.length === 0 ? "Geen ritten" : `${tripRideList.length} ${tripRideList.length === 1 ? "rit" : "ritten"}`}</TileValue>
       {phase !== "past" && (
-        <TileText>
-          {phase === "live" ? describe(mine("Outbound"), "Terug") : `${describe(mine("Inbound"), "Heen")} · ${describe(mine("Outbound"), "Terug")}`}
-        </TileText>
+        <ul className="-mx-1.5 divide-y divide-line">
+          {legs.map(({ label, ride }) => (
+            <li key={label} className="grid grid-cols-[62px_minmax(0,1fr)_auto] items-center gap-2 px-1.5 py-1.5 text-[12.5px]">
+              <span className="font-mono text-xs text-ink-3">{label}</span>
+              <span className={`min-w-0 truncate font-semibold ${ride ? "text-ink" : "text-warn"}`}>{ride ? how(ride) : "Nog geen rit"}</span>
+              {ride && <span className="shrink-0 text-ink-3">{dayTime(ride.departure_time)}</span>}
+            </li>
+          ))}
+        </ul>
       )}
     </TripTile>
     {/* Outside the tile: it is a link, and a click inside a portalled sheet still bubbles up to it. */}
@@ -367,32 +374,19 @@ export function PhotosTile({ trip, phase, summary, onOpenDay, uploadDayId }: { t
       icon={Camera}
       label="Foto's"
       onOpen={total > 0 && primaryDay ? () => onOpenDay(primaryDay) : undefined}
+      action={uploadDayId && !viewer && <StoryUploadButton eventDayId={uploadDayId} className={UPLOAD_BUTTON_CLASS} />}
       size={phase === "past" ? "full" : "wide"}
     >
       {total === 0 ? (
         <>
-          <div className="flex items-center justify-between gap-2">
-            <TileValue>Foto's</TileValue>
-            {uploadDayId && !viewer && (
-              <span className="relative shrink-0">
-                <StoryUploadButton eventDayId={uploadDayId} className={UPLOAD_BUTTON_CLASS} />
-              </span>
-            )}
-          </div>
+          <TileValue>Foto's</TileValue>
           <TileText>
             {phase === "past" ? "Er zijn geen foto's toegevoegd." : "Nog geen foto's. Voeg de eerste toe."}
           </TileText>
         </>
       ) : (
         <>
-          <div className="flex items-center justify-between gap-2">
-            <TileValue>{phase === "live" && todayCount > 0 ? `${todayCount} vandaag` : `${total} foto's`}</TileValue>
-            {uploadDayId && !viewer && (
-              <span className="relative shrink-0">
-                <StoryUploadButton eventDayId={uploadDayId} className={UPLOAD_BUTTON_CLASS} />
-              </span>
-            )}
-          </div>
+          <TileValue>{phase === "live" && todayCount > 0 ? `${todayCount} vandaag` : `${total} foto's`}</TileValue>
           <TileText>
             {trip.days.length > 1
               ? perDay.filter((x) => (x.s?.photo_count ?? 0) > 0).map((x) => `${x.s!.photo_count} op ${dayShort(x.day.date)}`).join(", ")
