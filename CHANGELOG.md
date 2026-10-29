@@ -35,6 +35,10 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **Buttons have a calmer, outline-free look.** The blue button is a plain blue fill without the black outline, the
+  other buttons are a thin line on the background, and the red "Verwijderen" is a plain red fill. Inloggen met Google
+  has its own soft button under a "of ga verder met" line. Greyed-out buttons are flat grey, and a button that is
+  busy keeps its size while the spinner turns.
 - **The "Vervoer regelen" switch of an activity looks like every other switch** (it was a thicker, hand-made one in the
   edit sheet), and the small status labels on an expense and on today's meal are the same size and shape as the other
   labels.
