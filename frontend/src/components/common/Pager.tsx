@@ -24,7 +24,7 @@ export function Pager({ count, index, onChange, dotLabel, prevLabel, nextLabel, 
   const arrowClass = `icon-btn border-1.5 border-line bg-surface ${arrowsFrom === "md" ? "max-md:hidden" : ""}`;
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <div className="-ml-[3px] flex flex-1 flex-wrap items-center">
+      <div className="flex flex-1 flex-wrap items-center">
         {Array.from({ length: count }, (_, i) => (
           <button
             key={i}
@@ -32,7 +32,7 @@ export function Pager({ count, index, onChange, dotLabel, prevLabel, nextLabel, 
             onClick={() => onChange(i)}
             aria-label={dotLabel(i)}
             aria-current={i === index}
-            className="flex h-11 items-center px-[3px]"
+            className="hit-area flex h-11 min-w-[28px] items-center justify-center"
           >
             <span
               className={`block h-1.5 rounded-full transition-all ${

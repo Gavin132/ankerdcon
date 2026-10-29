@@ -35,6 +35,14 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **Event page tiles:** the "Vervoer" tile lost its Heen/Terug bars (the "zonder rit" pill says who is missing), the
+  "+" on Activiteiten and the camera on Foto's are the same quiet button, the info tile is called "Praktisch" and
+  says how many topics it holds, an odd small tile at the end is stretched over the row instead of leaving half of it
+  empty, and the day cards read "Di", "Wo" above the number (the month is for screen readers).
+- **Hotel sheet:** the dates of the stay are in the title bar, the address is a link, and late arrivals and early
+  leavers read the same here and in "Praktisch" ("komt do 19 nov", "vertrekt wo 18 nov", "alleen di, do").
+- **Adding an activity:** the day is chosen with the same chips as everywhere else (and only asked when the trip has
+  more than one day), and "Vervoer regelen" is the app's usual switch.
 - **A calmer Hub.** "Voor jou" comes right after the trip on a phone, above the meal, ride and shortcut cards. Only
   what is yours to fix is coloured (no ride for you, money to pay); the rest of the rows and the count are grey. The
   trip carousel no longer swaps cards by itself (swipe or use the dots), the story row waits until there is something

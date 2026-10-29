@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, UserPlus, Users } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
+import { EmptyState } from "../common/EmptyState";
 import { TripSheet } from "./TripSheet";
 import { routes } from "../../config/routes";
 import { dayShort } from "../../utils/multiDay";
@@ -31,7 +32,20 @@ export function TripParticipants({ trip, users, myNames, phase, onManage, childr
   const [open, setOpen] = useState(false);
   const count = tripPeople(trip, users).length;
 
-  if (count === 0) return <>{children}</>;
+  // With nobody on it there is no list to open, so the way to sign someone up sits right here.
+  if (count === 0) {
+    return (
+      <>
+        {children}
+        {onManage && (
+          <button type="button" onClick={onManage} className="hit-area flex items-center gap-1 text-[12.5px] font-semibold text-brand-text hover:underline">
+            <UserPlus size={13} className="shrink-0" />
+            Iemand aanmelden
+          </button>
+        )}
+      </>
+    );
+  }
 
   return (
     <>
@@ -98,12 +112,7 @@ function ParticipantsSheet({
       }
     >
       {people.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-12 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
-            <Users size={22} />
-          </span>
-          <p className="text-sm font-semibold text-ink">Nog niemand aangemeld</p>
-        </div>
+        <EmptyState compact icon={<Users size={22} />} title="Nog niemand aangemeld" />
       ) : (
         <ul className="-mx-2 divide-y divide-line">
           {people.map(({ key, names, user, days, display }) => {

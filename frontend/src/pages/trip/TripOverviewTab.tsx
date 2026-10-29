@@ -23,7 +23,7 @@ import { TripRsvpModal } from "../../components/calendar/TripRsvpModal";
 import { StoryViewer } from "../../components/story/StoryViewer";
 import {
   CosplayTile, ExpensesTile, FoodTile, PhotosTile, PracticalSheet, PracticalTile, RoomsTile, TicketSheet, TicketTile, TransportTile, WeatherSheet, WeatherTile,
-  hasPracticalInfo,
+  hasPracticalInfo, tripCosts,
 } from "../../components/trip/TripTiles";
 import { buildTrips, tripInfo, tripOutliers, tripPhase, tripUploadDay, type TripDay, type TripPhase } from "../../utils/trips";
 import { useTrip } from "./tripContext";
@@ -150,18 +150,37 @@ export function TripOverviewTab() {
     }
   }
 
+  // Which tiles are there, and which of them are one column wide: with an odd number of those the last one is
+  // stretched over the row, or it would sit beside an empty half.
+  const shown: Record<TileId, boolean> = {
+    transport: true,
+    food: true,
+    rooms: trip.isHotel,
+    cosplay: trip.hasCon,
+    weather: !!trip.location && phase !== "past",
+    photos: true,
+    practical: phase !== "past" && (hasPracticalInfo(info) || tripOutliers(trip, users).length > 0),
+    expenses: true,
+    tickets: phase !== "past",
+  };
+  const small = TILE_ORDER[phase].filter((id) => {
+    if (!shown[id] || id === "photos") return false;
+    if (id === "transport" || id === "food" || id === "rooms") return phase === "past";
+    if (id === "expenses") return !(phase === "past" && tripCosts(trip, expenses, myNames).open > 0);
+    return true;
+  });
+  const wideId = small.length % 2 === 1 ? small[small.length - 1] : null;
+
   const tiles: Record<TileId, ReactNode> = {
-    transport: <TransportTile trip={trip} phase={phase} rides={rides} meals={meals} myNames={myNames} />,
-    food: <FoodTile trip={trip} phase={phase} meals={meals} myNames={myNames} />,
-    rooms: trip.isHotel && <RoomsTile trip={trip} phase={phase} rooms={rooms} users={users} myNames={myNames} />,
-    cosplay: trip.hasCon && <CosplayTile trip={trip} cosplays={cosplays} myNames={myNames} />,
-    weather: trip.location && phase !== "past" && <WeatherTile trip={trip} onOpen={() => setWeatherOpen(true)} />,
+    transport: <TransportTile trip={trip} phase={phase} rides={rides} meals={meals} myNames={myNames} wide={wideId === "transport"} />,
+    food: <FoodTile trip={trip} phase={phase} meals={meals} myNames={myNames} wide={wideId === "food"} />,
+    rooms: shown.rooms && <RoomsTile trip={trip} phase={phase} rooms={rooms} users={users} myNames={myNames} wide={wideId === "rooms"} />,
+    cosplay: shown.cosplay && <CosplayTile trip={trip} cosplays={cosplays} myNames={myNames} wide={wideId === "cosplay"} />,
+    weather: shown.weather && <WeatherTile trip={trip} onOpen={() => setWeatherOpen(true)} wide={wideId === "weather"} />,
     photos: <PhotosTile trip={trip} phase={phase} summary={storySummary} onOpenDay={setViewDayId} uploadDayId={uploadDay?.ev.id} />,
-    practical: phase !== "past" && (hasPracticalInfo(info) || tripOutliers(trip, users).length > 0) && (
-      <PracticalTile info={info} trip={trip} onOpen={() => setPracticalOpen(true)} />
-    ),
-    expenses: <ExpensesTile trip={trip} phase={phase} expenses={expenses} myNames={myNames} />,
-    tickets: phase !== "past" && <TicketTile trip={trip} onOpen={() => setTicketOpen(true)} />,
+    practical: shown.practical && <PracticalTile info={info} trip={trip} onOpen={() => setPracticalOpen(true)} wide={wideId === "practical"} />,
+    expenses: <ExpensesTile trip={trip} phase={phase} expenses={expenses} myNames={myNames} wide={wideId === "expenses"} />,
+    tickets: shown.tickets && <TicketTile trip={trip} onOpen={() => setTicketOpen(true)} wide={wideId === "tickets"} />,
   };
 
   return (

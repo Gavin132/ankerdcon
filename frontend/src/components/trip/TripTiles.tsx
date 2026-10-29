@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertCircle, BedDouble, Camera, Car, ChevronRight, CloudSun, FileText, Plus, Sparkles, Ticket as TicketIcon, Trash2, Upload, Utensils, Wallet } from "lucide-react";
+import { BedDouble, Camera, Car, ChevronRight, CloudSun, FileText, Info, Plus, Sparkles, Ticket as TicketIcon, Trash2, Upload, Utensils, Wallet } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
+import { AvatarStack } from "../common/AvatarStack";
+import { OutlierRow } from "./Outliers";
 import { Button } from "../common/Button";
 import { StoryUploadButton } from "../story/StoryUploadButton";
 import { DayChips } from "./DayChips";
@@ -21,11 +23,14 @@ import { getNow } from "../../store/time.store";
 import { parseEventDate, splitDateTime, toDateKey, todayKey } from "../../utils/date";
 import { dayShort } from "../../utils/multiDay";
 import { formatAmount, formatBytes } from "../../utils/format";
-import { defaultTripDayId, tripPeople, tripGaps, tripInfo, tripMeals, tripRides, tripOutliers, tripRoomGaps, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
+import { defaultTripDayId, tripGaps, tripInfo, tripMeals, tripRides, tripOutliers, tripRoomGaps, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
 import { groupPeople } from "../../utils/people";
 import { useLocalTicketsStore } from "../../store/localTickets.store";
 import type { LocalTicket } from "../../utils/localTickets";
 import type { CalendarEvent, Cosplay, Expense, HotelRoom, Meal, Ride, StoryDaySummary, User } from "../../types";
+
+/** The small "add" button in the corner of a tile: one neutral style, blue is for the page's one main action. */
+const ADD_BUTTON_CLASS = "icon-btn border-1.5 border-line bg-surface";
 
 const sameName = (names: string[]) => (n: string) => names.some((m) => m.toLowerCase() === n.toLowerCase());
 /** ["Gavin", "Sanne", "Luuk"] → "Gavin, Sanne en Luuk". */
@@ -83,7 +88,7 @@ function MissingPeopleSheet({
 
 /* ── Vervoer ─────────────────────────────────────────────────────────────── */
 
-export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Trip; phase: TripPhase; rides: Ride[]; meals: Meal[]; myNames: string[] }) {
+export function TransportTile({ trip, phase, rides, meals, myNames, wide }: { trip: Trip; phase: TripPhase; rides: Ride[]; meals: Meal[]; myNames: string[]; wide?: boolean }) {
   const { data: users = [] } = useUsers();
   const tripRideList = tripRides(rides, meals, trip).filter((r) => r.direction !== "Restaurant");
   const gaps = tripGaps(trip, rides, meals, users).transport;
@@ -95,7 +100,6 @@ export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Tr
     return `${label}: ${how}, ${dayTime(r.departure_time)}`;
   };
 
-  const total = tripPeople(trip, users).length;
   const missingBack = gaps.filter((g) => g.items.includes("Terug")).length;
   const missing = phase === "live" ? missingBack : gaps.length;
   // Who the pill counts: once the trip is on, only the ones still without a ride back.
@@ -104,9 +108,6 @@ export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Tr
     detail: phase === "live" ? "Terug" : g.items.join(" & "),
   }));
   const [missingOpen, setMissingOpen] = useState(false);
-  const bars = phase === "live"
-    ? [["Terug", total - missingBack] as const]
-    : [["Heen", total - gaps.filter((g) => g.items.includes("Heen")).length] as const, ["Terug", total - missingBack] as const];
 
   return (
     <>
@@ -115,7 +116,7 @@ export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Tr
       label="Vervoer"
       to={routes.trip.view(trip.id, "transport")}
       sheet
-      size={phase === "past" ? "small" : "wide"}
+      size={phase === "past" && !wide ? "small" : "wide"}
       pill={
         phase !== "past" &&
         missing > 0 && (
@@ -133,24 +134,9 @@ export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Tr
     >
       <TileValue>{tripRideList.length === 0 ? "Geen ritten" : `${tripRideList.length} ${tripRideList.length === 1 ? "rit" : "ritten"}`}</TileValue>
       {phase !== "past" && (
-        <>
-          <TileText>
-            {phase === "live" ? describe(mine("Outbound"), "Terug") : `${describe(mine("Inbound"), "Heen")} · ${describe(mine("Outbound"), "Terug")}`}
-          </TileText>
-          {total > 0 && (
-            <div className="space-y-1.5 pt-1">
-              {bars.map(([label, have]) => (
-                <div key={label} className="grid grid-cols-[40px_minmax(0,1fr)_40px] items-center gap-2 text-[12px] text-ink-3">
-                  <span>{label}</span>
-                  <span className="h-1.5 overflow-hidden rounded-full bg-line">
-                    <span className="block h-full rounded-full bg-ink-2" style={{ width: `${Math.round((have / total) * 100)}%` }} />
-                  </span>
-                  <span className="text-right font-mono tabular-nums text-ink-2">{have}/{total}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
+        <TileText>
+          {phase === "live" ? describe(mine("Outbound"), "Terug") : `${describe(mine("Inbound"), "Heen")} · ${describe(mine("Outbound"), "Terug")}`}
+        </TileText>
       )}
     </TripTile>
     {/* Outside the tile: it is a link, and a click inside a portalled sheet still bubbles up to it. */}
@@ -179,7 +165,7 @@ const MEAL_LINGER_MS = 3 * 60 * 60 * 1000;
  * (so it has no single `to` of its own — each row is its own link) and, while
  * the trip isn't over, has a "+" for anyone to plan another one.
  */
-export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: TripPhase; meals: Meal[]; myNames: string[] }) {
+export function FoodTile({ trip, phase, meals, myNames, wide }: { trip: Trip; phase: TripPhase; meals: Meal[]; myNames: string[]; wide?: boolean }) {
   const viewer = useIsViewer();
   const isMine = sameName(myNames);
   const all = tripMeals(meals, trip).sort((a, b) => a.time.localeCompare(b.time));
@@ -207,7 +193,7 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
     <TripTile
       icon={Utensils}
       label="Activiteiten"
-      size={phase === "past" ? "small" : "wide"}
+      size={phase === "past" && !wide ? "small" : "wide"}
       pill={
         missing > 0 && (
           // The count alone doesn't say who, so it opens the names.
@@ -228,9 +214,9 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
             onClick={() => setAddOpen(true)}
             title="Activiteit toevoegen"
             aria-label="Activiteit toevoegen"
-            className="hit-area flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-1.5 border-outline bg-brand text-brand-on transition-opacity hover:opacity-90"
+            className={ADD_BUTTON_CLASS}
           >
-            <Plus size={15} strokeWidth={2.5} />
+            <Plus size={16} />
           </button>
         )
       }
@@ -276,7 +262,7 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
 
 /* ── Hotel ──────────────────────────────────────────────────────────────── */
 
-export function RoomsTile({ trip, phase, rooms, users, myNames }: { trip: Trip; phase: TripPhase; rooms: HotelRoom[]; users: User[]; myNames: string[] }) {
+export function RoomsTile({ trip, phase, rooms, users, myNames, wide }: { trip: Trip; phase: TripPhase; rooms: HotelRoom[]; users: User[]; myNames: string[]; wide?: boolean }) {
   const isMine = sameName(myNames);
   const myRoom = rooms.find((r) => r.occupants.some(isMine));
   const roommates = myRoom?.occupants.filter((o) => !isMine(o)) ?? [];
@@ -289,7 +275,7 @@ export function RoomsTile({ trip, phase, rooms, users, myNames }: { trip: Trip; 
       label="Hotel"
       to={routes.trip.view(trip.id, "rooms")}
       sheet
-      size={phase === "past" ? "small" : "wide"}
+      size={phase === "past" && !wide ? "small" : "wide"}
       pill={missing > 0 && <TilePill>{missing} zonder kamer</TilePill>}
     >
       {phase === "past" || rooms.length === 0 ? (
@@ -302,13 +288,7 @@ export function RoomsTile({ trip, phase, rooms, users, myNames }: { trip: Trip; 
               className={`flex flex-col gap-1 rounded-lg border-1.5 px-2 pb-1.5 pt-1 ${r === myRoom ? "border-brand-text" : "border-line"}`}
             >
               <span className="font-display text-[17px] font-extrabold leading-none text-ink">{r.room_number || "–"}</span>
-              <span className="flex -space-x-1">
-                {r.occupants.slice(0, 3).map((o) => {
-                  const u = findUser(users, o);
-                  return <UserAvatar key={o} name={u?.name ?? o} user={u} className="h-[18px] w-[18px] text-[7px] !border-[1.5px] !border-surface" />;
-                })}
-                {r.occupants.length === 0 && <span className="text-[12px] text-ink-3">leeg</span>}
-              </span>
+              {r.occupants.length === 0 ? <span className="text-[12px] text-ink-3">leeg</span> : <AvatarStack names={r.occupants} size="xs" max={3} />}
             </span>
           ))}
           {rooms.length > 5 && <span className="self-center font-mono text-[12px] text-ink-3">+{rooms.length - 5}</span>}
@@ -330,7 +310,7 @@ export function RoomsTile({ trip, phase, rooms, users, myNames }: { trip: Trip; 
 
 /* ── Cosplay ─────────────────────────────────────────────────────────────── */
 
-export function CosplayTile({ trip, cosplays, myNames }: { trip: Trip; cosplays: Cosplay[]; myNames: string[] }) {
+export function CosplayTile({ trip, cosplays, myNames, wide }: { trip: Trip; cosplays: Cosplay[]; myNames: string[]; wide?: boolean }) {
   const ids = new Set(trip.eventIds);
   const list = cosplays.filter((c) => c.linked_event_ids.some((id) => ids.has(id)));
   const mine = list.find((c) => sameName(myNames)(c.user_name));
@@ -343,7 +323,7 @@ export function CosplayTile({ trip, cosplays, myNames }: { trip: Trip; cosplays:
   const moreCount = allImages.length - images.length;
 
   return (
-    <TripTile icon={Sparkles} label="Cosplay" to={routes.trip.view(trip.id, "cosplay")} sheet>
+    <TripTile icon={Sparkles} label="Cosplay" to={routes.trip.view(trip.id, "cosplay")} sheet size={wide ? "wide" : "small"}>
       <TileValue>{list.length}</TileValue>
       <TileText>{list.length === 1 ? "cosplay" : "cosplays"}{mine ? `, jij als ${mine.character_name}` : ""}</TileText>
       {images.length > 0 && (
@@ -362,11 +342,8 @@ export function CosplayTile({ trip, cosplays, myNames }: { trip: Trip; cosplays:
 
 /* ── Foto's ──────────────────────────────────────────────────────────────── */
 
-// Brand-blue circle (matches the Vervoer sheet's "+" buttons) instead of the
-// neutral icon-button StoryUploadButton normally wears — this one needs to
-// read as a pressable action at a glance, not blend in like the ticket's.
-const UPLOAD_BUTTON_CLASS =
-  "hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-1.5 border-outline bg-brand text-brand-on transition-opacity hover:opacity-90";
+// The upload button wears the same quiet `icon-btn` as the "+" on the Activiteiten tile (ADD_BUTTON_CLASS).
+const UPLOAD_BUTTON_CLASS = ADD_BUTTON_CLASS;
 
 /**
  * Opens the story viewer directly on the most relevant day instead of
@@ -442,7 +419,8 @@ export function PhotosTile({ trip, phase, summary, onOpenDay, uploadDayId }: { t
 
 /* ── Uitgaven ────────────────────────────────────────────────────────────── */
 
-export function ExpensesTile({ trip, phase, expenses, myNames }: { trip: Trip; phase: TripPhase; expenses: Expense[]; myNames: string[] }) {
+/** The trip's shared costs, your share of them and how much of that you still have to pay. */
+export function tripCosts(trip: Trip, expenses: Expense[], myNames: string[]) {
   const isMine = sameName(myNames);
   const ids = new Set(trip.eventIds);
   const list = expenses.filter((e) => e.linked_event_id && ids.has(e.linked_event_id));
@@ -450,13 +428,18 @@ export function ExpensesTile({ trip, phase, expenses, myNames }: { trip: Trip; p
   const myShares = list.flatMap((e) => e.shares.filter((s) => isMine(s.participant)).map((s) => ({ s, e })));
   const myTotal = myShares.reduce((sum, x) => sum + x.s.amount, 0);
   const open = myShares.filter((x) => x.s.status === "pending" && !isMine(x.e.paid_by)).reduce((sum, x) => sum + x.s.amount, 0);
+  return { list, total, myTotal, open };
+}
+
+export function ExpensesTile({ trip, phase, expenses, myNames, wide }: { trip: Trip; phase: TripPhase; expenses: Expense[]; myNames: string[]; wide?: boolean }) {
+  const { list, total, myTotal, open } = tripCosts(trip, expenses, myNames);
 
   return (
     <TripTile
       icon={Wallet}
       label="Kosten"
       to={routes.tripExpenses.view(trip.id)}
-      size={phase === "past" && open > 0 ? "wide" : "small"}
+      size={wide || (phase === "past" && open > 0) ? "wide" : "small"}
       pill={open > 0 && <TilePill>Open</TilePill>}
     >
       <TileValue>{list.length === 0 ? "Geen kosten" : open > 0 && phase === "past" ? `${formatAmount(open)} open` : formatAmount(total)}</TileValue>
@@ -483,13 +466,13 @@ function DayForecast({ trip, day }: { trip: Trip; day: TripDay }) {
   );
 }
 
-export function WeatherTile({ trip, onOpen }: { trip: Trip; onOpen: () => void }) {
+export function WeatherTile({ trip, onOpen, wide }: { trip: Trip; onOpen: () => void; wide?: boolean }) {
   const days = trip.days.filter((d) => toDateKey(d.date) >= todayKey()).slice(0, 4);
   const first = days[0] ?? trip.days[0];
   const { data } = useEventWeather(trip.location, toDateKey(first.date), trip.locationCoords);
 
   return (
-    <TripTile icon={CloudSun} label="Weer" onOpen={onOpen}>
+    <TripTile icon={CloudSun} label="Weer" onOpen={onOpen} size={wide ? "wide" : "small"}>
       <TileValue>
         {data ? `${Math.round(data.kind === "forecast" ? data.data.temp_max : data.data.temp_max_avg)}°` : "–"}
       </TileValue>
@@ -536,7 +519,7 @@ export function hasPracticalInfo(info: CalendarEvent): boolean {
   );
 }
 
-export function PracticalTile({ info, trip, onOpen }: { info: CalendarEvent; trip: Trip; onOpen: () => void }) {
+export function PracticalTile({ info, trip, onOpen, wide }: { info: CalendarEvent; trip: Trip; onOpen: () => void; wide?: boolean }) {
   const { data: users = [] } = useUsers();
   const topics = [
     info.parking_info && "parkeren",
@@ -548,25 +531,21 @@ export function PracticalTile({ info, trip, onOpen }: { info: CalendarEvent; tri
   ].filter(Boolean) as string[];
 
   return (
-    <TripTile icon={AlertCircle} label="Info" onOpen={onOpen}>
+    <TripTile icon={Info} label="Praktisch" onOpen={onOpen} size={wide ? "wide" : "small"}>
       {info.special_instructions ? (
         <>
           <span><TilePill>Let op</TilePill></span>
           <TileText><span className="line-clamp-2">{info.special_instructions}</span></TileText>
         </>
       ) : (
-        <TileValue>Info</TileValue>
+        <TileValue>{`${topics.length} ${topics.length === 1 ? "onderwerp" : "onderwerpen"}`}</TileValue>
       )}
-      {topics.length > 0 && <TileText>{topics.join(", ").replace(/^./, (c) => c.toUpperCase())}</TileText>}
+      {topics.length > 0 && (
+        <TileText>{topics.join(", ").replace(/^./, (c) => c.toUpperCase())}</TileText>
+      )}
     </TripTile>
   );
 }
-
-const OUTLIER_TEXT = {
-  "leaves-early": (days: TripDay[]) => `t/m ${dayShort(days[days.length - 1].date)}`,
-  "arrives-late": (days: TripDay[]) => `vanaf ${dayShort(days[0].date)}`,
-  "some-days": (days: TripDay[]) => `alleen ${days.map((d) => dayShort(d.date)).join(", ")}`,
-};
 
 /** Opened from the Praktisch tile — who's missing which days, plus parking, tickets and the rest. */
 export function PracticalSheet({ open, onClose, info, trip }: { open: boolean; onClose: () => void; info: CalendarEvent; trip: Trip }) {
@@ -581,10 +560,7 @@ export function PracticalSheet({ open, onClose, info, trip }: { open: boolean; o
           <p className="section-label">Niet alle dagen erbij</p>
           <ul className="mt-1.5 space-y-1">
             {outliers.map((o) => (
-              <li key={o.name} className="flex items-baseline justify-between gap-3 text-[13px]">
-                <span className="min-w-0 break-words font-medium text-ink">{o.name}</span>
-                <span className="shrink-0 whitespace-nowrap text-ink-3">{OUTLIER_TEXT[o.kind](o.days)}</span>
-              </li>
+              <OutlierRow key={o.name} outlier={o} />
             ))}
           </ul>
         </div>
@@ -603,7 +579,7 @@ const TICKET_MAX_BYTES = 15 * 1024 * 1024; // 15 MB — generous for a screensho
 const TICKET_ACCEPT = "image/jpeg,image/png,image/webp,application/pdf";
 
 /** Answers "have I saved my ticket for this trip" — nothing here ever leaves the device. */
-export function TicketTile({ trip, onOpen }: { trip: Trip; onOpen: () => void }) {
+export function TicketTile({ trip, onOpen, wide }: { trip: Trip; onOpen: () => void; wide?: boolean }) {
   const items = useLocalTicketsStore((s) => s.items);
   const hydrate = useLocalTicketsStore((s) => s.hydrate);
   useEffect(() => {
@@ -612,7 +588,7 @@ export function TicketTile({ trip, onOpen }: { trip: Trip; onOpen: () => void })
   const count = items.filter((t) => t.eventId === trip.id).length;
 
   return (
-    <TripTile icon={TicketIcon} label="Ticket" onOpen={onOpen}>
+    <TripTile icon={TicketIcon} label="Ticket" onOpen={onOpen} size={wide ? "wide" : "small"}>
       <TileValue>{count > 0 ? `${count} ${count === 1 ? "bestand" : "bestanden"}` : "Geen ticket"}</TileValue>
       <TileText>{count > 0 ? "Alleen op dit toestel opgeslagen" : "Bewaar een foto of PDF van je ticket"}</TileText>
     </TripTile>
@@ -660,7 +636,7 @@ function TicketRow({ ticket, onDelete }: { ticket: LocalTicket; onDelete: () => 
           type="button"
           onClick={() => setConfirming(true)}
           aria-label="Verwijderen"
-          className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
+          className="icon-btn"
         >
           <Trash2 size={15} />
         </button>

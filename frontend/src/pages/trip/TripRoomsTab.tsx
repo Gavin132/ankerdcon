@@ -15,7 +15,7 @@ import { NamePicker } from "../../components/common/NamePicker";
 import { TripSheet } from "../../components/trip/TripSheet";
 import { Button } from "../../components/common/Button";
 import { toast } from "../../store/toast.store";
-import { HotelInfoCard } from "../../components/event/HotelInfoCard";
+import { HotelInfoCard, stayRange } from "../../components/event/HotelInfoCard";
 import { tripInfo, tripRoomGaps } from "../../utils/trips";
 import { useTrip } from "./tripContext";
 import type { HotelRoom } from "../../types";
@@ -583,7 +583,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
   ) : undefined;
 
   return (
-    <TripSheet open={open} onClose={onClose} title="Hotel" subtitle={trip.title} footer={deleteConfirmFooter}>
+    <TripSheet open={open} onClose={onClose} title="Hotel" subtitle={`${stayRange(trip)} · ${trip.title}`} footer={deleteConfirmFooter}>
 
       <div className="space-y-5">
 

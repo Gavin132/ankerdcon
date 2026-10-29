@@ -1,12 +1,11 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { BedDouble, MapPin, Ticket, UserPlus } from "lucide-react";
-import { UserAvatar } from "../common/UserAvatar";
+import { BedDouble, MapPin, Ticket } from "lucide-react";
+import { AvatarStack } from "../common/AvatarStack";
 import { TripDayPicker } from "./TripDayPicker";
 import { TripParticipants } from "./TripParticipants";
 import { daysBetween, toDateKey, todayKey } from "../../utils/date";
 import { tripImage, tripPeople, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
-import { findUser as findMember } from "../../utils/people";
 import { getNow } from "../../store/time.store";
 import { useIsViewer } from "../../hooks/useIsViewer";
 import type { User } from "../../types";
@@ -78,14 +77,13 @@ export function TripTicket({
   const when = `${trip.dateRange}${year !== getNow().getFullYear() ? ` ${year}` : ""}`;
   const eventType = trip.days.find((d) => d.ev.event_type)?.ev.event_type ?? null;
   const summary = [
-    eventType === "gathering" ? "Gathering" : eventType === "concert" ? "Concert" : trip.hasCon ? "Con" : "Reis",
+    eventType === "gathering" ? "Feestje" : eventType === "concert" ? "Concert" : trip.hasCon ? "Con" : "Reis",
     trip.days.length === 1 ? "1 dag" : `${trip.days.length} dagen`,
     trip.isHotel ? "hotel" : null,
   ].filter(Boolean).join(" · ");
 
   // One avatar per person, not per name they happen to be signed up under (see utils/people.ts).
   const participants = tripPeople(trip, users).map((person) => person.name).sort((a, b) => Number(isMine(b)) - Number(isMine(a)));
-  const findUser = (p: string) => findMember(users, p);
   const others = participants.filter((p) => !isMine(p)).length;
   const verb = phase === "past" ? "waren er" : "gaan mee";
   const crewText = going
@@ -103,22 +101,8 @@ export function TripTicket({
   return (
     <article className="ticket-notch grid grid-cols-[minmax(0,1fr)] overflow-hidden rounded-[14px] border-2 border-outline bg-surface md:grid-cols-[200px_minmax(0,1fr)_168px] lg:grid-cols-[240px_minmax(0,1fr)_188px]">
       {/* ── Cover ── */}
-      <div className="relative h-40 overflow-hidden bg-hero sm:h-52 md:h-auto md:min-h-[280px]">
-        {image ? (
-          <img src={image} alt="" className={`absolute inset-0 h-full w-full object-cover ${phase === "past" ? "saturate-50" : ""}`} />
-        ) : (
-          <span
-            className="absolute inset-0 flex flex-col justify-end p-4 text-hero-ink"
-            style={{
-              backgroundImage: "radial-gradient(circle, rgb(var(--cyan) / .45) 1.4px, transparent 1.8px)",
-              backgroundSize: "12px 12px",
-            }}
-          >
-            <span className="font-display text-[34px] font-black uppercase leading-[0.9] [text-wrap:balance] md:text-[40px]">
-              {trip.title}
-            </span>
-          </span>
-        )}
+      <div className={`relative overflow-hidden bg-hero md:h-auto md:min-h-[280px] ${image ? "h-28 sm:h-52" : "h-16"}`}>
+        {image && <img src={image} alt="" className={`absolute inset-0 h-full w-full object-cover ${phase === "past" ? "saturate-50" : ""}`} />}
       </div>
 
       {/* ── Body ── */}
@@ -153,20 +137,8 @@ export function TripTicket({
         )}
 
         <div className="mt-auto flex flex-wrap items-center gap-2.5">
-          <TripParticipants trip={trip} users={users} myNames={myNames} phase={phase} onManage={onManage}>
-          {participants.length > 0 && (
-            <span className="flex -space-x-1.5">
-              {participants.slice(0, 6).map((p) => {
-                const u = findUser(p);
-                return <UserAvatar key={p} name={u?.name ?? p} user={u} className="h-7 w-7 text-[12px] !border-surface" />;
-              })}
-              {participants.length > 6 && (
-                <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-sunken font-mono text-[12px] font-semibold text-ink-2">
-                  +{participants.length - 6}
-                </span>
-              )}
-            </span>
-          )}
+          <TripParticipants trip={trip} users={users} myNames={myNames} phase={phase} onManage={viewer ? undefined : onManage}>
+          <AvatarStack names={participants} />
           <span className="min-w-0 flex-1 text-[13px] text-ink-2">
             {crewText}
             {going && myDays.length < trip.days.length && (
@@ -179,24 +151,13 @@ export function TripTicket({
 
       {/* ── Stub ── */}
       <div className="relative flex min-h-[118px] flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t-2 border-dashed border-line px-5 py-3 md:h-auto md:flex-col md:flex-nowrap md:items-stretch md:border-l-2 md:border-t-0 md:py-5">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-end gap-2.5 md:flex-col md:items-start md:gap-1">
-            <span className="font-display text-[60px] font-black leading-[0.8] text-ink md:text-[96px]">{count.big}</span>
-            <span className="pb-0.5 text-[13px] leading-tight text-ink-2">{count.small}</span>
-          </div>
-          {!viewer && (
-          <button
-            type="button"
-            onClick={onManage}
-            className="hit-area flex items-center gap-1 text-left text-[12.5px] font-semibold text-brand-text hover:underline"
-          >
-            <UserPlus size={13} className="shrink-0" />
-            {phase === "past" ? "Aanmeldingen aanpassen" : "Iemand aanmelden"}
-          </button>
-          )}
+        <div className="flex items-end gap-2.5 md:flex-col md:items-start md:gap-1">
+          <span className="font-display text-[60px] font-black leading-[0.8] text-ink md:text-[96px]">{count.big}</span>
+          <span className="pb-0.5 text-[13px] leading-tight text-ink-2">{count.small}</span>
         </div>
 
-        {(going || phase === "past") && (
+        {/* The stamp is for what is over or under way: before the trip the checked day cards and "Jij en 3 anderen" already say it. */}
+        {phase !== "upcoming" && (going || phase === "past") && (
           <motion.span
             aria-hidden
             initial={justJoined ? { scale: 1.8, rotate: -24, opacity: 0 } : false}
