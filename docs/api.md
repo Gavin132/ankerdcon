@@ -78,9 +78,10 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `GET /calendar/feed-url` | member | your private `.ics` subscription link |
 | `GET /calendar/feed.ics?token=` | *public, by token* | the `.ics` feed |
 | `GET /calendar/{day}/hotel-rooms` | member | rooms of the trip |
-| `POST /calendar/{day}/hotel-rooms`, `…/bulk` | member | create a room, or many |
-| `PUT /calendar/{day}/hotel-rooms/{room}` | member | edit a room: number, floor, notes, capacity and `occupants` (the whole list; new names must be members; at most `capacity` people). `null` clears a field, leaving it out keeps it |
-| `POST /calendar/{day}/hotel-rooms/{room}/assign`, `…/leave` | member | take or leave a bed |
+| `POST /calendar/{day}/hotel-rooms`, `…/bulk` | member | create a room, or many. A new room with `occupants` moves those people out of their other rooms and answers with the room plus `moved` |
+| `PUT /calendar/{day}/hotel-rooms/{room}` | member | edit a room: number, floor, notes, capacity and `occupants` (the whole list; new names must be members; at most `capacity` people). `null` clears a field, leaving it out keeps it. Answers `{moved: [{name, room_id, room_number}]}`: the people who were taken out of another room because they are in this one now |
+| `POST /calendar/{day}/hotel-rooms/{room}/assign` | member | take a bed (`user_names`). A person sleeps in one room: anyone in another room of the hotel is moved here, under all their names, and a full room (400) refuses before anybody leaves their old room. Answers `{moved: [...]}` like the PUT |
+| `POST /calendar/{day}/hotel-rooms/{room}/leave` | member | give up a bed |
 
 ### Rides — `/rides`
 

@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 import app.dependencies as deps
 from app.core import atomic
 from app.routers import admin, calendar
+from app.services import hotel_rooms
 from app.routes import AdminRoutes, CalendarRoutes
 from tests.test_atomic import Table, _Query, _Result
 
@@ -22,6 +23,10 @@ class _InQuery(_Query):
         self.op = "delete"
         return self
 
+    def insert(self, payload):
+        self.op, self.payload = "insert", payload
+        return self
+
     def _match(self, row):
         rest = []
         for cond in self.conds:
@@ -30,6 +35,11 @@ class _InQuery(_Query):
                     return False
             else:
                 rest.append(cond)
+        # a plain equality on a text column (event_id): the atomic test table only knows array columns and ids
+        plain = [c for c in rest if c[1] == "eq" and c[0] != "id" and isinstance(row.get(c[0]), str)]
+        if any(row.get(c[0]) != c[2] for c in plain):
+            return False
+        rest = [c for c in rest if c not in plain]
         saved, self.conds = self.conds, rest
         try:
             return super()._match(row)
@@ -37,6 +47,10 @@ class _InQuery(_Query):
             self.conds = saved
 
     def execute(self):
+        if self.op == "insert":
+            row = {"id": f"new{len(self.t.rows) + 1}", **self.payload}
+            self.t.rows[row["id"]] = row
+            return _Result([dict(row)])
         if self.op == "delete":
             for row_id in [i for i, r in self.t.rows.items() if self._match(r)]:
                 del self.t.rows[row_id]
@@ -62,7 +76,7 @@ def make(monkeypatch):
 
     def build(who="Sam", admin_user=False, viewer=False, room=None):
         db = _Db({"hotel_rooms": [dict(room or ROOM)], "profiles": [dict(p) for p in PROFILES]})
-        for module in (atomic, calendar, admin, deps):
+        for module in (atomic, calendar, admin, deps, hotel_rooms):
             monkeypatch.setattr(module, "supabase", db)
         monkeypatch.setattr(calendar, "_hotel_group_key", lambda event_id: ("trip1", True))
         monkeypatch.setattr(admin, "_hotel_group_key", lambda event_id: ("trip1", True))
@@ -89,7 +103,7 @@ def _room(db):
 def test_a_member_may_edit_a_room_and_put_another_member_in_it(make):
     client, db = make("Robin")
     response = client.put(ROOM_URL, headers=AUTH, json={"room_number": "301", "occupants": ["Sam", "Alex"]})
-    assert response.status_code == 204
+    assert response.status_code == 200
     assert _room(db)["room_number"] == "301"
     assert _room(db)["occupants"] == ["Sam", "Alex"]
     assert _room(db)["floor"] == "2"  # left out, so kept
@@ -97,14 +111,14 @@ def test_a_member_may_edit_a_room_and_put_another_member_in_it(make):
 
 def test_a_member_may_take_someone_else_out_of_a_room(make):
     client, db = make("Robin")
-    assert client.put(ROOM_URL, headers=AUTH, json={"occupants": []}).status_code == 204
+    assert client.put(ROOM_URL, headers=AUTH, json={"occupants": []}).status_code == 200
     assert _room(db)["occupants"] == []
 
 
 def test_a_null_clears_a_field_but_a_missing_one_keeps_it(make):
     """The room form relies on this: null clears the room number, leaving it out keeps it."""
     client, db = make("Sam")
-    assert client.put(ROOM_URL, headers=AUTH, json={"room_number": None, "capacity": None}).status_code == 204
+    assert client.put(ROOM_URL, headers=AUTH, json={"room_number": None, "capacity": None}).status_code == 200
     assert _room(db)["room_number"] is None and _room(db)["capacity"] is None
     assert _room(db)["floor"] == "2" and _room(db)["instructions"] == "Lift A" and _room(db)["occupants"] == ["Sam"]
 
@@ -128,7 +142,7 @@ def test_a_made_up_name_is_refused(make):
 def test_a_name_already_in_the_room_stays_even_when_no_profile_has_it_any_more(make):
     """Someone renamed or removed can still be left in place while the others are saved."""
     client, db = make("Sam", room={**ROOM, "occupants": ["Oud Naam"]})
-    assert client.put(ROOM_URL, headers=AUTH, json={"room_number": "9", "occupants": ["Oud Naam", "Alex"]}).status_code == 204
+    assert client.put(ROOM_URL, headers=AUTH, json={"room_number": "9", "occupants": ["Oud Naam", "Alex"]}).status_code == 200
     assert _room(db)["occupants"] == ["Oud Naam", "Alex"]
 
 
@@ -138,14 +152,14 @@ def test_a_room_cannot_get_more_people_than_its_capacity(make):
     assert _room(db)["occupants"] == ["Sam"]
     # Nor can the capacity drop below the people in it; a bigger one with more people works.
     assert client.put(ROOM_URL, headers=AUTH, json={"capacity": 1, "occupants": ["Sam", "Alex"]}).status_code == 400
-    assert client.put(ROOM_URL, headers=AUTH, json={"capacity": 3, "occupants": ["Sam", "Alex", "Robin"]}).status_code == 204
+    assert client.put(ROOM_URL, headers=AUTH, json={"capacity": 3, "occupants": ["Sam", "Alex", "Robin"]}).status_code == 200
     assert client.put(ROOM_URL, headers=AUTH, json={"capacity": 2}).status_code == 400
     assert _room(db)["capacity"] == 3
 
 
 def test_the_same_name_twice_counts_once(make):
     client, db = make("Sam")
-    assert client.put(ROOM_URL, headers=AUTH, json={"occupants": ["Alex", "Alex"]}).status_code == 204
+    assert client.put(ROOM_URL, headers=AUTH, json={"occupants": ["Alex", "Alex"]}).status_code == 200
     assert _room(db)["occupants"] == ["Alex"]
 
 
@@ -158,7 +172,7 @@ def test_a_room_of_another_trip_or_a_missing_one_is_not_found(make):
 
 def test_an_admin_may_still_edit(make):
     client, db = make("Beheer", admin_user=True)
-    assert client.put(ROOM_URL, headers=AUTH, json={"floor": "5", "occupants": ["Alex"]}).status_code == 204
+    assert client.put(ROOM_URL, headers=AUTH, json={"floor": "5", "occupants": ["Alex"]}).status_code == 200
     assert _room(db)["floor"] == "5"
 
 

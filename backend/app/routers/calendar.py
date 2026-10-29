@@ -18,11 +18,14 @@ from app.models.calendar import (
     CreateHotelRoomRequest,
     HotelRoom,
     HotelRoomAssignRequest,
+    HotelRoomCreated,
     HotelRoomLeaveRequest,
+    HotelRoomMoves,
     UpdateHotelRoomRequest,
 )
 from app.routes import CalendarRoutes
 from app.core.database import supabase
+from app.services import hotel_rooms
 
 logger = get_logger(__name__)
 router = APIRouter(prefix=CalendarRoutes.PREFIX, tags=["calendar"])
@@ -244,6 +247,8 @@ def leave_event_bulk(event_id: str, body: CalendarBulkRsvpRequest, current_user:
 #   delete one ........... admins only (`admin_delete_hotel_room` in routers/admin.py)
 # A read-only member ("kijker") is refused on every write by `get_current_user`. Names put in a room have to be
 # members, so nobody can fill a room with made-up names (`act_for_anyone_bulk(adding=True)`).
+# A person sleeps in ONE room of a hotel: every write that puts someone in a room (create with occupants, edit, assign)
+# goes through `services/hotel_rooms.py`, which moves them out of the other rooms and says so in its response.
 
 def _hotel_group_key(event_id: str) -> tuple[str, bool]:
     """Resolve an event_days id to its parent event — now always the real,
@@ -279,25 +284,34 @@ def list_hotel_rooms(event_id: str, _: str = Depends(get_current_user)) -> list[
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
-@router.post(CalendarRoutes.HOTEL_ROOMS, response_model=HotelRoom, status_code=status.HTTP_201_CREATED)
+@router.post(CalendarRoutes.HOTEL_ROOMS, response_model=HotelRoomCreated, status_code=status.HTTP_201_CREATED)
 def create_hotel_room(
     event_id: str,
     body: CreateHotelRoomRequest,
     current_user: str = Depends(get_current_user),
-) -> HotelRoom:
+) -> HotelRoomCreated:
     group_key, is_hotel = _hotel_group_key(event_id)
     if not is_hotel:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Dit evenement heeft geen hotel.")
     data = {k: v for k, v in body.model_dump().items() if v is not None}
     data["event_id"] = group_key
     # Same rule as assigning people to a room: anyone may be put in.
-    data["occupants"] = act_for_anyone_bulk(current_user, body.occupants, adding=True)
+    names = act_for_anyone_bulk(current_user, body.occupants, adding=True)
+    data["occupants"] = hotel_rooms.distinct_people_names(names)
+    if body.capacity is not None and len(data["occupants"]) > body.capacity:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=hotel_rooms.too_many_message(len(data["occupants"]), body.capacity, replacing=True),
+        )
     try:
         resp = supabase.table(Tables.HOTEL_ROOMS).insert(data).execute()
-        return resp.data[0]
+        room = resp.data[0]
     except Exception as e:
         logger.error("Failed to create hotel room for event %s: %s", event_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    # The new room has its people from the start; now they leave the other rooms of the hotel.
+    moved = hotel_rooms.take_out_of_other_rooms(group_key, room["id"], data["occupants"]) if data["occupants"] else []
+    return {**room, "moved": moved}
 
 
 @router.post(CalendarRoutes.HOTEL_ROOMS_BULK, response_model=list[HotelRoom], status_code=status.HTTP_201_CREATED)
@@ -326,15 +340,16 @@ def bulk_create_hotel_rooms(
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
 
-@router.put(CalendarRoutes.HOTEL_ROOM, status_code=status.HTTP_204_NO_CONTENT)
+@router.put(CalendarRoutes.HOTEL_ROOM, response_model=HotelRoomMoves)
 def update_hotel_room(
     event_id: str,
     room_id: str,
     body: UpdateHotelRoomRequest,
     current_user: str = Depends(get_current_user),
-) -> None:
+) -> HotelRoomMoves:
     """Edit a room, including who sleeps in it. A field sent as null is cleared, a field left out is kept, and
-    `occupants` replaces the whole list. The room may not end up with more people than its capacity."""
+    `occupants` replaces the whole list. The room may not end up with more people than its capacity. Everyone in the
+    list who sleeps in another room of the hotel is moved here; the response says who (`moved`)."""
     group_key, _ = _hotel_group_key(event_id)
     try:
         rows = supabase.table(Tables.HOTEL_ROOMS).select("event_id, capacity, occupants").eq("id", room_id).execute().data
@@ -348,34 +363,24 @@ def update_hotel_room(
     fields = {f: getattr(body, f) for f in body.model_fields_set if f != "occupants"}
     capacity_changed = "capacity" in fields
 
-    def too_many(count: int, capacity: int | None) -> HTTPException | None:
-        if capacity is not None and count > capacity:
-            return HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Deze kamer heeft plaats voor {capacity} {'persoon' if capacity == 1 else 'personen'}, maar er zouden er {count} in slapen.",
-            )
-        return None
-
+    moved: list[dict] = []
     if body.occupants is not None:
         wanted = list(dict.fromkeys(n.strip() for n in body.occupants if n and n.strip()))
         already = set(room.get("occupants") or [])
         # Names that are in the room already stay, whatever they are; anyone new has to be a member.
         act_for_anyone_bulk(current_user, [n for n in wanted if n not in already], adding=True)
 
-        def replace(_current: list, fresh: dict) -> list:
-            error = too_many(len(wanted), fields["capacity"] if capacity_changed else fresh.get("capacity"))
-            if error:
-                raise error
-            return wanted
-
-        update_list(
-            Tables.HOTEL_ROOMS, room_id, "occupants", replace,
-            select="occupants, capacity", not_found="Kamer niet gevonden.",
+        moved = hotel_rooms.put_people_in_room(
+            group_key, room_id, wanted, replace=True,
+            capacity=fields["capacity"] if capacity_changed else hotel_rooms.KEEP_CAPACITY,
         )
     elif capacity_changed:
-        error = too_many(len(room.get("occupants") or []), fields["capacity"])
-        if error:
-            raise error
+        count = hotel_rooms.count_people(room.get("occupants") or [])
+        if fields["capacity"] is not None and count > fields["capacity"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=hotel_rooms.too_many_message(count, fields["capacity"], replacing=True),
+            )
 
     if fields:
         try:
@@ -385,28 +390,21 @@ def update_hotel_room(
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
         if not done:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kamer niet gevonden.")
+    return HotelRoomMoves(moved=moved)
 
 
-@router.post(CalendarRoutes.HOTEL_ROOM_ASSIGN, status_code=status.HTTP_204_NO_CONTENT)
+@router.post(CalendarRoutes.HOTEL_ROOM_ASSIGN, response_model=HotelRoomMoves)
 def assign_hotel_room(
     event_id: str,
     room_id: str,
     body: HotelRoomAssignRequest,
     current_user: str = Depends(get_current_user),
-) -> None:
+) -> HotelRoomMoves:
+    """Give people a bed in this room. Someone who sleeps in another room of the hotel is moved here (`moved`);
+    a full room refuses before anybody leaves their old one."""
+    group_key, _ = _hotel_group_key(event_id)
     user_names = act_for_anyone_bulk(current_user, body.user_names, adding=True)
-
-    def add(occupants: list, room: dict) -> list | None:
-        merged = list(dict.fromkeys(occupants + user_names))
-        capacity = room.get("capacity")
-        if capacity is not None and len(merged) > capacity:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Deze kamer zit vol (max {capacity} personen).",
-            )
-        return merged
-
-    update_list(Tables.HOTEL_ROOMS, room_id, "occupants", add, select="occupants, capacity", not_found="Kamer niet gevonden.")
+    return HotelRoomMoves(moved=hotel_rooms.put_people_in_room(group_key, room_id, user_names))
 
 
 @router.post(CalendarRoutes.HOTEL_ROOM_LEAVE, status_code=status.HTTP_204_NO_CONTENT)
