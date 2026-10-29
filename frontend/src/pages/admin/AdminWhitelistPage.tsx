@@ -32,7 +32,7 @@ export function AdminWhitelistPage() {
       setDiscordId("");
       setEmail("");
       setViewer(false);
-      toast("success", "Toegevoegd aan de whitelist.");
+      toast("success", "Toegevoegd aan de toegangslijst.");
     } catch {
       toast("error", "Kon niet toevoegen — staat deze persoon er al op?");
     }
@@ -42,7 +42,7 @@ export function AdminWhitelistPage() {
     try {
       await deleteMutation.mutateAsync(id);
       setConfirmDeleteId(null);
-      toast("success", "Van de whitelist verwijderd.");
+      toast("success", "Van de toegangslijst verwijderd.");
     } catch {
       toast("error", "Kon niet verwijderen.");
     }
@@ -51,7 +51,7 @@ export function AdminWhitelistPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
       <AdminPageHeader
-        title="Whitelist"
+        title="Toegangslijst"
         subtitle={`${entries.length} personen mogen inloggen`}
       />
 
@@ -113,7 +113,7 @@ export function AdminWhitelistPage() {
             ) : entries.length === 0 ? (
               <tr>
                 <td colSpan={2} className="px-5 py-10 text-center text-sm text-ink-3">
-                  Nog niemand op de whitelist.
+                  Nog niemand op de toegangslijst.
                 </td>
               </tr>
             ) : (

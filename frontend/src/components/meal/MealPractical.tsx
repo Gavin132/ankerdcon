@@ -102,7 +102,7 @@ export function MealPractical({ meal }: MealPracticalProps) {
 
             {showTransport && (
               <PracticalRow icon={<Bus size={14} />} label="Vervoer">
-                Vervoer is nodig voor dit evenement.
+                Vervoer is nodig voor deze activiteit.
               </PracticalRow>
             )}
 
@@ -113,7 +113,7 @@ export function MealPractical({ meal }: MealPracticalProps) {
             )}
 
             {showDietary && (
-              <PracticalRow icon={<Leaf size={14} />} label="Dieet opties">
+              <PracticalRow icon={<Leaf size={14} />} label="Dieetopties">
                 {meal.dietary_options}
               </PracticalRow>
             )}

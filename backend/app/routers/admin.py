@@ -1504,7 +1504,7 @@ def _cdn_objects(kind: Optional[str], event: Optional[str]) -> tuple[list[dict],
     """The bucket's objects, each tagged with its kind. Raises the 503 the CDN
     endpoints share when the bucket cannot be read."""
     if event is not None and not _EVENT_ID.match(event):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ongeldig event.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ongeldig evenement.")
     try:
         objects, capped = minio_client.list_all_objects()
     except RuntimeError as e:
@@ -1589,7 +1589,7 @@ def admin_download_cdn(
     if len(chosen) > _ZIP_MAX_FILES or sum(o["size"] for o in chosen) > _ZIP_MAX_BYTES:
         raise HTTPException(
             status_code=413,
-            detail="Dit is te veel voor één zip. Kies eerst een onderdeel (of een event) en download die apart.",
+            detail="Dit is te veel voor één zip. Kies eerst een onderdeel (of een evenement) en download die apart.",
         )
     logger.warning("CDN: admin %s downloads %d files (kind=%s, event=%s)", admin, len(chosen), kind, event)
     label = "-".join(p for p in ("cdn", kind, event[:8] if event else None) if p)

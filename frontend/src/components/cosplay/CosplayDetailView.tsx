@@ -198,7 +198,7 @@ export function CosplayDetailFooter({
     <div className="flex items-center gap-2">
       <p className="flex-1 text-xs font-semibold text-ink">Zeker verwijderen?</p>
       <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)}>
-        Annuleer
+        Annuleren
       </Button>
       <Button size="sm" variant="danger" loading={deleteLoading} onClick={handleDelete}>
         Verwijderen

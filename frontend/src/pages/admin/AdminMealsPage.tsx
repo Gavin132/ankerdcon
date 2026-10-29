@@ -142,8 +142,8 @@ function MealDrawer({
     <AdminDrawer
       open={open}
       onClose={requestClose}
-      title={isEdit ? "Maaltijd bewerken" : "Nieuwe maaltijd"}
-      subtitle={isEdit ? meal.meal_name : "Voeg een food event toe"}
+      title={isEdit ? "Activiteit bewerken" : "Nieuwe activiteit"}
+      subtitle={isEdit ? meal.meal_name : "Voeg een activiteit toe"}
       footer={
         <DrawerFooter
           onCancel={requestClose}
@@ -299,7 +299,7 @@ function MealDrawer({
           <p className={SECTION_TITLE}>Praktisch</p>
 
           <div>
-            <label className={L}>Dieet opties</label>
+            <label className={L}>Dieetopties</label>
             <textarea
               {...register("dietary_options")}
               rows={2}
@@ -383,10 +383,10 @@ export function AdminMealsPage() {
     const ids = [...selectedIds];
     try {
       await bulkDeleteMutation.mutateAsync(ids);
-      toast("success", `${ids.length} maaltijden verwijderd.`);
+      toast("success", `${ids.length} activiteiten verwijderd.`);
       clearSelection();
     } catch {
-      toast("error", "Kon maaltijden niet verwijderen.");
+      toast("error", "Kon de activiteiten niet verwijderen. Probeer het opnieuw.");
     }
   }
 
@@ -401,22 +401,22 @@ export function AdminMealsPage() {
       toast("success", `${name} verwijderd.`);
       setConfirmDeleteId(null);
     } catch {
-      toast("error", "Kon maaltijd niet verwijderen.");
+      toast("error", "Kon de activiteit niet verwijderen. Probeer het opnieuw.");
     }
   }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
       <AdminPageHeader
-        title="Maaltijden"
-        subtitle={`${meals.length} food events`}
+        title="Activiteiten"
+        subtitle={`${meals.length} ${meals.length === 1 ? "activiteit" : "activiteiten"}`}
         action={
           <button
             onClick={() => setDrawer("new")}
             className="btn-primary min-h-[44px] gap-2 px-4 py-2.5 text-sm"
           >
             <Plus size={16} />
-            Nieuwe maaltijd
+            Nieuwe activiteit
           </button>
         }
       />
@@ -444,7 +444,7 @@ export function AdminMealsPage() {
                   <RowCheckbox checked={allSelected} indeterminate={indeterminate} onChange={selectAll} label="Alles selecteren" />
                 </th>
                 <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Maaltijd
+                  Activiteit
                 </th>
                 <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
                   Tijd
@@ -469,7 +469,7 @@ export function AdminMealsPage() {
                     colSpan={6}
                     className="px-5 py-10 text-center text-sm text-ink-3"
                   >
-                    Geen maaltijden gevonden.
+                    Geen activiteiten gevonden.
                   </td>
                 </tr>
               ) : (

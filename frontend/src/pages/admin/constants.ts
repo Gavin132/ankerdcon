@@ -60,7 +60,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Entiteiten",
     items: [
       { label: "Gebruikers",  path: routes.admin.users,  icon: Users },
-      { label: "Whitelist",   path: routes.admin.whitelist, icon: ListChecks },
+      { label: "Toegangslijst", path: routes.admin.whitelist, icon: ListChecks },
       { label: "Ritten",      path: routes.admin.rides,  icon: Car },
       {
         label: "Activiteiten",
@@ -101,6 +101,17 @@ export const NAV_GROUPS: NavGroup[] = [
 
 // Ride direction tags are told apart by their label, not by colour (flat design:
 // no decorative colours).
+/** The API stores the English values; admins read these. */
+export const DIRECTION_LABEL: Record<string, string> = {
+  Inbound: "Heen",
+  Outbound: "Terug",
+  Restaurant: "Restaurant",
+};
+export const VEHICLE_LABEL: Record<string, string> = {
+  Car: "Auto",
+  "Public Transport": "Openbaar vervoer",
+};
+
 export const DIRECTION_COLORS: Record<string, string> = {
   Inbound:    "text-ink-2",
   Outbound:   "text-ink-2",

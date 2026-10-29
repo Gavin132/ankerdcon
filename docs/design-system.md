@@ -90,6 +90,22 @@ uppercase labels for `section-label` and chips.
 labels, chips, hints and the tab bar. Smaller is only for the initials and "+3" counters inside a small
 avatar circle, which are part of the picture. (Not enforced by a tool: check new `text-[…px]` classes.)
 
+## Wording (Dutch UI text)
+
+- **"evenement", never "event"** in anything a member or admin reads (the one exception is the name of the *Event* tab, which is the product's own word and does not fit as
+  "Evenement" in a phone tab bar). Code, routes, API fields and the docs keep `event`. An activity is an "activiteit", not an "evenement".
+- **"Meldingen"**, not "Notificaties" (Instellingen row, page title, onboarding step, toasts).
+- **Buttons are the infinitive:** "Annuleren", "Verwijderen", "Opslaan", "Sluiten", "Toevoegen", "Aanmaken",
+  "Kopiëren". Not "Annuleer" or "Verwijder".
+- **Plurals are right:** "1 groep", "2 groepen", "1 activiteit".
+- **Settled money is "Verrekend"** (shares and settlements alike), what you still owe is "Te betalen"; the caption
+  of the balance is "Netto te ontvangen" / "Netto te betalen".
+- **No English in the admin panel either:** the stored ride values `Inbound` / `Outbound` and `Car` / `Public
+  Transport` show as Heen / Terug and Auto / Openbaar vervoer (`DIRECTION_LABEL`, `VEHICLE_LABEL` in
+  `pages/admin/constants.ts`). "Toegangslijst" (not whitelist), "Beheer" (not Admin portal), "Testomgeving",
+  "ledenportaal", "Ankerd-leden".
+- **Errors say what went wrong and what to do:** "Kon de activiteit niet verwijderen. Probeer het opnieuw."
+
 Page head pattern (see `TripLayout`, `HubPage`):
 
 ```tsx

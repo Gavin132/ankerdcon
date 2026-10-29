@@ -21,7 +21,7 @@ import { NamePicker } from "../../components/common/NamePicker";
 import { toast } from "../../store/toast.store";
 import type { Ride } from "../../types";
 import { F, FS, L } from "./styles";
-import { DIRECTION_COLORS } from "./constants";
+import { DIRECTION_COLORS, DIRECTION_LABEL, VEHICLE_LABEL } from "./constants";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminSearch } from "./components/AdminSearch";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
@@ -42,7 +42,7 @@ const VEHICLE_TYPES = ["Car", "Public Transport"] as const;
 const rideSchema = z.object({
   direction: z.enum(["Inbound", "Outbound", "Restaurant"]),
   vehicle_type: z.enum(["Car", "Public Transport"]),
-  driver: z.string().min(1, "Driver is verplicht"),
+  driver: z.string().min(1, "Chauffeur is verplicht"),
   departure_time: z.string().min(1, "Vertrektijd is verplicht"),
   start_location: z.string().min(1, "Startlocatie is verplicht"),
   end_location: z.string().optional(),
@@ -135,7 +135,7 @@ function RideDrawer({
       onClose={requestClose}
       title={isEdit ? "Rit bewerken" : "Nieuwe rit"}
       subtitle={
-        isEdit ? `${ride.direction} · ${ride.driver}` : "Voeg een nieuwe rit toe"
+        isEdit ? `${DIRECTION_LABEL[ride.direction] ?? ride.direction} · ${ride.driver}` : "Voeg een nieuwe rit toe"
       }
       footer={
         <DrawerFooter
@@ -157,7 +157,7 @@ function RideDrawer({
             <select {...register("direction")} className={FS}>
               {DIRECTIONS.map((d) => (
                 <option key={d} value={d}>
-                  {d}
+                  {DIRECTION_LABEL[d]}
                 </option>
               ))}
             </select>
@@ -167,7 +167,7 @@ function RideDrawer({
             <select {...register("vehicle_type")} className={FS}>
               {VEHICLE_TYPES.map((v) => (
                 <option key={v} value={v}>
-                  {v}
+                  {VEHICLE_LABEL[v]}
                 </option>
               ))}
             </select>
@@ -319,7 +319,8 @@ export function AdminRidesPage() {
     return (
       r.driver.toLowerCase().includes(q) ||
       r.start_location.toLowerCase().includes(q) ||
-      r.direction.toLowerCase().includes(q)
+      r.direction.toLowerCase().includes(q) ||
+      (DIRECTION_LABEL[r.direction] ?? "").toLowerCase().includes(q)
     );
   });
 
@@ -389,7 +390,7 @@ export function AdminRidesPage() {
               onClick={() => handleFilter(d)}
               className={`chip ${dirFilter === d ? "chip-on" : "chip-off"}`}
             >
-              {d === "All" ? "Alle" : d}
+              {d === "All" ? "Alle" : DIRECTION_LABEL[d]}
             </button>
           ))}
         </div>
@@ -475,7 +476,7 @@ export function AdminRidesPage() {
                           <span
                             className={`mt-0.5 inline-block rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] ${DIRECTION_COLORS[ride.direction] ?? "text-ink-2"}`}
                           >
-                            {ride.direction}
+                            {DIRECTION_LABEL[ride.direction] ?? ride.direction}
                           </span>
                         </div>
                       </div>
@@ -490,7 +491,7 @@ export function AdminRidesPage() {
                     </td>
                     <td className="hidden sm:table-cell px-5 py-3.5">
                       {ride.is_public_transport ? (
-                        <span className="text-xs text-ink-3">N/A</span>
+                        <span className="text-xs text-ink-3">n.v.t.</span>
                       ) : (
                         <span className="font-mono text-sm font-medium tabular-nums text-ink-2">
                           {ride.passengers.length}/{ride.total_seats}

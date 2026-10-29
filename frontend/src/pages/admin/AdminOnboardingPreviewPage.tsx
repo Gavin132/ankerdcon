@@ -17,14 +17,14 @@ export function AdminOnboardingPreviewPage() {
 
   const badge = (
     <div className="fixed top-3 right-3 z-50 flex items-center gap-2">
-      <span className="flex items-center gap-1.5 rounded-full border-1.5 border-amber-700 bg-amber-100 px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.06em] text-amber-800 dark:border-amber-400 dark:bg-amber-500/20 dark:text-amber-200">
-        <FlaskConical size={11} /> Test omgeving — niets wordt opgeslagen
+      <span className="pill pill-warn gap-1.5">
+        <FlaskConical size={12} /> Testomgeving, niets opgeslagen
       </span>
       <button
         type="button"
         onClick={exitPreview}
         aria-label="Preview sluiten"
-        className="hit-area flex h-8 w-8 items-center justify-center rounded-full border-1.5 border-line bg-surface text-ink transition-colors hover:border-ink-3"
+        className="icon-btn rounded-full border-1.5 border-line bg-surface hover:border-ink-3"
       >
         <X size={15} />
       </button>

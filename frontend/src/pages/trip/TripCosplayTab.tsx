@@ -544,7 +544,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                   }`}
                 >
                   <SlidersHorizontal size={13} />
-                  Filter & Sorteren
+                  Filter & sorteren
                   {activeFilterCount > 0 && (
                     <span className="flex h-4 w-4 items-center justify-center rounded-full bg-paper font-mono text-[9.5px] font-semibold text-ink">
                       {activeFilterCount}

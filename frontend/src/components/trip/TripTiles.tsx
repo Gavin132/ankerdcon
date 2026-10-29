@@ -91,7 +91,7 @@ export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Tr
   const describe = (r: Ride | undefined, label: string) => {
     if (!r) return `${label}: nog geen rit`;
     const how = isMine(r.driver) ? "rij je zelf" : r.is_public_transport ? "met het ov" : `met ${r.driver}`;
-    return `${label} ${how}, ${dayTime(r.departure_time)}`;
+    return `${label}: ${how}, ${dayTime(r.departure_time)}`;
   };
 
   const total = tripPeople(trip, users).length;
@@ -142,11 +142,11 @@ export function TransportTile({ trip, phase, rides, meals, myNames }: { trip: Tr
         )
       }
     >
-      <TileValue>{tripRideList.length === 0 ? "Nog geen ritten" : `${tripRideList.length} ${tripRideList.length === 1 ? "rit" : "ritten"}`}</TileValue>
+      <TileValue>{tripRideList.length === 0 ? "Geen ritten" : `${tripRideList.length} ${tripRideList.length === 1 ? "rit" : "ritten"}`}</TileValue>
       {phase !== "past" && (
         <>
           <TileText>
-            {phase === "live" ? describe(mine("Outbound"), "Terug") : `${describe(mine("Inbound"), "Heen")} · ${describe(mine("Outbound"), "terug")}`}
+            {phase === "live" ? describe(mine("Outbound"), "Terug") : `${describe(mine("Inbound"), "Heen")} · ${describe(mine("Outbound"), "Terug")}`}
           </TileText>
           {total > 0 && (
             <div className="space-y-1.5 pt-1">
@@ -247,7 +247,7 @@ export function FoodTile({ trip, phase, meals, myNames }: { trip: Trip; phase: T
       }
     >
       <TileValue>
-        {all.length === 0 ? "Nog niks gepland" : phase === "live" && ahead[0] ? nextMealText(ahead[0].time) : activityCount(all.length)}
+        {all.length === 0 ? "Niets gepland" : phase === "live" && ahead[0] ? nextMealText(ahead[0].time) : activityCount(all.length)}
       </TileValue>
       {phase !== "past" && shown.length > 0 && (
         <ul className="-mx-1.5 divide-y divide-line">
@@ -406,7 +406,7 @@ export function PhotosTile({ trip, phase, summary, onOpenDay, uploadDayId }: { t
       {total === 0 ? (
         <>
           <div className="flex items-center justify-between gap-2">
-            <TileValue>{phase === "past" ? "Geen foto's" : "Story"}</TileValue>
+            <TileValue>Foto's</TileValue>
             {uploadDayId && !viewer && (
               <span onClick={(e) => e.stopPropagation()} className="shrink-0">
                 <StoryUploadButton eventDayId={uploadDayId} className={UPLOAD_BUTTON_CLASS} />
@@ -470,7 +470,7 @@ export function ExpensesTile({ trip, phase, expenses, myNames }: { trip: Trip; p
       size={phase === "past" && open > 0 ? "wide" : "small"}
       pill={open > 0 && <TilePill>Open</TilePill>}
     >
-      <TileValue>{list.length === 0 ? "Nog niks" : open > 0 && phase === "past" ? `${formatAmount(open)} open` : formatAmount(total)}</TileValue>
+      <TileValue>{list.length === 0 ? "Geen kosten" : open > 0 && phase === "past" ? `${formatAmount(open)} open` : formatAmount(total)}</TileValue>
       <TileText>
         {list.length === 0
           ? "Gedeelde kosten van deze trip komen hier."

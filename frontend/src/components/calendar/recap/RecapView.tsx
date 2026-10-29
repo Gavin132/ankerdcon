@@ -169,8 +169,8 @@ export function RecapView({ trips, myNames, users, rides, meals, onJoin, onLeave
             </h2>
             <p className="section-label mt-1 !font-medium">
               {inMonth.length === 0
-                ? "Geen events"
-                : `${inMonth.length} ${inMonth.length === 1 ? "event" : "events"}${pastInMonth ? ` · ${pastInMonth} geweest` : ""}`}
+                ? "Geen evenementen"
+                : `${inMonth.length} ${inMonth.length === 1 ? "evenement" : "evenementen"}${pastInMonth ? ` · ${pastInMonth} geweest` : ""}`}
             </p>
           </div>
         </div>
@@ -220,7 +220,7 @@ export function RecapView({ trips, myNames, users, rides, meals, onJoin, onLeave
                     onClick={() => goToMonth(year, sm)}
                     aria-current={active}
                     title={isNow ? "Deze maand" : undefined}
-                    aria-label={`${MONTHS[sm]} ${year}${isNow ? " (deze maand)" : ""}, ${starts.length} ${starts.length === 1 ? "event" : "events"}`}
+                    aria-label={`${MONTHS[sm]} ${year}${isNow ? " (deze maand)" : ""}, ${starts.length} ${starts.length === 1 ? "evenement" : "evenementen"}`}
                     className={`flex w-[44px] shrink-0 flex-col items-center gap-1 rounded-lg border-1.5 px-0.5 pb-1.5 pt-1.5 font-mono text-[12px] uppercase transition-colors ${
                       active ? "border-outline bg-surface text-ink" : "border-transparent hover:bg-surface"
                     } ${isNow ? "font-semibold text-ink" : active ? "" : "text-ink-3"}`}
@@ -461,7 +461,7 @@ function EmptyDay({ dayKey, today, onClose }: { dayKey: string; today: string; o
       <h3 className="font-display text-[26px] font-extrabold uppercase leading-none text-ink">
         {WEEKDAYS[date.getDay()]} {date.getDate()} {MONTHS[date.getMonth()]}
       </h3>
-      <p className="text-[13px] text-ink-3">Geen event op deze dag.</p>
+      <p className="text-[13px] text-ink-3">Geen evenement op deze dag.</p>
     </div>
   );
 }
@@ -487,7 +487,7 @@ function MonthOverview({ title, trips, lastYear, lastYearLabel, storySummary, is
     <div className="card-surface flex flex-col gap-2 p-4">
       <p className="section-label">{title}</p>
       {trips.length === 0 ? (
-        <p className="text-[13px] text-ink-3">Geen events deze maand.</p>
+        <p className="text-[13px] text-ink-3">Geen evenementen deze maand.</p>
       ) : (
         <div className="-mx-2">
           {trips.map((t) => {

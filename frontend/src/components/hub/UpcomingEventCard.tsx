@@ -38,7 +38,7 @@ function Stub({ urgency, daysUntil, dayCount }: { urgency: EventUrgency; daysUnt
       <span className="font-display text-[52px] font-black leading-[0.8] sm:text-[88px]">{big}</span>
       <span className="text-[12px] leading-snug sm:w-full sm:border-t-1.5 sm:border-ink/35 sm:pt-2 dark:sm:border-hero/35">
         <b className="block text-[13px]">{unit}</b>
-        {dayCount > 1 ? `${dayCount} dagen event` : "1 dag event"}
+        {dayCount > 1 ? `${dayCount} dagen evenement` : "1 dag evenement"}
       </span>
     </div>
   );

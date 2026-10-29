@@ -126,7 +126,7 @@ export function RideCostSheet({ tripId, tripTitle, onClose }: { tripId: string |
                       type="button"
                       onClick={() => void copy(p.name, p.amount)}
                       aria-label={`Kopieer ${asTyped(p.amount)} voor ${p.name}`}
-                      title="Kopieer het bedrag"
+                      title="Bedrag kopiëren"
                       className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
                     >
                       {copied === p.name ? <Check size={14} /> : <Copy size={14} />}

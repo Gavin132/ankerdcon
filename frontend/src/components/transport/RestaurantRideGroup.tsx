@@ -122,7 +122,7 @@ function CarRow({ driver, departure, canAct, userNames, mine, expanded, onToggle
                   )}
                   <div className="flex gap-2">
                     <Button size="sm" variant="secondary" onClick={() => setAction(null)}>
-                      Annuleer
+                      Annuleren
                     </Button>
                     <Button
                       size="sm"

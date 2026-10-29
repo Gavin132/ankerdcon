@@ -71,9 +71,9 @@ export function NotificationSettingsPage() {
         notification_categories: draftCategories,
       });
       setSavedSnapshot({ allowDm: draftAllowDm, categories: draftCategories, ownTrips: draftOwnTrips });
-      toast("success", "Notificatie-instellingen opgeslagen!");
+      toast("success", "Meldingen opgeslagen.");
     } catch {
-      toast("error", "Kon instellingen niet opslaan.");
+      toast("error", "Je meldingen konden niet worden opgeslagen. Probeer het opnieuw.");
     }
   }
 
@@ -90,7 +90,7 @@ export function NotificationSettingsPage() {
 
   return (
     <div className="min-h-[100dvh] bg-paper">
-      <DetailTopbar title="Notificaties" onBack={goBack} width="2xl" />
+      <DetailTopbar title="Meldingen" onBack={goBack} width="2xl" />
 
       <div
         className="mx-auto max-w-2xl space-y-5 px-4 py-5 sm:py-8"

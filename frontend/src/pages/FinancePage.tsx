@@ -173,7 +173,7 @@ export function FinancePage() {
               { id: null, label: "Alles" },
               ...(selectedTrip && !tripOptions.some((t) => t.id === selectedTrip.id) ? [selectedTrip] : []),
               ...tripOptions,
-              ...(hasUnlinked ? [{ id: "none", label: "Zonder event" }] : []),
+              ...(hasUnlinked ? [{ id: "none", label: "Zonder evenement" }] : []),
             ].map((opt) => {
               const id = opt.id;
               const label = "title" in opt ? opt.title : opt.label;
@@ -202,7 +202,7 @@ export function FinancePage() {
               <Wallet size={13} className="shrink-0 text-ink-3" />
               <p className="section-label truncate">
                 {myName ? "Jouw saldo" : "Groepssaldo"}
-                {selectedTrip ? ` · ${selectedTrip.title}` : tripFilter === "none" ? " · zonder event" : ""}
+                {selectedTrip ? ` · ${selectedTrip.title}` : tripFilter === "none" ? " · zonder evenement" : ""}
               </p>
             </div>
 
@@ -221,7 +221,7 @@ export function FinancePage() {
                 <p className={`font-mono text-[32px] font-semibold leading-none tracking-[-0.02em] tabular-nums ${netTone}`}>
                   {formatAmount(Math.abs(net))}
                 </p>
-                <p className="text-[13px] text-ink-2">{net >= 0 ? "Te ontvangen" : "Te betalen"}</p>
+                <p className="text-[13px] text-ink-2">{net >= 0 ? "Netto te ontvangen" : "Netto te betalen"}</p>
 
                 <div className="mt-2 flex h-2.5 gap-[3px] overflow-hidden rounded-full bg-sunken" aria-hidden>
                   {othersOweMe > 0.01 && (

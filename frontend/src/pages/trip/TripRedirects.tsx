@@ -30,7 +30,7 @@ export function CurrentTripRedirect() {
     return (
       <div className="flex flex-col items-center gap-3 py-20 text-center text-slate-400">
         <CalendarDays size={40} className="opacity-30" />
-        <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Nog geen events gepland</p>
+        <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Nog geen evenementen gepland</p>
         <Link to={routes.calendar} className="text-xs font-semibold text-brand-text hover:underline">
           Bekijk de agenda
         </Link>

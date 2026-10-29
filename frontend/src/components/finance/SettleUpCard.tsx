@@ -28,10 +28,10 @@ export function describeSettlement(s: Settlement, meId: string | undefined) {
   const iPay = s.from_user_id === meId;
   const other = iPay ? s.to_user : s.from_user;
   const otherId = iPay ? s.to_user_id : s.from_user_id;
-  if (s.status === "confirmed") return { other, otherId, title: iPay ? `Betaald aan ${other}` : `Ontvangen van ${other}`, pill: "Afgerond", tone: TONE.muted };
+  if (s.status === "confirmed") return { other, otherId, title: iPay ? `Betaald aan ${other}` : `Ontvangen van ${other}`, pill: "Verrekend", tone: TONE.muted };
   if (s.status === "requested") {
     return iPay
-      ? { other, otherId, title: `${other} vraagt geld`, pill: "Betalen", tone: TONE.owe }
+      ? { other, otherId, title: `${other} vraagt geld`, pill: "Te betalen", tone: TONE.owe }
       : { other, otherId, title: `Verzoek aan ${other}`, pill: "Wacht op betaling", tone: TONE.waiting };
   }
   return iPay
@@ -134,7 +134,7 @@ export function SettleUpCard({ overview, users, meId, onOpen }: Props) {
 
       {done.length > 0 && (
         <div className="border-t border-line px-4 pb-3 pt-2.5">
-          <p className="mb-1 text-[12px] font-semibold text-ink-3">Recent afgerond</p>
+          <p className="mb-1 text-[12px] font-semibold text-ink-3">Recent verrekend</p>
           <ul className="space-y-0.5">
             {done.map((s) => {
               const d = describeSettlement(s, meId);

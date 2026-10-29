@@ -541,7 +541,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
                 </p>
               )}
               {formDirection === "Outbound" && (
-                <p className="mt-1.5 text-xs text-ink-3">Alvast ingevuld met de locatie van dit event.</p>
+                <p className="mt-1.5 text-xs text-ink-3">Alvast ingevuld met de locatie van dit evenement.</p>
               )}
             </div>
             {formDirection === "Restaurant" ? (
@@ -576,7 +576,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
                   )}
                 />
                 {formDirection === "Inbound" && (
-                  <p className="mt-1.5 text-xs text-ink-3">Alvast ingevuld met de locatie van dit event.</p>
+                  <p className="mt-1.5 text-xs text-ink-3">Alvast ingevuld met de locatie van dit evenement.</p>
                 )}
               </div>
             )}

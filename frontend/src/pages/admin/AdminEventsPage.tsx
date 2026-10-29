@@ -157,10 +157,10 @@ export function AdminEventsPage() {
     const ids = [...selectedIds];
     try {
       await bulkSetGroupMutation.mutateAsync({ eventIds: ids, groupId });
-      toast("success", `Label bijgewerkt voor ${ids.length} evenementen.`);
+      toast("success", `Groep bijgewerkt voor ${ids.length} ${ids.length === 1 ? "evenement" : "evenementen"}.`);
       clearSelection();
     } catch {
-      toast("error", "Kon label niet instellen.");
+      toast("error", "Kon de groep niet instellen. Probeer het opnieuw.");
     }
   }
 
@@ -246,7 +246,7 @@ export function AdminEventsPage() {
             className="btn-secondary px-3 text-sm"
           >
             <Tag size={16} />
-            Label
+            Groep
           </button>
         }
         overrideContent={

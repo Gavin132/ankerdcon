@@ -393,7 +393,7 @@ appear when the server cannot be reached, the member is not signed in, or the ap
 `backend/app/services/`. Four things, all opt-in where they reach a person:
 
 - a **shared webhook** post per new event, ride, expense or meal, reminder and ticket sale;
-- **personal DMs or push** per category, chosen under Instellingen → Notificaties (and a step
+- **personal DMs or push** per category, chosen under Instellingen → Meldingen (and a step
   in onboarding): a member picks exactly one channel — Discord DM or "Pushmeldingen" on this
   device, never both — then checks what they want to hear about; the category list is the same
   either way. `NotificationChannelPicker` (`components/notifications/`) is that channel choice;
@@ -469,8 +469,8 @@ read-only account) or an admin switches **Alleen kijken** on a member under Gebr
 | Page | For |
 | --- | --- |
 | Dashboard | counts and charts |
-| Gebruikers, Whitelist | members, deactivation, and who may log in at all |
-| Ritten, Maaltijden | fix or remove anything, remove single passengers |
+| Gebruikers, Toegangslijst | members, deactivation, and who may log in at all |
+| Ritten, Activiteiten | fix or remove anything, remove single passengers |
 | Evenementen, Groepen | trips and their days, series labels, bulk RSVP. Admins also get a pencil on every event page that opens the same edit form |
 | Badges | badge images and who has them |
 | Betalingen | expenses and shares, including forcing a status |

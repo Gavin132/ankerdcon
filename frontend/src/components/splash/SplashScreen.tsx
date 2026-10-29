@@ -51,7 +51,7 @@ export function SplashScreen({ onDismiss }: SplashScreenProps) {
           </p>
           <span aria-hidden className="h-[3px] w-10 rounded-full bg-brand" />
           <p className="font-mono text-[12px] uppercase tracking-[0.2em] text-hero-ink/50">
-            Live Event Logistics
+            Logistiek voor evenementen
           </p>
         </motion.div>
       </motion.div>

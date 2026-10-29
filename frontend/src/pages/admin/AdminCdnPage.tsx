@@ -17,7 +17,7 @@ const KIND_LABEL: Record<string, string> = {
   cosplay: "Cosplay",
   banner: "Banners",
   badge: "Badges",
-  "event-cover": "Event-covers",
+  "event-cover": "Evenementcovers",
   upload: "Uploads",
   other: "Overig",
 };
@@ -91,7 +91,7 @@ export function AdminCdnPage() {
 
   const tooBig = !!data && data.download_limit_bytes > 0 && data.total_size > data.download_limit_bytes;
   const downloading = downloaded !== null;
-  const scope = eventId ? "dit event" : kind ? (KIND_LABEL[kind] ?? kind).toLowerCase() : "alles";
+  const scope = eventId ? "dit evenement" : kind ? (KIND_LABEL[kind] ?? kind).toLowerCase() : "alles";
 
   async function downloadAll() {
     setDownloaded(0);
@@ -163,7 +163,7 @@ export function AdminCdnPage() {
               type="button"
               onClick={() => void downloadAll()}
               disabled={downloading || tooBig || !data || data.total === 0}
-              title={tooBig ? "Te veel voor één zip: kies eerst een onderdeel of event." : `Download ${scope} als zip`}
+              title={tooBig ? "Te veel voor één zip: kies eerst een onderdeel of evenement." : `Download ${scope} als zip`}
               className="btn-secondary ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] disabled:opacity-50"
             >
               {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
@@ -173,14 +173,14 @@ export function AdminCdnPage() {
 
           {kind === "story" && (
             <div className="flex flex-wrap items-center gap-2">
-              <label htmlFor="cdn-event" className="text-[12.5px] font-semibold text-ink-2">Per event</label>
+              <label htmlFor="cdn-event" className="text-[12.5px] font-semibold text-ink-2">Per evenement</label>
               <select
                 id="cdn-event"
                 value={eventId ?? ""}
                 onChange={(e) => pickEvent(e.target.value || null)}
                 className="rounded-lg border-1.5 border-line bg-surface px-3 py-1.5 text-[12.5px] text-ink"
               >
-                <option value="">Alle events</option>
+                <option value="">Alle evenementen</option>
                 {events.map((ev) => (
                   <option key={ev.id} value={ev.id}>{ev.event_name}</option>
                 ))}
@@ -189,7 +189,7 @@ export function AdminCdnPage() {
           )}
           {tooBig && (
             <p className="text-[12.5px] text-ink-3">
-              Dit is meer dan {formatBytes(data?.download_limit_bytes ?? 0)}, te veel voor één zip. Kies een onderdeel{kind === "story" ? " of een event" : ""} en download die apart.
+              Dit is meer dan {formatBytes(data?.download_limit_bytes ?? 0)}, te veel voor één zip. Kies een onderdeel{kind === "story" ? " of een evenement" : ""} en download die apart.
             </p>
           )}
 
@@ -316,7 +316,7 @@ function Viewer({ item, position, onClose, onPrev, onNext, onDelete }: { item: C
           {confirming ? (
             <>
               <button type="button" onClick={() => setConfirming(false)} className="h-9 rounded-full bg-white/10 px-3 text-xs font-semibold hover:bg-white/20">
-                Annuleer
+                Annuleren
               </button>
               <button
                 type="button"
@@ -444,7 +444,7 @@ function QuickUpload({ onUploaded }: { onUploaded: () => void }) {
             />
             <button type="button" onClick={copy} className="btn-secondary inline-flex shrink-0 items-center gap-1.5 px-3 py-2 text-sm">
               {copied ? <Check size={15} /> : <Copy size={15} />}
-              {copied ? "Gekopieerd" : "Kopieer"}
+              {copied ? "Gekopieerd" : "Kopiëren"}
             </button>
           </div>
         </div>

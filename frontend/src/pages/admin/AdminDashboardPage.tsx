@@ -262,7 +262,7 @@ export function AdminDashboardPage() {
         <div className="min-w-0">
           <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3">{greeting},</p>
           <h1 className="mt-1 font-display text-[34px] font-extrabold uppercase leading-[0.95] text-ink md:text-[42px]">{me?.name ?? "Admin"}</h1>
-          <p className="mt-1.5 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3">{dateLabel} · Admin Portal</p>
+          <p className="mt-1.5 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3">{dateLabel} · Beheer</p>
         </div>
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
           <Shield size={17} />

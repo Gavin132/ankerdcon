@@ -8,8 +8,8 @@ import { HEADER_ACTIONS_ID } from "./HeaderAction";
 import { GlobalSearch } from "./GlobalSearch";
 
 const PAGE_META: Record<string, { title: string; subtitle: string }> = {
-  "/": { title: "Hub", subtitle: "Live event logistics" },
-  "/calendar": { title: "Agenda", subtitle: "Alle events" },
+  "/": { title: "Hub", subtitle: "Alles op één plek" },
+  "/calendar": { title: "Agenda", subtitle: "Alle evenementen" },
   "/finance": { title: "Financiën", subtitle: "Groepskas" },
   "/crew": { title: "Crew", subtitle: "Leden & locaties" },
 };

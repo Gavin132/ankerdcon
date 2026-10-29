@@ -21,7 +21,7 @@ export function StepNotifications({ state, onChange, hasDiscord }: StepNotificat
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h2 className="font-display text-[34px] font-extrabold uppercase leading-[0.95] tracking-[0.01em] text-ink">Kies je notificaties</h2>
+        <h2 className="font-display text-[34px] font-extrabold uppercase leading-[0.95] tracking-[0.01em] text-ink">Kies je meldingen</h2>
         <p className="mt-2 text-sm leading-relaxed text-ink-2">
           Alles staat standaard uit — zet aan waar je bericht over wilt krijgen. Je kunt dit later altijd aanpassen.
         </p>

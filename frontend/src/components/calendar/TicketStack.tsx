@@ -94,7 +94,7 @@ export function TicketStack({ trips, meals, users, myNames, justJoinedId, onJoin
   return (
     <section
       aria-roledescription="carrousel"
-      aria-label="Komende events"
+      aria-label="Komende evenementen"
       onKeyDown={(e) => {
         if (e.key === "ArrowRight") { e.preventDefault(); go(current + 1); }
         if (e.key === "ArrowLeft") { e.preventDefault(); go(current - 1); }
@@ -163,7 +163,7 @@ export function TicketStack({ trips, meals, users, myNames, justJoinedId, onJoin
               type="button"
               onClick={() => go(current - 1)}
               disabled={current === 0}
-              aria-label="Vorig event"
+              aria-label="Vorig evenement"
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink disabled:cursor-default disabled:opacity-40"
             >
               <ChevronLeft size={18} />
@@ -194,7 +194,7 @@ export function TicketStack({ trips, meals, users, myNames, justJoinedId, onJoin
               type="button"
               onClick={() => go(current + 1)}
               disabled={current === trips.length - 1}
-              aria-label="Volgend event"
+              aria-label="Volgend evenement"
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink disabled:cursor-default disabled:opacity-40"
             >
               <ChevronRight size={18} />

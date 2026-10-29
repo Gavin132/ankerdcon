@@ -22,7 +22,7 @@ export function UserPhotos({ identifier, whose }: { identifier: string; whose?: 
     const seen = new Map<string, { id: string; name: string; count: number }>();
     for (const p of photos) {
       const id = p.event_id ?? "unknown";
-      const entry = seen.get(id) ?? { id, name: p.event_name ?? "Onbekend event", count: 0 };
+      const entry = seen.get(id) ?? { id, name: p.event_name ?? "Onbekend evenement", count: 0 };
       entry.count += 1;
       seen.set(id, entry);
     }
@@ -56,7 +56,7 @@ export function UserPhotos({ identifier, whose }: { identifier: string; whose?: 
             {events.length > 1 && (
               <div
                 role="group"
-                aria-label="Filter op event"
+                aria-label="Filter op evenement"
                 className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
                 {[{ id: ALL, name: "Alles", count: photos.length }, ...events].map((e) => (
@@ -149,7 +149,7 @@ function Lightbox({
         style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top, 0px))" }}
       >
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{photo.event_name ?? "Onbekend event"}</p>
+          <p className="truncate text-sm font-semibold">{photo.event_name ?? "Onbekend evenement"}</p>
           <p className="truncate text-xs text-white/60">
             {[photo.date ? formatDate(photo.date) : null, position].filter(Boolean).join(" · ")}
           </p>

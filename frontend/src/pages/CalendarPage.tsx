@@ -83,8 +83,8 @@ export function CalendarPage() {
     return (
       <EmptyState
         icon={<CalendarDays size={36} />}
-        title="Nog geen events"
-        description="Zodra er een event gepland is, verschijnt het hier."
+        title="Nog geen evenementen"
+        description="Zodra er een evenement gepland is, verschijnt het hier."
       />
     );
   }
@@ -137,7 +137,7 @@ export function CalendarPage() {
               </p>
               <button
                 onClick={copyFeedUrl}
-                title="Kopieer link"
+                title="Link kopiëren"
                 className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
               >
                 {copied ? <Check size={14} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={14} />}
@@ -174,7 +174,7 @@ export function CalendarPage() {
                 <EmptyState
                   icon={<CalendarDays size={28} />}
                   title="Niks gepland"
-                  description="Er staat nog geen nieuw event in de agenda. Hieronder vind je alles waar jullie al geweest zijn."
+                  description="Er staat nog geen nieuw evenement in de agenda. Hieronder vind je alles waar jullie al geweest zijn."
                 />
               </div>
             )}

@@ -132,7 +132,7 @@ export function TripRsvpModal({ trip: openTrip, users, onClose, onConfirm }: Tri
           <div>
             <p className="section-label mb-2">Namen</p>
             {mode === "leave" && options.length === 0 ? (
-              <p className="text-[13px] text-ink-3">Er is nog niemand aangemeld voor {multiDay ? "deze dagen" : "dit event"}.</p>
+              <p className="text-[13px] text-ink-3">Er is nog niemand aangemeld voor {multiDay ? "deze dagen" : "dit evenement"}.</p>
             ) : (
               <NamePicker
                 multiple

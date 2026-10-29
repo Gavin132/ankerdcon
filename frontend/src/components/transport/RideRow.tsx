@@ -264,7 +264,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
                   )}
                   <div className="flex gap-2">
                     <Button size="sm" variant="secondary" onClick={() => setAction(null)}>
-                      Annuleer
+                      Annuleren
                     </Button>
                     <Button
                       size="sm"
@@ -317,7 +317,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
                           onClick={() => setConfirmDelete(false)}
                           className="h-8 rounded-lg px-2 text-xs font-semibold text-ink-2 hover:text-ink"
                         >
-                          Annuleer
+                          Annuleren
                         </button>
                         <button
                           type="button"

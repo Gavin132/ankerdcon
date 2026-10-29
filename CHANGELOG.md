@@ -35,6 +35,19 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **One word for everything.** "Evenement" everywhere instead of the English "event" (the agenda, the recap, finance,
+  admin, a few error messages), "Meldingen" instead of "Notificaties", "Toegangslijst" instead of
+  "Whitelist", "Beheer" instead of "Admin portal". Buttons say "Annuleren", "Verwijderen" and "Kopiëren"; "1 groep"
+  instead of "1 groepen". In the admin panel rides read Heen / Terug and Auto / Openbaar vervoer instead of
+  Inbound / Outbound / Car / Public Transport, and the activities page says "Activiteiten" throughout.
+- **Settled money says "Verrekend"** (it was "Afgerond" in the settle-up list), the balance card says "Netto te
+  ontvangen" / "Netto te betalen", and a request to pay shows "Te betalen".
+- **Login page:** a smaller title and the text "Het ledenportaal voor Ankerd-evenementen" / "Alleen voor Ankerd-leden".
+- **Collected stubs:** the tilted "Geweest / Gemist" stamp is gone (a missed one is dashed and says "Gemist" in its
+  footer) and the stats read "evenementen mee" and "hotelverblijven".
+- **Event page tiles** say "Geen ritten", "Niets gepland", "Geen kosten" and "Foto's" when empty, and the
+  transport tile reads "Heen: met Sam, di 07:30 · Terug: nog geen rit".
+- **Admin: event groups** is a list that turns into cards on a phone, with a shorter placeholder and buttons you can hit.
 - **Announcement bar:** a warning is amber with dark text (it was white on amber, hard to read), an info message is a
   quiet strip instead of a near-black bar, a long message shows two lines instead of one and has an arrow to open it,
   and the close button no longer sits inside the button that opens the message. On a phone with a notch the text no

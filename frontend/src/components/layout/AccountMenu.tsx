@@ -172,7 +172,7 @@ export function AccountMenu({ variant = "avatar" }: AccountMenuProps) {
               {me?.is_admin && (
                 <button onClick={() => go(routes.admin.base)} className={itemClass}>
                   <Shield size={14} className="shrink-0 text-brand-text" />
-                  Admin portal
+                  Beheer
                 </button>
               )}
 

@@ -17,11 +17,11 @@ export function LoginPage() {
             alt=""
             className="mb-4 h-16 w-16 object-contain"
           />
-          <h1 className="font-display text-[52px] font-black uppercase leading-[0.88] tracking-[0.01em] text-ink">
+          <h1 className="font-display text-[42px] font-extrabold uppercase leading-[0.88] tracking-[0.01em] text-ink">
             Ankerd Con
           </h1>
           <p className="mt-3 font-mono text-[12px] uppercase tracking-[0.08em] text-ink-3">
-            Jouw leden portal voor het evenement
+            Het ledenportaal voor Ankerd-evenementen
           </p>
         </motion.div>
 
@@ -37,7 +37,7 @@ export function LoginPage() {
           </div>
 
           <p className="mt-5 text-center text-xs text-ink-3">
-            Alleen toegankelijk voor Ankerd members
+            Alleen voor Ankerd-leden
           </p>
         </motion.div>
       </div>

@@ -31,7 +31,7 @@ export function EventPicker({
   events,
   value,
   onChange,
-  placeholder = "Zoek event…",
+  placeholder = "Zoek evenement…",
 }: EventPickerProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -142,7 +142,7 @@ export function EventPicker({
           >
             {filtered.length === 0 ? (
               <p className="px-4 py-4 text-center text-xs text-ink-3">
-                {query ? `Geen resultaten voor "${query}"` : "Geen events beschikbaar"}
+                {query ? `Geen resultaten voor "${query}"` : "Geen evenementen beschikbaar"}
               </p>
             ) : (
               filtered.map((event) => {

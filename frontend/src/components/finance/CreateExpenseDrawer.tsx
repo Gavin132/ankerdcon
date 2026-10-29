@@ -245,13 +245,13 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
 
         {/* ── Event ───────────────────────────────────────── */}
         <div className={SF}>
-          <p className={ST}>Event (optioneel)</p>
+          <p className={ST}>Evenement (optioneel)</p>
           <div>
             <EventPicker
               events={events}
               value={watch("linked_event_id") || undefined}
               onChange={(id) => setValue("linked_event_id", id ?? "", { shouldDirty: true })}
-              placeholder="Hoort bij een event? Zoek en koppel…"
+              placeholder="Hoort bij een evenement? Zoek en koppel…"
             />
             <p className="mt-1.5 text-xs text-ink-3">
               Dan staat de uitgave ook bij de uitgaven van die trip.

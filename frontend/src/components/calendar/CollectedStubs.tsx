@@ -47,9 +47,9 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
   const open = yearTrips.find((t) => t.id === openId) ?? null;
 
   const stats = [
-    { value: `${mine.length}/${yearTrips.length}`, label: "events mee" },
+    { value: `${mine.length}/${yearTrips.length}`, label: "evenementen mee" },
     { value: conDays, label: conDays === 1 ? "con-dag" : "con-dagen" },
-    { value: hotelTrips, label: hotelTrips === 1 ? "hoteltrip" : "hoteltrips" },
+    { value: hotelTrips, label: hotelTrips === 1 ? "hotelverblijf" : "hotelverblijven" },
     { value: photos, label: "foto's gedeeld" },
   ];
 
@@ -120,14 +120,7 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
                 {t.title}
               </span>
               <span className="mt-auto pt-2 text-[12px] text-ink-2">
-                {tripPeople(t, users).length} gingen{tripPhotos > 0 ? ` · ${tripPhotos} foto's` : ""}
-              </span>
-              <span
-                className={`absolute right-2.5 top-10 -rotate-[10deg] rounded-md border-2 bg-surface/80 px-1.5 pt-0.5 font-display text-[14px] font-black uppercase leading-tight ${
-                  went ? "border-brand-text text-brand-text" : "border-dashed border-ink-3 text-ink-3"
-                }`}
-              >
-                {went ? "Geweest" : "Gemist"}
+                {went ? "" : "Gemist · "}{tripPeople(t, users).length} gingen{tripPhotos > 0 ? ` · ${tripPhotos} foto's` : ""}
               </span>
             </button>
           );

@@ -391,7 +391,7 @@ the beta's `HOST_PORT`.
    ```
 
    Reload the app; the admin panel appears in the menu. Add everyone else under **Admin →
-   Whitelist** from now on.
+   Toegangslijst** from now on.
 5. Work through the check-list:
 
    - [ ] the Hub loads after login

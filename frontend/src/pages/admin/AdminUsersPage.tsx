@@ -605,7 +605,7 @@ export function AdminUsersPage() {
                             <button
                               onClick={() => handleCopyDiscordId(user.discord_id!, user.id!)}
                               className="hit-area opacity-0 group-hover:opacity-100 flex h-6 w-6 items-center justify-center rounded-md text-ink-3 hover:bg-sunken hover:text-ink transition-all"
-                              title="Kopieer Discord ID"
+                              title="Discord ID kopiëren"
                             >
                               {copiedId === user.id ? (
                                 <Check size={11} className="text-emerald-600 dark:text-emerald-400" />

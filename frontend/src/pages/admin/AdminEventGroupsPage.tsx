@@ -94,7 +94,7 @@ export function AdminEventGroupsPage() {
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
       <AdminPageHeader
         title="Evenementgroepen"
-        subtitle={`${groups.length} groepen`}
+        subtitle={`${groups.length} ${groups.length === 1 ? "groep" : "groepen"}`}
       />
 
       {/* Create form */}
@@ -103,7 +103,7 @@ export function AdminEventGroupsPage() {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           className={`${F} flex-1`}
-          placeholder="Nieuwe groepsnaam, bijv. Comic Con…"
+          placeholder="Naam van de groep"
         />
         <button
           type="submit"
@@ -125,7 +125,7 @@ export function AdminEventGroupsPage() {
       />
 
       <div className="card-surface overflow-hidden">
-        <table className="w-full">
+        <table className="stack-table w-full">
           <thead>
             <tr className="border-b-1.5 border-line">
               <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
@@ -160,7 +160,7 @@ export function AdminEventGroupsPage() {
                   >
                     <RowCheckbox checked={selectedIds.has(group.id)} onChange={() => toggleSelect(group.id)} label={`Selecteer ${group.name}`} />
                   </td>
-                  <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                  <td className="cell-main px-2.5 sm:px-5 py-2.5 sm:py-3.5">
                     {editingId === group.id ? (
                       <input
                         autoFocus
@@ -183,21 +183,25 @@ export function AdminEventGroupsPage() {
                       </div>
                     )}
                   </td>
-                  <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
+                  <td className="cell-actions px-2 sm:px-5 py-2.5 sm:py-3.5">
                     {editingId === group.id ? (
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => saveEdit(group.id)}
                           disabled={updateMutation.isPending}
-                          className="hit-area flex h-7 w-7 items-center justify-center rounded-lg bg-ink text-paper transition-colors disabled:opacity-50 dark:bg-brand dark:text-brand-on"
+                          className="icon-btn"
+                          title="Opslaan"
+                          aria-label="Opslaan"
                         >
-                          <Check size={13} />
+                          <Check size={16} />
                         </button>
                         <button
                           onClick={() => setEditingId(null)}
-                          className="hit-area flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink transition-colors"
+                          className="icon-btn"
+                          title="Annuleren"
+                          aria-label="Annuleren"
                         >
-                          <X size={13} />
+                          <X size={16} />
                         </button>
                       </div>
                     ) : (

@@ -460,7 +460,7 @@ export function EventEditDrawer({
           )}
           {watch("is_hotel") && (
             <div>
-              <label className="mb-1 block text-xs font-medium text-ink-2">Hotel info</label>
+              <label className="mb-1 block text-xs font-medium text-ink-2">Hotelinfo</label>
               <textarea
                 {...register("hotel_info")}
                 rows={3}
@@ -620,7 +620,7 @@ export function EventEditDrawer({
               )}
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-ink-2">Tickets URL</label>
+              <label className="mb-1 block text-xs font-medium text-ink-2">Ticketlink</label>
               <input {...register("ticket_url")} className={F} placeholder="https://..." />
               {errors.ticket_url && (
                 <p className="field-error">{errors.ticket_url.message}</p>
@@ -730,7 +730,7 @@ export function EventEditDrawer({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-ink-2">Locker info</label>
+            <label className="mb-1 block text-xs font-medium text-ink-2">Kluisjes</label>
             <textarea
               {...register("locker_info")}
               rows={2}

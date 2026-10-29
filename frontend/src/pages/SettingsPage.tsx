@@ -92,7 +92,7 @@ export function SettingsPage() {
                 <Bell size={16} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-semibold text-ink">Notificaties</p>
+                <p className="text-[14px] font-semibold text-ink">Meldingen</p>
                 <p className="text-[12.5px] text-ink-3">Kies hoe je meldingen krijgt, via Discord of push, en waarvoor</p>
               </div>
               <ChevronRight size={16} className="shrink-0 text-ink-3" />
@@ -305,7 +305,7 @@ export function SettingsPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[14px] font-semibold text-ink">Ankerd Con</p>
-                <p className="text-[12.5px] text-ink-3">Event portal · v{__APP_VERSION__}</p>
+                <p className="text-[12.5px] text-ink-3">Ledenportaal · v{__APP_VERSION__}</p>
                 <p className="mt-0.5 text-[12px] text-ink-3">
                   Powered by{" "}
                   <a href="https://ayoublfatmi.nl" target="_blank" rel="noopener noreferrer" className="font-semibold text-ink-2 hover:text-ink hover:underline">

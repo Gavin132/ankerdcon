@@ -95,7 +95,7 @@ function CopyField({ label, value, display }: { label: string; value: string; di
         aria-label={`Kopieer ${label.toLowerCase()}`}
       >
         {copied ? <Check size={12} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={12} />}
-        {copied ? "Gekopieerd" : "Kopieer"}
+        {copied ? "Gekopieerd" : "Kopiëren"}
       </button>
     </div>
   );
@@ -296,7 +296,7 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
     );
 
     if (s.status === "confirmed") {
-      body = <Note>Afgerond{s.confirmed_at ? ` op ${formatDate(s.confirmed_at)}` : ""}. Alle aandelen tussen jullie tot dat moment zijn verrekend.</Note>;
+      body = <Note>Verrekend{s.confirmed_at ? ` op ${formatDate(s.confirmed_at)}` : ""}. Alle aandelen tussen jullie tot dat moment zijn verrekend.</Note>;
     } else if (s.status === "requested" && iPay) {
       body = (
         <div className="space-y-4">

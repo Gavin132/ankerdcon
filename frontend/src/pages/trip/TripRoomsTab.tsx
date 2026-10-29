@@ -536,7 +536,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
           <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
             <BedDouble size={22} />
           </span>
-          <p className="text-sm font-semibold text-ink">Dit event heeft geen hotel</p>
+          <p className="text-sm font-semibold text-ink">Dit evenement heeft geen hotel</p>
         </div>
       </TripSheet>
     );
@@ -568,7 +568,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
         onClick={() => setConfirmDeleteId(null)}
         className="rounded-xl px-3 py-1.5 text-xs font-semibold text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
       >
-        Annuleer
+        Annuleren
       </button>
       <button
         onClick={() => {
@@ -578,7 +578,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
         disabled={deleteRoom.isPending}
         className="rounded-xl border-2 border-rose-800 bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors disabled:opacity-50 dark:border-rose-400"
       >
-        {deleteRoom.isPending ? "Bezig…" : "Verwijder"}
+        {deleteRoom.isPending ? "Bezig…" : "Verwijderen"}
       </button>
     </div>
   ) : undefined;

@@ -27,7 +27,7 @@ function TripRow({ trip, current, going, onPick }: { trip: Trip; current: boolea
             {trip.location ? ` · ${trip.location}` : ""}
           </span>
         </span>
-        {current && <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[12px] font-semibold text-brand-text">Dit event</span>}
+        {current && <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[12px] font-semibold text-brand-text">Dit evenement</span>}
         {!current && PHASE_LABEL[phase] && <span className="shrink-0 rounded-full bg-brand px-2 py-0.5 text-[12px] font-semibold text-brand-on">{PHASE_LABEL[phase]}</span>}
         {going && !current && <span className="shrink-0 text-[12px] font-semibold text-ink-3">Jij gaat mee</span>}
         <ChevronRight size={14} className="shrink-0 text-ink-3" />
