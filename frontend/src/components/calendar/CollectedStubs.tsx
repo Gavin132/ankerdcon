@@ -69,7 +69,7 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
         )}
       </div>
 
-      <dl className="grid grid-cols-2 overflow-hidden rounded-xl border-1.5 border-line bg-surface sm:grid-cols-4">
+      <dl className="grid grid-cols-2 overflow-hidden card-surface sm:grid-cols-4">
         {stats.map((s, i) => (
           <div
             key={s.label}
@@ -93,7 +93,7 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
               type="button"
               onClick={() => setOpenId(isOpen ? null : t.id)}
               aria-expanded={isOpen}
-              className={`stub-notch relative flex min-h-[136px] flex-col overflow-hidden rounded-[10px] p-3 text-left transition-colors ${
+              className={`stub-notch relative flex min-h-[136px] flex-col overflow-hidden rounded-xl p-3 text-left transition-colors ${
                 isOpen
                   ? "border-2 border-outline bg-surface"
                   : went

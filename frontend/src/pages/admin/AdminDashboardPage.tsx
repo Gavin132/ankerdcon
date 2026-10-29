@@ -277,7 +277,7 @@ export function AdminDashboardPage() {
                 <Icon size={16} className="shrink-0 text-ink-3" />
               </span>
               {statsLoading && typeof value === "number" ? (
-                <div className="h-7 w-10 animate-pulse rounded bg-sunken" />
+                <div className="h-7 w-10 animate-pulse rounded-md bg-sunken" />
               ) : (
                 <span className="max-w-full truncate font-display text-[28px] font-extrabold leading-[0.95] tabular-nums text-ink">{value ?? 0}</span>
               )}

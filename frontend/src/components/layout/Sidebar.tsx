@@ -30,7 +30,7 @@ function TripWristband() {
   return (
     <Link
       to={routes.trip.view(trip.id)}
-      className="relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 overflow-hidden rounded-[10px] border-2 border-outline bg-brand px-3 py-2.5 text-brand-on"
+      className="relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 overflow-hidden rounded-xl border-2 border-outline bg-brand px-3 py-2.5 text-brand-on"
     >
       {/* Punched holes on both short edges */}
       <span aria-hidden className="absolute -left-[7px] top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-outline bg-surface" />

@@ -137,7 +137,7 @@ export function TripSheet({ open, onClose, title, subtitle, onBack, footer, view
               others is shorter by one strip each, so theirs stay in view. */}
           <motion.div
             ref={sheetRef}
-            className="flex w-full flex-col overflow-hidden rounded-t-[20px] border-t-1.5 border-x-1.5 border-line bg-surface sm:border-x-1.5"
+            className="flex w-full flex-col overflow-hidden rounded-t-sheet border-t-1.5 border-x-1.5 border-line bg-surface sm:border-x-1.5"
             style={{ maxHeight: `calc(85vh - ${Math.max(index, 0) * PEEK_PX}px)` }}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}

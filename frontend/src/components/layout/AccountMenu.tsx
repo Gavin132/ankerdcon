@@ -131,7 +131,7 @@ export function AccountMenu({ variant = "avatar" }: AccountMenuProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.12 }}
-            className={`absolute z-50 w-64 overflow-hidden rounded-xl border-1.5 border-line bg-surface shadow-xl ${
+            className={`absolute z-50 w-64 overflow-hidden card-surface shadow-xl ${
               variant === "row" ? "bottom-full left-0 mb-2" : "right-0 top-11"
             }`}
           >

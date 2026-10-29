@@ -137,7 +137,7 @@ export function UserProfilePopup({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.14 }}
           >
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border-1.5 border-line bg-surface shadow-xl">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden card-surface shadow-xl">
               {/* Banner and body scroll together when they don't fit (someone going
                   to many events, a small phone); the profile button below stays put. */}
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">

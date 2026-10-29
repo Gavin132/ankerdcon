@@ -601,11 +601,11 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                 <div key={i} className="card-surface overflow-hidden animate-pulse">
                   <div className="aspect-[4/3] w-full border-b-1.5 border-line bg-sunken" />
                   <div className="space-y-2.5 p-3">
-                    <div className="h-4 w-3/4 rounded bg-sunken" />
-                    <div className="h-3 w-1/2 rounded bg-sunken" />
+                    <div className="h-4 w-3/4 rounded-md bg-sunken" />
+                    <div className="h-3 w-1/2 rounded-md bg-sunken" />
                     <div className="flex items-center gap-1.5">
                       <div className="h-5 w-5 rounded-full bg-sunken" />
-                      <div className="h-3 w-16 rounded bg-sunken" />
+                      <div className="h-3 w-16 rounded-md bg-sunken" />
                     </div>
                     <div className="h-4 w-20 rounded-md bg-sunken" />
                   </div>

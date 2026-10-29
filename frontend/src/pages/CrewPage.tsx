@@ -239,8 +239,8 @@ export function CrewPage() {
               <div key={i} className="flex animate-pulse items-center gap-3 border-b border-line px-4 py-2.5 sm:odd:border-r">
                 <div className="h-9 w-9 shrink-0 rounded-full bg-sunken" />
                 <div className="flex-1 space-y-1.5">
-                  <div className="h-3 w-24 rounded bg-sunken" />
-                  <div className="h-2.5 w-16 rounded bg-sunken" />
+                  <div className="h-3 w-24 rounded-md bg-sunken" />
+                  <div className="h-2.5 w-16 rounded-md bg-sunken" />
                 </div>
               </div>
             ))}

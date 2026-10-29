@@ -32,7 +32,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
   const others = names.filter((p) => !myNames.includes(p)).length;
 
   return (
-    <article className="overflow-hidden rounded-[14px] border-2 border-outline bg-surface">
+    <article className="overflow-hidden rounded-hero border-2 border-outline bg-surface">
       <div
         className="relative h-32 bg-hero"
         style={cover ? undefined : { backgroundImage: "radial-gradient(circle, rgb(var(--cyan) / .45) 1.4px, transparent 1.8px)", backgroundSize: "12px 12px" }}
@@ -79,7 +79,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
               <Link
                 key={ev.id}
                 to={routes.trip.view(trip.id, "overview", ev.id)}
-                className={`min-w-0 rounded-[9px] border-1.5 border-line px-1 py-1.5 text-center transition-colors hover:border-ink-3 ${
+                className={`min-w-0 rounded-lg border-1.5 border-line px-1 py-1.5 text-center transition-colors hover:border-ink-3 ${
                   ev.has_con === false ? "bg-hatch-surface" : "bg-surface"
                 }`}
               >
@@ -129,7 +129,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
 
         <Link
           to={routes.trip.view(trip.id)}
-          className="flex items-center justify-between rounded-[10px] border-1.5 border-line px-3 py-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
+          className="flex items-center justify-between rounded-xl border-1.5 border-line px-3 py-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
         >
           Naar de trip
           <ChevronRight size={15} className="text-ink-3" />

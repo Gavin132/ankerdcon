@@ -20,7 +20,7 @@ export function BottomNav() {
               to={item.path}
               end={item.path === "/"}
               aria-current={isActive ? "page" : undefined}
-              className={`flex min-w-0 flex-col items-center gap-[3px] rounded-[10px] px-0.5 py-1.5 max-[339px]:px-0 transition-colors ${
+              className={`flex min-w-0 flex-col items-center gap-[3px] rounded-xl px-0.5 py-1.5 max-[339px]:px-0 transition-colors ${
                 isActive
                   ? "bg-[rgb(var(--nav-active-bg))] text-[rgb(var(--nav-active-fg))]"
                   : "text-ink-3"

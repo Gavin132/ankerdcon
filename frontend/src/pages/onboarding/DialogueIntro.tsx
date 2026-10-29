@@ -173,7 +173,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
         style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom,0px))" }}
       >
         <div
-          className="overflow-hidden rounded-[14px] border-2 border-outline bg-surface"
+          className="overflow-hidden rounded-hero border-2 border-outline bg-surface"
           onClick={handleBoxTap}
         >
           {/* Name bar */}

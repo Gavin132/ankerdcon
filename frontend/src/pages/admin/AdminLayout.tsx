@@ -12,7 +12,7 @@ function AdminTabFallback() {
   return (
     <AdminPage>
       <div className="space-y-2" aria-busy="true" aria-label="Laden…">
-        <div className="h-3 w-20 animate-pulse rounded bg-sunken" />
+        <div className="h-3 w-20 animate-pulse rounded-md bg-sunken" />
         <div className="h-10 w-56 animate-pulse rounded-lg bg-sunken" />
       </div>
       <div className="card-surface space-y-3 p-3">

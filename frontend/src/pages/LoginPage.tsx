@@ -32,7 +32,7 @@ export function LoginPage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1, duration: 0.3 }}
         >
-          <div className="rounded-[14px] border-2 border-outline bg-surface p-6 sm:p-7">
+          <div className="rounded-hero border-2 border-outline bg-surface p-6 sm:p-7">
             <LoginForm />
           </div>
 

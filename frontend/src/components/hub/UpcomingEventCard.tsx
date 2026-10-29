@@ -120,7 +120,7 @@ export function UpcomingEventCard({
   return (
     // `relative`: the title link stretches over the whole card (its ::after), so tapping anywhere
     // opens the event; the buttons inside sit above it (`relative z-10`) and keep their own action.
-    <div className="relative grid h-full grid-rows-[1fr_auto] overflow-hidden rounded-[14px] border-2 border-outline bg-surface sm:grid-cols-[minmax(0,1fr)_152px] sm:grid-rows-none">
+    <div className="relative grid h-full grid-rows-[1fr_auto] overflow-hidden rounded-hero border-2 border-outline bg-surface sm:grid-cols-[minmax(0,1fr)_152px] sm:grid-rows-none">
       <div className="flex min-w-0 flex-col">
         {/* ── Cover ── */}
         <button
@@ -181,7 +181,7 @@ export function UpcomingEventCard({
                     type="button"
                     onClick={() => onNavigate(dayEv.id)}
                     title={dayEv.event_name}
-                    className={`relative z-10 min-w-0 rounded-[10px] border-1.5 border-line px-1.5 py-2 text-center transition-colors hover:border-ink-3 ${
+                    className={`relative z-10 min-w-0 rounded-xl border-1.5 border-line px-1.5 py-2 text-center transition-colors hover:border-ink-3 ${
                       isTravelDay ? "bg-hatch-surface" : "bg-surface"
                     }`}
                   >

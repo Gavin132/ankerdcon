@@ -35,6 +35,9 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **One scale of rounded corners.** Boxes that hold content (the share lines of an expense, menus, the recap calendar,
+  the stub overview) have the same 12 px corners as the other cards, and the odd 9 px and 5 px corners of the day
+  tiles, thumbnails and admin fields are gone.
 - **Dates and counts are written like a sentence, labels in capitals.** The date of an event on the ticket, in the
   recap and in the sidebar, the day tiles of the recap, the date of a meal, the opening line of the login page and
   the sentences on the splash and onboarding screens no longer shout in capitals; capitals are kept for the labels

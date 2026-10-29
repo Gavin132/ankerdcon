@@ -160,6 +160,27 @@ labels, chips, hints), 13 and 14 (rows, body), 15 and 16 (lead text, inputs), th
 (12.5, 13.5, 14.5) are left over from older screens; do not add new ones. The layout check reports text under 12px
 (`small-text`); `npm run mobile-audit -- --info` lists it.
 
+## Shape: radius and borders
+
+One radius scale, named in `tailwind.config.ts` (`borderRadius`). Note that `xl` is 10px and `2xl` is 12px in this
+project, not Tailwind's 12 and 16:
+
+| Class | px | Use |
+| --- | --- | --- |
+| `rounded-sm` | 2 | tiny marks: a legend swatch, the dots in the month strip |
+| `rounded-md` | 6 | tags, skeleton bars, small thumbnails |
+| `rounded-lg` | 8 | an icon button, an icon square, a day tile, a chosen item in a segmented control |
+| `rounded-xl` | 10 | controls: buttons, inputs, notices, the segmented track, tab bar items |
+| `rounded-2xl` | 12 | containers: `card-surface`, menus and popovers, dialogs, skeletons of a card |
+| `rounded-hero` | 14 | hero blocks and tickets (the one bold element of a screen) |
+| `rounded-t-sheet` | 20 | the top corners of a bottom sheet (`TripSheet`) |
+| `rounded-full` | | pills, chips, avatars, dots, switches |
+
+No `rounded-[…px]`: if a shape does not fit the scale, the scale is wrong, not the shape. A bordered white box that is a
+container is `card-surface` (12px), not `rounded-xl border-1.5 border-line bg-surface` (10px). The checkbox (`.cb`) is
+4px. A hand-written radius next to a component that has one (`.input-field`, `.card-surface`) is a bug: let the class
+decide.
+
 ## Wording (Dutch UI text)
 
 - **"evenement", never "event"** in anything a member or admin reads (the one exception is the name of the *Event* tab, which is the product's own word and does not fit as

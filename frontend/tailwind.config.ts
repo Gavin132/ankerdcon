@@ -96,10 +96,15 @@ const config: Config = {
         // calmer one step lighter.
         black: "800",
       },
+      // The radius scale (docs/design-system.md): sm 2 (tiny marks), md 6 (tags, bars, thumbnails), lg 8
+      // (icon buttons and squares), xl 10 (buttons, inputs, notices), 2xl 12 (cards, menus, dialogs), hero 14
+      // (hero blocks and tickets), sheet 20 (top corners of a bottom sheet), full (pills, avatars).
+      // `xl` is 10px here, not Tailwind's 12px, and 2xl is 12px, not 16px.
       borderRadius: {
         xl: "10px",
         "2xl": "12px",
-        "3xl": "16px",
+        hero: "14px",
+        sheet: "20px",
       },
       borderWidth: {
         "1.5": "1.5px",

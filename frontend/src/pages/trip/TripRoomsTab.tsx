@@ -367,7 +367,7 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className={`flex min-w-0 flex-col gap-3 rounded-[12px] bg-surface p-4 border-1.5 ${isMine ? "border-brand-text" : "border-line"}`}
+      className={`flex min-w-0 flex-col gap-3 rounded-2xl bg-surface p-4 border-1.5 ${isMine ? "border-brand-text" : "border-line"}`}
     >
       {/* Header row: the room number, big */}
       <div className="flex items-start justify-between gap-2">
@@ -584,9 +584,9 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="card-surface animate-pulse p-4">
-                <div className="mb-2 h-8 w-16 rounded bg-sunken" />
-                <div className="mb-4 h-3 w-24 rounded bg-sunken" />
-                <div className="h-3 w-40 rounded bg-sunken" />
+                <div className="mb-2 h-8 w-16 rounded-md bg-sunken" />
+                <div className="mb-4 h-3 w-24 rounded-md bg-sunken" />
+                <div className="h-3 w-40 rounded-md bg-sunken" />
               </div>
             ))}
           </div>

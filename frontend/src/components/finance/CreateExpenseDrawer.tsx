@@ -42,7 +42,7 @@ const SPLIT_MODES: { id: SplitMode; label: string; icon: React.ReactNode }[] = [
 ];
 
 const SL = "field-label";
-const SF = "space-y-3 rounded-xl border-1.5 border-line bg-surface p-4";
+const SF = "card-surface space-y-3 p-4";
 const ST = "section-label";
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -351,7 +351,7 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
               {manualRows.length > 0 && (
                 <div className="space-y-1.5">
                   {manualRows.map((row, i) => (
-                    <div key={i} className="flex items-center gap-2 rounded-xl border-1.5 border-line bg-surface px-3 py-2">
+                    <div key={i} className="flex items-center card-surface gap-2 px-3 py-2">
                       <UserAvatar
                         name={row.participant}
                         user={resolveUser(row.participant)}

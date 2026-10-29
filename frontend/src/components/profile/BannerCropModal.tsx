@@ -200,7 +200,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
 
           {/* Panel — slides up from bottom */}
           <motion.div
-            className="fixed z-[201] overflow-hidden rounded-2xl border-1.5 border-line bg-surface shadow-xl"
+            className="fixed z-[201] overflow-hidden card-surface shadow-xl"
             style={{
               bottom: "max(1rem, env(safe-area-inset-bottom, 1rem))",
               left: "50%",

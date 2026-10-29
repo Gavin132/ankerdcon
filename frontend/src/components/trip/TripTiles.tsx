@@ -328,9 +328,9 @@ export function CosplayTile({ trip, cosplays, myNames, wide }: { trip: Trip; cos
       <TileText>{list.length === 1 ? "cosplay" : "cosplays"}{mine ? `, jij als ${mine.character_name}` : ""}</TileText>
       {images.length > 0 && (
         <span className="flex min-w-0 items-center gap-1 overflow-hidden">
-          {images.map((src, i) => <img key={i} src={src} alt="" className="h-11 w-[34px] shrink-0 rounded-[5px] object-cover" />)}
+          {images.map((src, i) => <img key={i} src={src} alt="" className="h-11 w-[34px] shrink-0 rounded-md object-cover" />)}
           {moreCount > 0 && (
-            <span className="flex h-11 shrink-0 items-center justify-center rounded-[5px] bg-sunken px-1.5 font-mono text-[12px] text-ink-3">
+            <span className="flex h-11 shrink-0 items-center justify-center rounded-md bg-sunken px-1.5 font-mono text-[12px] text-ink-3">
               +{moreCount}
             </span>
           )}

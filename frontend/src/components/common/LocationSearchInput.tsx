@@ -134,7 +134,7 @@ export function LocationSearchInput({
 
       {/* ── Dropdown results ───────────────────────────────── */}
       {open && results.length > 0 && (
-        <div className="absolute z-50 left-0 right-0 mt-1 rounded-xl border-1.5 border-line bg-surface shadow-xl overflow-hidden">
+        <div className="absolute z-50 left-0 right-0 mt-1 card-surface shadow-xl overflow-hidden">
           {results.map((place) => {
             const parts = place.display_name.split(",");
             const name = parts[0].trim();

@@ -61,7 +61,7 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
     : participants.length === 0 ? "Nog niemand aangemeld" : `${participants.length} gaan mee`;
 
   return (
-    <article className="ticket-notch grid grid-cols-[minmax(0,1fr)] overflow-hidden rounded-[14px] border-2 border-outline bg-surface md:grid-cols-[200px_minmax(0,1fr)_168px] lg:grid-cols-[240px_minmax(0,1fr)_188px]">
+    <article className="ticket-notch grid grid-cols-[minmax(0,1fr)] overflow-hidden rounded-hero border-2 border-outline bg-surface md:grid-cols-[200px_minmax(0,1fr)_168px] lg:grid-cols-[240px_minmax(0,1fr)_188px]">
       {/* ── Cover ── */}
       <Link
         to={routes.trip.view(trip.id)}

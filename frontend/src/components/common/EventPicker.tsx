@@ -138,7 +138,7 @@ export function EventPicker({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15 }}
-            className="max-h-[220px] overflow-y-auto overscroll-contain rounded-xl border-1.5 border-line bg-surface shadow-xl divide-y divide-line"
+            className="max-h-[220px] overflow-y-auto overscroll-contain card-surface shadow-xl divide-y divide-line"
           >
             {filtered.length === 0 ? (
               <p className="px-4 py-4 text-center text-xs text-ink-3">

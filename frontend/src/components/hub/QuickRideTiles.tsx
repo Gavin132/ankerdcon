@@ -27,7 +27,7 @@ function QuickTile({ icon, title, onClick }: { icon: React.ReactNode; title: str
     <button
       type="button"
       onClick={onClick}
-      className="flex min-h-11 items-center gap-3 rounded-xl border-1.5 border-line bg-surface p-3 text-left transition-colors hover:border-ink-3"
+      className="flex min-h-11 items-center card-surface gap-3 p-3 text-left transition-colors hover:border-ink-3"
     >
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">{icon}</span>
       <span className="min-w-0 flex-1 text-[14px] font-semibold leading-tight text-ink">{title}</span>

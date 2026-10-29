@@ -222,7 +222,7 @@ export function RecapView({ trips, myNames, users, rides, meals, onJoin, onLeave
                       {starts.map((t) => (
                         <i
                           key={t.id}
-                          className={`block h-[7px] w-[7px] rounded-[2px] ${
+                          className={`block h-[7px] w-[7px] rounded-sm ${
                             isPast(t)
                               ? isMine(t) ? "bg-ink-2" : "bg-line"
                               : isMine(t) ? "bg-brand shadow-[inset_0_0_0_1px_rgb(var(--outline))]" : "shadow-[inset_0_0_0_1.5px_rgb(var(--ink-3))]"
@@ -240,7 +240,7 @@ export function RecapView({ trips, myNames, users, rides, meals, onJoin, onLeave
 
       <div className="flex flex-col gap-4 xl:grid xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
         {/* ── Grid ── */}
-        <div className="overflow-hidden rounded-xl border-1.5 border-line bg-surface">
+        <div className="overflow-hidden card-surface">
           <div className="grid grid-cols-7 border-b-1.5 border-line">
             {DAY_LABELS.map((d) => (
               <span key={d} className="label-quiet py-1.5 text-center">{d}</span>
@@ -266,9 +266,9 @@ export function RecapView({ trips, myNames, users, rides, meals, onJoin, onLeave
           ))}
           </div>
           <div className="flex flex-wrap gap-x-3 gap-y-1 border-t-1.5 border-line px-2.5 py-2 text-[12px] text-ink-3 sm:hidden">
-            <span className="flex items-center gap-1.5"><i className="block h-2.5 w-3.5 rounded-[3px] bg-ink-2" />Geweest</span>
-            <span className="flex items-center gap-1.5"><i className="block h-2.5 w-3.5 rounded-[3px] bg-brand shadow-[inset_0_0_0_1px_rgb(var(--outline))]" />Jij gaat</span>
-            <span className="flex items-center gap-1.5"><i className="block h-2.5 w-3.5 rounded-[3px] shadow-[inset_0_0_0_1.5px_rgb(var(--ink-3))]" />Anderen gaan</span>
+            <span className="flex items-center gap-1.5"><i className="block h-2.5 w-3.5 rounded-sm bg-ink-2" />Geweest</span>
+            <span className="flex items-center gap-1.5"><i className="block h-2.5 w-3.5 rounded-sm bg-brand shadow-[inset_0_0_0_1px_rgb(var(--outline))]" />Jij gaat</span>
+            <span className="flex items-center gap-1.5"><i className="block h-2.5 w-3.5 rounded-sm shadow-[inset_0_0_0_1.5px_rgb(var(--ink-3))]" />Anderen gaan</span>
           </div>
         </div>
 
@@ -419,7 +419,7 @@ function Week({ week, monthPrefix, today, trips, tripByDay, selection, selectedT
             onClick={() => onTrip(trip)}
             style={{ gridColumn: `${col + 1} / span ${span}`, gridRow: 1 }}
             aria-label={`${trip.title}, ${trip.dateRange}`}
-            className={`relative z-[2] mx-[3px] flex h-[5px] min-w-0 items-center self-end overflow-hidden whitespace-nowrap rounded-[3px] text-[12px] font-semibold sm:mx-1.5 sm:h-[22px] sm:gap-1 sm:rounded-md sm:px-1.5 ${
+            className={`relative z-[2] mx-[3px] flex h-[5px] min-w-0 items-center self-end overflow-hidden whitespace-nowrap rounded-sm text-[12px] font-semibold sm:mx-1.5 sm:h-[22px] sm:gap-1 sm:rounded-md sm:px-1.5 ${
               lane > 0 ? "mb-3 sm:mb-[33px]" : "mb-1 sm:mb-[7px]"
             } ${tone} ${selectedTrip === trip ? "ring-2 ring-outline ring-offset-2 ring-offset-surface" : ""}`}
           >
@@ -491,7 +491,7 @@ function MonthOverview({ title, trips, lastYear, lastYearLabel, storySummary, is
                 key={t.id}
                 type="button"
                 onClick={() => onOpen(t)}
-                className="grid w-full grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-2.5 rounded-[10px] p-2 text-left transition-colors hover:bg-sunken"
+                className="grid w-full grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-2.5 rounded-xl p-2 text-left transition-colors hover:bg-sunken"
               >
                 <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-lg bg-hero font-display text-[14px] font-extrabold uppercase text-hero-ink">
                   {image ? <img src={image} alt="" loading="lazy" decoding="async" className={`h-full w-full object-cover ${past && !mine ? "opacity-60 grayscale" : ""}`} /> : t.title.slice(0, 3)}
@@ -530,7 +530,7 @@ function MonthOverview({ title, trips, lastYear, lastYearLabel, storySummary, is
                 onClick={() => onOpen(t)}
                 className="grid w-full grid-cols-[72px_minmax(0,1fr)] items-center gap-3 rounded-xl bg-sunken p-2.5 text-left transition-shadow hover:shadow-[inset_0_0_0_1.5px_rgb(var(--ink-3))]"
               >
-                <span className={`grid h-[72px] w-[72px] gap-0.5 overflow-hidden rounded-[9px] bg-hero ${thumbs.length > 1 ? "grid-cols-2" : ""}`}>
+                <span className={`grid h-[72px] w-[72px] gap-0.5 overflow-hidden rounded-lg bg-hero ${thumbs.length > 1 ? "grid-cols-2" : ""}`}>
                   {thumbs.map((src, i) => <img key={i} src={src} loading="lazy" decoding="async" alt="" className="h-full w-full object-cover" />)}
                 </span>
                 <span className="min-w-0">

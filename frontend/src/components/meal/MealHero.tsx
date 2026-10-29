@@ -24,7 +24,7 @@ export function MealHero({ meal, linkedEvent, onRsvpClick, onCancelClick }: Meal
   const category = mealCategory(meal);
 
   return (
-    <section className="overflow-hidden rounded-[14px] border-2 border-outline bg-hero text-hero-ink">
+    <section className="overflow-hidden rounded-hero border-2 border-outline bg-hero text-hero-ink">
       <div className="px-5 py-5 sm:px-7 sm:py-6">
         {/* One kicker line: what kind of activity, and of which trip. */}
         <p className="mb-2 text-xs font-medium text-hero-ink/75">

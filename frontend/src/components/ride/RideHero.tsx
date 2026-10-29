@@ -69,7 +69,7 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
 
   return (
     <section
-      className={`overflow-hidden rounded-[14px] border-2 border-outline bg-hero text-hero-ink ${isRecent || isPast ? "opacity-80" : ""}`}
+      className={`overflow-hidden rounded-hero border-2 border-outline bg-hero text-hero-ink ${isRecent || isPast ? "opacity-80" : ""}`}
     >
       <div className="px-5 py-5 sm:px-7 sm:py-6">
         {/* Chips: what it belongs to, which way, when, and at most one status. */}

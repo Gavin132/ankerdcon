@@ -201,9 +201,9 @@ export function WeatherSkeleton() {
   return (
     <div className="card-surface animate-pulse overflow-hidden">
       <div className="space-y-2.5 px-4 py-4">
-        <div className="h-3 w-28 rounded bg-sunken" />
+        <div className="h-3 w-28 rounded-md bg-sunken" />
         <div className="h-10 w-24 rounded-lg bg-sunken" />
-        <div className="h-3 w-40 rounded bg-sunken" />
+        <div className="h-3 w-40 rounded-md bg-sunken" />
       </div>
       <div className="grid grid-cols-2 divide-x divide-line border-t border-line">
         {[...Array(2)].map((_, i) => (
@@ -220,7 +220,7 @@ export function WeatherSkeleton() {
       </div>
       <div className="flex items-center gap-3 border-t border-line px-4 py-3.5">
         <div className="h-8 w-8 shrink-0 rounded-lg bg-sunken" />
-        <div className="h-3 flex-1 rounded bg-sunken" />
+        <div className="h-3 flex-1 rounded-md bg-sunken" />
       </div>
     </div>
   );

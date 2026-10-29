@@ -88,7 +88,7 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
   ];
 
   return (
-    <article className="overflow-hidden rounded-[14px] border-2 border-outline bg-surface">
+    <article className="overflow-hidden rounded-hero border-2 border-outline bg-surface">
       {/* ── Cover with stamp ── */}
       <div className="relative h-32 bg-hero">
         {cover && (
@@ -128,7 +128,7 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
           </p>
         </div>
 
-        <dl className="grid grid-cols-3 rounded-[10px] border-1.5 border-line">
+        <dl className="grid grid-cols-3 rounded-xl border-1.5 border-line">
           {stats.map((s, i) => (
             <div key={s.label} className={`flex flex-col-reverse px-2.5 py-2 ${i > 0 ? "border-l-1.5 border-line" : ""}`}>
               <dt className="text-[12px] text-ink-2">{s.label}</dt>
@@ -149,7 +149,7 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
                   type="button"
                   onClick={() => onDayChange(on ? null : key)}
                   aria-pressed={on}
-                  className={`min-w-0 rounded-[9px] px-1 py-1.5 text-center transition-colors ${
+                  className={`min-w-0 rounded-lg px-1 py-1.5 text-center transition-colors ${
                     on ? "border-2 border-outline" : "border-1.5 border-line hover:border-ink-3"
                   } ${ev.has_con === false ? "bg-hatch-surface" : "bg-surface"}`}
                 >
@@ -249,7 +249,7 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
 
         <Link
           to={routes.trip.view(trip.id)}
-          className="flex items-center justify-between rounded-[10px] border-1.5 border-line px-3 py-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
+          className="flex items-center justify-between rounded-xl border-1.5 border-line px-3 py-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
         >
           Naar de trip
           <ChevronRight size={15} className="text-ink-3" />

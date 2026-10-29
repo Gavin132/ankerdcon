@@ -669,7 +669,7 @@ export function EventEditDrawer({
                 value={ttTitle}
                 onChange={(e) => setTtTitle(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTicketType())}
-                className="input-field min-w-0 flex-1 rounded-[9px] px-3 py-2.5 text-base sm:text-sm"
+                className="input-field min-w-0 flex-1 px-3 py-2.5 text-base sm:text-sm"
                 placeholder="Dagticket"
               />
               <div className="relative w-28 shrink-0">
@@ -683,7 +683,7 @@ export function EventEditDrawer({
                   value={ttPrice}
                   onChange={(e) => setTtPrice(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTicketType())}
-                  className="input-field rounded-[9px] py-2.5 pl-7 pr-3 text-base sm:text-sm"
+                  className="input-field py-2.5 pl-7 pr-3 text-base sm:text-sm"
                   placeholder="89.50"
                 />
               </div>

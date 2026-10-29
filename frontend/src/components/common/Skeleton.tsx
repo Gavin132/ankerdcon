@@ -17,7 +17,7 @@ export function HubSkeleton() {
       </div>
       <div className="space-y-6 xl:grid xl:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] xl:gap-8 xl:space-y-0">
         <div className="space-y-6">
-          <Bone className="h-64 w-full rounded-[14px]" />
+          <Bone className="h-64 w-full rounded-hero" />
           <div className="grid grid-cols-2 gap-3">
             <Bone className="h-24 rounded-xl" />
             <Bone className="h-24 rounded-xl" />

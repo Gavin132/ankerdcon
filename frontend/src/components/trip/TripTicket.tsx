@@ -99,7 +99,7 @@ export function TripTicket({
   const stamp = phase === "past" ? (going ? "Geweest" : "Gemist") : phase === "live" ? "Erbij" : "Je gaat mee";
 
   return (
-    <article className="ticket-notch grid grid-cols-[minmax(0,1fr)] overflow-hidden rounded-[14px] border-2 border-outline bg-surface md:grid-cols-[200px_minmax(0,1fr)_168px] lg:grid-cols-[240px_minmax(0,1fr)_188px]">
+    <article className="ticket-notch grid grid-cols-[minmax(0,1fr)] overflow-hidden rounded-hero border-2 border-outline bg-surface md:grid-cols-[200px_minmax(0,1fr)_168px] lg:grid-cols-[240px_minmax(0,1fr)_188px]">
       {/* ── Cover ── */}
       <div className={`relative overflow-hidden bg-hero md:h-auto md:min-h-[280px] ${image ? "h-28 sm:h-52" : "h-16"}`}>
         {image && <img src={image} alt="" className={`absolute inset-0 h-full w-full object-cover ${phase === "past" ? "saturate-50" : ""}`} />}

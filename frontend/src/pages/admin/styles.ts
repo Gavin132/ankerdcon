@@ -2,11 +2,11 @@
 
 /** Text input inside admin drawers. Compact version of `input-field`. */
 export const F =
-  "input-field rounded-[9px] px-3 py-2.5 text-base sm:text-sm";
+  "input-field px-3 py-2.5 text-base sm:text-sm";
 
 /** Use for <select> elements. `.dark .input-field` sets the dark color-scheme so native options stay readable. */
 export const FS =
-  "input-field rounded-[9px] px-3 py-2.5 text-base sm:text-sm";
+  "input-field px-3 py-2.5 text-base sm:text-sm";
 
 export const L = "field-label";
 
