@@ -25,7 +25,7 @@ export function ImpersonationBanner() {
         <button
           type="button"
           onClick={stopImpersonation}
-          className="shrink-0 rounded-md border-1.5 border-warn-on bg-warn-on/10 px-3 py-1 text-xs font-bold hover:bg-warn-on/20 transition-colors"
+          className="hit-area inline-flex min-h-[32px] shrink-0 items-center justify-center rounded-xl border border-warn-on/40 bg-transparent px-3 text-xs font-bold text-warn-on transition-colors duration-75 hover:border-warn-on/70 hover:bg-warn-on/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warn-on"
         >
           Terug naar mijn account
         </button>

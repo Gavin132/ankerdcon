@@ -148,7 +148,7 @@ export function MealDetailPage() {
               onClick={() => setEditOpen(true)}
               title="Activiteit bewerken"
               aria-label="Activiteit bewerken"
-              className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+              className="icon-btn"
             >
               <Pencil size={16} />
             </button>

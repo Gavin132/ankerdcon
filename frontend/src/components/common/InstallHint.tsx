@@ -80,7 +80,7 @@ export function InstallHint({ kind, onDismiss }: { kind: InstallKind; onDismiss?
           )}
         </div>
         {onDismiss && (
-          <button type="button" onClick={onDismiss} aria-label="Sluiten" className="hit-area -mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink">
+          <button type="button" onClick={onDismiss} aria-label="Sluiten" className="icon-btn -mr-1 -mt-1">
             <X size={16} />
           </button>
         )}

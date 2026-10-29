@@ -226,7 +226,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
               </div>
               <button
                 onClick={onClose}
-                className="hit-area flex h-9 w-9 items-center justify-center rounded-xl text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+                className="icon-btn"
               >
                 <X size={16} />
               </button>
@@ -288,7 +288,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
                   <button
                     type="button"
                     onClick={() => applyZoom(Math.max(1, zoom - 0.1))}
-                    className="hit-area flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+                    className="icon-btn"
                   >
                     <ZoomOut size={14} />
                   </button>
@@ -304,7 +304,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
                   <button
                     type="button"
                     onClick={() => applyZoom(Math.min(MAX_ZOOM, zoom + 0.1))}
-                    className="hit-area flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+                    className="icon-btn"
                   >
                     <ZoomIn size={14} />
                   </button>

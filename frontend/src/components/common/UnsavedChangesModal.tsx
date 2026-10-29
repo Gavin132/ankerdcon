@@ -42,7 +42,7 @@ export function UnsavedChangesModal({ blocker }: Props) {
             </p>
             <div className="mt-5 flex items-center justify-end gap-2">
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="sm"
                 onClick={() => blocker.state === "blocked" && blocker.reset()}
               >

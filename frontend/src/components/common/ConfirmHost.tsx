@@ -40,7 +40,7 @@ export function ConfirmHost() {
             <h2 className="font-display text-2xl font-extrabold uppercase leading-none text-ink">{request.title}</h2>
             <p className="mt-2 text-sm leading-relaxed text-ink-2">{request.message}</p>
             <div className="mt-5 flex items-center justify-end gap-2">
-              <Button variant="ghost" size="sm" onClick={() => answer(false)}>
+              <Button variant="secondary" size="sm" onClick={() => answer(false)}>
                 {request.cancelLabel}
               </Button>
               <Button size="sm" variant={request.destructive ? "danger" : "primary"} onClick={() => answer(true)}>

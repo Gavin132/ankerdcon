@@ -339,7 +339,7 @@ export function UserProfilePopup({
                   className={
                     isOwn
                       ? "btn-primary w-full py-2.5 text-[13px]"
-                      : "flex w-full items-center justify-center gap-2 rounded-xl border-1.5 border-line bg-surface py-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
+                      : "btn-secondary w-full py-2.5 text-[13px]"
                   }
                 >
                   {isOwn ? <Pencil size={14} /> : <UserIcon size={14} />}

@@ -231,7 +231,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
               title="Uitloggen"
               aria-label="Uitloggen"
               onClick={handleLogout}
-              className="hit-area flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-bad"
+              className="icon-btn hover:text-bad"
             >
               <LogOut size={14} />
             </button>
@@ -251,7 +251,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
               title="Uitloggen"
               aria-label="Uitloggen"
               onClick={handleLogout}
-              className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-bad"
+              className="icon-btn hover:text-bad"
             >
               <LogOut size={14} />
             </button>

@@ -208,7 +208,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
                   Weet je zeker dat je "{expense.description}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.
                 </p>
                 <div className="flex gap-2">
-                  <Button variant="ghost" className="flex-1 text-xs" onClick={() => setConfirmDelete(false)}>
+                  <Button variant="secondary" className="flex-1 text-xs" onClick={() => setConfirmDelete(false)}>
                     Annuleren
                   </Button>
                   <Button

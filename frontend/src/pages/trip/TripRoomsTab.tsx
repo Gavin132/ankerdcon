@@ -539,7 +539,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
     <div className="flex items-center gap-3">
       <AlertCircle size={16} className="shrink-0 text-bad" />
       <p className="flex-1 text-sm font-semibold text-ink">Kamer verwijderen?</p>
-      <Button size="sm" variant="ghost" onClick={() => setConfirmDeleteId(null)}>
+      <Button size="sm" variant="secondary" onClick={() => setConfirmDeleteId(null)}>
         Annuleren
       </Button>
       <Button

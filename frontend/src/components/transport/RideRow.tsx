@@ -309,7 +309,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
                         </p>
                       )}
                       <div className="flex items-center gap-1.5">
-                        <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)}>
+                        <Button size="sm" variant="secondary" onClick={() => setConfirmDelete(false)}>
                           Annuleren
                         </Button>
                         <Button size="sm" variant="danger" loading={deleteMutation.isPending} onClick={handleDelete}>

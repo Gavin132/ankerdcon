@@ -88,7 +88,7 @@ export function TripSwitcherButton({ iconOnly, onClick }: { iconOnly?: boolean; 
       onClick={onClick}
       title="Andere evenementen"
       aria-label="Andere evenementen"
-      className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+      className="icon-btn"
     >
       <CalendarRange size={16} />
     </button>

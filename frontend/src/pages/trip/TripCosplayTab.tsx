@@ -494,7 +494,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                       </label>
                     )}
                     {images.length > 1 && (
-                      <button type="button" onClick={() => removeImage(index)} aria-label="Afbeelding verwijderen" className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-bad-soft hover:text-bad">
+                      <button type="button" onClick={() => removeImage(index)} aria-label="Afbeelding verwijderen" className="icon-btn hover:bg-bad-soft hover:text-bad">
                         <X size={16} />
                       </button>
                     )}

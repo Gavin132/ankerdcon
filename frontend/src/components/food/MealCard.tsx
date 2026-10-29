@@ -191,7 +191,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setCancelOpen(true); }}
-                  className="hit-area flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-bad-soft hover:text-bad"
+                  className="icon-btn hover:bg-bad-soft hover:text-bad"
                   title="Afmelden"
                 >
                   <UserMinus size={14} />
@@ -201,7 +201,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); exportMealToIcs(meal); }}
-                className="hit-area flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+                className="icon-btn"
                 title="Exporteer naar kalender"
               >
                 <CalendarPlus size={14} />

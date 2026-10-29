@@ -624,7 +624,7 @@ function TicketRow({ ticket, onDelete }: { ticket: LocalTicket; onDelete: () => 
       </a>
       {confirming ? (
         <span className="flex shrink-0 items-center gap-1.5">
-          <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
+          <Button size="sm" variant="secondary" onClick={() => setConfirming(false)}>
             Annuleren
           </Button>
           <Button size="sm" variant="danger" onClick={onDelete}>

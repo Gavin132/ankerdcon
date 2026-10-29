@@ -167,7 +167,7 @@ export function TripSheet({ open, onClose, title, subtitle, onBack, footer, view
                   <button
                     type="button"
                     onClick={onBack}
-                    className="hit-area -ml-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+                    className="icon-btn -ml-1.5"
                     aria-label="Terug"
                   >
                     <ChevronLeft size={16} />

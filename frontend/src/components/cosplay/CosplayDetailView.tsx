@@ -208,7 +208,7 @@ export function CosplayDetailFooter({
   return confirmDelete ? (
     <div className="flex items-center gap-2">
       <p className="flex-1 text-xs font-semibold text-ink">Zeker verwijderen?</p>
-      <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)}>
+      <Button size="sm" variant="secondary" onClick={() => setConfirmDelete(false)}>
         Annuleren
       </Button>
       <Button size="sm" variant="danger" loading={deleteLoading} onClick={handleDelete}>
@@ -216,9 +216,9 @@ export function CosplayDetailFooter({
       </Button>
     </div>
   ) : (
-    <Button variant="ghost" className="w-full text-bad hover:bg-bad-soft" onClick={handleDelete}>
+    <button type="button" className="btn-danger-soft w-full" onClick={handleDelete}>
       <Trash2 size={14} />
       Cosplay verwijderen
-    </Button>
+    </button>
   );
 }
