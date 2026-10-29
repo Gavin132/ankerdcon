@@ -25,9 +25,12 @@ export function TripLayout() {
   const sheetParam = searchParams.get("sheet") ?? undefined;
   const activeTab: TripTabId = isTripTabId(sheetParam) ? sheetParam : "overview";
 
+  // A tab this trip does not have (Cosplay on a concert, Hotel without one) is never remembered, or the Event tab
+  // would keep reopening on it.
+  const tabAvailable = !!trip && visibleTripTabs(trip).some((t) => t.id === activeTab);
   useEffect(() => {
-    rememberTripTab(activeTab);
-  }, [activeTab]);
+    if (tabAvailable) rememberTripTab(activeTab);
+  }, [activeTab, tabAvailable]);
 
   if (isLoading) {
     return (
@@ -58,13 +61,14 @@ export function TripLayout() {
     );
   }
 
-  const tabs = visibleTripTabs(trip);
-  if (!tabs.some((t) => t.id === activeTab)) {
-    return <Navigate to={routes.trip.view(trip.id)} replace />;
-  }
-
   const requestedDay = searchParams.get("day");
   const dayId = requestedDay && trip.eventIds.includes(requestedDay) ? requestedDay : null;
+
+  // A link to a sheet this trip does not have (?sheet=cosplay on a concert, from an old link or a search result)
+  // is plain Overzicht, with the chosen day kept.
+  if (!tabAvailable) {
+    return <Navigate to={routes.trip.view(trip.id, "overview", dayId ?? undefined)} replace />;
+  }
 
   function setDayId(next: string | null) {
     const params = new URLSearchParams(searchParams);

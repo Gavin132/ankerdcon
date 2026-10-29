@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildTrip, visibleTripTabs } from "./trips";
+import { buildTrip, cosplayTripId, visibleTripTabs } from "./trips";
 import type { CalendarEvent } from "../types";
 
 const day = (eventType: CalendarEvent["event_type"]) =>
@@ -18,5 +18,28 @@ describe("cosplay on a trip", () => {
     const trip = buildTrip([day("concert")], "d1")!;
     expect(trip.hasCon).toBe(false);
     expect(visibleTripTabs(trip).map((t) => t.id)).not.toContain("cosplay");
+  });
+});
+
+describe("search for a cosplay", () => {
+  const con = { ...day("con"), id: "con-day" } as CalendarEvent;
+  const concert = { ...day("concert"), id: "concert-day" } as CalendarEvent;
+  const events = [con, concert];
+
+  it("leads to the trip's Cosplay sheet for a con", () => {
+    expect(cosplayTripId(events, ["con-day"])).toBe("con-day");
+  });
+
+  it("leads nowhere for a cosplay linked only to a concert", () => {
+    expect(cosplayTripId(events, ["concert-day"])).toBeNull();
+  });
+
+  it("skips a concert and takes the first linked trip that has cosplay", () => {
+    expect(cosplayTripId(events, ["concert-day", "con-day"])).toBe("con-day");
+  });
+
+  it("leads nowhere for an event that no longer exists, or for no link", () => {
+    expect(cosplayTripId(events, ["gone"])).toBeNull();
+    expect(cosplayTripId(events, [])).toBeNull();
   });
 });

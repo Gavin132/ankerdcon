@@ -16,6 +16,7 @@ All notable changes to Ankerd Con are documented here.
 
 ### Fixed
 
+- **Search still found cosplays of a concert**, and led to a page without a Cosplay sheet. A concert has no cosplay, so those no longer show up, and an old link to one opens the event's overview.
 - **An urgent announcement could sit under an info one.** The banners at the top now stack urgent first, then warning, then info, newest first within each.
 - **After a rename you could no longer delete your own old things.** An old ride, expense, cosplay or photo of yours, and the
   shares on your old expenses, stayed out of reach (and out of the Financiën totals) because they carry your old name. Your

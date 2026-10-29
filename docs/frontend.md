@@ -69,7 +69,9 @@ bottom tabs); settings, profile, ride and meal pages sit outside it with their o
 **Trips** are `/trips/:tripId`. The `?sheet=transport|rooms|cosplay` query parameter opens
 that part as a sheet over the page, and `?day=` preselects a day. Both are query
 parameters rather than path segments, so opening or closing a sheet never remounts the page
-underneath or resets its scroll. Old URLs redirect (`config/routes.ts` → `legacy`).
+underneath or resets its scroll. A sheet the trip does not have (`?sheet=cosplay` on a concert, `rooms` without a hotel)
+redirects to plain Overzicht, keeping `?day=` (`TripLayout`); global search only offers a cosplay whose trip has the
+sheet (`cosplayTripId`). Old URLs redirect (`config/routes.ts` → `legacy`).
 
 ## The data layer
 

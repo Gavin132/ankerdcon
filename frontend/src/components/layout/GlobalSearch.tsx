@@ -12,7 +12,7 @@ import { EmptyState } from "../common/EmptyState";
 import { routes } from "../../config/routes";
 import { isBeforeToday } from "../../utils/date";
 import { rideSearchTitle } from "../../utils/rideSearch";
-import { buildTrip, buildTrips, currentTripId, isTripOver, tripIdForEvent } from "../../utils/trips";
+import { buildTrip, buildTrips, cosplayTripId, currentTripId, isTripOver } from "../../utils/trips";
 import { matchSearchActions, type SearchActionId } from "../../utils/searchActions";
 import type { RouteActionState } from "../../hooks/useRouteAction";
 
@@ -173,7 +173,8 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
         icon: Sparkles,
         rows: cosplayRows
           .map((c) => {
-            const tripId = c.linked_event_ids[0] ? tripIdForEvent(events, c.linked_event_ids[0]) : null;
+            // A concert has no Cosplay sheet, so a cosplay linked only to one is not offered.
+            const tripId = cosplayTripId(events, c.linked_event_ids);
             return tripId
               ? {
                   key: c.id,

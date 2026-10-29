@@ -146,6 +146,18 @@ export function tripImage(trip: Trip): string | null {
   return trip.days.map((d) => d.ev.image_url).find(Boolean) ?? null;
 }
 
+/**
+ * The trip a cosplay belongs to, for opening it from search: the first of the events it is linked to whose trip has a
+ * Cosplay sheet. Null when it has none (a concert has no cosplay, so its rows lead nowhere).
+ */
+export function cosplayTripId(events: CalendarEvent[], linkedEventIds: string[]): string | null {
+  for (const id of linkedEventIds) {
+    const tripId = tripIdForEvent(events, id);
+    if (tripId && buildTrip(events, tripId)?.hasCon) return tripId;
+  }
+  return null;
+}
+
 /** The trip a given event day belongs to, or null when the event doesn't exist. */
 export function tripIdForEvent(events: CalendarEvent[], eventId: string): string | null {
   const ev = events.find((e) => e.id === eventId);
