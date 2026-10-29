@@ -203,8 +203,8 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
                 Uitgave verwijderen
               </button>
             ) : (
-              <div className="space-y-3 rounded-xl bg-rose-100 p-3 dark:bg-rose-500/15">
-                <p className="text-xs font-semibold text-rose-700 dark:text-rose-300">
+              <div className="space-y-3 rounded-xl bg-bad-soft p-3">
+                <p className="text-xs font-semibold text-bad">
                   Weet je zeker dat je "{expense.description}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.
                 </p>
                 <div className="flex gap-2">

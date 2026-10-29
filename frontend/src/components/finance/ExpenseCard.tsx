@@ -87,7 +87,7 @@ export function ExpenseCard({ expense, users, me, onClick, tripTitle }: Props) {
               <span className="mt-1.5 flex items-center justify-end gap-2 whitespace-nowrap">
                 <span className="hidden h-1.5 w-12 overflow-hidden rounded-full sm:block bg-sunken shadow-[inset_0_0_0_1px_rgb(var(--line))]" aria-hidden>
                   <span
-                    className="block h-full bg-emerald-500"
+                    className="block h-full bg-ok-fill"
                     style={{ width: `${(confirmedCount / totalShares) * 100}%` }}
                   />
                 </span>

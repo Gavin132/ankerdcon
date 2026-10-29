@@ -227,10 +227,10 @@ export function FinancePage() {
 
                 <div className="mt-2 flex h-2.5 gap-[3px] overflow-hidden rounded-full bg-sunken" aria-hidden>
                   {othersOweMe > 0.01 && (
-                    <div className="h-full bg-emerald-500" style={{ width: `${(othersOweMe / openTotal) * 100}%` }} />
+                    <div className="h-full bg-ok-fill" style={{ width: `${(othersOweMe / openTotal) * 100}%` }} />
                   )}
                   {iOwe > 0.01 && (
-                    <div className="h-full bg-rose-500" style={{ width: `${(iOwe / openTotal) * 100}%` }} />
+                    <div className="h-full bg-bad-fill" style={{ width: `${(iOwe / openTotal) * 100}%` }} />
                   )}
                 </div>
                 <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 text-[12px] tabular-nums text-ink-2">
