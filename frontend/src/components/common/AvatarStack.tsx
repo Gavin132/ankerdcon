@@ -38,7 +38,7 @@ export function AvatarStack({ names, max = 5, size = "md", ringClass, onDark = f
       ))}
       {rest > 0 && (
         <span
-          className={`flex shrink-0 items-center justify-center rounded-full border-2 border-surface font-semibold ${onDark ? "bg-white/15 text-hero-ink" : "bg-sunken text-ink-2"} ${SIZES[size]} ${ringClass}`}
+          className={`flex shrink-0 items-center justify-center rounded-full border-2 border-surface font-semibold ${onDark ? "bg-hero-ink/15 text-hero-ink" : "bg-sunken text-ink-2"} ${SIZES[size]} ${ringClass}`}
           aria-label={`nog ${rest}`}
         >
           +{rest}

@@ -17,7 +17,7 @@ export function ConfirmHost() {
       {request && (
         <div className="fixed inset-0 z-[700] flex items-center justify-center p-4">
           <motion.div
-            className="absolute inset-0 bg-slate-950/50"
+            className="absolute inset-0 bg-scrim/50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

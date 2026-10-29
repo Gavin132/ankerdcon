@@ -17,7 +17,7 @@ const variantClasses: Record<NonNullable<ButtonProps["variant"]>, string> = {
   ghost:
     "bg-transparent text-ink-2 hover:bg-sunken hover:text-ink disabled:opacity-50",
   danger:
-    "bg-rose-600 text-white border-2 border-rose-800 disabled:opacity-60 dark:border-rose-400",
+    "bg-bad-fill text-bad-on border-2 border-bad disabled:opacity-60",
 };
 
 const sizeClasses: Record<NonNullable<ButtonProps["size"]>, string> = {

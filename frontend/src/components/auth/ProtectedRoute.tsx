@@ -17,11 +17,11 @@ function LoadingScreen() {
     return () => clearTimeout(t);
   }, []);
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center gap-5 bg-slate-950 px-6 text-center">
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-5 bg-hero px-6 text-center">
       <div className="h-8 w-8 rounded-full border-2 border-brand-text border-t-transparent animate-spin" />
       {slow && (
         <div className="flex max-w-[280px] flex-col items-center gap-3" role="status">
-          <p className="text-sm leading-relaxed text-slate-300">De server reageert traag. Even geduld, het kan zijn dat hij net opstart.</p>
+          <p className="text-sm leading-relaxed text-hero-ink/75">De server reageert traag. Even geduld, het kan zijn dat hij net opstart.</p>
           <StatusLink />
         </div>
       )}

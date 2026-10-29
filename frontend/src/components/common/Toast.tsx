@@ -25,7 +25,7 @@ export function ToastContainer() {
               if (Math.abs(info.offset.x) > 80 || Math.abs(info.velocity.x) > 500) removeToast(t.id);
             }}
             className={`pointer-events-auto flex w-full items-center gap-3 rounded-xl border-1.5 bg-surface px-3 py-2.5 ${
-              t.type === "error" ? "border-rose-500" : "border-outline"
+              t.type === "error" ? "border-bad-fill" : "border-outline"
             }`}
           >
             <div
@@ -33,8 +33,8 @@ export function ToastContainer() {
                 t.type === "success"
                   ? "bg-brand"
                   : t.type === "error"
-                  ? "bg-rose-600"
-                  : "bg-slate-600"
+                  ? "bg-bad-fill"
+                  : "bg-hero"
               }`}
             >
               <img

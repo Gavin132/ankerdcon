@@ -10,7 +10,7 @@ export function AdminRoute() {
   if (!currentUser) return <Navigate to={routes.login} replace />;
   // isPending, not isLoading: while the saved query cache is still being restored the query has not started
   // (isLoading is false), and reading that as "not an admin" sent a reload of /admin to the hub.
-  if (isPending) return <div className="min-h-dvh bg-slate-950" />;
+  if (isPending) return <div className="min-h-dvh bg-hero" />;
   if (!me?.is_admin) return <Navigate to={routes.hub} replace />;
 
   return <Outlet />;

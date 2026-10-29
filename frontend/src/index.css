@@ -61,6 +61,7 @@
   --avatar-4: 190 18 60;     /* #BE123C */
   --avatar-5: 74 90 99;      /* #4A5A63 */
   --avatar-6: 162 28 175;    /* #A21CAF */
+  --avatar-on: 255 255 255;  /* the initial on them */
 }
 
 .dark {
@@ -257,32 +258,6 @@
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3e%3cpath d='M2.5 6h7' stroke='%230F1519' stroke-width='1.8' stroke-linecap='round'/%3e%3c/svg%3e");
   }
 
-  /* Former frosted-glass surfaces are solid now (glass was tried and rejected). */
-  .glass {
-    background: rgb(var(--surface));
-    border: 1.5px solid rgb(var(--line));
-  }
-
-  .glass-dark {
-    background: #0F1519;
-    border: 1.5px solid rgb(255 255 255 / 0.12);
-  }
-
-  /* The old blue gradients, flattened. Brand = brand blue with ink text;
-     hero = the dark ink block used behind a trip's headline. */
-  .gradient-brand {
-    background: #2A84CC;
-  }
-
-  .gradient-hero {
-    background-color: #0F1519;
-  }
-
-  .gradient-card-blue { background: #2A84CC; }
-  .gradient-card-green { background: #1FA971; }
-  .gradient-card-amber { background: #E89B0C; }
-  .gradient-card-violet { background: #7C3AED; }
-
   .card-surface {
     border-radius: 12px;
     background-color: rgb(var(--surface));
@@ -464,7 +439,7 @@
   }
 
   .avatar {
-    @apply flex items-center justify-center rounded-full font-bold text-white;
+    @apply flex items-center justify-center rounded-full font-bold text-avatar-on;
   }
 
   /* Agenda ticket: two punched notches where the stub tears off. On phones the
@@ -472,21 +447,21 @@
      column, 170px wide and 190px from lg. */
   .ticket-notch {
     -webkit-mask:
-      radial-gradient(circle 11px at 0 calc(100% - 118px), transparent 97%, #000) left / 51% 100% no-repeat,
-      radial-gradient(circle 11px at 100% calc(100% - 118px), transparent 97%, #000) right / 51% 100% no-repeat;
+      radial-gradient(circle 11px at 0 calc(100% - 118px), transparent 97%, black) left / 51% 100% no-repeat,
+      radial-gradient(circle 11px at 100% calc(100% - 118px), transparent 97%, black) right / 51% 100% no-repeat;
     mask:
-      radial-gradient(circle 11px at 0 calc(100% - 118px), transparent 97%, #000) left / 51% 100% no-repeat,
-      radial-gradient(circle 11px at 100% calc(100% - 118px), transparent 97%, #000) right / 51% 100% no-repeat;
+      radial-gradient(circle 11px at 0 calc(100% - 118px), transparent 97%, black) left / 51% 100% no-repeat,
+      radial-gradient(circle 11px at 100% calc(100% - 118px), transparent 97%, black) right / 51% 100% no-repeat;
   }
   @media (min-width: 768px) {
     .ticket-notch {
       --stub: 170px;
       -webkit-mask:
-        radial-gradient(circle 11px at calc(100% - var(--stub)) 0, transparent 97%, #000) top / 100% 51% no-repeat,
-        radial-gradient(circle 11px at calc(100% - var(--stub)) 100%, transparent 97%, #000) bottom / 100% 51% no-repeat;
+        radial-gradient(circle 11px at calc(100% - var(--stub)) 0, transparent 97%, black) top / 100% 51% no-repeat,
+        radial-gradient(circle 11px at calc(100% - var(--stub)) 100%, transparent 97%, black) bottom / 100% 51% no-repeat;
       mask:
-        radial-gradient(circle 11px at calc(100% - var(--stub)) 0, transparent 97%, #000) top / 100% 51% no-repeat,
-        radial-gradient(circle 11px at calc(100% - var(--stub)) 100%, transparent 97%, #000) bottom / 100% 51% no-repeat;
+        radial-gradient(circle 11px at calc(100% - var(--stub)) 0, transparent 97%, black) top / 100% 51% no-repeat,
+        radial-gradient(circle 11px at calc(100% - var(--stub)) 100%, transparent 97%, black) bottom / 100% 51% no-repeat;
     }
   }
   @media (min-width: 1024px) {
@@ -496,11 +471,11 @@
   /* A collected stub on Agenda › Geweest: small notches at the perforation. */
   .stub-notch {
     -webkit-mask:
-      radial-gradient(circle 7px at 0 36px, transparent 97%, #000) left / 51% 100% no-repeat,
-      radial-gradient(circle 7px at 100% 36px, transparent 97%, #000) right / 51% 100% no-repeat;
+      radial-gradient(circle 7px at 0 36px, transparent 97%, black) left / 51% 100% no-repeat,
+      radial-gradient(circle 7px at 100% 36px, transparent 97%, black) right / 51% 100% no-repeat;
     mask:
-      radial-gradient(circle 7px at 0 36px, transparent 97%, #000) left / 51% 100% no-repeat,
-      radial-gradient(circle 7px at 100% 36px, transparent 97%, #000) right / 51% 100% no-repeat;
+      radial-gradient(circle 7px at 0 36px, transparent 97%, black) left / 51% 100% no-repeat,
+      radial-gradient(circle 7px at 100% 36px, transparent 97%, black) right / 51% 100% no-repeat;
   }
 
   /* The one bold call to action on a screen: brand blue, ink outline, flat.
@@ -522,10 +497,6 @@
 }
 
 @layer utilities {
-  .text-gradient {
-    color: rgb(var(--cyan-text));
-  }
-
   .shadow-card,
   .shadow-elevated,
   .shadow-hero {
@@ -554,32 +525,6 @@
   color-scheme: dark;
 }
 
-.dark .gradient-brand,
-.dark .gradient-card-blue {
-  background: #1F6CB0;
-}
-
-/* ── Global Tailwind utility overrides in dark mode ─────────────────────── */
-/* Specificity: 2 selectors (.dark + .class) beats single-class Tailwind utilities */
-
-/* Text */
-.dark .text-slate-900 { color: #E6F0F3; }
-.dark .text-slate-800 { color: #D5E2E7; }
-.dark .text-slate-700 { color: #BCC8CE; }
-
-/* Backgrounds */
-.dark .bg-slate-50  { background-color: #141B20; }
-.dark .bg-slate-100 { background-color: #1E2A31; }
-
-/* Borders */
-.dark .border-slate-100 { border-color: #1E2A31; }
-.dark .border-slate-200 { border-color: #243039; }
-
-/* Dividers */
-.dark .divide-slate-50 > :not([hidden]) ~ :not([hidden]) {
-  border-color: #1E2A31;
-}
-
 /* `truncate` clips on all sides, which shears the descenders (g, j, y) off
    text with a tight line-height — the display font and every `leading-none`
    label. Clip sideways only so the ellipsis still works but nothing below the
@@ -593,6 +538,7 @@
   min-width: 0;
 }
 
+/* colours:allowed:start (map tiles are inverted by a filter, so their background is a literal) */
 /* Crew map, dark theme: OpenStreetMap only ships a light style, so its tiles
    are inverted (hue-rotated back so water stays blue). Pins and controls are
    outside the tile pane and keep their own colours. */
@@ -602,6 +548,7 @@
 .crew-map-dark .leaflet-container {
   background: #1b2227;
 }
+/* colours:allowed:end */
 .crew-pin {
   background: none;
   border: none;

@@ -70,7 +70,7 @@ export function TimeTravelControl({ variant }: { variant: "sidebar" | "icon" }) 
           aria-label="Tijdreizen (testtool)"
           className={`flex w-full items-center justify-center gap-2.5 rounded-lg p-2.5 text-left transition-colors lg:justify-start lg:px-2.5 lg:py-2 ${
             override
-              ? "bg-amber-100 text-amber-900 hover:bg-amber-200 dark:bg-amber-500/15 dark:text-amber-200 dark:hover:bg-amber-500/25"
+              ? "bg-warn-soft text-warn hover:bg-warn-line/60"
               : "text-ink-2 hover:bg-sunken hover:text-ink"
           }`}
         >
@@ -90,13 +90,13 @@ export function TimeTravelControl({ variant }: { variant: "sidebar" | "icon" }) 
           aria-label="Tijdreizen (testtool)"
           className={`hit-area relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
             override
-              ? "bg-amber-100 text-amber-900 dark:bg-amber-500/15 dark:text-amber-200"
+              ? "bg-warn-soft text-warn"
               : "text-ink-2 hover:bg-sunken hover:text-ink"
           }`}
         >
           <Clock size={17} />
           {override && (
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-1.5 border-surface bg-amber-500" />
+            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-1.5 border-surface bg-warn-fill" />
           )}
         </button>
       )}

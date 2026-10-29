@@ -26,7 +26,7 @@ export function OfflineBanner() {
   if (!offline) return null;
 
   return (
-    <div className="sticky top-0 z-[100] border-b-1.5 border-outline bg-amber-400 text-slate-900">
+    <div className="sticky top-0 z-[100] border-b-1.5 border-outline bg-warn-fill text-warn-on">
       {/* Safe-area spacer — kept separate from the content row so the row
           itself always stays vertically centered regardless of notch height,
           same pattern as ImpersonationBanner. */}

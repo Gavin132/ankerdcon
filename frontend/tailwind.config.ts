@@ -61,7 +61,7 @@ const config: Config = {
         // The dark layer behind sheets, dialogs and viewers: `bg-scrim/50`.
         scrim: token("scrim"),
         // The fill of the initial of someone without a photo or colour of their own: `bg-avatar-1` .. `bg-avatar-6`.
-        avatar: { 1: token("avatar-1"), 2: token("avatar-2"), 3: token("avatar-3"), 4: token("avatar-4"), 5: token("avatar-5"), 6: token("avatar-6") },
+        avatar: { 1: token("avatar-1"), 2: token("avatar-2"), 3: token("avatar-3"), 4: token("avatar-4"), 5: token("avatar-5"), 6: token("avatar-6"), on: token("avatar-on") },
         ink: {
           DEFAULT: token("ink"),
           2: token("ink-2"),

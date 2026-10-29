@@ -41,7 +41,7 @@ export function ColorSwatch({ value, onChange, presets, customFallback, on = "su
           }`}
           style={{ backgroundColor: c }}
         >
-          {value === c && <Check size={11} strokeWidth={3} className="text-white" />}
+          {value === c && <Check size={11} strokeWidth={3} className="text-avatar-on" />}
         </button>
       ))}
 

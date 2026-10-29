@@ -26,8 +26,8 @@ function persistDismissedIds(ids: Set<string>) {
 // text (white on amber was 2.1:1); urgent keeps rose with white text.
 const SEVERITY_STYLE: Record<AnnouncementSeverity, { bar: string; hover: string; icon: ElementType }> = {
   info:    { bar: "border-b-1.5 border-line bg-sunken text-ink", hover: "hover:bg-ink/5", icon: Info },
-  warning: { bar: "bg-amber-400 text-slate-950", hover: "hover:bg-black/10", icon: AlertTriangle },
-  urgent:  { bar: "bg-rose-600 text-white", hover: "hover:bg-black/10", icon: Megaphone },
+  warning: { bar: "bg-warn-fill text-warn-on", hover: "hover:bg-scrim/10", icon: AlertTriangle },
+  urgent:  { bar: "bg-bad-fill text-bad-on", hover: "hover:bg-scrim/10", icon: Megaphone },
 };
 
 /** Site-wide announcement bar(s), shown above the header on every page. `fallback` shows instead when there is

@@ -190,7 +190,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 z-[200] bg-slate-950/50"
+            className="fixed inset-0 z-[200] bg-scrim/50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -266,18 +266,18 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
                 {/* Loading spinner */}
                 {!imgReady && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="h-6 w-6 rounded-full border-2 border-white/20 border-t-white/70 animate-spin" />
+                    <div className="h-6 w-6 rounded-full border-2 border-hero-ink/20 border-t-hero-ink/70 animate-spin" />
                   </div>
                 )}
 
                 {/* Rule-of-thirds overlay */}
                 {imgReady && (
                   <div className="pointer-events-none absolute inset-0">
-                    <div className="absolute inset-x-0 top-1/3 h-px bg-white/10" />
-                    <div className="absolute inset-x-0 top-2/3 h-px bg-white/10" />
-                    <div className="absolute inset-y-0 left-1/3 w-px bg-white/10" />
-                    <div className="absolute inset-y-0 left-2/3 w-px bg-white/10" />
-                    <div className="absolute inset-0 rounded-xl ring-1 ring-white/20" />
+                    <div className="absolute inset-x-0 top-1/3 h-px bg-hero-ink/10" />
+                    <div className="absolute inset-x-0 top-2/3 h-px bg-hero-ink/10" />
+                    <div className="absolute inset-y-0 left-1/3 w-px bg-hero-ink/10" />
+                    <div className="absolute inset-y-0 left-2/3 w-px bg-hero-ink/10" />
+                    <div className="absolute inset-0 rounded-xl ring-1 ring-hero-ink/20" />
                   </div>
                 )}
               </div>

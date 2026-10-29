@@ -88,7 +88,7 @@ export function UserPhotos({ identifier, whose }: { identifier: string; whose?: 
                     className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
                   />
                   {p.media_type === "video" && (
-                    <span className="pointer-events-none absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-hero/65 text-white">
+                    <span className="pointer-events-none absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-hero/65 text-hero-ink">
                       <Play size={10} fill="currentColor" />
                     </span>
                   )}
@@ -137,17 +137,17 @@ function Lightbox({
   }, [onClose, onPrev, onNext]);
 
   const arrow =
-    "absolute top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20";
+    "absolute top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-hero-ink/10 text-hero-ink transition-colors hover:bg-hero-ink/20";
 
   return createPortal(
-    <div className="fixed inset-0 z-[500] flex flex-col bg-black/95" onClick={onClose} role="dialog" aria-modal="true" aria-label="Foto">
+    <div className="fixed inset-0 z-[500] flex flex-col bg-scrim/95" onClick={onClose} role="dialog" aria-modal="true" aria-label="Foto">
       <div
-        className="flex shrink-0 items-center justify-between gap-3 px-4 py-3 text-white"
+        className="flex shrink-0 items-center justify-between gap-3 px-4 py-3 text-hero-ink"
         style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top, 0px))" }}
       >
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{photo.event_name ?? "Onbekend evenement"}</p>
-          <p className="truncate text-xs text-white/60">
+          <p className="truncate text-xs text-hero-ink/60">
             {[photo.date ? formatDate(photo.date) : null, position].filter(Boolean).join(" · ")}
           </p>
         </div>
@@ -155,7 +155,7 @@ function Lightbox({
           type="button"
           onClick={onClose}
           aria-label="Sluiten"
-          className="hit-area flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 hover:bg-white/20"
+          className="hit-area flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-hero-ink/10 hover:bg-hero-ink/20"
         >
           <X size={18} />
         </button>

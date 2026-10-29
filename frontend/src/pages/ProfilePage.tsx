@@ -212,7 +212,7 @@ function ProfileHead({
                   onError={onAvatarError}
                 />
               ) : (
-                <span className="text-3xl font-bold text-white">
+                <span className="text-3xl font-bold text-avatar-on">
                   {user.name[0].toUpperCase()}
                 </span>
               )}
@@ -738,7 +738,7 @@ export function ProfilePage() {
               <input
                 type="text"
                 maxLength={30}
-                className={`input-field ${nameError && draftName !== user.name ? "!border-rose-500 dark:!border-rose-400" : ""}`}
+                className={`input-field ${nameError && draftName !== user.name ? "!border-bad-fill" : ""}`}
                 value={draftName}
                 onChange={(e) => setDraftName(e.target.value)}
               />
@@ -779,7 +779,7 @@ export function ProfilePage() {
                   type="tel"
                   autoComplete="tel"
                   maxLength={20}
-                  className={`input-field pl-9 ${phoneError && draftPhone ? "!border-rose-500 dark:!border-rose-400" : ""}`}
+                  className={`input-field pl-9 ${phoneError && draftPhone ? "!border-bad-fill" : ""}`}
                   placeholder="+31 6 12345678"
                   value={draftPhone}
                   onChange={(e) => setDraftPhone(e.target.value)}

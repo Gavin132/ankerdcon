@@ -43,7 +43,7 @@ export function HeroPeople({ names, singular, plural, children }: HeroPeopleProp
 
   return (
     <>
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-x-3 gap-y-3 border-t border-dashed border-white/20 pt-4">
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-x-3 gap-y-3 border-t border-dashed border-hero-ink/20 pt-4">
         {people.length > 0 && (
           <button
             type="button"
@@ -73,13 +73,13 @@ export function HeroPeople({ names, singular, plural, children }: HeroPeopleProp
               </>
             );
             const cls =
-              "inline-flex min-h-9 items-center gap-1.5 rounded-full border border-white/25 bg-white/10 py-1 pl-1.5 pr-3 text-xs font-medium text-hero-ink";
+              "inline-flex min-h-9 items-center gap-1.5 rounded-full border border-hero-ink/25 bg-hero-ink/10 py-1 pl-1.5 pr-3 text-xs font-medium text-hero-ink";
             return person.user ? (
               <button
                 key={person.names[0]}
                 type="button"
                 onClick={(e) => openPopup(person.user!, e)}
-                className={`hit-area ${cls} transition-colors hover:bg-white/20`}
+                className={`hit-area ${cls} transition-colors hover:bg-hero-ink/20`}
               >
                 {inner}
               </button>

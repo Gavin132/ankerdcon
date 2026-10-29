@@ -122,7 +122,7 @@ function ProfilePhotos({ bannerColor }: { bannerColor: string }) {
             {hasAvatar ? (
               <img src={me!.avatar_url} alt="" className="h-full w-full object-cover" onError={() => setAvatarImgErr(true)} />
             ) : (
-              <span className="text-xl font-bold text-white">{(me?.name ?? "?")[0]?.toUpperCase()}</span>
+              <span className="text-xl font-bold text-avatar-on">{(me?.name ?? "?")[0]?.toUpperCase()}</span>
             )}
           </div>
           <button
@@ -203,7 +203,7 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
               autoComplete="tel"
               maxLength={20}
               placeholder="+31 6 12345678"
-              className={`input-field pl-9 ${phoneError && state.phone ? "!border-rose-500 dark:!border-rose-400" : ""}`}
+              className={`input-field pl-9 ${phoneError && state.phone ? "!border-bad-fill" : ""}`}
               value={state.phone}
               onChange={(e) => onChange({ phone: e.target.value })}
             />

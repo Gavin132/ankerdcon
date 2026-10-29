@@ -8,6 +8,7 @@ import { useUser } from "../../hooks/useUsers";
 import { useBadges } from "../../hooks/useBadges";
 import { BadgeIcon } from "../common/BadgeIcon";
 import { avatarColor, avatarSrc } from "../../utils/avatar";
+import { HERO_COLOR } from "../../utils/profile";
 import { logout } from "../../services/auth.service";
 
 interface AccountMenuProps {
@@ -78,7 +79,7 @@ export function AccountMenu({ variant = "avatar" }: AccountMenuProps) {
   function avatar(sizeClass: string) {
     return (
       <span
-        className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full font-bold text-white ${sizeClass} ${!useInlineColor && !showDiscordAvatar ? avatarColor(displayName) : ""}`}
+        className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full font-bold text-avatar-on ${sizeClass} ${!useInlineColor && !showDiscordAvatar ? avatarColor(displayName) : ""}`}
         style={useInlineColor && !showDiscordAvatar ? { backgroundColor: me.color, backgroundImage: "none" } : undefined}
       >
         {showDiscordAvatar ? (
@@ -141,7 +142,7 @@ export function AccountMenu({ variant = "avatar" }: AccountMenuProps) {
                 style={
                   me?.banner_url
                     ? { backgroundImage: `url(${me.banner_url})`, backgroundSize: "cover", backgroundPosition: "center" }
-                    : { backgroundColor: me?.banner_color || "#0F1519" }
+                    : { backgroundColor: me?.banner_color || HERO_COLOR }
                 }
               />
               <div className="absolute left-4 -bottom-5 rounded-full border-[3px] border-surface">
@@ -185,7 +186,7 @@ export function AccountMenu({ variant = "avatar" }: AccountMenuProps) {
               <button
                 role="menuitem"
                 onClick={handleLogout}
-                className="flex min-h-11 w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-[13px] font-medium text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10 transition-colors"
+                className="flex min-h-11 w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-[13px] font-medium text-bad hover:bg-bad-soft transition-colors"
               >
                 <LogOut size={14} className="shrink-0" />
                 Uitloggen

@@ -5,9 +5,9 @@ import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
 export type HeroTone = "neutral" | "warn" | "bad";
 
 const TONES: Record<HeroTone, string> = {
-  neutral: "border-white/25 bg-white/10 text-hero-ink",
-  warn: "border-amber-300/40 bg-amber-400/15 text-amber-200",
-  bad: "border-rose-300/40 bg-rose-500/20 text-rose-200",
+  neutral: "border-hero-ink/25 bg-hero-ink/10 text-hero-ink",
+  warn: "border-hero-warn/40 bg-hero-warn/15 text-hero-warn",
+  bad: "border-hero-bad/40 bg-hero-bad/15 text-hero-bad",
 };
 
 /** Class string of a chip, for when the chip is a `Link` or a `button` instead of a `span`. */
@@ -34,7 +34,7 @@ export function HeroSecondaryButton({ className = "", ...props }: ButtonHTMLAttr
   return (
     <button
       type="button"
-      className={`hit-area flex min-h-[40px] items-center gap-1.5 whitespace-nowrap rounded-xl border-1.5 border-white/25 px-3.5 py-2 text-xs font-semibold text-hero-ink transition-colors hover:border-white/50 ${className}`}
+      className={`hit-area flex min-h-[40px] items-center gap-1.5 whitespace-nowrap rounded-xl border-1.5 border-hero-ink/25 px-3.5 py-2 text-xs font-semibold text-hero-ink transition-colors hover:border-hero-ink/50 ${className}`}
       {...props}
     />
   );

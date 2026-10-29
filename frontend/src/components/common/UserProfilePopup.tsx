@@ -119,7 +119,7 @@ export function UserProfilePopup({
           {/* Dimmed backdrop — no blur, list stays readable */}
           <motion.div
             key="popup-bg"
-            className="fixed inset-0 z-[230] bg-slate-950/50"
+            className="fixed inset-0 z-[230] bg-scrim/50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -150,7 +150,7 @@ export function UserProfilePopup({
                   {/* Avatar — 68px, overlapping the banner by half */}
                   <div className="-mt-[34px] mb-2">
                     <div
-                      className={`relative z-10 flex h-[68px] w-[68px] items-center justify-center overflow-hidden rounded-full border-[4px] border-surface text-2xl font-bold text-white ${!hasAvatar ? `bg-gradient-to-br ${avatarColor(u!.name)}` : ""}`}
+                      className={`relative z-10 flex h-[68px] w-[68px] items-center justify-center overflow-hidden rounded-full border-[4px] border-surface text-2xl font-bold text-avatar-on ${!hasAvatar ? `bg-gradient-to-br ${avatarColor(u!.name)}` : ""}`}
                       style={
                         !hasAvatar && u?.color
                           ? { backgroundColor: u.color, backgroundImage: "none" }
