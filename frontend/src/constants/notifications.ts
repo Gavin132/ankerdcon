@@ -35,11 +35,22 @@ export const NOTIFICATION_CATEGORIES: NotificationCategoryDef[] = [
   { id: "expense_created", group: "plans", label: "Nieuwe uitgave", description: "Wanneer iemand een groepsuitgave toevoegt." },
   { id: "meal_created", group: "plans", label: "Nieuwe activiteit", description: "Wanneer iemand een activiteit plant, zoals een etentje of bowlen." },
   { id: "feedback_submitted", group: "admin", label: "Nieuwe feedback", description: "Wanneer iemand een bug, idee of opmerking instuurt. Alleen voor admins.", adminOnly: true },
+  { id: "new_user", group: "admin", label: "Nieuwe gebruiker", description: "Wanneer iemand voor het eerst inlogt, zodat je weet wanneer er een profiel is om samen te voegen. Alleen voor admins.", adminOnly: true },
 ];
 
 /** The categories this member can choose from. */
 export function categoriesFor(isAdmin: boolean): NotificationCategoryDef[] {
   return NOTIFICATION_CATEGORIES.filter((c) => !c.adminOnly || isAdmin);
+}
+
+/**
+ * The choices to save. A member who is no longer an admin may still carry an admin category from
+ * when they were; the backend refuses those from anyone else, so they are left out instead of
+ * making every save fail.
+ */
+export function categoriesToSave(chosen: string[], isAdmin: boolean): string[] {
+  if (isAdmin) return chosen;
+  return chosen.filter((id) => !NOTIFICATION_CATEGORIES.some((c) => c.id === id && c.adminOnly));
 }
 
 /** What "Alleen belangrijk" switches on: what you would miss something over. */

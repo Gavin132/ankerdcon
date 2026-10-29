@@ -10,7 +10,7 @@ import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 import { useCurrentUser, useUpdatePreferences } from "../hooks/useUsers";
 import { useSmartBack } from "../hooks/useSmartBack";
 import { routes } from "../config/routes";
-import { activePreset, applyPreset, categoriesFor, NOTIFICATION_GROUPS, type NotificationPreset } from "../constants/notifications";
+import { activePreset, applyPreset, categoriesFor, categoriesToSave, NOTIFICATION_GROUPS, type NotificationPreset } from "../constants/notifications";
 import { NotificationChannelPicker } from "../components/notifications/NotificationChannelPicker";
 import { NoDiscordNotice } from "../components/notifications/NoDiscordNotice";
 import { toast } from "../store/toast.store";
@@ -67,7 +67,7 @@ export function NotificationSettingsPage() {
       await updateMutation.mutateAsync({
         allow_dm: draftAllowDm,
         notify_own_trips_only: draftOwnTrips,
-        notification_categories: draftCategories,
+        notification_categories: categoriesToSave(draftCategories, !!user?.is_admin),
       });
       setSavedSnapshot({ allowDm: draftAllowDm, categories: draftCategories, ownTrips: draftOwnTrips });
       toast("success", "Meldingen opgeslagen.");

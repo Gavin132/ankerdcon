@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activePreset, applyPreset, categoriesFor, IMPORTANT_CATEGORY_IDS } from "./notifications";
+import { activePreset, applyPreset, categoriesFor, categoriesToSave, IMPORTANT_CATEGORY_IDS, NOTIFICATION_CATEGORIES } from "./notifications";
 
 describe("notification presets", () => {
   it("'none' clears every ordinary category but leaves an admin one alone", () => {
@@ -33,5 +33,30 @@ describe("notification presets", () => {
   it("an admin's own category does not change which preset it is", () => {
     expect(activePreset(["feedback_submitted"], true)).toBe("none");
     expect(activePreset([...IMPORTANT_CATEGORY_IDS, "feedback_submitted"], true)).toBe("important");
+  });
+});
+
+describe("the admin-only notifications", () => {
+  const ids = (isAdmin: boolean) => categoriesFor(isAdmin).map((c) => c.id);
+
+  it("are offered to an admin and to nobody else", () => {
+    for (const id of ["feedback_submitted", "new_user"]) {
+      expect(ids(true)).toContain(id);
+      expect(ids(false)).not.toContain(id);
+    }
+  });
+
+  it("'Nieuwe gebruiker' is an admin category that no preset switches on by itself", () => {
+    expect(NOTIFICATION_CATEGORIES.find((c) => c.id === "new_user")).toMatchObject({ adminOnly: true, group: "admin" });
+    for (const preset of ["all", "important"] as const) {
+      expect(applyPreset(preset, [], true)).not.toContain("new_user");
+    }
+    expect(applyPreset("all", ["new_user"], true)).toContain("new_user");
+    expect(applyPreset("none", ["new_user"], true)).toContain("new_user");
+  });
+
+  it("is saved for an admin, and left out for a member who kept it from when they were one", () => {
+    expect(categoriesToSave(["ride_created", "new_user"], true)).toEqual(["ride_created", "new_user"]);
+    expect(categoriesToSave(["ride_created", "new_user", "feedback_submitted"], false)).toEqual(["ride_created"]);
   });
 });
