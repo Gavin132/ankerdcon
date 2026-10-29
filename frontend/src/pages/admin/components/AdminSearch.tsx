@@ -20,7 +20,7 @@ export function AdminSearch({
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="input-field py-2.5 pl-9 pr-10 text-base sm:text-sm"
+        className="input-field pl-9 pr-10"
         placeholder={placeholder}
       />
       {value && (

@@ -1,12 +1,10 @@
 /** Shared Tailwind class strings for the admin portal (flat design, see docs/design-system.md). */
 
-/** Text input inside admin drawers. Compact version of `input-field`. */
-export const F =
-  "input-field px-3 py-2.5 text-base sm:text-sm";
+/** Text input inside admin drawers: the one `input-field` (16 px, so iOS does not zoom, 48 px tall). */
+export const F = "input-field";
 
 /** Use for <select> elements. `.dark .input-field` sets the dark color-scheme so native options stay readable. */
-export const FS =
-  "input-field px-3 py-2.5 text-base sm:text-sm";
+export const FS = "input-field";
 
 export const L = "field-label";
 

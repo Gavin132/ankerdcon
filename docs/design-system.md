@@ -249,7 +249,7 @@ Page head pattern (see `TripLayout`, `HubPage`):
   `border-outline bg-brand-soft`; a day tile also gets the tick circle. A group where several can be on at once
   (the flags of a meal category) is a chip with `bg-brand-soft text-brand-text` and a tick. Never `border-2`, never a
   brand fill with an outline for a choice (the brand fill is the one main button).
-- **Inputs:** `input-field`.
+- **Inputs:** `input-field` for every text field, select and textarea, and nothing else sets its size: 16px text (`text-base`, on every screen size, so iOS never zooms), `px-4 py-3` (a 48px tall field), 10px radius (`rounded-xl`), 1.5px `border-line`, the brand-text border on focus. A field in a sheet, in the admin panel or beside a button is the same field: add only layout (`w-full`, `min-w-0 flex-1`, `!w-auto` for a select in a filter row) and the padding for an icon inside it (`pl-9`). A field made of an icon and a bare `<input>` in a wrapper (the search, the quick-ride time) is `h-11` with `text-base`. Never `text-sm` or `text-xs` on a field, never a different radius. Labels are `field-label` (12.5px semibold), messages `field-error`.
 - **Hero blocks** (event, ride, meal headers): a flat ink block (`bg-hero text-hero-ink`, tokens that stay dark in light mode too,
   rounded 14px, `border-2 border-outline`) or the event image with a flat dark overlay
   (`bg-hero/60`, no gradient ramps). Title in the display face. White-ish chips are `HeroChip`
@@ -308,7 +308,7 @@ Page head pattern (see `TripLayout`, `HubPage`):
 - **A press dims whatever is pressed** (`button`, `a[href]`, `role="button"`, 70% opacity, in
   `index.css`), because on a touchscreen nothing hovers and a tap would otherwise show no feedback. It has
   the lowest specificity: a component with its own pressed state (`active:scale-…`) wins.
-- **A text field is 16px or bigger** (`input-field` is `text-base`); below that iOS zooms the page in when
+- **A text field is 16px or bigger** (`input-field` is `text-base` at every width); below that iOS zooms the page in when
   the field gets focus. Give fields the keyboard they need: `inputMode="decimal"` for amounts,
   `"numeric"` for counts, `type="tel"` with `autoComplete="tel"`, `enterKeyHint="search"` on search boxes.
 - **Full-height screens use `min-h-dvh` / `h-dvh`**, not `min-h-screen` / `h-screen`: on iOS Safari `100vh`

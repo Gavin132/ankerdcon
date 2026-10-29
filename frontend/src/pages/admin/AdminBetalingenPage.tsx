@@ -59,7 +59,7 @@ function AdminStatusPicker({
       disabled={pending}
       onChange={(e) => handleChange(e.target.value as ExpenseShare["status"])}
       aria-label={`Status van ${who}`}
-      className="input-field !w-auto min-w-0 py-2 text-base sm:text-sm"
+      className="input-field !w-auto min-w-0"
     >
       {STATUS_ORDER.map((s) => (
         <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>
@@ -272,7 +272,7 @@ function ExpenseCard({
                 value={expense.linked_event_id ?? ""}
                 onChange={(e) => onSetEvent(expense.id, e.target.value || null)}
                 aria-label="Evenement van deze uitgave"
-                className="input-field !w-auto max-w-[220px] py-2 text-base sm:text-sm"
+                className="input-field !w-auto max-w-[220px]"
               >
                 <option value="">Geen evenement</option>
                 {events.map((ev) => (

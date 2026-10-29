@@ -273,7 +273,7 @@ export function AdminEventsPage() {
               <select
                 value={pickedGroup}
                 onChange={(e) => setPickedGroup(e.target.value)}
-                className="input-field w-full rounded-lg px-3 py-2.5 sm:w-auto"
+                className="input-field w-full sm:w-auto"
               >
                 <option value="">— Geen groep —</option>
                 {eventGroups.map((g) => (

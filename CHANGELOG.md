@@ -35,6 +35,9 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **All text fields in the admin panel are as big as the ones in the rest of the app** (16 px text and the same
+  height, on a computer too). The fields in the sheets, the search boxes and the filters of Betalingen used to be
+  smaller on a wide screen.
 - **Icons come in a fixed set of sizes** (12, 14, 16, 20, 22), so the same icon is the same size everywhere; the little
   icons that were 9 to 11 px are 12 now, and the vehicle icon of a ride no longer shrinks for a small car.
 - **Empty lists look the same everywhere.** "Geen gebruikers gevonden", "Nog geen groepen", "Nog geen auto's aangemeld"

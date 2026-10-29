@@ -442,7 +442,7 @@ function QuickUpload({ onUploaded }: { onUploaded: () => void }) {
               value={result.url}
               onFocus={(e) => e.currentTarget.select()}
               aria-label="Link naar het bestand"
-              className="input-field min-w-0 flex-1 !bg-sunken font-mono !text-base sm:!text-xs"
+              className="input-field min-w-0 flex-1 !bg-sunken font-mono"
             />
             <button type="button" onClick={copy} className="btn-secondary inline-flex shrink-0 items-center gap-1.5 px-3 py-2 text-sm">
               {copied ? <Check size={16} /> : <Copy size={16} />}
