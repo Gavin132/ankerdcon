@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Car, ChevronRight, Users } from "lucide-react";
+import { Car, Users } from "lucide-react";
 import { routes } from "../../config/routes";
 import { useCalendar } from "../../hooks/useCalendar";
 import { parseEventDate, toDateKey } from "../../utils/date";
@@ -22,16 +22,13 @@ interface QuickRideTilesProps {
   rides?: Ride[];
 }
 
-function QuickTile({ icon, title, onClick }: { icon: React.ReactNode; title: string; onClick: () => void }) {
+/** One of the two shortcuts: a standard blue button, the icon beside a one-line label, so both are the same width and
+ * height whatever the label says. */
+function QuickButton({ icon, title, onClick }: { icon: React.ReactNode; title: string; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex min-h-11 items-center card-surface gap-3 p-3 text-left transition-colors hover:border-ink-3"
-    >
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">{icon}</span>
-      <span className="min-w-0 flex-1 text-[14px] font-semibold leading-tight text-ink">{title}</span>
-      <ChevronRight size={16} className="shrink-0 text-ink-3" />
+    <button type="button" onClick={onClick} className="btn-primary gap-2 px-2 text-sm">
+      {icon}
+      {title}
     </button>
   );
 }
@@ -80,8 +77,8 @@ export function QuickRideTiles({ event, restaurantMeal, rides = [] }: QuickRideT
     <>
       <p className="mb-2 text-xs text-ink-3">{hint}</p>
       <div className="grid grid-cols-2 gap-3">
-        <QuickTile icon={<Car size={16} />} title="Rit aanbieden" onClick={handleOfferClick} />
-        <QuickTile icon={<Users size={16} />} title="Meerijden" onClick={handleJoinClick} />
+        <QuickButton icon={<Car size={16} />} title="Rit aanbieden" onClick={handleOfferClick} />
+        <QuickButton icon={<Users size={16} />} title="Meerijden" onClick={handleJoinClick} />
       </div>
 
       {isRestaurantLeg ? (

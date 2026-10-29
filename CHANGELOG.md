@@ -42,6 +42,8 @@ All notable changes to Ankerd Con are documented here.
 - **The changelog page of the admin panel printed the date as 2026-10-22.**
 
 ### Changed
+- **"Rit aanbieden" and "Meerijden" on the Hub are two equal blue buttons** with the icon beside the name, so
+  "Rit aanbieden" no longer breaks over two lines on a phone.
 - **Search no longer lists old rides.** Searching for a driver or a place finds rides from today onwards only.
 - **A concert has no Cosplay card, tab or search suggestion.** Other events (cons, gatherings, trips) keep them.
 - **In the admin users list, an admin is a shield on the corner of the profile picture**, in your accent colour, instead

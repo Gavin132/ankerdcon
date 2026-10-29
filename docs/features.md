@@ -121,7 +121,7 @@ the trip is the left column and "Voor jou" with the shortcuts the right one):
   drivers who planned the other way but not this one ("Nog geen terugrit: Anna, Bram"), for the
   whole trip, so on the way back nobody has to go through every driver to see who is still missing
   (`driversMissing` in `utils/transportView.ts`). The sheet opens on the day, and scrolls to the section, the
-  Hub's "Rit aanbieden" and "Meerijden" tiles would use (`utils/transportView.ts`, built on
+  Hub's "Rit aanbieden" and "Meerijden" buttons would use (`utils/transportView.ts`, built on
   `planQuickRide`): Heen before the trip and in the morning, Terug from 13:00, Heen on
   tomorrow's day from 20:00, Terug on the last day once it's over, and Eten instead of Terug
   when the trip has no hotel and a meal still to come needs a ride. That is only the starting
