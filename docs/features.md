@@ -45,7 +45,8 @@ the trip, the ride buttons and a meal today are the left column and "Voor jou" w
 - **Upcoming trip ticket** (`components/hub/UpcomingEventCard.tsx`): the nearest
   trip with a countdown, its days and who is going. More than one upcoming trip becomes a
   carousel (`UpcomingEventsCarousel.tsx`): swipe it or use the dots (`Pager`; the arrows show from `md`).
-  It never moves by itself.
+  It never moves by itself. On a phone the row is as tall as the card in view; from `lg` up all cards are as tall as the
+  tallest one, so paging does not move the dots or anything below.
 - **Quick ride buttons** (`QuickRideTiles.tsx`, straight under the trip; **today's meals**, `MealTodayCard.tsx`, is the
   shortcut card after it): offer or join a ride to/from the event or hotel. The
   direction and time are guessed from the clock (`utils/quickRide.ts`).

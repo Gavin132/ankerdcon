@@ -95,8 +95,10 @@ export function UpcomingEventsCarousel({
 
   const itemCount = items.length;
 
-  // The row is as tall as the card in view, not the tallest card: otherwise a short card sits above an
+  // On a phone the row is as tall as the card in view, not the tallest card: otherwise a short card sits above an
   // empty gap on its way to the dots. Re-measured when the card changes size (a list of names opening).
+  // From `lg` up all cards are as tall as the tallest one (the row stretches them), so paging does not move the dots,
+  // the arrows or anything below the carousel.
   const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [height, setHeight] = useState<number | undefined>(undefined);
   useLayoutEffect(() => {
@@ -133,8 +135,8 @@ export function UpcomingEventsCarousel({
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          style={{ height }}
-          className="flex items-start overflow-x-auto overflow-y-hidden snap-x snap-mandatory gap-3 scroll-smooth transition-[height] duration-200 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          style={{ "--row-h": height === undefined ? undefined : `${height}px` } as React.CSSProperties}
+          className="flex h-[var(--row-h)] items-start overflow-x-auto overflow-y-hidden snap-x snap-mandatory gap-3 scroll-smooth transition-[height] duration-200 lg:h-auto lg:items-stretch [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {items.map((item, i) => (
             // The cards out of view are cut off by the row's height, so they are not for the keyboard or a screen reader either.
