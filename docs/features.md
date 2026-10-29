@@ -37,18 +37,19 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
 
 ## Hub
 
-`pages/HubPage.tsx`. From the top:
+`pages/HubPage.tsx`. From the top (on a phone, "Voor jou" comes straight after the trip, before the meal and ride shortcuts; from `xl`
+the trip is the left column and "Voor jou" with the shortcuts the right one):
 
-- **Story row**: an "add" tile and a ring per day with photos, unseen ones highlighted.
+- **Story row**: an "add" tile and a ring per day with photos, unseen ones highlighted. It only shows
+  once a day has photos or the trip is a day away; weeks before, it would be empty circles.
 - **Upcoming trip ticket** (`components/hub/UpcomingEventCard.tsx`): the nearest
   trip with a countdown, its days and who is going. More than one upcoming trip becomes a
-  carousel (`UpcomingEventsCarousel.tsx`) that advances itself every 10 seconds — paused while
-  the tab is in the background, skipped entirely under "reduce motion", and the countdown
-  restarts whenever someone swipes or taps a dot/arrow themselves.
+  carousel (`UpcomingEventsCarousel.tsx`): swipe it or use the dots (`Pager`; the arrows show from `md`).
+  It never moves by itself.
 - **Today's meals** (`MealTodayCard.tsx`) and **quick ride tiles**
   (`QuickRideTiles.tsx`): offer or join a ride to/from the event or hotel. The
   direction and time are guessed from the clock (`utils/quickRide.ts`).
-  "Meerijden" is the same day chips and Heen/Terug rows as the Vervoer sheet (`JoinRideModal.tsx` reuses
+  One grey line above the two tiles says what the sheets open on. "Meerijden" is the same day chips and Heen/Terug rows as the Vervoer sheet (`JoinRideModal.tsx` reuses
   `RideRow`). Where a new ride starts and ends is `defaultRideEnds` (`utils/rideLocations.ts`),
   shared with the Vervoer sheet: the venue on the event side and, on a hotel trip, the hotel on
   the other side except for the first Heen and the last Terug (those are from and to home).
@@ -70,7 +71,9 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
 
 - The **ticket** (`components/trip/TripTicket.tsx`) shows the trip, its days, who
   is going and a countdown. Tap a day to sign up or off. Tap the avatars to see
-  everyone by name (`TripParticipants.tsx`); that list has an "Iemand aanmelden" button too.
+  everyone by name (`TripParticipants.tsx`); that list has the "Iemand aanmelden" button (it sits next to the text
+  when nobody is on the trip yet). The tilted "Je gaat mee" stamp is only on a trip that is under way or over; before it,
+  the checked day cards and "Jij en 3 anderen" say it.
 - The line at the top of the ticket names what kind of trip it is: an admin can tag an event
   **Con**, **Gathering** or **Concert** (`events.event_type` — Admin → Evenementen); untagged
   falls back to "Con" when the trip has con programming (`has_con`) or "Reis" otherwise. Shown
@@ -304,7 +307,7 @@ by hand, by members or admins.
 - **Recap** looks back: days of past trips show their photos (grey when you did not
   go), and a past trip opens a look-back with who went and the rides and dinners.
 - Past trips are collected as stubs per year.
-- **Abonneren** gives a private `.ics` link for a calendar app
+- **Agenda-link** gives a private `.ics` link for a calendar app ("Kopieer link" or open it in Google Calendar)
   (`GET /api/calendar/feed.ics?token=…`). Change `CALENDAR_FEED_TOKEN` to invalidate
   every shared link.
 

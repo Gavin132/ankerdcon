@@ -17,13 +17,14 @@ interface MealTodayCardProps {
   meals: Meal[];
   /** Every name the signed-in user can appear under in `participants`. */
   myNames: string[];
+  className?: string;
 }
 
 /**
  * Hub shortcut for a day with a mealplan: one card per meal that's today, straight
  * to its page, with whether you're on the list. Sits above the quick-ride cards.
  */
-export function MealTodayCard({ meals, myNames }: MealTodayCardProps) {
+export function MealTodayCard({ meals, myNames, className = "" }: MealTodayCardProps) {
   const { data: users = [] } = useUsers();
   const now = getNow().getTime();
   const today = todayKey();
@@ -39,12 +40,12 @@ export function MealTodayCard({ meals, myNames }: MealTodayCardProps) {
 
   return (
     // Its own animated wrapper (rather than the hub's) so a day without a meal leaves no empty gap.
-    <motion.div variants={listItem} className="space-y-2">
+    <motion.div variants={listItem} className={`space-y-2 ${className}`}>
       {todays.map((meal) => {
         const eating = (meal.participants ?? []).some((p) => myNames.includes(p));
         const count = groupPeople(meal.participants ?? [], users).length;
         return (
-          <Link key={meal.id} to={routes.meal.view(meal.id)} className="card-surface-hover flex items-center gap-3 p-3.5">
+          <Link key={meal.id} to={routes.meal.view(meal.id)} className="card-surface-hover flex min-h-11 items-center gap-3 p-3.5">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
               <Utensils size={16} />
             </span>

@@ -8,6 +8,7 @@ import { StoryViewer } from "../story/StoryViewer";
 import { dayShort } from "../../utils/multiDay";
 import { tripImage, tripPeople, type Trip } from "../../utils/trips";
 import { useUsers } from "../../hooks/useUsers";
+import { Segmented } from "../common/Segmented";
 import { routes } from "../../config/routes";
 
 interface CollectedStubsProps {
@@ -58,21 +59,13 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h2 className="font-display text-[26px] font-extrabold uppercase leading-none text-ink">Geweest in {year}</h2>
         {years.length > 1 && (
-          <div className="flex max-w-full gap-1 overflow-x-auto rounded-[10px] border-1.5 border-line bg-sunken p-[3px]" role="group" aria-label="Jaar">
-            {years.map((y) => (
-              <button
-                key={y}
-                type="button"
-                onClick={() => { setYear(y); setOpenId(null); }}
-                aria-pressed={y === year}
-                className={`min-h-9 shrink-0 rounded-[7px] px-3 py-1 font-mono text-[12px] font-semibold transition-colors ${
-                  y === year ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]" : "text-ink-2 hover:text-ink"
-                }`}
-              >
-                {y}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            label="Jaar"
+            scroll
+            options={years.map((y) => ({ value: String(y), label: <span className="tabular-nums">{y}</span> }))}
+            value={String(year)}
+            onChange={(y) => { setYear(Number(y)); setOpenId(null); }}
+          />
         )}
       </div>
 
@@ -108,7 +101,7 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
                     : "border-1.5 border-dashed border-line hover:border-ink-3"
               }`}
             >
-              <span className="border-b-1.5 border-dashed border-line pb-1.5 font-mono text-[12px] uppercase tracking-[0.06em] text-ink-3">
+              <span className="border-b-1.5 border-dashed border-line pb-1.5 text-[12px] text-ink-3">
                 {t.dateRange}
               </span>
               {thumb && (
@@ -143,7 +136,7 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
                 className="flex items-center gap-2 text-[14px] font-semibold text-ink hover:underline"
               >
                 <span className="min-w-0 truncate">{open.title}</span>
-                <span className="shrink-0 font-mono text-[12px] uppercase text-ink-3">{open.dateRange}</span>
+                <span className="shrink-0 text-[12px] font-normal text-ink-3">{open.dateRange}</span>
                 <ChevronRight size={14} className="ml-auto shrink-0 text-ink-3" />
               </Link>
               {photosOf(open) > 0 ? (

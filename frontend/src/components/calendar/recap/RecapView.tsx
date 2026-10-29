@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Camera, Check, ChevronLeft, ChevronRight, Undo2, Users } from "lucide-react";
 import { TripLookback } from "./TripLookback";
+import { Segmented } from "../../common/Segmented";
 import { TripPreview } from "./TripPreview";
 import { useStorySummary } from "../../../hooks/useStories";
 import { getNow } from "../../../store/time.store";
@@ -155,12 +156,12 @@ export function RecapView({ trips, myNames, users, rides, meals, onJoin, onLeave
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         {/* Arrows sit together in front of the title, so they stay put however long the month name is. */}
         <div className="flex items-center gap-3">
-          <div className="flex shrink-0 gap-1.5">
-            <button type="button" onClick={() => goToMonth(y, m - 1)} aria-label="Vorige maand" className="hit-area flex h-9 w-9 items-center justify-center rounded-[9px] border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink">
-              <ChevronLeft size={17} />
+          <div className="flex shrink-0 gap-2">
+            <button type="button" onClick={() => goToMonth(y, m - 1)} aria-label="Vorige maand" className="icon-btn border-1.5 border-line bg-surface">
+              <ChevronLeft size={16} />
             </button>
-            <button type="button" onClick={() => goToMonth(y, m + 1)} aria-label="Volgende maand" className="hit-area flex h-9 w-9 items-center justify-center rounded-[9px] border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink">
-              <ChevronRight size={17} />
+            <button type="button" onClick={() => goToMonth(y, m + 1)} aria-label="Volgende maand" className="icon-btn border-1.5 border-line bg-surface">
+              <ChevronRight size={16} />
             </button>
           </div>
           <div className="min-w-0">
@@ -176,26 +177,17 @@ export function RecapView({ trips, myNames, users, rides, meals, onJoin, onLeave
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {!isCurrentMonth && (
-            <button type="button" onClick={() => goToMonth(now.getFullYear(), now.getMonth())} className="hit-area flex h-9 items-center gap-1.5 rounded-[9px] border-1.5 border-line bg-surface px-3 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3">
+            <button type="button" onClick={() => goToMonth(now.getFullYear(), now.getMonth())} className="btn-secondary min-h-9 px-3 text-[13px]">
               <Undo2 size={14} />
               Vandaag
             </button>
           )}
-          <div className="flex gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]" role="group" aria-label="Filter">
-            {([false, true] as const).map((mine) => (
-              <button
-                key={String(mine)}
-                type="button"
-                onClick={() => { setMineOnly(mine); if (mine && selectedTrip && !isMine(selectedTrip)) setSelection(null); }}
-                aria-pressed={mineOnly === mine}
-                className={`hit-area min-h-9 rounded-[7px] px-3 py-1 text-[13px] font-semibold transition-colors ${
-                  mineOnly === mine ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]" : "text-ink-2 hover:text-ink"
-                }`}
-              >
-                {mine ? "Waar ik was" : "Alles"}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            label="Filter"
+            options={[{ value: "all", label: "Alles" }, { value: "mine", label: "Waar ik was" }]}
+            value={mineOnly ? "mine" : "all"}
+            onChange={(v) => { setMineOnly(v === "mine"); if (v === "mine" && selectedTrip && !isMine(selectedTrip)) setSelection(null); }}
+          />
         </div>
       </div>
 

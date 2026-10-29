@@ -17,11 +17,12 @@ interface ForYouPanelProps {
   meals: Meal[];
   expenses: Expense[];
   myName: string | undefined;
+  className?: string;
 }
 
 interface ForYouItem {
   key: string;
-  tone: "bad" | "warn" | "info";
+  tone: "bad" | "warn" | "info" | "calm";
   icon: React.ReactNode;
   title: string;
   /** Where it gets fixed, e.g. "HDCC · Event › Vervoer". */
@@ -31,10 +32,12 @@ interface ForYouItem {
 
 const COLLAPSED_COUNT = 4;
 
+// Only what is yours to fix gets a colour: no transport for you (bad) and money to pay (warn). The rest is neutral.
 const TONE = {
-  bad:  "pill-bad",
-  warn: "pill-warn",
-  info: "bg-brand-soft text-brand-text",
+  bad:  "icon-tile-bad",
+  warn: "icon-tile-warn",
+  info: "bg-sunken text-ink",
+  calm: "bg-sunken text-ink",
 };
 
 function people(n: number) {
@@ -46,7 +49,7 @@ function people(n: number) {
  * where it's fixed. Replaces the old Acties banner and page — the fixing
  * itself happens in Event › Vervoer / Eten, the meal page or Financiën.
  */
-export function ForYouPanel({ events, rides, meals, expenses, myName }: ForYouPanelProps) {
+export function ForYouPanel({ events, rides, meals, expenses, myName, className = "" }: ForYouPanelProps) {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const { data: settleUp } = useSettleUp();
@@ -74,7 +77,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName }: ForYouPa
     if (othersMissing.length > 0) {
       items.push({
         key: "transport",
-        tone: "warn",
+        tone: "calm",
         icon: <Bus size={15} />,
         title: `${people(othersMissing.length)} nog geen vervoer`,
         where: `${trip.title} · Event › Vervoer`,
@@ -85,7 +88,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName }: ForYouPa
       const meHungry = !!myName && gaps.food.includes(myName);
       items.push({
         key: "food",
-        tone: "warn",
+        tone: "calm",
         icon: <UtensilsCrossed size={15} />,
         title: meHungry && gaps.food.length === 1
           ? "Je eet nog nergens mee"
@@ -102,7 +105,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName }: ForYouPa
       const { gap } = action;
       items.push({
         key: `restaurant-${gap.id}`,
-        tone: "warn",
+        tone: "calm",
         icon: <UtensilsCrossed size={15} />,
         title: `${people(gap.unassigned.length)} geen auto naar het restaurant`,
         where: `Vertrek ${formatTime(gap.departureTime)} · ${gap.location}`,
@@ -160,19 +163,17 @@ export function ForYouPanel({ events, rides, meals, expenses, myName }: ForYouPa
   const hidden = items.length - shown.length;
 
   return (
-    <motion.section variants={listItem} className="card-surface overflow-hidden" aria-labelledby="for-you-title">
+    <motion.section variants={listItem} className={`card-surface overflow-hidden ${className}`} aria-labelledby="for-you-title">
       <div className="flex items-center gap-2 px-4 pt-4 pb-2">
         <p id="for-you-title" className="section-label">Voor jou</p>
         {items.length > 0 && (
-          <span className="rounded-full bg-rose-600 px-2 font-mono text-[12px] font-semibold leading-[18px] text-white tabular-nums dark:bg-rose-500">
-            {items.length}
-          </span>
+          <span className="pill pill-neutral tabular-nums">{items.length}</span>
         )}
       </div>
 
       {items.length === 0 ? (
         <p className="flex items-center gap-2 px-4 pb-4 text-sm text-ink-2">
-          <CheckCircle2 size={16} className="text-emerald-500" />
+          <CheckCircle2 size={16} className="text-ok" />
           Alles is geregeld
         </p>
       ) : (
@@ -182,9 +183,9 @@ export function ForYouPanel({ events, rides, meals, expenses, myName }: ForYouPa
               <button
                 type="button"
                 onClick={item.go}
-                className="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left hover:bg-sunken active:bg-sunken transition-colors"
+                className="flex min-h-11 w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left hover:bg-sunken active:bg-sunken transition-colors"
               >
-                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${TONE[item.tone]}`}>
+                <span className={`h-8 w-8 ${TONE[item.tone]} ${item.tone === "info" || item.tone === "calm" ? "flex shrink-0 items-center justify-center rounded-lg" : ""}`}>
                   {item.icon}
                 </span>
                 <span className="min-w-0 flex-1">

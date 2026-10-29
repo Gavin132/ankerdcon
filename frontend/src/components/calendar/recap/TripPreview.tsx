@@ -1,13 +1,12 @@
 import { TripParticipants } from "../../trip/TripParticipants";
 import { Link } from "react-router-dom";
 import { BedDouble, ChevronRight, MapPin, Ticket, X } from "lucide-react";
-import { UserAvatar } from "../../common/UserAvatar";
+import { AvatarStack } from "../../common/AvatarStack";
 import { TripPlanList } from "./TripPlanList";
 import { daysBetween, toDateKey, todayKey } from "../../../utils/date";
 import { dayShort, monthShort } from "../../../utils/multiDay";
 import { tripImage, tripPeople, type Trip } from "../../../utils/trips";
 import { groupPeople } from "../../../utils/people";
-import { findUser as findMember } from "../../../utils/people";
 import { routes } from "../../../config/routes";
 import type { Meal, Ride, User } from "../../../types";
 
@@ -30,7 +29,6 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
   const going = trip.participants.some((p) => myNames.includes(p));
   const hotel = trip.days.map((d) => d.ev.hotel_location).find(Boolean);
   const names = tripPeople(trip, users).map((person) => person.name).sort((a, b) => Number(myNames.includes(b)) - Number(myNames.includes(a)));
-  const findUser = (p: string) => findMember(users, p);
   const others = names.filter((p) => !myNames.includes(p)).length;
 
   return (
@@ -99,14 +97,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
 
         <div className="flex items-center gap-2.5">
           <TripParticipants trip={trip} users={users} myNames={myNames} onManage={onManage}>
-          {names.length > 0 && (
-            <span className="flex -space-x-1.5">
-              {names.slice(0, 6).map((p) => {
-                const u = findUser(p);
-                return <UserAvatar key={p} name={u?.name ?? p} user={u} className="h-7 w-7 text-[12px] !border-surface" />;
-              })}
-            </span>
-          )}
+          <AvatarStack names={names} />
           <span className="text-[13px] text-ink-2">
             {going
               ? others === 0 ? "Alleen jij" : `Jij en ${others} ${others === 1 ? "ander" : "anderen"}`

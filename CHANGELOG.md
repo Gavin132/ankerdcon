@@ -35,6 +35,18 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **A calmer Hub.** "Voor jou" comes right after the trip on a phone, above the meal, ride and shortcut cards. Only
+  what is yours to fix is coloured (no ride for you, money to pay); the rest of the rows and the count are grey. The
+  trip carousel no longer swaps cards by itself (swipe or use the dots), the story row waits until there is something
+  to see, the two ride tiles share one grey line instead of repeating it, and the ticket says "Vandaag" or
+  "Nu bezig, dag 2 van 3" once instead of three times.
+- **Agenda:** "Abonneren" is "Agenda-link" with a "Kopieer link" and a "Google Calendar" button instead of a raw link,
+  the cards behind the top ticket no longer print the next trips' names (the counter says "1 van 4"), and the
+  dots and arrows are the same as on the Hub and 44 px to hit.
+- **Crew:** a member's Discord name only shows when it differs from their name, the "location shared" dot no longer
+  pulses, and an empty search is a proper empty state.
+- **The Event ticket is shorter on a phone** (a lower cover, none for a trip without a picture), and "Iemand aanmelden"
+  moved from the ticket to the list of people who are going.
 - **Easier to hit on a phone.** Small controls are 44 px to hit now, and spaced so two of them no longer share a
   touch area: the edit and delete buttons of a hotel room, the colour swatches and alias chips on your profile, the
   paging buttons and search clear button in the admin panel, the arrows of an activity category, the delete

@@ -14,6 +14,8 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
   "/crew": { title: "Crew", subtitle: "Leden & locaties" },
 };
 
+const TITLE_CLASS = "truncate font-display text-[22px] font-extrabold uppercase leading-none tracking-[0.02em] text-ink";
+
 function pageMeta(pathname: string) {
   if (pathname === "/trip" || pathname.startsWith("/trip/") || pathname.startsWith("/trips/")) {
     return { title: "Event", subtitle: "Alles voor deze trip" };
@@ -37,9 +39,8 @@ export function Header() {
         <img src="/icons/icon-192.png" alt="" className="h-8 w-8 shrink-0 object-contain md:hidden" />
 
         <div className="flex min-w-0 flex-1 items-baseline gap-3">
-          <h1 className="truncate font-display text-[22px] font-extrabold uppercase leading-none tracking-[0.02em] text-ink">
-            {meta.title}
-          </h1>
+          {/* The Hub has its own heading (the greeting), so there the bar's title is not a second h1. */}
+          {pathname === "/" ? <p className={TITLE_CLASS}>{meta.title}</p> : <h1 className={TITLE_CLASS}>{meta.title}</h1>}
           {meta.subtitle && (
             <p className="hidden truncate font-mono text-[12px] uppercase tracking-[0.08em] text-ink-3 sm:block">
               {meta.subtitle}

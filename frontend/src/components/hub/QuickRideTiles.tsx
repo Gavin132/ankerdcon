@@ -22,29 +22,24 @@ interface QuickRideTilesProps {
   rides?: Ride[];
 }
 
-function QuickTile({ icon, title, hint, onClick }: { icon: React.ReactNode; title: string; hint: string; onClick: () => void }) {
+function QuickTile({ icon, title, onClick }: { icon: React.ReactNode; title: string; onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex flex-col gap-3 rounded-xl border-1.5 border-line bg-surface p-3.5 text-left transition-colors hover:border-ink-3"
+      className="flex min-h-11 items-center gap-3 rounded-xl border-1.5 border-line bg-surface p-3 text-left transition-colors hover:border-ink-3"
     >
-      <span className="flex w-full items-start justify-between">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sunken text-ink">{icon}</span>
-        <ChevronRight size={15} className="text-ink-3" />
-      </span>
-      <span>
-        <span className="block text-[14px] font-semibold leading-tight text-ink">{title}</span>
-        <span className="mt-1 block text-[12px] leading-snug text-ink-3">{hint}</span>
-      </span>
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">{icon}</span>
+      <span className="min-w-0 flex-1 text-[14px] font-semibold leading-tight text-ink">{title}</span>
+      <ChevronRight size={15} className="shrink-0 text-ink-3" />
     </button>
   );
 }
 
 /** Two hub shortcuts for getting to/from the event. The titles are fixed;
- * the grey line says what the sheet will open on — which direction and when
- * (see `planQuickRide`), or "naar restaurant" in the evening when there's a
- * meal still needing a ride. */
+ * the one grey line above them says what both sheets will open on — which
+ * direction and when (see `planQuickRide`), or "naar restaurant" in the
+ * evening when there's a meal still needing a ride. */
 export function QuickRideTiles({ event, restaurantMeal, rides = [] }: QuickRideTilesProps) {
   const navigate = useNavigate();
   const [offerOpen, setOfferOpen] = useState(false);
@@ -83,9 +78,10 @@ export function QuickRideTiles({ event, restaurantMeal, rides = [] }: QuickRideT
 
   return (
     <>
+      <p className="mb-2 text-xs text-ink-3">{hint}</p>
       <div className="grid grid-cols-2 gap-3">
-        <QuickTile icon={<Car size={16} />} title="Rit aanbieden" hint={hint} onClick={handleOfferClick} />
-        <QuickTile icon={<Users size={16} />} title="Meerijden" hint={hint} onClick={handleJoinClick} />
+        <QuickTile icon={<Car size={16} />} title="Rit aanbieden" onClick={handleOfferClick} />
+        <QuickTile icon={<Users size={16} />} title="Meerijden" onClick={handleJoinClick} />
       </div>
 
       {isRestaurantLeg ? (

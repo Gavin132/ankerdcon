@@ -6,6 +6,7 @@ import { CollectedStubs } from "../components/calendar/CollectedStubs";
 import { RecapView } from "../components/calendar/recap/RecapView";
 import { TripRsvpModal } from "../components/calendar/TripRsvpModal";
 import { EmptyState } from "../components/common/EmptyState";
+import { Segmented } from "../components/common/Segmented";
 import { useUsers } from "../hooks/useUsers";
 import { useMeals } from "../hooks/useMeals";
 import { useRides } from "../hooks/useRides";
@@ -93,33 +94,20 @@ export function CalendarPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-2">
         <button
+          type="button"
           onClick={() => setSubscribeOpen((v) => !v)}
           aria-expanded={subscribeOpen}
-          className={`flex items-center gap-1.5 rounded-[10px] border-1.5 px-3 py-1.5 text-[13px] font-semibold transition-colors ${
-            subscribeOpen
-              ? "border-outline bg-ink text-paper dark:bg-brand dark:text-brand-on"
-              : "border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
-          }`}
+          className="btn-secondary px-3 text-[13px]"
         >
-          <CalendarPlus size={14} />
-          Abonneren
+          <CalendarPlus size={16} />
+          Agenda-link
         </button>
-        <div className="flex gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]" role="group" aria-label="Weergave">
-          {(["tickets", "recap"] as const).map((view) => (
-            <button
-              key={view}
-              onClick={() => setCalendarView(view)}
-              aria-pressed={calendarView === view}
-              className={`rounded-[7px] px-3 py-1.5 text-[13px] font-semibold transition-colors ${
-                calendarView === view
-                  ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]"
-                  : "text-ink-2 hover:text-ink"
-              }`}
-            >
-              {view === "tickets" ? "Tickets" : "Recap"}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          label="Weergave"
+          options={[{ value: "tickets", label: "Tickets" }, { value: "recap", label: "Recap" }]}
+          value={calendarView}
+          onChange={setCalendarView}
+        />
       </div>
 
       <AnimatePresence>
@@ -131,25 +119,23 @@ export function CalendarPage() {
             transition={{ duration: 0.2, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <div className="card-surface flex items-center gap-2 px-3.5 py-2.5">
-              <p className="flex-1 truncate font-mono text-[12px] text-ink-2">
-                {feedUrl || "Link ophalen…"}
-              </p>
-              <button
-                onClick={copyFeedUrl}
-                title="Link kopiëren"
-                className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
-              >
-                {copied ? <Check size={14} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={14} />}
-              </button>
-              <a
-                href={feedUrl ? googleCalUrl : undefined}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="shrink-0 whitespace-nowrap rounded-lg border-1.5 border-line bg-surface px-2.5 py-1.5 text-[12px] font-semibold text-ink transition-colors hover:border-ink-3"
-              >
-                Google Calendar
-              </a>
+            <div className="card-surface space-y-3 p-4">
+              <p className="text-sm text-ink-2">Zet alle evenementen in je eigen agenda. De link blijft bijgewerkt.</p>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={copyFeedUrl} disabled={!feedUrl} className="btn-secondary px-3 text-[13px]">
+                  {copied ? <Check size={16} className="text-ok" /> : <Copy size={16} />}
+                  {copied ? "Gekopieerd" : feedUrl ? "Kopieer link" : "Link ophalen…"}
+                </button>
+                <a
+                  href={feedUrl ? googleCalUrl : undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-disabled={!feedUrl}
+                  className="btn-secondary px-3 text-[13px]"
+                >
+                  Google Calendar
+                </a>
+              </div>
             </div>
           </motion.div>
         )}

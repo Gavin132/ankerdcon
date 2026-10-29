@@ -276,6 +276,7 @@
   .hit-area,
   .chip,
   .icon-btn,
+  .segmented-item,
   .btn-primary {
     position: relative;
   }
@@ -283,6 +284,7 @@
   .hit-area::after,
   .chip::after,
   .icon-btn::after,
+  .segmented-item::after,
   .btn-primary::after {
     content: "";
     position: absolute;
@@ -380,6 +382,18 @@
   }
   .chip-on { @apply border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on; }
   .chip-off { @apply border-line bg-surface text-ink-2 hover:border-ink-3; }
+
+  /* Segmented control: pick one of a few views of the same thing (Tickets / Recap). The track is a sunken
+     well, the chosen item a surface with the ink outline. 36 px to look at, 44 px to hit. Use <Segmented>. */
+  .segmented {
+    @apply inline-flex max-w-full gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px];
+  }
+  .segmented-item {
+    @apply inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[7px] px-3 py-1 text-[13px] font-semibold text-ink-2 transition-colors hover:text-ink;
+  }
+  .segmented-item[aria-pressed="true"] {
+    @apply bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))];
+  }
 
   /* Label above a form field, and the message under it when it is wrong. */
   .field-label {

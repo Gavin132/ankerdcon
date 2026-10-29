@@ -1,9 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AgendaTicket } from "./AgendaTicket";
-import { tripImage, type Trip, type TripDay } from "../../utils/trips";
-import { getGroupTitle } from "../../utils/multiDay";
+import { Pager } from "../common/Pager";
+import type { Trip, TripDay } from "../../utils/trips";
 import type { Meal, User } from "../../types";
 
 interface TicketStackProps {
@@ -67,7 +66,6 @@ export function TicketStack({ trips, meals, users, myNames, justJoinedId, onJoin
   if (!trip) return null;
   currentIdRef.current = trip.id;
   const peeks = [trips[current + 1], trips[current + 2]];
-  const next = trips[current + 1];
 
   function go(to: number) {
     const clamped = Math.max(0, Math.min(trips.length - 1, to));
@@ -80,16 +78,6 @@ export function TicketStack({ trips, meals, users, myNames, justJoinedId, onJoin
     if (info.offset.x < -SWIPE_DISTANCE || info.velocity.x < -SWIPE_VELOCITY) go(current + 1);
     else if (info.offset.x > SWIPE_DISTANCE || info.velocity.x > SWIPE_VELOCITY) go(current - 1);
   }
-
-  const peekLabel = (t: Trip) => {
-    const img = tripImage(t);
-    return (
-      <>
-        {img && <img src={img} alt="" loading="lazy" decoding="async" className="h-3.5 w-5 rounded-sm object-cover" />}
-        <span className="truncate">{getGroupTitle(t.days)} · {t.dateRange}</span>
-      </>
-    );
-  };
 
   return (
     <section
@@ -104,16 +92,8 @@ export function TicketStack({ trips, meals, users, myNames, justJoinedId, onJoin
       className="space-y-3 overflow-x-clip"
     >
       <motion.div className="relative pb-11" initial={false} animate={{ height: boxHeight }} transition={{ duration: 0.24, ease: [0.2, 0.8, 0.2, 1] }}>
-        {peeks[1] && (
-          <div aria-hidden className="absolute inset-x-8 bottom-0 top-20 flex items-end gap-2 rounded-[14px] border-1.5 border-line bg-sunken px-4 pb-1 font-mono text-[12px] uppercase tracking-[0.06em] text-ink-3">
-            {peekLabel(peeks[1])}
-          </div>
-        )}
-        {peeks[0] && (
-          <div aria-hidden className="absolute inset-x-4 bottom-[22px] top-10 flex items-end gap-2 rounded-[14px] border-1.5 border-line bg-surface px-4 pb-1 font-mono text-[12px] uppercase tracking-[0.06em] text-ink-3">
-            {peekLabel(peeks[0])}
-          </div>
-        )}
+        {peeks[1] && <div aria-hidden className="absolute inset-x-8 bottom-0 top-20 rounded-[14px] border-1.5 border-line bg-sunken" />}
+        {peeks[0] && <div aria-hidden className="absolute inset-x-4 bottom-[22px] top-10 rounded-[14px] border-1.5 border-line bg-surface" />}
 
         <AnimatePresence mode="popLayout" initial={false} custom={direction}>
           <motion.div
@@ -158,52 +138,17 @@ export function TicketStack({ trips, meals, users, myNames, justJoinedId, onJoin
 
       {trips.length > 1 && (
         <>
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={() => go(current - 1)}
-              disabled={current === 0}
-              aria-label="Vorig evenement"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink disabled:cursor-default disabled:opacity-40"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <div className="flex flex-wrap items-center justify-center gap-0.5">
-              {trips.map((t, i) => {
-                const mine = t.participants.some((p) => myNames.includes(p));
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => go(i)}
-                    aria-label={`${t.title}, ${t.dateRange}`}
-                    aria-current={i === current}
-                    title={`${t.title} · ${t.dateRange}`}
-                    className="hit-area flex h-6 w-6 items-center justify-center"
-                  >
-                    <span
-                      className={`block h-2 rounded-full transition-all ${
-                        i === current ? "w-5 bg-outline" : mine ? "w-2 bg-ink-3" : "w-2 bg-line"
-                      }`}
-                    />
-                  </button>
-                );
-              })}
-            </div>
-            <button
-              type="button"
-              onClick={() => go(current + 1)}
-              disabled={current === trips.length - 1}
-              aria-label="Volgend evenement"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink disabled:cursor-default disabled:opacity-40"
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-          <p className="text-center text-[12.5px] text-ink-3">
-            {current + 1} van {trips.length}
-            {next ? ` · daarna ${next.title}, ${next.dateRange}` : ""}
-          </p>
+          <Pager
+            count={trips.length}
+            index={current}
+            onChange={go}
+            dotLabel={(i) => `${trips[i].title}, ${trips[i].dateRange}`}
+            prevLabel="Vorig evenement"
+            nextLabel="Volgend evenement"
+            isMine={(i) => trips[i].participants.some((p) => myNames.includes(p))}
+            arrowsFrom="md"
+          />
+          <p className="text-center text-[12.5px] text-ink-3">{current + 1} van {trips.length}</p>
         </>
       )}
     </section>

@@ -1,12 +1,11 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BedDouble, MapPin, Music2, PartyPopper, Ticket, Utensils } from "lucide-react";
-import { UserAvatar } from "../common/UserAvatar";
+import { BedDouble, MapPin, Ticket, Utensils } from "lucide-react";
+import { AvatarStack } from "../common/AvatarStack";
 import { TripDayPicker } from "../trip/TripDayPicker";
 import { TripParticipants } from "../trip/TripParticipants";
 import { daysBetween, toDateKey, todayKey } from "../../utils/date";
 import { tripImage, tripPeople, type Trip, type TripDay } from "../../utils/trips";
-import { findUser as findMember } from "../../utils/people";
 import { routes } from "../../config/routes";
 import { getNow } from "../../store/time.store";
 import type { Meal, User } from "../../types";
@@ -49,14 +48,13 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
   const when = `${trip.dateRange}${year !== getNow().getFullYear() ? ` ${year}` : ""}`;
 
   const summary = [
-    eventType === "gathering" ? "Gathering" : eventType === "concert" ? "Concert" : trip.hasCon ? "Con" : "Reis",
+    eventType === "gathering" ? "Feestje" : eventType === "concert" ? "Concert" : trip.hasCon ? "Con" : "Reis",
     trip.days.length === 1 ? "1 dag" : `${trip.days.length} dagen`,
     trip.isHotel ? "hotel" : null,
   ].filter(Boolean).join(" · ");
 
   // One avatar per person, not per name they happen to be signed up under (see utils/people.ts).
   const participants = tripPeople(trip, users).map((person) => person.name).sort((a, b) => Number(isMine(b)) - Number(isMine(a)));
-  const findUser = (p: string) => findMember(users, p);
   const others = participants.filter((p) => !isMine(p)).length;
   const crewText = going
     ? others === 0 ? "Alleen jij" : `Jij en ${others} ${others === 1 ? "ander" : "anderen"}`
@@ -69,21 +67,13 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
         to={routes.trip.view(trip.id)}
         draggable={false}
         aria-label={`Open ${trip.title}`}
-        className="relative block h-40 overflow-hidden bg-hero sm:h-52 md:h-auto md:min-h-[300px]"
+        className={`relative block overflow-hidden bg-hero md:h-auto md:min-h-[300px] ${image ? "h-40 sm:h-52" : "h-14 sm:h-16"}`}
       >
         {image ? (
           <img src={image} alt="" draggable={false} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
         ) : (
-          <span
-            className="absolute inset-0 flex flex-col justify-end gap-1 p-4 text-hero-ink"
-            style={{
-              backgroundImage: "radial-gradient(circle, rgb(var(--cyan) / .45) 1.4px, transparent 1.8px)",
-              backgroundSize: "12px 12px",
-            }}
-          >
-            <span className="font-display text-[34px] font-black uppercase leading-[0.9] [text-wrap:balance] md:text-[40px]">
-              {trip.title}
-            </span>
+          <span aria-hidden className="absolute inset-0 flex items-center justify-center bg-hero text-hero-ink/40">
+            <Ticket size={32} />
           </span>
         )}
       </Link>
@@ -108,8 +98,6 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
             )}
             {hotel && <span className="flex min-w-0 items-center gap-1.5"><BedDouble size={13} className="shrink-0" /> <span className="truncate">{hotel}</span></span>}
             {hasMeal && <span className="flex items-center gap-1.5"><Utensils size={13} className="shrink-0" /> Activiteit gepland</span>}
-            {eventType === "gathering" && <span className="flex items-center gap-1.5"><PartyPopper size={13} className="shrink-0" /> Feestje</span>}
-            {eventType === "concert" && <span className="flex items-center gap-1.5"><Music2 size={13} className="shrink-0" /> Concert</span>}
           </p>
         </div>
 
@@ -118,19 +106,7 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
 
         <div className="mt-auto flex items-center gap-2.5">
           <TripParticipants trip={trip} users={users} myNames={myNames}>
-          {participants.length > 0 && (
-            <span className="flex -space-x-1.5">
-              {participants.slice(0, 6).map((p) => {
-                const u = findUser(p);
-                return <UserAvatar key={p} name={u?.name ?? p} user={u} className="h-7 w-7 text-[12px] !border-surface" />;
-              })}
-              {participants.length > 6 && (
-                <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-sunken font-mono text-[12px] font-semibold text-ink-2">
-                  +{participants.length - 6}
-                </span>
-              )}
-            </span>
-          )}
+          <AvatarStack names={participants} />
           <span className="text-[13px] text-ink-2">
             {crewText}
             {going && myDays.length < trip.days.length && (

@@ -61,7 +61,7 @@ export function AddStoryTile({ eventDayId }: AddStoryTileProps) {
           </span>
         )}
       </button>
-      <span className="max-w-full truncate font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-ink-2">
+      <span className="max-w-full truncate text-[12px] font-semibold text-ink-2">
         {picker.progress?.fraction !== undefined
           ? `${Math.round(picker.progress.fraction * 100)}%`
           : picker.progress && picker.progress.total > 1

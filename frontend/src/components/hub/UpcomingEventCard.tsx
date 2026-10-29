@@ -2,8 +2,10 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BedDouble, CalendarDays, MapPin, Music2, PartyPopper, Utensils } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
+import { AvatarStack } from "../common/AvatarStack";
+import { todayKey, toDateKey } from "../../utils/date";
 import { formatDate } from "../../utils/format";
-import { dayShort, monthShort } from "../../utils/multiDay";
+import { dayShort } from "../../utils/multiDay";
 import { findUser as findMember, groupPeople } from "../../utils/people";
 import type { CalendarEvent, Meal, User } from "../../types";
 import type { AnchorRect } from "../common/UserProfilePopup";
@@ -26,20 +28,28 @@ function Chip({ children, tone = "plain" }: { children: React.ReactNode; tone?: 
   );
 }
 
-/** The brand-blue tear-off stub with the countdown. Beside the ticket from sm, below it on phones. */
-function Stub({ urgency, daysUntil, dayCount }: { urgency: EventUrgency; daysUntil: number; dayCount: number }) {
-  const label = urgency === "today" ? "Vandaag" : "Nog";
-  const big = urgency === "today" ? "Nu" : String(daysUntil);
-  const unit = urgency === "today" ? "bezig" : daysUntil === 1 ? "dag" : "dagen";
+/**
+ * The brand-blue tear-off stub with the countdown. Beside the ticket from sm, below it on phones. Today it says
+ * "Vandaag" (events have a date, not a start time, so it cannot say that it has begun); once a multi-day trip is
+ * under way it says "Nu bezig" and which day it is.
+ */
+function Stub({ urgency, daysUntil, dayCount, dayNumber }: { urgency: EventUrgency; daysUntil: number; dayCount: number; dayNumber: number | null }) {
+  const today = urgency === "today";
+  const underway = today && dayNumber !== null && dayNumber > 1;
+  const big = underway ? "Nu" : today ? "Vandaag" : String(daysUntil);
+  const unit = underway ? "bezig" : today ? "" : daysUntil === 1 ? "dag" : "dagen";
+  const sub = underway ? `dag ${dayNumber} van ${dayCount}` : dayCount > 1 ? `${dayCount} dagen` : "";
 
   return (
     <div className="flex items-center justify-center gap-3 border-t-2 border-dashed border-outline bg-brand px-4 py-2.5 text-brand-on sm:flex-col sm:gap-2 sm:border-l-2 sm:border-t-0 sm:px-4 sm:py-5 sm:text-center">
-      <span className="text-[12px] font-semibold">{label}</span>
-      <span className="font-display text-[52px] font-black leading-[0.8] sm:text-[88px]">{big}</span>
-      <span className="text-[12px] leading-snug sm:w-full sm:border-t-1.5 sm:border-ink/35 sm:pt-2 dark:sm:border-hero/35">
-        <b className="block text-[13px]">{unit}</b>
-        {dayCount > 1 ? `${dayCount} dagen evenement` : "1 dag evenement"}
-      </span>
+      {!today && <span className="text-[12px] font-semibold">Nog</span>}
+      <span className={`font-display font-black leading-[0.8] ${big.length > 3 ? "text-[34px] sm:text-[38px]" : "text-[52px] sm:text-[88px]"}`}>{big}</span>
+      {(unit || sub) && (
+        <span className="text-[12px] leading-snug sm:w-full sm:border-t-1.5 sm:border-ink/35 sm:pt-2 dark:sm:border-hero/35">
+          {unit && <b className="block text-[13px]">{unit}</b>}
+          {sub}
+        </span>
+      )}
     </div>
   );
 }
@@ -100,6 +110,9 @@ export function UpcomingEventCard({
   // One person per entry, not per name they are signed up under (see utils/people.ts).
   const participants = groupPeople(dayEvents.flatMap((ev) => ev.participants ?? []), users).map((person) => person.name);
 
+  // Which day of the trip it is today (null when it is not under way), counted over all of its days.
+  const dayNumber = isGroupEvent ? days.filter((d) => d.date && toDateKey(d.date) <= todayKey()).length : null;
+
   function findUser(p: string) {
     return findMember(users, p);
   }
@@ -130,8 +143,6 @@ export function UpcomingEventCard({
           )}
           <span aria-hidden className={`absolute inset-0 ${coverImage ? "bg-hero/45" : ""}`} />
           <span className="absolute left-4 top-3 flex flex-wrap gap-1.5 sm:left-5 sm:top-4">
-            {urgency === "today" && <Chip tone="live">Vandaag</Chip>}
-            {urgency === "tomorrow" && <Chip>Morgen</Chip>}
             {isTravelOnly && <Chip>Reisdag</Chip>}
             {isHotel && <Chip><BedDouble size={11} /> Hotel</Chip>}
             {eventType === "gathering" && <Chip><PartyPopper size={11} /> Feestje</Chip>}
@@ -174,8 +185,8 @@ export function UpcomingEventCard({
                       isTravelDay ? "bg-hatch-surface" : "bg-surface"
                     }`}
                   >
-                    <span className="block font-mono text-[12px] uppercase leading-none tracking-[0.08em] text-ink-3">
-                      {dayShort(date)} {monthShort(date)}
+                    <span className="block text-[12px] capitalize leading-none text-ink-3" aria-label={formatDate(dayEv.date)}>
+                      {dayShort(date)}
                     </span>
                     <span className="block font-display text-[26px] font-extrabold leading-none text-ink">{date.getDate()}</span>
                     <span className="mt-1 flex items-center justify-center gap-1 text-[12px] leading-none text-ink-2">
@@ -198,12 +209,7 @@ export function UpcomingEventCard({
                 className="hit-area relative z-10 inline-flex items-center gap-2 py-1 text-left"
                 aria-expanded={participantsExpanded}
               >
-                <span className="flex -space-x-1.5">
-                  {participants.slice(0, 5).map((p) => {
-                    const u = findUser(p);
-                    return <UserAvatar key={p} name={u?.name ?? p} user={u} className="h-6 w-6 text-[9px] !border-surface" />;
-                  })}
-                </span>
+                <AvatarStack names={dayEvents.flatMap((ev) => ev.participants ?? [])} size="sm" />
                 <span className="text-[13px] text-ink-2 hover:text-ink">
                   {participantsExpanded
                     ? "Verbergen"
@@ -249,7 +255,7 @@ export function UpcomingEventCard({
         </div>
       </div>
 
-      <Stub urgency={urgency} daysUntil={daysUntil} dayCount={days.length} />
+      <Stub urgency={urgency} daysUntil={daysUntil} dayCount={days.length} dayNumber={dayNumber} />
     </div>
   );
 }

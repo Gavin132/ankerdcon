@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ChevronDown, Users } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
+import { Segmented } from "../common/Segmented";
+import { SeatPicker } from "../common/SeatPicker";
 import { useCurrentUser } from "../../hooks/useUsers";
 import { useCreateRide } from "../../hooks/useRides";
 import { useCalendar } from "../../hooks/useCalendar";
@@ -124,23 +126,13 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
     >
       <div className="space-y-5">
         {/* Direction toggle */}
-        <div className="flex gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]">
-          {(["Inbound", "Outbound"] as const).map((d) => (
-            <button
-              key={d}
-              type="button"
-              onClick={() => switchDirection(d)}
-              aria-pressed={direction === d}
-              className={`flex-1 rounded-[7px] px-3 py-2 text-[13px] font-semibold transition-colors ${
-                direction === d
-                  ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]"
-                  : "text-ink-2 hover:text-ink"
-              }`}
-            >
-              {d === "Inbound" ? "Heen" : "Terug"}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          label="Richting"
+          fill
+          options={[{ value: "Inbound", label: "Heen" }, { value: "Outbound", label: "Terug" }]}
+          value={direction}
+          onChange={switchDirection}
+        />
 
         {/* Route summary — editable, so a missing location (e.g. a non-hotel
             event's "home" end) can just be typed in right here. */}
@@ -207,34 +199,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
           </div>
         </div>
 
-        {vehicleType !== "Public Transport" && (
-          <div>
-            <label className="section-label mb-1.5 block">
-              Totaal aantal plekken in je auto
-            </label>
-            <div className="flex items-center gap-2 rounded-xl border-1.5 border-line bg-surface px-1">
-              <button
-                type="button"
-                onClick={() => setSeats((s) => Math.max(1, s - 1))}
-                className="icon-btn"
-              >
-                −
-              </button>
-              <div className="flex flex-1 items-center justify-center gap-1.5 font-mono text-sm font-semibold tabular-nums text-ink">
-                <Users size={13} className="text-ink-3" />
-                {seats}
-              </div>
-              <button
-                type="button"
-                onClick={() => setSeats((s) => Math.min(99, s + 1))}
-                className="icon-btn"
-              >
-                +
-              </button>
-            </div>
-            <p className="mt-1.5 text-xs text-ink-3">Incl. jezelf</p>
-          </div>
-        )}
+        {vehicleType !== "Public Transport" && <SeatPicker value={seats} onChange={setSeats} />}
 
         {/* Advanced options */}
         <div>
