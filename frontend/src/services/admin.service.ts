@@ -350,10 +350,11 @@ export async function bulkRsvpAdminEvent(
 // ── Hotel Rooms (admin) ───────────────────────────────────────────────────────
 
 export interface AdminUpdateHotelRoomPayload {
-  room_number?: string;
-  floor?: string;
-  instructions?: string;
-  capacity?: number;
+  /** `null` clears the field; leaving it out keeps what is there. */
+  room_number?: string | null;
+  floor?: string | null;
+  instructions?: string | null;
+  capacity?: number | null;
   occupants?: string[];
 }
 

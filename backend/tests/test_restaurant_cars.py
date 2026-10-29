@@ -49,3 +49,4 @@ def test_choosing_the_car_you_are_already_in_changes_nothing(monkeypatch):
     t = _use(monkeypatch, [{"id": "r1", "restaurant_drivers": _cars()}])
     _assign("Alex", "Sam")  # Sam's car is full, but Alex is in it
     assert t.rows["r1"]["restaurant_drivers"] == _cars() and t.writes == 0
+

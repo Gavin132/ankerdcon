@@ -16,6 +16,8 @@ All notable changes to Ankerd Con are documented here.
 
 ### Fixed
 
+- **Admin: clearing a hotel room's number, floor, notes or capacity did nothing.** The old value came back after saving; an
+  emptied field is cleared now.
 - **A failed Discord link told you to try again "via je profiel"**; linking is in Instellingen.
 - **Admin: giving or taking a badge, or dragging badges into another order, failed without a word.** It says so now, and the
   list goes back to the saved order.

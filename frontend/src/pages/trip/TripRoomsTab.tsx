@@ -19,18 +19,11 @@ import { Button } from "../../components/common/Button";
 import { toast } from "../../store/toast.store";
 import { HotelInfoCard, stayRange } from "../../components/event/HotelInfoCard";
 import { tripInfo, tripRoomGaps } from "../../utils/trips";
+import { roomCreatePayload, roomEditPayload, type RoomFormValues } from "../../utils/roomForm";
 import { useTrip } from "./tripContext";
 import type { HotelRoom } from "../../types";
 
 // ── Room form modal ────────────────────────────────────────────────────────────
-
-interface RoomFormValues {
-  room_number: string;
-  floor: string;
-  instructions: string;
-  capacity: string;
-  occupants: string[];
-}
 
 function RoomModal({
   open,
@@ -64,31 +57,14 @@ function RoomModal({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const roomLabel = values.room_number.trim() || "Kamer";
-    const capacity = values.capacity.trim() ? Number(values.capacity) : undefined;
     try {
       if (isEdit) {
-        await updateRoom.mutateAsync({
-          eventId,
-          roomId: room.id,
-          payload: {
-            room_number: values.room_number.trim() || undefined,
-            floor: values.floor.trim() || undefined,
-            instructions: values.instructions.trim() || undefined,
-            capacity,
-            occupants: values.occupants,
-          },
-        });
+        await updateRoom.mutateAsync({ eventId, roomId: room.id, payload: roomEditPayload(values) });
         toast("success", `${roomLabel} bijgewerkt.`);
       } else {
         await createRoom.mutateAsync({
           eventId,
-          payload: {
-            room_number: values.room_number.trim() || undefined,
-            floor: values.floor.trim() || undefined,
-            instructions: values.instructions.trim() || undefined,
-            capacity,
-            occupants: values.occupants,
-          },
+          payload: roomCreatePayload(values),
         });
         toast("success", `${roomLabel} aangemaakt.`);
       }
