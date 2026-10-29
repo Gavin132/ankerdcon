@@ -256,9 +256,9 @@ function AssignDrawer({
     if (!user.id) return;
     const has = (user.badge_ids ?? []).includes(badge.id);
     if (has) {
-      unassign.mutate({ userId: user.id, badgeId: badge.id });
+      unassign.mutate({ userId: user.id, badgeId: badge.id }, { onError: () => toast("error", "Kon de badge niet weghalen. Probeer het opnieuw.") });
     } else {
-      assign.mutate({ userId: user.id, badgeId: badge.id });
+      assign.mutate({ userId: user.id, badgeId: badge.id }, { onError: () => toast("error", "Kon de badge niet toekennen. Probeer het opnieuw.") });
     }
   }
 
@@ -393,7 +393,7 @@ function BadgeMembersDrawer({
               <span className="flex-1 text-sm text-ink">{u.name}</span>
               <button
                 type="button"
-                onClick={() => u.id && badge && unassign.mutate({ userId: u.id, badgeId: badge.id })}
+                onClick={() => u.id && badge && unassign.mutate({ userId: u.id, badgeId: badge.id }, { onError: () => toast("error", "Kon de badge niet weghalen. Probeer het opnieuw.") })}
                 disabled={unassign.isPending}
                 className="icon-btn text-ink-3 hover:!bg-bad-soft hover:!text-bad"
                 title="Badge afnemen"
@@ -488,7 +488,13 @@ export function AdminBadgesPage() {
 
     const reordered = next.map((b, i) => ({ ...b, display_order: i }));
     setItems(reordered);
-    reorderBadgesMutation.mutate(reordered.map((b) => ({ id: b.id, display_order: b.display_order })));
+    reorderBadgesMutation.mutate(reordered.map((b) => ({ id: b.id, display_order: b.display_order })), {
+      // The list on screen must not keep an order the server did not take.
+      onError: () => {
+        setItems(badges);
+        toast("error", "Kon de volgorde niet opslaan. Probeer het opnieuw.");
+      },
+    });
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────

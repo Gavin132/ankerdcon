@@ -16,6 +16,9 @@ All notable changes to Ankerd Con are documented here.
 
 ### Fixed
 
+- **A failed Discord link told you to try again "via je profiel"**; linking is in Instellingen.
+- **Admin: giving or taking a badge, or dragging badges into another order, failed without a word.** It says so now, and the
+  list goes back to the saved order.
 - **A ride to a restaurant showed up in search with no name.** It is called "Rit naar <activiteit>" now.
 - **"1 foto's", "1 gingen", "1 ritten verwijderd".** One photo, one person who went and one thing deleted in the admin panel (rides,
   activities, events, groups, users) now use the singular.
