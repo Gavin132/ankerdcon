@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countOf, formatAmount, formatBytes, formatDateRangeShort, formatDateShort } from "./format";
+import { countOf, formatAmount, formatBytes, formatDateRangeShort, formatDateShort, siteLabel } from "./format";
 
 describe("formatAmount", () => {
   it("writes money the Dutch way, with a comma", () => {
@@ -44,5 +44,17 @@ describe("countOf", () => {
     expect(countOf(1, "foto", "foto's")).toBe("1 foto");
     expect(countOf(2, "foto", "foto's")).toBe("2 foto's");
     expect(countOf(0, "rit", "ritten")).toBe("0 ritten");
+  });
+});
+
+describe("siteLabel", () => {
+  it("shortens a link to its address", () => {
+    expect(siteLabel("https://www.dokomi.de/en/tickets?x=1")).toBe("dokomi.de");
+    expect(siteLabel("http://hdcc.nl/")).toBe("hdcc.nl");
+    expect(siteLabel("https://tickets.example.com/a")).toBe("tickets.example.com");
+  });
+
+  it("falls back to the text itself when it is not a link", () => {
+    expect(siteLabel("niet een link")).toBe("niet een link");
   });
 });

@@ -1,12 +1,14 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { BedDouble, MapPin, Ticket } from "lucide-react";
+import { BedDouble, ExternalLink, Globe, MapPin, Ticket } from "lucide-react";
 import { AvatarStack } from "../common/AvatarStack";
 import { TripDayPicker } from "./TripDayPicker";
 import { TripParticipants } from "./TripParticipants";
 import { daysBetween, toDateKey, todayKey } from "../../utils/date";
 import { tripImage, tripPeople, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
 import { getNow } from "../../store/time.store";
+import { siteLabel } from "../../utils/format";
+import { safeHref } from "../../utils/validation";
 import { useIsViewer } from "../../hooks/useIsViewer";
 import type { User } from "../../types";
 
@@ -47,6 +49,8 @@ interface TripTicketProps {
   myNames: string[];
   description?: string;
   hotel?: string;
+  /** The event's own website; shown on the location line when it is a safe http(s) link. */
+  website?: string;
   /** Plays the stamp animation — set right after signing up. */
   justJoined: boolean;
   onToggleDay: (day: TripDay) => void;
@@ -61,11 +65,12 @@ interface TripTicketProps {
  * counts down, says the trip is underway, or how long ago it was.
  */
 export function TripTicket({
-  trip, phase, users, myNames, description, hotel, justJoined,
+  trip, phase, users, myNames, description, hotel, website, justJoined,
   onToggleDay, onJoin, onLeave, onManage,
 }: TripTicketProps) {
   const viewer = useIsViewer();
   const image = tripImage(trip);
+  const websiteUrl = safeHref(website);
   const today = todayKey();
   const firstKey = toDateKey(trip.days[0].date);
   const lastKey = toDateKey(trip.days[trip.days.length - 1].date);
@@ -127,6 +132,19 @@ export function TripTicket({
               </a>
             )}
             {hotel && <span className="flex min-w-0 items-center gap-1.5"><BedDouble size={14} className="shrink-0" /> <span className="truncate">{hotel}</span></span>}
+            {websiteUrl && (
+              <a
+                href={websiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={`Website van het evenement: ${websiteUrl}`}
+                aria-label={`Website van het evenement, ${siteLabel(websiteUrl)} (opent in een nieuw tabblad)`}
+                className="hit-area flex min-w-0 items-center gap-1.5 hover:text-ink hover:underline"
+              >
+                <Globe size={14} className="shrink-0" /> <span className="truncate">{siteLabel(websiteUrl)}</span>
+                <ExternalLink size={12} className="shrink-0" aria-hidden />
+              </a>
+            )}
           </p>
           {description && <Description text={description} />}
         </div>

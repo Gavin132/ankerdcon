@@ -91,3 +91,12 @@ export function formatTicketSaleStart(raw: string): string {
     return format(d, "EEEE d MMMM 'om' HH:mm", { locale: nl });
   return raw;
 }
+
+/** A link's short name for a label: the address without "https://", "www." or the path ("https://www.dokomi.de/en/tickets" → "dokomi.de"). */
+export function siteLabel(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "") || url;
+  } catch {
+    return url;
+  }
+}

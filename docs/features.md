@@ -73,7 +73,9 @@ the trip, the ride buttons and a meal today are the left column and "Voor jou" w
   is going and a countdown. Tap a day to sign up or off. Tap the avatars to see
   everyone by name (`TripParticipants.tsx`); that list has the "Iemand aanmelden" button (it sits next to the text
   when nobody is on the trip yet). The tilted "Je gaat mee" stamp is only on a trip that is under way or over; before it,
-  the checked day cards and "Jij en 3 anderen" say it.
+  the checked day cards and "Jij en 3 anderen" say it. The location line under the title has the place (a Maps link), the
+  hotel and, when the event has a website, a small globe link with its address ("dokomi.de", `siteLabel`; only http(s) links,
+  opens in a new tab).
 - The line at the top of the ticket names what kind of trip it is: an admin can tag an event
   **Con**, **Gathering** or **Concert** (`events.event_type` — Admin → Evenementen); untagged
   falls back to "Con" when the trip has con programming (`has_con`) or "Reis" otherwise. Shown

@@ -208,6 +208,7 @@ export function TripOverviewTab() {
             myNames={myNames}
             description={info.description}
             hotel={info.hotel_location}
+            website={info.website ?? undefined}
             justJoined={justJoined}
             onToggleDay={onToggleDay}
             onJoin={() => {

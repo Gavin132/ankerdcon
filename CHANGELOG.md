@@ -7,6 +7,8 @@ All notable changes to Ankerd Con are documented here.
 ## [Unreleased]
 
 ### Added
+- **The event's website is linked in the top card of an event**, on the line with the location and the hotel
+  (a globe and the address, for example "dokomi.de"). It opens in a new tab.
 
 - **Admins can merge a placeholder into the real member.** A member who had not logged in yet can be put on rides,
   meals and expenses through a placeholder profile (Admin > Gebruikers). When that person logs in they get a profile of
