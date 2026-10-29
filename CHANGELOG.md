@@ -35,6 +35,14 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **Financiën is calmer.** A row of Afrekenen or Ritkosten is two lines and the amount says which way the money goes
+  (red = you pay, green = you receive); a pill is only there where you have to do something ("Te betalen",
+  "Bevestigen", "Wacht op bevestiging", "Invullen"). On a phone the list of expenses and its add button come right after
+  what you owe, and the group's totals ("Betaald per persoon", top 3) come last. The settlement sheet has one blue
+  button (the payment link is a quiet one), no longer shows the amount four times and says since when instead of the
+  amount in its title. "Ontvangen" and "Ik heb betaald" in an expense are quiet buttons. The new-expense form is plain
+  fields instead of five cards, in the order description, amount, date, paid by, event. The Ritkosten sheet has a one-line
+  intro and Opslaan under the form, and the total and your share are two rows. A long expense title shows on two lines.
 - **Activity and ride pages are calmer.** The activity header is one kicker line, the name, and three plain lines (when,
   where, price) instead of five chips; "Vervoer nodig" is said once, in the transport block. The sign-up row is one
   button: "Aanmelden" until you are on the list, then "Afmelden" and "Iemand aanmelden". The ride header got the

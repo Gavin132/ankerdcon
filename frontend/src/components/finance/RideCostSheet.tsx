@@ -68,7 +68,17 @@ export function RideCostSheet({ tripId, tripTitle, onClose }: { tripId: string |
   }
 
   return (
-    <TripSheet open={open} onClose={onClose} title="Ritkosten" subtitle={tripTitle}>
+    <TripSheet
+      open={open}
+      onClose={onClose}
+      title="Ritkosten"
+      subtitle={tripTitle}
+      footer={
+        <Button onClick={save} loading={setCost.isPending} disabled={!dirty} className="w-full">
+          <Check size={15} /> Opslaan
+        </Button>
+      }
+    >
       <div className="space-y-6">
         <section className="space-y-2">
           <label htmlFor="ride-cost-amount" className="section-label block">Wat kostte het rijden?</label>
@@ -85,20 +95,15 @@ export function RideCostSheet({ tripId, tripTitle, onClose }: { tripId: string |
             />
           </div>
           <p className="text-xs leading-snug text-ink-3">
-            Alles bij elkaar voor deze hele trip: brandstof, tol en parkeren. Het wordt gedeeld door jou en iedereen die op
-            zijn eerste heenrit bij jou in de auto zat. Wie later in een andere auto zat, betaalt nog steeds alleen de
-            chauffeur van zijn eerste heenrit.
+            Brandstof, tol en parkeren voor de hele trip. Gedeeld met iedereen die op de heenrit bij jou zat.
           </p>
-          <Button onClick={save} loading={setCost.isPending} disabled={!dirty} className="w-full">
-            <Check size={15} /> Opslaan
-          </Button>
         </section>
 
         <section className="space-y-2.5">
           <p className="section-label">Wie deelt mee</p>
           {sheet.group.length === 0 ? (
             <p className="text-xs text-ink-3">
-              Niemand zat op zijn eerste heenrit bij jou in de auto, dus er is niemand om iets te vragen. Je kosten blijven bij jou.
+              Niemand zat op de heenrit bij jou in de auto, dus er is niemand om iets te vragen. Je kosten blijven bij jou.
             </p>
           ) : !sheet.amount ? (
             <>
@@ -134,10 +139,20 @@ export function RideCostSheet({ tripId, tripTitle, onClose }: { tripId: string |
                   </li>
                 ))}
               </ul>
+              <dl className="space-y-1 text-[13.5px]">
+                <div className="flex justify-between gap-3">
+                  <dt className="text-ink-2">Totaal te ontvangen</dt>
+                  <dd className="font-mono font-semibold tabular-nums text-ink">{formatAmount(sheet.passengers.reduce((s, p) => s + p.amount, 0))}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-ink-2">Jouw deel</dt>
+                  <dd className="font-mono font-semibold tabular-nums text-ink">{formatAmount(sheet.own_share ?? 0)}</dd>
+                </div>
+              </dl>
               <p className="text-xs leading-snug text-ink-3">
-                {formatAmount(sheet.amount)} gedeeld door {sheet.group.length + 1} personen ({formatAmount(share ?? 0)} per
-                persoon). Totaal te ontvangen {formatAmount(sheet.passengers.reduce((s, p) => s + p.amount, 0))}; jouw eigen deel is{" "}
-                {formatAmount(sheet.own_share ?? 0)}. Vraag het via een Tikkie of een betaalverzoek; hier wordt niets afgeboekt.
+                {formatAmount(sheet.amount)} gedeeld door {sheet.group.length + 1} personen ({formatAmount(share ?? 0)} per persoon).
+                Wie later in een andere auto zat, betaalt alleen de chauffeur van hun eerste heenrit. Vraag het via een Tikkie
+                of een betaalverzoek; hier wordt niets afgeboekt.
               </p>
             </>
           )}

@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Wallet, Plus, TrendingUp, ArrowDownLeft, ArrowUpRight, CheckCircle2 } from "lucide-react";
+import { Wallet, Plus, ArrowDownLeft, ArrowUpRight, CheckCircle2 } from "lucide-react";
 import { Button } from "../components/common/Button";
 import { EmptyState } from "../components/common/EmptyState";
 import { UserAvatar } from "../components/common/UserAvatar";
@@ -135,7 +135,7 @@ export function FinancePage() {
     const totalGroup  = Object.values(totals).reduce((s, n) => s + n, 0);
     const topSpenders = Object.entries(totals)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
+      .slice(0, 3);
     return { totalGroup, topSpenders };
   }, [expenses]);
 
@@ -144,7 +144,7 @@ export function FinancePage() {
     return (
       <div className="space-y-3">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-24 animate-pulse rounded-2xl bg-sunken" />
+          <div key={i} className="card-surface h-24 animate-pulse" />
         ))}
       </div>
     );
@@ -155,8 +155,8 @@ export function FinancePage() {
   const netTone = Math.abs(net) < 0.01
     ? "text-ink"
     : net > 0
-      ? "text-emerald-700 dark:text-emerald-400"
-      : "text-rose-700 dark:text-rose-400";
+      ? "text-ok"
+      : "text-bad";
 
   return (
     <div className="space-y-5 pb-20 md:pb-0">
@@ -194,10 +194,12 @@ export function FinancePage() {
         )}
       </div>
 
-      <div className="space-y-5 xl:grid xl:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] xl:items-start xl:gap-[22px] xl:space-y-0">
-        <div className="space-y-5">
+      {/* On a phone everything is one column, ordered so the list of expenses (and its "add" button) comes right after
+          what you owe, and the group's totals last; from xl the totals sit under the balance, the list beside them. */}
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] xl:items-start xl:gap-[22px]">
+        <div className="contents xl:block xl:space-y-5">
           {/* ── Personal balance ─────────────────────────────── */}
-          <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card-surface overflow-hidden">
+          <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card-surface order-1 overflow-hidden xl:order-none">
             <div className="flex items-center gap-2 px-4 pb-2 pt-4">
               <Wallet size={13} className="shrink-0 text-ink-3" />
               <p className="section-label truncate">
@@ -233,11 +235,11 @@ export function FinancePage() {
                 </div>
                 <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 text-[12px] tabular-nums text-ink-2">
                   <span className="inline-flex items-center gap-1.5">
-                    <ArrowDownLeft size={13} className="text-emerald-600 dark:text-emerald-400" />
+                    <ArrowDownLeft size={13} className="text-ok" />
                     Te ontvangen <b className="font-mono font-semibold text-ink">{formatAmount(othersOweMe)}</b>
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <ArrowUpRight size={13} className="text-rose-600 dark:text-rose-400" />
+                    <ArrowUpRight size={13} className="text-bad" />
                     Te betalen <b className="font-mono font-semibold text-ink">{formatAmount(iOwe)}</b>
                   </span>
                 </div>
@@ -246,23 +248,20 @@ export function FinancePage() {
           </motion.section>
 
           {/* ── Settle up (across all trips) ─────────────────── */}
-          <SettleUpCard overview={settleUp} users={users} meId={me?.id} onOpen={setSettleTarget} />
+          <SettleUpCard overview={settleUp} users={users} meId={me?.id} onOpen={setSettleTarget} className="order-2 xl:order-none" />
 
           {/* ── Ritkosten: what passengers owe the driver ────── */}
-          <RideCostsCard tripFilter={tripFilter} />
+          <RideCostsCard tripFilter={tripFilter} className="order-3 xl:order-none" />
 
           {/* ── Group overview ───────────────────────────────── */}
           {expenses.length > 0 && (
             <motion.section
               initial={{ opacity: 0 }}
               animate={{ opacity: 1, transition: { delay: 0.08 } }}
-              className="card-surface overflow-hidden"
+              className="card-surface order-5 overflow-hidden xl:order-none"
             >
               <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-4">
-                <p className="section-label flex items-center gap-1.5">
-                  <TrendingUp size={13} />
-                  Groep totaal
-                </p>
+                <p className="section-label">Betaald per persoon</p>
                 <span className="font-mono text-[15px] font-semibold tabular-nums text-ink">
                   {formatAmount(totalGroup)}
                 </span>
@@ -282,7 +281,7 @@ export function FinancePage() {
                             <span className="truncate text-[13.5px] font-semibold text-ink">{name}</span>
                             <span className="shrink-0 font-mono text-[13px] font-semibold tabular-nums text-ink">{formatAmount(amount)}</span>
                           </div>
-                          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-sunken shadow-[inset_0_0_0_1px_rgb(var(--line))]">
+                          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-sunken border border-line">
                             <div
                               className="h-full rounded-full bg-ink-2 transition-all duration-500"
                               style={{ width: `${pct}%` }}
@@ -299,7 +298,7 @@ export function FinancePage() {
         </div>
 
         {/* ── Expense list ─────────────────────────────────────── */}
-        <div className="space-y-3">
+        <div className="order-4 space-y-3 xl:order-none">
         <div className="flex items-center justify-between gap-3">
           <p className="section-label flex items-center gap-2">
             Uitgaven
@@ -317,7 +316,11 @@ export function FinancePage() {
             <EmptyState
               icon={<Wallet size={22} />}
               title="Geen uitgaven"
-              description={selectedTrip ? `Nog geen uitgaven voor ${selectedTrip.title}.` : "Voeg de eerste groepsuitgave toe."}
+              description={
+                selectedTrip
+                  ? `Nog geen uitgaven voor ${selectedTrip.title}.`
+                  : viewer ? "Er zijn nog geen uitgaven." : "Voeg de eerste groepsuitgave toe."
+              }
             />
           </div>
         ) : (

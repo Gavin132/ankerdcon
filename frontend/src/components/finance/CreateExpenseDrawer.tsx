@@ -192,31 +192,25 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
     <TripSheet open={open} onClose={handleClose} title="Uitgave toevoegen" subtitle="Registreer een groepsuitgave" footer={footer}>
       <form id="create-expense-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
-        {/* ── Betaler ───────────────────────────────────────── */}
-        <div className={SF}>
-          <p className={ST}>Betaler</p>
+        {/* ── What it was, how much, when, who paid, for which event: plain fields, no card each ── */}
+        <div className="space-y-4">
           <div>
-            <label className={SL}>Betaald door</label>
-            <NamePicker
-              options={actable(userNames)}
-              value={watch("paid_by") ?? ""}
-              onChange={(name) => setValue("paid_by", name, { shouldValidate: true })}
-              color="sky"
-              placeholder="Zoek naam…"
+            <label className={SL} htmlFor="expense-description">Wat was het voor?</label>
+            <input
+              id="expense-description"
+              className="input-field"
+              placeholder="Bijv. Parkeerkosten Jaarbeurs"
+              {...register("description")}
             />
-            {errors.paid_by && <p className={ERR}>{errors.paid_by.message}</p>}
+            {errors.description && <p className={ERR}>{errors.description.message}</p>}
           </div>
-        </div>
 
-        {/* ── Bedrag, valuta & datum ────────────────────────── */}
-        <div className={SF}>
-          <p className={ST}>Bedrag & datum</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Amount + currency */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className={SL}>Bedrag</label>
+              <label className={SL} htmlFor="expense-amount">Bedrag</label>
               <div className="flex gap-2">
                 <input
+                  id="expense-amount"
                   type="number"
                   inputMode="decimal"
                   step="0.01"
@@ -226,6 +220,7 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
                   {...register("amount")}
                 />
                 <select
+                  aria-label="Valuta"
                   className="input-field w-20 shrink-0"
                   {...register("currency")}
                 >
@@ -236,18 +231,26 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
               </div>
               {errors.amount && <p className={ERR}>{errors.amount.message}</p>}
             </div>
-            {/* Date */}
             <div>
-              <label className={SL}>Datum</label>
-              <input type="date" className="input-field" {...register("date")} />
+              <label className={SL} htmlFor="expense-date">Datum</label>
+              <input id="expense-date" type="date" className="input-field" {...register("date")} />
             </div>
           </div>
-        </div>
 
-        {/* ── Event ───────────────────────────────────────── */}
-        <div className={SF}>
-          <p className={ST}>Evenement (optioneel)</p>
           <div>
+            <p className={SL}>Betaald door</p>
+            <NamePicker
+              options={actable(userNames)}
+              value={watch("paid_by") ?? ""}
+              onChange={(name) => setValue("paid_by", name, { shouldValidate: true })}
+              color="sky"
+              placeholder="Zoek naam…"
+            />
+            {errors.paid_by && <p className={ERR}>{errors.paid_by.message}</p>}
+          </div>
+
+          <div>
+            <p className={SL}>Evenement (optioneel)</p>
             <EventPicker
               events={events}
               value={watch("linked_event_id") || undefined}
@@ -257,20 +260,6 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
             <p className="mt-1.5 text-xs text-ink-3">
               Dan staat de uitgave ook bij de uitgaven van die trip.
             </p>
-          </div>
-        </div>
-
-        {/* ── Omschrijving ──────────────────────────────────── */}
-        <div className={SF}>
-          <p className={ST}>Omschrijving</p>
-          <div>
-            <label className={SL}>Wat was het voor?</label>
-            <input
-              className="input-field"
-              placeholder="Bijv. Parkeerkosten Jaarbeurs"
-              {...register("description")}
-            />
-            {errors.description && <p className={ERR}>{errors.description.message}</p>}
           </div>
         </div>
 
@@ -345,14 +334,8 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
                 />
               </div>
               {splitParticipants.length > 0 && parseFloat(fixedAmountStr) > 0 && (
-                <div className={`rounded-xl px-3 py-2.5 ${
-                  Math.abs(remaining) < 0.01
-                    ? "bg-emerald-100 dark:bg-emerald-500/15"
-                    : "bg-amber-100 dark:bg-amber-500/15"
-                }`}>
-                  <p className={`font-mono text-[12px] font-semibold tabular-nums ${
-                    Math.abs(remaining) < 0.01 ? "text-emerald-700 dark:text-emerald-300" : "text-amber-800 dark:text-amber-300"
-                  }`}>
+                <div className={`p-3 ${Math.abs(remaining) < 0.01 ? "notice-ok" : "notice-warn"}`}>
+                  <p className={`font-mono text-[12px] font-semibold tabular-nums ${Math.abs(remaining) < 0.01 ? "text-ok" : "text-warn"}`}>
                     {splitParticipants.length} × {formatAmount(parseFloat(fixedAmountStr), currency)} = {formatAmount(sharesSum, currency)}
                     {Math.abs(remaining) >= 0.01 && ` · verschil: ${formatAmount(Math.abs(remaining), currency)}`}
                   </p>
@@ -380,18 +363,14 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
                       <span className="shrink-0 font-mono text-[13px] font-semibold tabular-nums text-ink">
                         {formatAmount(row.amount, currency)}
                       </span>
-                      <button type="button" onClick={() => removeManualRow(i)} className="hit-area ml-1 flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300">
+                      <button type="button" onClick={() => removeManualRow(i)} aria-label={`${row.participant} verwijderen`} className="hit-area ml-1 flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-bad-soft hover:text-bad">
                         <X size={13} />
                       </button>
                     </div>
                   ))}
                   {/* Running total */}
-                  <div className={`rounded-xl px-3 py-2 ${
-                    Math.abs(remaining) < 0.01
-                      ? "bg-emerald-100 dark:bg-emerald-500/15"
-                      : "bg-sunken"
-                  }`}>
-                    <p className={`font-mono text-[12px] font-semibold tabular-nums ${Math.abs(remaining) < 0.01 ? "text-emerald-700 dark:text-emerald-300" : "text-ink-2"}`}>
+                  <div className={`p-3 ${Math.abs(remaining) < 0.01 ? "notice-ok" : "rounded-xl bg-sunken"}`}>
+                    <p className={`font-mono text-[12px] font-semibold tabular-nums ${Math.abs(remaining) < 0.01 ? "text-ok" : "text-ink-2"}`}>
                       Totaal: {formatAmount(sharesSum, currency)}
                       {totalAmount > 0 && Math.abs(remaining) >= 0.01 && ` · restant: ${formatAmount(remaining, currency)}`}
                       {Math.abs(remaining) < 0.01 && " · volledig verdeeld"}
@@ -427,7 +406,8 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
                       type="button"
                       onClick={addManualRow}
                       disabled={!manualName || !manualAmountStr}
-                      className="btn-primary w-12 shrink-0 disabled:opacity-40"
+                      aria-label="Persoon toevoegen"
+                      className="btn-secondary w-12 shrink-0 px-0"
                     >
                       <Plus size={15} />
                     </button>

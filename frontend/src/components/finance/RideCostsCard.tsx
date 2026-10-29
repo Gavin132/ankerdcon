@@ -1,18 +1,16 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Car, ChevronRight } from "lucide-react";
+import { Car } from "lucide-react";
 import { RideCostSheet } from "./RideCostSheet";
+import { FinanceRow, type FinancePillTone, type FinanceTone } from "./FinanceRow";
 import { useRideCosts } from "../../hooks/useRideCosts";
 import { useCalendar } from "../../hooks/useCalendar";
 import { buildTrip } from "../../utils/trips";
 import { toDateKey, todayKey } from "../../utils/date";
-import { formatAmount } from "../../utils/format";
 import { getNow } from "../../store/time.store";
 
 /** A trip stays on this card for this long after its last day. */
 const SHOW_DAYS_AFTER = 90;
-
-const PILL = "pill";
 
 /**
  * Ritkosten on the Financiën page: for each recent trip, what passengers owe you for driving
@@ -21,7 +19,7 @@ const PILL = "pill";
  *
  * `tripFilter` is the page's own trip filter (a trip id, "none" or null).
  */
-export function RideCostsCard({ tripFilter }: { tripFilter: string | null }) {
+export function RideCostsCard({ tripFilter, className = "" }: { tripFilter: string | null; className?: string }) {
   const { data } = useRideCosts();
   const { data: events = [] } = useCalendar();
   const [openTripId, setOpenTripId] = useState<string | null>(null);
@@ -59,9 +57,9 @@ export function RideCostsCard({ tripFilter }: { tripFilter: string | null }) {
               ? "Te weinig om te delen"
               : `${s.passengers.length} ${s.passengers.length === 1 ? "persoon betaalt" : "personen betalen"} jou`,
           amount: !waiting && s.passengers.length > 0 ? owed : null,
-          pill: waiting ? "Invullen" : "Bekijken",
-          tone: waiting ? "pill-warn" : "pill-neutral",
-          owed: true,
+          // Only "fill in the bill" is something to do; otherwise the amount says what you get.
+          pill: waiting ? { text: "Invullen", tone: "warn" as FinancePillTone } : undefined,
+          tone: "owed" as FinanceTone,
         };
       });
     const riding = data.as_passenger
@@ -72,9 +70,8 @@ export function RideCostsCard({ tripFilter }: { tripFilter: string | null }) {
         title: `Jij betaalt ${l.driver}`,
         sub: title(l.trip_id),
         amount: l.amount,
-        pill: "Te betalen",
-        tone: "pill-bad",
-        owed: false,
+        pill: undefined,
+        tone: "owe" as FinanceTone,
       }));
     return [...driving, ...riding];
   }, [data, events, tripFilter]);
@@ -84,42 +81,28 @@ export function RideCostsCard({ tripFilter }: { tripFilter: string | null }) {
 
   return (
     <>
-      <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card-surface overflow-hidden">
+      <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`card-surface overflow-hidden ${className}`}>
         <div className="flex items-center gap-2 px-4 pb-2 pt-4">
           <Car size={13} className="shrink-0 text-ink-3" />
           <p className="section-label">Ritkosten</p>
         </div>
         <ul className="divide-y divide-line border-t border-line">
-          {rows.map((row) => {
-            const body = (
-              <>
-                <span className="min-w-0 flex-1">
-                  <span className="line-clamp-2 break-words text-[13.5px] font-semibold text-ink">{row.title}</span>
-                  <span className="block truncate text-[12px] text-ink-3">{row.sub}</span>
-                  <span className={`${PILL} ${row.tone} mt-1 inline-block`}>{row.pill}</span>
+          {rows.map((row) => (
+            <FinanceRow
+              key={row.key}
+              lead={
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                  <Car size={15} />
                 </span>
-                {row.amount !== null && (
-                  <span className="shrink-0 font-mono text-[13.5px] font-semibold tabular-nums text-ink">{formatAmount(row.amount)}</span>
-                )}
-                {row.tripId && <ChevronRight size={15} className="shrink-0 text-ink-3" />}
-              </>
-            );
-            return (
-              <li key={row.key}>
-                {row.tripId ? (
-                  <button
-                    type="button"
-                    onClick={() => setOpenTripId(row.tripId)}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-sunken"
-                  >
-                    {body}
-                  </button>
-                ) : (
-                  <div className="flex w-full items-center gap-3 px-4 py-3">{body}</div>
-                )}
-              </li>
-            );
-          })}
+              }
+              title={row.title}
+              sub={row.sub}
+              amount={row.amount}
+              tone={row.tone}
+              pill={row.pill}
+              onClick={row.tripId ? () => setOpenTripId(row.tripId) : undefined}
+            />
+          ))}
         </ul>
         <p className="border-t border-line bg-sunken px-4 py-2.5 text-[12px] leading-snug text-ink-3">
           Een overzicht van wat het rijden kost, niet iets wat hier betaald wordt. Reken het af met een Tikkie.

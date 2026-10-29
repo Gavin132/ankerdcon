@@ -26,7 +26,7 @@ export function HeroChip({ tone = "neutral", className = "", ...props }: HeroChi
 
 /** The row at the end of the sign-up line: the quiet action first, the one primary last. */
 export function HeroActions({ children }: { children: ReactNode }) {
-  return <div className="ml-auto flex items-center gap-2">{children}</div>;
+  return <div className="ml-auto flex flex-wrap items-center justify-end gap-2">{children}</div>;
 }
 
 /** "Afmelden", "Uitstappen": outlined on the dark block, as tall as the primary next to it. */
@@ -34,7 +34,7 @@ export function HeroSecondaryButton({ className = "", ...props }: ButtonHTMLAttr
   return (
     <button
       type="button"
-      className={`hit-area flex min-h-[40px] items-center gap-1.5 rounded-xl border-1.5 border-white/25 px-3.5 py-2 text-xs font-semibold text-hero-ink transition-colors hover:border-white/50 ${className}`}
+      className={`hit-area flex min-h-[40px] items-center gap-1.5 whitespace-nowrap rounded-xl border-1.5 border-white/25 px-3.5 py-2 text-xs font-semibold text-hero-ink transition-colors hover:border-white/50 ${className}`}
       {...props}
     />
   );

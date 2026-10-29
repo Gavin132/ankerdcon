@@ -163,7 +163,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
                           type="button"
                           onClick={() => handleClaim(share.id)}
                           disabled={isLoading}
-                          className="btn-primary ml-auto rounded-lg px-3 py-1 text-[12px]"
+                          className="btn-secondary hit-area ml-auto min-h-9 px-3 text-[12px]"
                         >
                           Ik heb betaald
                         </button>
@@ -173,14 +173,14 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
                           type="button"
                           onClick={() => handleConfirm(share.id)}
                           disabled={isLoading}
-                          className="ml-auto flex items-center gap-1.5 rounded-lg border-1.5 border-emerald-700 bg-emerald-600 px-3 py-1 text-[12px] font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50 dark:border-emerald-400"
+                          className="btn-secondary hit-area ml-auto min-h-9 px-3 text-[12px]"
                         >
                           <Check size={11} />
                           Ontvangen
                         </button>
                       )}
                       {share.status === "confirmed" && (
-                        <CheckCircle2 size={14} className="ml-auto text-emerald-600 dark:text-emerald-400" />
+                        <CheckCircle2 size={14} className="ml-auto text-ok" />
                       )}
                     </div>
                   </div>
@@ -197,7 +197,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
               <button
                 type="button"
                 onClick={() => setConfirmDelete(true)}
-                className="flex min-h-11 items-center gap-2 text-sm font-semibold text-ink-3 transition-colors hover:text-rose-600 dark:hover:text-rose-400"
+                className="flex min-h-11 items-center gap-2 text-sm font-semibold text-ink-3 transition-colors hover:text-bad"
               >
                 <Trash2 size={14} />
                 Uitgave verwijderen

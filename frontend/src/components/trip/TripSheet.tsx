@@ -174,7 +174,7 @@ export function TripSheet({ open, onClose, title, subtitle, onBack, footer, view
                   </button>
                 )}
                 <div className="min-w-0">
-                  <h2 className="truncate font-display text-2xl font-extrabold uppercase leading-none tracking-[0.01em] text-ink">
+                  <h2 className="line-clamp-2 break-words font-display text-2xl font-extrabold uppercase leading-none tracking-[0.01em] text-ink">
                     {title}
                   </h2>
                   {subtitle && <p className="mt-0.5 truncate text-xs text-ink-3">{subtitle}</p>}
