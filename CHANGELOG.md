@@ -35,6 +35,21 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **Admin: calmer lists and sheets.** Every admin page has the same width, padding and rhythm. The tables use the shared
+  header and cell styles (12 px headers, no more 10.5 px), and on a phone a row is two lines: the name and the buttons,
+  then the date, place or price, so the name is no longer squeezed to a few letters (Ritten, Activiteiten,
+  Evenementen). Gebruikers shows a pill only for what is not normal (Admin, Kijker, Inactief); deactivating a
+  member moved into the edit sheet as the switch "Account actief" and the bulk bar. Evenementen has "Aankomend" /
+  "Geschiedenis" as a switch next to the group filter, shows the dates once ("17 – 19 nov. 2026 · 3 dagen"), calls the
+  tag "Soort evenement" (Con, Bijeenkomst, Concert), has a separate "Bekijken in de app" button instead of a clickable
+  row, and its sheet folds Tickets & links and Praktische info away for an existing event. Faces in the tables count
+  people, not stored names. The sheets use switches for yes/no (hotel, car available, vervoer nodig) and a 44 px
+  line for the "Con" checkbox of a day.
+- **Admin: smaller things.** The search box is 44 px tall; the pager buttons are spaced so they do not overlap; the
+  page loading state is the outline of a page instead of a spinner; the dashboard greeting follows the page rules
+  ("Beheer" above your name, normal-case date line) and its chart takes the theme and accent colours; the category
+  flags are a soft tint with a tick; the Toegangslijst has labelled fields; hints are 12 px; every sheet's save button
+  says "Opslaan" (edit) or "Toevoegen" (new).
 - **Profile, settings and Meldingen:** "Opslaan" and the new "Zo zien anderen je profiel" button (an eye, on a phone too)
   are in the top bar of the profile; Opslaan is only blue when something changed, and the same goes for Meldingen, where
   the categories are switches instead of checkboxes and a line says the channel is applied at once. Form labels are

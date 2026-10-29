@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatAmount, formatBytes, formatDateShort } from "./format";
+import { formatAmount, formatBytes, formatDateRangeShort, formatDateShort } from "./format";
 
 describe("formatAmount", () => {
   it("writes money the Dutch way, with a comma", () => {
@@ -24,5 +24,17 @@ describe("formatDateShort", () => {
 
   it("gives back what it cannot read", () => {
     expect(formatDateShort("niet een datum")).toBe("niet een datum");
+  });
+});
+
+describe("formatDateRangeShort", () => {
+  it("writes the year once", () => {
+    expect(formatDateRangeShort(new Date(2026, 10, 17), new Date(2026, 10, 19))).toBe("17 – 19 nov. 2026");
+    expect(formatDateRangeShort(new Date(2026, 9, 28), new Date(2026, 10, 2))).toBe("28 okt. – 2 nov. 2026");
+    expect(formatDateRangeShort(new Date(2026, 11, 30), new Date(2027, 0, 2))).toBe("30 dec. 2026 – 2 jan. 2027");
+  });
+
+  it("is a single date for one day", () => {
+    expect(formatDateRangeShort(new Date(2026, 10, 17), new Date(2026, 10, 17))).toBe("17 nov. 2026");
   });
 });

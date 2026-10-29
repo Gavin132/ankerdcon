@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Users, Car, UtensilsCrossed, CalendarDays, Shield,
+  Users, Car, UtensilsCrossed, CalendarDays,
   Sparkles, Wallet, MapPin, UserPlus, ChevronRight, TrendingUp,
 } from "lucide-react";
 import {
@@ -22,10 +22,12 @@ import { toast } from "../../store/toast.store";
 import { formatDate, formatAmount } from "../../utils/format";
 import { parseEventDate, todayKey, toDateKey } from "../../utils/date";
 import { getNow } from "../../store/time.store";
+import { AdminPage } from "./components/AdminPage";
+import { AdminPageHeader } from "./components/AdminPageHeader";
 import { groupCalendarEntries, getGroupTitle, formatDateRange, type CalendarItem } from "../../utils/multiDay";
 import type { CalendarEvent, User } from "../../types";
 
-const DAYS_NL = ["Zo","Ma","Di","Wo","Do","Vr","Za"];
+const DAYS_NL = ["zo","ma","di","wo","do","vr","za"];
 const MONTHS_NL = ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
 
 // ── Tooltip ───────────────────────────────────────────────────────────────────
@@ -36,7 +38,7 @@ function DarkTooltip({ active, payload, label }: {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-lg border-1.5 border-line bg-surface px-3 py-2.5 text-xs shadow-xl">
-      {label && <p className="mb-1.5 font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink-3">{label}</p>}
+      {label && <p className="label-quiet mb-1.5">{label}</p>}
       {payload.map((p, i) => (
         <div key={i} className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
@@ -140,11 +142,11 @@ function EventRow({ item, users, cosplayCount }: {
         {/* Info */}
         <div className="min-w-0 flex-1 basis-40">
           <p className="truncate text-sm font-semibold text-ink">{title}</p>
-          <div className="mt-0.5 flex items-center gap-3 text-[11px] text-ink-3">
+          <div className="mt-0.5 flex items-center gap-3 text-xs text-ink-3">
             <span className="whitespace-nowrap font-mono">{dateLabel}</span>
             {firstDay.location && (
               <span className="flex min-w-0 items-center gap-1">
-                <MapPin size={9} className="shrink-0" /> <span className="truncate">{firstDay.location}</span>
+                <MapPin size={12} className="shrink-0" /> <span className="truncate">{firstDay.location}</span>
               </span>
             )}
           </div>
@@ -158,27 +160,27 @@ function EventRow({ item, users, cosplayCount }: {
           </span>
           {cosplayCount > 0 && (
             <span className="flex items-center gap-1 text-ink-2">
-              <Sparkles size={11} />
+              <Sparkles size={14} />
               <span className="font-mono font-semibold tabular-nums">{cosplayCount}</span>
             </span>
           )}
           <button
             type="button"
             onClick={() => setShowRsvp((v) => !v)}
-            className={`hit-area flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+            className={`hit-area flex min-h-9 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
               showRsvp
                 ? "border-1.5 border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
                 : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
             }`}
           >
-            <UserPlus size={11} />
-            RSVP
+            <UserPlus size={14} />
+            Aanmelden
           </button>
           <button
             type="button"
             onClick={() => navigate(routes.event.view(firstDay.id))}
-            aria-label={`Open ${title}`}
-            className="hit-area flex h-9 w-9 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+            aria-label={`${title} openen`}
+            className="icon-btn text-ink-3"
           >
             <ChevronRight size={16} />
           </button>
@@ -188,8 +190,8 @@ function EventRow({ item, users, cosplayCount }: {
       {showRsvp && (
         <div className="px-4 pb-3">
           {days.length > 1 && (
-            <p className="mb-1.5 text-[11px] text-ink-3">
-              Aanmelden voor {formatDate(firstDay.date)} — de eerstvolgende dag van deze trip
+            <p className="mb-1.5 text-xs text-ink-3">
+              Aanmelden voor {formatDate(firstDay.date)}, de eerstvolgende dag van dit evenement
             </p>
           )}
           <BulkRsvpPanel event={firstDay} users={users} onDone={() => setShowRsvp(false)} />
@@ -244,7 +246,8 @@ export function AdminDashboardPage() {
     });
   }, [allUsers]);
 
-  const AXIS = { fill: "#74838A", fontSize: 11, fontFamily: "Poppins, system-ui, sans-serif" };
+  // Theme colours, so the chart follows light and dark mode and the accent colour.
+  const AXIS = { fill: "rgb(var(--ink-3))", fontSize: 12, fontFamily: "Poppins, system-ui, sans-serif" };
 
   const METRICS = [
     { label: "Gebruikers",  value: stats?.users,  icon: Users,           path: routes.admin.users  },
@@ -256,19 +259,13 @@ export function AdminDashboardPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
-
+    <AdminPage>
       {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <div className="flex items-end justify-between gap-4">
-        <div className="min-w-0">
-          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3">{greeting},</p>
-          <h1 className="mt-1 font-display text-[34px] font-extrabold uppercase leading-[0.95] text-ink md:text-[42px]">{me?.name ?? "Admin"}</h1>
-          <p className="mt-1.5 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3">{dateLabel} · Beheer</p>
-        </div>
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-          <Shield size={17} />
-        </div>
-      </div>
+      <AdminPageHeader
+        eyebrow="Beheer"
+        title={me?.name ?? "Admin"}
+        subtitle={`${greeting} · ${dateLabel}`}
+      />
 
       {/* ── Metrics strip ───────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
@@ -276,8 +273,8 @@ export function AdminDashboardPage() {
           const body = (
             <>
               <span className="flex w-full items-center justify-between gap-2">
-                <span className="truncate font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">{label}</span>
-                <Icon size={14} className="shrink-0 text-ink-3" />
+                <span className="label-quiet truncate">{label}</span>
+                <Icon size={16} className="shrink-0 text-ink-3" />
               </span>
               {statsLoading && typeof value === "number" ? (
                 <div className="h-7 w-10 animate-pulse rounded bg-sunken" />
@@ -302,7 +299,7 @@ export function AdminDashboardPage() {
       <div className="card-surface overflow-hidden">
         <div className="flex items-center justify-between gap-3 border-b-1.5 border-line px-4 py-3">
           <p className="section-label flex items-center gap-1.5">
-            <CalendarDays size={12} /> Aankomende evenementen
+            <CalendarDays size={14} /> Aankomende evenementen
           </p>
           <button
             type="button"
@@ -340,8 +337,8 @@ export function AdminDashboardPage() {
 
       {/* ── User growth chart ────────────────────────────────────────────────── */}
       <div className="card-surface p-4 sm:p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <TrendingUp size={13} className="text-ink-3" />
+        <div className="mb-4 flex items-center gap-2">
+          <TrendingUp size={14} className="text-ink-3" />
           <p className="section-label">Gebruikersgroei</p>
         </div>
         {usersLoading ? (
@@ -352,26 +349,25 @@ export function AdminDashboardPage() {
           <>
             <ResponsiveContainer width="100%" height={160}>
               <ComposedChart data={userGrowthData} margin={{ top: 4, right: 16, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(116,131,138,0.22)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--line))" />
                 <XAxis dataKey="label" tick={AXIS} tickLine={false} axisLine={false} />
                 <YAxis tick={AXIS} tickLine={false} axisLine={false} allowDecimals={false} />
-                <Tooltip content={<DarkTooltip />} cursor={{ fill: "rgba(116,131,138,0.10)" }} />
-                <Bar dataKey="newUsers" name="Nieuw" fill="#57B2F9" radius={[3, 3, 0, 0]} maxBarSize={32} />
-                <Line dataKey="cumulative" name="Totaal" type="monotone" stroke="#74838A" strokeWidth={2} dot={false} />
+                <Tooltip content={<DarkTooltip />} cursor={{ fill: "rgb(var(--sunken))" }} />
+                <Bar dataKey="newUsers" name="Nieuw" fill="rgb(var(--cyan))" radius={[3, 3, 0, 0]} maxBarSize={32} />
+                <Line dataKey="cumulative" name="Totaal" type="monotone" stroke="rgb(var(--ink-3))" strokeWidth={2} dot={false} />
               </ComposedChart>
             </ResponsiveContainer>
-            <div className="flex items-center gap-4 mt-2 justify-end">
-              <span className="flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink-3">
+            <div className="mt-2 flex items-center justify-end gap-4">
+              <span className="label-quiet flex items-center gap-1.5">
                 <span className="h-2.5 w-2.5 rounded-sm bg-brand" /> Nieuw
               </span>
-              <span className="flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink-3">
+              <span className="label-quiet flex items-center gap-1.5">
                 <span className="h-0.5 w-4 bg-ink-3" /> Cumulatief
               </span>
             </div>
           </>
         )}
       </div>
-
-    </div>
+    </AdminPage>
   );
 }

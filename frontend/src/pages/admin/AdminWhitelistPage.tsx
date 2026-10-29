@@ -2,8 +2,10 @@ import { useState } from "react";
 import { Plus, ShieldCheck, MessageSquare, Mail, Trash2, Eye } from "lucide-react";
 import { useAdminWhitelist, useCreateWhitelistEntry, useDeleteWhitelistEntry } from "../../hooks/useWhitelist";
 import { toast } from "../../store/toast.store";
-import { F } from "./styles";
+import { F, L, TH, TD, TR, PILL_NEUTRAL } from "./styles";
+import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
+import { ToggleRow } from "./components/ToggleRow";
 import { ConfirmInline } from "./components/ConfirmInline";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 
@@ -34,7 +36,7 @@ export function AdminWhitelistPage() {
       setViewer(false);
       toast("success", "Toegevoegd aan de toegangslijst.");
     } catch {
-      toast("error", "Kon niet toevoegen — staat deze persoon er al op?");
+      toast("error", "Kon niet toevoegen. Staat deze persoon er al op? Controleer het Discord ID of e-mailadres en probeer het opnieuw.");
     }
   }
 
@@ -44,67 +46,75 @@ export function AdminWhitelistPage() {
       setConfirmDeleteId(null);
       toast("success", "Van de toegangslijst verwijderd.");
     } catch {
-      toast("error", "Kon niet verwijderen.");
+      toast("error", "Kon niet verwijderen. Probeer het opnieuw.");
     }
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+    <AdminPage>
       <AdminPageHeader
         title="Toegangslijst"
-        subtitle={`${entries.length} personen mogen inloggen`}
+        subtitle={`${entries.length} ${entries.length === 1 ? "persoon mag" : "personen mogen"} inloggen`}
       />
 
-      <p className="text-sm text-ink-3">
-        Alleen wie hier op staat kan bij de eerste keer inloggen een profiel aanmaken —
-        op Discord ID voor wie via Discord inlogt, op e-mailadres voor wie via Google inlogt.
-        Iemand die al een profiel heeft blijft gewoon toegang houden als deze hier
-        (per ongeluk) niet meer op staat.
+      <p className="max-w-3xl text-sm text-ink-2">
+        Wie hier staat, kan bij de eerste keer inloggen een profiel aanmaken. Bestaande profielen
+        houden hun toegang.
       </p>
 
       {/* Create form */}
-      <form onSubmit={handleCreate} className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-        <input
-          value={discordId}
-          onChange={(e) => setDiscordId(e.target.value)}
-          className={`${F} flex-1`}
-          placeholder="Discord ID…"
+      <form onSubmit={handleCreate} className="card-surface space-y-3 p-4">
+        <p className="section-label">Toevoegen</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label htmlFor="whitelist-discord" className={L}>Discord ID</label>
+            <input
+              id="whitelist-discord"
+              value={discordId}
+              onChange={(e) => setDiscordId(e.target.value)}
+              className={`${F} font-mono`}
+              placeholder="123456789012345678"
+              inputMode="numeric"
+            />
+            <p className="mt-1.5 text-xs text-ink-3">Voor wie via Discord inlogt.</p>
+          </div>
+          <div>
+            <label htmlFor="whitelist-email" className={L}>E-mailadres</label>
+            <input
+              id="whitelist-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={F}
+              placeholder="naam@voorbeeld.nl"
+            />
+            <p className="mt-1.5 text-xs text-ink-3">Voor wie via Google inlogt.</p>
+          </div>
+        </div>
+        <ToggleRow
+          icon={<Eye size={16} />}
+          label="Alleen kijken"
+          hint="Kan alles bekijken, maar niets aanpassen of zich ergens voor aanmelden."
+          checked={viewer}
+          onChange={() => setViewer((v) => !v)}
         />
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className={`${F} flex-1`}
-          placeholder="of e-mailadres…"
-        />
-        <label className="flex basis-full cursor-pointer items-center gap-2 text-[13px] text-ink-2">
-          <input type="checkbox" className="cb" checked={viewer} onChange={(e) => setViewer(e.target.checked)} />
-          <Eye size={13} className="shrink-0" />
-          <span>
-            <b className="font-semibold text-ink">Alleen kijken</b>: kan alles bekijken, maar niets aanpassen of zich ergens voor aanmelden.
-          </span>
-        </label>
         <button
           type="submit"
           disabled={(!discordId.trim() && !email.trim()) || createMutation.isPending}
-          className="btn-primary min-h-[44px] shrink-0 px-4 py-2.5 text-sm"
+          className="btn-primary min-h-[44px] w-full px-4 py-2.5 text-sm sm:w-auto"
         >
-          <Plus size={15} />
+          <Plus size={16} />
           Toevoegen
         </button>
       </form>
 
       {/* Entries table */}
       <div className="card-surface overflow-hidden">
-        <table className="w-full table-fixed">
+        <table className="stack-table w-full">
           <thead>
-            <tr className="border-b-1.5 border-line">
-              <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                Identificatie
-              </th>
-              <th className="w-24 px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                Acties
-              </th>
+            <tr>
+              <th className={TH}>Identificatie</th>
+              <th className={`${TH} text-right`}>Acties</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
@@ -118,25 +128,24 @@ export function AdminWhitelistPage() {
               </tr>
             ) : (
               entries.map((entry) => (
-                <tr key={entry.id} className="hover:bg-sunken transition-colors">
-                  <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                <tr key={entry.id} className={TR}>
+                  <td className={`cell-main ${TD}`}>
                     <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
-                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink sm:h-7 sm:w-7">
-                        {entry.discord_id
-                          ? <MessageSquare size={13} />
-                          : <Mail size={13} />}
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                        {entry.discord_id ? <MessageSquare size={14} /> : <Mail size={14} />}
                       </div>
                       <span className="min-w-0 truncate font-mono text-[13px] font-medium text-ink">
                         {entry.discord_id || entry.email}
                       </span>
                       {entry.viewer && (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-line bg-surface px-2 py-0.5 text-[11px] font-semibold text-ink-2">
-                          <Eye size={10} /> Kijker
+                        <span className={`${PILL_NEUTRAL} shrink-0`}>
+                          <Eye size={14} />
+                          Kijker
                         </span>
                       )}
                     </div>
                   </td>
-                  <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
+                  <td className={`cell-actions ${TD}`}>
                     {confirmDeleteId === entry.id ? (
                       <ConfirmInline
                         isPending={deleteMutation.isPending}
@@ -147,9 +156,9 @@ export function AdminWhitelistPage() {
                       <div className="flex items-center justify-end">
                         <button
                           onClick={() => setConfirmDeleteId(entry.id)}
-                          className="hit-area flex h-9 w-9 items-center justify-center rounded-lg text-ink-3 hover:bg-bad-soft hover:text-bad transition-colors"
+                          className="icon-btn text-ink-3 hover:!bg-bad-soft hover:!text-bad"
                           title="Verwijderen"
-                          aria-label="Verwijderen"
+                          aria-label={`${entry.discord_id || entry.email} van de toegangslijst verwijderen`}
                         >
                           <Trash2 size={16} />
                         </button>
@@ -169,6 +178,6 @@ export function AdminWhitelistPage() {
           Deze lijst is alleen zichtbaar voor admins.
         </p>
       )}
-    </div>
+    </AdminPage>
   );
 }

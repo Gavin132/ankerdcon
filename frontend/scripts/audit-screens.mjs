@@ -97,7 +97,7 @@ export const screens = [
   { name: "admin-users-add", path: "/admin/users", role: "admin", steps: click(byText(/nieuwe gebruiker/i)) },
   { name: "admin-users-selected", path: "/admin/users", role: "admin", steps: click(checkbox(/Selecteer /)) },
   { name: "admin-users-bulk-delete", path: "/admin/users", role: "admin", steps: then(click(checkbox(/Selecteer /)), click(byText(/^Verwijderen$/))) },
-  { name: "admin-users-edit", path: "/admin/users", role: "admin", steps: click(byLabel(/^Bewerken$/)) },
+  { name: "admin-users-edit", path: "/admin/users", role: "admin", steps: click(byLabel(/bewerken$/i)) },
   { name: "admin-whitelist", path: "/admin/whitelist", role: "admin" },
   { name: "admin-rides", path: "/admin/rides", role: "admin" },
   { name: "admin-meals", path: "/admin/meals", role: "admin" },

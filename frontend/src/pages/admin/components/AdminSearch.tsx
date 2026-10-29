@@ -9,7 +9,7 @@ interface Props {
 export function AdminSearch({
   value,
   onChange,
-  placeholder = "Zoeken...",
+  placeholder = "Zoeken…",
 }: Props) {
   return (
     <div className="relative w-full max-w-sm">
@@ -20,16 +20,16 @@ export function AdminSearch({
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="input-field rounded-[9px] py-2 pl-9 pr-9 text-base sm:text-sm"
+        className="input-field rounded-[9px] py-2.5 pl-9 pr-10 text-base sm:text-sm"
         placeholder={placeholder}
       />
       {value && (
         <button
           onClick={() => onChange("")}
           aria-label="Zoekopdracht wissen"
-          className="hit-area absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-ink-3 transition-colors hover:text-ink"
+          className="icon-btn absolute right-1 top-1/2 -translate-y-1/2"
         >
-          <X size={14} />
+          <X size={16} />
         </button>
       )}
     </div>

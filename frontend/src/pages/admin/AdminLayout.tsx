@@ -2,15 +2,25 @@ import { Suspense, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { AdminSidebar } from "./components/AdminSidebar";
 import { AdminTopbar } from "./components/AdminTopbar";
+import { AdminPage } from "./components/AdminPage";
 
 // Keeps the sidebar/topbar mounted while an admin page's chunk loads,
 // instead of the navigation bubbling to the app's top-level Suspense and
 // tearing down this whole layout — same fix as AppShell for the main tabs.
+// It draws the shape of a page (a title and three rows), not a spinner.
 function AdminTabFallback() {
   return (
-    <div className="flex items-center justify-center py-24">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-text border-t-transparent" />
-    </div>
+    <AdminPage>
+      <div className="space-y-2" aria-busy="true" aria-label="Laden…">
+        <div className="h-3 w-20 animate-pulse rounded bg-sunken" />
+        <div className="h-10 w-56 animate-pulse rounded-lg bg-sunken" />
+      </div>
+      <div className="card-surface space-y-3 p-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="h-12 animate-pulse rounded-lg bg-sunken" />
+        ))}
+      </div>
+    </AdminPage>
   );
 }
 

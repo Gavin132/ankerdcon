@@ -10,6 +10,7 @@ import { ApiError } from "../../lib/api/client";
 import { toast } from "../../store/toast.store";
 import type { MealCategory } from "../../types";
 import { F } from "./styles";
+import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 
@@ -42,8 +43,11 @@ function FlagToggle({
       title={flag.hint}
       disabled={disabled}
       onClick={onToggle}
-      className={`chip disabled:opacity-50 ${on ? "chip-on" : "chip-off"}`}
+      // Several of these are on at once, so "on" is a soft tint and a tick, not the ink fill of a filter chip.
+      className={`chip disabled:opacity-50 ${on ? "border-transparent bg-brand-soft text-brand-text" : "chip-off"}`}
     >
+      {/* The tick says "on" without leaning on the colour alone */}
+      {on && <Check size={14} />}
       {flag.label}
     </button>
   );
@@ -128,10 +132,10 @@ export function AdminMealCategoriesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+    <AdminPage width="narrow">
       <AdminPageHeader
         title="Categorieën"
-        subtitle={`${categories.length} soorten activiteit. De bovenste staat voorgeselecteerd bij een nieuwe activiteit.`}
+        subtitle={`${categories.length} ${categories.length === 1 ? "soort" : "soorten"} activiteit. De bovenste staat voorgeselecteerd bij een nieuwe activiteit.`}
       />
 
       <form onSubmit={handleCreate} className="card-surface space-y-3 p-4">
@@ -141,7 +145,7 @@ export function AdminMealCategoriesPage() {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             className={`${F} flex-1`}
-            placeholder="Nieuwe naam"
+            placeholder="Nieuwe categorie…"
             maxLength={40}
           />
           <button
@@ -149,11 +153,11 @@ export function AdminMealCategoriesPage() {
             disabled={!newName.trim() || createMutation.isPending}
             className="btn-primary min-h-[44px] gap-2 px-4 py-2.5 text-sm"
           >
-            <Plus size={15} />
+            <Plus size={16} />
             Aanmaken
           </button>
         </div>
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Wat heeft de nieuwe categorie">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Wat heeft de nieuwe categorie">
           {FLAGS.map((f) => (
             <FlagToggle key={f.key} flag={f} on={newFlags[f.key]} onToggle={() => setNewFlags((v) => ({ ...v, [f.key]: !v[f.key] }))} />
           ))}
@@ -173,7 +177,7 @@ export function AdminMealCategoriesPage() {
           categories.map((category, index) => (
             <div key={category.id} className="space-y-2.5 px-4 py-3.5">
               <div className="flex items-center gap-2">
-                <div className="flex shrink-0 gap-0.5">
+                <div className="flex shrink-0 gap-2">
                   <button
                     type="button"
                     aria-label={`${category.name} omhoog`}
@@ -214,7 +218,7 @@ export function AdminMealCategoriesPage() {
                 </div>
 
                 {editingId === category.id ? (
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
                       aria-label="Opslaan"
@@ -240,6 +244,8 @@ export function AdminMealCategoriesPage() {
                     id={category.id}
                     confirmId={confirmDeleteId}
                     isPending={deleteMutation.isPending}
+                    editLabel={`${category.name} hernoemen`}
+                    deleteLabel={`${category.name} verwijderen`}
                     onEdit={() => {
                       setEditingId(category.id);
                       setEditingName(category.name);
@@ -251,7 +257,7 @@ export function AdminMealCategoriesPage() {
                 )}
               </div>
 
-              <div className="flex flex-wrap gap-1.5" role="group" aria-label={`Wat heeft ${category.name}`}>
+              <div className="flex flex-wrap gap-2" role="group" aria-label={`Wat heeft ${category.name}`}>
                 {FLAGS.map((f) => (
                   <FlagToggle
                     key={f.key}
@@ -266,6 +272,6 @@ export function AdminMealCategoriesPage() {
           ))
         )}
       </div>
-    </div>
+    </AdminPage>
   );
 }

@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Shield, ShieldOff, Plus, X, UserPlus, Ban, CheckCircle, Copy, Check, Eye } from "lucide-react";
+import { Shield, Plus, X, UserPlus, Ban, Copy, Check, Eye } from "lucide-react";
 import {
   useAdminUsers,
   useAdminCreateUser,
@@ -15,7 +15,8 @@ import { UserAvatar } from "../../components/common/UserAvatar";
 import { AdminDrawer } from "./AdminDrawer";
 import { toast } from "../../store/toast.store";
 import type { User } from "../../types";
-import { F, L } from "./styles";
+import { F, L, TH, TD, TR, TR_SELECTED, PILL_NEUTRAL } from "./styles";
+import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminSearch } from "./components/AdminSearch";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
@@ -25,7 +26,6 @@ import { DrawerFooter } from "./components/DrawerFooter";
 import { DiscardChangesConfirm } from "./components/DiscardChangesConfirm";
 import { AdminBulkBar } from "./components/AdminBulkBar";
 import { RowCheckbox } from "./components/RowCheckbox";
-import { ConfirmInline } from "./components/ConfirmInline";
 import { ToggleRow } from "./components/ToggleRow";
 import { useTableSelection } from "../../hooks/useTableSelection";
 import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
@@ -82,7 +82,7 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
       open={open}
       onClose={requestClose}
       title="Nieuwe gebruiker"
-      subtitle="Voeg een gebruiker toe, met of zonder eigen account"
+      subtitle="Met of zonder eigen account"
       footer={
         <DrawerFooter
           onCancel={requestClose}
@@ -104,7 +104,7 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
           {errors.name && (
             <p className="field-error">{errors.name.message}</p>
           )}
-          <p className="mt-1.5 text-[11px] text-ink-3">
+          <p className="mt-1.5 text-xs text-ink-3">
             Zichtbaar voor de hele groep bij ritten, maaltijden, kamers en uitgaven.
           </p>
         </div>
@@ -116,7 +116,7 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
             className={`${F} font-mono`}
             placeholder="123456789012345678"
           />
-          <p className="mt-1.5 text-[11px] text-ink-3">
+          <p className="mt-1.5 text-xs text-ink-3">
             Alleen nodig als deze persoon zelf met Discord gaat inloggen — voor een stabielere koppeling na naamwijzigingen. Laat dit leeg voor iemand zonder eigen account (bijv. iemand die niet mee wil doen aan de app); je kunt ze dan nog steeds overal aan toevoegen.
           </p>
         </div>
@@ -153,6 +153,7 @@ const editSchema = z.object({
     .optional(),
   is_admin: z.boolean().optional(),
   is_viewer: z.boolean().optional(),
+  is_active: z.boolean().optional(),
 });
 type EditForm = z.infer<typeof editSchema>;
 
@@ -183,10 +184,12 @@ function UserEditDrawer({
       color: user?.color ?? "",
       is_admin: user?.is_admin ?? false,
       is_viewer: user?.is_viewer ?? false,
+      is_active: user?.is_active !== false,
     },
   });
   const isAdmin = watch("is_admin");
   const isViewer = watch("is_viewer");
+  const isActive = watch("is_active");
 
   function addAlias() {
     const trimmed = aliasInput.trim();
@@ -199,12 +202,13 @@ function UserEditDrawer({
   async function onSubmit(values: EditForm) {
     try {
       // is_viewer only when it was changed: a database without the column yet must still save everything else.
-      const { is_viewer, ...rest } = values;
+      const { is_viewer, is_active, ...rest } = values;
       await updateMutation.mutateAsync({
         id: user!.id!,
         ...rest,
         aliases,
         ...((is_viewer ?? false) !== (user?.is_viewer ?? false) ? { is_viewer } : {}),
+        ...((is_active ?? true) !== (user?.is_active !== false) ? { is_active } : {}),
       });
       toast("success", `${user!.name} bijgewerkt.`);
       onClose();
@@ -333,9 +337,10 @@ function UserEditDrawer({
                   aliases.includes(aliasInput.trim()) ||
                   aliases.length >= 10
                 }
+                aria-label="Alias toevoegen"
                 className="btn-primary h-11 w-11 shrink-0"
               >
-                <Plus size={14} />
+                <Plus size={16} />
               </button>
             </div>
             {aliases.length > 0 && (
@@ -352,13 +357,13 @@ function UserEditDrawer({
                       aria-label={`Alias ${a} verwijderen`}
                       className="hit-area -mr-1 p-1 text-ink-3 hover:text-bad transition-colors"
                     >
-                      <X size={11} />
+                      <X size={14} />
                     </button>
                   </span>
                 ))}
               </div>
             )}
-            <p className="mt-1.5 text-[11px] text-ink-3">
+            <p className="mt-1.5 text-xs text-ink-3">
               Zoekopdrachten in aanmeldformulieren herkennen deze namen ook.
             </p>
           </div>
@@ -376,6 +381,13 @@ function UserEditDrawer({
             checked={!!isViewer}
             onChange={() => setValue("is_viewer", !isViewer, { shouldDirty: true })}
           />
+          <ToggleRow
+            icon={<Ban size={16} />}
+            label="Account actief"
+            hint="Uitzetten blokkeert inloggen. De naam blijft in ritten, kamers en uitgaven staan."
+            checked={isActive !== false}
+            onChange={() => setValue("is_active", isActive === false, { shouldDirty: true })}
+          />
         </form>
       )}
     </AdminDrawer>
@@ -388,7 +400,6 @@ function UserEditDrawer({
 
 export function AdminUsersPage() {
   const { data: users = [], isLoading } = useAdminUsers();
-  const updateMutation = useAdminUpdateUser();
   const deleteMutation = useAdminDeleteUser();
   const bulkDeleteMutation = useAdminBulkDeleteUsers();
   const bulkDeactivateMutation = useAdminBulkDeactivateUsers();
@@ -397,7 +408,6 @@ export function AdminUsersPage() {
   const [editing, setEditing] = useState<User | null>(null);
   const [creating, setCreating] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [confirmDeactivateId, setConfirmDeactivateId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const filtered = users.filter((u) => {
@@ -425,25 +435,6 @@ export function AdminUsersPage() {
   function handleSearch(v: string) {
     setSearch(v);
     setPage(0);
-  }
-
-  async function handleDeactivate(user: User) {
-    try {
-      await updateMutation.mutateAsync({ id: user.id!, is_active: false });
-      toast("success", `${user.name} gedeactiveerd.`);
-      setConfirmDeactivateId(null);
-    } catch {
-      toast("error", "Kon status niet wijzigen.");
-    }
-  }
-
-  async function handleActivate(user: User) {
-    try {
-      await updateMutation.mutateAsync({ id: user.id!, is_active: true });
-      toast("success", `${user.name} geactiveerd.`);
-    } catch {
-      toast("error", "Kon status niet wijzigen.");
-    }
   }
 
   function handleCopyDiscordId(id: string, userId: string) {
@@ -487,7 +478,7 @@ export function AdminUsersPage() {
   const activeCount = users.filter((u) => u.is_active !== false).length;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+    <AdminPage>
       <AdminPageHeader
         title="Gebruikers"
         subtitle={`${activeCount} actief · ${users.length} totaal`}
@@ -496,7 +487,7 @@ export function AdminUsersPage() {
             onClick={() => setCreating(true)}
             className="btn-primary min-h-[44px] px-4 py-2 text-sm"
           >
-            <UserPlus size={15} />
+            <UserPlus size={16} />
             Nieuwe gebruiker
           </button>
         }
@@ -505,7 +496,7 @@ export function AdminUsersPage() {
       <AdminSearch
         value={search}
         onChange={handleSearch}
-        placeholder="Zoek op naam, Discord of alias..."
+        placeholder="Zoek op naam, Discord of alias…"
       />
 
       <AdminBulkBar
@@ -530,185 +521,101 @@ export function AdminUsersPage() {
         <div className="overflow-x-auto">
           <table className="stack-table w-full">
             <thead>
-              <tr className="border-b-1.5 border-line text-left">
-                <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
+              <tr className="text-left">
+                <th className={`${TH} w-10 !pr-2`}>
                   <RowCheckbox checked={allSelected} indeterminate={indeterminate} onChange={selectAll} label="Alles selecteren" />
                 </th>
-                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Gebruiker
-                </th>
-                <th className="hidden sm:table-cell px-5 py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Discord ID
-                </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Status
-                </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Rol
-                </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Acties
-                </th>
+                <th className={TH}>Gebruiker</th>
+                <th className={`${TH} hidden sm:table-cell`}>Discord ID</th>
+                <th className={TH}>Status</th>
+                <th className={`${TH} text-right`}>Acties</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
               {isLoading ? (
-                <AdminTableSkeleton cols={6} />
+                <AdminTableSkeleton cols={5} />
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-5 py-10 text-center text-sm text-ink-3"
-                  >
+                  <td colSpan={5} className="px-5 py-10 text-center text-sm text-ink-3">
                     Geen gebruikers gevonden.
                   </td>
                 </tr>
               ) : (
                 paginated.map((user) => {
                   const isActive = user.is_active !== false;
+                  const isSelected = selectedIds.has(user.id!);
                   return (
-                    <tr
-                      key={user.id}
-                      className={`group transition-colors ${selectedIds.has(user.id!) ? "bg-brand-soft/50 hover:bg-brand-soft/70" : "hover:bg-sunken"} ${!isActive ? "opacity-50" : ""}`}
-                    >
+                    <tr key={user.id} className={`${isSelected ? TR_SELECTED : TR} ${!isActive ? "opacity-60" : ""}`}>
                       <td
-                        className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3.5"
+                        className={`${TD} w-10 !pr-2`}
                         onClick={(e) => { e.stopPropagation(); toggleSelect(user.id!); }}
                       >
-                        <RowCheckbox checked={selectedIds.has(user.id!)} onChange={() => toggleSelect(user.id!)} label={`Selecteer ${user.name}`} />
+                        <RowCheckbox checked={isSelected} onChange={() => toggleSelect(user.id!)} label={`Selecteer ${user.name}`} />
                       </td>
-                      <td className="cell-main px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                      <td className={`cell-main ${TD}`}>
                         <div className="flex items-center gap-2 sm:gap-3">
                           <UserAvatar
                             name={user.name}
                             className="h-7 w-7 sm:h-8 sm:w-8 text-[9px] sm:text-[10px] shrink-0"
                           />
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-ink truncate">
-                              {user.name}
-                            </p>
+                            <p className="truncate text-sm font-semibold text-ink">{user.name}</p>
                             {user.discord_username && (
-                              <p className="text-xs text-ink-3 truncate">
-                                @{user.discord_username}
-                              </p>
+                              <p className="truncate text-xs text-ink-3">@{user.discord_username}</p>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="hidden sm:table-cell px-5 py-3.5">
+                      <td className={`hidden sm:table-cell ${TD}`}>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-xs text-ink-3 font-mono">
-                            {user.discord_id ?? (
-                              <span className="text-ink-3">—</span>
-                            )}
-                          </span>
+                          <span className="font-mono text-xs text-ink-3">{user.discord_id ?? "—"}</span>
                           {user.discord_id && (
                             <button
                               onClick={() => handleCopyDiscordId(user.discord_id!, user.id!)}
-                              className="hit-area opacity-0 group-hover:opacity-100 flex h-6 w-6 items-center justify-center rounded-md text-ink-3 hover:bg-sunken hover:text-ink transition-all"
+                              className="icon-btn text-ink-3"
                               title="Discord ID kopiëren"
                               aria-label="Discord ID kopiëren"
                             >
-                              {copiedId === user.id ? (
-                                <Check size={11} className="text-emerald-600 dark:text-emerald-400" />
-                              ) : (
-                                <Copy size={11} />
-                              )}
+                              {copiedId === user.id ? <Check size={14} className="text-ok" /> : <Copy size={14} />}
                             </button>
                           )}
                         </div>
                       </td>
-                      <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
-                        {isActive ? (
-                          <span
-                            title="Actief"
-                            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 p-1.5 text-[11.5px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 sm:px-2 sm:py-0.5"
-                          >
-                            <CheckCircle size={10} />
-                            <span className="hidden sm:inline">Actief</span>
-                          </span>
-                        ) : (
-                          <span
-                            title="Inactief"
-                            className="inline-flex items-center gap-1.5 rounded-full bg-sunken p-1.5 text-[11.5px] font-semibold text-ink-2 sm:px-2 sm:py-0.5"
-                          >
-                            <Ban size={10} />
-                            <span className="hidden sm:inline">Inactief</span>
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
-                        {user.is_viewer && !user.is_admin ? (
-                          <span
-                            title="Alleen kijken"
-                            className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface p-1.5 text-[11.5px] font-semibold text-ink-2 sm:px-2 sm:py-0.5"
-                          >
-                            <Eye size={10} />
-                            <span className="hidden sm:inline">Kijker</span>
-                          </span>
-                        ) : user.is_admin ? (
-                          <span
-                            title="Admin"
-                            className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface p-1.5 text-[11.5px] font-semibold text-ink sm:px-2 sm:py-0.5"
-                          >
-                            <Shield size={10} />
-                            <span className="hidden sm:inline">Admin</span>
-                          </span>
-                        ) : (
-                          <span
-                            title="Gebruiker"
-                            className="inline-flex items-center gap-1.5 rounded-full bg-sunken p-1.5 text-[11.5px] font-semibold text-ink-2 sm:px-2 sm:py-0.5"
-                          >
-                            <ShieldOff size={10} />
-                            <span className="hidden sm:inline">Gebruiker</span>
-                          </span>
-                        )}
-                      </td>
-                      <td className="cell-actions px-2 sm:px-5 py-2.5 sm:py-3.5">
-                        <div className="flex items-center justify-end gap-1 sm:gap-1.5">
-                          {/* Deactivate confirmation inline */}
-                          {confirmDeactivateId === user.id ? (
-                            <ConfirmInline
-                              calm
-                              question="Deactiveren?"
-                              confirmLabel="Deactiveren"
-                              isPending={updateMutation.isPending}
-                              onConfirm={() => handleDeactivate(user)}
-                              onCancel={() => setConfirmDeactivateId(null)}
-                            />
-                          ) : (
-                            <button
-                              onClick={() =>
-                                isActive
-                                  ? setConfirmDeactivateId(user.id!)
-                                  : handleActivate(user)
-                              }
-                              disabled={updateMutation.isPending}
-                              title={isActive ? "Deactiveren" : "Activeren"}
-                              aria-label={isActive ? "Deactiveren" : "Activeren"}
-                              className={`hit-area flex h-9 w-9 items-center justify-center rounded-lg transition-colors disabled:opacity-40 ${
-                                isActive
-                                  ? "text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-500/15"
-                                  : "text-emerald-700 hover:bg-emerald-100 dark:text-emerald-300 dark:hover:bg-emerald-500/15"
-                              }`}
-                            >
-                              {isActive ? <Ban size={14} /> : <CheckCircle size={14} />}
-                            </button>
+                      {/* Only what is not the normal case: a plain active member shows nothing here. */}
+                      <td className={TD}>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {!isActive && (
+                            <span className={PILL_NEUTRAL}>
+                              <Ban size={14} />
+                              Inactief
+                            </span>
                           )}
-
-                          <DeleteConfirmActions
-                            id={user.id!}
-                            confirmId={confirmDeleteId}
-                            isPending={deleteMutation.isPending}
-                            onEdit={() => setEditing(user)}
-                            onRequestDelete={() => {
-                              setConfirmDeactivateId(null);
-                              setConfirmDeleteId(user.id!);
-                            }}
-                            onConfirmDelete={() => handleDelete(user.id!, user.name)}
-                            onCancelDelete={() => setConfirmDeleteId(null)}
-                          />
+                          {user.is_admin && (
+                            <span className="pill border border-line bg-surface text-ink">
+                              <Shield size={14} />
+                              Admin
+                            </span>
+                          )}
+                          {user.is_viewer && !user.is_admin && (
+                            <span className="pill border border-line bg-surface text-ink-2">
+                              <Eye size={14} />
+                              Kijker
+                            </span>
+                          )}
                         </div>
+                      </td>
+                      <td className={`cell-actions ${TD}`}>
+                        <DeleteConfirmActions
+                          id={user.id!}
+                          confirmId={confirmDeleteId}
+                          isPending={deleteMutation.isPending}
+                          onEdit={() => setEditing(user)}
+                          onRequestDelete={() => setConfirmDeleteId(user.id!)}
+                          onConfirmDelete={() => handleDelete(user.id!, user.name)}
+                          onCancelDelete={() => setConfirmDeleteId(null)}
+                          editLabel={`${user.name} bewerken`}
+                          deleteLabel={`${user.name} verwijderen`}
+                        />
                       </td>
                     </tr>
                   );
@@ -733,7 +640,6 @@ export function AdminUsersPage() {
         user={editing}
         onClose={() => setEditing(null)}
       />
-
-    </div>
+    </AdminPage>
   );
 }

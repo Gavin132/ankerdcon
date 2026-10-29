@@ -12,6 +12,7 @@ import {
   ChevronUp,
   UserPlus,
   Trash2,
+  Hotel,
 } from "lucide-react";
 import type { TicketType, Event, EventDay } from "../../types";
 import {
@@ -26,7 +27,10 @@ import {
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { AdminDrawer } from "./AdminDrawer";
 import { toast } from "../../store/toast.store";
-import { F, SECTION, SECTION_TITLE } from "./styles";
+import { F, L, SECTION, SECTION_TITLE, CHECK_ROW } from "./styles";
+import { EVENT_TYPE_LABEL } from "./constants";
+import { AdminSection } from "./components/AdminSection";
+import { ToggleRow } from "./components/ToggleRow";
 import { LocationSearchInput } from "../../components/common/LocationSearchInput";
 import { uploadEventCoverImage } from "../../services/storage.service";
 import { DrawerFooter } from "./components/DrawerFooter";
@@ -132,50 +136,49 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
   return (
     <div className={SECTION}>
       <p className={SECTION_TITLE}>Dagen ({days.length})</p>
-      <p className="text-xs text-ink-3 -mt-1">
-        Vink "Con" uit voor een dag die alleen reizen/hotel is, zonder convention die dag.
+      <p className="-mt-1 text-xs text-ink-3">
+        Haal het vinkje bij "Con" weg voor een dag die alleen reizen of hotel is, zonder convention die dag.
       </p>
 
       <div className="space-y-2">
         {sorted.map((day) => {
           const isExpanded = expandedDay === day.id;
           return (
-            <div key={day.id} className="overflow-hidden rounded-xl border border-line bg-paper">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2.5">
-                <CalendarDays size={14} className="text-ink-3 shrink-0" />
-                <span className="min-w-0 flex-1 basis-36 font-mono text-[13px] font-semibold text-ink">
+            <div key={day.id} className="overflow-hidden rounded-xl border-1.5 border-line bg-paper">
+              {/* Line 1: the date and the delete button. Line 2: the Con checkbox and who is on this day. */}
+              <div className="flex items-center gap-2 pl-3 pr-1.5">
+                <CalendarDays size={16} className="shrink-0 text-ink-3" />
+                <span className="min-w-0 flex-1 py-2.5 font-mono text-[13px] font-semibold text-ink">
                   {formatDate(day.date)}
                 </span>
-                <label className="hit-area flex items-center gap-1.5 text-xs text-ink-3 cursor-pointer whitespace-nowrap">
-                  <input
-                    type="checkbox"
-                    checked={day.has_con}
-                    onChange={() => handleToggleCon(day)}
-                    className="cb"
-                  />
-                  Con
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setExpandedDay(isExpanded ? null : day.id)}
-                  className="hit-area flex items-center gap-1 text-xs text-ink-3 hover:text-ink transition-colors whitespace-nowrap"
-                >
-                  <UserPlus size={14} />
-                  {day.participants.length}
-                  {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                </button>
                 <button
                   type="button"
                   onClick={() => handleDeleteDay(day)}
                   disabled={deleteDay.isPending}
                   aria-label={`Dag ${formatDate(day.date)} verwijderen`}
-                  className="hit-area flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-3 hover:bg-bad-soft hover:text-bad transition-colors disabled:opacity-40"
+                  className="icon-btn text-ink-3 hover:!bg-bad-soft hover:!text-bad"
                 >
                   <Trash2 size={16} />
                 </button>
               </div>
+              <div className="flex items-center justify-between gap-3 border-t border-line px-3">
+                <label className={CHECK_ROW}>
+                  <input type="checkbox" checked={day.has_con} onChange={() => handleToggleCon(day)} className="cb" />
+                  Con
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setExpandedDay(isExpanded ? null : day.id)}
+                  aria-expanded={isExpanded}
+                  className="flex min-h-11 items-center gap-1.5 text-xs font-medium text-ink-2 transition-colors hover:text-ink"
+                >
+                  <UserPlus size={14} />
+                  {day.participants.length} {day.participants.length === 1 ? "aanmelding" : "aanmeldingen"}
+                  {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </button>
+              </div>
               {isExpanded && (
-                <div className="border-t border-line px-3 py-2.5 space-y-1.5">
+                <div className="space-y-1.5 border-t border-line px-3 py-2.5">
                   {day.participants.length === 0 ? (
                     <p className="text-xs text-ink-3">Nog geen aanmeldingen.</p>
                   ) : (
@@ -191,14 +194,14 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
                           />
                         </div>
                       ) : (
-                        <div key={p} className="flex items-center gap-2 rounded-lg bg-sunken px-2.5 py-1.5">
-                          <UserAvatar name={p} className="h-5 w-5 text-[7px]" />
+                        <div key={p} className="flex items-center gap-2 rounded-lg bg-sunken pl-2.5 pr-1">
+                          <UserAvatar name={p} className="h-5 w-5 text-[8px]" />
                           <span className="flex-1 text-xs text-ink-2">{p}</span>
                           <button
                             type="button"
                             onClick={() => setConfirmRemove(`${day.id}|${p}`)}
                             aria-label={`${p} afmelden voor deze dag`}
-                            className="hit-area flex h-6 w-6 items-center justify-center rounded text-ink-3 hover:text-bad transition-colors"
+                            className="icon-btn !h-8 !w-8 text-ink-3 hover:!text-bad"
                           >
                             <XIcon size={14} />
                           </button>
@@ -215,7 +218,7 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
 
       <div className="flex items-end gap-2 pt-1">
         <div className="min-w-0 flex-1">
-          <label className="mb-1 block text-xs font-medium text-ink-2">Nieuwe dag</label>
+          <label className={L}>Nieuwe dag</label>
           <input
             type="date"
             value={newDate}
@@ -223,7 +226,7 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
             className={`${F} min-w-0`}
           />
         </div>
-        <label className="flex items-center gap-1.5 text-xs text-ink-3 pb-2.5 cursor-pointer whitespace-nowrap">
+        <label className={`${CHECK_ROW} shrink-0`}>
           <input type="checkbox" checked={newHasCon} onChange={(e) => setNewHasCon(e.target.checked)} className="cb" />
           Con
         </label>
@@ -233,7 +236,7 @@ function DaysSection({ eventId, days }: { eventId: string; days: EventDay[] }) {
           disabled={!newDate || createDay.isPending}
           className="btn-primary h-11 shrink-0 gap-1.5 px-3 text-sm"
         >
-          <Plus size={14} />
+          <Plus size={16} />
           Toevoegen
         </button>
       </div>
@@ -354,6 +357,7 @@ export function EventEditDrawer({
 
   const isPending = createMutation.isPending || updateMutation.isPending || imageUploading;
   const currentImageUrl = watch("image_url");
+  const isHotel = watch("is_hotel");
   const ticketTypesDirty = JSON.stringify(ticketTypes) !== JSON.stringify(initialTicketTypes.current);
   const { requestClose, confirming, confirmDiscard, cancelDiscard } =
     useConfirmDiscard(isDirty || ticketTypesDirty, onClose);
@@ -397,17 +401,16 @@ export function EventEditDrawer({
         className="space-y-4"
       >
         {/* ── Basisgegevens ────────────────────────────────────────── */}
-        <div className={SECTION}>
-          <p className={SECTION_TITLE}>Basisgegevens</p>
+        <AdminSection title="Basisgegevens">
           <div>
-            <label className="mb-1 block text-xs font-medium text-ink-2">Naam *</label>
+            <label className={L}>Naam *</label>
             <input {...register("event_name")} className={F} placeholder="DoKomi 2027" />
             {errors.event_name && (
               <p className="field-error">{errors.event_name.message}</p>
             )}
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-ink-2">Groep</label>
+            <label className={L}>Groep</label>
             <select {...register("event_group_id")} className={F}>
               <option value="">— Geen groep —</option>
               {eventGroups.map((g) => (
@@ -415,22 +418,24 @@ export function EventEditDrawer({
               ))}
             </select>
           </div>
-          <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-line bg-paper px-3 py-2.5 hover:bg-sunken transition-colors">
-            <input type="checkbox" {...register("is_hotel")} className="cb" />
-            <span className="text-sm text-ink-2">Hotel beschikbaar</span>
-          </label>
           <div>
-            <label className="mb-1 block text-xs font-medium text-ink-2">Tag</label>
+            <label className={L}>Soort evenement</label>
             <select {...register("event_type")} className={F}>
-              <option value="">— Geen tag —</option>
-              <option value="con">Con</option>
-              <option value="gathering">Gathering</option>
-              <option value="concert">Concert</option>
+              <option value="">— Geen soort —</option>
+              {Object.entries(EVENT_TYPE_LABEL).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
             </select>
           </div>
-          {watch("is_hotel") && (
+          <ToggleRow
+            icon={<Hotel size={16} />}
+            label="Hotel beschikbaar"
+            checked={!!isHotel}
+            onChange={() => setValue("is_hotel", !isHotel, { shouldDirty: true })}
+          />
+          {isHotel && (
             <div>
-              <label className="mb-1 block text-xs font-medium text-ink-2">Hotellocatie</label>
+              <label className={L}>Hotellocatie</label>
               <Controller
                 name="hotel_location"
                 control={control}
@@ -448,19 +453,19 @@ export function EventEditDrawer({
               </p>
             </div>
           )}
-          {watch("is_hotel") && (
+          {isHotel && (
             <div>
-              <label className="mb-1 block text-xs font-medium text-ink-2">Google Maps-link hotel (optioneel)</label>
-              <input {...register("hotel_location_maps_url")} className={F} placeholder="https://maps.app.goo.gl/..." />
+              <label className={L}>Google Maps-link hotel (optioneel)</label>
+              <input {...register("hotel_location_maps_url")} className={F} placeholder="https://maps.app.goo.gl/…" />
               <p className="mt-1 text-xs text-ink-3">
-                Voor als de locatie hierboven niet (goed) geocodet — bijv. een hotelketen die naar de
-                verkeerde stad wijst. Opent direct deze link vanaf de crew-kaart in plaats daarvan.
+                Voor als de locatie hierboven niet goed gevonden wordt, bijvoorbeeld een hotelketen die naar de
+                verkeerde stad wijst. Opent direct deze link vanaf de crewkaart.
               </p>
             </div>
           )}
-          {watch("is_hotel") && (
+          {isHotel && (
             <div>
-              <label className="mb-1 block text-xs font-medium text-ink-2">Hotelinfo</label>
+              <label className={L}>Hotelinfo</label>
               <textarea
                 {...register("hotel_info")}
                 rows={3}
@@ -472,27 +477,25 @@ export function EventEditDrawer({
               </p>
             </div>
           )}
-        </div>
+        </AdminSection>
 
         {/* ── Dagen — first thing after naming the event, so it's visible
              right after creating without scrolling past everything else ── */}
         {editEvent ? (
           <DaysSection eventId={editEvent.id} days={days} />
         ) : (
-          <div className={SECTION}>
-            <p className={SECTION_TITLE}>Dagen</p>
+          <AdminSection title="Dagen">
             <p className="text-xs text-ink-3">
-              Sla het evenement eerst op — daarna kun je hier de dagen toevoegen.
+              Sla het evenement eerst op. Daarna kun je hier de dagen toevoegen.
             </p>
-          </div>
+          </AdminSection>
         )}
 
         {/* ── Beschrijving & Locatie ────────────────────────────────── */}
-        <div className={SECTION}>
-          <p className={SECTION_TITLE}>Details</p>
+        <AdminSection title="Details">
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-medium text-ink-2">Cover afbeelding</label>
+            <div className="flex items-center justify-between">
+              <label className={`${L} !mb-0`}>Cover afbeelding</label>
               <button
                 type="button"
                 onClick={() => setImageUrlMode((v) => !v)}
@@ -509,7 +512,7 @@ export function EventEditDrawer({
             {imageUrlMode ? (
               <input
                 className={F}
-                placeholder="https://..."
+                placeholder="https://…"
                 value={currentImageUrl ?? ""}
                 onChange={(e) => setValue("image_url", e.target.value, { shouldValidate: true })}
               />
@@ -545,7 +548,7 @@ export function EventEditDrawer({
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {imageUploading ? (
-                    <p className="text-xs text-ink-3">Uploaden...</p>
+                    <p className="text-xs text-ink-3">Uploaden…</p>
                   ) : (
                     <>
                       <Upload size={18} className="mx-auto mb-1.5 text-ink-3" />
@@ -563,19 +566,20 @@ export function EventEditDrawer({
 
             {currentImageUrl && (
               <div className="mt-2 relative rounded-xl overflow-hidden border border-line">
-                <img src={currentImageUrl} alt="preview" className="w-full h-28 object-cover" />
+                <img src={currentImageUrl} alt="Voorbeeld" className="w-full h-28 object-cover" />
                 <button
                   type="button"
                   onClick={() => setValue("image_url", "", { shouldValidate: true })}
-                  className="hit-area absolute right-1.5 top-1.5 rounded-lg bg-hero/70 p-1 text-white transition-colors hover:bg-hero"
+                  aria-label="Afbeelding verwijderen"
+                  className="icon-btn absolute right-1.5 top-1.5 !h-8 !w-8 bg-hero/70 !text-white hover:!bg-hero"
                 >
-                  <XIcon size={12} />
+                  <XIcon size={14} />
                 </button>
               </div>
             )}
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-ink-2">Beschrijving</label>
+            <label className={L}>Beschrijving</label>
             <textarea
               {...register("description")}
               rows={3}
@@ -584,7 +588,7 @@ export function EventEditDrawer({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-ink-2">Locatie</label>
+            <label className={L}>Locatie</label>
             <Controller
               name="location"
               control={control}
@@ -599,36 +603,35 @@ export function EventEditDrawer({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-ink-2">Google Maps-link (optioneel)</label>
-            <input {...register("location_maps_url")} className={F} placeholder="https://maps.app.goo.gl/..." />
+            <label className={L}>Google Maps-link (optioneel)</label>
+            <input {...register("location_maps_url")} className={F} placeholder="https://maps.app.goo.gl/…" />
             <p className="mt-1 text-xs text-ink-3">
-              Voor als de locatie hierboven niet (goed) geocodet. Opent direct deze link vanaf de
-              crew-kaart in plaats daarvan.
+              Voor als de locatie hierboven niet goed gevonden wordt. Opent direct deze link vanaf de
+              crewkaart.
             </p>
           </div>
-        </div>
+        </AdminSection>
 
         {/* ── Tickets ──────────────────────────────────────────────── */}
-        <div className={SECTION}>
-          <p className={SECTION_TITLE}>Tickets & Links</p>
+        <AdminSection title="Tickets & links" collapsible defaultOpen={!isEdit}>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-ink-2">Website</label>
-              <input {...register("website")} className={F} placeholder="https://..." />
+              <label className={L}>Website</label>
+              <input {...register("website")} className={F} placeholder="https://…" />
               {errors.website && (
                 <p className="field-error">{errors.website.message}</p>
               )}
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-ink-2">Ticketlink</label>
-              <input {...register("ticket_url")} className={F} placeholder="https://..." />
+              <label className={L}>Ticketlink</label>
+              <input {...register("ticket_url")} className={F} placeholder="https://…" />
               {errors.ticket_url && (
                 <p className="field-error">{errors.ticket_url.message}</p>
               )}
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-ink-2">Ticketverkoop start</label>
+            <label className={L}>Ticketverkoop start</label>
             <input
               {...register("ticket_sale_start")}
               type="datetime-local"
@@ -637,13 +640,13 @@ export function EventEditDrawer({
           </div>
 
           <div>
-            <label className="mb-2 block text-xs font-medium text-ink-2">Ticket soorten</label>
+            <label className={L}>Ticket soorten</label>
             {ticketTypes.length > 0 && (
-              <div className="space-y-1.5 mb-3">
+              <div className="mb-3 space-y-1.5">
                 {ticketTypes.map((tt, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-3 rounded-xl border border-line bg-sunken px-3 py-2.5"
+                    className="flex items-center gap-3 rounded-xl border border-line bg-sunken py-0.5 pl-3 pr-1.5"
                   >
                     <span className="flex-1 text-sm font-medium text-ink">{tt.title}</span>
                     <span className="font-mono text-sm font-semibold tabular-nums text-ink">
@@ -653,9 +656,9 @@ export function EventEditDrawer({
                       type="button"
                       onClick={() => setTicketTypes((p) => p.filter((_, idx) => idx !== i))}
                       aria-label={`Tickettype ${tt.title} verwijderen`}
-                      className="hit-area flex h-6 w-6 items-center justify-center rounded-lg text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 transition-colors"
+                      className="icon-btn text-ink-3 hover:!bg-bad-soft hover:!text-bad"
                     >
-                      <XIcon size={12} />
+                      <XIcon size={14} />
                     </button>
                   </div>
                 ))}
@@ -688,22 +691,22 @@ export function EventEditDrawer({
                 type="button"
                 onClick={addTicketType}
                 disabled={!ttTitle.trim() || !ttPrice}
+                aria-label="Tickettype toevoegen"
                 className="btn-primary h-11 w-11 shrink-0"
               >
-                <Plus size={15} />
+                <Plus size={16} />
               </button>
             </div>
             {ticketTypes.length === 0 && (
               <p className="mt-1.5 text-xs text-ink-3">Nog geen ticket soorten toegevoegd.</p>
             )}
           </div>
-        </div>
+        </AdminSection>
 
         {/* ── Praktisch ────────────────────────────────────────────── */}
-        <div className={SECTION}>
-          <p className={SECTION_TITLE}>Praktische info</p>
+        <AdminSection title="Praktische info" collapsible defaultOpen={!isEdit}>
           <div>
-            <label className="mb-1 block text-xs font-medium text-ink-2">Parkeerinformatie</label>
+            <label className={L}>Parkeerinformatie</label>
             <textarea
               {...register("parking_info")}
               rows={2}
@@ -712,7 +715,7 @@ export function EventEditDrawer({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-ink-2">Speciale instructies</label>
+            <label className={L}>Speciale instructies</label>
             <textarea
               {...register("special_instructions")}
               rows={2}
@@ -721,7 +724,7 @@ export function EventEditDrawer({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-ink-2">Wat meenemen</label>
+            <label className={L}>Wat meenemen</label>
             <textarea
               {...register("what_to_bring")}
               rows={2}
@@ -730,15 +733,15 @@ export function EventEditDrawer({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-ink-2">Kluisjes</label>
+            <label className={L}>Kluisjes</label>
             <textarea
               {...register("locker_info")}
               rows={2}
               className={`${F} resize-none`}
-              placeholder="Locatie, afmeting, kosten..."
+              placeholder="Locatie, afmeting, kosten…"
             />
           </div>
-        </div>
+        </AdminSection>
       </form>
     </AdminDrawer>
     <DiscardChangesConfirm open={confirming} onCancel={cancelDiscard} onConfirm={confirmDiscard} />

@@ -63,7 +63,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
         <img src="/icons/icon-192.png" alt="" className="h-9 w-9 shrink-0 object-contain" />
         {!collapsed && (
           <div className="min-w-0">
-            <p className="font-mono text-[10px] uppercase leading-none tracking-[0.08em] text-ink-3">
+            <p className="font-mono text-xs uppercase leading-none tracking-[0.08em] text-ink-3">
               Ankerd Con
             </p>
             <p className="mt-0.5 font-display text-[22px] font-black uppercase leading-none tracking-[0.02em] text-ink">

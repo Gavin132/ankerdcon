@@ -61,6 +61,15 @@ export function formatDateShort(dateStr: string): string {
   }
 }
 
+/** A run of days for a list, the year once: "17 – 19 nov. 2026", "28 okt. – 2 nov. 2026", "17 nov. 2026". */
+export function formatDateRangeShort(first: Date, last: Date): string {
+  const f = (d: Date, pattern: string) => format(d, pattern, { locale: nl });
+  if (first.getTime() === last.getTime()) return f(first, "d MMM yyyy");
+  if (first.getFullYear() !== last.getFullYear()) return `${f(first, "d MMM yyyy")} – ${f(last, "d MMM yyyy")}`;
+  if (first.getMonth() !== last.getMonth()) return `${f(first, "d MMM")} – ${f(last, "d MMM yyyy")}`;
+  return `${f(first, "d")} – ${f(last, "d MMM yyyy")}`;
+}
+
 /** A file size: "512 B", "48 KB", "3,2 MB", "1,25 GB". */
 export function formatBytes(bytes: number): string {
   const nl1 = (n: number, digits: number) => n.toLocaleString("nl-NL", { minimumFractionDigits: digits, maximumFractionDigits: digits });

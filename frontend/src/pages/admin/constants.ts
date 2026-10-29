@@ -99,9 +99,12 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-// Ride direction tags are told apart by their label, not by colour (flat design:
-// no decorative colours).
 /** The API stores the English values; admins read these. */
+export const EVENT_TYPE_LABEL: Record<string, string> = {
+  con: "Con",
+  gathering: "Bijeenkomst",
+  concert: "Concert",
+};
 export const DIRECTION_LABEL: Record<string, string> = {
   Inbound: "Heen",
   Outbound: "Terug",
@@ -110,10 +113,4 @@ export const DIRECTION_LABEL: Record<string, string> = {
 export const VEHICLE_LABEL: Record<string, string> = {
   Car: "Auto",
   "Public Transport": "Openbaar vervoer",
-};
-
-export const DIRECTION_COLORS: Record<string, string> = {
-  Inbound:    "text-ink-2",
-  Outbound:   "text-ink-2",
-  Restaurant: "text-ink-2",
 };

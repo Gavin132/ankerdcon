@@ -35,18 +35,18 @@ export function AdminPagination({
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 border-t-1.5 border-line px-4 py-3">
-      <p className="font-mono text-[11.5px] tabular-nums text-ink-3">
+    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t-1.5 border-line px-4 py-3">
+      <p className="font-mono text-xs tabular-nums text-ink-3">
         {from}–{to} van {total}
       </p>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         <button
           onClick={() => onPage(page - 1)}
           disabled={page === 0}
           aria-label="Vorige pagina"
-          className="hit-area flex h-9 w-9 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
+          className="icon-btn text-ink-3 disabled:cursor-not-allowed disabled:opacity-30"
         >
-          <ChevronLeft size={14} />
+          <ChevronLeft size={16} />
         </button>
         {pages.map((p, i) =>
           p === "…" ? (
@@ -76,9 +76,9 @@ export function AdminPagination({
           onClick={() => onPage(page + 1)}
           disabled={page === totalPages - 1}
           aria-label="Volgende pagina"
-          className="hit-area flex h-9 w-9 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
+          className="icon-btn text-ink-3 disabled:cursor-not-allowed disabled:opacity-30"
         >
-          <ChevronRight size={14} />
+          <ChevronRight size={16} />
         </button>
       </div>
     </div>
