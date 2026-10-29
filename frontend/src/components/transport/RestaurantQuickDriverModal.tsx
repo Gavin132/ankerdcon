@@ -86,7 +86,7 @@ export function RestaurantQuickDriverModal({ open, onClose, event, meal, existin
 
   const footer = !alreadyDriving && (
     <Button onClick={onSubmit} loading={isPending} className="w-full">
-      <Car size={15} />
+      <Car size={16} />
       {existingRide ? `Rijd mee met ${seats} plaatsen` : `Rit aanmaken met ${seats} plaatsen`}
     </Button>
   );

@@ -176,7 +176,7 @@ export function RideDetailPage() {
                 className="w-full"
                 disabled={claimNames.length === 0}
               >
-                <Plus size={15} />
+                <Plus size={16} />
                 {claimNames.length === 0
                   ? "Selecteer een naam"
                   : claimNames.length === 1

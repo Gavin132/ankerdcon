@@ -123,10 +123,10 @@ export function TripTicket({
                 rel="noopener noreferrer"
                 className="hit-area flex min-w-0 items-center gap-1.5 hover:text-ink hover:underline"
               >
-                <MapPin size={13} className="shrink-0" /> <span className="truncate">{trip.location}</span>
+                <MapPin size={14} className="shrink-0" /> <span className="truncate">{trip.location}</span>
               </a>
             )}
-            {hotel && <span className="flex min-w-0 items-center gap-1.5"><BedDouble size={13} className="shrink-0" /> <span className="truncate">{hotel}</span></span>}
+            {hotel && <span className="flex min-w-0 items-center gap-1.5"><BedDouble size={14} className="shrink-0" /> <span className="truncate">{hotel}</span></span>}
           </p>
           {description && <Description text={description} />}
         </div>

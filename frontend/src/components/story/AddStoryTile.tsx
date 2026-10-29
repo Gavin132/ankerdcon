@@ -42,11 +42,11 @@ export function AddStoryTile({ eventDayId }: AddStoryTileProps) {
         className="relative flex h-16 w-16 items-center justify-center rounded-full border-1.5 border-dashed border-ink-3/60 transition-colors hover:border-ink-3 disabled:cursor-not-allowed"
       >
         {busy ? (
-          <Loader2 size={18} className="animate-spin text-ink-3" />
+          <Loader2 size={16} className="animate-spin text-ink-3" />
         ) : pendingCount > 0 ? (
-          <UploadCloud size={18} className="text-warn" />
+          <UploadCloud size={16} className="text-warn" />
         ) : (
-          <ImagePlus size={18} className="text-ink-3" />
+          <ImagePlus size={16} className="text-ink-3" />
         )}
         <span
           className={`absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-1.5 ${

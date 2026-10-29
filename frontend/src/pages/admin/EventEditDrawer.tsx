@@ -551,7 +551,7 @@ export function EventEditDrawer({
                     <p className="text-xs text-ink-3">Uploaden…</p>
                   ) : (
                     <>
-                      <Upload size={18} className="mx-auto mb-1.5 text-ink-3" />
+                      <Upload size={16} className="mx-auto mb-1.5 text-ink-3" />
                       <p className="text-xs font-medium text-ink-3">Klik of sleep een afbeelding hierheen</p>
                       <p className="text-xs text-ink-3 mt-0.5">PNG, JPG, WebP · liggend formaat aanbevolen</p>
                     </>

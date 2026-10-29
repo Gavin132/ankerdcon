@@ -67,7 +67,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName, className 
       items.push({
         key: "me-transport",
         tone: "bad",
-        icon: <Bus size={15} />,
+        icon: <Bus size={16} />,
         title: `Je hebt nog geen ${meMissing.items.length === 2 ? "heen- en terugrit" : meMissing.items[0] === "Heen" ? "heenrit" : "terugrit"}`,
         where: `${trip.title} · Event › Vervoer`,
         go: () => navigate(routes.trip.view(trip.id, "transport")),
@@ -78,7 +78,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName, className 
       items.push({
         key: "transport",
         tone: "calm",
-        icon: <Bus size={15} />,
+        icon: <Bus size={16} />,
         title: `${people(othersMissing.length)} nog geen vervoer`,
         where: `${trip.title} · Event › Vervoer`,
         go: () => navigate(routes.trip.view(trip.id, "transport")),
@@ -89,7 +89,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName, className 
       items.push({
         key: "food",
         tone: "calm",
-        icon: <UtensilsCrossed size={15} />,
+        icon: <UtensilsCrossed size={16} />,
         title: meHungry && gaps.food.length === 1
           ? "Je eet nog nergens mee"
           : `${gaps.food.length === 1 ? "1 persoon eet" : `${gaps.food.length} mensen eten`} nog niet mee`,
@@ -106,7 +106,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName, className 
       items.push({
         key: `restaurant-${gap.id}`,
         tone: "calm",
-        icon: <UtensilsCrossed size={15} />,
+        icon: <UtensilsCrossed size={16} />,
         title: `${people(gap.unassigned.length)} geen auto naar het restaurant`,
         where: `Vertrek ${formatTime(gap.departureTime)} · ${gap.location}`,
         go: () =>
@@ -118,7 +118,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName, className 
       items.push({
         key: `pay-${action.share.id}`,
         tone: "warn",
-        icon: <Wallet size={15} />,
+        icon: <Wallet size={16} />,
         title: `Betaal ${formatAmount(action.share.amount)} aan ${action.expense.paid_by}`,
         where: `${action.expense.description} · Financiën`,
         go: () => navigate(routes.expense.view(action.expense.id)),
@@ -128,7 +128,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName, className 
       items.push({
         key: `confirm-${action.expense.id}`,
         tone: "info",
-        icon: <CheckCheck size={15} />,
+        icon: <CheckCheck size={16} />,
         title: `Bevestig ${n} ${n === 1 ? "betaling" : "betalingen"}`,
         where: `${action.expense.description} · Financiën`,
         go: () => navigate(routes.expense.view(action.expense.id)),
@@ -142,7 +142,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName, className 
       items.push({
         key: `settle-pay-${s.id}`,
         tone: "warn",
-        icon: <Wallet size={15} />,
+        icon: <Wallet size={16} />,
         title: `${s.to_user} vraagt ${formatAmount(s.amount, s.currency)}`,
         where: "Financiën › Afrekenen",
         go: () => navigate(routes.settlement.view(s.id)),
@@ -151,7 +151,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName, className 
       items.push({
         key: `settle-confirm-${s.id}`,
         tone: "info",
-        icon: <CheckCheck size={15} />,
+        icon: <CheckCheck size={16} />,
         title: `Bevestig ${formatAmount(s.amount, s.currency)} van ${s.from_user}`,
         where: "Financiën › Afrekenen",
         go: () => navigate(routes.settlement.view(s.id)),
@@ -192,7 +192,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName, className 
                   <span className="block text-[13px] font-semibold leading-snug text-ink">{item.title}</span>
                   <span className="block truncate text-[12px] text-ink-3">{item.where}</span>
                 </span>
-                <ChevronRight size={14} className="shrink-0 text-ink-3" />
+                <ChevronRight size={16} className="shrink-0 text-ink-3" />
               </button>
             </li>
           ))}
@@ -203,7 +203,7 @@ export function ForYouPanel({ events, rides, meals, expenses, myName, className 
                 onClick={() => setExpanded((v) => !v)}
                 className="flex min-h-11 w-full items-center justify-center gap-1 rounded-lg py-2 text-xs font-semibold text-ink-3 hover:text-ink"
               >
-                <ChevronDown size={13} className={expanded ? "rotate-180" : ""} />
+                <ChevronDown size={14} className={expanded ? "rotate-180" : ""} />
                 {expanded ? "Minder tonen" : `Nog ${hidden} tonen`}
               </button>
             </li>

@@ -24,7 +24,7 @@ export function StepDone() {
 
       <div className="card-surface w-full p-4 text-left">
         <div className="flex items-center gap-3">
-          <Sparkles size={15} className="shrink-0 text-ink-3" />
+          <Sparkles size={16} className="shrink-0 text-ink-3" />
           <p className="text-xs leading-relaxed text-ink-2">
             Je kunt je profiel en voorkeuren altijd aanpassen via je avatar, onder <strong className="text-ink">Instellingen</strong>.
           </p>

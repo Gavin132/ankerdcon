@@ -87,7 +87,7 @@ export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
       subtitle={trip.title}
       footer={
         <Button onClick={save} loading={createMutation.isPending} disabled={!canSave} className="w-full">
-          <CalendarPlus size={15} />
+          <CalendarPlus size={16} />
           Activiteit opslaan
         </Button>
       }

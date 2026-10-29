@@ -44,7 +44,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
           aria-label="Sluiten"
           className="hit-area absolute left-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-hero/70 text-hero-ink transition-colors hover:bg-hero"
         >
-          <X size={15} />
+          <X size={16} />
         </button>
         {going && (
           <span className="absolute -bottom-3.5 right-3 -rotate-[9deg] rounded-lg border-[2.5px] border-brand-text bg-surface px-2.5 pt-1 font-display text-[20px] font-black uppercase leading-none text-brand-text">
@@ -68,8 +68,8 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
             {trip.title}
           </Link>
           <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-2">
-            {trip.location && <span className="flex min-w-0 items-center gap-1.5"><MapPin size={13} className="shrink-0" /><span className="truncate">{trip.location}</span></span>}
-            {hotel && <span className="flex min-w-0 items-center gap-1.5"><BedDouble size={13} className="shrink-0" /><span className="truncate">{hotel}</span></span>}
+            {trip.location && <span className="flex min-w-0 items-center gap-1.5"><MapPin size={14} className="shrink-0" /><span className="truncate">{trip.location}</span></span>}
+            {hotel && <span className="flex min-w-0 items-center gap-1.5"><BedDouble size={14} className="shrink-0" /><span className="truncate">{hotel}</span></span>}
           </p>
         </div>
 
@@ -132,7 +132,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
           className="flex items-center justify-between rounded-xl border-1.5 border-line px-3 py-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
         >
           Naar de trip
-          <ChevronRight size={15} className="text-ink-3" />
+          <ChevronRight size={16} className="text-ink-3" />
         </Link>
       </div>
     </article>

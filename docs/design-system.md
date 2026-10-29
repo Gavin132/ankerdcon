@@ -162,6 +162,24 @@ labels, chips, hints), 13 and 14 (rows, body), 15 and 16 (lead text, inputs), th
 (12.5, 13.5, 14.5) are left over from older screens; do not add new ones. The layout check reports text under 12px
 (`small-text`); `npm run mobile-audit -- --info` lists it.
 
+## Icons
+
+Lucide icons, the `size` prop in whole pixels, one scale: **12, 14, 16, 20, 22, 24 and up**. Nothing is smaller than 12
+and there is no 9, 10, 11, 13, 15, 17, 18 or 19.
+
+| Size | Role |
+| --- | --- |
+| 12 | beside 12px text: in a pill, a tag, a hero chip, a meta line; the tick in a tiny filter badge |
+| 14 | in a chip, in a control under 36 px (the little edit and delete buttons on a photo, the clear button of a field), in a `size="sm"` button |
+| 16 | **the default**: in a button, a row, a list, the top bar, an `icon-btn` (36 px), a "go on" chevron at the end of a row |
+| 20 | the tab bar and the icon rail of the sidebar, the heading icon of a dialog |
+| 22 | the icon of an `EmptyState` |
+| 24 and up | a status screen or a hero (`StatusScreen`, the empty calendar) |
+
+The same icon keeps the same size in the same role: delete and edit are 16 in an `icon-btn` and in a row, 14 in a
+control under 36 px, 12 inside a chip. A spinner replaces the icon it stands for, at that icon's size (`Loader2`).
+Compact density does not change icon sizes. Avatar initials are text, not icons, and keep their own sizes.
+
 ## Shape: radius and borders
 
 One radius scale, named in `tailwind.config.ts` (`borderRadius`). Note that `xl` is 10px and `2xl` is 12px in this

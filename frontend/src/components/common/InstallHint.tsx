@@ -50,7 +50,7 @@ export function InstallHint({ kind, onDismiss }: { kind: InstallKind; onDismiss?
     <section className="card-surface p-4" aria-label="App installeren">
       <div className="flex items-start gap-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-          <Download size={17} />
+          <Download size={16} />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[14px] font-semibold text-ink">Zet Ankerd Con op je beginscherm</p>
@@ -81,7 +81,7 @@ export function InstallHint({ kind, onDismiss }: { kind: InstallKind; onDismiss?
         </div>
         {onDismiss && (
           <button type="button" onClick={onDismiss} aria-label="Sluiten" className="hit-area -mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink">
-            <X size={15} />
+            <X size={16} />
           </button>
         )}
       </div>

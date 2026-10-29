@@ -192,7 +192,7 @@ export function NamePicker(props: NamePickerProps) {
       {/* ── Search input ─────────────────────────────────────────────────── */}
       <div ref={wrapperRef} className="relative">
         <Search
-          size={13}
+          size={14}
           className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3"
         />
         <input
@@ -270,7 +270,7 @@ export function NamePicker(props: NamePickerProps) {
                     })()}
                   </span>
                   {isSelected && (
-                    <Check size={15} className={`shrink-0 ${tk.check}`} />
+                    <Check size={16} className={`shrink-0 ${tk.check}`} />
                   )}
                   {!isMulti && singleValue === name && (
                     <span className={`h-2 w-2 shrink-0 rounded-full ${tk.dot}`} />

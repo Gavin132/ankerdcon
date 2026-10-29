@@ -254,13 +254,13 @@ export function HubPage() {
               className="flex min-h-11 w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-sunken"
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-                <MapPin size={15} />
+                <MapPin size={16} />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold text-ink">Locatie pingen</span>
                 <span className="block text-xs text-ink-3">Laat de groep weten waar je bent</span>
               </span>
-              <ChevronRight size={14} className="shrink-0 text-ink-3" />
+              <ChevronRight size={16} className="shrink-0 text-ink-3" />
             </button>
           </motion.div>
         </div>

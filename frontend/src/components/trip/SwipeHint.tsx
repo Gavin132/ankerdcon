@@ -64,7 +64,7 @@ export function SwipeHint({ enabled, dismissedBy }: { enabled: boolean; dismisse
               transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
               className="flex shrink-0 text-paper/60"
             >
-              <ChevronLeft size={15} />
+              <ChevronLeft size={16} />
             </motion.span>
             <span className="text-[12.5px] font-semibold">Swipe voor andere evenementen</span>
             <motion.span
@@ -73,7 +73,7 @@ export function SwipeHint({ enabled, dismissedBy }: { enabled: boolean; dismisse
               transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
               className="flex shrink-0 text-paper/60"
             >
-              <ChevronRight size={15} />
+              <ChevronRight size={16} />
             </motion.span>
           </motion.div>
         )}

@@ -11,7 +11,7 @@ export function LinkedMealCard({ meal }: { meal: Meal }) {
       <h2 className="section-label mb-3">Gekoppelde activiteit</h2>
       <div className="flex items-center gap-3">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-          <Utensils size={15} />
+          <Utensils size={16} />
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-ink">{meal.meal_name}</p>

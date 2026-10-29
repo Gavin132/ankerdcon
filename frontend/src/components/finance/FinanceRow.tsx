@@ -40,7 +40,7 @@ export function FinanceRow({ lead, title, sub, amount, currency = "EUR", tone = 
       {amount != null && (
         <span className={`shrink-0 font-mono text-sm font-semibold tabular-nums ${AMOUNT_TONE[tone]}`}>{formatAmount(amount, currency)}</span>
       )}
-      {onClick && <ChevronRight size={14} className="shrink-0 text-ink-3" />}
+      {onClick && <ChevronRight size={16} className="shrink-0 text-ink-3" />}
     </>
   );
   const cls = `flex w-full items-center gap-3 px-4 py-3 text-left ${muted ? "opacity-60" : ""}`;

@@ -127,7 +127,7 @@ export function LocationSearchInput({
             aria-label="Zoekopdracht wissen"
             className="hit-area absolute right-1.5 flex h-9 w-9 items-center justify-center text-ink-3 hover:text-ink transition-colors"
           >
-            <X size={14} />
+            <X size={16} />
           </button>
         )}
       </div>
@@ -148,7 +148,7 @@ export function LocationSearchInput({
                            hover:bg-sunken transition-colors
                            border-b border-line last:border-0"
               >
-                <MapPin size={13} className="text-ink-3 shrink-0 mt-0.5" />
+                <MapPin size={14} className="text-ink-3 shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-ink truncate">{name}</p>
                   {sub && <p className="text-xs text-ink-3 truncate mt-0.5">{sub}</p>}

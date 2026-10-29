@@ -21,16 +21,16 @@ export function MealLinks(props: MealLinksProps) {
       <div className="divide-y divide-line">
         {website && (
           <a href={website} target="_blank" rel="noopener noreferrer" className={LINK}>
-            <Globe size={15} className="shrink-0" />
+            <Globe size={16} className="shrink-0" />
             <span className="min-w-0 flex-1">Website</span>
-            <ExternalLink size={13} className="shrink-0 text-ink-3" />
+            <ExternalLink size={14} className="shrink-0 text-ink-3" />
           </a>
         )}
         {menuUrl && (
           <a href={menuUrl} target="_blank" rel="noopener noreferrer" className={LINK}>
-            <BookOpen size={15} className="shrink-0" />
+            <BookOpen size={16} className="shrink-0" />
             <span className="min-w-0 flex-1">Menu bekijken</span>
-            <ExternalLink size={13} className="shrink-0 text-ink-3" />
+            <ExternalLink size={14} className="shrink-0 text-ink-3" />
           </a>
         )}
       </div>

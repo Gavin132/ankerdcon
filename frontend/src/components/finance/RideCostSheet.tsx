@@ -75,7 +75,7 @@ export function RideCostSheet({ tripId, tripTitle, onClose }: { tripId: string |
       subtitle={tripTitle}
       footer={
         <Button onClick={save} loading={setCost.isPending} disabled={!dirty} className="w-full">
-          <Check size={15} /> Opslaan
+          <Check size={16} /> Opslaan
         </Button>
       }
     >

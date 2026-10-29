@@ -44,7 +44,7 @@ function LoadPill({ guidance: g }: { guidance: CarGuidance }) {
         : `Boven doel · ${rangeText(g)}`;
   return (
     <span title="Zo vol moet deze auto vertrekken, zodat niemand achterblijft" className={`${PILL} ${tone}`}>
-      <Users size={11} className="shrink-0" />
+      <Users size={12} className="shrink-0" />
       {text}
     </span>
   );
@@ -214,13 +214,13 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
               {guidance && canAct && !isPT && <LoadPill guidance={guidance} />}
               {statusPill && (
                 <span className={`${PILL} ${statusPillClass}`}>
-                  <Timer size={11} />
+                  <Timer size={12} />
                   {status === "recent" ? "Vertrokken" : `Over ${formatCountdown(minutesUntil)}`}
                 </span>
               )}
               {ride.action_required && !isPast && (
                 <span className={`${PILL} pill-warn`}>
-                  <AlertCircle size={11} className="shrink-0" />
+                  <AlertCircle size={12} className="shrink-0" />
                   Actie vereist
                 </span>
               )}
@@ -228,7 +228,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
           )}
 
           <div className="flex items-start gap-2">
-            <Users size={13} className="mt-0.5 shrink-0 text-ink-3" />
+            <Users size={14} className="mt-0.5 shrink-0 text-ink-3" />
             <span>
               {otherPassengers.length > 0
                 ? `${joinNames(otherPassengers)} ${otherPassengers.length === 1 ? "rijdt" : "rijden"} mee`
@@ -238,7 +238,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
 
           {ride.parking_info && (
             <div className="flex items-start gap-2">
-              <ParkingCircle size={13} className="mt-0.5 shrink-0 text-ink-3" />
+              <ParkingCircle size={14} className="mt-0.5 shrink-0 text-ink-3" />
               <span>{ride.parking_info}</span>
             </div>
           )}
@@ -271,7 +271,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
                       disabled={names.length === 0}
                       onClick={action === "claim" ? handleClaim : handleLeave}
                     >
-                      {action === "claim" ? <Plus size={15} /> : <UserMinus size={15} />}
+                      {action === "claim" ? <Plus size={16} /> : <UserMinus size={16} />}
                       {names.length === 0
                         ? "Selecteer een naam"
                         : action === "claim"
@@ -313,13 +313,13 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
                           Annuleren
                         </Button>
                         <Button size="sm" variant="danger" loading={deleteMutation.isPending} onClick={handleDelete}>
-                          <Trash2 size={13} /> Zeker weten?
+                          <Trash2 size={14} /> Zeker weten?
                         </Button>
                       </div>
                     </div>
                   ) : (
                     <Button size="sm" variant="secondary" onClick={() => setConfirmDelete(true)}>
-                      <Trash2 size={13} /> Rit verwijderen
+                      <Trash2 size={14} /> Rit verwijderen
                     </Button>
                   )}
                 </div>
@@ -331,7 +331,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
             to={routes.ride.view(ride.id)}
             className="inline-flex items-center gap-0.5 text-[12.5px] font-semibold text-brand-text hover:underline"
           >
-            Bekijk rit <ChevronRight size={13} />
+            Bekijk rit <ChevronRight size={14} />
           </Link>
         </div>
       </Collapse>

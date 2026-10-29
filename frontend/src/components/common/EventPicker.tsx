@@ -112,7 +112,7 @@ export function EventPicker({
       {/* Search input */}
       <div className="relative">
         <Search
-          size={13}
+          size={14}
           className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3"
         />
         <input
@@ -159,7 +159,7 @@ export function EventPicker({
                     }`}
                   >
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken">
-                      <CalendarDays size={15} className="text-ink" />
+                      <CalendarDays size={16} className="text-ink" />
                     </div>
                     <span className="flex-1 min-w-0">
                       <span className="block text-sm font-semibold text-ink truncate">
@@ -171,7 +171,7 @@ export function EventPicker({
                       </span>
                     </span>
                     {isSelected && (
-                      <Check size={15} className="shrink-0 text-ink" />
+                      <Check size={16} className="shrink-0 text-ink" />
                     )}
                   </button>
                 );

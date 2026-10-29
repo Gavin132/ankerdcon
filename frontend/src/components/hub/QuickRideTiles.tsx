@@ -31,7 +31,7 @@ function QuickTile({ icon, title, onClick }: { icon: React.ReactNode; title: str
     >
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">{icon}</span>
       <span className="min-w-0 flex-1 text-[14px] font-semibold leading-tight text-ink">{title}</span>
-      <ChevronRight size={15} className="shrink-0 text-ink-3" />
+      <ChevronRight size={16} className="shrink-0 text-ink-3" />
     </button>
   );
 }

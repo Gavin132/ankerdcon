@@ -173,7 +173,7 @@ export function MealDetailPage() {
           mealCategory(meal).has_transport && meal.transport_needed && linkedEvent && !viewer && (
             <div className="card-surface flex items-center gap-3 p-4">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-                <Car size={18} />
+                <Car size={16} />
               </span>
               <span className="min-w-0 flex-1 leading-tight">
                 <span className="block text-sm font-semibold text-ink">Nog geen rit</span>
@@ -214,7 +214,7 @@ export function MealDetailPage() {
             className="w-full"
             disabled={rsvpNames.length === 0}
           >
-            <UserCheck size={15} />
+            <UserCheck size={16} />
             {rsvpNames.length === 0
               ? "Selecteer een naam"
               : rsvpNames.length === 1
@@ -246,7 +246,7 @@ export function MealDetailPage() {
             className="w-full"
             disabled={cancelNames.length === 0}
           >
-            <UserMinus size={15} />
+            <UserMinus size={16} />
             {cancelNames.length === 0
               ? "Selecteer een naam"
               : cancelNames.length === 1

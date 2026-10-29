@@ -66,7 +66,7 @@ export function EventLinks({ event, bare = false }: EventLinksProps) {
                 rel="noopener noreferrer"
                 className={linkButton}
               >
-                <Ticket size={15} />
+                <Ticket size={16} />
                 Tickets kopen
                 <ExternalLink size={12} className="ml-0.5 text-ink-3" />
               </a>
@@ -78,7 +78,7 @@ export function EventLinks({ event, bare = false }: EventLinksProps) {
                 rel="noopener noreferrer"
                 className={linkButton}
               >
-                <Globe size={15} />
+                <Globe size={16} />
                 Officiële website
                 <ExternalLink size={12} className="ml-0.5 text-ink-3" />
               </a>

@@ -54,7 +54,7 @@ export function Header() {
           aria-label="Zoeken"
           className="icon-btn"
         >
-          <Search size={17} />
+          <Search size={16} />
         </button>
         <div className="md:hidden">
           <TimeTravelControl variant="icon" />

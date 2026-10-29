@@ -97,7 +97,7 @@ export function MealEditSheet({ open, onClose, meal, events, onDeleted }: MealEd
       subtitle={meal.meal_name}
       footer={
         <Button onClick={save} loading={updateMutation.isPending} disabled={!canSave} className="w-full">
-          <Save size={15} />
+          <Save size={16} />
           Wijzigingen opslaan
         </Button>
       }
@@ -219,7 +219,7 @@ export function MealEditSheet({ open, onClose, meal, events, onDeleted }: MealEd
               </p>
               <div className="flex gap-2">
                 <Button variant="danger" onClick={remove} loading={deleteMutation.isPending} className="flex-1">
-                  <Trash2 size={15} />
+                  <Trash2 size={16} />
                   Ja, verwijderen
                 </Button>
                 <Button variant="secondary" onClick={() => setConfirmDelete(false)} disabled={deleteMutation.isPending} className="flex-1">

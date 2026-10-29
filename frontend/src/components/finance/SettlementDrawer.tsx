@@ -283,7 +283,7 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
             rel="noopener noreferrer"
             className="btn-secondary flex w-full items-center justify-center gap-2 px-4 text-[14px]"
           >
-            <ExternalLink size={15} />
+            <ExternalLink size={16} />
             Betalen via {link.provider ?? "betaallink"}
             <span className="font-mono text-[12px] font-medium opacity-80">({link.host})</span>
           </a>

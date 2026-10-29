@@ -25,7 +25,7 @@ export function ColorSwatch({ value, onChange, presets, customFallback, on = "su
           value === "" ? "ring-outline" : "ring-transparent hover:ring-line"
         }`}
       >
-        {value === "" ? <Check size={11} strokeWidth={3} className="text-ink" /> : <Slash size={13} />}
+        {value === "" ? <Check size={12} strokeWidth={3} className="text-ink" /> : <Slash size={14} />}
       </button>
 
       {presets.map((c) => (
@@ -41,7 +41,7 @@ export function ColorSwatch({ value, onChange, presets, customFallback, on = "su
           }`}
           style={{ backgroundColor: c }}
         >
-          {value === c && <Check size={11} strokeWidth={3} className="text-avatar-on" />}
+          {value === c && <Check size={12} strokeWidth={3} className="text-avatar-on" />}
         </button>
       ))}
 
@@ -56,7 +56,7 @@ export function ColorSwatch({ value, onChange, presets, customFallback, on = "su
             className="absolute inset-0 z-10 h-full w-full cursor-pointer rounded-full opacity-0"
           />
           <div className="flex h-9 w-9 items-center justify-center rounded-full border-1.5 border-dashed border-ink-3 bg-surface text-ink-2">
-            <Plus size={13} />
+            <Plus size={14} />
           </div>
         </div>
       )}

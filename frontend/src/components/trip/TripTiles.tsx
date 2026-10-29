@@ -241,7 +241,7 @@ export function FoodTile({ trip, phase, meals, myNames, wide }: { trip: Trip; ph
                       : mealCategory(m).name}
                   </span>
                 </span>
-                <ChevronRight size={14} className="shrink-0 text-ink-3" />
+                <ChevronRight size={16} className="shrink-0 text-ink-3" />
               </Link>
             </li>
           ))}
@@ -614,7 +614,7 @@ function TicketRow({ ticket, onDelete }: { ticket: LocalTicket; onDelete: () => 
           <img src={url} alt="" className="h-11 w-11 shrink-0 rounded-lg object-cover" />
         ) : (
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink-3">
-            <FileText size={18} />
+            <FileText size={16} />
           </span>
         )}
         <span className="min-w-0 flex-1">
@@ -638,7 +638,7 @@ function TicketRow({ ticket, onDelete }: { ticket: LocalTicket; onDelete: () => 
           aria-label="Verwijderen"
           className="icon-btn"
         >
-          <Trash2 size={15} />
+          <Trash2 size={16} />
         </button>
       )}
     </div>

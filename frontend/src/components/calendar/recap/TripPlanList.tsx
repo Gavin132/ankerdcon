@@ -94,7 +94,7 @@ export function TripPlanList({ trip, rides, meals, dayKey, past }: TripPlanListP
               }`}
             >
               <time className="pt-px font-mono text-[12px] tabular-nums text-ink">{item.time}</time>
-              <Icon size={15} className="mt-0.5 text-ink-3" />
+              <Icon size={16} className="mt-0.5 text-ink-3" />
               <span className="min-w-0">
                 <span className="block truncate font-medium text-ink">{item.title}</span>
                 <span className="block truncate text-[12px] text-ink-3">{item.sub}</span>

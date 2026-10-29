@@ -74,7 +74,7 @@ export function TimeTravelControl({ variant }: { variant: "sidebar" | "icon" }) 
               : "text-ink-2 hover:bg-sunken hover:text-ink"
           }`}
         >
-          <Clock size={19} className="shrink-0 lg:h-4 lg:w-4" />
+          <Clock size={20} className="shrink-0 lg:h-4 lg:w-4" />
           <span className="hidden min-w-0 flex-1 lg:block">
             <span className="block text-[14px] font-medium leading-tight">Tijdreizen</span>
             <span className="block truncate font-mono text-[12px] leading-tight opacity-80">
@@ -94,7 +94,7 @@ export function TimeTravelControl({ variant }: { variant: "sidebar" | "icon" }) 
               : "text-ink-2 hover:bg-sunken hover:text-ink"
           }`}
         >
-          <Clock size={17} />
+          <Clock size={16} />
           {override && (
             <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-1.5 border-surface bg-warn-fill" />
           )}

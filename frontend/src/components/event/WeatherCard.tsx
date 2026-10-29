@@ -158,7 +158,7 @@ export function ClimateAverageCard({ climate }: { climate: ClimateAverage }) {
       {/* Header */}
       <div className="px-4 pb-4 pt-4">
         <div className="mb-2 flex items-center gap-1.5">
-          <History size={11} className="text-ink-3" />
+          <History size={12} className="text-ink-3" />
           <p className="section-label">
             Historisch gemiddelde
           </p>

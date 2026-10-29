@@ -447,7 +447,7 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
               aria-expanded={expanded}
               className="mt-0.5 flex items-center gap-0.5 text-[12px] font-semibold text-brand-text hover:underline"
             >
-              {expanded ? <><ChevronUp size={11} /> Minder</> : <><ChevronDown size={11} /> Meer</>}
+              {expanded ? <><ChevronUp size={12} /> Minder</> : <><ChevronDown size={12} /> Meer</>}
             </button>
           )}
         </div>

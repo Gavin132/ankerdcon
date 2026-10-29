@@ -39,7 +39,7 @@ export function TripParticipants({ trip, users, myNames, phase, onManage, childr
         {children}
         {onManage && (
           <button type="button" onClick={onManage} className="hit-area flex items-center gap-1 text-[12.5px] font-semibold text-brand-text hover:underline">
-            <UserPlus size={13} className="shrink-0" />
+            <UserPlus size={14} className="shrink-0" />
             Iemand aanmelden
           </button>
         )}
@@ -57,7 +57,7 @@ export function TripParticipants({ trip, users, myNames, phase, onManage, childr
         className="hit-area flex min-w-0 flex-1 items-center gap-2.5 rounded-lg text-left transition-opacity hover:opacity-80 active:opacity-70"
       >
         {children}
-        <ChevronRight size={14} className="shrink-0 text-ink-3" aria-hidden />
+        <ChevronRight size={16} className="shrink-0 text-ink-3" aria-hidden />
       </button>
       <ParticipantsSheet open={open} onClose={() => setOpen(false)} trip={trip} users={users} myNames={myNames} phase={phase} onManage={onManage} />
     </>
@@ -139,7 +139,7 @@ function ParticipantsSheet({
                     className="flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-sunken active:bg-sunken"
                   >
                     {row}
-                    <ChevronRight size={14} className="shrink-0 text-ink-3" />
+                    <ChevronRight size={16} className="shrink-0 text-ink-3" />
                   </Link>
                 ) : (
                   <div className="flex items-center gap-3 px-2 py-2.5">{row}</div>

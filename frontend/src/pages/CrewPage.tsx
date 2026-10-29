@@ -140,7 +140,7 @@ export function CrewPage() {
               title={parkingBlockedReason ?? undefined}
               className={`btn-secondary px-3 text-[13px] ${parkingBlockedReason ? "text-ink-3" : ""}`}
             >
-              <Car size={13} />
+              <Car size={14} />
               Parkeerplek
             </button>
             <button
@@ -148,7 +148,7 @@ export function CrewPage() {
               onClick={() => setPingOpen(true)}
               className="btn-secondary px-3 text-[13px]"
             >
-              <MapPin size={13} />
+              <MapPin size={14} />
               Locatie pingen
             </button>
             {parkingBlockedReason && <p className="basis-full text-xs text-ink-3">{parkingBlockedReason}</p>}
@@ -207,7 +207,7 @@ export function CrewPage() {
 
         <div className="px-4 pb-3">
           <div className="relative">
-          <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-3" />
+          <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-3" />
           <input
             id="crew-search"
             type="search"
@@ -227,7 +227,7 @@ export function CrewPage() {
               aria-label="Zoekopdracht wissen"
               className="icon-btn absolute right-1 top-1/2 -translate-y-1/2"
             >
-              <X size={14} />
+              <X size={16} />
             </button>
           )}
           </div>
@@ -290,7 +290,7 @@ export function CrewPage() {
                       )}
                       {room && (
                         <span className="flex items-center gap-1 font-mono text-[12px] text-ink-2">
-                          <BedDouble size={11} />
+                          <BedDouble size={12} />
                           {room}
                         </span>
                       )}

@@ -201,7 +201,7 @@ export function FinancePage() {
           {/* ── Personal balance ─────────────────────────────── */}
           <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card-surface order-1 overflow-hidden xl:order-none">
             <div className="flex items-center gap-2 px-4 pb-2 pt-4">
-              <Wallet size={13} className="shrink-0 text-ink-3" />
+              <Wallet size={14} className="shrink-0 text-ink-3" />
               <p className="section-label truncate">
                 {myName ? "Jouw saldo" : "Groepssaldo"}
                 {selectedTrip ? ` · ${selectedTrip.title}` : tripFilter === "none" ? " · zonder evenement" : ""}
@@ -235,11 +235,11 @@ export function FinancePage() {
                 </div>
                 <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 text-[12px] tabular-nums text-ink-2">
                   <span className="inline-flex items-center gap-1.5">
-                    <ArrowDownLeft size={13} className="text-ok" />
+                    <ArrowDownLeft size={14} className="text-ok" />
                     Te ontvangen <b className="font-mono font-semibold text-ink">{formatAmount(othersOweMe)}</b>
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <ArrowUpRight size={13} className="text-bad" />
+                    <ArrowUpRight size={14} className="text-bad" />
                     Te betalen <b className="font-mono font-semibold text-ink">{formatAmount(iOwe)}</b>
                   </span>
                 </div>

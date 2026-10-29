@@ -27,7 +27,7 @@ export function DetailTopbar({ title, plainTitle, onBack, onShare, actions, widt
     <header className="sticky top-0 z-10 border-b-1.5 border-line bg-surface pt-[env(safe-area-inset-top,0px)]">
       <div className={`mx-auto flex h-14 items-center gap-2 px-4 ${width === "2xl" ? "max-w-2xl" : "max-w-3xl"}`}>
         <button onClick={onBack} className={ICON_BUTTON} aria-label="Terug">
-          <ArrowLeft size={18} />
+          <ArrowLeft size={16} />
         </button>
         {plainTitle ? (
           <p className="min-w-0 flex-1 truncate font-display text-[22px] font-extrabold uppercase leading-none tracking-[0.02em] text-ink">
@@ -42,7 +42,7 @@ export function DetailTopbar({ title, plainTitle, onBack, onShare, actions, widt
         {actions}
         <TimeTravelControl variant="icon" />
         {isFreshEntry() && (
-          <HomeLinkButton size={17} className={ICON_BUTTON} />
+          <HomeLinkButton size={16} className={ICON_BUTTON} />
         )}
       </div>
     </header>

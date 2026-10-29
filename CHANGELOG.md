@@ -35,6 +35,8 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **Icons come in a fixed set of sizes** (12, 14, 16, 20, 22), so the same icon is the same size everywhere; the little
+  icons that were 9 to 11 px are 12 now, and the vehicle icon of a ride no longer shrinks for a small car.
 - **Empty lists look the same everywhere.** "Geen gebruikers gevonden", "Nog geen groepen", "Nog geen auto's aangemeld"
   and the other empty lists in the admin panel, the cosplay filters, the profile photos and the trip pages are one
   empty state: an icon, a short title, sometimes one line of help or a button.

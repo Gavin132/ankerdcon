@@ -85,7 +85,7 @@ export function Sidebar() {
               }`}
             >
               <Icon
-                size={19}
+                size={20}
                 strokeWidth={active ? 2.4 : 2}
                 className={`shrink-0 lg:h-4 lg:w-4 ${active ? "text-brand dark:text-brand-on" : ""}`}
               />

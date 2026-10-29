@@ -73,7 +73,7 @@ export function LoginForm() {
           className="w-full"
         >
           Inloggen met Discord
-          {loading !== "discord" && <LogIn size={18} className="ml-2" />}
+          {loading !== "discord" && <LogIn size={16} className="ml-2" />}
         </Button>
         <p className="text-center">
           <span className="pill pill-neutral">Aanbevolen</span>

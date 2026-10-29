@@ -14,7 +14,7 @@ export function StatusLink({ className = "" }: { className?: string }) {
       rel="noopener noreferrer"
       className={`inline-flex min-h-11 items-center gap-1.5 py-2.5 text-[12.5px] font-semibold text-brand-text hover:underline ${className}`}
     >
-      <Activity size={13} />
+      <Activity size={14} />
       Ligt het aan ons? Bekijk de serverstatus
     </a>
   );

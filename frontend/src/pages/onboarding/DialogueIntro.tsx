@@ -266,7 +266,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                             transition={{ duration: 0.12 }}
                           >
                             <div className="flex h-5 w-5 items-center justify-center rounded-full bg-ink text-paper">
-                              <Check size={11} strokeWidth={3} />
+                              <Check size={12} strokeWidth={3} />
                             </div>
                           </motion.div>
                         )}
@@ -308,7 +308,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                         disabled={birthYear <= YEAR_MIN}
                         className="flex h-11 w-11 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink transition-colors hover:border-ink-3 disabled:opacity-30"
                       >
-                        <Minus size={18} />
+                        <Minus size={16} />
                       </motion.button>
 
                       {/* Year display */}
@@ -340,7 +340,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                         disabled={birthYear >= YEAR_MAX}
                         className="flex h-11 w-11 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink transition-colors hover:border-ink-3 disabled:opacity-30"
                       >
-                        <Plus size={18} />
+                        <Plus size={16} />
                       </motion.button>
                     </div>
 

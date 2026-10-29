@@ -228,7 +228,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
                 onClick={onClose}
                 className="hit-area flex h-9 w-9 items-center justify-center rounded-xl text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
               >
-                <X size={15} />
+                <X size={16} />
               </button>
             </div>
 
@@ -327,7 +327,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
                 disabled={!imgReady}
                 onClick={handleConfirm}
               >
-                <Upload size={13} />
+                <Upload size={14} />
                 {isGif ? "Uploaden" : "Bijsnijden & uploaden"}
               </Button>
             </div>

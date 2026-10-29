@@ -390,9 +390,9 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
               aria-expanded={historyShown}
               className="flex min-h-[40px] items-center gap-2 text-[13px] font-semibold text-ink-2 hover:text-ink"
             >
-              <History size={13} />
+              <History size={14} />
               Geschiedenis <span className="font-mono tabular-nums">({past.length})</span>
-              <ChevronDown size={13} className={`transition-transform duration-200 ${historyShown ? "rotate-180" : ""}`} />
+              <ChevronDown size={14} className={`transition-transform duration-200 ${historyShown ? "rotate-180" : ""}`} />
             </button>
             <AnimatePresence>
               {historyShown && (

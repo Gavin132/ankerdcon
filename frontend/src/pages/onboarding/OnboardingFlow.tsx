@@ -154,7 +154,7 @@ export function OnboardingFlow({ me, onFinish, doneLabel, onDone, overlay }: Onb
                   aria-label="Vorige stap"
                   className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
                 >
-                  <ArrowLeft size={17} />
+                  <ArrowLeft size={16} />
                 </button>
               )}
 
@@ -178,7 +178,7 @@ export function OnboardingFlow({ me, onFinish, doneLabel, onDone, overlay }: Onb
                   onClick={() => handleFinish(false)}
                   className="flex-1"
                 >
-                  Opslaan &amp; afronden <Check size={15} />
+                  Opslaan &amp; afronden <Check size={16} />
                 </Button>
               ) : (
                 <button
@@ -186,7 +186,7 @@ export function OnboardingFlow({ me, onFinish, doneLabel, onDone, overlay }: Onb
                   onClick={() => goTo(step + 1)}
                   className="btn-primary h-11 flex-1 text-sm"
                 >
-                  Volgende <ArrowRight size={15} />
+                  Volgende <ArrowRight size={16} />
                 </button>
               )}
             </div>

@@ -36,9 +36,9 @@ const CURRENCIES = ["EUR", "USD", "GBP", "JPY"] as const;
 type SplitMode = "gelijk" | "vast" | "handmatig";
 
 const SPLIT_MODES: { id: SplitMode; label: string; icon: React.ReactNode }[] = [
-  { id: "gelijk",    label: "Gelijk",    icon: <Equal           size={13} /> },
-  { id: "vast",      label: "Vast",      icon: <Tag             size={13} /> },
-  { id: "handmatig", label: "Handmatig", icon: <SlidersHorizontal size={13} /> },
+  { id: "gelijk",    label: "Gelijk",    icon: <Equal           size={14} /> },
+  { id: "vast",      label: "Vast",      icon: <Tag             size={14} /> },
+  { id: "handmatig", label: "Handmatig", icon: <SlidersHorizontal size={14} /> },
 ];
 
 const SL = "field-label";
@@ -364,7 +364,7 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
                         {formatAmount(row.amount, currency)}
                       </span>
                       <button type="button" onClick={() => removeManualRow(i)} aria-label={`${row.participant} verwijderen`} className="hit-area ml-1 flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-bad-soft hover:text-bad">
-                        <X size={13} />
+                        <X size={14} />
                       </button>
                     </div>
                   ))}
@@ -409,7 +409,7 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
                       aria-label="Persoon toevoegen"
                       className="btn-secondary w-12 shrink-0 px-0"
                     >
-                      <Plus size={15} />
+                      <Plus size={16} />
                     </button>
                   </div>
                 </div>

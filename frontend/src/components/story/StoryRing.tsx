@@ -34,7 +34,7 @@ export function StoryRing({ label, hasPhotos, hasUnseen, previewUrl, onClick }: 
           {previewUrl ? (
             <img src={previewUrl} alt="" className="h-full w-full object-cover" />
           ) : hasPhotos ? (
-            <Camera size={18} className="text-ink-2" />
+            <Camera size={16} className="text-ink-2" />
           ) : null}
         </div>
       </div>

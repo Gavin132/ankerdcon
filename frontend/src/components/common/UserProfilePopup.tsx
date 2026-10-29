@@ -250,7 +250,7 @@ export function UserProfilePopup({
                         {room && (
                           <div className="flex items-center gap-2.5">
                             <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-sunken text-ink-2">
-                              <BedDouble size={11} />
+                              <BedDouble size={12} />
                             </div>
                             <span className="text-[12px] text-ink-2">Kamer {room}</span>
                           </div>
@@ -258,7 +258,7 @@ export function UserProfilePopup({
                         {u?.phone_number && (
                           <div className="flex items-center gap-2.5">
                             <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-sunken text-ink-2">
-                              <Phone size={11} />
+                              <Phone size={12} />
                             </div>
                             <a
                               href={`tel:${u.phone_number}`}
@@ -272,7 +272,7 @@ export function UserProfilePopup({
                         {isPingFresh(u?.live_location_ping) && (
                           <div className="flex items-center gap-2.5">
                             <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md pill-ok">
-                              <MapPin size={11} />
+                              <MapPin size={12} />
                             </div>
                             <LocationPingDisplay
                               raw={u!.live_location_ping}
@@ -303,7 +303,7 @@ export function UserProfilePopup({
                               className="flex items-center gap-2 rounded-lg bg-sunken px-2.5 py-1.5"
                             >
                               <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-surface text-ink-2">
-                                <CalendarDays size={10} />
+                                <CalendarDays size={12} />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <p className="truncate text-[12px] font-semibold leading-tight text-ink">
@@ -342,7 +342,7 @@ export function UserProfilePopup({
                       : "flex w-full items-center justify-center gap-2 rounded-xl border-1.5 border-line bg-surface py-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
                   }
                 >
-                  {isOwn ? <Pencil size={13} /> : <UserIcon size={13} />}
+                  {isOwn ? <Pencil size={14} /> : <UserIcon size={14} />}
                   {isOwn ? "Profiel bewerken" : "Bekijk profiel"}
                 </button>
               </div>

@@ -17,10 +17,10 @@ export function AdminTopbar({ onToggleDesktop, onToggleMobile }: Props) {
     <header className="sticky top-0 z-20 flex h-[60px] shrink-0 items-center justify-between gap-3 border-b-1.5 border-line bg-surface px-4 lg:bg-paper lg:px-6">
       <div className="flex min-w-0 items-center gap-3">
         <button onClick={onToggleMobile} className={`${ICON_BTN} lg:hidden`} aria-label="Menu openen">
-          <Menu size={18} />
+          <Menu size={16} />
         </button>
         <button onClick={onToggleDesktop} className={`${ICON_BTN} hidden lg:flex`} aria-label="Menu in- of uitklappen">
-          <Menu size={17} />
+          <Menu size={16} />
         </button>
         {/* The page's own title is the h1 below; the bar only says where you are. */}
         <span className="label-quiet">Admin</span>

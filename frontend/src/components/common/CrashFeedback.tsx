@@ -50,7 +50,7 @@ export function CrashFeedback({ detail }: { detail: string | null }) {
         onClick={() => setOpen(true)}
         className="mt-3 inline-flex min-h-11 items-center gap-1.5 py-2.5 text-[12.5px] font-semibold text-brand-text hover:underline"
       >
-        <MessageSquarePlus size={13} />
+        <MessageSquarePlus size={14} />
         Vertel wat er gebeurde
       </button>
     );

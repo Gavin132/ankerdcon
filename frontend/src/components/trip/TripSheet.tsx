@@ -170,7 +170,7 @@ export function TripSheet({ open, onClose, title, subtitle, onBack, footer, view
                     className="hit-area -ml-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
                     aria-label="Terug"
                   >
-                    <ChevronLeft size={17} />
+                    <ChevronLeft size={16} />
                   </button>
                 )}
                 <div className="min-w-0">

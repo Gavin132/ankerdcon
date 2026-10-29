@@ -133,7 +133,7 @@ function ProfilePhotos({ bannerColor }: { bannerColor: string }) {
             title="Profielfoto wijzigen"
             className="hit-area absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper disabled:opacity-60"
           >
-            {uploadAvatarMutation.isPending ? <Loader2 size={11} className="animate-spin" /> : <Pencil size={11} />}
+            {uploadAvatarMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <Pencil size={12} />}
           </button>
         </div>
 
@@ -151,7 +151,7 @@ function ProfilePhotos({ bannerColor }: { bannerColor: string }) {
             title="Profielfoto verwijderen"
             className="hit-area mb-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-sunken hover:text-ink disabled:opacity-60"
           >
-            {deleteAvatarMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+            {deleteAvatarMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
           </button>
         )}
       </div>
@@ -210,7 +210,7 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
           </div>
           {phoneError && state.phone && (
             <p className="field-error flex items-center gap-1">
-              <AlertTriangle size={11} /> {phoneError}
+              <AlertTriangle size={12} /> {phoneError}
             </p>
           )}
           <p className="mt-1.5 text-xs text-ink-3">

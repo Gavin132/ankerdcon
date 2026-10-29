@@ -47,7 +47,7 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
   const restaurantTitle = linkedMeal?.meal_name ?? ride.start_location;
   const restaurantPlace = linkedMeal?.location || ride.start_location;
 
-  const { Icon: TransportIcon, small: smallVehicle } = rideVehicleIcon(ride.driver, users, ride.total_seats, isPT);
+  const { Icon: TransportIcon } = rideVehicleIcon(ride.driver, users, isPT);
 
   // A viewer (read-only member) sees who is in the car, but gets no buttons.
   const canAct = status !== "recent" && status !== "past" && !viewer;
@@ -58,13 +58,13 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
   // One status chip at a time, the most pressing first: leaving now > leaving soon > gone > something to do.
   const statusChip: { tone: "neutral" | "warn" | "bad"; icon: React.ReactNode; text: string } | null =
     status === "urgent"
-      ? { tone: "bad", icon: <Timer size={11} />, text: `Vertrekt over ${formatCountdown(minutesUntil)}!` }
+      ? { tone: "bad", icon: <Timer size={12} />, text: `Vertrekt over ${formatCountdown(minutesUntil)}!` }
       : status === "soon"
-        ? { tone: "warn", icon: <Timer size={11} />, text: `Vertrekt over ${formatCountdown(minutesUntil)}` }
+        ? { tone: "warn", icon: <Timer size={12} />, text: `Vertrekt over ${formatCountdown(minutesUntil)}` }
         : isRecent
-          ? { tone: "neutral", icon: <Clock size={11} />, text: "Vertrokken" }
+          ? { tone: "neutral", icon: <Clock size={12} />, text: "Vertrokken" }
           : ride.action_required && !isPast
-            ? { tone: "warn", icon: <AlertCircle size={11} />, text: "Actie vereist" }
+            ? { tone: "warn", icon: <AlertCircle size={12} />, text: "Actie vereist" }
             : null;
 
   return (
@@ -76,30 +76,30 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
         <div className="mb-4 flex flex-wrap items-center gap-1.5">
           {linkedMeal && (
             <Link to={routes.meal.view(linkedMeal.id)} className={`hit-area ${heroChipClass()} transition-colors hover:bg-hero-ink/20`}>
-              <Utensils size={11} />
+              <Utensils size={12} />
               {linkedMeal.meal_name}
             </Link>
           )}
           {linkedEvent && !linkedMeal && (
             <Link to={routes.event.view(linkedEvent.id)} className={`hit-area ${heroChipClass()} transition-colors hover:bg-hero-ink/20`}>
-              <CalendarDays size={11} />
+              <CalendarDays size={12} />
               {linkedEvent.event_name}
             </Link>
           )}
           {/* A restaurant ride with its meal already says what it is; the chip is for one without. */}
           {!(isRestaurant && linkedMeal) && (
             <HeroChip>
-              <TransportIcon size={smallVehicle ? 9 : 11} />
+              <TransportIcon size={12} />
               {isPT ? "Openbaar vervoer" : isInbound ? "Heen" : ride.direction === "Outbound" ? "Terug" : "Restaurant"}
             </HeroChip>
           )}
           <HeroChip className="normal-case tracking-normal">
-            <Clock size={11} />
+            <Clock size={12} />
             {formatDateTime(ride.departure_time)}
           </HeroChip>
           {!isPT && !isRestaurant && !isRecent && !isPast && !ride.is_full && (
             <HeroChip>
-              <Users size={11} />
+              <Users size={12} />
               {`${ride.seats_left} ${ride.seats_left === 1 ? "plek" : "plekken"} vrij`}
             </HeroChip>
           )}

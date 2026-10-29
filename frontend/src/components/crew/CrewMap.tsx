@@ -346,7 +346,7 @@ export default function CrewMap({ users, onOpenProfile, trip, meals, rides, allU
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      Route <ExternalLink size={10} />
+                      Route <ExternalLink size={12} />
                     </a>
                   </div>
                 ))}
@@ -380,7 +380,7 @@ export default function CrewMap({ users, onOpenProfile, trip, meals, rides, allU
                       to={routes.ride.view(p.outboundRide.id)}
                       className="mt-1 inline-flex items-center gap-0.5 text-[12px] font-semibold text-brand-text hover:underline"
                     >
-                      Naar de rit <ExternalLink size={10} />
+                      Naar de rit <ExternalLink size={12} />
                     </Link>
                   </>
                 ) : (
@@ -415,7 +415,7 @@ export default function CrewMap({ users, onOpenProfile, trip, meals, rides, allU
                         Profiel
                       </button>
                       <a className="inline-flex items-center gap-0.5 text-brand-text hover:underline" href={pingMapUrl(p.lat, p.lng)} target="_blank" rel="noopener noreferrer">
-                        Route <ExternalLink size={10} />
+                        Route <ExternalLink size={12} />
                       </a>
                     </div>
                   </div>

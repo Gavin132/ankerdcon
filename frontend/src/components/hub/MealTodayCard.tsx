@@ -65,7 +65,7 @@ export function MealTodayCard({ meals, myNames, className = "" }: MealTodayCardP
             >
               {eating ? "Je eet mee" : count > 0 ? `${count} eten mee` : "Nog niemand"}
             </span>
-            <ChevronRight size={15} className="shrink-0 text-ink-3" />
+            <ChevronRight size={16} className="shrink-0 text-ink-3" />
           </Link>
         );
       })}

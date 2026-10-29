@@ -104,7 +104,7 @@ export function EventPractical({
               )}
             </div>
             <ChevronRight
-              size={15}
+              size={16}
               className="shrink-0 text-ink-3 transition-colors group-hover:text-ink"
             />
           </button>

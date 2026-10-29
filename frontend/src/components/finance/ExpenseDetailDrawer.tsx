@@ -175,7 +175,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
                           disabled={isLoading}
                           className="btn-secondary hit-area ml-auto min-h-9 px-3 text-[12px]"
                         >
-                          <Check size={11} />
+                          <Check size={12} />
                           Ontvangen
                         </button>
                       )}

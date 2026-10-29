@@ -328,7 +328,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
       loading={isSubmitting || createMutation.isPending}
       className="w-full"
     >
-      <Sparkles size={15} />
+      <Sparkles size={16} />
       Cosplay opslaan
     </Button>
   );
@@ -495,7 +495,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                     )}
                     {images.length > 1 && (
                       <button type="button" onClick={() => removeImage(index)} aria-label="Afbeelding verwijderen" className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-bad-soft hover:text-bad">
-                        <X size={13} />
+                        <X size={16} />
                       </button>
                     )}
                   </div>
@@ -532,7 +532,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                       : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"
                   }`}
                 >
-                  <SlidersHorizontal size={13} />
+                  <SlidersHorizontal size={14} />
                   Filter & sorteren
                   {activeFilterCount > 0 && (
                     <span className="flex h-4 w-4 items-center justify-center rounded-full bg-paper text-[12px] font-semibold leading-none text-ink">
@@ -569,7 +569,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                       <span key={name} className={removableChip}>
                         {name}
                         <button onClick={() => removePersonFilter(name)} aria-label={`Filter ${name} verwijderen`} className={removeChipButton}>
-                          <X size={11} />
+                          <X size={12} />
                         </button>
                       </span>
                     ))}
@@ -577,7 +577,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                       <span className={removableChip}>
                         {filters.days.length} {filters.days.length === 1 ? "dag" : "dagen"}
                         <button onClick={removeDayFilter} aria-label="Dagfilter verwijderen" className={removeChipButton}>
-                          <X size={11} />
+                          <X size={12} />
                         </button>
                       </span>
                     )}
@@ -585,7 +585,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                       <span className={removableChip}>
                         {SORT_LABELS[filters.sort]}
                         <button onClick={removeSortFilter} aria-label="Sortering verwijderen" className={removeChipButton}>
-                          <X size={11} />
+                          <X size={12} />
                         </button>
                       </span>
                     )}
@@ -678,7 +678,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                 aria-label="Vorige pagina"
                 className={pageArrow}
               >
-                <ChevronLeft size={15} />
+                <ChevronLeft size={16} />
               </button>
 
               {Array.from({ length: totalPages }).map((_, i) => {
@@ -717,7 +717,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                 aria-label="Volgende pagina"
                 className={pageArrow}
               >
-                <ChevronRight size={15} />
+                <ChevronRight size={16} />
               </button>
             </div>
           )}

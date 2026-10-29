@@ -10,7 +10,7 @@ export function ShareButton({ onClick }: { onClick: () => void }) {
       aria-label="Delen"
       className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
     >
-      <Share2 size={17} />
+      <Share2 size={16} />
     </button>
   );
 }

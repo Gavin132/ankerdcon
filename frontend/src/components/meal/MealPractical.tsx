@@ -48,9 +48,9 @@ export function MealPractical({ meal }: MealPracticalProps) {
                 rel="noopener noreferrer"
                 className="hit-area flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-ink-3"
               >
-                <Navigation size={11} />
+                <Navigation size={12} />
                 Route
-                <ExternalLink size={10} className="text-ink-3" />
+                <ExternalLink size={12} className="text-ink-3" />
               </a>
             )}
           </div>

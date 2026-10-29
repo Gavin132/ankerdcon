@@ -39,7 +39,7 @@ export const CarCard = forwardRef<HTMLDivElement, CarCardProps>(function CarCard
 
   const spotsLeft = Math.max(0, driver.seats - driver.passengers.length);
   const isFull = spotsLeft === 0;
-  const { Icon: CarIcon, small: smallVehicle } = rideVehicleIcon(driver.name, users, driver.seats);
+  const { Icon: CarIcon } = rideVehicleIcon(driver.name, users);
   const available = userNames.filter((n) => n !== driver.name && !driver.passengers.includes(n));
 
   function toggle(next: "join" | "leave") {
@@ -70,7 +70,7 @@ export const CarCard = forwardRef<HTMLDivElement, CarCardProps>(function CarCard
         <div className="flex min-w-0 flex-col leading-tight">
           <span className="truncate text-[14px] font-semibold text-ink">{driver.name}</span>
           <span className="flex items-center gap-1 text-[12px] text-ink-3">
-            <CarIcon size={smallVehicle ? 10 : 12} className="shrink-0" />
+            <CarIcon size={12} className="shrink-0" />
             Chauffeur · {driver.seats} plekken
           </span>
         </div>
@@ -116,7 +116,7 @@ export const CarCard = forwardRef<HTMLDivElement, CarCardProps>(function CarCard
                 onClick={() => toggle("join")}
                 aria-expanded={action === "join"}
               >
-                <Plus size={13} />
+                <Plus size={14} />
                 Stap in
               </Button>
             )}
@@ -153,7 +153,7 @@ export const CarCard = forwardRef<HTMLDivElement, CarCardProps>(function CarCard
               >
                 {action === "join" ? (
                   <>
-                    <Plus size={15} />
+                    <Plus size={16} />
                     {names.length === 0 ? "Selecteer een naam" : names.length === 1 ? `${names[0]} stapt in` : `${names.length} personen stappen in`}
                   </>
                 ) : names.length === 0 ? "Selecteer een naam" : names.length === 1 ? `${names[0]} uitstappen` : `${names.length} personen uitstappen`}

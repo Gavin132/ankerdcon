@@ -31,7 +31,7 @@ export function LocationPingDisplay({ raw, align = "end" }: Props) {
             onClick={(e) => e.stopPropagation()}
             className="inline-flex items-center gap-0.5 font-sans font-semibold text-brand-text hover:underline"
           >
-            Kaart <ExternalLink size={10} />
+            Kaart <ExternalLink size={12} />
           </a>
         )}
       </span>

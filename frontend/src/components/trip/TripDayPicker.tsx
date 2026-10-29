@@ -49,7 +49,7 @@ export function TripDayPicker({ trip, myNames, readOnly = false, onToggleDay }: 
                     imGoing ? "border-outline bg-brand text-brand-on" : "border-ink-3 bg-surface"
                   }`}
                 >
-                  {imGoing && <Check size={9} strokeWidth={3} />}
+                  {imGoing && <Check size={12} strokeWidth={3} />}
                 </span>
               )}
               <span className="block text-[12px] capitalize leading-none text-ink-3">{dayShort(date)}</span>

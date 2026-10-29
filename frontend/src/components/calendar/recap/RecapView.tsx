@@ -424,10 +424,10 @@ function Week({ week, monthPrefix, today, trips, tripByDay, selection, selectedT
             } ${tone} ${selectedTrip === trip ? "ring-2 ring-outline ring-offset-2 ring-offset-surface" : ""}`}
           >
             <span className="hidden min-w-0 items-center gap-1 sm:flex sm:w-full">
-              {past && mine && <Check size={11} strokeWidth={3} className="shrink-0" />}
+              {past && mine && <Check size={12} strokeWidth={3} className="shrink-0" />}
               <span className="truncate">{trip.title}</span>
               <span className="ml-auto flex shrink-0 items-center gap-0.5 pl-1 font-mono text-[12px]">
-                {past ? <Camera size={11} /> : <Users size={11} />}
+                {past ? <Camera size={12} /> : <Users size={12} />}
                 {past ? photos : tripPeople(trip, users).length}
               </span>
             </span>
@@ -507,7 +507,7 @@ function MonthOverview({ title, trips, lastYear, lastYearLabel, storySummary, is
                       : mine ? "bg-brand-soft text-brand-text" : "bg-sunken text-ink-2"
                   }`}
                 >
-                  {mine && <Check size={11} strokeWidth={3} />}
+                  {mine && <Check size={12} strokeWidth={3} />}
                   {past ? (mine ? "Geweest" : "Gemist") : mine ? "Jij gaat" : `${tripPeople(t, users).length} gaan`}
                 </span>
               </button>

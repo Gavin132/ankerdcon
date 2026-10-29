@@ -52,7 +52,7 @@ export function ToastContainer() {
               onClick={() => removeToast(t.id)}
               className="hit-area shrink-0 flex h-6 w-6 items-center justify-center rounded-md text-ink-3 hover:text-ink hover:bg-sunken transition-colors"
             >
-              <X size={13} />
+              <X size={14} />
             </button>
           </motion.div>
         ))}

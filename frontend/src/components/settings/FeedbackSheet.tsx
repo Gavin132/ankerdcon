@@ -54,7 +54,7 @@ export function FeedbackSheet({ open, onClose }: { open: boolean; onClose: () =>
       subtitle="Een bug, idee of iets anders"
       footer={
         <Button onClick={send} loading={submit.isPending} disabled={!canSend} className="w-full">
-          <Send size={15} />
+          <Send size={16} />
           Versturen
         </Button>
       }

@@ -31,7 +31,7 @@ function TripRow({ trip, current, going, onPick }: { trip: Trip; current: boolea
         {current && <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[12px] font-semibold text-brand-text">Dit evenement</span>}
         {!current && PHASE_LABEL[phase] && <span className="shrink-0 rounded-full bg-brand px-2 py-0.5 text-[12px] font-semibold text-brand-on">{PHASE_LABEL[phase]}</span>}
         {going && !current && <span className="shrink-0 text-[12px] font-semibold text-ink-3">Jij gaat mee</span>}
-        <ChevronRight size={14} className="shrink-0 text-ink-3" />
+        <ChevronRight size={16} className="shrink-0 text-ink-3" />
       </Link>
     </li>
   );
@@ -90,7 +90,7 @@ export function TripSwitcherButton({ iconOnly, onClick }: { iconOnly?: boolean; 
       aria-label="Andere evenementen"
       className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
     >
-      <CalendarRange size={17} />
+      <CalendarRange size={16} />
     </button>
   ) : (
     <button type="button" onClick={onClick} className="btn-secondary flex w-full items-center justify-center gap-2 px-4 py-3 text-sm">

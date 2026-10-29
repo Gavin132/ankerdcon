@@ -205,7 +205,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
             className="hit-area flex items-center gap-1.5 text-xs font-semibold text-ink-3 transition-colors hover:text-ink"
           >
             <motion.span animate={{ rotate: advancedOpen ? 180 : 0 }} transition={{ duration: 0.18 }}>
-              <ChevronDown size={13} />
+              <ChevronDown size={14} />
             </motion.span>
             Meer opties
           </button>

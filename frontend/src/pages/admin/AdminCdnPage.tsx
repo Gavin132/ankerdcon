@@ -244,7 +244,7 @@ export function AdminCdnPage() {
 
           {hasNextPage && (
             <div ref={sentinel} className="flex h-12 items-center justify-center text-ink-3" aria-live="polite">
-              {isFetchingNextPage && <Loader2 size={18} className="animate-spin" aria-label="Meer laden" />}
+              {isFetchingNextPage && <Loader2 size={16} className="animate-spin" aria-label="Meer laden" />}
             </div>
           )}
         </>
@@ -343,7 +343,7 @@ function Viewer({ item, position, onClose, onPrev, onNext, onDelete }: { item: C
             <ExternalLink size={16} />
           </a>
           <button type="button" onClick={onClose} aria-label="Sluiten" className="hit-area flex h-9 w-9 items-center justify-center rounded-full bg-hero-ink/10 hover:bg-hero-ink/20">
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
       </div>

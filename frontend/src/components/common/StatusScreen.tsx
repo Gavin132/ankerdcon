@@ -64,7 +64,7 @@ export function StatusScreen({ kicker, mark, title, children, actions, details, 
               className="inline-flex min-h-11 items-center gap-1.5 text-[12.5px] font-semibold text-ink-2 hover:text-ink"
             >
               Technische details
-              <ChevronDown size={13} className={`transition-transform ${detailsOpen ? "rotate-180" : ""}`} />
+              <ChevronDown size={14} className={`transition-transform ${detailsOpen ? "rotate-180" : ""}`} />
             </button>
             <Collapse open={detailsOpen} className="w-full">
               <div className="flex flex-col items-center pb-2">{details}</div>

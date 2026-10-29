@@ -88,7 +88,7 @@ export function UserPhotos({ identifier, whose }: { identifier: string; whose?: 
                   />
                   {p.media_type === "video" && (
                     <span className="pointer-events-none absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-hero/65 text-hero-ink">
-                      <Play size={10} fill="currentColor" />
+                      <Play size={12} fill="currentColor" />
                     </span>
                   )}
                 </button>
@@ -156,7 +156,7 @@ function Lightbox({
           aria-label="Sluiten"
           className="hit-area flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-hero-ink/10 hover:bg-hero-ink/20"
         >
-          <X size={18} />
+          <X size={16} />
         </button>
       </div>
       <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 pb-4">

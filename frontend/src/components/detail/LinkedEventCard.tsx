@@ -15,7 +15,7 @@ export function LinkedEventCard({ event }: LinkedEventCardProps) {
       <h2 className="section-label mb-3">Gekoppeld evenement</h2>
       <div className="flex items-center gap-3">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-          <CalendarDays size={15} />
+          <CalendarDays size={16} />
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-ink">{event.event_name}</p>

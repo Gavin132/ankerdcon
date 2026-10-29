@@ -67,7 +67,7 @@ export function TripRsvpModal({ trip: openTrip, users, onClose, onConfirm }: Tri
           className="w-full"
           onClick={() => { onConfirm(mode, names, dayIds); onClose(); }}
         >
-          <Check size={15} />
+          <Check size={16} />
           {label}
         </Button>
       }

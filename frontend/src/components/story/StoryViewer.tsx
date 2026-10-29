@@ -369,7 +369,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                 title="Sluiten"
                 className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-hero-ink/10 hover:text-hero-ink"
               >
-                <X size={20} />
+                <X size={16} />
               </button>
             </div>
           </div>

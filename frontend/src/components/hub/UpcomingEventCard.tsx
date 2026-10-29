@@ -144,9 +144,9 @@ export function UpcomingEventCard({
           <span aria-hidden className={`absolute inset-0 ${coverImage ? "bg-hero/45" : ""}`} />
           <span className="absolute left-4 top-3 flex flex-wrap gap-1.5 sm:left-5 sm:top-4">
             {isTravelOnly && <Chip>Reisdag</Chip>}
-            {isHotel && <Chip><BedDouble size={11} /> Hotel</Chip>}
-            {eventType === "gathering" && <Chip><PartyPopper size={11} /> Feestje</Chip>}
-            {eventType === "concert" && <Chip><Music2 size={11} /> Concert</Chip>}
+            {isHotel && <Chip><BedDouble size={12} /> Hotel</Chip>}
+            {eventType === "gathering" && <Chip><PartyPopper size={12} /> Feestje</Chip>}
+            {eventType === "concert" && <Chip><Music2 size={12} /> Concert</Chip>}
           </span>
         </button>
 
@@ -161,9 +161,9 @@ export function UpcomingEventCard({
               {title}
             </h2>
             <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-2">
-              <span className="flex items-center gap-1.5"><CalendarDays size={13} className="shrink-0" /> {when}</span>
-              {location && <span className="flex min-w-0 items-center gap-1.5"><MapPin size={13} className="shrink-0" /> <span className="truncate">{location}</span></span>}
-              {!isGroupEvent && hasMeal(event.id) && <span className="flex items-center gap-1.5"><Utensils size={13} className="shrink-0" /> Activiteit gepland</span>}
+              <span className="flex items-center gap-1.5"><CalendarDays size={14} className="shrink-0" /> {when}</span>
+              {location && <span className="flex min-w-0 items-center gap-1.5"><MapPin size={14} className="shrink-0" /> <span className="truncate">{location}</span></span>}
+              {!isGroupEvent && hasMeal(event.id) && <span className="flex items-center gap-1.5"><Utensils size={14} className="shrink-0" /> Activiteit gepland</span>}
             </p>
             {description && (
               <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-ink-3">{description}</p>
@@ -190,8 +190,8 @@ export function UpcomingEventCard({
                     </span>
                     <span className="block font-display text-[26px] font-extrabold leading-none text-ink">{date.getDate()}</span>
                     <span className="mt-1 flex items-center justify-center gap-1 text-[12px] leading-none text-ink-2">
-                      {isTravelDay ? <BedDouble size={11} className="shrink-0" /> : null}
-                      {hasMeal(dayEv.id) && <Utensils size={11} className="shrink-0" />}
+                      {isTravelDay ? <BedDouble size={12} className="shrink-0" /> : null}
+                      {hasMeal(dayEv.id) && <Utensils size={12} className="shrink-0" />}
                       <span className="truncate">{isTravelDay ? "Reisdag" : `${groupPeople(dayEv.participants ?? [], users).length} mee`}</span>
                     </span>
                   </button>

@@ -83,7 +83,7 @@ export function RideCostsCard({ tripFilter, className = "" }: { tripFilter: stri
     <>
       <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`card-surface overflow-hidden ${className}`}>
         <div className="flex items-center gap-2 px-4 pb-2 pt-4">
-          <Car size={13} className="shrink-0 text-ink-3" />
+          <Car size={14} className="shrink-0 text-ink-3" />
           <p className="section-label">Ritkosten</p>
         </div>
         <ul className="divide-y divide-line border-t border-line">
@@ -92,7 +92,7 @@ export function RideCostsCard({ tripFilter, className = "" }: { tripFilter: stri
               key={row.key}
               lead={
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-                  <Car size={15} />
+                  <Car size={16} />
                 </span>
               }
               title={row.title}

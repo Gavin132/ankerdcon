@@ -43,11 +43,11 @@ export function TripTile({ icon: Icon, label, to, onToggle, expanded, onOpen, sh
   const header = (labelEl: ReactNode) => (
     <span className="flex w-full items-center gap-2">
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-        <Icon size={15} />
+        <Icon size={16} />
       </span>
       {labelEl}
       {(pill || action) && <span className="relative flex shrink-0 items-center gap-2">{pill}{action}</span>}
-      {(to || onOpen) && <ChevronRight size={15} className="shrink-0 text-ink-3 transition-colors group-hover:text-ink" />}
+      {(to || onOpen) && <ChevronRight size={16} className="shrink-0 text-ink-3 transition-colors group-hover:text-ink" />}
     </span>
   );
 
@@ -58,7 +58,7 @@ export function TripTile({ icon: Icon, label, to, onToggle, expanded, onOpen, sh
         {children}
         {!sheet && (
           <span aria-hidden className="mt-auto flex items-center gap-1 pt-1 text-[12.5px] font-semibold text-brand-text">
-            Naar {label.toLowerCase()} <ArrowRight size={13} />
+            Naar {label.toLowerCase()} <ArrowRight size={14} />
           </span>
         )}
       </div>
@@ -71,7 +71,7 @@ export function TripTile({ icon: Icon, label, to, onToggle, expanded, onOpen, sh
         {header(<span className={LABEL}>{label}</span>)}
         {children}
         <span className="mt-auto flex items-center gap-1 pt-1 text-[12.5px] font-semibold text-brand-text">
-          {expanded ? "Inklappen" : "Uitklappen"} <ChevronDown size={13} className={expanded ? "rotate-180" : ""} />
+          {expanded ? "Inklappen" : "Uitklappen"} <ChevronDown size={14} className={expanded ? "rotate-180" : ""} />
         </span>
       </button>
     );

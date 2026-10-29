@@ -172,7 +172,7 @@ function ProfileHead({
                 title="Banner verwijderen"
                 className="hit-area flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-ink/80 text-paper transition-colors hover:bg-ink disabled:opacity-60"
               >
-                {bannerDeleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                {bannerDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
               </button>
             )}
             <button
@@ -183,7 +183,7 @@ function ProfileHead({
               title="Banner wijzigen"
               className="hit-area flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-ink/80 text-paper transition-colors hover:bg-ink disabled:opacity-60"
             >
-              {bannerUploading ? <Loader2 size={13} className="animate-spin" /> : <Pencil size={13} />}
+              {bannerUploading ? <Loader2 size={14} className="animate-spin" /> : <Pencil size={14} />}
             </button>
           </div>
         )}
@@ -245,7 +245,7 @@ function ProfileHead({
                   className="hit-area flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper disabled:opacity-60"
                 >
                   {avatarUploading ? (
-                    <Loader2 size={13} className="animate-spin" />
+                    <Loader2 size={14} className="animate-spin" />
                   ) : (
                     <Pencil size={12} />
                   )}
@@ -333,7 +333,7 @@ function ViewProfile({
           {room && (
             <div className="flex items-center gap-2.5 text-sm text-ink-2">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-                <BedDouble size={15} />
+                <BedDouble size={16} />
               </span>
               Kamer {room}
             </div>
@@ -341,7 +341,7 @@ function ViewProfile({
           {user.phone_number && (
             <div className="flex items-center gap-2.5 text-sm">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-                <Phone size={15} />
+                <Phone size={16} />
               </span>
               <a href={`tel:${user.phone_number}`} className="hit-area font-medium text-brand-text">
                 {user.phone_number}
@@ -351,7 +351,7 @@ function ViewProfile({
           {isPingFresh(user.live_location_ping) && (
             <div className="flex items-center gap-2.5 text-sm text-ink-2">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg pill-ok">
-                <MapPin size={15} />
+                <MapPin size={16} />
               </span>
               <LocationPingDisplay
                 raw={user.live_location_ping}
@@ -663,7 +663,7 @@ export function ProfilePage() {
               aria-label="Zo zien anderen je profiel"
               title="Zo zien anderen je profiel"
             >
-              <Eye size={18} />
+              <Eye size={16} />
             </button>
             {/* Always in reach, and only blue when there is something to save. */}
             <Button
@@ -744,7 +744,7 @@ export function ProfilePage() {
               />
               {nameError && draftName !== user.name && (
                 <p className="field-error flex items-center gap-1">
-                  <AlertTriangle size={11} /> {nameError}
+                  <AlertTriangle size={12} /> {nameError}
                 </p>
               )}
             </Field>
@@ -787,7 +787,7 @@ export function ProfilePage() {
               </div>
               {phoneError && draftPhone && (
                 <p className="field-error flex items-center gap-1">
-                  <AlertTriangle size={11} /> {phoneError}
+                  <AlertTriangle size={12} /> {phoneError}
                 </p>
               )}
             </Field>
@@ -864,7 +864,7 @@ export function ProfilePage() {
                         aria-label={`Alias ${alias} verwijderen`}
                         className="hit-area -mr-1 p-1 text-ink-3 transition-colors hover:text-bad"
                       >
-                        <X size={11} />
+                        <X size={12} />
                       </button>
                     </span>
                   ))}

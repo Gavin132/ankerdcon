@@ -137,7 +137,7 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
               >
                 <span className="min-w-0 truncate">{open.title}</span>
                 <span className="shrink-0 text-[12px] font-normal text-ink-3">{open.dateRange}</span>
-                <ChevronRight size={14} className="ml-auto shrink-0 text-ink-3" />
+                <ChevronRight size={16} className="ml-auto shrink-0 text-ink-3" />
               </Link>
               {photosOf(open) > 0 ? (
                 <div className="flex gap-3 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

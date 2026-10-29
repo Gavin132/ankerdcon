@@ -163,7 +163,7 @@ export function RestaurantDetailActions({
         {/* Everyone has a car: the one good-news line. (Who still has none is the box under the cars.) */}
         {allClear && canAct && (
           <div className="notice-ok flex items-center gap-2 px-4 py-3 text-sm font-semibold text-ok">
-            <CheckCircle2 size={15} className="shrink-0" />
+            <CheckCircle2 size={16} className="shrink-0" />
             Iedereen heeft een auto.
           </div>
         )}
@@ -194,7 +194,7 @@ export function RestaurantDetailActions({
                     }}
                     className="hit-area flex min-h-10 items-center gap-1.5 rounded-xl border-1.5 border-line px-3 text-xs font-semibold text-ink transition-colors hover:border-ink-3"
                   >
-                    <UserMinus size={13} /> Afmelden
+                    <UserMinus size={14} /> Afmelden
                   </button>
                 )}
                 {canAct && (
@@ -206,7 +206,7 @@ export function RestaurantDetailActions({
                     }}
                     className="btn-primary min-h-10 px-3.5 text-xs"
                   >
-                    <Car size={13} /> Ik rijd
+                    <Car size={14} /> Ik rijd
                   </button>
                 )}
               </div>
@@ -227,7 +227,7 @@ export function RestaurantDetailActions({
                         setDriverOpen(true);
                       }}
                     >
-                      <Car size={15} />
+                      <Car size={16} />
                       Eerste auto aanmelden
                     </Button>
                   )
@@ -316,7 +316,7 @@ export function RestaurantDetailActions({
             className="w-full"
             disabled={!driverName.trim()}
           >
-            <Car size={15} />
+            <Car size={16} />
             {driverName.trim() ? `${driverName} rijdt met ${driverSeats} plaatsen` : "Selecteer een naam"}
           </Button>
         }
@@ -364,7 +364,7 @@ export function RestaurantDetailActions({
             className="w-full"
             disabled={!assignPersonDriver}
           >
-            <ArrowRight size={15} />
+            <ArrowRight size={16} />
             {assignPersonDriver ? `${assignPersonName} → ${assignPersonDriver}` : "Selecteer een auto"}
           </Button>
         }

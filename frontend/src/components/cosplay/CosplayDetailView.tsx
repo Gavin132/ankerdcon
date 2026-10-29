@@ -73,7 +73,7 @@ export function CosplayDetailBody({ cosplay, events, users, onLeave: onClose }: 
             onClick={onClose}
             className="flex items-center gap-1.5 rounded-full border-1.5 border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
           >
-            <Calendar size={11} />
+            <Calendar size={12} />
             {formatDate(e.date)}
           </Link>
         ))}
@@ -100,7 +100,7 @@ export function CosplayDetailBody({ cosplay, events, users, onLeave: onClose }: 
                 className="group relative aspect-square overflow-hidden rounded-xl border-1.5 border-line bg-sunken transition-colors hover:border-ink-3"
               >
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-ink-3">
-                  <ImageOff size={18} />
+                  <ImageOff size={16} />
                   <span className="text-[12px]">Niet beschikbaar</span>
                 </div>
                 <img
@@ -154,7 +154,7 @@ export function CosplayDetailBody({ cosplay, events, users, onLeave: onClose }: 
             className="hit-area absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-xl bg-hero-ink/10 text-hero-ink hover:bg-hero-ink/20 transition-colors"
             onClick={() => setLightbox(null)}
           >
-            <X size={18} />
+            <X size={16} />
           </button>
           <div className="flex max-h-full max-w-full flex-col items-center gap-3" onClick={(e) => e.stopPropagation()}>
             <img

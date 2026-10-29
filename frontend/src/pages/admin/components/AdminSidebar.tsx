@@ -77,7 +77,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
             aria-label="Menu sluiten"
             className="icon-btn ml-auto"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         )}
       </div>
@@ -185,7 +185,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
                       {({ isActive }) => (
                         <>
                           <Icon
-                            size={collapsed ? 19 : 16}
+                            size={collapsed ? 20 : 16}
                             strokeWidth={isActive ? 2.4 : 2}
                             className={`shrink-0 ${isActive ? "text-brand dark:text-brand-on" : ""}`}
                           />

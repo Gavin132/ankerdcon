@@ -54,7 +54,7 @@ export function SettleUpCard({ overview, users, meId, onOpen, className = "" }: 
   return (
     <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`card-surface overflow-hidden ${className}`}>
       <div className="flex items-center gap-2 px-4 pb-1 pt-4">
-        <HandCoins size={13} className="shrink-0 text-ink-3" />
+        <HandCoins size={14} className="shrink-0 text-ink-3" />
         <p className="section-label">Afrekenen</p>
       </div>
       <p className="px-4 pb-2 text-[12px] text-ink-3">Eén betaling per persoon, voor alle uitgaven samen.</p>

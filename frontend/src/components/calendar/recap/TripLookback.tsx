@@ -100,7 +100,7 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
           aria-label="Sluiten"
           className="hit-area absolute left-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-hero/70 text-hero-ink transition-colors hover:bg-hero"
         >
-          <X size={15} />
+          <X size={16} />
         </button>
         <span
           className={`absolute -bottom-3.5 right-3 -rotate-[9deg] rounded-lg border-[2.5px] bg-surface px-2.5 pt-1 font-display text-[20px] font-black uppercase leading-none ${
@@ -123,8 +123,8 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
             {trip.title}
           </Link>
           <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-2">
-            {location && <span className="flex min-w-0 items-center gap-1.5"><MapPin size={13} className="shrink-0" /><span className="truncate">{location}</span></span>}
-            {hotel && <span className="flex min-w-0 items-center gap-1.5"><BedDouble size={13} className="shrink-0" /><span className="truncate">{hotel}</span></span>}
+            {location && <span className="flex min-w-0 items-center gap-1.5"><MapPin size={14} className="shrink-0" /><span className="truncate">{location}</span></span>}
+            {hotel && <span className="flex min-w-0 items-center gap-1.5"><BedDouble size={14} className="shrink-0" /><span className="truncate">{hotel}</span></span>}
           </p>
         </div>
 
@@ -158,7 +158,7 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
                   </span>
                   <span className="block font-display text-[22px] font-extrabold leading-none text-ink">{date.getDate()}</span>
                   <span className="mt-0.5 flex items-center justify-center gap-1 text-[12px] leading-none text-ink-2">
-                    <Camera size={10} /> {photoCount(ev.id)}
+                    <Camera size={12} /> {photoCount(ev.id)}
                   </span>
                 </button>
               );
@@ -200,7 +200,7 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
                         <img src={gridImage(photo)} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.04]" />
                         {photo.media_type === "video" && (
                           <span className="pointer-events-none absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-hero/65 text-hero-ink">
-                            <Play size={10} fill="currentColor" />
+                            <Play size={12} fill="currentColor" />
                           </span>
                         )}
                         {isLast ? (
@@ -252,7 +252,7 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
           className="flex items-center justify-between rounded-xl border-1.5 border-line px-3 py-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
         >
           Naar de trip
-          <ChevronRight size={15} className="text-ink-3" />
+          <ChevronRight size={16} className="text-ink-3" />
         </Link>
       </div>
 

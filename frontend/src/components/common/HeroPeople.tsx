@@ -55,7 +55,7 @@ export function HeroPeople({ names, singular, plural, children }: HeroPeopleProp
             <span className="flex min-w-0 items-center gap-1 text-xs font-medium text-hero-ink/75">
               <span className="font-mono font-semibold tabular-nums text-hero-ink">{people.length}</span>{" "}
               {people.length === 1 ? singular : plural}
-              <ChevronDown size={13} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+              <ChevronDown size={14} className={`transition-transform ${open ? "rotate-180" : ""}`} />
             </span>
           </button>
         )}

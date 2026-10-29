@@ -42,7 +42,7 @@ export function SelectableDayCards({ days, selected, onToggle, caption, label = 
                 on ? "border-outline bg-brand text-brand-on" : "border-ink-3 bg-surface"
               }`}
             >
-              {on && <Check size={9} strokeWidth={3} />}
+              {on && <Check size={12} strokeWidth={3} />}
             </span>
             <span className="block text-[12px] capitalize leading-none text-ink-3">{dayShort(date)}</span>
             <span className="block font-display text-[26px] font-extrabold leading-none text-ink">{date.getDate()}</span>

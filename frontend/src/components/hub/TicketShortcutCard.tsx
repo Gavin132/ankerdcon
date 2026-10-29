@@ -39,7 +39,7 @@ export function TicketShortcutCard({ events }: { events: CalendarEvent[] }) {
           hasTicket ? "pill-ok" : "pill-warn"
         }`}
       >
-        <TicketIcon size={15} />
+        <TicketIcon size={16} />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold text-ink">
@@ -49,7 +49,7 @@ export function TicketShortcutCard({ events }: { events: CalendarEvent[] }) {
           {hasTicket ? `Bekijk voor ${trip.title}` : `Bewaar 'm voor ${trip.title}`}
         </span>
       </span>
-      <ChevronRight size={14} className="shrink-0 text-ink-3" />
+      <ChevronRight size={16} className="shrink-0 text-ink-3" />
     </button>
   );
 }

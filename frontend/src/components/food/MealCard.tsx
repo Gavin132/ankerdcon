@@ -114,7 +114,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
           {/* ── Header ──────────────────────────────────────────── */}
           <div className="flex items-start gap-2.5">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-              <UtensilsCrossed size={15} strokeWidth={2} />
+              <UtensilsCrossed size={16} strokeWidth={2} />
             </span>
             <div className="min-w-0 flex-1">
               <h3 className="text-[14.5px] font-semibold leading-snug text-ink">{meal.meal_name}</h3>
@@ -144,7 +144,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
               ) : null}
               {meal.transport_needed && (
                 <span className="tag gap-1 py-0.5">
-                  <Bus size={11} />
+                  <Bus size={12} />
                   Vervoer nodig
                 </span>
               )}
@@ -157,7 +157,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
               onClick={(e) => e.stopPropagation()}
               className="tag max-w-full gap-1 self-start py-0.5 transition-colors hover:border-ink-3 hover:text-ink"
             >
-              <Link2 size={10} className="shrink-0" />
+              <Link2 size={12} className="shrink-0" />
               <span className="truncate">{linkedEvent.event_name}</span>
             </Link>
           )}
@@ -208,11 +208,11 @@ export function MealCard({ meal, userNames }: MealCardProps) {
               </button>
 
               <Button size="sm" variant="primary" className="ml-1 !min-h-[36px] !py-1.5" onClick={(e) => { e.stopPropagation(); setRsvpOpen(true); }}>
-                <UserCheck size={13} />
+                <UserCheck size={14} />
                 Aanmelden
               </Button>
 
-              <ChevronRight size={14} className="ml-0.5 shrink-0 text-ink-3" />
+              <ChevronRight size={16} className="ml-0.5 shrink-0 text-ink-3" />
             </div>
           </div>
 
@@ -270,7 +270,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
             color="green"
           />
           <Button onClick={onRsvp} loading={rsvpMutation.isPending} className="w-full" disabled={rsvpNames.length === 0}>
-            <UserCheck size={15} />
+            <UserCheck size={16} />
             {rsvpNames.length === 0 ? "Selecteer een naam" : rsvpNames.length === 1 ? `${rsvpNames[0]} aanmelden` : `${rsvpNames.length} personen aanmelden`}
           </Button>
         </div>
@@ -286,7 +286,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
         <div className="space-y-3">
           <NamePicker multiple options={safeParticipants} value={cancelNames} onChange={setCancelNames} color="rose" />
           <Button variant="danger" onClick={onCancel} loading={cancelMutation.isPending} className="w-full" disabled={cancelNames.length === 0}>
-            <UserMinus size={15} />
+            <UserMinus size={16} />
             {cancelNames.length === 0 ? "Selecteer een naam" : cancelNames.length === 1 ? `${cancelNames[0]} afmelden` : `${cancelNames.length} personen afmelden`}
           </Button>
         </div>

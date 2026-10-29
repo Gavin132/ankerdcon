@@ -26,7 +26,7 @@ export function AdminOnboardingPreviewPage() {
         aria-label="Preview sluiten"
         className="icon-btn rounded-full border-1.5 border-line bg-surface hover:border-ink-3"
       >
-        <X size={15} />
+        <X size={16} />
       </button>
     </div>
   );
