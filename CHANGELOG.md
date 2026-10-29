@@ -16,6 +16,7 @@ All notable changes to Ankerd Con are documented here.
 
 ### Fixed
 
+- **The Vervoer tile said "Jij rijdt" for your own journey by public transport.** It says "Met het ov" now.
 - **Two people could take the last seat in a car to a restaurant.** Only the button checked for a full car; the server
   now refuses the second one with "Deze auto is vol.".
 - **A restaurant ride named the restaurant twice.** Its page said "Van: <restaurant>" and "Naar: <restaurant>" and

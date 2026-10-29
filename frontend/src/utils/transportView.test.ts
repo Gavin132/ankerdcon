@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultTransportView, dayForDateKey, driversMissing } from "./transportView";
+import { defaultTransportView, dayForDateKey, driversMissing, rideHow } from "./transportView";
 import { buildTrip } from "./trips";
 import type { CalendarEvent, Meal } from "../types";
 
@@ -98,5 +98,21 @@ describe("driversMissing", () => {
   it("sorts the names", () => {
     const rides = [ride("Zoë", "Inbound"), ride("Anna", "Inbound")];
     expect(driversMissing(rides, "Inbound", "Outbound")).toEqual(["Anna", "Zoë"]);
+  });
+});
+
+describe("rideHow", () => {
+  const isMe = (n: string) => n === "Gavin";
+
+  it("says who drives when it is not you", () => {
+    expect(rideHow({ driver: "Sam", is_public_transport: false }, isMe)).toBe("Met Sam");
+  });
+
+  it("says you drive on your own car ride", () => {
+    expect(rideHow({ driver: "Gavin", is_public_transport: false }, isMe)).toBe("Jij rijdt");
+  });
+
+  it("never says you drive on your own public transport journey", () => {
+    expect(rideHow({ driver: "Gavin", is_public_transport: true }, isMe)).toBe("Met het ov");
   });
 });

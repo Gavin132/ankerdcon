@@ -40,7 +40,7 @@ export function StoryUploadButton({ eventDayId, className }: StoryUploadButtonPr
         {picker.busy ? (
           <Loader2 size={16} className="animate-spin" />
         ) : pendingCount > 0 ? (
-          <UploadCloud size={16} className="text-warn" />
+          <UploadCloud size={16} />
         ) : (
           <ImagePlus size={16} />
         )}

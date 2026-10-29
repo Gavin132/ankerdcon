@@ -22,6 +22,7 @@ import { routes } from "../../config/routes";
 import { getNow } from "../../store/time.store";
 import { parseEventDate, splitDateTime, toDateKey, todayKey } from "../../utils/date";
 import { dayShort } from "../../utils/multiDay";
+import { rideHow } from "../../utils/transportView";
 import { formatAmount, formatBytes } from "../../utils/format";
 import { defaultTripDayId, tripGaps, tripInfo, tripMeals, tripRides, tripOutliers, tripRoomGaps, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
 import { groupPeople } from "../../utils/people";
@@ -29,8 +30,8 @@ import { useLocalTicketsStore } from "../../store/localTickets.store";
 import type { LocalTicket } from "../../utils/localTickets";
 import type { CalendarEvent, Cosplay, Expense, HotelRoom, Meal, Ride, StoryDaySummary, User } from "../../types";
 
-/** The small "add" button in the corner of a tile: one neutral style, blue is for the action buttons. */
-const ADD_BUTTON_CLASS = "icon-btn border-1.5 border-line bg-surface";
+/** The small "add" button in the corner of a tile: the standard blue, as a 36 px square like every icon button. */
+const ADD_BUTTON_CLASS = "icon-btn bg-brand text-brand-on hover:bg-brand hover:text-brand-on hover:opacity-90";
 
 const sameName = (names: string[]) => (n: string) => names.some((m) => m.toLowerCase() === n.toLowerCase());
 /** ["Gavin", "Sanne", "Luuk"] → "Gavin, Sanne en Luuk". */
@@ -99,7 +100,7 @@ export function TransportTile({ trip, phase, rides, meals, myNames, wide }: { tr
     ...(phase === "live" ? [] : [{ label: "Heen", ride: mine("Inbound") }]),
     { label: "Terug", ride: mine("Outbound") },
   ];
-  const how = (r: Ride) => (isMine(r.driver) ? "Jij rijdt" : r.is_public_transport ? "Met het ov" : `Met ${r.driver}`);
+  const how = (r: Ride) => rideHow(r, isMine);
 
   const missingBack = gaps.filter((g) => g.items.includes("Terug")).length;
   const missing = phase === "live" ? missingBack : gaps.length;
@@ -349,7 +350,7 @@ export function CosplayTile({ trip, cosplays, myNames, wide }: { trip: Trip; cos
 
 /* ── Foto's ──────────────────────────────────────────────────────────────── */
 
-// The upload button wears the same quiet `icon-btn` as the "+" on the Activiteiten tile (ADD_BUTTON_CLASS).
+// The upload button wears the same blue `icon-btn` as the "+" on the Activiteiten tile (ADD_BUTTON_CLASS).
 const UPLOAD_BUTTON_CLASS = ADD_BUTTON_CLASS;
 
 /**
