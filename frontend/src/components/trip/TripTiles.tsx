@@ -29,7 +29,7 @@ import { useLocalTicketsStore } from "../../store/localTickets.store";
 import type { LocalTicket } from "../../utils/localTickets";
 import type { CalendarEvent, Cosplay, Expense, HotelRoom, Meal, Ride, StoryDaySummary, User } from "../../types";
 
-/** The small "add" button in the corner of a tile: one neutral style, blue is for the page's one main action. */
+/** The small "add" button in the corner of a tile: one neutral style, blue is for the action buttons. */
 const ADD_BUTTON_CLASS = "icon-btn border-1.5 border-line bg-surface";
 
 const sameName = (names: string[]) => (n: string) => names.some((m) => m.toLowerCase() === n.toLowerCase());
@@ -504,7 +504,7 @@ export function WeatherSheet({ open, onClose, trip }: { open: boolean; onClose: 
   );
 }
 
-/* ── Praktisch ───────────────────────────────────────────────────────────── */
+/* ── Info ───────────────────────────────────────────────────────────── */
 
 export function hasPracticalInfo(info: CalendarEvent): boolean {
   return !!(
@@ -525,30 +525,33 @@ export function PracticalTile({ info, trip, onOpen, wide }: { info: CalendarEven
   ].filter(Boolean) as string[];
 
   return (
-    <TripTile icon={Info} label="Praktisch" onOpen={onOpen} size={wide ? "wide" : "small"}>
+    <TripTile icon={Info} label="Info" onOpen={onOpen} size={wide ? "wide" : "small"}>
       {info.special_instructions ? (
         <>
           <span><TilePill>Let op</TilePill></span>
           <TileText><span className="line-clamp-2">{info.special_instructions}</span></TileText>
         </>
       ) : (
-        <TileValue>{`${topics.length} ${topics.length === 1 ? "onderwerp" : "onderwerpen"}`}</TileValue>
+        <>
+          <TileValue>{topics.length}</TileValue>
+          <TileText>{topics.length === 1 ? "onderwerp" : "onderwerpen"}</TileText>
+        </>
       )}
       {topics.length > 0 && (
-        <TileText>{topics.join(", ").replace(/^./, (c) => c.toUpperCase())}</TileText>
+        <TileText><span className="line-clamp-2 break-words">{topics.join(", ").replace(/^./, (c) => c.toUpperCase())}</span></TileText>
       )}
     </TripTile>
   );
 }
 
-/** Opened from the Praktisch tile — who's missing which days, plus parking, tickets and the rest. */
+/** Opened from the Info tile — who's missing which days, plus parking, tickets and the rest. */
 export function PracticalSheet({ open, onClose, info, trip }: { open: boolean; onClose: () => void; info: CalendarEvent; trip: Trip }) {
   const { data: users = [] } = useUsers();
   const outliers = tripOutliers(trip, users);
   const hasRows = !!(info.special_instructions || info.parking_info || info.what_to_bring || info.locker_info);
   const hasLinks = !!(info.website || info.ticket_url || info.ticket_sale_start || (info.ticket_types?.length ?? 0) > 0);
   return (
-    <TripSheet open={open} onClose={onClose} title="Praktisch" subtitle={trip.title}>
+    <TripSheet open={open} onClose={onClose} title="Info" subtitle={trip.title}>
       {outliers.length > 0 && (
         <div className="pb-4">
           <p className="section-label">Niet alle dagen erbij</p>

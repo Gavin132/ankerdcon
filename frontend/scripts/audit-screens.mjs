@@ -54,7 +54,7 @@ export const screens = [
   { name: "trip-rooms-bulk", path: `${TRIP}?sheet=rooms`, steps: click(byText(/Meerdere/)) },
   { name: "trip-cosplay-form", path: `${TRIP}?sheet=cosplay`, steps: click(byText(/^Toevoegen$/)) },
   { name: "trip-meal-form", path: TRIP, steps: click(byLabel(/Activiteit toevoegen/)) },
-  { name: "trip-practical", path: TRIP, steps: click(byText(/Praktisch/)) },
+  { name: "trip-practical", path: TRIP, steps: click(byText(/^Info$/)) },
   { name: "trip-participants", path: TRIP, steps: click((p) => p.locator("button[aria-haspopup=dialog]")) },
   { name: "trip-single-day", path: "/trips/d-gathering" },
   { name: "trip-past", path: "/trips/trip-hdcc25" },

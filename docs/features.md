@@ -87,13 +87,13 @@ the trip is the left column and "Voor jou" with the shortcuts the right one):
   moved and which way, not just a sudden swap. Admins also get a pencil to edit the event.
 - Below it, a **tile** per part of the trip (`TripTiles.tsx`): Vervoer, Eten,
   Hotel (hotel trips only: address, arrivals and departures, rooms; the dates of the stay are in the sheet's subtitle), Foto's, Cosplay (trips with a convention), Weer,
-  Info (opens the Praktisch sheet), Kosten and Ticket (opens Mijn ticket); the tile labels are
+  Info (opens the Info sheet), Kosten and Ticket (opens Mijn ticket); the tile labels are
   short so they fit. Tiles show the answer ("6 rides, 3 people without a ride
   back") and their order changes before, during and after the trip. The amber "zonder rit" and
   "nergens bij" pills open the names of who is missing (a sheet, `MissingPeopleSheet`).
 - Tiles open as **sheets** over the page (`TripSheet.tsx`). Vervoer, Hotel and
   Cosplay are routed with `?sheet=transport|rooms|cosplay` so they can be linked;
-  Weer, Praktisch and Eten's "add meal" open from local state.
+  Weer, Info and Eten's "add meal" open from local state.
 - **Mijn ticket** (`TicketTile`/`TicketSheet` in `TripTiles.tsx`) lets a member save a photo or
   PDF of their own event ticket — kept entirely in this browser's IndexedDB
   (`utils/localTickets.ts`, `store/localTickets.store.ts`), never uploaded anywhere. Deliberately
@@ -101,7 +101,7 @@ the trip is the left column and "Voor jou" with the shortcuts the right one):
   not admins, and there is nothing server-side to secure. The trade-off is the flip side of
   that — it doesn't sync to another device and a browser can clear it on its own, so it's a
   convenience, not a permanent archive. Not the same "ticket" as an event's `ticket_url` (where
-  to buy one) — that stays under Praktisch.
+  to buy one) — that stays under Info.
 - Multi-day trips get **day chips** to filter by day.
 
 ## Transport
