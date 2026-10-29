@@ -18,7 +18,7 @@ import jwt
 from app.config import Settings, get_settings
 from app.core.database import supabase
 from app.core.logging import get_logger
-from app.services import discord_bot
+from app.services import discord_bot, notification_service
 
 logger = get_logger(__name__)
 
@@ -665,7 +665,27 @@ def _create_profile(fields: dict) -> dict:
     if not resp.data:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Profiel aanmaken mislukt.")
     logger.info("Auth: auto-created profile for %s", insert_data["name"])
+    _announce_new_profile(resp.data[0]["name"])
     return resp.data[0]
+
+
+def _run_in_background(target: Callable[..., None], *args: Any) -> None:
+    """Runs `target` on its own thread so a slow Discord or push service never holds up a login.
+    Separate from the request's BackgroundTasks because the sign-in code has no access to them."""
+    threading.Thread(target=target, args=args, daemon=True).start()
+
+
+def _announce_new_profile(name: str) -> None:
+    """Tells the admins who asked to hear about it (category `new_user`) that somebody logged in for
+    the first time. Tied to the successful insert in `_create_profile`, so a retried or concurrent
+    login (whose insert is refused: the id is taken) never announces twice, and a stub profile that
+    is claimed or one an admin created by hand never announces at all. Best effort: nothing in here
+    may fail or delay the login."""
+    try:
+        settings = get_settings()
+        _run_in_background(notification_service.notify_new_user, settings.discord_bot_token, name, settings.app_url)
+    except Exception as e:
+        logger.warning("Auth: could not announce the new profile %s: %s", name, e)
 
 
 def _resolve_email_user(identity: VerifiedIdentity, user_id: str, settings: Settings) -> str:

@@ -60,6 +60,7 @@ DM_RIDE_CREATED = "🚗 **{driver} heeft een nieuwe rit aangemaakt**\n🕐 Vertr
 DM_EXPENSE_CREATED = "💸 **{paid_by} heeft een nieuwe uitgave toegevoegd**\n💰 {amount:.2f} {currency} — {description}\n\nOpen de app om je aandeel te verrekenen."
 DM_TEST_NOTIFICATION = "🔔 **Testmelding**\nDit is een proefbericht van Ankerd Con. Zie je dit, dan werken je meldingen."
 DM_FEEDBACK_SUBMITTED = "💬 **Nieuwe feedback ({kind}){from_line}**\n{message}\n\nLees en beoordeel hem onder Admin → Feedback."
+DM_NEW_USER = "👋 **{name} heeft voor het eerst ingelogd**\nIs dit iemand van een placeholder? Voeg samen via Admin → Gebruikers.{link_line}"
 DM_MEAL_CREATED = "📅 **Nieuwe activiteit: {meal_name}**\n🕐 {time}{location_line}\n\nOpen de app om je aan te melden."
 
 # Settling up — personal DMs to the other member of a settlement (not an

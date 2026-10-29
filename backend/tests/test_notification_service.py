@@ -41,21 +41,21 @@ def _profile(**overrides):
 @pytest.fixture
 def pushed(monkeypatch):
     calls = []
-    monkeypatch.setattr(svc.push_service, "send_push", lambda settings, names, title, body: calls.append(names))
+    monkeypatch.setattr(svc.push_service, "send_push", lambda settings, names, title, body, url="/": calls.append(names))
     return calls
 
 
 @pytest.fixture
 def pushed_titles(monkeypatch):
     calls = []
-    monkeypatch.setattr(svc.push_service, "send_push", lambda settings, names, title, body: calls.append(title))
+    monkeypatch.setattr(svc.push_service, "send_push", lambda settings, names, title, body, url="/": calls.append(title))
     return calls
 
 
 @pytest.fixture
 def pushed_bodies(monkeypatch):
     calls = []
-    monkeypatch.setattr(svc.push_service, "send_push", lambda settings, names, title, body: calls.append(body))
+    monkeypatch.setattr(svc.push_service, "send_push", lambda settings, names, title, body, url="/": calls.append(body))
     return calls
 
 

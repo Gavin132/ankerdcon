@@ -39,11 +39,15 @@ from app.config import get_settings
 from app.constants import Tables
 from app.core.database import supabase
 from app.core.logging import get_logger
+from app import messages
 from app.services import discord_bot, push_service
 
 logger = get_logger(__name__)
 
 _APP_TITLE = "Ankerd Con"
+
+# Where a new-user notification leads: the admin page where a placeholder is merged.
+_NEW_USER_PATH = "/admin/users"
 
 
 class NotificationCategory:
@@ -56,6 +60,7 @@ class NotificationCategory:
     EXPENSE_CREATED = "expense_created"
     MEAL_CREATED = "meal_created"
     FEEDBACK_SUBMITTED = "feedback_submitted"
+    NEW_USER = "new_user"
 
 
 ALL_CATEGORIES: list[str] = [
@@ -68,12 +73,15 @@ ALL_CATEGORIES: list[str] = [
     NotificationCategory.EXPENSE_CREATED,
     NotificationCategory.MEAL_CREATED,
     NotificationCategory.FEEDBACK_SUBMITTED,
+    NotificationCategory.NEW_USER,
 ]
 
 # Categories only admins can have. Choosing one is refused for anyone else (see
 # users.py), and a broadcast skips a profile that is no longer an admin even if it
 # still carries the category from when it was.
-ADMIN_ONLY_CATEGORIES: frozenset[str] = frozenset({NotificationCategory.FEEDBACK_SUBMITTED})
+ADMIN_ONLY_CATEGORIES: frozenset[str] = frozenset(
+    {NotificationCategory.FEEDBACK_SUBMITTED, NotificationCategory.NEW_USER}
+)
 
 # Push notification title per category — a phone's notification chrome already
 # shows the app name and icon, so repeating "Ankerd Con" as the title told a
@@ -88,6 +96,7 @@ _PUSH_TITLES: dict[str, str] = {
     NotificationCategory.EXPENSE_CREATED: "Nieuwe uitgave",
     NotificationCategory.MEAL_CREATED: "Nieuwe activiteit",
     NotificationCategory.FEEDBACK_SUBMITTED: "Nieuwe feedback",
+    NotificationCategory.NEW_USER: "Nieuwe gebruiker",
 }
 
 
@@ -125,6 +134,7 @@ def broadcast_category_dm(
     content: str,
     eligible_names: set[str] | None = None,
     trip_names: set[str] | None = None,
+    url: str = "/",
 ) -> None:
     """Send `content` to every active, opted-in user for `category` — as a
     Discord DM (needs `allow_dm` + a linked account), a push (needs a
@@ -137,6 +147,8 @@ def broadcast_category_dm(
     `trip_names` is who the notification is about (see trip_names_for_day). A member who keeps
     "alleen voor mijn trips" on (the default) only gets it when they are in that set; one who
     switched it off gets everything they opted in to, as before.
+
+    `url` is the page a tapped push notification opens (a path in the app).
 
     Fire-and-forget — intended for `background_tasks.add_task`. Never raises;
     a failed fetch or a single failed send must never break the caller.
@@ -168,7 +180,24 @@ def broadcast_category_dm(
     if dm_sent:
         logger.info("Notification broadcast (%s): DM to %d user(s)", category, dm_sent)
     title = _PUSH_TITLES.get(category, _APP_TITLE)
-    push_service.send_push(get_settings(), push_names, title, push_service.headline(content, title))
+    push_service.send_push(get_settings(), push_names, title, push_service.headline(content, title), url)
+
+
+def notify_new_user(bot_token: str, name: str, app_url: str = "") -> None:
+    """Tell the admins who asked to hear about it that somebody logged in for the first time, so
+    they know there may be a placeholder profile to merge (Admin → Gebruikers). Category
+    `new_user`: admins only, off by default; `broadcast_category_dm` skips anyone who is no
+    longer an admin or active. Fire-and-forget, never raises.
+    """
+    try:
+        base = (app_url or "").rstrip("/")
+        content = messages.DM_NEW_USER.format(
+            name=discord_bot.escape_markdown(name),
+            link_line=f"\n{base}{_NEW_USER_PATH}" if base else "",
+        )
+        broadcast_category_dm(bot_token, NotificationCategory.NEW_USER, content, url=_NEW_USER_PATH)
+    except Exception as e:
+        logger.error("New-user notification for %s failed: %s", name, e)
 
 
 def send_personal_dm(bot_token: str, profile_id: str, content: str, title: str = _APP_TITLE) -> None:
