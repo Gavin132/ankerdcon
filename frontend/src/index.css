@@ -27,11 +27,11 @@
      because the opacity differs per theme: light mode needs a strong highlight on pale grounds and a gentle
      shadow, dark mode the other way round. */
   --btn-edge: 255 255 255;
-  --btn-edge-a: 0.7;
+  --btn-edge-a: 0.5;
   --btn-shade: 15 21 25;
-  --btn-shade-a: 0.25;
+  --btn-shade-a: 0.12;
   --btn-shadow: 15 21 25;
-  --btn-shadow-a: 0.22;
+  --btn-shadow-a: 0.12;
   /* A chosen chip, the active tab: the ink fill with paper text (brand fill with ink text in dark mode, where ink is
      light). `--selected-icon` is the icon on it: the accent colour on the ink, ink on the accent. */
   --selected: 15 21 25;
@@ -111,11 +111,11 @@
 .dark,
 .btn-on-hero {
   --btn-edge: 255 255 255;
-  --btn-edge-a: 0.4;
+  --btn-edge-a: 0.16;
   --btn-shade: 0 0 0;
-  --btn-shade-a: 0.5;
+  --btn-shade-a: 0.28;
   --btn-shadow: 0 0 0;
-  --btn-shadow-a: 0.5;
+  --btn-shadow-a: 0.25;
 }
 
 /* ─── Accent colours ─────────────────────────────────────────────────────────
@@ -504,7 +504,7 @@
        .btn-danger       solid red fill: the confirm of a destructive action ("Verwijderen")
        .btn-danger-soft  red text on a soft red tint: the quiet one that only opens the question
      Primary, secondary, tonal and danger are a slightly raised plate (`.btn-bevel`: a light 1px edge on top, a
-     2px darker edge below, a soft shadow); ghost and danger-soft are flat. States, the same for every tier:
+     1px darker edge below, a soft shadow); ghost and danger-soft are flat. States, the same for every tier:
      hover is a small shift (primary and danger a touch lighter, the outlined tiers a darker border, the plate
      does not move), pressed sinks (no edge, no shadow, an inset shade, 1px down), keyboard focus is the brand
      ring with an offset, disabled is flat grey (`bg-sunken text-ink-3`, no outline, no bevel, cursor-not-allowed). */
@@ -527,8 +527,8 @@
   .btn-bevel {
     --tw-shadow:
       inset 0 1px 0 rgb(var(--btn-edge) / var(--btn-edge-a)),
-      inset 0 -2px 0 rgb(var(--btn-shade) / var(--btn-shade-a)),
-      0 2px 4px rgb(var(--btn-shadow) / var(--btn-shadow-a));
+      inset 0 -1px 0 rgb(var(--btn-shade) / var(--btn-shade-a)),
+      0 1px 2px rgb(var(--btn-shadow) / var(--btn-shadow-a));
     --tw-shadow-colored: var(--tw-shadow);
     box-shadow: var(--tw-ring-offset-shadow, 0 0 transparent), var(--tw-ring-shadow, 0 0 transparent), var(--tw-shadow);
   }
