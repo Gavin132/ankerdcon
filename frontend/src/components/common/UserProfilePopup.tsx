@@ -5,7 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { routes } from "../../config/routes";
 import { Phone, MapPin, Pencil, CalendarDays, User as UserIcon, BedDouble } from "lucide-react";
 import { avatarColor, avatarSrc } from "../../utils/avatar";
-import { FONT_MAP, getBannerStyle } from "../../utils/profile";
+import { FONT_MAP, getBannerStyle, readableNameColor } from "../../utils/profile";
+import { useThemeStore } from "../../store/theme.store";
 import { LocationPingDisplay } from "./LocationPingDisplay";
 import { isPingFresh } from "../../utils/locationPing";
 import { useCurrentTripRoomNumbers } from "../../hooks/useTripRooms";
@@ -47,6 +48,7 @@ export function UserProfilePopup({
   calendarEvents,
 }: UserProfilePopupProps) {
   const navigate = useNavigate();
+  const isDark = useThemeStore((s) => s.isDark);
   useBackClose(open, onClose);
   const [imgErr, setImgErr] = useState(false);
   useEffect(() => {
@@ -71,7 +73,7 @@ export function UserProfilePopup({
   );
   const nameStyle: React.CSSProperties = u
     ? {
-        color: u.color || undefined,
+        color: readableNameColor(u.color, isDark),
         fontFamily:
           u.font && u.font !== "default" ? FONT_MAP[u.font] : undefined,
       }

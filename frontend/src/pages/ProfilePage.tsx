@@ -45,7 +45,8 @@ import { BadgeIcon } from "../components/common/BadgeIcon";
 import { useAuthStore } from "../store/auth.store";
 import { avatarColor, avatarSrc } from "../utils/avatar";
 import { prepareAvatarFile } from "../utils/imageCompression";
-import { FONT_MAP, NAME_COLORS, BANNER_COLORS, getBannerStyle } from "../utils/profile";
+import { FONT_MAP, NAME_COLORS, BANNER_COLORS, getBannerStyle, readableNameColor } from "../utils/profile";
+import { useThemeStore } from "../store/theme.store";
 import { toast } from "../store/toast.store";
 import { validateDisplayName, validatePhoneNumber } from "../utils/validation";
 import type { Badge, FontOption, User } from "../types";
@@ -366,6 +367,7 @@ function ViewProfile({
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export function ProfilePage() {
+  const isDark = useThemeStore((s) => s.isDark);
   const { userId } = useParams<{ userId: string }>();
   const decodedName = userId ? decodeURIComponent(userId) : "";
   // `?preview=1` shows your own profile the way others see it.
@@ -575,7 +577,7 @@ export function ProfilePage() {
     displayBannerPosition || undefined,
   );
   const nameStyle: React.CSSProperties = {
-    color: displayColor || undefined,
+    color: readableNameColor(displayColor, isDark),
     fontFamily:
       displayFont && displayFont !== "default"
         ? FONT_MAP[displayFont]
