@@ -18,7 +18,7 @@ import { TripSheet } from "../../components/trip/TripSheet";
 import { Button } from "../../components/common/Button";
 import { toast } from "../../store/toast.store";
 import { HotelInfoCard, stayRange } from "../../components/event/HotelInfoCard";
-import { tripInfo, tripRoomGaps } from "../../utils/trips";
+import { tripInfo, tripRoomGaps, tripRoomSummary } from "../../utils/trips";
 import { roomCreatePayload, roomEditPayload, type RoomFormValues } from "../../utils/roomForm";
 import { useTrip } from "./tripContext";
 import type { HotelRoom } from "../../types";
@@ -487,8 +487,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
   const userNames = users.map((u) => u.name);
 
   // Stats
-  const assignedNames = new Set(rooms.flatMap((r) => r.occupants));
-  const eventAttendees = trip.participants;
+  const summary = tripRoomSummary(trip, rooms, users);
   const unassigned = tripRoomGaps(trip, rooms, users);
   const info = tripInfo(trip);
 
@@ -558,7 +557,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
 
         {/* The numbers first: how many rooms, how many people are in one. */}
         <p className="section-label">
-          {rooms.length} {rooms.length === 1 ? "kamer" : "kamers"} · {assignedNames.size} van {eventAttendees.length} ingedeeld
+          {summary.rooms} {summary.rooms === 1 ? "kamer" : "kamers"} · {summary.seats !== null && `${summary.seats} ${summary.seats === 1 ? "plaats" : "plaatsen"} · `}{summary.assigned} van {summary.people} ingedeeld
         </p>
 
         {/* ── Room grid ─────────────────────────────────────────────── */}

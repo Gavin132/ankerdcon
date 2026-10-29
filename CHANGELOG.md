@@ -17,6 +17,9 @@ All notable changes to Ankerd Con are documented here.
   placeholder's name one of the member's former names and removes the placeholder. Placeholders have a pill and a filter.
 
 ### Fixed
+- **The Hotel sheet counted names, not people:** "7 van 25 ingedeeld" while 24 people had signed up (one of them under
+  two names). It counts people now, and also says how many beds the rooms have ("12 kamers · 24 plaatsen · 0 van 24
+  ingedeeld"), so rooms that are made but still empty are clear.
 - **The list of names slid out of sight when you searched near the bottom of the window.** In "Wie gaat er mee?" and
   every other name search, the list now opens above the field when there is no room under it, and is never taller
   than the room it has.

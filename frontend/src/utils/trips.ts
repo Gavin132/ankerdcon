@@ -314,3 +314,14 @@ export function tripRoomGaps(trip: Trip, rooms: HotelRoom[], users: User[] = [])
   const assigned = new Set(rooms.flatMap((r) => r.occupants).map((n) => n.toLowerCase()));
   return tripPeople(trip, users).filter((person) => !isIn(person, assigned)).map((person) => person.name);
 }
+
+/**
+ * The numbers on top of the Hotel sheet: rooms, their beds (when every room says how many it has) and how many of the
+ * people on the trip are in a room. People, not stored names: someone signed up under two names counts once.
+ */
+export function tripRoomSummary(trip: Trip, rooms: HotelRoom[], users: User[] = []) {
+  const people = tripPeople(trip, users).length;
+  const withoutRoom = tripRoomGaps(trip, rooms, users).length;
+  const seats = rooms.length > 0 && rooms.every((r) => r.capacity != null) ? rooms.reduce((sum, r) => sum + (r.capacity ?? 0), 0) : null;
+  return { rooms: rooms.length, seats, people, assigned: people - withoutRoom };
+}
