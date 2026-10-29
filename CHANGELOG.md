@@ -47,7 +47,8 @@ All notable changes to Ankerd Con are documented here.
   header and cell styles (12 px headers, no more 10.5 px), and on a phone a row is two lines: the name and the buttons,
   then the date, place or price, so the name is no longer squeezed to a few letters (Ritten, Activiteiten,
   Evenementen). Gebruikers shows a pill only for what is not normal (Admin, Kijker, Inactief); deactivating a
-  member moved into the edit sheet as the switch "Account actief" and the bulk bar. Evenementen has "Aankomend" /
+  member moved into the edit sheet as the switch "Account actief" and the bulk bar, and both ask first, because it
+  takes the member off every event. Evenementen has "Aankomend" /
   "Geschiedenis" as a switch next to the group filter, shows the dates once ("17 – 19 nov. 2026 · 3 dagen"), calls the
   tag "Soort evenement" (Con, Bijeenkomst, Concert), has a separate "Bekijken in de app" button instead of a clickable
   row, and its sheet folds Tickets & links and Praktische info away for an existing event. Faces in the tables count

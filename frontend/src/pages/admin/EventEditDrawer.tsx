@@ -470,7 +470,7 @@ export function EventEditDrawer({
                 {...register("hotel_info")}
                 rows={3}
                 className={`${F} resize-none`}
-                placeholder="Bijv. inchecktijd vanaf 15:00, code voor de kluisjes, ontbijt inbegrepen..."
+                placeholder="Bijv. inchecktijd vanaf 15:00, code voor de kluisjes, ontbijt inbegrepen…"
               />
               <p className="mt-1 text-xs text-ink-3">
                 Verschijnt op de hoteltegel van het evenement, onder "Hotel &amp; overnachting".
@@ -584,7 +584,7 @@ export function EventEditDrawer({
               {...register("description")}
               rows={3}
               className={`${F} resize-none`}
-              placeholder="Korte beschrijving van het evenement..."
+              placeholder="Korte beschrijving van het evenement…"
             />
           </div>
           <div>
@@ -711,7 +711,7 @@ export function EventEditDrawer({
               {...register("parking_info")}
               rows={2}
               className={`${F} resize-none`}
-              placeholder="Parkeerplaats P1, bereikbaar via afslag 5..."
+              placeholder="Parkeerplaats P1, bereikbaar via afslag 5…"
             />
           </div>
           <div>
@@ -720,7 +720,7 @@ export function EventEditDrawer({
               {...register("special_instructions")}
               rows={2}
               className={`${F} resize-none`}
-              placeholder="Neem afslag 5 voor de snelste route..."
+              placeholder="Neem afslag 5 voor de snelste route…"
             />
           </div>
           <div>
@@ -729,7 +729,7 @@ export function EventEditDrawer({
               {...register("what_to_bring")}
               rows={2}
               className={`${F} resize-none`}
-              placeholder="ID, tickets, poncho, zonnebrandcrème..."
+              placeholder="ID, tickets, poncho, zonnebrandcrème…"
             />
           </div>
           <div>

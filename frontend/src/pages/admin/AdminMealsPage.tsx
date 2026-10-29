@@ -293,7 +293,7 @@ function MealDrawer({
               {...register("description")}
               rows={3}
               className={`${F} resize-none`}
-              placeholder="Extra context over het restaurant, sfeer, dresscode..."
+              placeholder="Extra context over het restaurant, sfeer, dresscode…"
             />
           </div>
         </div>
@@ -307,7 +307,7 @@ function MealDrawer({
               {...register("dietary_options")}
               rows={2}
               className={`${F} resize-none`}
-              placeholder="Vegetarisch, vegan, glutenvrij beschikbaar..."
+              placeholder="Vegetarisch, vegan, glutenvrij beschikbaar…"
             />
           </div>
 
@@ -317,7 +317,7 @@ function MealDrawer({
               {...register("parking_info")}
               rows={2}
               className={`${F} resize-none`}
-              placeholder="Parkeergarage op 200m, gratis na 18:00..."
+              placeholder="Parkeergarage op 200m, gratis na 18:00…"
             />
           </div>
 
@@ -327,7 +327,7 @@ function MealDrawer({
               {...register("extra_notes")}
               rows={2}
               className={`${F} resize-none`}
-              placeholder="Reservering vereist, ID meenemen..."
+              placeholder="Reservering vereist, ID meenemen…"
             />
           </div>
         </div>

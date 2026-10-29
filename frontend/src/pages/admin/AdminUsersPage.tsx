@@ -29,6 +29,7 @@ import { RowCheckbox } from "./components/RowCheckbox";
 import { ToggleRow } from "./components/ToggleRow";
 import { useTableSelection } from "../../hooks/useTableSelection";
 import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
+import { askConfirm } from "../../store/confirm.store";
 
 const PAGE_SIZE = 15;
 
@@ -200,6 +201,17 @@ function UserEditDrawer({
   }
 
   async function onSubmit(values: EditForm) {
+    // Deactivating takes the member off every event and sends a Discord message, so it asks first.
+    if (user?.is_active !== false && values.is_active === false) {
+      const ok = await askConfirm({
+        title: `${user!.name} deactiveren?`,
+        message: "Deze persoon kan niet meer inloggen, gaat van alle evenementen af en krijgt een bericht op Discord.",
+        confirmLabel: "Deactiveren",
+        cancelLabel: "Annuleren",
+        destructive: true,
+      });
+      if (!ok) return;
+    }
     try {
       // is_viewer only when it was changed: a database without the column yet must still save everything else.
       const { is_viewer, is_active, ...rest } = values;
@@ -266,7 +278,7 @@ function UserEditDrawer({
             <input
               {...register("phone_number")}
               className={F}
-              placeholder="+31 6..."
+              placeholder="+31 6…"
             />
           </div>
 
@@ -290,7 +302,7 @@ function UserEditDrawer({
               {...register("bio")}
               rows={3}
               className={`${F} resize-none`}
-              placeholder="Over mij..."
+              placeholder="Over mij…"
             />
             {errors.bio && (
               <p className="field-error">{errors.bio.message}</p>
@@ -384,7 +396,7 @@ function UserEditDrawer({
           <ToggleRow
             icon={<Ban size={16} />}
             label="Account actief"
-            hint="Uitzetten blokkeert inloggen. De naam blijft in ritten, kamers en uitgaven staan."
+            hint="Uitzetten blokkeert inloggen en haalt de persoon van alle evenementen af."
             checked={isActive !== false}
             onChange={() => setValue("is_active", isActive === false, { shouldDirty: true })}
           />
@@ -466,6 +478,14 @@ export function AdminUsersPage() {
 
   async function handleBulkDeactivate() {
     const ids = [...selectedIds];
+    const ok = await askConfirm({
+      title: `${ids.length} ${ids.length === 1 ? "gebruiker" : "gebruikers"} deactiveren?`,
+      message: "Zij kunnen niet meer inloggen, gaan van alle evenementen af en krijgen een bericht op Discord.",
+      confirmLabel: "Deactiveren",
+      cancelLabel: "Annuleren",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await bulkDeactivateMutation.mutateAsync(ids);
       toast("success", `${ids.length} gebruikers gedeactiveerd.`);
