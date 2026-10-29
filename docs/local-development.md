@@ -298,7 +298,9 @@ What is where:
   something, seat counts add up).
 - `src/dev/mock/adapter.ts`: answers requests (it replaces axios's network adapter). A read with no entry answers
   `[]` and is listed in `window.__mock.unhandled`; a change is accepted and forgotten, the next read shows the fixtures
-  again. Add a line to `GETS` when a new screen needs data.
+  again. Add a line to `GETS` when a new screen needs data. The one change with a made-up answer is the preview and the merge of a
+  placeholder (`POST /api/admin/users/{id}/merge`), counted from the fixtures; the fixtures hold two placeholders (Tess and one with
+  a long name), so Admin > Gebruikers can be checked.
 - `src/lib/mockMode.ts`: the one flag the rest of the app knows. It keeps the sign-in listener quiet and keeps made-up
   data out of the saved query cache.
 

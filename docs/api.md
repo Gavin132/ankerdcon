@@ -246,7 +246,7 @@ and description are left out. Only registered when the built frontend exists.
 | Area | Endpoints |
 | --- | --- |
 | Overview | `GET /admin/stats`, `GET /admin/cdn` (`?limit=&offset=&kind=&event=`: every file in the bucket, newest first; `event` narrows story photos to one event) |
-| Users | list, create (a stub for the whitelist), update, delete, bulk delete, bulk deactivate, `POST /admin/impersonate/{id}` ([security.md](security.md#log-in-as)), badges per user |
+| Users | list (with `is_placeholder`), create (a stub for the whitelist), update, delete, bulk delete, bulk deactivate, `POST /admin/impersonate/{id}` ([security.md](security.md#log-in-as)), badges per user, `POST /admin/users/{id}/merge` (below) |
 | Whitelist | list, add, remove |
 | Feedback | `GET /admin/feedback` (newest first), `PUT /admin/feedback/{id}` (status `new`, `seen` or `done`), `DELETE /admin/feedback/{id}` |
 | Meal categories (`/admin/meal-categories`) | list, create, update (name, order, switches), delete (409 while in use) |
@@ -261,6 +261,14 @@ and description are left out. Only registered when the built frontend exists.
 | Download as zip | `GET /admin/cdn/download?kind=&event=` streams one zip of the same selection, keeping the bucket's folders. Built while it is sent (stored, not recompressed), so a big one starts at once. Refused with 413 above 1.5 GB or 3000 files; 404 when nothing matches. A file MinIO cannot read is skipped and logged. |
 | Delete a file | `DELETE /admin/cdn?key=<object key>` removes any file in the bucket and clears what pointed at it (story photo row, cosplay image, banner, event cover). Refuses a file a badge still uses (409). |
 | Quick upload | `POST /admin/quick-upload` stores an image or video under `uploads/` and returns `{url, key, media, size}` |
+
+**Merging a placeholder** (`POST /admin/users/{source_id}/merge`, body `{"target_id": "…", "dry_run": true}`): folds a
+placeholder profile (the one in the URL) into a real member. `dry_run` is `true` unless the request says `false`, and a dry run
+changes nothing; both return `{dry_run, source_name, target_name, counts, dropped, alias_names}` (`counts` per kind of what moves,
+`dropped` what is left out as a duplicate or a payment to oneself). 400 when the source is not a placeholder, the target is
+one or is deactivated, or both are the same profile (each with a Dutch message that says what to do); 404 for an unknown
+profile; 409 when the placeholder and the member both have an open settlement with the same person (finish one first).
+What it touches, and in which order, is in [security.md](security.md#placeholders-and-merging).
 
 ## Interactive docs
 

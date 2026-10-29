@@ -33,6 +33,10 @@ is described at the bottom, in case it needs to come back.
   - `actable(names)` filters a list of names;
   - `canActFor(name)` checks one name.
 
+The people who are signed up this way may be **placeholders**: profiles an admin made for someone who has not logged in
+yet. When that person has their own profile, an admin merges the placeholder into it and every sign-up, seat and expense
+share follows ([security.md](security.md#placeholders-and-merging)).
+
 Because anyone can be signed up or off without their consent, consider logging who made
 each change if that ever becomes a problem.
 

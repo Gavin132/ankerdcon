@@ -6,6 +6,14 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- **Admins can merge a placeholder into the real member.** A member who had not logged in yet can be put on rides,
+  meals and expenses through a placeholder profile (Admin > Gebruikers). When that person logs in they get a profile of
+  their own; "Voeg samen met…" on the placeholder shows what would move (rides, activities, trip days, rooms,
+  expenses, settlements, cosplays, photos and so on), and on confirming it moves all of it to the member, makes the
+  placeholder's name one of the member's former names and removes the placeholder. Placeholders have a pill and a filter.
+
 ### Fixed
 
 - **A restaurant ride named the restaurant twice.** Its page said "Van: <restaurant>" and "Naar: <restaurant>" and

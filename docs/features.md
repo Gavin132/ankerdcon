@@ -480,7 +480,7 @@ read-only account) or an admin switches **Alleen kijken** on a member under Gebr
 | Page | For |
 | --- | --- |
 | Dashboard | counts and charts |
-| Gebruikers, Toegangslijst | members and who may log in at all. A member is deactivated with the switch "Account actief" in the edit sheet (or in bulk from the selection strip) |
+| Gebruikers, Toegangslijst | members and who may log in at all. A member is deactivated with the switch "Account actief" in the edit sheet (or in bulk from the selection strip). A profile nobody has logged in to has a "Placeholder" pill (and a filter), and its row has "Voeg samen met…": a sheet where the admin picks the real member, reads what would move and confirms (`UserMergeSheet`, [security.md](security.md#placeholders-and-merging)) |
 | Ritten, Activiteiten | fix or remove anything, remove single passengers |
 | Evenementen, Groepen | trips and their days, series labels, bulk RSVP; "Aankomend" / "Geschiedenis" switches the list. The eye on a row opens the event in the app. Admins also get a pencil on every event page that opens the same edit form |
 | Badges | badge images and who has them |

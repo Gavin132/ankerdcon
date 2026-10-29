@@ -8,6 +8,7 @@ everything itself.** See [architecture.md](architecture.md) for why.
 - [The whitelist](#the-whitelist)
 - [Authorization](#authorization)
 - [Log in as](#log-in-as)
+- [Placeholders and merging](#placeholders-and-merging)
 - [Requests and responses](#requests-and-responses)
 - [Uploads](#uploads)
 - [Money and links](#money-and-links)
@@ -60,8 +61,9 @@ Only people who sign up with Google can link Discord (Instellingen), not the oth
 - A whitelisted first login creates the profile (and sends a welcome DM). Profiles are
   **only ever created by the backend**, never by a database trigger, because a trigger
   would skip the whitelist (migrations v2.23 and `remove_trigger.sql`).
-- An admin can create a **stub profile** ahead of time. It is only claimed by a Discord
-  account that is on the whitelist with a matching id.
+- An admin can create a **stub profile** (a placeholder) ahead of time. It is only claimed by a Discord
+  account that is on the whitelist with a matching id; otherwise the person gets a profile of their own and
+  an admin merges the placeholder into it by hand ([below](#placeholders-and-merging)).
 - Deactivating or deleting a member cuts off access at once and sends them a DM.
 
 ## Authorization
@@ -108,6 +110,44 @@ What this is **not** protected against, and what is planned, is in
 The risk is therefore a **hijacked admin account** or a **leaked secret**, not anything an
 ordinary member can do. Protect the admins' Discord and Google accounts with two-factor
 authentication and keep the secret out of screenshots and chat.
+
+## Placeholders and merging
+
+A **placeholder** is a profile nobody has ever logged in to: an admin made it (Admin > Gebruikers > Nieuwe gebruiker) so
+the person can already be put on rides, meals and expenses. There is deliberately **no self-claim**: a member who logs in
+for the first time gets a new profile (the one exception is the automatic claim of a stub whose name equals the Discord
+username, see [The whitelist](#the-whitelist)), and an admin merges the placeholder into it by hand.
+
+- **What counts as a placeholder** is one function, `is_placeholder` in `backend/app/services/profile_merge.py`: no `email`,
+  no `discord_username` and no `avatar_url`, which is what every login fills in. `is_first_login` is not used because "log
+  in as" clears it for a guest, and `discord_id` is not used because an admin may type one in ahead of time. The admin and
+  member user lists carry it as `is_placeholder`.
+- **`POST /admin/users/{id}/merge`** (`get_admin_user`, enforced in the router): the source must be a placeholder, the target a
+  real, active member, and they must differ. `dry_run` (the default) only counts. The real merge is written to the server log
+  as a `WARNING` (admin, both profiles, counts), like "log in as" and CDN deletes.
+- **What it touches.** By id: `settlements` (`from_user_id`, `to_user_id`, `created_by`). By name (the placeholder's name and
+  its aliases): `rides` (`driver`, `passengers`, the cars in `restaurant_drivers`), `meals` (`participants`, `created_by`),
+  `event_days.participants`, `hotel_rooms.occupants`, `expenses.paid_by`, `expense_shares.participant`, `cosplays.user_name`,
+  `story_photos.uploaded_by`, `story_seen.user_name`, `ride_costs.driver`, `parking_spots` (`driver`, `placed_by`),
+  `feedback.user_name`, `push_subscriptions.user_name`. On the member's profile: `badge_ids` gain the placeholder's, and
+  `aliases` gain its names. Tables from a later migration that has not been run are skipped.
+- **Never twice.** In a name list the placeholder's name is replaced by the member's, or just removed when the member is on it
+  already (under their name or an alias). Two restaurant cars of the same person become one. One row per (trip, driver) in
+  `ride_costs` and `parking_spots` and per day in `story_seen` is kept for the member; the placeholder's duplicate is
+  dropped (`story_seen` keeps the furthest). Two shares of the member in one expense are added up when they are in the same
+  state, otherwise both stay.
+- **Money.** A settlement between the two is dropped (it would be a payment to oneself) and the expense shares it held are
+  freed. A share the member would now owe themselves is marked paid. Other settlements move to the member; if the
+  placeholder and the member both have an *open* settlement with the same person in the same currency the merge is
+  refused (409), because the database allows one open settlement per pair.
+- **No transaction, so the order is the safety.** Supabase's REST client has none. Every step is a rename "placeholder name
+  to member name" (idempotent), lists are changed with `update_list` (compare-and-swap, so a sign-up at the same moment is
+  kept), the placeholder is deleted only after all of that (a profile delete cascades to its settlements), and its name
+  becomes an alias only after it is deleted (an alias another profile still has is rejected elsewhere). A failure halfway
+  answers 503 and the placeholder is still there: run the merge again and it carries on.
+- **Not touched, on purpose:** `announcements.created_by` and `changelog_entries.created_by` (admin-written; a placeholder
+  never logged in so it cannot have written them), the `whitelist`, and the placeholder's own fields (phone, bio, colour,
+  a typed-in `discord_id`): the member keeps theirs. The placeholder's `discord_id`, if any, is dropped with the profile.
 
 ## Requests and responses
 
