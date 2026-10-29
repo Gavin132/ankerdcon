@@ -31,6 +31,12 @@ describe("groupPeople", () => {
     expect(people[0].user).toBeUndefined();
   });
 
+  it("keeps a member's current name as theirs, even when another member lists it as a former name", () => {
+    // Alex lists "Sam" as a former name, yet someone on a list as "samdraws" is Sam, who is also "Sam".
+    const [sam] = groupPeople(["samdraws"], members);
+    expect(isIn(sam, new Set(["sam"]))).toBe(true);
+  });
+
   it("does not merge two different members, nor give one the other's name", () => {
     const people = groupPeople(["Sam", "Alex"], members);
     expect(people.map((p) => p.name)).toEqual(["Sam", "Alex"]);

@@ -438,6 +438,20 @@ export interface HotelRoom {
   created_at?: string;
 }
 
+/** Somebody who was taken out of another room because they were put in this one (a person sleeps in one room). */
+export interface RoomMove {
+  name: string;
+  room_id: string;
+  room_number: string | null;
+}
+
+/** What a write to a room moved: who left which other room. Empty when nobody did. */
+export interface HotelRoomMoves {
+  moved: RoomMove[];
+}
+
+export type HotelRoomCreated = HotelRoom & HotelRoomMoves;
+
 export interface CreateHotelRoomRequest {
   room_number?: string;
   floor?: string;

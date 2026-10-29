@@ -51,6 +51,7 @@ export const screens = [
   { name: "trip-admin", path: TRIP, role: "admin" },
   { name: "trip-rooms-admin", path: `${TRIP}?sheet=rooms`, role: "admin" },
   { name: "trip-rooms-add", path: `${TRIP}?sheet=rooms`, steps: click(byText(/Nieuwe kamer/)) },
+  { name: "trip-rooms-edit", path: `${TRIP}?sheet=rooms`, steps: click(byLabel(/Kamer 216 bewerken/)) },
   { name: "trip-rooms-bulk", path: `${TRIP}?sheet=rooms`, steps: click(byText(/Meerdere/)) },
   { name: "trip-cosplay-form", path: `${TRIP}?sheet=cosplay`, steps: click(byText(/^Toevoegen$/)) },
   { name: "trip-meal-form", path: TRIP, steps: click(byLabel(/Activiteit toevoegen/)) },

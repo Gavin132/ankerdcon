@@ -32,7 +32,8 @@ function ownIdentities(user: User, users: User[]): string[] {
     if (other.discord_username) taken.add(other.discord_username);
     for (const alias of other.aliases ?? []) taken.add(alias);
   }
-  return [user.name, user.discord_username, ...(user.aliases ?? [])].filter((n): n is string => !!n && !taken.has(n));
+  // The current name is always the member's own, even when another member lists it as a former name.
+  return [user.name, user.discord_username, ...(user.aliases ?? [])].filter((n): n is string => !!n && (n === user.name || !taken.has(n)));
 }
 
 /**

@@ -22,9 +22,21 @@ import { ApiError } from "../../lib/api/client";
 import { toast } from "../../store/toast.store";
 import { HotelInfoCard, stayRange } from "../../components/event/HotelInfoCard";
 import { tripInfo, tripRoomGaps, tripRoomSummary } from "../../utils/trips";
+import { groupPeople } from "../../utils/people";
+import {
+  duplicateNotice,
+  joinNames,
+  moveHint,
+  otherRoomsOf,
+  peopleInOtherRooms,
+  peopleInSeveralRooms,
+  roomLabel,
+  roomMoveMessage,
+  type RoomDuplicate,
+} from "../../utils/rooms";
 import { roomCreatePayload, roomEditPayload, type RoomFormValues } from "../../utils/roomForm";
 import { useTrip } from "./tripContext";
-import type { HotelRoom } from "../../types";
+import type { HotelRoom, User } from "../../types";
 
 // ── Room form modal ────────────────────────────────────────────────────────────
 
@@ -34,12 +46,17 @@ function RoomModal({
   room,
   eventId,
   userNames,
+  rooms,
+  users,
 }: {
   open: boolean;
   onClose: () => void;
   room: HotelRoom | null; // null = create mode
   eventId: string;
   userNames: string[];
+  /** Every room of the hotel and every member: who is picked and already sleeps elsewhere is moved, and the form says so. */
+  rooms: HotelRoom[];
+  users: User[];
 }) {
   const isEdit = room !== null;
   const createRoom = useCreateHotelRoom();
@@ -54,21 +71,26 @@ function RoomModal({
   });
 
   const isPending = createRoom.isPending || updateRoom.isPending;
+  // A person sleeps in one room: whoever is picked and sleeps in another room now is moved here.
+  const movingHere = moveHint(peopleInOtherRooms(values.occupants, rooms, users, room?.id ?? null));
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const roomLabel = values.room_number.trim() || "Kamer";
+    const name = values.room_number.trim() || "Kamer";
     try {
+      let moved;
       if (isEdit) {
-        await updateRoom.mutateAsync({ eventId, roomId: room.id, payload: roomEditPayload(values) });
-        toast("success", `${roomLabel} bijgewerkt.`);
+        ({ moved } = await updateRoom.mutateAsync({ eventId, roomId: room.id, payload: roomEditPayload(values) }));
+        toast("success", `${name} bijgewerkt.`);
       } else {
-        await createRoom.mutateAsync({
+        ({ moved } = await createRoom.mutateAsync({
           eventId,
           payload: roomCreatePayload(values),
-        });
-        toast("success", `${roomLabel} aangemaakt.`);
+        }));
+        toast("success", `${name} aangemaakt.`);
       }
+      const movedText = roomMoveMessage(moved, values.room_number.trim() || null);
+      if (movedText) toast("info", movedText);
       onClose();
     } catch (err) {
       // A refusal that says what is wrong ("more people than beds", "unknown member") is shown as it is.
@@ -156,6 +178,7 @@ function RoomModal({
             onChange={(names) => setValues((v) => ({ ...v, occupants: names }))}
             color="sky"
           />
+          {movingHere && <p className="mt-1.5 text-[12.5px] leading-snug text-ink-3">{movingHere}</p>}
         </div>
       </form>
     </TripSheet>
@@ -291,6 +314,8 @@ interface RoomCardProps {
   currentUserName: string | undefined;
   /** Every name the signed-in member can be on this room under (`useMyNames`). */
   myNames: string[];
+  /** People who are in more than one room (rooms made before the rule): their name gets a mark. */
+  duplicates: RoomDuplicate[];
   /** Whether the member may change anything (not a read-only member): the pen and the sign-up buttons. */
   canEdit: boolean;
   /** Only an admin deletes a room. */
@@ -307,6 +332,7 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
   users,
   currentUserName,
   myNames,
+  duplicates,
   canEdit,
   isAdmin,
   onEdit,
@@ -319,16 +345,19 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
   // On the room under the current name or under a former one (a rename, a Discord username).
   const myStoredNames = room.occupants.filter((o) => myNames.includes(o));
   const isMine = myStoredNames.length > 0;
-  const isFull = room.capacity != null && room.occupants.length >= room.capacity;
-  const resolveUser = (name: string) =>
-    (users ?? []).find((u) => u.name === name || u.discord_username === name || u.aliases?.includes(name));
+  // People, not stored names: someone on the room under two names is one bed.
+  const people = groupPeople(room.occupants, users ?? []);
+  const isFull = room.capacity != null && people.length >= room.capacity;
 
   async function handleSelfAssign() {
     if (!currentUserName) return;
     try {
-      await assignRoom.mutateAsync({ eventId, roomId: room.id, userNames: [currentUserName] });
-    } catch {
-      toast("error", "Kon je niet aanmelden voor deze kamer — mogelijk zit hij al vol.");
+      // A person sleeps in one room: the backend moves me out of my other room and says so.
+      const { moved } = await assignRoom.mutateAsync({ eventId, roomId: room.id, userNames: [currentUserName], alsoNames: myNames });
+      const movedText = roomMoveMessage(moved, room.room_number);
+      if (movedText) toast("info", movedText);
+    } catch (err) {
+      toast("error", err instanceof ApiError && err.status === 400 ? err.message : "Kon je niet aanmelden voor deze kamer — mogelijk zit hij al vol.");
     }
   }
 
@@ -368,10 +397,10 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
             {room.floor && <span className="tag">{room.floor}</span>}
             <span className="text-[12.5px] tabular-nums text-ink-3">
               {room.capacity != null
-                ? `${room.occupants.length} van ${room.capacity} bezet`
-                : room.occupants.length === 0
+                ? `${people.length} van ${room.capacity} bezet`
+                : people.length === 0
                   ? "Leeg"
-                  : `${room.occupants.length} ${room.occupants.length === 1 ? "persoon" : "personen"}`}
+                  : `${people.length} ${people.length === 1 ? "persoon" : "personen"}`}
             </span>
             {isMine && <span className="pill pill-neutral">Jij</span>}
           </div>
@@ -405,14 +434,20 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
       </div>
 
       {/* Occupants: names below the number */}
-      {room.occupants.length > 0 && (
+      {people.length > 0 && (
         <p className="break-words text-[13px] leading-snug text-ink-2">
-          {room.occupants.map((name, i) => {
-            const displayName = resolveUser(name)?.name ?? name;
+          {people.map((person, i) => {
+            const also = otherRoomsOf(person, room, duplicates);
+            const alsoText = `Staat ook in ${joinNames(also.map(roomLabel))}`;
             return (
-              <span key={name}>
+              <span key={person.name}>
                 {i > 0 && ", "}
-                <span className={myNames.includes(name) ? "font-semibold text-ink" : undefined}>{displayName}</span>
+                <span className={person.names.some((n) => myNames.includes(n)) ? "font-semibold text-ink" : undefined}>{person.name}</span>
+                {also.length > 0 && (
+                  <span className="pill pill-warn ml-1.5 align-middle" title={alsoText} aria-label={`${person.name}: ${alsoText}`}>
+                    {also.length === 1 && also[0].room_number ? `Ook in kamer ${also[0].room_number}` : also.length === 1 ? "Ook in een andere kamer" : `Ook in ${also.length} andere kamers`}
+                  </span>
+                )}
               </span>
             );
           })}
@@ -494,6 +529,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
   // Stats
   const summary = tripRoomSummary(trip, rooms, users);
   const unassigned = tripRoomGaps(trip, rooms, users);
+  const duplicates = peopleInSeveralRooms(rooms, users);
   const info = tripInfo(trip);
 
   if (!event) {
@@ -565,6 +601,20 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
           {summary.rooms} {summary.rooms === 1 ? "kamer" : "kamers"} · {summary.seats !== null && `${summary.seats} ${summary.seats === 1 ? "plaats" : "plaatsen"} · `}{summary.assigned} van {summary.people} ingedeeld
         </p>
 
+        {/* Rooms made before "a person sleeps in one room" can still hold somebody twice: say so, they fix it by picking a room again. */}
+        {duplicates.length > 0 && (
+          <div className="notice-warn flex items-start gap-3 px-4 py-3.5" role="status">
+            <AlertCircle size={16} className="mt-0.5 shrink-0 text-warn" />
+            <div className="min-w-0 flex-1">
+              <p className="break-words text-sm font-semibold leading-tight text-warn">{duplicateNotice(duplicates)}</p>
+              <p className="mt-1 text-[12.5px] leading-snug text-ink-2">
+                Een persoon slaapt in één kamer. Kies opnieuw een kamer voor {duplicates.length === 1 ? "deze persoon" : "hen"} ("Ik slaap hier"
+                of Bewerken): {duplicates.length === 1 ? "die gaat" : "ze gaan"} dan uit de andere kamers.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* ── Room grid ─────────────────────────────────────────────── */}
         {isLoading ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -599,6 +649,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
                   users={users}
                   currentUserName={currentUserName}
                   myNames={myNames}
+                  duplicates={duplicates}
                   canEdit={canEdit}
                   isAdmin={isAdmin}
                   onEdit={(r) => setModalRoom(r)}
@@ -660,6 +711,8 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
         room={modalRoom === "new" ? null : (modalRoom ?? null)}
         eventId={id!}
         userNames={userNames}
+        rooms={rooms}
+        users={users}
       />
 
       {/* ── Bulk create modal ────────────────────────────────────────── */}

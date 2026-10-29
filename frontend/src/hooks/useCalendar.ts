@@ -152,19 +152,25 @@ export function useBulkCreateHotelRooms() {
   });
 }
 
+/**
+ * A bed in a room. A person sleeps in one room, so the backend moves them out of the others and says who it moved
+ * (`moved`, in the result). Optimistically the same happens here for `userNames` and `alsoNames` (the other names the
+ * same people go by, e.g. `useMyNames()`), and the rooms are fetched again afterwards, which is the truth.
+ */
 export function useAssignHotelRoom() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ eventId, roomId, userNames }: { eventId: string; roomId: string; userNames: string[] }) =>
+    mutationFn: ({ eventId, roomId, userNames }: { eventId: string; roomId: string; userNames: string[]; alsoNames?: string[] }) =>
       assignHotelRoom(eventId, roomId, userNames),
-    onMutate: async ({ eventId, roomId, userNames }) => {
+    onMutate: async ({ eventId, roomId, userNames, alsoNames = [] }) => {
       await qc.cancelQueries({ queryKey: QUERY_KEYS.hotelRooms(eventId) });
       const previous = qc.getQueryData<HotelRoom[]>(QUERY_KEYS.hotelRooms(eventId));
+      const leaving = new Set([...userNames, ...alsoNames]);
       qc.setQueryData<HotelRoom[]>(QUERY_KEYS.hotelRooms(eventId), (old = []) =>
         old.map((r) =>
           r.id === roomId
             ? { ...r, occupants: [...new Set([...r.occupants, ...userNames])] }
-            : r,
+            : { ...r, occupants: r.occupants.filter((o) => !leaving.has(o)) },
         ),
       );
       return { previous };

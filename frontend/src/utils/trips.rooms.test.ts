@@ -32,6 +32,12 @@ describe("tripRoomSummary", () => {
     expect(tripRoomSummary(trip, rooms, members)).toMatchObject({ assigned: 2, people: 2 });
   });
 
+  it("counts a person who is in two rooms (an old duplicate), also under two names, once", () => {
+    const rooms = [room("a", 2, ["marshxmallow.fluff"]), room("b", 2, ["Marshmallow", "Sam"])];
+    expect(tripRoomSummary(trip, rooms, members)).toMatchObject({ assigned: 2, people: 2 });
+    expect(tripRoomSummary(trip, [room("a", 2, ["Sam"]), room("b", 2, ["Sam"])], members)).toMatchObject({ assigned: 1, people: 2 });
+  });
+
   it("does not know the beds when a room has no capacity", () => {
     expect(tripRoomSummary(trip, [room("a", 2), room("b", null)], members).seats).toBeNull();
   });

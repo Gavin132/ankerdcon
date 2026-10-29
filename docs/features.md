@@ -200,6 +200,22 @@ and signs someone up or off ("Ik slaap hier", "Verlaat kamer"). Only an admin de
 its capacity. The rule is written down once, above the hotel routes in `backend/app/routers/calendar.py`
 (`update_hotel_room`); the sheet shows the pen to everyone who may use it and the bin to admins.
 
+**A person sleeps in one room of a hotel.** Putting someone in a room (*Ik slaap hier*, the room form's *Bewoners*
+list, a new room with people in it) **moves** them: they are taken out of every other room of the hotel in the same
+request. One shared function does it for every route (`backend/app/services/hotel_rooms.py`), and the backend decides,
+the sheet only shows it. Someone counts as one person under all their stored names (current name, Discord username,
+former names), so moving "samdraws" also takes the member's other names out of the other rooms, and adding a member
+who is in the room under another name adds nobody. A full room refuses (400) *before* anyone leaves their old one;
+the order is add to the new room first, then remove from the old ones, so a failure in between can leave somebody in two
+rooms for a while but never in none. The response says who moved (`moved`), and the sheet answers with a toast
+("Sam is verplaatst van kamer 12 naar kamer 4."); the room form says near the picker who will be moved.
+
+Rooms made before this rule can already hold somebody twice. Nothing is changed or migrated automatically: the Hotel
+sheet marks that person's name in each of those rooms ("Ook in kamer 12") and shows a warning above the rooms ("Sam
+staat in 2 kamers"). Picking a room for them again ("Ik slaap hier" or the form) takes them out of the other rooms
+(`peopleInSeveralRooms` in `utils/rooms.ts`). The numbers on top and the *zonder kamer* list count people, so
+a duplicate is counted once.
+
 ## Cosplay
 
 `pages/trip/TripCosplayTab.tsx`, `components/cosplay/`, `backend/app/routers/cosplays.py`.

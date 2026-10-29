@@ -17,6 +17,11 @@ All notable changes to Ankerd Con are documented here.
   placeholder's name one of the member's former names and removes the placeholder. Placeholders have a pill and a filter.
 
 ### Fixed
+- **Someone could be in several hotel rooms at once.** A person sleeps in one room now: picking a room for someone ("Ik slaap
+  hier", or in the room form) moves them out of their other room, also when they were put in under another name of theirs
+  (a rename or their Discord username), and you are told who moved ("Sam is verplaatst van kamer 12 naar kamer 4."). A room that is
+  full still says no, and then nobody leaves their old room. If a room already has someone who is in two rooms, the Hotel sheet
+  now says so ("Sam staat in 2 kamers") and marks their name; choose a room for them again to fix it.
 - **The Hotel sheet counted names, not people:** "7 van 25 ingedeeld" while 24 people had signed up (one of them under
   two names). It counts people now, and also says how many beds the rooms have ("12 kamers · 24 plaatsen · 0 van 24
   ingedeeld"), so rooms that are made but still empty are clear.
