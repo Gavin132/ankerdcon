@@ -216,6 +216,11 @@ def assign_to_driver(ride_id: str, body: RestaurantAssignRequest, current_user: 
         target_driver = next((d for d in drivers if d.get("name") == body.driver_name), None)
         if not target_driver:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chauffeur niet gevonden.")
+        if user_name in target_driver.get("passengers", []):
+            return None
+        # Checked again on every retry, so two people cannot both take the last seat of a car.
+        if len(target_driver.get("passengers", [])) >= (target_driver.get("seats") or 0):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Deze auto is vol.")
         for d in drivers:
             if user_name in d.get("passengers", []):
                 d["passengers"].remove(user_name)

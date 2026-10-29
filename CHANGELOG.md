@@ -16,6 +16,8 @@ All notable changes to Ankerd Con are documented here.
 
 ### Fixed
 
+- **Two people could take the last seat in a car to a restaurant.** Only the button checked for a full car; the server
+  now refuses the second one with "Deze auto is vol.".
 - **A restaurant ride named the restaurant twice.** Its page said "Van: <restaurant>" and "Naar: <restaurant>" and
   put the full address in the big title. It now shows the meal's name as the title, the address under it, and the
   top bar says "Rit naar <meal>".
