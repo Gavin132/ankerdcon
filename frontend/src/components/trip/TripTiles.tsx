@@ -23,7 +23,7 @@ import { getNow } from "../../store/time.store";
 import { parseEventDate, splitDateTime, toDateKey, todayKey } from "../../utils/date";
 import { dayShort } from "../../utils/multiDay";
 import { rideHow } from "../../utils/transportView";
-import { formatAmount, formatBytes } from "../../utils/format";
+import { countOf, formatAmount, formatBytes } from "../../utils/format";
 import { defaultTripDayId, tripGaps, tripInfo, tripMeals, tripRides, tripOutliers, tripRoomGaps, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
 import { groupPeople } from "../../utils/people";
 import { useLocalTicketsStore } from "../../store/localTickets.store";
@@ -387,7 +387,7 @@ export function PhotosTile({ trip, phase, summary, onOpenDay, uploadDayId }: { t
         </>
       ) : (
         <>
-          <TileValue>{phase === "live" && todayCount > 0 ? `${todayCount} vandaag` : `${total} foto's`}</TileValue>
+          <TileValue>{phase === "live" && todayCount > 0 ? `${todayCount} vandaag` : countOf(total, "foto", "foto's")}</TileValue>
           <TileText>
             {trip.days.length > 1
               ? perDay.filter((x) => (x.s?.photo_count ?? 0) > 0).map((x) => `${x.s!.photo_count} op ${dayShort(x.day.date)}`).join(", ")

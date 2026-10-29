@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Clock, Bus, MapPin, UtensilsCrossed } from "lucide-react";
 import { LocationSearchInput } from "../../components/common/LocationSearchInput";
-import { formatAmount, formatDateTime } from "../../utils/format";
+import { countOf, formatAmount, formatDateTime } from "../../utils/format";
 import {
   useAdminMeals,
   useAdminCreateMeal,
@@ -387,7 +387,7 @@ export function AdminMealsPage() {
     const ids = [...selectedIds];
     try {
       await bulkDeleteMutation.mutateAsync(ids);
-      toast("success", `${ids.length} activiteiten verwijderd.`);
+      toast("success", `${countOf(ids.length, "activiteit", "activiteiten")} verwijderd.`);
       clearSelection();
     } catch {
       toast("error", "Kon de activiteiten niet verwijderen. Probeer het opnieuw.");

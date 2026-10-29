@@ -26,7 +26,7 @@ import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 import { AdminBulkBar } from "./components/AdminBulkBar";
 import { RowCheckbox } from "./components/RowCheckbox";
 import { useTableSelection } from "../../hooks/useTableSelection";
-import { formatDateRangeShort } from "../../utils/format";
+import { countOf, formatDateRangeShort } from "../../utils/format";
 import { parseEventDate } from "../../utils/date";
 import { getNow } from "../../store/time.store";
 import { EmptyState } from "../../components/common/EmptyState";
@@ -170,7 +170,7 @@ export function AdminEventsPage() {
     const ids = [...selectedIds];
     try {
       await bulkDeleteMutation.mutateAsync(ids);
-      toast("success", `${ids.length} evenementen verwijderd.`);
+      toast("success", `${countOf(ids.length, "evenement", "evenementen")} verwijderd.`);
       clearSelection();
     } catch {
       toast("error", "Kon evenementen niet verwijderen.");

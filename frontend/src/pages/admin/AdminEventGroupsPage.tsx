@@ -18,6 +18,7 @@ import { AdminBulkBar } from "./components/AdminBulkBar";
 import { RowCheckbox } from "./components/RowCheckbox";
 import { useTableSelection } from "../../hooks/useTableSelection";
 import { EmptyState } from "../../components/common/EmptyState";
+import { countOf } from "../../utils/format";
 
 const PAGE_SIZE = 15;
 
@@ -45,7 +46,7 @@ export function AdminEventGroupsPage() {
     const ids = [...selectedIds];
     try {
       await bulkDeleteMutation.mutateAsync(ids);
-      toast("success", `${ids.length} groepen verwijderd.`);
+      toast("success", `${countOf(ids.length, "groep", "groepen")} verwijderd.`);
       clearSelection();
     } catch {
       toast("error", "Kon de groepen niet verwijderen. Probeer het opnieuw.");

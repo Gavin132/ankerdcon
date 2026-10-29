@@ -10,7 +10,7 @@ import { askConfirm } from "../../store/confirm.store";
 import { deleteCdnFile, downloadCdnZip, getAdminCdn, quickUpload, type QuickUploadResult } from "../../services/admin.service";
 import { useAdminEvents } from "../../hooks/useAdmin";
 import { toast } from "../../store/toast.store";
-import { formatBytes, formatDateTime } from "../../utils/format";
+import { countOf, formatBytes, formatDateTime } from "../../utils/format";
 import type { CdnObject } from "../../types";
 import { EmptyState } from "../../components/common/EmptyState";
 
@@ -120,7 +120,7 @@ export function AdminCdnPage() {
           <span className="font-mono text-xs opacity-70">{data?.counts[k]}</span>
         </>
       ),
-      ariaLabel: `${KIND_LABEL[k] ?? k}, ${data?.counts[k]} bestanden`,
+      ariaLabel: `${KIND_LABEL[k] ?? k}, ${countOf(data?.counts[k] ?? 0, "bestand", "bestanden")}`,
     })),
   ];
 
@@ -171,7 +171,7 @@ export function AdminCdnPage() {
         <>
           <p className="flex items-center gap-1.5 font-mono text-xs tabular-nums text-ink-3">
             <HardDrive size={14} />
-            {data ? `${data.total} bestanden · ${formatBytes(data.total_size)}` : "…"}
+            {data ? `${countOf(data.total, "bestand", "bestanden")} · ${formatBytes(data.total_size)}` : "…"}
             {data?.capped && " (afgekapt)"}
           </p>
 

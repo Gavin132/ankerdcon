@@ -70,6 +70,11 @@ export function formatDateRangeShort(first: Date, last: Date): string {
   return `${f(first, "d")} – ${f(last, "d MMM yyyy")}`;
 }
 
+/** A count with its noun in the right form: countOf(1, "rit", "ritten") is "1 rit", countOf(3, ...) is "3 ritten". */
+export function countOf(n: number, one: string, many: string): string {
+  return `${n} ${n === 1 ? one : many}`;
+}
+
 /** A file size: "512 B", "48 KB", "3,2 MB", "1,25 GB". */
 export function formatBytes(bytes: number): string {
   const nl1 = (n: number, digits: number) => n.toLocaleString("nl-NL", { minimumFractionDigits: digits, maximumFractionDigits: digits });

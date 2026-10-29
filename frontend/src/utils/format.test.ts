@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatAmount, formatBytes, formatDateRangeShort, formatDateShort } from "./format";
+import { countOf, formatAmount, formatBytes, formatDateRangeShort, formatDateShort } from "./format";
 
 describe("formatAmount", () => {
   it("writes money the Dutch way, with a comma", () => {
@@ -36,5 +36,13 @@ describe("formatDateRangeShort", () => {
 
   it("is a single date for one day", () => {
     expect(formatDateRangeShort(new Date(2026, 10, 17), new Date(2026, 10, 17))).toBe("17 nov. 2026");
+  });
+});
+
+describe("countOf", () => {
+  it("uses the singular for exactly one and the plural otherwise, zero included", () => {
+    expect(countOf(1, "foto", "foto's")).toBe("1 foto");
+    expect(countOf(2, "foto", "foto's")).toBe("2 foto's");
+    expect(countOf(0, "rit", "ritten")).toBe("0 ritten");
   });
 });

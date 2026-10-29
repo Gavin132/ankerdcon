@@ -16,6 +16,8 @@ All notable changes to Ankerd Con are documented here.
 
 ### Fixed
 
+- **"1 foto's", "1 gingen", "1 ritten verwijderd".** One photo, one person who went and one thing deleted in the admin panel (rides,
+  activities, events, groups, users) now use the singular.
 - **The Vervoer tile said "Jij rijdt" for your own journey by public transport.** It says "Met het ov" now.
 - **Two people could take the last seat in a car to a restaurant.** Only the button checked for a full car; the server
   now refuses the second one with "Deze auto is vol.".

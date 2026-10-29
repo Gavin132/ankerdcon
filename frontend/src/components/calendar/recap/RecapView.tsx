@@ -9,6 +9,7 @@ import { toDateKey, todayKey } from "../../../utils/date";
 import { tripImage, tripPeople, type Trip } from "../../../utils/trips";
 import { useUsers } from "../../../hooks/useUsers";
 import { DAY_LABELS } from "../../../constants";
+import { countOf } from "../../../utils/format";
 import type { Meal, Ride, StoryDaySummary, User } from "../../../types";
 
 interface RecapViewProps {
@@ -537,7 +538,7 @@ function MonthOverview({ title, trips, lastYear, lastYearLabel, storySummary, is
                   <span className="section-label block">Vorig jaar in {lastYearLabel}</span>
                   <span className="mt-0.5 block font-display text-[20px] font-extrabold uppercase leading-[0.95] text-ink [text-wrap:balance]">{t.title}</span>
                   <span className="mt-1 block text-[12.5px] text-ink-2">
-                    {t.dateRange}{photos > 0 ? ` · ${photos} foto's` : ""} · {isMine(t) ? "jij was erbij" : "jij was er niet bij"}
+                    {t.dateRange}{photos > 0 ? ` · ${countOf(photos, "foto", "foto's")}` : ""} · {isMine(t) ? "jij was erbij" : "jij was er niet bij"}
                   </span>
                 </span>
               </button>

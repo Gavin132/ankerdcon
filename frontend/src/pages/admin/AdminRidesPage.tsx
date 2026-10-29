@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Car, Train, AlertCircle } from "lucide-react";
 import { LocationSearchInput } from "../../components/common/LocationSearchInput";
-import { formatDateTime } from "../../utils/format";
+import { countOf, formatDateTime } from "../../utils/format";
 import {
   useAdminRides,
   useAdminUsers,
@@ -339,7 +339,7 @@ export function AdminRidesPage() {
     const ids = [...selectedIds];
     try {
       await bulkDeleteMutation.mutateAsync(ids);
-      toast("success", `${ids.length} ritten verwijderd.`);
+      toast("success", `${countOf(ids.length, "rit", "ritten")} verwijderd.`);
       clearSelection();
     } catch {
       toast("error", "Kon ritten niet verwijderen.");

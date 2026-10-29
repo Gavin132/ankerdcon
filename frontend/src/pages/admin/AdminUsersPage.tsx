@@ -32,6 +32,7 @@ import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
 import { askConfirm } from "../../store/confirm.store";
 import { EmptyState } from "../../components/common/EmptyState";
 import { UserMergeSheet } from "./components/UserMergeSheet";
+import { countOf } from "../../utils/format";
 
 const PAGE_SIZE = 15;
 
@@ -478,7 +479,7 @@ export function AdminUsersPage() {
     const ids = [...selectedIds];
     try {
       await bulkDeleteMutation.mutateAsync(ids);
-      toast("success", `${ids.length} gebruikers verwijderd.`);
+      toast("success", `${countOf(ids.length, "gebruiker", "gebruikers")} verwijderd.`);
       clearSelection();
     } catch {
       toast("error", "Kon gebruikers niet verwijderen.");
@@ -497,7 +498,7 @@ export function AdminUsersPage() {
     if (!ok) return;
     try {
       await bulkDeactivateMutation.mutateAsync(ids);
-      toast("success", `${ids.length} gebruikers gedeactiveerd.`);
+      toast("success", `${countOf(ids.length, "gebruiker", "gebruikers")} gedeactiveerd.`);
       clearSelection();
     } catch {
       toast("error", "Kon gebruikers niet deactiveren.");

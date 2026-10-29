@@ -10,6 +10,7 @@ import { tripImage, tripPeople, type Trip } from "../../utils/trips";
 import { useUsers } from "../../hooks/useUsers";
 import { Segmented } from "../common/Segmented";
 import { routes } from "../../config/routes";
+import { countOf } from "../../utils/format";
 
 interface CollectedStubsProps {
   /** Past trips, newest first. */
@@ -113,7 +114,7 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
                 {t.title}
               </span>
               <span className="mt-auto pt-2 text-[12px] text-ink-2">
-                {went ? "" : "Gemist · "}{tripPeople(t, users).length} gingen{tripPhotos > 0 ? ` · ${tripPhotos} foto's` : ""}
+                {went ? "" : "Gemist · "}{countOf(tripPeople(t, users).length, "ging", "gingen")}{tripPhotos > 0 ? ` · ${countOf(tripPhotos, "foto", "foto's")}` : ""}
               </span>
             </button>
           );
