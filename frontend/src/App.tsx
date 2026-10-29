@@ -124,7 +124,7 @@ function AuthSync() {
                 toast("success", "Discord-account gekoppeld!");
               })
               .catch(() => {
-                toast("error", "Koppelen van Discord is niet gelukt. Probeer het opnieuw via je profiel.");
+                toast("error", "Koppelen van Discord is niet gelukt. Probeer het opnieuw via Instellingen.");
               });
           }
         } catch {
