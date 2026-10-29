@@ -38,12 +38,12 @@ export function WeatherCard({ weather }: { weather: EventWeather }) {
           : "Zeer hoog";
   const uvColor =
     weather.uv_index <= 2
-      ? "text-emerald-600 dark:text-emerald-400"
+      ? "text-ok"
       : weather.uv_index <= 5
-        ? "text-amber-600 dark:text-amber-400"
+        ? "text-warn"
         : weather.uv_index <= 7
-          ? "text-orange-600 dark:text-orange-400"
-          : "text-rose-600 dark:text-rose-400";
+          ? "text-warn"
+          : "text-bad";
 
   const advice = getWeatherAdvice(weather);
 

@@ -369,7 +369,7 @@ function Week({ week, monthPrefix, today, trips, tripByDay, selection, selectedT
           : isSelected
             ? "bg-[rgb(var(--nav-active-bg))] text-[rgb(var(--nav-active-fg))] font-semibold"
             : preview
-              ? "bg-hero/70 text-white"
+              ? "bg-hero/70 text-hero-ink"
               : outside ? "text-ink-3 opacity-60" : key < today ? "text-ink-2" : "text-ink";
 
         return (
@@ -407,8 +407,8 @@ function Week({ week, monthPrefix, today, trips, tripByDay, selection, selectedT
         const photos = trip.eventIds.reduce((sum, id) => sum + (storySummary?.[id]?.photo_count ?? 0), 0);
         const tone = past
           ? mine
-            ? "bg-[#F5F8F9] shadow-[0_0_0_1px_rgba(15,21,25,.6)] sm:bg-hero/80 sm:text-[#F5F8F9] sm:shadow-none"
-            : "bg-ink-3 sm:bg-hero/55 sm:text-[#C9D4D9]"
+            ? "bg-hero-ink shadow-[0_0_0_1px_rgb(var(--hero)/0.6)] sm:bg-hero/80 sm:text-hero-ink sm:shadow-none"
+            : "bg-ink-3 sm:bg-hero/55 sm:text-hero-ink/80"
           : mine
             ? "border-1.5 border-outline bg-brand text-brand-on"
             : "border-1.5 border-ink-3 bg-surface text-ink-2";

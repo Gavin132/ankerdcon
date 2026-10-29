@@ -58,11 +58,11 @@ export function EventPractical({
           row.accent ? (
             /* Special instructions — amber accent row */
             <div key={i} className={bare ? "py-3.5" : ""}>
-              <div className={`${bare ? "notice-warn px-4 py-3" : "bg-amber-50 px-5 py-4 dark:bg-amber-500/10"}`}>
-                <p className="mb-1 font-mono text-[12px] font-semibold uppercase tracking-[0.09em] text-amber-800 dark:text-amber-300">
+              <div className={`${bare ? "notice-warn px-4 py-3" : "bg-warn-soft px-5 py-4"}`}>
+                <p className="mb-1 font-mono text-[12px] font-semibold uppercase tracking-[0.09em] text-warn">
                   {row.label}
                 </p>
-                <p className="whitespace-pre-line text-sm font-medium leading-relaxed text-amber-900 dark:text-amber-200">
+                <p className="whitespace-pre-line text-sm font-medium leading-relaxed text-warn">
                   {row.content}
                 </p>
               </div>

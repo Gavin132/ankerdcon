@@ -42,7 +42,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
           type="button"
           onClick={onClose}
           aria-label="Sluiten"
-          className="hit-area absolute left-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-hero/70 text-white transition-colors hover:bg-hero"
+          className="hit-area absolute left-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-hero/70 text-hero-ink transition-colors hover:bg-hero"
         >
           <X size={15} />
         </button>

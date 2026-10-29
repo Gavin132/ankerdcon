@@ -149,13 +149,13 @@ export function CosplayDetailBody({ cosplay, events, users, onLeave: onClose }: 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[500] flex items-center justify-center bg-slate-950/90 p-4"
+          className="fixed inset-0 z-[500] flex items-center justify-center bg-scrim/90 p-4"
           onClick={() => setLightbox(null)}
         >
           <button
             type="button"
             aria-label="Sluiten"
-            className="hit-area absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors"
+            className="hit-area absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-xl bg-hero-ink/10 text-hero-ink hover:bg-hero-ink/20 transition-colors"
             onClick={() => setLightbox(null)}
           >
             <X size={18} />
@@ -171,7 +171,7 @@ export function CosplayDetailBody({ cosplay, events, users, onLeave: onClose }: 
                 href={safeHref(lightbox)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hit-area inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-white/85 hover:text-white"
+                className="hit-area inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-hero-ink/85 hover:text-hero-ink"
               >
                 <ExternalLink size={14} /> Bekijk origineel
               </a>
@@ -220,7 +220,7 @@ export function CosplayDetailFooter({
       </Button>
     </div>
   ) : (
-    <Button variant="ghost" className="w-full text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10" onClick={handleDelete}>
+    <Button variant="ghost" className="w-full text-bad hover:bg-bad-soft" onClick={handleDelete}>
       <Trash2 size={14} />
       Cosplay verwijderen
     </Button>

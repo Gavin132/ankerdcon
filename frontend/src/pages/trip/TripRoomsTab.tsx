@@ -537,7 +537,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
   // the sheet's own animated panel, not the viewport.
   const deleteConfirmFooter = confirmDeleteId ? (
     <div className="flex items-center gap-3">
-      <AlertCircle size={16} className="shrink-0 text-rose-600 dark:text-rose-400" />
+      <AlertCircle size={16} className="shrink-0 text-bad" />
       <p className="flex-1 text-sm font-semibold text-ink">Kamer verwijderen?</p>
       <Button size="sm" variant="ghost" onClick={() => setConfirmDeleteId(null)}>
         Annuleren
@@ -630,24 +630,24 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
               aria-expanded={unassignedOpen}
               className="flex w-full items-start gap-3 px-4 py-3.5 text-left"
             >
-              <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-700 dark:text-amber-300" />
+              <AlertCircle size={16} className="mt-0.5 shrink-0 text-warn" />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold leading-tight text-amber-800 dark:text-amber-300">
+                <p className="text-sm font-semibold leading-tight text-warn">
                   {unassigned.length} {unassigned.length === 1 ? "deelnemer heeft" : "deelnemers hebben"} nog geen kamer
                 </p>
                 {!unassignedOpen && (
                   <div className="mt-1.5">
-                    <AvatarStack names={unassigned} size="sm" max={10} ringClass="!border-amber-50 dark:!border-[#241d0e]" />
+                    <AvatarStack names={unassigned} size="sm" max={10} ringClass="!border-warn-soft" />
                   </div>
                 )}
               </div>
               <ChevronDown
                 size={16}
-                className={`mt-0.5 shrink-0 text-amber-700 transition-transform dark:text-amber-300 ${unassignedOpen ? "rotate-180" : ""}`}
+                className={`mt-0.5 shrink-0 text-warn transition-transform ${unassignedOpen ? "rotate-180" : ""}`}
               />
             </button>
             {unassignedOpen && (
-              <ul className="space-y-2 border-t border-amber-200 px-4 py-3 dark:border-amber-500/25">
+              <ul className="space-y-2 border-t border-warn-line px-4 py-3">
                 {unassigned.map((name) => {
                   const u = users.find((x) => x.name === name || x.discord_username === name || x.aliases?.includes(name));
                   return (

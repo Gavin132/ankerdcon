@@ -699,7 +699,7 @@ export function TicketSheet({ open, onClose, trip }: { open: boolean; onClose: (
         Ticket toevoegen (foto of PDF)
       </label>
 
-      {error && <p className="mb-4 text-sm text-rose-700 dark:text-rose-300" role="alert">{error}</p>}
+      {error && <p className="mb-4 text-sm text-bad" role="alert">{error}</p>}
 
       {mine.length === 0 ? (
         <p className="py-6 text-center text-sm text-ink-3">Nog geen ticket toegevoegd.</p>

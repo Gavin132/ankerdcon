@@ -455,20 +455,20 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                     ) : (
                       <label className={`flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-xl border-1.5 px-3 py-2.5 transition-colors ${
                         entry.url
-                          ? "border-emerald-300 bg-emerald-50 dark:border-emerald-500/40 dark:bg-emerald-500/10"
+                          ? "border-ok-line bg-ok-soft"
                           : entry.queued
-                          ? "border-amber-300 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10"
+                          ? "border-warn-line bg-warn-soft"
                           : "border-line bg-surface hover:border-ink-3"
                       }`}>
                         {entry.uploading
                           ? <div className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-ink-3 border-t-transparent" />
                           : entry.url
-                          ? <CheckCircle2 size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                          ? <CheckCircle2 size={14} className="shrink-0 text-ok" />
                           : entry.queued
-                          ? <UploadCloud size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                          ? <UploadCloud size={14} className="shrink-0 text-warn" />
                           : <Upload size={14} className="shrink-0 text-ink-3" />}
                         <span className={`truncate text-xs font-medium ${
-                          entry.url ? "text-emerald-700 dark:text-emerald-300" : entry.queued ? "text-amber-700 dark:text-amber-400" : "text-ink-2"
+                          entry.url ? "text-ok" : entry.queued ? "text-warn" : "text-ink-2"
                         }`}>
                           {entry.uploading
                             ? "Uploaden…"
@@ -493,7 +493,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                       </label>
                     )}
                     {images.length > 1 && (
-                      <button type="button" onClick={() => removeImage(index)} aria-label="Afbeelding verwijderen" className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400">
+                      <button type="button" onClick={() => removeImage(index)} aria-label="Afbeelding verwijderen" className="hit-area flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-bad-soft hover:text-bad">
                         <X size={13} />
                       </button>
                     )}

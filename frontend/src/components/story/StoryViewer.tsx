@@ -290,9 +290,9 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
           {/* Progress bars */}
           <div className="flex gap-1 px-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] shrink-0">
             {photos.map((p, i) => (
-              <div key={p.id} className="h-[3px] flex-1 rounded-full bg-white/25 overflow-hidden">
-                {i < index && <div className="h-full w-full bg-white" />}
-                {i === index && <motion.div className="h-full w-full bg-white origin-left" style={{ scaleX: videoProgress }} />}
+              <div key={p.id} className="h-[3px] flex-1 rounded-full bg-hero-ink/25 overflow-hidden">
+                {i < index && <div className="h-full w-full bg-hero-ink" />}
+                {i === index && <motion.div className="h-full w-full bg-hero-ink origin-left" style={{ scaleX: videoProgress }} />}
               </div>
             ))}
           </div>
@@ -313,7 +313,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                     if (videoRef.current) videoRef.current.muted = nowMuted;
                   }}
                   aria-label={muted ? "Geluid aan" : "Geluid uit"}
-                  className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-white/10 hover:text-hero-ink"
+                  className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-hero-ink/10 hover:text-hero-ink"
                 >
                   {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
                 </button>
@@ -323,7 +323,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                 onClick={() => handleShare(current.image_url)}
                 aria-label="Delen"
                 title="Delen"
-                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-white/10 hover:text-hero-ink"
+                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-hero-ink/10 hover:text-hero-ink"
               >
                 <Share2 size={16} />
               </button>
@@ -333,7 +333,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                 onClick={handleDownloadAll}
                 title="Download alle foto's van deze dag als zip"
                 aria-label="Download alle foto's van deze dag"
-                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-white/10 hover:text-hero-ink disabled:opacity-50"
+                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-hero-ink/10 hover:text-hero-ink disabled:opacity-50"
               >
                 {downloadingAll ? <Loader2 size={16} className="animate-spin" /> : <FolderDown size={16} />}
               </button>
@@ -343,7 +343,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                 onClick={() => handleDownload(current)}
                 aria-label="Foto downloaden"
                 title="Foto downloaden"
-                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-white/10 hover:text-hero-ink disabled:opacity-50"
+                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-hero-ink/10 hover:text-hero-ink disabled:opacity-50"
               >
                 {downloadingId === current.id ? (
                   <Loader2 size={16} className="animate-spin" />
@@ -357,7 +357,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                   onClick={() => handleDelete(current.id)}
                   aria-label="Foto verwijderen"
                   title="Foto verwijderen"
-                  className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-white/10 hover:text-hero-ink"
+                  className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-hero-ink/10 hover:text-hero-ink"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -367,7 +367,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                 onClick={handleClose}
                 aria-label="Sluiten"
                 title="Sluiten"
-                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-white/10 hover:text-hero-ink"
+                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-hero-ink/10 hover:text-hero-ink"
               >
                 <X size={20} />
               </button>
@@ -395,10 +395,10 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                   onError={() => setFailedVideoId(current.id)}
                 />
                 {buffering && failedVideoId !== current.id && (
-                  <Loader2 size={28} className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-spin text-white/80" />
+                  <Loader2 size={28} className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-spin text-hero-ink/80" />
                 )}
                 {failedVideoId === current.id && (
-                  <p className="pointer-events-none absolute inset-x-6 top-1/2 -translate-y-1/2 text-center text-sm text-white/80">
+                  <p className="pointer-events-none absolute inset-x-6 top-1/2 -translate-y-1/2 text-center text-sm text-hero-ink/80">
                     Deze video kan op dit apparaat niet worden afgespeeld. Je kunt hem wel downloaden.
                   </p>
                 )}

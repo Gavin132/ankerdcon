@@ -98,7 +98,7 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
           type="button"
           onClick={onClose}
           aria-label="Sluiten"
-          className="hit-area absolute left-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-hero/70 text-white transition-colors hover:bg-hero"
+          className="hit-area absolute left-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-hero/70 text-hero-ink transition-colors hover:bg-hero"
         >
           <X size={15} />
         </button>
@@ -199,12 +199,12 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
                       >
                         <img src={gridImage(photo)} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.04]" />
                         {photo.media_type === "video" && (
-                          <span className="pointer-events-none absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-hero/65 text-white">
+                          <span className="pointer-events-none absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-hero/65 text-hero-ink">
                             <Play size={10} fill="currentColor" />
                           </span>
                         )}
                         {isLast ? (
-                          <span className="absolute inset-0 flex items-center justify-center bg-hero/65 font-display text-[24px] font-extrabold text-white">
+                          <span className="absolute inset-0 flex items-center justify-center bg-hero/65 font-display text-[24px] font-extrabold text-hero-ink">
                             +{shownTotal - tiles.length + 1}
                           </span>
                         ) : (
