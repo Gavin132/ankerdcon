@@ -1,7 +1,7 @@
 # Design system
 
 The look approved in September 2026 (see `docs/ui-proposal/ui-rework-proposal.html`):
-calm and slightly raised (buttons, cards and filter controls sit on a thin plate edge), based on the Ankerd anchor mascot. Ink outlines, one blue brand fill (`#57B2F9`), status
+calm and slightly raised (buttons, cards and filter controls sit on a thin plate edge), based on the Ankerd anchor mascot. Ink outlines, one deep blue brand fill (`#0078D4`) with white text on it, status
 colours only for status, calm screens.
 
 The tokens live in `frontend/tailwind.config.ts` and `frontend/src/index.css`. To see the
@@ -23,17 +23,17 @@ components in use, look at `pages/trip/TripOverviewTab.tsx` and `components/trip
   `divide-y`). A selected state is never a thicker outline: see Selected below.
 - **Accent colour is a personal setting** (Instellingen → Accentkleur: blue, turquoise, green,
   gold, orange, pink, purple; per device). It only swaps the brand tokens (`--cyan`,
-  `--cyan-soft`, `--cyan-text`, and `--selected` in dark mode) through `[data-accent]`
+  `--cyan-soft`, `--cyan-text`, `--selected` in dark mode and `--selected-icon` in light mode) through `[data-accent]`
   blocks in `index.css`; paper, surface, ink and the status colours never change. So **use the
   brand tokens (`bg-brand`, `bg-brand-soft`, `text-brand-text`), not `sky-*`, for anything that
   means "the app's colour"** (spinners, links, selected states), or it stays blue for everyone
   who picked another accent. `sky-*` is for things that are blue on purpose. A new accent needs
-  a fill, a tint and a text colour that is 4.5:1 on white, and their dark counterparts, and an
-  entry in `ACCENTS` (`theme.store.ts`).
-- **Blue (`#57B2F9`) is the brand fill**, for the main action and the one bold
-  element. Text on the brand fill is ink (`text-brand-on`), never white. The fill is
-  too light to use as text, so brand-coloured text and links use `text-brand-text`
-  (`#0C69BB` light, `#89CAFE` dark).
+  a fill that holds the white `text-brand-on` label at 4.5:1 (see the accent table under Colours), a tint and a text colour that is 4.5:1 on white,
+  and their dark counterparts, and an entry in `ACCENTS` (`theme.store.ts`, the swatch is the fill).
+- **Deep blue (`#0078D4`) is the brand fill**, for the main action and the one bold
+  element. Text and icons on the brand fill are white (`text-brand-on`), on the default blue and on every
+  accent, so the fill is always deep enough for that (4.5:1). Brand-coloured text and links
+  use `text-brand-text` (`#0C69BB` light, `#89CAFE` dark), never the fill itself.
 - **No floating UI.** No floating action buttons and no sticky "add" bars over the
   content. A page's main action lives in its content (a header row above the list) or in
   the top bar (`HeaderAction`). Things that open over a page are sheets (see below).
@@ -66,13 +66,13 @@ variant is needed with them.
 | `text-ink` / `text-ink-2` / `text-ink-3` | primary / secondary / muted text and icons |
 | `border-line` | normal borders and dividers (`border-1.5`, dividers `h-px bg-line`) |
 | `border-outline` | the bold 2px outline of a hero, ticket or dialog (a button has no outline) |
-| `bg-brand`, `text-brand-on` | brand blue fill with ink text |
+| `bg-brand`, `text-brand-on` | deep brand blue fill with a white label |
 | `bg-brand-soft`, `text-brand-text` | soft blue background, blue text/links |
 | `bg-hatch-surface` | striped surface for travel days |
 | `text-ok` / `text-warn` / `text-bad`, `bg-ok-soft` / `bg-warn-soft` / `bg-bad-soft` | status text and its tint (emerald / amber / rose); they switch in dark mode by themselves, so no `dark:` twin |
 | `border-ok-line` / `-warn-line` / `-bad-line`, `bg-ok-fill` / `-warn-fill` / `-bad-fill`, `text-ok-on` / `-warn-on` / `-bad-on` | a notice's border, a solid dot, bar, banner or button, and the text on that solid fill |
 | `bg-scrim/50` | the dark layer behind a sheet, dialog or viewer |
-| `bg-selected`, `text-selected-on`, `text-selected-icon` | a chosen chip (`.chip-on`) and the active tab: the ink fill with paper text (the brand fill with ink text in dark mode), and the icon on it |
+| `bg-selected`, `text-selected-on`, `text-selected-icon` | a chosen chip (`.chip-on`) and the active tab: the ink fill with paper text (the brand fill with a white label in dark mode), and the icon on it |
 | `bg-hero`, `text-hero-ink`, `text-hero-warn`, `text-hero-bad`, `bg-hero-ink/10` | the always-dark hero panel and what sits on it (the same in both themes) |
 | `bg-avatar-1` .. `bg-avatar-6`, `text-avatar-on` | the fill of an initial without a photo or colour of its own (picked by name), and the white initial |
 
@@ -97,7 +97,7 @@ used on, in either theme; `npm run check-colors` (`frontend/scripts/check-colors
 | `ink` / `ink-2` / `ink-3` | `#0F1519` / `#4A5A63` / `#606F77` | `#E6F0F3` / `#A0B0B8` / `#7D8D95` | primary, secondary, muted text and icons |
 | `line` | `#D5DEE2` | `#243039` | borders and dividers |
 | `outline` | `#0F1519` | `#BFD3DA` | the bold 2px outline |
-| `brand` (+ `brand-on`) | `#57B2F9` (ink) | same | the one fill, with its text; follows the accent colour |
+| `brand` (+ `brand-on`) | `#0078D4` (`#FFFFFF`, 4.53:1) | same | the one fill, with its white text; follows the accent colour |
 | `brand-soft` / `brand-text` | `#DCEEFB` / `#0C69BB` | `#0F2A40` / `#89CAFE` | tint, and brand-coloured text and links |
 | `ok` / `ok-soft` / `ok-line` | `#047857` / `#D1FAE5` / `#A7F3D0` | `#6EE7B7` / `#13332F` / `#1D5244` | done, paid, received: text, tint, border |
 | `ok-fill` / `ok-on` | `#10B981` / `#0F1519` | same | solid dot or bar, and text on it |
@@ -105,11 +105,27 @@ used on, in either theme; `npm run check-colors` (`frontend/scripts/check-colors
 | `warn-fill` / `warn-on` | `#FBBF24` / `#0F1519` | same | banner, solid dot or badge, and text on it |
 | `bad` / `bad-soft` / `bad-line` | `#BE123C` / `#FFE4E6` / `#FDA4AF` | `#FDA4AF` / `#362029` / `#703D48` | problem, you owe, destructive |
 | `bad-fill` / `bad-on` | `#E11D48` / `#FFFFFF` | same | the danger button, error banner and toast, solid bar, and text on it |
-| `selected` / `selected-on` / `selected-icon` | `#0F1519` / `#F5F8F9` / the accent | `#57B2F9` (the accent) / `#0F1519` / `#0F1519` | a chosen chip and the active tab, so no `dark:` twin is needed; the icon on it is the accent on ink in light, ink on the accent in dark |
+| `selected` / `selected-on` / `selected-icon` | `#0F1519` / `#F5F8F9` / `#89CAFE` (a light tint of the accent) | `#0078D4` (the accent fill) / `#FFFFFF` / `#FFFFFF` | a chosen chip and the active tab, so no `dark:` twin is needed; the icon on it is a light tint of the accent on ink in light mode, white on the accent fill in dark mode |
 | `hero` / `hero-ink` | `#0F1519` / `#E6F0F3` | same | the always-dark hero panel and its text |
 | `hero-warn` / `hero-bad` | `#FDE68A` / `#FECDD3` | same | warn and bad chip text on the hero |
 | `scrim` | `#080C0F` | same | `bg-scrim/50` behind sheets and viewers; a caption on a photo |
 | `avatar-1` .. `avatar-6` (+ `avatar-on`) | `#0D75D1` `#047857` `#B45309` `#BE123C` `#4A5A63` `#A21CAF` (white) | same | fill of an initial without a photo or colour of its own |
+
+**Accent colours** (Instellingen › Accentkleur; `[data-accent]` blocks in `index.css`, ids and swatches in `ACCENTS`). Each fill is the
+swatch, carries the white `brand-on` label at the contrast shown (`styles.tokens.test.ts` fails under 4.5:1) and is the dark-mode chosen chip. The
+text colour and tint are for brand-coloured text on the page and keep their own pairs (4.5:1 on white and on the tint, and the dark counterparts on `surface`).
+
+| Accent | Fill (light and dark) | White on the fill | Fill on a dark card | `--selected-icon` in light mode |
+| --- | --- | --- | --- | --- |
+| Blauw (default) | `#0078D4` | 4.53:1 | 3.84:1 | `#89CAFE` |
+| Turquoise | `#0D7C72` | 5.07:1 | 3.43:1 | `#7EEADB` |
+| Groen | `#15803D` | 5.02:1 | 3.47:1 | `#8FDDB5` |
+| Goud | `#A66506` | 4.68:1 | 3.72:1 | `#FDE047` |
+| Oranje | `#CA480E` | 4.72:1 | 3.68:1 | `#FDBA74` |
+| Roze | `#DB2777` | 4.60:1 | 3.78:1 | `#F9A8D4` |
+| Paars | `#8242F0` | 5.27:1 | 3.30:1 | `#C4B5FD` |
+
+Gold is a dark amber and not the bright `#FACC15` of before: a yellow cannot hold a white label.
 
 Which token: pills and chips are `.pill-ok|warn|bad`, a bordered message is `.notice-ok|warn|bad`, an icon square is
 `.icon-tile-ok|warn|bad`, the destructive buttons are `<Button variant="danger">` / `.btn-danger`. There is no "info" colour: a
@@ -239,13 +255,14 @@ Page head pattern (see `TripLayout`, `HubPage`):
 - **Pill (status):** `.pill` plus `.pill-ok|warn|bad|neutral` (12px semibold, `rounded-full`, `px-2 py-0.5`); add only `gap-1.5`, `shrink-0` or `font-mono tabular-nums`. Never rebuild it with `rounded-full px-2 py-0.5 text-xs font-semibold`.
 - **Tag:** `tag` (`rounded-md border border-line px-1.5`, small uppercase label, 12px). A chip is the filter pill below.
 - **One blue button per view.** The main action of a screen or sheet is `btn-primary`; the same action repeated in each section of a list ("Rit aanbieden" for Heen and for Terug) is `btn-secondary`, so the eye has one place to go.
-- **Buttons:** one family in five tiers, defined once in `index.css` (`.btn-*`) and used by `<Button variant="...">` and by a raw `<button className="btn-secondary px-4 text-sm">` alike. Hover does not move or scale a button. **Buttons, and only buttons, are a slightly raised plate** (`.btn-bevel`, built into `primary`, `secondary`, `tonal` and `danger`): a 1px light edge on top (`--btn-edge`), a 1px darker edge below as the thickness of the plate (`--btn-shade`) and a soft `0 1px 2px` shadow round it (`--btn-shadow`), each a colour channel plus an opacity (`--btn-edge-a`, `--btn-shade-a`, `--btn-shadow-a`) that differ per theme: light mode a clear white edge and a gentle shadow, dark mode a fainter edge and a deeper shade; kept subtle on purpose, the grey tiers looked over the top when stronger. The shade is black or ink over the button's own fill, so it is a darker version of any fill, also the pale brand blue where a white edge hardly shows. Ghost, `danger-soft`, `.icon-btn`, chips, segmented controls, cards and sheets stay flat; do not add a bevel to them. A hand-made button gets it with the `btn-bevel` class (the hero buttons do, together with `btn-on-hero`, which pins the dark-theme values because the hero is dark in both themes). Every tier is `rounded-xl` (10 px), bold, 44 px tall (`hit-area` on one made smaller) and at least 12 px text:
-  - `primary` / `.btn-primary`: solid `bg-brand` with `text-brand-on`, no border. The one main action of a view.
+- **Buttons:** one family in five tiers, defined once in `index.css` (`.btn-*`) and used by `<Button variant="...">` and by a raw `<button className="btn-secondary px-4 text-sm">` alike. Hover does not move or scale a button. **Buttons, and only buttons, are a slightly raised plate** (`.btn-bevel`, built into `primary`, `secondary`, `tonal` and `danger`): a 1px light edge on top (`--btn-edge`), a 1px darker edge below as the thickness of the plate (`--btn-shade`) and a soft `0 1px 2px` shadow round it (`--btn-shadow`), each a colour channel plus an opacity (`--btn-edge-a`, `--btn-shade-a`, `--btn-shadow-a`) that differ per theme: light mode a clear white edge and a gentle shadow, dark mode a fainter edge and a deeper shade; kept subtle on purpose, the grey tiers looked over the top when stronger. The shade is black or ink over the button's own fill, so it is a darker version of any fill. Ghost, `danger-soft`, `.icon-btn`, chips, segmented controls, cards and sheets stay flat; do not add a bevel to them. A hand-made button gets it with the `btn-bevel` class (the hero buttons do, together with `btn-on-hero`, which pins the dark-theme values because the hero is dark in both themes). Every tier is `rounded-xl` (10 px), bold, 44 px tall (`hit-area` on one made smaller) and at least 12 px text:
+  - `primary` / `.btn-primary`: solid `bg-brand` with a white `text-brand-on` label, no border. The one main action of a view.
   - `secondary` / `.btn-secondary`: transparent with a 1px `border-line` hairline and an ink label. Every other action.
   - `tonal` / `.btn-tonal`: `bg-surface` with the same hairline, a lifted fill for a neutral action that needs more body than the outlined one ("Inloggen met Google"; an icon first, then the label). It lifts off the page (`bg-paper`), not off a card, so put it on the page or a `bg-paper` panel (the login panel is one).
   - `ghost` / `.btn-ghost`: no fill, no border, `text-ink-2`; the quiet "Terug" or "Annuleren" that is not paired with a destructive confirm.
-  - `danger` / `.btn-danger`: solid `bg-bad-fill text-bad-on`, the confirm of a destructive action. `.btn-danger-soft` (red text on `bg-bad-soft`) is the quiet one that only opens the question. A confirm pairs `secondary` "Annuleren" with `danger`.
+  - `danger` / `.btn-danger`: solid `bg-bad-fill` with a white `text-bad-on` label, the confirm of a destructive action. `.btn-danger-soft` (red text on `bg-bad-soft`) is the quiet one that only opens the question. A confirm pairs `secondary` "Annuleren" with `danger`.
   - **States, the same for every tier:** hover is a small shift (primary and danger fade to 90%, the outlined tiers darken the border to `border-ink-3` and take a faint `bg-sunken`, ghost takes `bg-sunken`); pressed sinks into the page (the edges and the shadow go, an inset shade appears, the button moves 1px down and dims to 80%); keyboard focus is the `ring-brand-text` ring with an offset; disabled is flat grey (`bg-sunken text-ink-3`, no outline, no bevel, `cursor-not-allowed`; the ghost only loses its text colour); loading (`<Button loading>`) puts a spinner over the label, which stays in place hidden, so the width does not change.
+  - **Which labels are white:** the two solid fills, primary and danger (and the hero's primary, which is `.btn-primary`). The outlined, tonal and ghost tiers sit on the page or a card, so their label is the theme's ink (`text-ink`, `text-ink-2` for ghost): white in dark mode already, dark in light mode, where white would vanish. The hero's secondary button is `text-hero-ink` on the always-dark hero. The spinner of a loading button is `currentColor`, so it follows the label.
   - **Icon-only buttons** are `.icon-btn` (36 px square, `rounded-lg`, 44 px to hit, `text-ink-2`, hover `bg-sunken`; add only a position or a hover colour such as `hover:text-bad`). Never rebuild one with `hit-area flex h-8 w-8 ...`. On an image or the dark hero the control is a translucent hero chip and stays hand-made.
   - **`OrDivider`** (`components/common/OrDivider.tsx`, `<OrDivider label="of ga verder met" />`): a hairline with a centred label between two groups of actions, as on the login page between Discord and Google. On/off settings use `components/common/Switch.tsx`, and a row with a name and a hint in a sheet is `components/common/ToggleRow.tsx` (the admin sheets and the meal sheets alike). Shared classes in `index.css`: `.pill` + `.pill-ok|warn|bad|neutral` (status: fine / waiting for you / you owe / info), `.chip` + `.chip-on|off` (filters), `.notice-warn` / `.notice-ok` (a bordered message block), `.icon-btn`, `.field-label` and `.field-error` (forms), `.stack-table` with `cell-main` and `cell-actions` (a data table that becomes cards on a phone: the name cell takes what is left of the line and may shrink, the actions never shrink; a `ConfirmInline` in the actions cell takes a line of its own), `.btn-danger` (the red confirm, same as `<Button variant="danger">`) and `.btn-danger-soft` (the quiet red one that opens the question). Popups are `TripSheet` (`Modal` is a thin wrapper around it). A control under 44 px gets `hit-area`.
 - **Segmented control:** `<Segmented options value onChange label>` (`components/common/Segmented.tsx`, styled by `.segmented` and `.segmented-item` in `index.css`): a sunken track and the chosen item as a surface with the ink outline, 36 px to look at and 44 px to hit. `fill` shares the full width between the items (a sheet), `scroll` lets a long row (years) scroll sideways. Used for Tickets/Recap, the recap filter, the years of the collected stubs, Heen/Terug in the quick-ride sheet, the split mode of an expense, and in the admin panel Aankomend/Geschiedenis (Evenementen) and the file kinds (CDN). Never paste the classes into a screen.
