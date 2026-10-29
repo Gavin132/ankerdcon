@@ -16,6 +16,8 @@ All notable changes to Ankerd Con are documented here.
 
 ### Fixed
 
+- **Admin: deleting an activity left its ride to the restaurant behind**, with the people still signed up in it. The ride goes
+  with the activity, as when its maker deletes it.
 - **Deactivating members in bulk did not take them off their events.** The selection strip only switched the account off,
   although it said they would leave every event and get a Discord message; it does both now, like the switch in the edit sheet.
 - **A deactivated or deleted member stayed in their hotel room and in restaurant cars**, and kept their former name on rides,

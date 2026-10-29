@@ -673,10 +673,17 @@ async def admin_update_meal(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Maaltijd niet gevonden.")
 
 
+def _delete_meal(meal_id: str) -> None:
+    """The ride to a restaurant only exists for its meal (the foreign key would just blank the link and leave
+    a ride nobody can place, with people still in its cars), so it goes first, as in the member's own delete."""
+    supabase.table(Tables.RIDES).delete().eq("direction", "Restaurant").eq("linked_meal_id", meal_id).execute()
+    supabase.table(Tables.MEALS).delete().eq("id", meal_id).execute()
+
+
 @router.delete(AdminRoutes.MEAL_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
 def admin_delete_meal(meal_id: str, _: str = Depends(get_admin_user)) -> None:
     try:
-        supabase.table(Tables.MEALS).delete().eq("id", meal_id).execute()
+        _delete_meal(meal_id)
     except Exception as e:
         logger.error("Failed to delete meal %s: %s", meal_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
@@ -686,7 +693,7 @@ def admin_delete_meal(meal_id: str, _: str = Depends(get_admin_user)) -> None:
 def admin_bulk_delete_meals(body: BulkDeleteMealsRequest, _: str = Depends(get_admin_user)) -> None:
     for meal_id in body.meal_ids:
         try:
-            supabase.table(Tables.MEALS).delete().eq("id", meal_id).execute()
+            _delete_meal(meal_id)
         except Exception as e:
             logger.error("Failed to delete meal %s during bulk delete: %s", meal_id, e)
 
