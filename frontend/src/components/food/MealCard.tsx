@@ -191,7 +191,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setCancelOpen(true); }}
-                  className="hit-area flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
+                  className="hit-area flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-bad-soft hover:text-bad"
                   title="Afmelden"
                 >
                   <UserMinus size={14} />

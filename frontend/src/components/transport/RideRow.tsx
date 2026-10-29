@@ -302,7 +302,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
                   {confirmDelete ? (
                     <div className="space-y-1.5">
                       {otherPassengers.length > 0 && (
-                        <p className="text-[12px] text-rose-600 dark:text-rose-400">
+                        <p className="text-[12px] text-bad">
                           {otherPassengers.length === 1
                             ? "Er is al iemand bij deze rit ingedeeld — die persoon verliest zijn plek."
                             : `Er zijn al ${otherPassengers.length} mensen bij deze rit ingedeeld — zij verliezen hun plek.`}

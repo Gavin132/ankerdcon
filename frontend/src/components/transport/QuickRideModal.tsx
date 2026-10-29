@@ -154,7 +154,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
           />
         </div>
         {missingLocation && (
-          <p className="-mt-3 text-xs font-medium text-amber-700 dark:text-amber-300">
+          <p className="-mt-3 text-xs font-medium text-warn">
             Vul de ontbrekende locatie hierboven in.
           </p>
         )}

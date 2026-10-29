@@ -548,7 +548,7 @@ export type TabId = "hub" | "trip" | "calendar" | "finance" | "crew";
 export type BaseProps = {
   options: string[];
   placeholder?: string;
-  color?: "sky" | "rose" | "green" | "violet";
+  color?: "sky" | "rose" | "green";
 };
 
 export type SingleProps = BaseProps & {

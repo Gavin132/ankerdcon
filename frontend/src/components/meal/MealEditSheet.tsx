@@ -210,8 +210,8 @@ export function MealEditSheet({ open, onClose, meal, events, onDeleted }: MealEd
         {/* Removing is a different thing from saving, so it sits apart and asks first. */}
         <div className="border-t-1.5 border-line pt-5">
           {confirmDelete ? (
-            <div className="space-y-3 rounded-xl border-1.5 border-rose-300 bg-rose-50 p-3.5 dark:border-rose-400/40 dark:bg-rose-500/10">
-              <p className="text-[13px] leading-snug text-rose-800 dark:text-rose-200">
+            <div className="space-y-3 rounded-xl border-1.5 border-bad-line bg-bad-soft p-3.5">
+              <p className="text-[13px] leading-snug text-bad">
                 <b>{meal.meal_name}</b> verwijderen?
                 {meal.participants.length > 0 &&
                   ` ${meal.participants.length} ${meal.participants.length === 1 ? "aanmelding gaat" : "aanmeldingen gaan"} mee.`}
@@ -231,7 +231,7 @@ export function MealEditSheet({ open, onClose, meal, events, onDeleted }: MealEd
             <button
               type="button"
               onClick={() => setConfirmDelete(true)}
-              className="flex items-center gap-2 text-[13px] font-semibold text-rose-700 transition-colors hover:text-rose-900 dark:text-rose-300 dark:hover:text-rose-200"
+              className="flex items-center gap-2 text-[13px] font-semibold text-bad transition-opacity hover:opacity-80"
             >
               <Trash2 size={14} />
               Activiteit verwijderen

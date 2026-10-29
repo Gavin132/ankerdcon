@@ -75,13 +75,13 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
         {/* Chips: what it belongs to, which way, when, and at most one status. */}
         <div className="mb-4 flex flex-wrap items-center gap-1.5">
           {linkedMeal && (
-            <Link to={routes.meal.view(linkedMeal.id)} className={`hit-area ${heroChipClass()} transition-colors hover:bg-white/20`}>
+            <Link to={routes.meal.view(linkedMeal.id)} className={`hit-area ${heroChipClass()} transition-colors hover:bg-hero-ink/20`}>
               <Utensils size={11} />
               {linkedMeal.meal_name}
             </Link>
           )}
           {linkedEvent && !linkedMeal && (
-            <Link to={routes.event.view(linkedEvent.id)} className={`hit-area ${heroChipClass()} transition-colors hover:bg-white/20`}>
+            <Link to={routes.event.view(linkedEvent.id)} className={`hit-area ${heroChipClass()} transition-colors hover:bg-hero-ink/20`}>
               <CalendarDays size={11} />
               {linkedEvent.event_name}
             </Link>
@@ -131,7 +131,7 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
               <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-hero-ink/70">Van</p>
               <p className="truncate text-[15px] font-semibold text-hero-ink/90">{fromLabel}</p>
             </div>
-            <i aria-hidden className="ml-[4.5px] my-1 block h-4 w-0.5 bg-white/25" />
+            <i aria-hidden className="ml-[4.5px] my-1 block h-4 w-0.5 bg-hero-ink/25" />
             <span aria-hidden />
             <i aria-hidden className="mt-[5px] block h-[11px] w-[11px] rounded-full border-2 border-hero-ink bg-hero-ink" />
             <div className="min-w-0">
