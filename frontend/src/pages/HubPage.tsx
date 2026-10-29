@@ -198,7 +198,7 @@ export function HubPage() {
       )}
 
       {/* Two columns on wide screens: the trip on the left, what needs doing on the right. On a phone the two
-          columns dissolve (max-xl:contents) and "Voor jou" comes straight after the trip, before the shortcuts. */}
+          columns dissolve (max-xl:contents): the trip, the two ride buttons, "Voor jou", a meal today, the shortcuts. */}
       <div className="flex flex-col gap-5 xl:grid xl:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] xl:items-start xl:gap-8">
         <div className="min-w-0 space-y-5 max-xl:contents max-xl:space-y-0">
           {/* ── Upcoming events carousel ───────────────────────────────── */}
@@ -218,26 +218,26 @@ export function HubPage() {
             </motion.div>
           )}
 
-          {/* ── A mealplan today: shortcut to it, above the ride cards ── */}
-          <MealTodayCard
-            className="max-xl:order-3"
-            meals={meals ?? []}
-            myNames={[me?.name, ...(me?.aliases ?? [])].filter((n): n is string => !!n)}
-          />
-
-          {/* ── Quick ride shortcuts — switches to the shared restaurant ride
+          {/* ── Quick ride shortcuts, straight under the trip — switches to the shared restaurant ride
                 itself in the evening when a meal still needs transport. ── */}
           {event && !viewer && (
-            <motion.div variants={listItem} className="max-xl:order-4">
+            <motion.div variants={listItem} className="max-xl:order-2">
               <QuickRideTiles event={event} restaurantMeal={restaurantMeal} rides={rides ?? []} />
             </motion.div>
           )}
+
+          {/* ── A mealplan today: shortcut to it ── */}
+          <MealTodayCard
+            className="max-xl:order-4"
+            meals={meals ?? []}
+            myNames={[me?.name, ...(me?.aliases ?? [])].filter((n): n is string => !!n)}
+          />
         </div>
 
         <div className="min-w-0 space-y-5 max-xl:contents max-xl:space-y-0">
           {/* ── Voor jou ─────────────────────────────────────────────────── */}
           <ForYouPanel
-            className="max-xl:order-2"
+            className="max-xl:order-3"
             events={events ?? []}
             rides={rides ?? []}
             meals={meals ?? []}

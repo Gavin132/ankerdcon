@@ -37,8 +37,8 @@ working (`router.tsx`, `config/routes.ts` → `legacy`).
 
 ## Hub
 
-`pages/HubPage.tsx`. From the top (on a phone, "Voor jou" comes straight after the trip, before the meal and ride shortcuts; from `xl`
-the trip is the left column and "Voor jou" with the shortcuts the right one):
+`pages/HubPage.tsx`. From the top (on a phone the two ride buttons come straight after the trip, then "Voor jou", then a meal today and the shortcuts; from `xl`
+the trip, the ride buttons and a meal today are the left column and "Voor jou" with the shortcuts the right one):
 
 - **Story row**: an "add" tile and a ring per day with photos, unseen ones highlighted. It only shows
   once a day has photos or the trip is a day away; weeks before, it would be empty circles.
@@ -46,10 +46,10 @@ the trip is the left column and "Voor jou" with the shortcuts the right one):
   trip with a countdown, its days and who is going. More than one upcoming trip becomes a
   carousel (`UpcomingEventsCarousel.tsx`): swipe it or use the dots (`Pager`; the arrows show from `md`).
   It never moves by itself.
-- **Today's meals** (`MealTodayCard.tsx`) and **quick ride tiles**
-  (`QuickRideTiles.tsx`): offer or join a ride to/from the event or hotel. The
+- **Quick ride buttons** (`QuickRideTiles.tsx`, straight under the trip; **today's meals**, `MealTodayCard.tsx`, is the
+  shortcut card after it): offer or join a ride to/from the event or hotel. The
   direction and time are guessed from the clock (`utils/quickRide.ts`).
-  One grey line above the two tiles says what the sheets open on. "Meerijden" is the same day chips and Heen/Terug rows as the Vervoer sheet (`JoinRideModal.tsx` reuses
+  One grey line above the two buttons says what the sheets open on. "Meerijden" is the same day chips and Heen/Terug rows as the Vervoer sheet (`JoinRideModal.tsx` reuses
   `RideRow`). Where a new ride starts and ends is `defaultRideEnds` (`utils/rideLocations.ts`),
   shared with the Vervoer sheet: the venue on the event side and, on a hotel trip, the hotel on
   the other side except for the first Heen and the last Terug (those are from and to home).

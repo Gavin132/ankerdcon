@@ -42,11 +42,10 @@ All notable changes to Ankerd Con are documented here.
 - **The changelog page of the admin panel printed the date as 2026-10-22.**
 
 ### Changed
+- **The two ride buttons on the Hub are straight under the trip**, above "Voor jou".
 - **All buttons are the same height everywhere:** 44 px on a phone and 40 px on a computer (a few tight places, such
   as the buttons on a meal or ride header, a confirm in a table row or a small button in a card, use a slightly
   smaller one: 40 px and 36 px). The Crew buttons and the login buttons follow it too.
-- **The blue buttons sit slightly raised again:** a light edge on top, a darker edge underneath and a soft shadow;
-  pressed, they sink in. Only the blue buttons have it; every other button and card stays flat.
 - **"Rit aanbieden" and "Meerijden" on the Hub are two equal blue buttons** with the icon beside the name, so
   "Rit aanbieden" no longer breaks over two lines on a phone.
 - **Search no longer lists old rides.** Searching for a driver or a place finds rides from today onwards only.

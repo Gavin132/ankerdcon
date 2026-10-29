@@ -31,5 +31,5 @@ export function HeroActions({ children }: { children: ReactNode }) {
 
 /** "Aanmelden", "Afmelden", "Iemand aanmelden", "Stap in", "Uitstappen": every action on the hero is the compact blue button (`btn-compact`: 40 px, 36 px from `lg` up). */
 export function HeroButton({ className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button type="button" className={`btn-primary btn-on-hero btn-compact px-3.5 focus-visible:ring-hero-ink focus-visible:ring-offset-hero ${className}`} {...props} />;
+  return <button type="button" className={`btn-primary btn-compact px-3.5 focus-visible:ring-hero-ink focus-visible:ring-offset-hero ${className}`} {...props} />;
 }
