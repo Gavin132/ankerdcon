@@ -43,7 +43,7 @@ function UploadQueuedPreview() {
 
       <div className="relative flex h-9 w-9 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink-2">
         <UploadCloud size={16} className="text-warn" />
-        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-warn-fill px-1 font-mono text-[9px] font-bold text-warn-on">1</span>
+        <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-warn-fill px-1 font-mono text-xs font-bold text-warn-on">1</span>
       </div>
     </div>
   );

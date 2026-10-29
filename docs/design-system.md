@@ -149,9 +149,13 @@ uppercase labels for `section-label`, `label-quiet` kickers, chips and tags.
 label that names a group or a field is uppercase mono. So the day tiles on the Hub, the day cards of a trip and the
 date line of a cosplay card all read "Di", "Wo" and "di 17 · do 19 nov".
 
-**Nothing the member has to read is smaller than 12px.** Use `text-xs` or `text-[12px]` as the floor for
-labels, chips, hints and the tab bar. Smaller is only for the initials and "+3" counters inside a small
-avatar circle, which are part of the picture. (Not enforced by a tool: check new `text-[…px]` classes.)
+**Nothing the member has to read is smaller than 12px**, with no exception for tags, table headers, kickers, the
+sidebar wristband or the tab bar (a label that does not fit is shortened, not shrunk). Use `text-xs` (12px) as the
+floor. Smaller is only for the initials inside an avatar circle (`UserAvatar`, `AvatarStack`), which are part of the
+picture; a count in a circle (a filter badge) is 12px in a circle that grows to fit it. Sizes in use: 12 (`text-xs`:
+labels, chips, hints), 13 and 14 (rows, body), 15 and 16 (lead text, inputs), then the display sizes. The half sizes
+(12.5, 13.5, 14.5) are left over from older screens; do not add new ones. The layout check reports text under 12px
+(`small-text`); `npm run mobile-audit -- --info` lists it.
 
 ## Wording (Dutch UI text)
 
@@ -172,7 +176,7 @@ avatar circle, which are part of the picture. (Not enforced by a tool: check new
 Page head pattern (see `TripLayout`, `HubPage`):
 
 ```tsx
-<p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3">Kicker · context</p>
+<p className="label-quiet">Kicker · context</p>
 <h1 className="mt-1 font-display text-[34px] font-extrabold uppercase leading-[0.95] text-ink md:text-[42px]">Title</h1>
 ```
 
@@ -183,7 +187,7 @@ Page head pattern (see `TripLayout`, `HubPage`):
 - **Panel header:** `section-label` on the left, an optional `text-[12.5px] font-semibold text-brand-text` link on the right.
 - **List rows inside a panel:** `divide-y divide-line` or `border-t border-line`, row hover `hover:bg-sunken`.
 - **Icon square: all or none.** Use it only where every item of the same list or grid has one (the tiles on the Event page, the rows in Instellingen); a heading with an icon next to a heading without one reads as a mistake, and the square pushes the text in. Inside a sheet (Hotel, Praktisch) the headings have no icon. `flex h-8 w-8 items-center justify-center rounded-lg bg-sunken text-ink`; status versions are `icon-tile-ok`, `icon-tile-warn` and `icon-tile-bad` (colours and shape; add the size, `h-8 w-8`).
-- **Pill (status):** `inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11.5px] font-semibold` in the status colours above; neutral: `bg-sunken text-ink-2`.
+- **Pill (status):** `inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold` in the status colours above; neutral: `bg-sunken text-ink-2`.
 - **Tag:** `tag` (`rounded-md border border-line px-1.5`, small uppercase label, 12px). A chip is the filter pill below.
 - **One blue button per view.** The main action of a screen or sheet is `btn-primary`; the same action repeated in each section of a list ("Rit aanbieden" for Heen and for Terug) is `btn-secondary`, so the eye has one place to go.
 - **Buttons:** use `<Button>` (`primary` blue with an ink outline, `secondary`, `ghost`, `danger`; all flat, no shadows). For a raw element: `btn-primary px-4 py-2.5 text-sm` or `btn-secondary px-4 text-sm` (both defined in `index.css`; a disabled `btn-primary` turns flat grey by itself). On/off settings use `components/common/Switch.tsx`. Shared classes in `index.css`: `.pill` + `.pill-ok|warn|bad|neutral` (status: fine / waiting for you / you owe / info), `.chip` + `.chip-on|off` (filters), `.notice-warn` / `.notice-ok` (a bordered message block), `.icon-btn`, `.field-label` and `.field-error` (forms), `.stack-table` with `cell-main` and `cell-actions` (a data table that becomes cards on a phone: the name cell takes what is left of the line and may shrink, the actions never shrink; a `ConfirmInline` in the actions cell takes a line of its own), `.btn-danger` (the red confirm, same as `<Button variant="danger">`) and `.btn-danger-soft` (the quiet red one that opens the question), both 44 px tall. Popups are `TripSheet` (`Modal` is a thin wrapper around it). A control under 44 px gets `hit-area`.
