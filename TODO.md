@@ -16,12 +16,8 @@ ticked off — `CHANGELOG.md` and git history are the record.
 Open items before or around the next deploy. New migrations go here until they are run, in
 the order they must be run, with the Supabase SQL editor; see
 [docs/deployment.md](docs/deployment.md#database-migrations) for how to check what has already
-been applied. (Migrations v2.19 (apart from its last line, below) and v2.25 up to v2.40 are done.)
+been applied. (Migrations v2.19 (apart from its last line, below) and v2.25 up to v2.41 are done.)
 
-- [ ] Run `db/migrations/migration_v2.41_story_thumbnails.sql` (`story_photos.thumb_url`, `preview_url`), then make the
-      thumbnails of the photos already in stories: `cd backend && python -m scripts.backfill_story_previews`
-      (inside the backend container; add a number to try a few first). Until then grids load the full-size
-      photos, as before. Safe to run again.
 - [ ] Make the event covers that are already uploaded lighter (new ones are resized on upload): in `backend/`,
       `python -m scripts.shrink_event_covers --dry-run` to see which, then without `--dry-run`; add
       `--delete-old` to remove the big originals as well. Until then the Hub and agenda load them at full size.
@@ -111,6 +107,5 @@ leaked signing secret. What to change:
 - [ ] Migration file names are inconsistent (`migration_v1.1.sql` is titled v2.2
       inside, there is no v2.24). Rename or index them; see the table in
       [docs/database.md](docs/database.md#migrations).
-- [ ] Frontend tests: `npm test` runs Vitest, but only the car-loading maths
-      (`utils/carBalance.test.ts`) is covered. The backend has 57 tests (settle-up maths and flow, admin guards, CDN
-      classification, link handling).
+- [ ] ESLint is not set up: `npm run lint` fails because the repo has no ESLint config file. Add one (the
+      plugins are already in `devDependencies`) and fix what it finds, or drop the script.
