@@ -23,6 +23,7 @@ import { getNow } from "../../store/time.store";
 import { parseEventDate, splitDateTime, toDateKey, todayKey } from "../../utils/date";
 import { dayShort } from "../../utils/multiDay";
 import { rideHow } from "../../utils/transportView";
+import { practicalTopics } from "../../utils/practicalInfo";
 import { countOf, formatAmount, formatBytes } from "../../utils/format";
 import { defaultTripDayId, tripGaps, tripInfo, tripMeals, tripRides, tripOutliers, tripRoomGaps, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
 import { groupPeople } from "../../utils/people";
@@ -516,14 +517,7 @@ export function hasPracticalInfo(info: CalendarEvent): boolean {
 
 export function PracticalTile({ info, trip, onOpen, wide }: { info: CalendarEvent; trip: Trip; onOpen: () => void; wide?: boolean }) {
   const { data: users = [] } = useUsers();
-  const topics = [
-    info.parking_info && "parkeren",
-    info.what_to_bring && "meenemen",
-    info.locker_info && "lockers",
-    (info.ticket_url || (info.ticket_types?.length ?? 0) > 0) && "tickets",
-    info.website && "website",
-    tripOutliers(trip, users).length > 0 && "aanwezigheid",
-  ].filter(Boolean) as string[];
+  const topics = practicalTopics(info, tripOutliers(trip, users).length > 0);
 
   return (
     <TripTile icon={Info} label="Info" onOpen={onOpen} size={wide ? "wide" : "small"}>

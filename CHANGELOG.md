@@ -16,6 +16,7 @@ All notable changes to Ankerd Con are documented here.
 
 ### Fixed
 
+- **The Info tile said "0 onderwerpen" for an event with only a ticket sale date.** It counts that as tickets now.
 - **Admin: deleting an activity left its ride to the restaurant behind**, with the people still signed up in it. The ride goes
   with the activity, as when its maker deletes it.
 - **Deactivating members in bulk did not take them off their events.** The selection strip only switched the account off,
