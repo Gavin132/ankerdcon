@@ -133,7 +133,10 @@ the trip, the ride buttons and a meal today are the left column and "Voor jou" w
   to confirm and warns when others have joined. `DELETE /api/rides/{id}` is for the driver
   or an admin.
 - **Restaurant rides** are created from a meal that needs transport and can have
-  several cars, each with its own seats (`RestaurantRideGroup.tsx`, `CarCard.tsx`).
+  several cars, each with its own seats (`RestaurantRideGroup.tsx`, `CarCard.tsx`). "Who has no car yet" is one
+  function, `restaurantCarGaps` (`utils/restaurantCars.ts`), used by the Hub's Voor jou, the ride/meal page and the
+  Vervoer sheet. It counts people, not names, so someone signed up under a rename or their Discord username is neither
+  counted twice nor missed when they are in a car under another name.
 - **Car loading advice** (Heen and Terug, per day): from the number of people signed up for
   that day and the cars offered, each car shows how many it should leave with so nobody is
   left behind (`utils/carBalance.ts`). Cars go in departure order; whatever an early car

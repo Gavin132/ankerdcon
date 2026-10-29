@@ -25,6 +25,7 @@ import {
 import { useRestaurantCars } from "../../hooks/useRestaurantCars";
 import { exportRideToIcs } from "../../utils/ics";
 import { getRideStatus } from "../../utils/rides";
+import { restaurantCarGaps } from "../../utils/restaurantCars";
 import { toast } from "../../store/toast.store";
 import type { Meal, Ride, User } from "../../types";
 import { EmptyState } from "../common/EmptyState";
@@ -39,7 +40,7 @@ interface Props {
 export function RestaurantDetailActions({
   ride,
   userNames,
-  users: _users,
+  users,
   linkedMeal,
 }: Props) {
   const [driverOpen, setDriverOpen] = useState(false);
@@ -65,10 +66,8 @@ export function RestaurantDetailActions({
   const drivers = ride.restaurant_drivers ?? [];
   const attendees = linkedMeal ? (linkedMeal.participants ?? []) : ride.passengers;
   const driverNames = new Set(drivers.map((d) => d.name));
-  const assignedPax = new Set(drivers.flatMap((d) => d.passengers));
-  const unassigned = attendees.filter(
-    (a) => !driverNames.has(a) && !assignedPax.has(a),
-  );
+  // People, not names: the same worked out for the Hub and the Vervoer sheet (`restaurantCarGaps`).
+  const { unassigned, hasPassengers } = restaurantCarGaps(attendees, drivers, users);
   const allParticipants = Array.from(
     new Set([...attendees, ...drivers.map((d) => d.name)]),
   );
@@ -154,7 +153,7 @@ export function RestaurantDetailActions({
 
   const allClear =
     drivers.length > 0 &&
-    attendees.filter((a) => !driverNames.has(a)).length > 0 &&
+    hasPassengers &&
     unassigned.length === 0;
 
   return (
@@ -265,17 +264,17 @@ export function RestaurantDetailActions({
               </p>
             </div>
             <div className="space-y-2">
-              {unassigned.map((name) => (
-                <div key={name} className="flex items-center justify-between gap-3">
+              {unassigned.map((person) => (
+                <div key={person.name} className="flex items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-2">
-                    <AvatarStack names={[name]} size="sm" ringClass="!border-0" />
-                    <span className="truncate text-sm font-semibold text-ink">{name}</span>
+                    <AvatarStack names={[person.name]} size="sm" ringClass="!border-0" />
+                    <span className="truncate text-sm font-semibold text-ink">{person.name}</span>
                   </div>
                   {canAct && drivers.length > 0 && (
                     <button
                       type="button"
                       onClick={() => {
-                        setAssignPersonName(name);
+                        setAssignPersonName(person.names[0]);
                         setAssignPersonDriver("");
                         setAssignPersonOpen(true);
                       }}

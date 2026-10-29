@@ -16,6 +16,7 @@ All notable changes to Ankerd Con are documented here.
 
 ### Fixed
 
+- **"Nog geen auto" for a restaurant counted names, not people.** Someone on the list under two names (a rename or their Discord username) was counted twice, or shown without a car while they sat in one under their other name. The Hub, the ride page and the Vervoer sheet now work it out the same way, per person.
 - **Search still found cosplays of a concert**, and led to a page without a Cosplay sheet. A concert has no cosplay, so those no longer show up, and an old link to one opens the event's overview.
 - **An urgent announcement could sit under an info one.** The banners at the top now stack urgent first, then warning, then info, newest first within each.
 - **After a rename you could no longer delete your own old things.** An old ride, expense, cosplay or photo of yours, and the

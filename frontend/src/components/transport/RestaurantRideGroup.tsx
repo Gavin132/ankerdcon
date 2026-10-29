@@ -12,6 +12,7 @@ import { useCurrentUser, useUsers } from "../../hooks/useUsers";
 import { useRestaurantCars } from "../../hooks/useRestaurantCars";
 import { formatTime } from "../../utils/format";
 import { getRideStatus } from "../../utils/rides";
+import { restaurantCarGaps } from "../../utils/restaurantCars";
 import { listItem } from "../../utils/motion";
 import { routes } from "../../config/routes";
 import { useIsViewer } from "../../hooks/useIsViewer";
@@ -186,9 +187,8 @@ export function RestaurantRideGroup({ ride, userNames }: { ride: Ride; userNames
   const canAct = status !== "past" && status !== "recent";
 
   const drivers = ride.restaurant_drivers ?? [];
-  const driverNames = new Set(drivers.map((d) => d.name));
-  const assignedPax = new Set(drivers.flatMap((d) => d.passengers));
-  const unassigned = cars.attendees.filter((a) => !driverNames.has(a) && !assignedPax.has(a));
+  // People, not names: the same worked out for the Hub and the ride page (`restaurantCarGaps`).
+  const { unassigned } = restaurantCarGaps(cars.attendees, drivers, users);
   const canOfferRide = canAct && !viewer && !!linkedMeal && !!linkedEvent;
 
   const resolve = (stored: string) =>

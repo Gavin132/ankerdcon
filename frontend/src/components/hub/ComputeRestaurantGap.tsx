@@ -1,13 +1,14 @@
-import type { Meal, Ride, RestaurantGap } from "../../types";
+import type { Meal, Ride, RestaurantGap, User } from "../../types";
 import { getRideStatus } from "../../utils/rides";
+import { restaurantCarGaps } from "../../utils/restaurantCars";
 
 /**
  * Who going to a restaurant still has no car. Mirrors the restaurant car list (RestaurantDetailActions) exactly
  * (drivers come from `restaurant_drivers`; the people going are the linked
  * meal's participants, else the ride's own passengers) so the Hub can never
- * disagree with the ride card.
+ * disagree with the ride card. People are counted, not names (`restaurantCarGaps`).
  */
-export function computeRestaurantGaps(rides: Ride[], meals: Meal[] = []): RestaurantGap[] {
+export function computeRestaurantGaps(rides: Ride[], meals: Meal[] = [], users: User[] = []): RestaurantGap[] {
   return rides
     .filter((r) => r.direction === "Restaurant")
     .flatMap((ride) => {
@@ -16,9 +17,7 @@ export function computeRestaurantGaps(rides: Ride[], meals: Meal[] = []): Restau
       const drivers = ride.restaurant_drivers ?? [];
       const meal = ride.linked_meal_id ? meals.find((m) => m.id === ride.linked_meal_id) : undefined;
       const attendees = meal ? (meal.participants ?? []) : ride.passengers;
-      const driverNames = new Set(drivers.map((d) => d.name));
-      const assignedPax = new Set(drivers.flatMap((d) => d.passengers));
-      const unassigned = attendees.filter((a) => !driverNames.has(a) && !assignedPax.has(a));
+      const unassigned = restaurantCarGaps(attendees, drivers, users).unassigned.map((person) => person.name);
       if (unassigned.length === 0) return [];
       return [
         {
