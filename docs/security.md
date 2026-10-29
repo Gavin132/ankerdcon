@@ -64,7 +64,7 @@ Only people who sign up with Google can link Discord (Instellingen), not the oth
 - An admin can create a **stub profile** (a placeholder) ahead of time. It is only claimed by a Discord
   account that is on the whitelist with a matching id; otherwise the person gets a profile of their own and
   an admin merges the placeholder into it by hand ([below](#placeholders-and-merging)).
-- Deactivating or deleting a member cuts off access at once and sends them a DM.
+- Deactivating or deleting a member cuts off access at once, takes them (and their former names) off every ride, activity, trip day, hotel room and restaurant car, and sends them a DM. Deactivating in bulk does the same as the switch in the edit sheet.
 
 ## Authorization
 
