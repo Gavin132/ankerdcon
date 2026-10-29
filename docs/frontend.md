@@ -161,8 +161,9 @@ disappears the instant the browser's `online` event fires. The full picture is i
 ## Conventions
 
 - **Dutch user-facing text**, English code. Errors say what went wrong and what to do.
-- **Tokens, not colours.** Use `bg-surface`, `text-ink-2`, `border-line` so dark mode works
-  by itself ([design-system.md](design-system.md)).
+- **Tokens, not colours.** Use `bg-surface`, `text-ink-2`, `border-line`, `text-bad`, `bg-warn-soft` so dark mode works
+  by itself, and never a palette class (`bg-rose-100`), `text-white` or a hex value; `npm run check-colors` fails on them
+  ([design-system.md](design-system.md#colours)).
 - **Names resolve through aliases.** A stored name may be a former name; look it up with
   `name`, `discord_username` or `aliases` (see `UserAvatar`, `TripParticipants`).
 - **One source for URLs and keys:** `routes`, `apiRoutes`, `QUERY_KEYS`.
@@ -179,5 +180,5 @@ disappears the instant the browser's `online` event fires. The full picture is i
    in `router.tsx` and `config/routes.ts`.
 3. If it opens over a page, use `TripSheet`. If it is admin-only, add it to
    `pages/admin/constants.ts` (navigation) and the admin router group.
-4. `npx tsc --noEmit`, `npm run build`, and the backend tests.
+4. `npx tsc --noEmit`, `npm run build`, `npm run check-colors`, and the backend tests.
 5. Update [api.md](api.md), [features.md](features.md) and `CHANGELOG.md`.

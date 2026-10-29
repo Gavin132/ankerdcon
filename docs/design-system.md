@@ -28,12 +28,12 @@ components in use, look at `pages/trip/TripOverviewTab.tsx` and `components/trip
 - **Blue (`#57B2F9`) is the brand fill**, for the main action and the one bold
   element. Text on the brand fill is ink (`text-brand-on`), never white. The fill is
   too light to use as text, so brand-coloured text and links use `text-brand-text`
-  (`#0D75D1` light, `#89CAFE` dark).
+  (`#0C69BB` light, `#89CAFE` dark).
 - **No floating UI.** No floating action buttons and no sticky "add" bars over the
   content. A page's main action lives in its content (a header row above the list) or in
   the top bar (`HeaderAction`). Things that open over a page are sheets (see below).
-- **Status colours are for status only:** emerald = ok/paid, amber = needs
-  attention, rose = problem/destructive. Don't use violet, indigo, purple, blue or
+- **Status colours are for status only:** `ok` (emerald) = ok/paid, `warn` (amber) = needs
+  attention, `bad` (rose) = problem/destructive. Don't use violet, indigo, purple, blue or
   teal as decoration. Where a component used them to tell categories apart,
   prefer ink/grey plus an icon. Keep a colour only when it carries meaning the user
   relies on (a user's own avatar colour, a badge's own colour).
@@ -64,11 +64,69 @@ variant is needed with them.
 | `bg-brand`, `text-brand-on` | brand blue fill with ink text |
 | `bg-brand-soft`, `text-brand-text` | soft blue background, blue text/links |
 | `bg-hatch-surface` | striped surface for travel days |
-| `text-ok` / `text-warn` / `text-bad`, `bg-ok-soft` / `bg-warn-soft` / `bg-bad-soft` | status text and its tint (emerald / amber / rose); they switch in dark mode by themselves, so no `dark:` twin. Use these, not raw `emerald-*`, `amber-*` or `rose-*`, in new code |
+| `text-ok` / `text-warn` / `text-bad`, `bg-ok-soft` / `bg-warn-soft` / `bg-bad-soft` | status text and its tint (emerald / amber / rose); they switch in dark mode by themselves, so no `dark:` twin |
+| `border-ok-line` / `-warn-line` / `-bad-line`, `bg-ok-fill` / `-warn-fill` / `-bad-fill`, `text-ok-on` / `-warn-on` / `-bad-on` | a notice's border, a solid dot, bar, banner or button, and the text on that solid fill |
+| `bg-scrim/50` | the dark layer behind a sheet, dialog or viewer |
+| `bg-hero`, `text-hero-ink`, `text-hero-warn`, `text-hero-bad`, `bg-hero-ink/10` | the always-dark hero panel and what sits on it (the same in both themes) |
+| `bg-avatar-1` .. `bg-avatar-6`, `text-avatar-on` | the fill of an initial without a photo or colour of its own (picked by name), and the white initial |
 
-`slate-*` and `sky-*` are remapped to the new greys and the brand blue, so existing classes
-already look right; converting them to tokens is still preferred when you touch a
-line, because tokens also handle dark mode.
+**Every colour comes from a token** (the next section); `npm run check-colors` fails on a raw palette class.
+`slate-*` and `sky-*` stay remapped in `tailwind.config.ts` (to the greys and the brand blue) but nothing in the
+app uses them any more; the check counts them, and new code uses the tokens.
+
+## Colours
+
+All colours of the UI are CSS variables in `frontend/src/index.css` (`:root` for light, `.dark` for dark, channels
+without `rgb()` so `bg-ink/10` works), exposed as Tailwind colours in `frontend/tailwind.config.ts`. A component
+names the meaning (`text-bad`, `bg-warn-soft`), never a palette colour and never a `dark:` twin of one. A vitest test
+(`src/styles.tokens.test.ts`) reads `index.css` and fails when a text colour is under 4.5:1 on the background it is
+used on, in either theme; `npm run check-colors` (`frontend/scripts/check-colors.mjs`) fails on a raw palette class
+(`bg-rose-100`, `text-white`, `from-violet-500` ...), a hex colour or an `rgb(1, 2, 3)` in `src`.
+
+| Token | Light | Dark | Use |
+| --- | --- | --- | --- |
+| `paper` | `#F5F8F9` | `#0D1216` | page background |
+| `surface` | `#FFFFFF` | `#141B20` | cards, sheets, menus, inputs |
+| `sunken` | `#EBF1F3` | `#10161A` | wells, hover rows, skeletons |
+| `ink` / `ink-2` / `ink-3` | `#0F1519` / `#4A5A63` / `#606F77` | `#E6F0F3` / `#A0B0B8` / `#7D8D95` | primary, secondary, muted text and icons |
+| `line` | `#D5DEE2` | `#243039` | borders and dividers |
+| `outline` | `#0F1519` | `#BFD3DA` | the bold 2px outline |
+| `brand` (+ `brand-on`) | `#57B2F9` (ink) | same | the one fill, with its text; follows the accent colour |
+| `brand-soft` / `brand-text` | `#DCEEFB` / `#0C69BB` | `#0F2A40` / `#89CAFE` | tint, and brand-coloured text and links |
+| `ok` / `ok-soft` / `ok-line` | `#047857` / `#D1FAE5` / `#A7F3D0` | `#6EE7B7` / `#13332F` / `#1D5244` | done, paid, received: text, tint, border |
+| `ok-fill` / `ok-on` | `#10B981` / `#0F1519` | same | solid dot or bar, and text on it |
+| `warn` / `warn-soft` / `warn-line` | `#92400E` / `#FEF3C7` / `#FCD34D` | `#FCD34D` / `#362F1D` / `#58421A` | needs attention, waiting |
+| `warn-fill` / `warn-on` | `#FBBF24` / `#0F1519` | same | banner, solid dot or badge, and text on it |
+| `bad` / `bad-soft` / `bad-line` | `#BE123C` / `#FFE4E6` / `#FDA4AF` | `#FDA4AF` / `#362029` / `#703D48` | problem, you owe, destructive |
+| `bad-fill` / `bad-on` | `#E11D48` / `#FFFFFF` | same | the danger button, error banner and toast, solid bar, and text on it |
+| `hero` / `hero-ink` | `#0F1519` / `#E6F0F3` | same | the always-dark hero panel and its text |
+| `hero-warn` / `hero-bad` | `#FDE68A` / `#FECDD3` | same | warn and bad chip text on the hero |
+| `scrim` | `#080C0F` | same | `bg-scrim/50` behind sheets and viewers; a caption on a photo |
+| `avatar-1` .. `avatar-6` (+ `avatar-on`) | `#0D75D1` `#047857` `#B45309` `#BE123C` `#4A5A63` `#A21CAF` (white) | same | fill of an initial without a photo or colour of its own |
+
+Which token: pills and chips are `.pill-ok|warn|bad`, a bordered message is `.notice-ok|warn|bad`, an icon square is
+`.icon-tile-ok|warn|bad`, the destructive buttons are `<Button variant="danger">` / `.btn-danger`. There is no "info" colour: a
+neutral message is `bg-sunken text-ink-2` and the app's own colour is `brand`. Categories (event types, meal types,
+ride directions) are told apart by words and icons, not by colour.
+
+**Stays hard-coded** (each is in `ALLOWED` in `scripts/check-colors.mjs` with its reason; add a line there, not a
+workaround): colours members choose and that are stored as data (`NAME_COLORS`, `BANNER_COLORS`, the colour picker's
+starting value; event-group and badge colours come from the database); the swatches of the accent picker
+(`ACCENTS` in `theme.store.ts`); brand marks of third parties (the Google logo in `LoginForm`); the `theme-color`
+meta tag, the splash screen and the manifest (the browser needs a literal); canvas code (`videoPoster.ts`); the map
+pins and the story viewer's drag fade (Leaflet HTML and framer-motion need literal values); the QR code on the
+Instellingen page (black on white, to scan); `src/dev/` and tests. The places in `index.css` that keep a literal outside
+the token blocks are the checkmark SVGs of the checkbox (data URIs cannot read variables) and, between `colours:allowed` markers, the dark map-tile background.
+
+**Names the user picks are not trusted on either theme.** A stored name colour is only a preference, and a dark
+purple vanishes on the dark page. `readableNameColor(color, isDark)` (`utils/profile.ts`) gives the colour back
+unchanged when it has 4.5:1 against the page, and otherwise the same hue moved lighter or darker; use it wherever a
+member's colour is drawn as *text*. As a background (an avatar) the colour is used as picked, with white initials.
+
+**Adding a colour:** first look whether `ok`, `warn`, `bad`, `brand` or `ink` already means it. If a new one is
+needed, add the channels to `:root` and `.dark` in `index.css` (a pair for text and tint, 4.5:1), name it in
+`tailwind.config.ts`, add its pairs to `src/styles.tokens.test.ts`, put a row in the table above, and use the class
+in components. A new *accent colour* for the personal setting is a `[data-accent]` block (see Rules).
 
 ## Type
 
@@ -147,8 +205,8 @@ Page head pattern (see `TripLayout`, `HubPage`):
   tall (`MealHero`, `RideHero`). The row at the bottom with the faces of who is on the list, their count and the
   actions is `HeroPeople` (`components/common/HeroPeople.tsx`: tap for the names, tap a name for the profile popup).
   A hero has **one** blue button and at most **one** status chip (urgent, then soon, then action required); text on
-  it is `text-hero-ink/75` or stronger. The warn and bad chip tones keep `amber-200` / `rose-200` because the panel is
-  dark in both themes (the `text-warn` tokens switch with the theme and would be dark on dark). The facts of an
+  it is `text-hero-ink/75` or stronger. The warn and bad chip tones are `text-hero-warn` / `text-hero-bad` because the
+  panel is dark in both themes (the `text-warn` tokens switch with the theme and would be dark on dark). The facts of an
   activity (when, where, price) are plain icon lines, not chips; chips are for status. A page with a hero
   has no second heading: its `DetailTopbar` gets `plainTitle` and the kind of page ("Activiteit", "Rit").
 - **Sheets** (`TripSheet`): the standard way to open something over a page. `Modal` is a thin wrapper and passes its `footer` on, so the main button of a small question sits under the scrolling body like everywhere else. A bottom sheet with a
@@ -163,7 +221,7 @@ Page head pattern (see `TripLayout`, `HubPage`):
   the open sheets and their heights; `TripSheet` does the drawing, so no caller has to do anything.
   A sheet over something that is not a `TripSheet` still needs `stacked`.
 - **Modals, menus, popovers:** `bg-surface border-1.5 border-line`, may keep
-  `shadow-xl` (floating layers are the only thing with a shadow). Backdrop `bg-slate-950/50`, no blur.
+  `shadow-xl` (floating layers are the only thing with a shadow). Backdrop `bg-scrim/50`, no blur.
 - **Empty states:** `<EmptyState icon title description action>`: icon in an `h-12 w-12 rounded-xl bg-sunken text-ink-3` square, `text-sm font-semibold text-ink` title, `text-xs text-ink-3` body. `compact` (`py-8` instead of `py-16`) inside a card or a table cell.
 - **Asking before a delete:** a delete that takes other things with it (a day, a selection of rows) goes through `askConfirm` (`store/confirm.store.ts`, shown by `ConfirmHost`): a dialog with "Annuleren" and a red "Verwijderen" (`destructive: true`). Taking one row out of a list inside a card or table uses the two-step `ConfirmInline` (`pages/admin/components/`): the question, "Annuleren", the red confirm, all 44 px tall.
 - **Skeletons:** `bg-sunken animate-pulse`.

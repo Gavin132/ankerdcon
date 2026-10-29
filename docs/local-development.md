@@ -240,8 +240,9 @@ API and the frontend build read that file.
 | `backend/` | `python -m pytest` | 57 tests: settle-up maths and flow, admin guards, link handling, CDN classification. They run against an in-memory stand-in for Supabase and need no network. Install the tools with `pip install -r backend/requirements-dev.txt`. |
 | `frontend/` | `npx tsc --noEmit` | type-check |
 | `frontend/` | `npm run build` | type-check plus production build. Output goes to `backend/dist` (gitignored), which the backend then serves. |
-| `frontend/` | `npm test` | Vitest. One test file so far: the car-loading maths in `src/utils/carBalance.test.ts`. |
+| `frontend/` | `npm test` | Vitest: the car-loading maths, avatars, back stack, people, and the colours (`src/styles.tokens.test.ts` checks the contrast of every text/background token pair in `index.css`, light and dark; `src/utils/profile.test.ts` the readable name colour). |
 | `frontend/` | `npm run lint` | ESLint |
+| `frontend/` | `npm run check-colors` | fails on a hard-coded colour in `src`: a Tailwind palette class (`bg-rose-100`, `text-white`), a hex or `rgb(1, 2, 3)`. Colours are tokens (`text-bad`, `bg-warn-soft`); the few legitimate literals are in `ALLOWED` in `scripts/check-colors.mjs` ([design-system.md](design-system.md#colours)). |
 
 There are hardly any frontend tests. To look at a component in isolation without
 logging in, render it from a throwaway page with its data preloaded into a

@@ -48,6 +48,8 @@ is easy to get wrong.
 
 - Backend: `cd backend && python -m pytest`. Add a test for a bug you fix.
 - Frontend: `cd frontend && npx tsc --noEmit && npm run build`.
+- **Colours: `cd frontend && npm run check-colors`** fails on a raw palette class, `text-white` or a hex literal; use the tokens
+  (`text-ok`, `bg-warn-soft`, `bg-scrim/50` ...), `docs/design-system.md#colours`.
 - **A layout change: `npm run mobile-audit`** (dev server running): it opens every screen at phone widths on mock data
   and reports clipped text, anything past the screen edge and controls too small to hit. Add a new page or sheet to
   `scripts/audit-screens.mjs` (`docs/local-development.md#mock-mode`).

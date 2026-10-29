@@ -35,6 +35,13 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **Colours are the same everywhere, in light and in dark mode.** Warnings, errors, "ok" messages, the red delete
+  buttons, the coloured banners, the chips on the dark headers and the initials of members without a photo now use one
+  shared set of colours instead of being coloured one by one, so a screen can no longer look different in dark mode
+  than the rest. Brand-coloured text on a light blue background is a touch darker so it reads better.
+- **Your name colour is readable on every theme.** A name colour that would disappear on the dark (or light) page, like
+  a dark purple on the dark profile page, is shown a bit lighter (or darker) there; the colour you picked is not
+  changed.
 - **Admin: Betalingen, Aankondigingen and the other pages.** Betalingen shows the three totals in one card instead of
   three stacked cards and sets a share's status with a list (Openstaand, Geclaimd, Bevestigd) instead of three lettered
   circles. Aankondigingen shows the type as a pill with words, a switch for "Actief" and two lines of the message; its
