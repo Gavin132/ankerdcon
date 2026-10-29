@@ -41,7 +41,6 @@ import {
   updateAdminMeal,
   updateAdminRide,
   updateAdminUser,
-  adminUpdateHotelRoom,
   adminDeleteHotelRoom,
   updateAdminExpense,
   deleteAdminExpense,
@@ -53,7 +52,6 @@ import {
   type AdminCreateMealPayload,
   type AdminCreateUserPayload,
   type AdminUpdateEventPayload,
-  type AdminUpdateHotelRoomPayload,
   type AdminUpdateMealPayload,
   type AdminUpdateRidePayload,
   type AdminUpdateUserPayload,
@@ -394,18 +392,6 @@ export function useAdminBulkRsvpEvent() {
 }
 
 // ── Hotel Room (admin) hooks ──────────────────────────────────────────────────
-
-export function useAdminUpdateHotelRoom() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ eventId, roomId, payload }: { eventId: string; roomId: string; payload: AdminUpdateHotelRoomPayload }) =>
-      adminUpdateHotelRoom(eventId, roomId, payload),
-    onSuccess: (_d, { eventId }) => {
-      qc.invalidateQueries({ queryKey: ["hotel-rooms", eventId] });
-      qc.invalidateQueries({ queryKey: ["admin", "hotel-rooms", eventId] });
-    },
-  });
-}
 
 export function useAdminDeleteHotelRoom() {
   const qc = useQueryClient();

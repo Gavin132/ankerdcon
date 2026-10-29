@@ -17,7 +17,7 @@ is described at the bottom, in case it needs to come back.
   - `act_for_anyone(current_user, requested)` returns the requested name, or your own
     when none is given. Used for the sign-ups above: meals (RSVP, cancel), rides (claim or
     leave a seat, restaurant drivers and assignments), trip days (RSVP, leave) and hotel
-    rooms (create with occupants, assign, leave).
+    rooms (create with occupants, assign, leave, and the room form's list of occupants, `PUT /calendar/{day}/hotel-rooms/{room}`).
   Adding a name (as opposed to taking one off) must be a member's name, checked against the
     profiles, so nobody can fill a ride or a room with made-up names.
   - `act_as(current_user, requested)` is the strict one: your own name (or a former name or Discord username

@@ -124,6 +124,22 @@ class CreateHotelRoomRequest(BaseModel):
     occupants: list[str] = []
 
 
+class UpdateHotelRoomRequest(BaseModel):
+    """Editing a room. A field sent as null is cleared, a field left out is kept; `occupants` replaces the whole
+    list (null or left out keeps it)."""
+    room_number: str | None = None
+    floor: str | None = None
+    instructions: str | None = None
+    capacity: int | None = None
+    occupants: list[str] | None = None
+
+    @model_validator(mode="after")
+    def _validate(self) -> "UpdateHotelRoomRequest":
+        if self.capacity is not None and not 1 <= self.capacity <= 20:
+            raise ValueError("Capaciteit moet tussen 1 en 20 liggen.")
+        return self
+
+
 MAX_ROOMS_PER_REQUEST = 100
 
 

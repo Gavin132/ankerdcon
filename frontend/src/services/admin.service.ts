@@ -349,23 +349,6 @@ export async function bulkRsvpAdminEvent(
 
 // ── Hotel Rooms (admin) ───────────────────────────────────────────────────────
 
-export interface AdminUpdateHotelRoomPayload {
-  /** `null` clears the field; leaving it out keeps what is there. */
-  room_number?: string | null;
-  floor?: string | null;
-  instructions?: string | null;
-  capacity?: number | null;
-  occupants?: string[];
-}
-
-export async function adminUpdateHotelRoom(
-  eventId: string,
-  roomId: string,
-  payload: AdminUpdateHotelRoomPayload,
-): Promise<void> {
-  await apiClient.put(apiRoutes.admin.events.hotelRoomById(eventId, roomId), payload);
-}
-
 export async function adminDeleteHotelRoom(eventId: string, roomId: string): Promise<void> {
   await apiClient.delete(apiRoutes.admin.events.hotelRoomById(eventId, roomId));
 }

@@ -185,14 +185,6 @@ class BulkDeleteEventGroupsRequest(BaseModel):
     group_ids: list[str]
 
 
-class AdminUpdateHotelRoomRequest(BaseModel):
-    room_number: Optional[str] = None
-    floor: Optional[str] = None
-    instructions: Optional[str] = None
-    capacity: Optional[int] = None
-    occupants: Optional[list[str]] = None
-
-
 class BulkRsvpRequest(BaseModel):
     user_names: list[str]
 

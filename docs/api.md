@@ -79,6 +79,7 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `GET /calendar/feed.ics?token=` | *public, by token* | the `.ics` feed |
 | `GET /calendar/{day}/hotel-rooms` | member | rooms of the trip |
 | `POST /calendar/{day}/hotel-rooms`, `…/bulk` | member | create a room, or many |
+| `PUT /calendar/{day}/hotel-rooms/{room}` | member | edit a room: number, floor, notes, capacity and `occupants` (the whole list; new names must be members; at most `capacity` people). `null` clears a field, leaving it out keeps it |
 | `POST /calendar/{day}/hotel-rooms/{room}/assign`, `…/leave` | member | take or leave a bed |
 
 ### Rides — `/rides`
@@ -252,7 +253,7 @@ and description are left out. Only registered when the built frontend exists.
 | Meal categories (`/admin/meal-categories`) | list, create, update (name, order, switches), delete (409 while in use) |
 | Rides, meals | list, create, update, delete, bulk delete, remove one passenger or participant |
 | Events | list events and days, create, update, delete, add a day, update or delete a day, remove one participant, bulk RSVP, bulk delete, bulk set group |
-| Hotel rooms | list, update, delete |
+| Hotel rooms | list, delete (editing is for every member, see Calendar) |
 | Event groups | list, create, update, delete, bulk delete |
 | Badges | list, create, update, delete, reorder |
 | Expenses | update (its linked event), delete, `PUT /admin/expense-shares/{id}` to force a status. Refused with 409 while the expense or share is in an open settlement. |

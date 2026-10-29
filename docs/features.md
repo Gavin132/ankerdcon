@@ -193,6 +193,13 @@ numbers at check-in) and can have a capacity, so rooms can be created in bulk
 ("10 rooms of 2") and self-assignment stops when a room is full. "Kamer X" labels
 elsewhere come from these assignments (`hooks/useTripRooms.ts`).
 
+Who may do what: every member sees the rooms, creates them (one or in bulk), **edits any room**
+(number, floor, notes, capacity and who sleeps in it, so they can put other members in or take them out)
+and signs someone up or off ("Ik slaap hier", "Verlaat kamer"). Only an admin deletes a room. A read-only member
+(*kijker*) can do none of the writes. The names in a room have to be members, and a room cannot hold more people than
+its capacity. The rule is written down once, above the hotel routes in `backend/app/routers/calendar.py`
+(`update_hotel_room`); the sheet shows the pen to everyone who may use it and the bin to admins.
+
 ## Cosplay
 
 `pages/trip/TripCosplayTab.tsx`, `components/cosplay/`, `backend/app/routers/cosplays.py`.

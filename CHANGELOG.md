@@ -74,6 +74,11 @@ All notable changes to Ankerd Con are documented here.
 - **The changelog page of the admin panel printed the date as 2026-10-22.**
 
 ### Changed
+- **Every member can edit a hotel room and put other members in it.** The pen on a room in the Hotel sheet is no longer
+  only for admins: change the room number, floor, notes and number of people, and choose who sleeps there (so you can sign
+  up others, or take them off). Only members can be chosen, and a room cannot get more people than its capacity. Deleting
+  a room is still for admins, and so is everything for a read-only member: they can only look.
+- **The Hotel sheet's buttons are hidden for a read-only member**, who could not use them anyway.
 - **The Info tile with a "Let op" no longer lists the topics under the warning.** It repeated the headings you see
   when you open the tile. Without a "Let op" the tile still shows the count and the topics.
 - **On a computer, the cards in the Hub carousel are all the same height**, so the dots, the arrows and the ride

@@ -74,6 +74,7 @@ export const apiRoutes = {
     leaveBulk:    (id: string) => `/api/calendar/${id}/leave/bulk`,
     hotelRooms:   (eventId: string) => `/api/calendar/${eventId}/hotel-rooms`,
     hotelRoomsBulk: (eventId: string) => `/api/calendar/${eventId}/hotel-rooms/bulk`,
+    hotelRoom:    (eventId: string, roomId: string) => `/api/calendar/${eventId}/hotel-rooms/${roomId}`,
     assignRoom:   (eventId: string, roomId: string) => `/api/calendar/${eventId}/hotel-rooms/${roomId}/assign`,
     leaveRoom:    (eventId: string, roomId: string) => `/api/calendar/${eventId}/hotel-rooms/${roomId}/leave`,
   },

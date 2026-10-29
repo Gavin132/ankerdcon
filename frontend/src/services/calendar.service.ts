@@ -1,6 +1,6 @@
 import { apiClient } from "../lib/api/client";
 import { apiRoutes } from "../config/api-routes";
-import type { BulkCreateHotelRoomsRequest, CalendarEvent, CreateHotelRoomRequest, HotelRoom } from "../types";
+import type { BulkCreateHotelRoomsRequest, CalendarEvent, CreateHotelRoomRequest, HotelRoom, UpdateHotelRoomRequest } from "../types";
 
 export async function getCalendar(): Promise<CalendarEvent[]> {
   const { data } = await apiClient.get<CalendarEvent[]>(apiRoutes.calendar.base);
@@ -38,6 +38,10 @@ export async function getHotelRooms(eventId: string): Promise<HotelRoom[]> {
 export async function createHotelRoom(eventId: string, payload: CreateHotelRoomRequest): Promise<HotelRoom> {
   const { data } = await apiClient.post<HotelRoom>(apiRoutes.calendar.hotelRooms(eventId), payload);
   return data;
+}
+
+export async function updateHotelRoom(eventId: string, roomId: string, payload: UpdateHotelRoomRequest): Promise<void> {
+  await apiClient.put(apiRoutes.calendar.hotelRoom(eventId, roomId), payload);
 }
 
 export async function bulkCreateHotelRooms(eventId: string, payload: BulkCreateHotelRoomsRequest): Promise<HotelRoom[]> {

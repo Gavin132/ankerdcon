@@ -19,6 +19,7 @@ from app.models.calendar import (
     HotelRoom,
     HotelRoomAssignRequest,
     HotelRoomLeaveRequest,
+    UpdateHotelRoomRequest,
 )
 from app.routes import CalendarRoutes
 from app.core.database import supabase
@@ -234,6 +235,15 @@ def leave_event_bulk(event_id: str, body: CalendarBulkRsvpRequest, current_user:
 
 
 # ── Hotel Rooms ────────────────────────────────────────────────────────────────
+# Who may do what with a room (the one place this is written down; docs/security.md repeats it):
+#   see the rooms ........ every member
+#   create one, or many .. every member (not a read-only one)
+#   edit one ............. every member (not a read-only one): number, floor, notes, capacity and who sleeps in it,
+#                          so a member can put other members in and take them out (`update_hotel_room`)
+#   sign someone up/off .. every member (not a read-only one), through assign / leave
+#   delete one ........... admins only (`admin_delete_hotel_room` in routers/admin.py)
+# A read-only member ("kijker") is refused on every write by `get_current_user`. Names put in a room have to be
+# members, so nobody can fill a room with made-up names (`act_for_anyone_bulk(adding=True)`).
 
 def _hotel_group_key(event_id: str) -> tuple[str, bool]:
     """Resolve an event_days id to its parent event — now always the real,
@@ -314,6 +324,67 @@ def bulk_create_hotel_rooms(
     except Exception as e:
         logger.error("Failed to bulk-create hotel rooms for event %s: %s", event_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+
+
+@router.put(CalendarRoutes.HOTEL_ROOM, status_code=status.HTTP_204_NO_CONTENT)
+def update_hotel_room(
+    event_id: str,
+    room_id: str,
+    body: UpdateHotelRoomRequest,
+    current_user: str = Depends(get_current_user),
+) -> None:
+    """Edit a room, including who sleeps in it. A field sent as null is cleared, a field left out is kept, and
+    `occupants` replaces the whole list. The room may not end up with more people than its capacity."""
+    group_key, _ = _hotel_group_key(event_id)
+    try:
+        rows = supabase.table(Tables.HOTEL_ROOMS).select("event_id, capacity, occupants").eq("id", room_id).execute().data
+    except Exception as e:
+        logger.error("Failed to read hotel room %s: %s", room_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if not rows or rows[0].get("event_id") != group_key:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kamer niet gevonden.")
+    room = rows[0]
+
+    fields = {f: getattr(body, f) for f in body.model_fields_set if f != "occupants"}
+    capacity_changed = "capacity" in fields
+
+    def too_many(count: int, capacity: int | None) -> HTTPException | None:
+        if capacity is not None and count > capacity:
+            return HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Deze kamer heeft plaats voor {capacity} {'persoon' if capacity == 1 else 'personen'}, maar er zouden er {count} in slapen.",
+            )
+        return None
+
+    if body.occupants is not None:
+        wanted = list(dict.fromkeys(n.strip() for n in body.occupants if n and n.strip()))
+        already = set(room.get("occupants") or [])
+        # Names that are in the room already stay, whatever they are; anyone new has to be a member.
+        act_for_anyone_bulk(current_user, [n for n in wanted if n not in already], adding=True)
+
+        def replace(_current: list, fresh: dict) -> list:
+            error = too_many(len(wanted), fields["capacity"] if capacity_changed else fresh.get("capacity"))
+            if error:
+                raise error
+            return wanted
+
+        update_list(
+            Tables.HOTEL_ROOMS, room_id, "occupants", replace,
+            select="occupants, capacity", not_found="Kamer niet gevonden.",
+        )
+    elif capacity_changed:
+        error = too_many(len(room.get("occupants") or []), fields["capacity"])
+        if error:
+            raise error
+
+    if fields:
+        try:
+            done = supabase.table(Tables.HOTEL_ROOMS).update(fields).eq("id", room_id).execute().data
+        except Exception as e:
+            logger.error("Failed to update hotel room %s: %s", room_id, e)
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+        if not done:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kamer niet gevonden.")
 
 
 @router.post(CalendarRoutes.HOTEL_ROOM_ASSIGN, status_code=status.HTTP_204_NO_CONTENT)

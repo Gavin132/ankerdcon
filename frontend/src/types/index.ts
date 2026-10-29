@@ -446,6 +446,15 @@ export interface CreateHotelRoomRequest {
   occupants?: string[];
 }
 
+/** Editing a room: `null` clears a field, leaving it out keeps it; `occupants` replaces the whole list. */
+export interface UpdateHotelRoomRequest {
+  room_number?: string | null;
+  floor?: string | null;
+  instructions?: string | null;
+  capacity?: number | null;
+  occupants?: string[];
+}
+
 export interface HotelRoomBatch {
   count: number;
   capacity?: number;

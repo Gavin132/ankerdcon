@@ -29,6 +29,7 @@ class CalendarRoutes:
     LEAVE_BULK = "/{event_id}/leave/bulk"
     HOTEL_ROOMS = "/{event_id}/hotel-rooms"
     HOTEL_ROOMS_BULK = "/{event_id}/hotel-rooms/bulk"
+    HOTEL_ROOM = "/{event_id}/hotel-rooms/{room_id}"
     HOTEL_ROOM_ASSIGN = "/{event_id}/hotel-rooms/{room_id}/assign"
     HOTEL_ROOM_LEAVE = "/{event_id}/hotel-rooms/{room_id}/leave"
 

@@ -30,7 +30,6 @@ from app.models.admin import (
     AdminSetShareStatusRequest,
     AdminUpdateEventRequest,
     AdminUpdateExpenseRequest,
-    AdminUpdateHotelRoomRequest,
     AdminUpdateMealRequest,
     AdminUpdateRideRequest,
     AdminUpdateUserRequest,
@@ -1008,6 +1007,7 @@ def admin_bulk_rsvp_event(day_id: str, body: BulkRsvpRequest, _: str = Depends(g
 # ── Hotel Rooms (admin) ──────────────────────────────────────────────────────────
 # event_id here is an event_days id, same as the user-facing hotel-rooms
 # page already sends — _hotel_group_key resolves it to the real parent.
+# Editing a room is not here: any member may (`update_hotel_room` in routers/calendar.py).
 
 @router.get(AdminRoutes.EVENT_HOTEL_ROOMS, response_model=list[HotelRoom])
 def admin_list_hotel_rooms(event_id: str, _: str = Depends(get_admin_user)) -> list[HotelRoom]:
@@ -1017,30 +1017,6 @@ def admin_list_hotel_rooms(event_id: str, _: str = Depends(get_admin_user)) -> l
     except Exception as e:
         logger.error("Failed to list hotel rooms for event %s: %s", event_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-
-
-@router.put(AdminRoutes.EVENT_HOTEL_ROOM, status_code=status.HTTP_204_NO_CONTENT)
-def admin_update_hotel_room(
-    event_id: str,
-    room_id: str,
-    body: AdminUpdateHotelRoomRequest,
-    _: str = Depends(get_admin_user),
-) -> None:
-    updates: dict = {}
-    for field, value in body.model_dump(exclude_unset=False).items():
-        if field in body.model_fields_set:
-            updates[field] = value
-        elif value is not None:
-            updates[field] = value
-    if not updates:
-        return
-    try:
-        resp = supabase.table(Tables.HOTEL_ROOMS).update(updates).eq("id", room_id).execute()
-    except Exception as e:
-        logger.error("Failed to update hotel room %s: %s", room_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-    if not resp.data:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kamer niet gevonden.")
 
 
 @router.delete(AdminRoutes.EVENT_HOTEL_ROOM, status_code=status.HTTP_204_NO_CONTENT)

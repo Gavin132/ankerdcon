@@ -4,11 +4,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   useHotelRooms,
   useCreateHotelRoom,
+  useUpdateHotelRoom,
   useBulkCreateHotelRooms,
   useAssignHotelRoom,
   useLeaveHotelRoom,
 } from "../../hooks/useCalendar";
-import { useAdminUpdateHotelRoom, useAdminDeleteHotelRoom } from "../../hooks/useAdmin";
+import { useAdminDeleteHotelRoom } from "../../hooks/useAdmin";
+import { useIsViewer } from "../../hooks/useIsViewer";
 import { useUsers, useCurrentUser, useMyNames } from "../../hooks/useUsers";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { AvatarStack } from "../../components/common/AvatarStack";
@@ -16,6 +18,7 @@ import { EmptyState } from "../../components/common/EmptyState";
 import { NamePicker } from "../../components/common/NamePicker";
 import { TripSheet } from "../../components/trip/TripSheet";
 import { Button } from "../../components/common/Button";
+import { ApiError } from "../../lib/api/client";
 import { toast } from "../../store/toast.store";
 import { HotelInfoCard, stayRange } from "../../components/event/HotelInfoCard";
 import { tripInfo, tripRoomGaps, tripRoomSummary } from "../../utils/trips";
@@ -31,18 +34,16 @@ function RoomModal({
   room,
   eventId,
   userNames,
-  isAdmin,
 }: {
   open: boolean;
   onClose: () => void;
   room: HotelRoom | null; // null = create mode
   eventId: string;
   userNames: string[];
-  isAdmin: boolean;
 }) {
   const isEdit = room !== null;
   const createRoom = useCreateHotelRoom();
-  const updateRoom = useAdminUpdateHotelRoom();
+  const updateRoom = useUpdateHotelRoom();
 
   const [values, setValues] = useState<RoomFormValues>({
     room_number: room?.room_number ?? "",
@@ -69,8 +70,9 @@ function RoomModal({
         toast("success", `${roomLabel} aangemaakt.`);
       }
       onClose();
-    } catch {
-      toast("error", "Kon kamer niet opslaan.");
+    } catch (err) {
+      // A refusal that says what is wrong ("more people than beds", "unknown member") is shown as it is.
+      toast("error", err instanceof ApiError && err.status === 400 ? err.message : "Kon kamer niet opslaan.");
     }
   }
 
@@ -118,34 +120,30 @@ function RoomModal({
           </div>
         </div>
 
-        {isAdmin && (
-          <div>
-            <label className="field-label">
-              Verdieping
-            </label>
-            <input
-              className="input-field"
-              placeholder="2e verdieping"
-              value={values.floor}
-              onChange={(e) => setValues((v) => ({ ...v, floor: e.target.value }))}
-            />
-          </div>
-        )}
+        <div>
+          <label className="field-label">
+            Verdieping
+          </label>
+          <input
+            className="input-field"
+            placeholder="2e verdieping"
+            value={values.floor}
+            onChange={(e) => setValues((v) => ({ ...v, floor: e.target.value }))}
+          />
+        </div>
 
-        {isAdmin && (
-          <div>
-            <label className="field-label">
-              Routebeschrijving / instructies
-            </label>
-            <textarea
-              className="input-field resize-none"
-              rows={3}
-              placeholder="Bijv. Neem lift A naar verdieping 3, dan links de gang in..."
-              value={values.instructions}
-              onChange={(e) => setValues((v) => ({ ...v, instructions: e.target.value }))}
-            />
-          </div>
-        )}
+        <div>
+          <label className="field-label">
+            Routebeschrijving / instructies
+          </label>
+          <textarea
+            className="input-field resize-none"
+            rows={3}
+            placeholder="Bijv. Neem lift A naar verdieping 3, dan links de gang in..."
+            value={values.instructions}
+            onChange={(e) => setValues((v) => ({ ...v, instructions: e.target.value }))}
+          />
+        </div>
 
         <div>
           <label className="field-label">
@@ -293,6 +291,9 @@ interface RoomCardProps {
   currentUserName: string | undefined;
   /** Every name the signed-in member can be on this room under (`useMyNames`). */
   myNames: string[];
+  /** Whether the member may change anything (not a read-only member): the pen and the sign-up buttons. */
+  canEdit: boolean;
+  /** Only an admin deletes a room. */
   isAdmin: boolean;
   onEdit: (room: HotelRoom) => void;
   onDelete: (room: HotelRoom) => void;
@@ -306,6 +307,7 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
   users,
   currentUserName,
   myNames,
+  canEdit,
   isAdmin,
   onEdit,
   onDelete,
@@ -375,8 +377,8 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
           </div>
         </div>
 
-        {/* Admin action buttons */}
-        {isAdmin && (
+        {/* Every member edits (and puts others in); only an admin deletes. */}
+        {canEdit && (
           <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
@@ -387,15 +389,17 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
             >
               <Pencil size={16} />
             </button>
-            <button
-              type="button"
-              onClick={() => onDelete(room)}
-              className="icon-btn"
-              title="Verwijderen"
-              aria-label={`Kamer ${room.room_number ?? ""} verwijderen`.replace("  ", " ")}
-            >
-              <Trash2 size={16} />
-            </button>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => onDelete(room)}
+                className="icon-btn"
+                title="Verwijderen"
+                aria-label={`Kamer ${room.room_number ?? ""} verwijderen`.replace("  ", " ")}
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -435,7 +439,7 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
       )}
 
       {/* Self-assign / leave: a full room has nothing to offer. */}
-      {currentUserName && (isMine || !isFull) && (
+      {canEdit && currentUserName && (isMine || !isFull) && (
         <div className="mt-auto pt-1">
           {isMine ? (
             <button type="button" onClick={handleSelfLeave} disabled={isPending} className="btn-primary w-full">
@@ -474,6 +478,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
   const { data: currentUser } = useCurrentUser();
 
   const isAdmin = currentUser?.is_admin ?? false;
+  const canEdit = !useIsViewer();
   const currentUserName = currentUser?.name;
   const { myNames } = useMyNames();
 
@@ -535,7 +540,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
         Verwijderen
       </Button>
     </div>
-  ) : (
+  ) : !canEdit ? undefined : (
     <div className="grid grid-cols-2 gap-2">
       <button type="button" onClick={() => setBulkModalOpen(true)} className="btn-primary min-w-0 px-3">
         <Layers size={16} className="shrink-0" />
@@ -594,6 +599,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
                   users={users}
                   currentUserName={currentUserName}
                   myNames={myNames}
+                  canEdit={canEdit}
                   isAdmin={isAdmin}
                   onEdit={(r) => setModalRoom(r)}
                   onDelete={handleDelete}
@@ -654,7 +660,6 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
         room={modalRoom === "new" ? null : (modalRoom ?? null)}
         eventId={id!}
         userNames={userNames}
-        isAdmin={isAdmin}
       />
 
       {/* ── Bulk create modal ────────────────────────────────────────── */}

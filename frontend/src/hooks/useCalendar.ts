@@ -8,12 +8,13 @@ import {
   leaveCalendarEventBulk,
   getHotelRooms,
   createHotelRoom,
+  updateHotelRoom,
   bulkCreateHotelRooms,
   assignHotelRoom,
   leaveHotelRoom,
 } from "../services/calendar.service";
 import { QUERY_KEYS, STALE_TIME } from "../constants";
-import type { BulkCreateHotelRoomsRequest, CalendarEvent, CreateHotelRoomRequest, HotelRoom } from "../types";
+import type { BulkCreateHotelRoomsRequest, CalendarEvent, CreateHotelRoomRequest, HotelRoom, UpdateHotelRoomRequest } from "../types";
 
 export function useCalendar() {
   return useQuery({
@@ -122,6 +123,18 @@ export function useCreateHotelRoom() {
   return useMutation({
     mutationFn: ({ eventId, payload }: { eventId: string; payload: CreateHotelRoomRequest }) =>
       createHotelRoom(eventId, payload),
+    onSuccess: (_data, { eventId }) => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.hotelRooms(eventId) });
+    },
+  });
+}
+
+/** Any member may edit a room, including who sleeps in it (the backend decides; a read-only member is refused). */
+export function useUpdateHotelRoom() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ eventId, roomId, payload }: { eventId: string; roomId: string; payload: UpdateHotelRoomRequest }) =>
+      updateHotelRoom(eventId, roomId, payload),
     onSuccess: (_data, { eventId }) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.hotelRooms(eventId) });
     },
