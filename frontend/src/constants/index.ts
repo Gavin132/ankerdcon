@@ -28,6 +28,8 @@ export const QUERY_KEYS = {
   // Admin
   adminStats:  ["admin", "stats"]  as const,
   adminUsers:  ["admin", "users"]  as const,
+  /** What merging a placeholder into a member would move. Under `adminUsers`, so every change to the users drops it. */
+  adminMergePreview: (sourceId: string, targetId: string) => ["admin", "users", "merge-preview", sourceId, targetId] as const,
   adminRides:  ["admin", "rides"]  as const,
   adminMeals:  ["admin", "meals"]  as const,
   adminMealCategories: ["admin", "meal-categories"] as const,

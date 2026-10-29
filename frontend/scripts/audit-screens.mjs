@@ -102,6 +102,16 @@ export const screens = [
   { name: "admin-users-selected", path: "/admin/users", role: "admin", steps: click(checkbox(/Selecteer /)) },
   { name: "admin-users-bulk-delete", path: "/admin/users", role: "admin", steps: then(click(checkbox(/Selecteer /)), click(byText(/^Verwijderen$/))) },
   { name: "admin-users-edit", path: "/admin/users", role: "admin", steps: click(byLabel(/bewerken$/i)) },
+  { name: "admin-users-placeholders", path: "/admin/users", role: "admin", steps: click(byText(/^Placeholders/)) },
+  { name: "admin-users-merge", path: "/admin/users", role: "admin", steps: click(byLabel(/samenvoegen met een lid$/i)) },
+  {
+    name: "admin-users-merge-preview", path: "/admin/users", role: "admin",
+    steps: then(
+      click(byLabel(/samenvoegen met een lid$/i)),
+      async (page) => { await page.getByPlaceholder(/Zoek een lid/).fill("Sam"); await page.waitForTimeout(300); },
+      click((p) => p.getByRole("button", { name: /Sam$/ })),
+    ),
+  },
   { name: "admin-whitelist", path: "/admin/whitelist", role: "admin" },
   { name: "admin-rides", path: "/admin/rides", role: "admin" },
   { name: "admin-rides-edit", path: "/admin/rides", role: "admin", steps: click(byLabel(/bewerken$/i)) },

@@ -140,6 +140,7 @@ export const apiRoutes = {
       bulkDelete:       "/api/admin/users/bulk-delete",
       bulkDeactivate:   "/api/admin/users/bulk-deactivate",
       impersonate:      (id: string) => `/api/admin/impersonate/${id}`,
+      merge:            (id: string) => `/api/admin/users/${id}/merge`,
     },
 
     rides: {

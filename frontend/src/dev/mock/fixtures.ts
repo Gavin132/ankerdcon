@@ -45,7 +45,11 @@ export function buildUsers(role: Role): User[] {
     user("u-long", "Isabella-Maria van der Berg-Oosterhuis", { color: "#4338CA", bio: "Een bio die lang genoeg is om op een smal scherm over meerdere regels te lopen en te laten zien wat er dan gebeurt met de rest van de pagina." }),
     user("u-dark", "Xx_DarkLord_xX", { color: "#0F1519" }),
     user("u-emma", "Emma", { avatar_url: avatarImage(280, "E") }),
-    user("u-tess", "Tess", { is_active: true }),
+    // Made by an admin ahead of time, never logged in: what "Voeg samen met…" is for. One is on a trip day, one has a long name.
+    user("u-tess", "Tess", { is_active: true, discord_username: undefined, is_placeholder: true, is_first_login: true }),
+    user("u-placeholder-long", "Mevrouw Jansen-van-der-Heijden (gast van Sam)", {
+      discord_username: undefined, is_placeholder: true, is_first_login: true,
+    }),
   ];
 }
 

@@ -55,6 +55,35 @@ const GETS: [RegExp, Handler][] = [
   [/^\/api\/admin\/cdn$/, () => ({ total: 0, total_size: 0, capped: false, counts: {}, download_limit_bytes: 1_500_000_000, items: [] })],
 ];
 
+/** What merging a placeholder would move, counted from the made-up data (the real count is the server's). */
+function mergeAnswer(fx: Fixtures, sourceId: string, body: { target_id?: string; dry_run?: boolean }) {
+  const source = fx.users.find((u) => u.id === sourceId);
+  const target = fx.users.find((u) => u.id === body.target_id);
+  if (!source || !target) return { error: "Gebruiker niet gevonden. Ververs de pagina en probeer het opnieuw.", status: 404 };
+  if (source.is_placeholder !== true) {
+    return { error: `${source.name} is al ingelogd en is geen placeholder. Je kunt alleen een placeholder samenvoegen: kies een ander profiel.`, status: 400 };
+  }
+  if (target.is_placeholder) {
+    return { error: `${target.name} is zelf een placeholder en heeft nog niet ingelogd. Kies een lid dat al is ingelogd.`, status: 400 };
+  }
+  const name = source.name;
+  const counts = {
+    rides: fx.rides.filter((r) => r.driver === name || r.passengers.includes(name)).length,
+    meals: fx.meals.filter((m) => m.participants?.includes(name)).length,
+    trip_days: fx.calendar.filter((d) => d.participants?.includes(name)).length,
+    hotel_rooms: fx.rooms.filter((r) => r.occupants?.includes(name)).length,
+    expenses: fx.expenses.filter((e) => e.paid_by === name).length,
+    expense_shares: fx.expenses.flatMap((e) => e.shares ?? []).filter((s) => s.participant === name).length,
+    settlements: 0, cosplays: fx.cosplays.filter((c) => c.user_name === name).length,
+    photos: Object.values(fx.storyDays).flat().filter((p) => p.uploaded_by === name).length,
+    stories_seen: 0, ride_costs: 0, parking_spots: 0, feedback: 0, push_subscriptions: 0,
+    badges: (source.badge_ids ?? []).filter((b) => !(target.badge_ids ?? []).includes(b)).length,
+  };
+  // The one thing the demo drops, so the "niet overgenomen" line has something to show.
+  const dropped = { settlements: counts.expense_shares > 0 ? 1 : 0, ride_costs: 0, parking_spots: 0, restaurant_cars: 0 };
+  return { dry_run: body.dry_run !== false, source_name: name, target_name: target.name, counts, dropped, alias_names: [name] };
+}
+
 const SLEEP = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /** What a request had no mock for. Read by the audit (`window.__mock.unhandled`), so a screen that looks empty
@@ -80,6 +109,19 @@ export function makeAdapter(fx: Fixtures, delayMs: number): AxiosAdapter {
     } else {
       // A change is accepted and forgotten: the next read still shows the fixtures.
       status = method === "delete" ? 204 : 200;
+      const merge = method === "post" ? path.match(/^\/api\/admin\/users\/([^/]+)\/merge$/) : null;
+      if (merge) {
+        const body = typeof config.data === "string" ? JSON.parse(config.data) : (config.data ?? {});
+        const answer = mergeAnswer(fx, decodeURIComponent(merge[1]), body);
+        if ("error" in answer) {
+          // Like a refused request from the server: axios rejects, the client turns the detail into the message.
+          return Promise.reject(Object.assign(new Error(answer.error), {
+            isAxiosError: true, config, response: { data: { detail: answer.error }, status: answer.status, statusText: "Error", headers: {}, config },
+          }));
+        }
+        data = answer;
+        status = 200;
+      }
     }
     return { data, status, statusText: "OK", headers: {}, config, request: {} };
   };

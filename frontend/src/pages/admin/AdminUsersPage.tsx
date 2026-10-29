@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Shield, Plus, X, UserPlus, Ban, Copy, Check, Eye, Users } from "lucide-react";
+import { Shield, Plus, X, UserPlus, Ban, Copy, Check, Eye, Users, GitMerge, Hourglass } from "lucide-react";
 import {
   useAdminUsers,
   useAdminCreateUser,
@@ -15,7 +15,7 @@ import { UserAvatar } from "../../components/common/UserAvatar";
 import { AdminDrawer } from "./AdminDrawer";
 import { toast } from "../../store/toast.store";
 import type { User } from "../../types";
-import { F, L, TH, TD, TR, TR_SELECTED, PILL_NEUTRAL } from "./styles";
+import { F, L, TH, TD, TR, TR_SELECTED, PILL_NEUTRAL, CHIP_ON, CHIP_OFF } from "./styles";
 import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminSearch } from "./components/AdminSearch";
@@ -31,6 +31,7 @@ import { useTableSelection } from "../../hooks/useTableSelection";
 import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
 import { askConfirm } from "../../store/confirm.store";
 import { EmptyState } from "../../components/common/EmptyState";
+import { UserMergeSheet } from "./components/UserMergeSheet";
 
 const PAGE_SIZE = 15;
 
@@ -419,11 +420,18 @@ export function AdminUsersPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [editing, setEditing] = useState<User | null>(null);
+  const [merging, setMerging] = useState<User | null>(null);
+  const [onlyPlaceholders, setOnlyPlaceholders] = useState(false);
   const [creating, setCreating] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  const placeholderCount = users.filter((u) => u.is_placeholder).length;
+  // Switched on and the last placeholder merged away: back to everyone, not to an empty list with no way out.
+  const placeholdersOnly = onlyPlaceholders && placeholderCount > 0;
+
   const filtered = users.filter((u) => {
+    if (placeholdersOnly && !u.is_placeholder) return false;
     if (!search) return true;
     const q = search.toLowerCase();
     return (
@@ -520,6 +528,27 @@ export function AdminUsersPage() {
         placeholder="Zoek op naam, Discord of alias…"
       />
 
+      {placeholderCount > 0 && (
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Filter">
+          <button
+            type="button"
+            className={placeholdersOnly ? CHIP_OFF : CHIP_ON}
+            aria-pressed={!placeholdersOnly}
+            onClick={() => { setOnlyPlaceholders(false); setPage(0); }}
+          >
+            Iedereen · {users.length}
+          </button>
+          <button
+            type="button"
+            className={placeholdersOnly ? CHIP_ON : CHIP_OFF}
+            aria-pressed={placeholdersOnly}
+            onClick={() => { setOnlyPlaceholders(true); setPage(0); }}
+          >
+            Placeholders · {placeholderCount}
+          </button>
+        </div>
+      )}
+
       <AdminBulkBar
         itemsLabel="gebruikers"
         count={selectedIds.size}
@@ -584,6 +613,13 @@ export function AdminUsersPage() {
                             {user.discord_username && (
                               <p className="truncate text-xs text-ink-3">@{user.discord_username}</p>
                             )}
+                            {/* Under the name, not in the status column: a wide pill there squeezes the name to nothing on a phone. */}
+                            {user.is_placeholder && (
+                              <span className={`${PILL_NEUTRAL} mt-1`} title="Nog niemand heeft hiermee ingelogd">
+                                <Hourglass size={14} />
+                                Placeholder
+                              </span>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -636,6 +672,18 @@ export function AdminUsersPage() {
                           onCancelDelete={() => setConfirmDeleteId(null)}
                           editLabel={`${user.name} bewerken`}
                           deleteLabel={`${user.name} verwijderen`}
+                          before={
+                            user.is_placeholder ? (
+                              <button
+                                onClick={() => setMerging(user)}
+                                className="icon-btn text-ink-3"
+                                title="Voeg samen met…"
+                                aria-label={`${user.name} samenvoegen met een lid`}
+                              >
+                                <GitMerge size={16} />
+                              </button>
+                            ) : undefined
+                          }
                         />
                       </td>
                     </tr>
@@ -655,6 +703,8 @@ export function AdminUsersPage() {
       </div>
 
       <UserCreateDrawer open={creating} onClose={() => setCreating(false)} />
+
+      <UserMergeSheet key={merging?.id ?? "none-merge"} source={merging} users={users} onClose={() => setMerging(null)} />
 
       <UserEditDrawer
         key={editing?.id ?? "none"}

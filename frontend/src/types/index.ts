@@ -89,6 +89,8 @@ export interface User {
   is_viewer?: boolean;
   is_active?: boolean;
   is_first_login?: boolean;
+  /** Made by an admin and never logged in to: a stand-in that can be merged into the real member (see utils/mergePreview.ts). */
+  is_placeholder?: boolean;
   onboarding_completed?: boolean;
   allow_dm?: boolean;
   show_greeting?: boolean;

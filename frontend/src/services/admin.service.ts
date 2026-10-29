@@ -119,6 +119,27 @@ export async function bulkDeactivateAdminUsers(userIds: string[]): Promise<void>
   await apiClient.post(apiRoutes.admin.users.bulkDeactivate, { user_ids: userIds });
 }
 
+/** What a merge moves (or, as a preview, would move), per kind. See backend/app/services/profile_merge.py. */
+export interface MergeUserResult {
+  dry_run: boolean;
+  source_name: string;
+  target_name: string;
+  counts: Record<string, number>;
+  /** Left out rather than moved: a duplicate, or a payment to oneself. */
+  dropped: Record<string, number>;
+  /** The placeholder's names that become aliases of the member. */
+  alias_names: string[];
+}
+
+/** Folds a placeholder into a real member. With `dryRun` nothing changes and the result is the preview. */
+export async function mergeAdminUser(sourceId: string, targetId: string, dryRun: boolean): Promise<MergeUserResult> {
+  const { data } = await apiClient.post<MergeUserResult>(apiRoutes.admin.users.merge(sourceId), {
+    target_id: targetId,
+    dry_run: dryRun,
+  });
+  return data;
+}
+
 export interface ImpersonateResponse {
   access_token: string;
   name: string;
