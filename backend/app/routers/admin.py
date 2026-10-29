@@ -13,6 +13,7 @@ import jwt
 from app.config import Settings, get_settings
 from app.constants import Tables
 from app.core import minio_client
+from app.core.atomic import update_list
 from app.core.logging import get_logger
 from app.core.meal_categories import default_category_id, list_meals_with_category, require_category
 from app.core.thumbnails import derivative_keys_by_name, derivative_urls, is_derivative
@@ -296,21 +297,57 @@ def admin_impersonate_user(
     return {"access_token": token, "name": profile["name"]}
 
 
-def _remove_user_from_all_events(name: str) -> None:
-    """Strip a user's name from passengers/participants arrays across all tables."""
-    for table, field in [
-        (Tables.RIDES, "passengers"),
-        (Tables.MEALS, "participants"),
-        (Tables.EVENT_DAYS, "participants"),
+def _remove_user_from_all_events(name: str, aliases: list[str] | None = None) -> None:
+    """Take a member off everything they were signed up for: ride passengers, activities, trip days, hotel
+    rooms and the cars of restaurant rides (a car they drove goes, with the people in it). Their former
+    names go too, so nobody is left on a list as a ghost. Each list is changed with `update_list`, so a
+    sign-up that happens at the same moment is kept."""
+    names = {n for n in [name, *(aliases or [])] if n}
+    if not names:
+        return
+
+    def drop(current: list, _row: dict) -> list | None:
+        kept = [m for m in current if m not in names]
+        return kept if len(kept) != len(current) else None
+
+    def drop_from_cars(cars: list, _row: dict) -> list | None:
+        kept = [
+            {**car, "passengers": [p for p in car.get("passengers") or [] if p not in names]}
+            for car in cars if car.get("name") not in names
+        ]
+        return kept if kept != cars else None
+
+    for table, field, change, jsonb in [
+        (Tables.RIDES, "passengers", drop, False),
+        (Tables.RIDES, "restaurant_drivers", drop_from_cars, True),
+        (Tables.MEALS, "participants", drop, False),
+        (Tables.EVENT_DAYS, "participants", drop, False),
+        (Tables.HOTEL_ROOMS, "occupants", drop, False),
     ]:
         try:
             rows = supabase.table(table).select(f"id, {field}").execute().data or []
-            for row in rows:
-                members: list = row.get(field) or []
-                if name in members:
-                    supabase.table(table).update({field: [m for m in members if m != name]}).eq("id", row["id"]).execute()
         except Exception as e:
             logger.error("Cleanup %s.%s failed for %r: %s", table, field, name, e)
+            continue
+        for row in rows:
+            if not row.get(field):
+                continue
+            try:
+                update_list(table, row["id"], field, change, jsonb=jsonb)
+            except Exception as e:  # one stuck row must not leave the rest of the member's sign-ups behind
+                logger.error("Cleanup %s.%s of %s failed for %r: %s", table, field, row["id"], name, e)
+
+
+def _after_deactivation(row: dict, settings: Settings) -> None:
+    """What deactivating a member also does, however it was done (one by one or in bulk): they come off every
+    list they were on, and they get a Discord message when they allow one."""
+    if row.get("name"):
+        _remove_user_from_all_events(row["name"], row.get("aliases"))
+    if row.get("allow_dm", True) and row.get("discord_id"):
+        try:
+            discord_bot.send_deactivated_dm(settings.discord_bot_token, row["discord_id"])
+        except Exception as e:
+            logger.warning("Failed to send deactivation DM to %s: %s", row.get("discord_id"), e)
 
 
 def _revoke_whitelist(row: dict) -> None:
@@ -338,7 +375,7 @@ def admin_update_user(
         return
 
     try:
-        current = supabase.table(Tables.PROFILES).select("name, discord_id, is_active, allow_dm").eq("id", user_id).execute()
+        current = supabase.table(Tables.PROFILES).select("name, discord_id, is_active, allow_dm, aliases").eq("id", user_id).execute()
     except Exception as e:
         logger.error("Failed to fetch user %s for update: %s", user_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
@@ -360,13 +397,7 @@ def admin_update_user(
 
     # Deactivation: send DM + remove from all events
     if body.is_active is False and row.get("is_active") is not False:
-        if row.get("name"):
-            _remove_user_from_all_events(row["name"])
-        if row.get("allow_dm", True) and row.get("discord_id"):
-            try:
-                discord_bot.send_deactivated_dm(settings.discord_bot_token, row["discord_id"])
-            except Exception as e:
-                logger.warning("Failed to send deactivation DM to %s: %s", row.get("discord_id"), e)
+        _after_deactivation(row, settings)
 
 
 @router.delete(AdminRoutes.USER_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
@@ -376,7 +407,7 @@ def admin_delete_user(
     settings: Settings = Depends(get_settings),
 ) -> None:
     try:
-        current = supabase.table(Tables.PROFILES).select("name, discord_id, email, allow_dm").eq("id", user_id).execute()
+        current = supabase.table(Tables.PROFILES).select("name, discord_id, email, allow_dm, aliases").eq("id", user_id).execute()
     except Exception as e:
         logger.error("Failed to fetch user %s for deletion: %s", user_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
@@ -386,7 +417,7 @@ def admin_delete_user(
     row = current.data[0]
 
     if row.get("name"):
-        _remove_user_from_all_events(row["name"])
+        _remove_user_from_all_events(row["name"], row.get("aliases"))
 
     try:
         supabase.table(Tables.PROFILES).delete().eq("id", user_id).execute()
@@ -410,7 +441,7 @@ def admin_bulk_delete_users(
 ) -> None:
     for user_id in body.user_ids:
         try:
-            current = supabase.table(Tables.PROFILES).select("name, discord_id, email, allow_dm").eq("id", user_id).execute()
+            current = supabase.table(Tables.PROFILES).select("name, discord_id, email, allow_dm, aliases").eq("id", user_id).execute()
         except Exception as e:
             logger.error("Failed to fetch user %s during bulk delete: %s", user_id, e)
             continue
@@ -418,7 +449,7 @@ def admin_bulk_delete_users(
             continue
         row = current.data[0]
         if row.get("name"):
-            _remove_user_from_all_events(row["name"])
+            _remove_user_from_all_events(row["name"], row.get("aliases"))
         try:
             supabase.table(Tables.PROFILES).delete().eq("id", user_id).execute()
         except Exception as e:
@@ -433,12 +464,25 @@ def admin_bulk_delete_users(
 
 
 @router.post(AdminRoutes.USERS_BULK_DEACTIVATE, status_code=status.HTTP_204_NO_CONTENT)
-def admin_bulk_deactivate_users(body: BulkDeactivateUsersRequest, _: str = Depends(get_admin_user)) -> None:
+def admin_bulk_deactivate_users(
+    body: BulkDeactivateUsersRequest,
+    _: str = Depends(get_admin_user),
+    settings: Settings = Depends(get_settings),
+) -> None:
+    """The same as deactivating each member in their edit sheet: no more login, off every list, a message on Discord."""
     for user_id in body.user_ids:
         try:
+            current = supabase.table(Tables.PROFILES).select("name, discord_id, is_active, allow_dm, aliases").eq("id", user_id).execute()
+            if not current.data:
+                continue
+            row = current.data[0]
             supabase.table(Tables.PROFILES).update({"is_active": False}).eq("id", user_id).execute()
         except Exception as e:
             logger.error("Failed to deactivate user %s: %s", user_id, e)
+            continue
+        forget_viewer(row["name"])
+        if row.get("is_active") is not False:
+            _after_deactivation(row, settings)
 
 
 # ── Whitelist ──────────────────────────────────────────────────────────────────

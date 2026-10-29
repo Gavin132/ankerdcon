@@ -16,6 +16,10 @@ All notable changes to Ankerd Con are documented here.
 
 ### Fixed
 
+- **Deactivating members in bulk did not take them off their events.** The selection strip only switched the account off,
+  although it said they would leave every event and get a Discord message; it does both now, like the switch in the edit sheet.
+- **A deactivated or deleted member stayed in their hotel room and in restaurant cars**, and kept their former name on rides,
+  activities and days. They are taken off all of those now.
 - **Admin: clearing a hotel room's number, floor, notes or capacity did nothing.** The old value came back after saving; an
   emptied field is cleared now.
 - **A failed Discord link told you to try again "via je profiel"**; linking is in Instellingen.
