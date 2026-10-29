@@ -613,7 +613,7 @@ export function AdminUsersPage() {
                             {user.is_admin && (
                               <span
                                 title="Admin"
-                                className="absolute -bottom-1.5 -right-1.5 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-ink text-paper ring-2 ring-surface"
+                                className="absolute -bottom-1.5 -right-1.5 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-brand text-brand-on ring-2 ring-surface"
                               >
                                 <Shield size={12} aria-hidden />
                                 <span className="sr-only">Admin</span>

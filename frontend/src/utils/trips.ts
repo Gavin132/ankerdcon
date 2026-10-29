@@ -77,7 +77,8 @@ function tripFromDays(id: string, days: TripDay[]): Trip {
     location: days.find((d) => d.ev.location)?.ev.location ?? "",
     locationCoords: locationCoordsOf(days),
     isHotel: days.some((d) => d.ev.is_hotel),
-    hasCon: days.some((d) => d.ev.has_con !== false),
+    // A concert has no cosplay: no tile, tab or search action for it, whatever the day's has_con says.
+    hasCon: !days.some((d) => d.ev.event_type === "concert") && days.some((d) => d.ev.has_con !== false),
     participants: [...new Set(days.flatMap((d) => d.ev.participants ?? []))],
   };
 }

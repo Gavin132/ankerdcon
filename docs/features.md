@@ -86,7 +86,7 @@ the trip is the left column and "Voor jou" with the shortcuts the right one):
   the direction swiped (`tripSlideVariants` in `TripOverviewTab.tsx`), so it's clear something
   moved and which way, not just a sudden swap. Admins also get a pencil to edit the event.
 - Below it, a **tile** per part of the trip (`TripTiles.tsx`): Vervoer, Eten,
-  Hotel (hotel trips only: address, arrivals and departures, rooms; the dates of the stay are in the sheet's subtitle), Foto's, Cosplay (trips with a convention), Weer,
+  Hotel (hotel trips only: address, arrivals and departures, rooms; the dates of the stay are in the sheet's subtitle), Foto's, Cosplay (trips with a convention; never for a concert), Weer,
   Info (opens the Info sheet), Kosten and Ticket (opens Mijn ticket); the tile labels are
   short so they fit. Tiles show the answer ("6 rides, 3 people without a ride
   back") and their order changes before, during and after the trip. The amber "zonder rit" and

@@ -42,6 +42,9 @@ All notable changes to Ankerd Con are documented here.
 - **The changelog page of the admin panel printed the date as 2026-10-22.**
 
 ### Changed
+- **A concert has no Cosplay card, tab or search suggestion.** Other events (cons, gatherings, trips) keep them.
+- **In the admin users list, an admin is a shield on the corner of the profile picture**, in your accent colour, instead
+  of an "Admin" label, and "Placeholder" is a small grey line under the name.
 
 - **Every action button is blue now.** "Andere evenementen", "Route", "Tickets kopen", "Officiële website", "Parkeerplek", "Locatie pingen", "Afmelden", "Iemand aanmelden" and the other buttons that used to be an empty outline are the same blue as the rest; only "Annuleren" next to a confirm stays outlined, and the small add buttons (photo, "+" on Activiteiten) stay grey.
 - **The "Praktisch" tile is called "Info"** and shows the number of topics small, with the topics under it, so it fits on a phone. The text under "Parkeerplek" and "Locatie pingen" is gone: tapping "Parkeerplek" still tells you when it cannot be saved.
