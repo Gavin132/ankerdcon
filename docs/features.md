@@ -86,7 +86,7 @@ the trip is the left column and "Voor jou" with the shortcuts the right one):
   the direction swiped (`tripSlideVariants` in `TripOverviewTab.tsx`), so it's clear something
   moved and which way, not just a sudden swap. Admins also get a pencil to edit the event.
 - Below it, a **tile** per part of the trip (`TripTiles.tsx`): Vervoer, Eten,
-  Hotel (hotel trips only: address, stay, arrivals and departures, rooms), Foto's, Cosplay (trips with a convention), Weer,
+  Hotel (hotel trips only: address, arrivals and departures, rooms; the dates of the stay are in the sheet's subtitle), Foto's, Cosplay (trips with a convention), Weer,
   Info (opens the Praktisch sheet), Kosten and Ticket (opens Mijn ticket); the tile labels are
   short so they fit. Tiles show the answer ("6 rides, 3 people without a ride
   back") and their order changes before, during and after the trip. The amber "zonder rit" and
@@ -112,8 +112,8 @@ the trip is the left column and "Voor jou" with the shortcuts the right one):
   driver, seats, a departure time, a start and end location and optional parking
   info. Public transport has no seats.
 - **The Vervoer sheet** shows one day at a time, with three sections under each other:
-  **Heen**, **Terug** and, when the trip has a meal, **Eten** (each header with its number of
-  rides and, for Heen and Terug, its own "Rit aanbieden"). On a multi-day trip day chips pick the
+  **Heen**, **Terug** and, when the trip has a meal, **Eten** (each a small label with its number of
+  rides and, for Heen and Terug, its own "Rit aanbieden"; the people without a ride are named in those sections, not in a list of their own). On a multi-day trip day chips pick the
   day (an amber dot marks a day that still has people without transport). Each ride is a
   single row (time, driver, where from or to, seats free and the car's target); tap it for
   who rides along, the parking info, **Stap in** / **Uitstappen** and a link to the ride's

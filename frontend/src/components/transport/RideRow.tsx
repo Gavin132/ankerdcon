@@ -118,13 +118,10 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
   const otherPassengers = ride.passengers.filter((p) => p !== ride.driver).map(resolveName);
 
   const seatsText = isPT ? `${ride.passengers.length} mee` : ride.is_full ? "Vol" : `${ride.seats_left} vrij`;
-  const goalText = guidance && canAct && !isPT ? `doel ${rangeText(guidance)}` : null;
-  const goalTone =
-    guidance?.status === "short"
-      ? "text-amber-800 dark:text-amber-300"
-      : guidance?.status === "ok"
-        ? "text-emerald-700 dark:text-emerald-300"
-        : "text-ink-3";
+  // Collapsed, a row only says "2 vrij" / "Vol"; the goal shows when the car is short of it. "On course" is in the
+  // expanded part (LoadPill).
+  const goalText = guidance && canAct && !isPT && guidance.status === "short" ? `doel ${rangeText(guidance)}` : null;
+  const goalTone = "text-warn";
 
   const statusPill = status === "urgent" || status === "soon" || status === "recent";
   const statusPillClass =

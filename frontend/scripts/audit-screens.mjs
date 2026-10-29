@@ -26,6 +26,9 @@ export const screens = [
   // ── The five tabs ──────────────────────────────────────────────────────────
   { name: "hub", path: "/" },
   { name: "agenda", path: "/calendar" },
+  { name: "agenda-link", path: "/calendar", steps: click(byText(/Agenda-link/)) },
+  { name: "agenda-recap", path: "/calendar", steps: click(byText(/^Recap$/)) },
+  { name: "agenda-past", path: "/calendar", scenario: "past" },
   { name: "finance", path: "/finance" },
   { name: "crew", path: "/crew" },
 
@@ -43,6 +46,14 @@ export const screens = [
   { name: "trip-rooms", path: `${TRIP}?sheet=rooms` },
   { name: "trip-cosplay", path: `${TRIP}?sheet=cosplay` },
   { name: "trip-photos", path: `${TRIP}?sheet=photos` },
+  { name: "trip-transport-form", path: `${TRIP}?sheet=transport`, steps: click(byText(/Rit aanbieden/)) },
+  { name: "trip-admin", path: TRIP, role: "admin" },
+  { name: "trip-rooms-admin", path: `${TRIP}?sheet=rooms`, role: "admin" },
+  { name: "trip-rooms-add", path: `${TRIP}?sheet=rooms`, steps: click(byText(/Nieuwe kamer/)) },
+  { name: "trip-rooms-bulk", path: `${TRIP}?sheet=rooms`, steps: click(byText(/Meerdere/)) },
+  { name: "trip-cosplay-form", path: `${TRIP}?sheet=cosplay`, steps: click(byText(/^Toevoegen$/)) },
+  { name: "trip-meal-form", path: TRIP, steps: click(byLabel(/Activiteit toevoegen/)) },
+  { name: "trip-practical", path: TRIP, steps: click(byText(/Praktisch/)) },
   { name: "trip-participants", path: TRIP, steps: click((p) => p.locator("button[aria-haspopup=dialog]")) },
   { name: "trip-single-day", path: "/trips/d-gathering" },
   { name: "trip-past", path: "/trips/trip-hdcc25" },
@@ -68,6 +79,7 @@ export const screens = [
   { name: "changelog", path: "/settings/changelog" },
 
   // ── Overlays on the hub ────────────────────────────────────────────────────
+  { name: "hub-quick-offer", path: "/", steps: click(byText(/Rit aanbieden/)) },
   { name: "hub-account-menu", path: "/", steps: click(byLabel(/account|menu|profiel/i)) },
   { name: "hub-search", path: "/", steps: click(byLabel(/zoeken/i)) },
   { name: "hub-story-viewer", path: "/", steps: click(byText(/^Vr|^Za|^Zo|^Do/)) },

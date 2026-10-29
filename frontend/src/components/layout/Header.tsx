@@ -36,7 +36,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-30 border-b-1.5 border-line bg-surface pt-[env(safe-area-inset-top,0px)] lg:bg-paper">
       <div className="flex h-14 items-center gap-3 px-4 md:px-8 lg:px-10">
-        <img src="/icons/icon-192.png" alt="" className="h-8 w-8 shrink-0 object-contain md:hidden" />
+        <img src="/icons/icon-192.png" alt="" className="h-8 w-8 shrink-0 object-contain max-[359px]:hidden md:hidden" />
 
         <div className="flex min-w-0 flex-1 items-baseline gap-3">
           {/* The Hub has its own heading (the greeting), so there the bar's title is not a second h1. */}

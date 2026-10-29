@@ -10,6 +10,7 @@ import { Button } from "../../components/common/Button";
 import { TripSheet } from "../../components/trip/TripSheet";
 import { DayChips } from "../../components/trip/DayChips";
 import { NamePicker } from "../../components/common/NamePicker";
+import { SeatPicker } from "../../components/common/SeatPicker";
 import { RideRow } from "../../components/transport/RideRow";
 import { RestaurantMealPrompt, RestaurantRideGroup } from "../../components/transport/RestaurantRideGroup";
 import { useRides, useCreateRide } from "../../hooks/useRides";
@@ -25,7 +26,6 @@ import { isTripOver, tripGaps, tripRides } from "../../utils/trips";
 import { defaultTransportView, driversMissing } from "../../utils/transportView";
 import { defaultRideEnds } from "../../utils/rideLocations";
 import { useIsViewer } from "../../hooks/useIsViewer";
-import { TripMissingList } from "../../components/trip/TripMissingList";
 import { useTrip } from "./tripContext";
 import type { Direction, Ride } from "../../types";
 
@@ -64,9 +64,10 @@ const createSchema = z
 
 type CreateForm = z.infer<typeof createSchema>;
 
-const SL = "section-label mb-1.5 block";
-const SF = "space-y-4 rounded-xl border-1.5 border-line bg-sunken p-4";
-const ST = "section-label mb-3";
+// Field labels are `field-label`; a group of fields is a heading with a line above it, not a grey panel.
+const SL = "field-label";
+const SF = "space-y-4 border-t border-line pt-5 first:border-0 first:pt-0";
+const ST = "section-label";
 
 const container = {
   hidden: { opacity: 0 },
@@ -140,7 +141,6 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
   const dayRides = tripRides(allRides ?? [], meals, trip, activeDayId);
   const tripAllRides = tripRides(allRides ?? [], meals, trip);
   const gaps = tripGaps(trip, allRides ?? [], meals, users ?? []);
-  const missingPeople = gaps.transport.map((g) => ({ name: g.name, detail: g.items.join(" & ") }));
   const tripMealIds = new Set(meals.filter((m) => m.linked_event_id && trip.eventIds.includes(m.linked_event_id)).map((m) => m.id));
   const tripMealOptions = meals.filter((m) => tripMealIds.has(m.id));
 
@@ -338,9 +338,13 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
     return (
       <section key={direction} ref={(el) => { sectionRefs.current[direction] = el; }} className="scroll-mt-2 space-y-2.5">
         <div className="flex items-center justify-between gap-2.5">
-          <h3 className="flex items-baseline gap-2 font-display text-[22px] font-extrabold uppercase leading-none text-ink">
-            {SECTION_LABEL[direction]}
-            {count > 0 && <span className="font-mono text-[12px] font-semibold tabular-nums text-ink-3">{count}</span>}
+          <h3 className="flex items-baseline gap-2">
+            <span className="section-label text-ink-2">{SECTION_LABEL[direction]}</span>
+            {count > 0 && (
+              <span className="text-xs text-ink-3">
+                {count} {isEten ? (count === 1 ? "activiteit" : "activiteiten") : count === 1 ? "rit" : "ritten"}
+              </span>
+            )}
           </h3>
           {canOffer && (
             <button
@@ -431,7 +435,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
       subtitle={
         view === "form"
           ? formDirection === "Restaurant"
-            ? "Zet tijd en locatie neer — pas als iemand “Ik rijd” aangeeft, is er echt een rit"
+            ? "Voor deze activiteit"
             : "Vul de details van de rit in"
           : `${trip.title} · ${trip.dateRange}`
       }
@@ -442,6 +446,10 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
           {/* Richting en event/etentje komen uit welke "+" is aangeklikt — dat is al
               duidelijk uit de sectie en dag waar de rit vandaan komt, dus geen keuze
               meer hier. */}
+
+          {formDirection === "Restaurant" && (
+            <p className="text-xs text-ink-3">Zet tijd en locatie neer. Pas als iemand “Ik rijd” aangeeft, is er echt een rit.</p>
+          )}
 
           {/* Chauffeur — defaults to jezelf, maar kan verwijderd worden als je de rit voor iemand anders aanmaakt */}
           <div className={SF}>
@@ -472,7 +480,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
           {/* Vertrektijd & zitplaatsen */}
           <div className={SF}>
             <p className={ST}>Timing</p>
-            <div className={`grid gap-3 ${formDirection === "Restaurant" ? "grid-cols-1" : "grid-cols-2"}`}>
+            <div className="space-y-4">
               <div>
                 <label className={SL}>{formDirection === "Restaurant" ? "Vertrektijd" : "Tijd"}</label>
                 {formDirection === "Restaurant" ? (
@@ -506,11 +514,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
                 )}
               </div>
               {formDirection !== "Restaurant" && (
-                <div>
-                  <label className={SL}>Plekken in de auto</label>
-                  <input type="number" inputMode="numeric" min={1} max={99} className="input-field" {...register("total_seats")} />
-                  <p className="mt-1 text-xs text-ink-3">Incl. bestuurder</p>
-                </div>
+                <SeatPicker value={Number(watch("total_seats")) || 5} onChange={(n) => setValue("total_seats", n)} />
               )}
             </div>
           </div>
@@ -585,7 +589,7 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
           {/* Restaurant opties */}
           {formDirection === "Restaurant" && (
             <div className="space-y-3 notice-warn p-4">
-              <p className="mb-3 font-mono text-[12px] font-semibold uppercase tracking-[0.09em] text-amber-800 dark:text-amber-300">Restaurant opties</p>
+              <p className="section-label mb-3 text-warn">Restaurant opties</p>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" className="cb" {...register("action_required")} />
                 <div>
@@ -637,11 +641,6 @@ export function TripTransportSheet({ open, onClose }: { open: boolean; onClose: 
               )}
             </motion.div>
           </AnimatePresence>
-
-          <TripMissingList
-            title={`${missingPeople.length} ${missingPeople.length === 1 ? "persoon heeft" : "mensen hebben"} nog geen vervoer`}
-            people={missingPeople}
-          />
         </div>
       )}
     </TripSheet>

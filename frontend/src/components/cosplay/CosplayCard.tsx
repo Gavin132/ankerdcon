@@ -90,18 +90,12 @@ export const CosplayCard = forwardRef<HTMLDivElement, CosplayCardProps>(function
             </span>
           </div>
 
-          {/* Days + photo count: plain text lines, not a pill per day */}
-          <div className="mt-auto flex flex-col gap-0.5">
-            {linkedEvents.length > 0 && (
-              <span className="font-mono text-[12px] uppercase tracking-[0.05em] text-ink-2">
-                {daysLabel(linkedEvents)}
-              </span>
+          {/* Days + photo count: plain text lines, in the way you would say them (data is not a label) */}
+          <div className="mt-auto flex flex-col gap-0.5 text-[12px] text-ink-3">
+            {linkedEvents.length > 0 && <span className="text-ink-2">{daysLabel(linkedEvents)}</span>}
+            {cosplay.inspo_images.length > 0 && (
+              <span>{cosplay.inspo_images.length} {cosplay.inspo_images.length === 1 ? "foto" : "foto's"}</span>
             )}
-            <span className="font-mono text-[12px] uppercase tracking-[0.05em] text-ink-3">
-              {cosplay.inspo_images.length > 0
-                ? `${cosplay.inspo_images.length} foto${cosplay.inspo_images.length !== 1 ? "'s" : ""}`
-                : "Geen foto's"}
-            </span>
           </div>
         </div>
       </button>

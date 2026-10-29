@@ -35,6 +35,17 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **Vervoer sheet:** the headings are small labels with a count ("4 ritten") instead of display titles as big as the
+  sheet's own, the list of people without a ride under the sections is gone (each section names them already), "Ik rijd"
+  on an activity is the quiet button, a missing car is an amber notice instead of a red dashed box, a ride's row only
+  shows "doel" when the car is short of it, and the form asks the seats the same way as the quick-ride sheets.
+- **Hotel sheet:** the numbers ("4 kamers · 7 van 14 ingedeeld") are at the top and the two buttons sit in the footer
+  ("Meerdere", "Nieuwe kamer"). A room card says "1 van 2 bezet" once instead of three times, a full room has no
+  button, and your own room is outlined in the app colour instead of the heavy black border.
+- **Cosplay sheet:** the dashed "Cosplay toevoegen" card is gone (the button above the list does it), a cosplay's
+  days read "di 27 · do 29 okt" in plain text and the photo count only shows when there are photos.
+- **Forms in the trip sheets** have their save button in the footer, with the labels above the fields in the same style
+  everywhere.
 - **Event page tiles:** the "Vervoer" tile lost its Heen/Terug bars (the "zonder rit" pill says who is missing), the
   "+" on Activiteiten and the camera on Foto's are the same quiet button, the info tile is called "Praktisch" and
   says how many topics it holds, an odd small tile at the end is stretched over the row instead of leaving half of it

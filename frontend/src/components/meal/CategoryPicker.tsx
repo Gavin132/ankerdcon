@@ -11,7 +11,7 @@ export function CategoryPicker({ categories, value, onChange }: CategoryPickerPr
   if (categories.length === 0) return null;
   return (
     <div>
-      <p className="section-label mb-2">Soort</p>
+      <p className="field-label">Soort</p>
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Soort activiteit">
         {categories.map((c) => (
           <button
@@ -19,9 +19,7 @@ export function CategoryPicker({ categories, value, onChange }: CategoryPickerPr
             type="button"
             onClick={() => onChange(c)}
             aria-pressed={value === c.id}
-            className={`rounded-xl px-3 py-2 text-[13px] font-semibold transition-colors ${
-              value === c.id ? "border-2 border-outline bg-brand text-brand-on" : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"
-            }`}
+            className={`chip ${value === c.id ? "chip-on" : "chip-off"}`}
           >
             {c.name}
           </button>
