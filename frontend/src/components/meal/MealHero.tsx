@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Clock, MapPin, Banknote, UserCheck, UserMinus, UserPlus } from "lucide-react";
-import { HeroActions, HeroPrimaryButton, HeroSecondaryButton } from "../common/HeroActions";
+import { HeroActions, HeroButton } from "../common/HeroActions";
 import { HeroPeople } from "../common/HeroPeople";
 import { formatAmount, formatDateTime } from "../../utils/format";
 import { routes } from "../../config/routes";
@@ -68,25 +68,25 @@ export function MealHero({ meal, linkedEvent, onRsvpClick, onCancelClick }: Meal
         </ul>
 
         {/* Who is coming and the sign-up: only for kinds of activity people sign up for (not the group photo).
-            One main action: "Aanmelden" until you are on the list, then "Afmelden" (and the way to sign up
-            someone else, since members may act for anyone). */}
+            "Aanmelden" until you are on the list, then "Afmelden" and the way to sign up someone else
+            (members may act for anyone). All standard blue buttons. */}
         {category.has_signup && (participants.length > 0 || !viewer) && (
           <HeroPeople names={participants} singular="aanmelding" plural="aanmeldingen">
             {!viewer && (
               <HeroActions>
                 {onList ? (
                   <>
-                    <HeroSecondaryButton onClick={onCancelClick}>
+                    <HeroButton onClick={onCancelClick}>
                       <UserMinus size={14} /> Afmelden
-                    </HeroSecondaryButton>
-                    <HeroSecondaryButton onClick={onRsvpClick}>
+                    </HeroButton>
+                    <HeroButton onClick={onRsvpClick}>
                       <UserPlus size={14} /> Iemand aanmelden
-                    </HeroSecondaryButton>
+                    </HeroButton>
                   </>
                 ) : (
-                  <HeroPrimaryButton onClick={onRsvpClick}>
+                  <HeroButton onClick={onRsvpClick}>
                     <UserCheck size={14} /> Aanmelden
-                  </HeroPrimaryButton>
+                  </HeroButton>
                 )}
               </HeroActions>
             )}

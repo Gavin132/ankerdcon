@@ -179,7 +179,7 @@ export function MealDetailPage() {
                 <span className="block text-sm font-semibold text-ink">Nog geen rit</span>
                 <span className="block text-xs text-ink-3">Bied een rit aan</span>
               </span>
-              <button type="button" onClick={() => setQuickRideOpen(true)} className="btn-secondary px-4 text-sm">
+              <button type="button" onClick={() => setQuickRideOpen(true)} className="btn-primary px-4 text-sm">
                 Ik rijd
               </button>
             </div>

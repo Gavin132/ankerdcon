@@ -18,7 +18,7 @@ export function EventLinks({ event, bare = false }: EventLinksProps) {
   const hasSaleInfo = !!event.ticket_sale_start;
 
   const linkButton =
-    "flex flex-1 items-center justify-center gap-2 rounded-xl border-1.5 border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-3";
+    "btn-primary flex-1 px-4 text-sm";
 
   // Inside a sheet the sheet already has its own side padding; in a card the rows bring theirs.
   const pad = bare ? "py-3.5" : "px-5 py-4";
@@ -68,7 +68,7 @@ export function EventLinks({ event, bare = false }: EventLinksProps) {
               >
                 <Ticket size={16} />
                 Tickets kopen
-                <ExternalLink size={12} className="ml-0.5 text-ink-3" />
+                <ExternalLink size={12} className="ml-0.5" />
               </a>
             )}
             {websiteUrl && (
@@ -80,7 +80,7 @@ export function EventLinks({ event, bare = false }: EventLinksProps) {
               >
                 <Globe size={16} />
                 Officiële website
-                <ExternalLink size={12} className="ml-0.5 text-ink-3" />
+                <ExternalLink size={12} className="ml-0.5" />
               </a>
             )}
           </div>

@@ -502,7 +502,7 @@ export function AdminBadgesPage() {
           <>
             <button
               onClick={() => setAssignOpen(true)}
-              className="btn-secondary px-4 py-2.5 text-sm"
+              className="btn-primary px-4 py-2.5 text-sm"
             >
               <Users size={16} />
               Toewijzen

@@ -150,7 +150,7 @@ function CarRow({ driver, departure, canAct, userNames, mine, expanded, onToggle
                     </Button>
                   )}
                   {driver.passengers.length > 0 && (
-                    <Button size="sm" variant="secondary" onClick={() => open("leave")}>
+                    <Button size="sm" onClick={() => open("leave")}>
                       <UserMinus size={14} />
                       Uitstappen
                     </Button>
@@ -210,7 +210,7 @@ export function RestaurantRideGroup({ ride, userNames }: { ride: Ride; userNames
           <ChevronRight size={16} className="shrink-0 text-ink-3" />
         </Link>
         {canOfferRide && (
-          <button type="button" onClick={() => setDriverOpen(true)} className="btn-secondary shrink-0 px-3 text-xs">
+          <button type="button" onClick={() => setDriverOpen(true)} className="btn-primary shrink-0 px-3 text-xs">
             <Car size={14} /> Ik rijd
           </button>
         )}
@@ -285,7 +285,7 @@ export function RestaurantMealPrompt({ meal }: { meal: Meal }) {
           </span>
         </span>
         {!viewer && (
-          <button type="button" onClick={() => setOpen(true)} className="btn-secondary shrink-0 px-3 text-xs">
+          <button type="button" onClick={() => setOpen(true)} className="btn-primary shrink-0 px-3 text-xs">
             <Car size={14} /> Ik rijd
           </button>
         )}

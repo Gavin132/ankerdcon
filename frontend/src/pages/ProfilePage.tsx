@@ -605,7 +605,7 @@ export function ProfilePage() {
           icon={<UserX size={22} />}
           title="Profiel niet gevonden"
           description="Dit lid bestaat niet (meer), of de link klopt niet."
-          action={<Button variant="secondary" onClick={goBack}>Terug</Button>}
+          action={<Button onClick={goBack}>Terug</Button>}
         />
       </div>
     );

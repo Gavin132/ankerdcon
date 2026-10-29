@@ -137,7 +137,7 @@ export function AdminCdnPage() {
               onClick={() => void downloadAll()}
               disabled={downloading || tooBig || !data || data.total === 0}
               title={tooBig ? "Te veel voor één zip: kies eerst een onderdeel of evenement." : `Download ${scope} als zip`}
-              className="btn-secondary min-h-[44px] px-4 py-2.5 text-sm disabled:opacity-50"
+              className="btn-primary min-h-[44px] px-4 py-2.5 text-sm disabled:opacity-50"
             >
               {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
               {downloading ? `Bezig… ${formatBytes(downloaded ?? 0)}` : `Download ${scope} (zip)`}
@@ -444,7 +444,7 @@ function QuickUpload({ onUploaded }: { onUploaded: () => void }) {
               aria-label="Link naar het bestand"
               className="input-field min-w-0 flex-1 !bg-sunken font-mono"
             />
-            <button type="button" onClick={copy} className="btn-secondary inline-flex shrink-0 items-center gap-1.5 px-3 py-2 text-sm">
+            <button type="button" onClick={copy} className="btn-primary inline-flex shrink-0 items-center gap-1.5 px-3 py-2 text-sm">
               {copied ? <Check size={16} /> : <Copy size={16} />}
               {copied ? "Gekopieerd" : "Kopiëren"}
             </button>

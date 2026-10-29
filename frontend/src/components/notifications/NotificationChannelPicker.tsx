@@ -121,7 +121,7 @@ export function NotificationChannelPicker({ allowDm, onAllowDmChange, hasDiscord
                   : "Stuur jezelf één bericht om te zien of het aankomt. Gebruikt wat je het laatst opsloeg."}
               </p>
             </div>
-            <Button size="sm" variant="secondary" onClick={sendTest} loading={testMutation.isPending}>
+            <Button size="sm" onClick={sendTest} loading={testMutation.isPending}>
               {testSent ? "Opnieuw" : "Stuur"}
             </Button>
           </div>

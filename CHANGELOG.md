@@ -43,6 +43,8 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **Every action button is blue now.** "Andere evenementen", "Route", "Tickets kopen", "Officiële website", "Parkeerplek", "Locatie pingen", "Afmelden", "Iemand aanmelden" and the other buttons that used to be an empty outline are the same blue as the rest; only "Annuleren" next to a confirm stays outlined, and the small add buttons (photo, "+" on Activiteiten) stay grey.
+- **The "Praktisch" tile is called "Info"** and shows the number of topics small, with the topics under it, so it fits on a phone. The text under "Parkeerplek" and "Locatie pingen" is gone: tapping "Parkeerplek" still tells you when it cannot be saved.
 - **The blue buttons are a deeper blue with white labels.** Buttons, the chosen filter and the active tab in dark mode, switches
   and the countdown stub use a deeper blue so the white text on them reads well, and the accent colours in Instellingen
   are deeper to match (gold is now a dark amber).

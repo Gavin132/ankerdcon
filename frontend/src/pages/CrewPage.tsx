@@ -138,7 +138,7 @@ export function CrewPage() {
               onClick={openParking}
               aria-disabled={!!parkingBlockedReason}
               title={parkingBlockedReason ?? undefined}
-              className={`btn-secondary px-3 text-[13px] ${parkingBlockedReason ? "text-ink-3" : ""}`}
+              className="btn-primary px-3 text-[13px] aria-disabled:opacity-60"
             >
               <Car size={14} />
               Parkeerplek
@@ -146,12 +146,11 @@ export function CrewPage() {
             <button
               type="button"
               onClick={() => setPingOpen(true)}
-              className="btn-secondary px-3 text-[13px]"
+              className="btn-primary px-3 text-[13px]"
             >
               <MapPin size={14} />
               Locatie pingen
             </button>
-            {parkingBlockedReason && <p className="basis-full text-xs text-ink-3">{parkingBlockedReason}</p>}
           </div>
           )}
         </div>

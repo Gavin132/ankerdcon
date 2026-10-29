@@ -165,7 +165,7 @@ export function TimeTravelControl({ variant }: { variant: "sidebar" | "icon" }) 
             type="button"
             onClick={() => { setOverride(null); setOpen(false); }}
             disabled={!override}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border-1.5 border-line bg-surface py-2.5 text-sm font-semibold text-ink-2 hover:border-ink-3 hover:text-ink disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="btn-primary w-full text-sm"
           >
             <RotateCcw size={14} />
             Terug naar echte tijd

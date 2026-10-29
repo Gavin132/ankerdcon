@@ -24,23 +24,12 @@ export function HeroChip({ tone = "neutral", className = "", ...props }: HeroChi
   return <span className={`${heroChipClass(tone)} ${className}`} {...props} />;
 }
 
-/** The row at the end of the sign-up line: the quiet action first, the one primary last. */
+/** The row at the end of the sign-up line: the actions side by side. */
 export function HeroActions({ children }: { children: ReactNode }) {
   return <div className="ml-auto flex flex-wrap items-center justify-end gap-2">{children}</div>;
 }
 
-/** "Afmelden", "Uitstappen": the secondary tier on the dark block (transparent, 1px hairline), as tall as the primary next to it. */
-export function HeroSecondaryButton({ className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      type="button"
-      className={`hit-area inline-flex min-h-[40px] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-hero-ink/25 bg-transparent px-3.5 py-2 text-xs font-bold text-hero-ink transition-colors duration-75 hover:border-hero-ink/50 hover:bg-hero-ink/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hero-ink focus-visible:ring-offset-2 focus-visible:ring-offset-hero ${className}`}
-      {...props}
-    />
-  );
-}
-
-/** "Aanmelden", "Stap in": the one blue button of the hero (the primary tier, no outline). */
-export function HeroPrimaryButton({ className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
+/** "Aanmelden", "Afmelden", "Iemand aanmelden", "Stap in", "Uitstappen": every action on the hero is the standard blue button, 40 px tall. */
+export function HeroButton({ className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
   return <button type="button" className={`btn-primary min-h-[40px] px-3.5 py-2 text-xs focus-visible:ring-hero-ink focus-visible:ring-offset-hero ${className}`} {...props} />;
 }

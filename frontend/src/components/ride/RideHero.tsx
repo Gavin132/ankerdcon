@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Clock, Timer, CalendarDays, MapPin, Users, Utensils, Plus, UserMinus, AlertCircle } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
-import { HeroActions, HeroChip, HeroPrimaryButton, HeroSecondaryButton, heroChipClass } from "../common/HeroActions";
+import { HeroActions, HeroChip, HeroButton, heroChipClass } from "../common/HeroActions";
 import { HeroPeople } from "../common/HeroPeople";
 import { useCurrentUser } from "../../hooks/useUsers";
 import { useIsViewer } from "../../hooks/useIsViewer";
@@ -168,14 +168,14 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
             {canAct && (
               <HeroActions>
                 {canLeave && (
-                  <HeroSecondaryButton onClick={onLeaveClick}>
+                  <HeroButton onClick={onLeaveClick}>
                     <UserMinus size={14} /> Uitstappen
-                  </HeroSecondaryButton>
+                  </HeroButton>
                 )}
                 {onClaimClick && !ride.is_full && (
-                  <HeroPrimaryButton onClick={onClaimClick}>
+                  <HeroButton onClick={onClaimClick}>
                     <Plus size={14} /> Stap in
-                  </HeroPrimaryButton>
+                  </HeroButton>
                 )}
                 {ride.is_full && <p className="text-xs text-hero-ink/75">Deze rit zit vol</p>}
               </HeroActions>

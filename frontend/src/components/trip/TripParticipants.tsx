@@ -38,7 +38,7 @@ export function TripParticipants({ trip, users, myNames, phase, onManage, childr
       <>
         {children}
         {onManage && (
-          <button type="button" onClick={onManage} className="hit-area flex items-center gap-1 text-[12.5px] font-semibold text-brand-text hover:underline">
+          <button type="button" onClick={onManage} className="btn-primary min-h-10 px-3.5 text-xs">
             <UserPlus size={14} className="shrink-0" />
             Iemand aanmelden
           </button>
@@ -103,7 +103,7 @@ function ParticipantsSheet({
               onClose();
               onManage();
             }}
-            className="btn-secondary flex w-full items-center justify-center gap-2 px-4 py-3 text-sm"
+            className="btn-primary flex w-full items-center justify-center gap-2 px-4 py-3 text-sm"
           >
             <UserPlus size={16} />
             {phase === "past" ? "Aanmeldingen aanpassen" : "Iemand aanmelden"}

@@ -33,7 +33,7 @@ export function ConfirmInline({
         type="button"
         onClick={onConfirm}
         disabled={isPending}
-        className={`${calm ? "btn-secondary" : "btn-danger"} px-3 text-sm`}
+        className={`${calm ? "btn-primary" : "btn-danger"} px-3 text-sm`}
       >
         {isPending ? "Bezig…" : confirmLabel}
       </button>

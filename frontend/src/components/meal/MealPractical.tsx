@@ -46,11 +46,11 @@ export function MealPractical({ meal }: MealPracticalProps) {
                 href={mapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hit-area flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-ink-3"
+                className="btn-primary min-h-10 shrink-0 px-3 text-xs"
               >
                 <Navigation size={12} />
                 Route
-                <ExternalLink size={12} className="text-ink-3" />
+                <ExternalLink size={12} />
               </a>
             )}
           </div>
@@ -74,7 +74,7 @@ export function MealPractical({ meal }: MealPracticalProps) {
             href={mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-secondary px-3.5 text-sm"
+            className="btn-primary px-3.5 text-sm"
           >
             <Navigation size={14} />
             Route

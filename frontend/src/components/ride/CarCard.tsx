@@ -112,7 +112,7 @@ export const CarCard = forwardRef<HTMLDivElement, CarCardProps>(function CarCard
             {!isFull && (
               <Button
                 size="sm"
-                variant="secondary"
+                
                 onClick={() => toggle("join")}
                 aria-expanded={action === "join"}
               >

@@ -93,7 +93,7 @@ export function TripSwitcherButton({ iconOnly, onClick }: { iconOnly?: boolean; 
       <CalendarRange size={16} />
     </button>
   ) : (
-    <button type="button" onClick={onClick} className="btn-secondary flex w-full items-center justify-center gap-2 px-4 py-3 text-sm">
+    <button type="button" onClick={onClick} className="btn-primary flex w-full items-center justify-center gap-2 px-4 py-3 text-sm">
       <CalendarRange size={16} />
       Andere evenementen
     </button>

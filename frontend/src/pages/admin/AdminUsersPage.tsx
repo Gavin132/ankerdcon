@@ -559,7 +559,7 @@ export function AdminUsersPage() {
           <button
             onClick={handleBulkDeactivate}
             disabled={bulkIsPending}
-            className="btn-secondary px-3 text-sm"
+            className="btn-primary px-3 text-sm"
           >
             <Ban size={16} />
             Deactiveren

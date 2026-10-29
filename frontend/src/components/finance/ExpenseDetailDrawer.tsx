@@ -163,7 +163,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
                           type="button"
                           onClick={() => handleClaim(share.id)}
                           disabled={isLoading}
-                          className="btn-secondary hit-area ml-auto min-h-9 px-3 text-[12px]"
+                          className="btn-primary hit-area ml-auto min-h-9 px-3 text-[12px]"
                         >
                           Ik heb betaald
                         </button>
@@ -173,7 +173,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
                           type="button"
                           onClick={() => handleConfirm(share.id)}
                           disabled={isLoading}
-                          className="btn-secondary hit-area ml-auto min-h-9 px-3 text-[12px]"
+                          className="btn-primary hit-area ml-auto min-h-9 px-3 text-[12px]"
                         >
                           <Check size={12} />
                           Ontvangen

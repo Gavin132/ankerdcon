@@ -289,7 +289,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
                     </Button>
                   )}
                   {ride.passengers.length > 0 && (
-                    <Button size="sm" variant="secondary" onClick={() => openAction("leave")}>
+                    <Button size="sm" onClick={() => openAction("leave")}>
                       <UserMinus size={14} />
                       Uitstappen
                     </Button>

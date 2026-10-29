@@ -478,8 +478,8 @@
 
   /* Buttons: one family, five tiers, all flat (no shadow, nothing moves or scales), 10 px radius, bold label,
      44 px tall (a smaller one adds `min-h-*` and `hit-area`). <Button variant="..."> uses these same classes.
-       .btn-primary      solid brand fill, no outline: the one main action of a view
-       .btn-secondary    transparent, 1px hairline: every other action
+       .btn-primary      solid brand fill, white label: the standard action button, alone or in a row
+       .btn-secondary    transparent, 1px hairline: only the cancelling partner of a confirm (Annuleren) and a quiet extra
        .btn-tonal        lifted `bg-surface` fill with a hairline: a neutral action with a bit more body (sign in with Google)
        .btn-ghost        no fill, no border, quiet text: Annuleren, Terug
        .btn-danger       solid red fill: the confirm of a destructive action ("Verwijderen")

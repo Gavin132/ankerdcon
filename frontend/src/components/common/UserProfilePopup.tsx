@@ -336,11 +336,7 @@ export function UserProfilePopup({
                     onClose();
                     navigate(routes.profile.view(u?.id ?? u?.name ?? ""));
                   }}
-                  className={
-                    isOwn
-                      ? "btn-primary w-full py-2.5 text-[13px]"
-                      : "btn-secondary w-full py-2.5 text-[13px]"
-                  }
+                  className="btn-primary w-full py-2.5 text-[13px]"
                 >
                   {isOwn ? <Pencil size={14} /> : <UserIcon size={14} />}
                   {isOwn ? "Profiel bewerken" : "Bekijk profiel"}

@@ -168,11 +168,8 @@ function EventRow({ item, users, cosplayCount }: {
           <button
             type="button"
             onClick={() => setShowRsvp((v) => !v)}
-            className={`hit-area flex min-h-9 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-              showRsvp
-                ? "border-1.5 border-transparent bg-selected text-selected-on"
-                : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
-            }`}
+            aria-expanded={showRsvp}
+            className="btn-primary hit-area min-h-9 px-3 text-xs"
           >
             <UserPlus size={14} />
             Aanmelden

@@ -457,11 +457,11 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
       {currentUserName && (isMine || !isFull) && (
         <div className="mt-auto pt-1">
           {isMine ? (
-            <button type="button" onClick={handleSelfLeave} disabled={isPending} className="btn-secondary w-full text-sm text-bad">
+            <button type="button" onClick={handleSelfLeave} disabled={isPending} className="btn-primary w-full text-sm">
               {isPending ? "Bezig…" : "Verlaat kamer"}
             </button>
           ) : (
-            <button type="button" onClick={handleSelfAssign} disabled={isPending} className="btn-secondary w-full text-sm">
+            <button type="button" onClick={handleSelfAssign} disabled={isPending} className="btn-primary w-full text-sm">
               {isPending ? "Bezig…" : "Ik slaap hier"}
             </button>
           )}
@@ -556,7 +556,7 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
     </div>
   ) : (
     <div className="grid grid-cols-2 gap-2">
-      <button type="button" onClick={() => setBulkModalOpen(true)} className="btn-secondary min-w-0 px-3 text-[13px]">
+      <button type="button" onClick={() => setBulkModalOpen(true)} className="btn-primary min-w-0 px-3 text-[13px]">
         <Layers size={16} className="shrink-0" />
         Meerdere
       </button>

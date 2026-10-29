@@ -11,7 +11,7 @@ interface Props {
   disabled?: boolean;
 }
 
-/** Footer of an admin sheet: "Annuleren" and the one blue button that submits the form with `formId`. */
+/** Footer of an admin sheet: "Annuleren" and the blue button that submits the form with `formId`. */
 export function DrawerFooter({ onCancel, formId, isPending, isEdit, submitLabel, disabled }: Props) {
   return (
     <div className="flex gap-2">

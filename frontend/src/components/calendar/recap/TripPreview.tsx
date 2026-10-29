@@ -117,7 +117,7 @@ export function TripPreview({ trip, onClose, myNames, users, rides, meals, onJoi
               Ik ga mee
             </button>
           )}
-          <button type="button" onClick={onManage} className="text-[13px] font-semibold text-brand-text hover:underline">
+          <button type="button" onClick={onManage} className="btn-primary min-h-10 px-3.5 text-xs">
             Anderen aanmelden
           </button>
         </div>

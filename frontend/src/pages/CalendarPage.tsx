@@ -97,7 +97,7 @@ export function CalendarPage() {
           type="button"
           onClick={() => setSubscribeOpen((v) => !v)}
           aria-expanded={subscribeOpen}
-          className="btn-secondary px-3 text-[13px]"
+          className="btn-primary px-3 text-[13px]"
         >
           <CalendarPlus size={16} />
           Agenda-link
@@ -122,7 +122,7 @@ export function CalendarPage() {
             <div className="card-surface space-y-3 p-4">
               <p className="text-sm text-ink-2">Zet alle evenementen in je eigen agenda. De link blijft bijgewerkt.</p>
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={copyFeedUrl} disabled={!feedUrl} className="btn-secondary px-3 text-[13px]">
+                <button type="button" onClick={copyFeedUrl} disabled={!feedUrl} className="btn-primary px-3 text-[13px]">
                   {copied ? <Check size={16} className="text-ok" /> : <Copy size={16} />}
                   {copied ? "Gekopieerd" : feedUrl ? "Kopieer link" : "Link ophalen…"}
                 </button>
@@ -131,7 +131,7 @@ export function CalendarPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-disabled={!feedUrl}
-                  className="btn-secondary px-3 text-[13px]"
+                  className="btn-primary px-3 text-[13px]"
                 >
                   Google Calendar
                 </a>
