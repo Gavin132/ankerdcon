@@ -3,6 +3,7 @@ import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronRight,
+  ExternalLink,
   QrCode,
   Bell,
   MessageSquare,
@@ -112,94 +113,6 @@ export function SettingsPage() {
                 <ChevronRight size={16} className="shrink-0 text-ink-3" />
               </button>
             )}
-          </div>
-        </motion.section>
-
-        {/* App installeren: only on a phone that has not done so yet */}
-        {installKind && (
-          <motion.div variants={listItem}>
-            <InstallHint kind={installKind} />
-          </motion.div>
-        )}
-
-        {/* Weergave */}
-        <motion.section variants={listItem} className={PANEL}>
-          <p className="section-label px-4 pb-2.5 pt-3.5">Weergave</p>
-          <div className={PANEL_ROWS}>
-            <div className="flex w-full items-center gap-3 px-4 py-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-                {isDark ? <Moon size={16} /> : <Sun size={16} />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-semibold text-ink">Donker thema</p>
-                <p className="text-[12.5px] text-ink-3">Geldt voor dit apparaat</p>
-              </div>
-              <Switch checked={isDark} onChange={toggleTheme} label="Donker thema" />
-            </div>
-
-            <div className="px-4 py-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-                  <Palette size={16} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-semibold text-ink">Accentkleur</p>
-                  <p className="text-[12.5px] text-ink-3">Geldt voor dit apparaat</p>
-                </div>
-              </div>
-              <div className="mt-3 grid w-fit grid-cols-4 gap-2.5 pl-11 min-[430px]:grid-cols-7" role="radiogroup" aria-label="Accentkleur">
-                {ACCENTS.map((a) => {
-                  const selected = accent === a.id;
-                  return (
-                    <button
-                      key={a.id}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      aria-label={a.label}
-                      title={a.label}
-                      onClick={() => setAccent(a.id)}
-                      style={{ backgroundColor: a.swatch }}
-                      className={`hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero transition-transform active:scale-95 ${
-                        selected ? "border-2 border-outline" : "border-1.5 border-line"
-                      }`}
-                    >
-                      {selected && <Check size={16} strokeWidth={3} />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="px-4 py-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-                  <Rows3 size={16} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-semibold text-ink">Dichtheid</p>
-                  <p className="text-[12.5px] text-ink-3">Geldt voor dit apparaat</p>
-                </div>
-              </div>
-              <div className="mt-3 flex gap-2 pl-11" role="radiogroup" aria-label="Dichtheid">
-                {DENSITY_OPTIONS.map((o) => {
-                  const selected = density === o.id;
-                  return (
-                    <button
-                      key={o.id}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      onClick={() => setDensity(o.id)}
-                      className={`chip ${selected ? "chip-on" : "chip-off"}`}
-                    >
-                      {o.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
             {me && (
               <div className="flex w-full items-center gap-3 px-4 py-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
@@ -221,6 +134,91 @@ export function SettingsPage() {
                 />
               </div>
             )}
+          </div>
+        </motion.section>
+
+        {/* App installeren: only on a phone that has not done so yet */}
+        {installKind && (
+          <motion.div variants={listItem}>
+            <InstallHint kind={installKind} />
+          </motion.div>
+        )}
+
+        {/* Weergave */}
+        <motion.section variants={listItem} className={PANEL}>
+          <p className="section-label px-4 pt-3.5">Weergave</p>
+          <p className="px-4 pb-2.5 pt-0.5 text-[12.5px] text-ink-3">Voor dit apparaat</p>
+          <div className={PANEL_ROWS}>
+            <div className="flex w-full items-center gap-3 px-4 py-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                {isDark ? <Moon size={16} /> : <Sun size={16} />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold text-ink">Donker thema</p>
+              </div>
+              <Switch checked={isDark} onChange={toggleTheme} label="Donker thema" />
+            </div>
+
+            <div className="px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                  <Palette size={16} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-semibold text-ink">Accentkleur</p>
+                  </div>
+              </div>
+              <div className="mt-3 grid w-fit grid-cols-4 gap-2.5 pl-11 min-[430px]:grid-cols-7" role="radiogroup" aria-label="Accentkleur">
+                {ACCENTS.map((a) => {
+                  const selected = accent === a.id;
+                  return (
+                    <button
+                      key={a.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      aria-label={a.label}
+                      title={a.label}
+                      onClick={() => setAccent(a.id)}
+                      style={{ backgroundColor: a.swatch }}
+                      className={`hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero transition-colors ${
+                        selected ? "border-2 border-outline" : "border-1.5 border-line"
+                      }`}
+                    >
+                      {selected && <Check size={16} strokeWidth={3} />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                  <Rows3 size={16} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-semibold text-ink">Dichtheid</p>
+                  </div>
+              </div>
+              <div className="mt-3 flex gap-2 pl-11" role="radiogroup" aria-label="Dichtheid">
+                {DENSITY_OPTIONS.map((o) => {
+                  const selected = density === o.id;
+                  return (
+                    <button
+                      key={o.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => setDensity(o.id)}
+                      className={`chip ${selected ? "chip-on" : "chip-off"}`}
+                    >
+                      {o.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </motion.section>
 
@@ -254,7 +252,6 @@ export function SettingsPage() {
                     <div className="rounded-xl border-1.5 border-line bg-white p-3">
                       <QRCodeSVG value={window.location.origin} size={160} bgColor="#ffffff" fgColor="#0F1519" level="M" />
                     </div>
-                    <p className="text-[12.5px] text-ink-3">Scan om de app te openen</p>
                   </div>
                 </motion.div>
               )}
@@ -268,7 +265,7 @@ export function SettingsPage() {
                 <p className="text-[14px] font-semibold text-ink">Broncode</p>
                 <p className="text-[12.5px] text-ink-3">Bekijk de repository op GitHub</p>
               </div>
-              <ChevronRight size={16} className="shrink-0 text-ink-3" />
+              <ExternalLink size={14} className="shrink-0 text-ink-3" />
             </a>
 
             <a href="https://www.youtube.com/@ankerd" target="_blank" rel="noopener noreferrer" className={ROW}>
@@ -279,7 +276,7 @@ export function SettingsPage() {
                 <p className="text-[14px] font-semibold text-ink">YouTube</p>
                 <p className="text-[12.5px] text-ink-3">Bekijk het YouTube-kanaal</p>
               </div>
-              <ChevronRight size={16} className="shrink-0 text-ink-3" />
+              <ExternalLink size={14} className="shrink-0 text-ink-3" />
             </a>
           </div>
         </motion.section>
@@ -306,17 +303,17 @@ export function SettingsPage() {
               <div className="flex-1 min-w-0">
                 <p className="text-[14px] font-semibold text-ink">Ankerd Con</p>
                 <p className="text-[12.5px] text-ink-3">Ledenportaal · v{__APP_VERSION__}</p>
-                <p className="mt-0.5 text-[12px] text-ink-3">
-                  Powered by{" "}
-                  <a href="https://ayoublfatmi.nl" target="_blank" rel="noopener noreferrer" className="font-semibold text-ink-2 hover:text-ink hover:underline">
+                <p className="-ml-2 flex flex-wrap items-center text-[12px] text-ink-3">
+                  <span className="pl-2">Powered by</span>
+                  <a href="https://ayoublfatmi.nl" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 min-w-11 items-center justify-center px-2 font-semibold text-ink-2 hover:text-ink hover:underline">
                     ALFA
                   </a>
                   {" · "}
-                  <a href="https://rg-digital.dev/" target="_blank" rel="noopener noreferrer" className="font-semibold text-ink-2 hover:text-ink hover:underline">
+                  <a href="https://rg-digital.dev/" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 min-w-11 items-center justify-center px-2 font-semibold text-ink-2 hover:text-ink hover:underline">
                     RG Digital
                   </a>
                   {" · "}
-                  <a href="https://ankerd.nl" target="_blank" rel="noopener noreferrer" className="font-semibold text-ink-2 hover:text-ink hover:underline">
+                  <a href="https://ankerd.nl" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 min-w-11 items-center justify-center px-2 font-semibold text-ink-2 hover:text-ink hover:underline">
                     Ankerd
                   </a>
                 </p>

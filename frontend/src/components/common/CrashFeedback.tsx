@@ -37,7 +37,7 @@ export function CrashFeedback({ detail }: { detail: string | null }) {
 
   if (state === "sent") {
     return (
-      <p className="mt-5 flex items-center gap-1.5 text-[12.5px] font-semibold text-emerald-700 dark:text-emerald-300" role="status">
+      <p className="mt-3 flex items-center gap-1.5 text-[12.5px] font-semibold text-ok" role="status">
         <Check size={14} /> Bedankt, we kijken ernaar.
       </p>
     );
@@ -48,7 +48,7 @@ export function CrashFeedback({ detail }: { detail: string | null }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-5 inline-flex min-h-11 items-center gap-1.5 py-2.5 text-[12.5px] font-semibold text-brand-text hover:underline"
+        className="mt-3 inline-flex min-h-11 items-center gap-1.5 py-2.5 text-[12.5px] font-semibold text-brand-text hover:underline"
       >
         <MessageSquarePlus size={13} />
         Vertel wat er gebeurde
@@ -57,8 +57,8 @@ export function CrashFeedback({ detail }: { detail: string | null }) {
   }
 
   return (
-    <div className="mt-5 w-full max-w-[320px] space-y-2 text-left">
-      <label htmlFor="crash-feedback" className="section-label block">Wat deed je toen het misging?</label>
+    <div className="mt-3 w-full max-w-[320px] space-y-2 text-left">
+      <label htmlFor="crash-feedback" className="field-label">Wat deed je toen het misging?</label>
       <textarea
         id="crash-feedback"
         rows={3}
@@ -70,7 +70,7 @@ export function CrashFeedback({ detail }: { detail: string | null }) {
       />
       <p className="text-[12px] leading-snug text-ink-3">De pagina en de technische melding gaan automatisch mee.</p>
       {state === "failed" && (
-        <p className="text-[12px] font-semibold text-rose-700 dark:text-rose-300" role="alert">
+        <p className="text-[12px] font-semibold text-bad" role="alert">
           Versturen lukte niet. Probeer het later nog eens, via Instellingen → Feedback geven.
         </p>
       )}

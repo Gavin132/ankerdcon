@@ -10,10 +10,9 @@ import { DiscordIcon } from "../components/common/DiscordIcon";
 import { UserPhotos } from "../components/profile/UserPhotos";
 import { UnsavedChangesModal } from "../components/common/UnsavedChangesModal";
 import {
-  ArrowLeft,
-  Check,
   AlertTriangle,
   BedDouble,
+  Eye,
   Phone,
   MapPin,
   Pencil,
@@ -22,6 +21,7 @@ import {
   Smartphone,
   Plus,
   Trash2,
+  UserX,
   X,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -39,20 +39,16 @@ import {
   useDeleteAvatar,
 } from "../hooks/useUsers";
 import { BannerCropModal } from "../components/profile/BannerCropModal";
+import { ColorSwatch } from "../components/profile/ColorSwatch";
+import { EmptyState } from "../components/common/EmptyState";
 import { BadgeIcon } from "../components/common/BadgeIcon";
 import { useAuthStore } from "../store/auth.store";
 import { avatarColor, avatarSrc } from "../utils/avatar";
 import { prepareAvatarFile } from "../utils/imageCompression";
+import { FONT_MAP, NAME_COLORS, BANNER_COLORS, getBannerStyle } from "../utils/profile";
 import { toast } from "../store/toast.store";
 import { validateDisplayName, validatePhoneNumber } from "../utils/validation";
 import type { Badge, FontOption, User } from "../types";
-
-const FONT_MAP: Record<string, string> = {
-  mono: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-  serif: 'Georgia, Cambria, "Times New Roman", Times, serif',
-  cursive: "cursive",
-  display: 'Impact, "Arial Black", sans-serif',
-};
 
 const FONT_OPTIONS: { value: FontOption; label: string }[] = [
   { value: "default", label: "Standaard" },
@@ -61,50 +57,6 @@ const FONT_OPTIONS: { value: FontOption; label: string }[] = [
   { value: "cursive", label: "Cursief" },
   { value: "display", label: "Display" },
 ];
-
-const NAME_COLORS = [
-  "#0f172a",
-  "#0ea5e9",
-  "#8b5cf6",
-  "#10b981",
-  "#f43f5e",
-  "#f59e0b",
-  "#6366f1",
-  "#ec4899",
-  "#14b8a6",
-  "#a3e635",
-  "#64748b",
-];
-
-const BANNER_COLORS = [
-  "#0f172a",
-  "#1e293b",
-  "#1a1a2e",
-  "#2d1b69",
-  "#0c4a6e",
-  "#14532d",
-  "#7c2d12",
-  "#1c1917",
-  "#0369a1",
-  "#064e3b",
-  "#4c0519",
-  "#292524",
-];
-
-function getBannerStyle(
-  bannerColor: string,
-  bannerUrl?: string,
-  bannerPosition?: string,
-): React.CSSProperties {
-  if (bannerUrl)
-    return {
-      backgroundImage: `url(${bannerUrl})`,
-      backgroundSize: "cover",
-      backgroundPosition: bannerPosition || "center",
-    };
-  if (bannerColor) return { backgroundColor: bannerColor };
-  return { backgroundColor: "#0F1519" };
-}
 
 // ─── Field wrapper ────────────────────────────────────────────────────────────
 
@@ -121,71 +73,9 @@ function Field({
 }) {
   return (
     <div className={className}>
-      <label className="section-label mb-1.5 block">{label}</label>
+      <label className="field-label">{label}</label>
       {children}
       {hint && <p className="mt-1.5 text-xs text-ink-3">{hint}</p>}
-    </div>
-  );
-}
-
-// ─── Color swatch row ─────────────────────────────────────────────────────────
-
-function ColorPicker({
-  value,
-  onChange,
-  presets,
-  fallback = "#94a3b8",
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  presets: string[];
-  fallback?: string;
-}) {
-  return (
-    <div className="flex flex-wrap items-center gap-2.5">
-      <button
-        type="button"
-        onClick={() => onChange("")}
-        aria-pressed={value === ""}
-        aria-label="Automatische kleur"
-        className={`hit-area flex h-9 w-9 items-center justify-center rounded-full border-1.5 border-line bg-sunken ring-2 ring-offset-2 ring-offset-surface transition-shadow ${
-          value === "" ? "ring-outline" : "ring-transparent hover:ring-line"
-        }`}
-        title="Automatisch"
-      >
-        {value === "" && <Check size={11} strokeWidth={3} className="text-ink" />}
-      </button>
-
-      {presets.map((c) => (
-        <button
-          key={c}
-          type="button"
-          onClick={() => onChange(value === c ? "" : c)}
-          aria-pressed={value === c}
-          aria-label={`Kleur ${c}`}
-          className={`hit-area flex h-9 w-9 items-center justify-center rounded-full ring-2 ring-offset-2 ring-offset-surface transition-shadow ${
-            value === c ? "ring-outline" : "ring-transparent hover:ring-line"
-          }`}
-          style={{ backgroundColor: c }}
-          title={c}
-        >
-          {value === c && <Check size={11} strokeWidth={3} className="text-white" />}
-        </button>
-      ))}
-
-      <div className="relative h-9 w-9">
-        <input
-          type="color"
-          value={value || fallback}
-          onChange={(e) => onChange(e.target.value)}
-          aria-label="Aangepaste kleur"
-          className="absolute inset-0 z-10 h-full w-full cursor-pointer rounded-full opacity-0"
-          title="Aangepaste kleur"
-        />
-        <div className="flex h-9 w-9 items-center justify-center rounded-full border-1.5 border-dashed border-ink-3 bg-surface text-ink-2">
-          <Plus size={13} />
-        </div>
-      </div>
     </div>
   );
 }
@@ -279,7 +169,7 @@ function ProfileHead({
                 disabled={bannerDeleting}
                 aria-label="Banner verwijderen"
                 title="Banner verwijderen"
-                className="hit-area flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-colors hover:bg-ink/90 disabled:opacity-60"
+                className="hit-area flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-ink/80 text-paper transition-colors hover:bg-ink disabled:opacity-60"
               >
                 {bannerDeleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
               </button>
@@ -290,7 +180,7 @@ function ProfileHead({
               disabled={bannerUploading}
               aria-label="Banner wijzigen"
               title="Banner wijzigen"
-              className="hit-area flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-transform hover:bg-ink/90 active:scale-95 disabled:opacity-60"
+              className="hit-area flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-ink/80 text-paper transition-colors hover:bg-ink disabled:opacity-60"
             >
               {bannerUploading ? <Loader2 size={13} className="animate-spin" /> : <Pencil size={13} />}
             </button>
@@ -340,7 +230,7 @@ function ProfileHead({
                     disabled={avatarDeleting}
                     aria-label="Profielfoto verwijderen"
                     title="Profielfoto verwijderen"
-                    className="hit-area flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-colors hover:bg-ink/90 disabled:opacity-60"
+                    className="hit-area flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink/80 text-paper transition-colors hover:bg-ink disabled:opacity-60"
                   >
                     {avatarDeleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
                   </button>
@@ -351,7 +241,7 @@ function ProfileHead({
                   disabled={avatarUploading}
                   aria-label="Profielfoto wijzigen"
                   title="Profielfoto wijzigen"
-                  className="hit-area flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper transition-transform active:scale-95 disabled:opacity-60"
+                  className="hit-area flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper disabled:opacity-60"
                 >
                   {avatarUploading ? (
                     <Loader2 size={13} className="animate-spin" />
@@ -452,7 +342,7 @@ function ViewProfile({
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
                 <Phone size={15} />
               </span>
-              <a href={`tel:${user.phone_number}`} className="font-medium text-brand-text">
+              <a href={`tel:${user.phone_number}`} className="hit-area font-medium text-brand-text">
                 {user.phone_number}
               </a>
             </div>
@@ -696,22 +586,25 @@ export function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-paper">
-        <LoadingSpinner />
+      <div className="min-h-[100dvh] bg-paper">
+        <DetailTopbar title="Profiel" onBack={goBack} />
+        <div className="flex justify-center py-24">
+          <LoadingSpinner />
+        </div>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-3 bg-paper px-6">
-        <p className="text-sm font-semibold text-ink">Gebruiker niet gevonden</p>
-        <button
-          onClick={goBack}
-          className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
-        >
-          <ArrowLeft size={13} /> Terug
-        </button>
+      <div className="min-h-[100dvh] bg-paper">
+        <DetailTopbar title="Profiel" onBack={goBack} />
+        <EmptyState
+          icon={<UserX size={22} />}
+          title="Profiel niet gevonden"
+          description="Dit lid bestaat niet (meer), of de link klopt niet."
+          action={<Button variant="secondary" onClick={goBack}>Terug</Button>}
+        />
       </div>
     );
   }
@@ -760,16 +653,27 @@ export function ProfilePage() {
         title="Profiel"
         onBack={goBack}
         actions={
-          // Always in reach, and only blue when there is something to save.
-          <Button
-            size="sm"
-            onClick={onSave}
-            disabled={!isDirty}
-            loading={updateMutation.isPending || renameMutation.isPending}
-          >
-            <Save size={14} />
-            Opslaan
-          </Button>
+          <>
+            <button
+              type="button"
+              onClick={() => navigate(`${routes.profile.view(decodedName)}?preview=1`)}
+              className="icon-btn"
+              aria-label="Zo zien anderen je profiel"
+              title="Zo zien anderen je profiel"
+            >
+              <Eye size={18} />
+            </button>
+            {/* Always in reach, and only blue when there is something to save. */}
+            <Button
+              size="sm"
+              onClick={onSave}
+              disabled={!isDirty}
+              loading={updateMutation.isPending || renameMutation.isPending}
+            >
+              <Save size={14} />
+              Opslaan
+            </Button>
+          </>
         }
       />
 
@@ -799,33 +703,20 @@ export function ProfilePage() {
           onDeleteBanner={onBannerDelete}
           bannerDeleting={deleteBannerMutation.isPending}
           hasBanner={!!user.banner_url}
-          actions={
-            <>
-              <input
-                ref={avatarInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                className="hidden"
-                onChange={onAvatarFileChange}
-              />
-              <input
-                ref={bannerInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp"
-                className="hidden"
-                onChange={onBannerFileChange}
-              />
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => navigate(`${routes.profile.view(decodedName)}?preview=1`)}
-                className="hidden sm:flex"
-              >
-                <Pencil size={13} />
-                Bekijk profiel
-              </Button>
-            </>
-          }
+        />
+        <input
+          ref={avatarInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          className="hidden"
+          onChange={onAvatarFileChange}
+        />
+        <input
+          ref={bannerInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/gif,image/webp"
+          className="hidden"
+          onChange={onBannerFileChange}
         />
         <p className="-mt-2 px-1 text-xs text-ink-3">
           Foto en banner worden meteen opgeslagen. De rest sla je op met Opslaan, bovenin.
@@ -989,27 +880,7 @@ export function ProfilePage() {
           <div className="space-y-6">
             {/* Naamkleur */}
             <Field label="Naamkleur">
-              <ColorPicker
-                value={draftColor}
-                onChange={setDraftColor}
-                presets={NAME_COLORS}
-              />
-              {draftColor && (
-                <div className="mt-3 inline-flex items-center rounded-lg bg-sunken px-3 py-1.5">
-                  <span
-                    className="text-sm font-bold"
-                    style={{
-                      color: draftColor,
-                      fontFamily:
-                        draftFont !== "default"
-                          ? FONT_MAP[draftFont]
-                          : undefined,
-                    }}
-                  >
-                    {user.name}
-                  </span>
-                </div>
-              )}
+              <ColorSwatch value={draftColor} onChange={setDraftColor} presets={NAME_COLORS} customFallback="#94a3b8" />
             </Field>
 
             {/* Lettertype */}
@@ -1049,22 +920,12 @@ export function ProfilePage() {
                 })}
               </div>
             </Field>
-          </div>
-        </Card>
 
-        {/* ── Bannerkleur ──────────────────────────────────────────────── */}
-        <Card title="Bannerkleur" subtitle="Gebruikt als er geen bannerafbeelding is ingesteld.">
-          {/* Live preview strip */}
-          <div
-            className="mb-4 h-14 w-full rounded-xl border-1.5 border-line"
-            style={getBannerStyle(draftBanner)}
-          />
-          <ColorPicker
-            value={draftBanner}
-            onChange={setDraftBanner}
-            presets={BANNER_COLORS}
-            fallback="#1e293b"
-          />
+            {/* Bannerkleur */}
+            <Field label="Bannerkleur" hint="Gebruikt als er geen bannerafbeelding is ingesteld.">
+              <ColorSwatch value={draftBanner} onChange={setDraftBanner} presets={BANNER_COLORS} customFallback="#1e293b" />
+            </Field>
+          </div>
         </Card>
 
         <UserPhotos identifier={user.id ?? user.name} />

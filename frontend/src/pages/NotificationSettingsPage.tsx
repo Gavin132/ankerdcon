@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { motion } from "framer-motion";
 import { Save } from "lucide-react";
+import { NotificationCategoryRow } from "../components/notifications/NotificationCategoryRow";
 import { Button } from "../components/common/Button";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { UnsavedChangesModal } from "../components/common/UnsavedChangesModal";
@@ -14,8 +15,6 @@ import { NotificationChannelPicker } from "../components/notifications/Notificat
 import { NoDiscordNotice } from "../components/notifications/NoDiscordNotice";
 import { toast } from "../store/toast.store";
 import { Switch } from "../components/common/Switch";
-
-/** Flat top bar for the pages outside the app shell: back, title, and home on a fresh entry. */
 
 const PRESETS: { id: NotificationPreset; label: string }[] = [
   { id: "all", label: "Alles" },
@@ -82,15 +81,29 @@ export function NotificationSettingsPage() {
 
   if (isLoading || !user) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-paper">
-        <LoadingSpinner />
+      <div className="min-h-[100dvh] bg-paper">
+        <DetailTopbar title="Meldingen" onBack={goBack} width="2xl" />
+        <div className="flex justify-center py-24">
+          <LoadingSpinner />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-[100dvh] bg-paper">
-      <DetailTopbar title="Meldingen" onBack={goBack} width="2xl" />
+      <DetailTopbar
+        title="Meldingen"
+        onBack={goBack}
+        width="2xl"
+        actions={
+          // Same as the profile: in reach, and only blue when there is something to save.
+          <Button size="sm" onClick={onSave} disabled={!isDirty} loading={updateMutation.isPending}>
+            <Save size={14} />
+            Opslaan
+          </Button>
+        }
+      />
 
       <div
         className="mx-auto max-w-2xl space-y-5 px-4 py-5 sm:py-8"
@@ -104,6 +117,9 @@ export function NotificationSettingsPage() {
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
           <NotificationChannelPicker allowDm={draftAllowDm} onAllowDmChange={setDraftAllowDm} hasDiscord={!!user.discord_id} />
+          <p className="mt-2 px-1 text-xs text-ink-3">
+            Het kanaal wordt meteen toegepast; de rest hieronder sla je op met Opslaan, bovenin.
+          </p>
         </motion.div>
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="space-y-4">
@@ -149,18 +165,15 @@ export function NotificationSettingsPage() {
                 )}
 
                 <div className="divide-y divide-line border-t border-line">
-                  {inGroup.map((cat) => {
-                    const checked = draftCategories.includes(cat.id);
-                    return (
-                      <label key={cat.id} className="flex cursor-pointer items-start gap-3 px-4 py-3 transition-colors hover:bg-sunken">
-                        <input type="checkbox" className="cb mt-0.5" checked={checked} onChange={() => toggleCategory(cat.id)} />
-                        <div className="min-w-0">
-                          <p className="text-[14px] font-semibold text-ink">{cat.label}</p>
-                          <p className="mt-0.5 text-[12.5px] text-ink-3">{cat.description}</p>
-                        </div>
-                      </label>
-                    );
-                  })}
+                  {inGroup.map((cat) => (
+                    <NotificationCategoryRow
+                      key={cat.id}
+                      label={cat.label}
+                      description={cat.description}
+                      checked={draftCategories.includes(cat.id)}
+                      onChange={() => toggleCategory(cat.id)}
+                    />
+                  ))}
                 </div>
               </div>
             );
@@ -175,12 +188,6 @@ export function NotificationSettingsPage() {
           </div>
         </motion.div>
 
-        <div className="flex justify-end">
-          <Button onClick={onSave} loading={updateMutation.isPending} className="w-full sm:w-auto">
-            <Save size={15} />
-            Opslaan
-          </Button>
-        </div>
       </div>
 
       <UnsavedChangesModal blocker={blocker} />

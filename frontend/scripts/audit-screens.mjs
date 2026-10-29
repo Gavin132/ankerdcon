@@ -72,6 +72,8 @@ export const screens = [
   { name: "profile-me-dirty", path: "/profile/u-gavin", steps: async (page) => { await page.locator("textarea").first().fill("Nieuwe tekst"); await page.waitForTimeout(400); } },
   { name: "profile-other", path: "/profile/u-sam" },
   { name: "profile-long-name", path: "/profile/u-long" },
+  { name: "profile-not-found", path: "/profile/niemand-bekend" },
+  { name: "not-found", path: "/dit-bestaat-niet" },
 
   // ── Settings ───────────────────────────────────────────────────────────────
   { name: "settings", path: "/settings" },
@@ -113,6 +115,9 @@ export const screens = [
   { name: "admin-impersonate", path: "/admin/impersonate", role: "admin" },
   { name: "admin-time-travel", path: "/admin/time-travel", role: "admin" },
   { name: "admin-screens", path: "/admin/screens", role: "admin" },
+  { name: "status-crash", path: "/admin/screens", role: "admin", steps: click(byText(/Er ging iets mis/)) },
+  { name: "status-unreachable", path: "/admin/screens", role: "admin", steps: click(byText(/Kan de server niet bereiken/)) },
+  { name: "status-forbidden", path: "/admin/screens", role: "admin", steps: click(byText(/^Geen toegang$/)) },
   { name: "admin-cdn", path: "/admin/cdn", role: "admin" },
   { name: "admin-feedback", path: "/admin/feedback", role: "admin" },
   { name: "admin-preview-onboarding", path: "/admin/preview/onboarding", role: "admin" },

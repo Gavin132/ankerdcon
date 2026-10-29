@@ -35,6 +35,19 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **Profile, settings and Meldingen:** "Opslaan" and the new "Zo zien anderen je profiel" button (an eye, on a phone too)
+  are in the top bar of the profile; Opslaan is only blue when something changed, and the same goes for Meldingen, where
+  the categories are switches instead of checkboxes and a line says the channel is applied at once. Form labels are
+  normal field labels, the banner colour moved into "Weergave", the colour dots have a slash for "automatisch", the
+  unreadable near-black and lime name colours are gone from the choices, and a profile that is loading or not found
+  keeps its top bar. Instellingen says "Voor dit apparaat" once, "Begroeting tonen" sits under Account, and GitHub and
+  YouTube show an arrow out instead of a chevron. "Wat is nieuw" has the spacing of the other pages and "Versie 2.19.0"
+  for a bare number.
+- **Error screens (404, geen toegang, server onbereikbaar, crash)** are built the same way: logo or icon, a title, what to
+  do and the buttons first; the joke follows, and the technical message and the feedback form are behind "Technische
+  details". The login page says "Log in om verder te gaan" once, the "Aanbevolen" tag is a pill under the Discord button
+  and an error there is announced to screen readers. The profile step of onboarding is shorter (no aliases, no banner
+  colour, no second preview).
 - **Financiën is calmer.** A row of Afrekenen or Ritkosten is two lines and the amount says which way the money goes
   (red = you pay, green = you receive); a pill is only there where you have to do something ("Te betalen",
   "Bevestigen", "Wacht op bevestiging", "Invullen"). On a phone the list of expenses and its add button come right after

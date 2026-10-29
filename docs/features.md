@@ -360,7 +360,11 @@ by hand, by members or admins.
   which stops the periodic resync below from overwriting it. Deleting either is a small trash
   icon next to its pencil, not a text link. The same upload flow (`StepProfile.tsx`'s
   `ProfilePhotos`) is available during onboarding, saving immediately rather than waiting for
-  onboarding to finish.
+  onboarding to finish. The profile step of onboarding only asks pronouns, phone number, bio and name colour;
+  aliases and the banner colour are set on the profile page. On the profile page "Opslaan" sits in the top bar
+  (blue only when something changed), "Zo zien anderen je profiel" is an eye button there, and the banner colour
+  is part of "Weergave". The colour dots (`components/profile/ColorSwatch.tsx`), the font stacks and the banner
+  style (`utils/profile.ts`) are shared with onboarding and the profile popup.
 - **Avatars stay current on their own**: since a stored `avatar_url` was previously only ever
   filled in once and then frozen, a changed or since-broken Discord/Google picture could stay
   wrong (or a broken image) forever. It is now re-checked once a day per profile
@@ -383,8 +387,10 @@ sheet, where the member picks Rit aanbieden themselves.
 
 ## Error screens
 
-Every error screen (`ErrorFallback`, `ServerUnreachable`, `ForbiddenPage`, `NotFoundPage`, and
-`public/boot-guard.js`) ends its message with a random Dutch chemistry joke
+Every error screen (`ErrorFallback`, `ServerUnreachable`, `ForbiddenPage`, `NotFoundPage`) is one
+`StatusScreen` (`components/common/StatusScreen.tsx`): the logo or an icon square, the title, what to do, the buttons,
+then a joke, and the technical message and feedback form behind "Technische details". Together with
+`public/boot-guard.js` they end with a random Dutch chemistry joke
 (`constants/chemistryJokes.ts`). `boot-guard.js` is plain ES5 and keeps its own copy of the list.
 The crash screen (`ErrorFallback`) also has "Vertel wat er gebeurde" (`CrashFeedback.tsx`): a bug report with
 the page and the technical message appended. It calls the feedback service directly, without React Query or
@@ -402,7 +408,9 @@ appear when the server cannot be reached, the member is not signed in, or the ap
   either way. `NotificationChannelPicker` (`components/notifications/`) is that channel choice;
   it only offers a channel that's actually usable (Discord only if the profile has a linked
   account, push only where the browser supports it), and picking one turns the other off —
-  selecting push unsubscribes Discord DMs (`allow_dm`) and vice versa;
+  selecting push unsubscribes Discord DMs (`allow_dm`) and vice versa. The channel is applied at once; the
+  categories (a `Switch` row each, `NotificationCategoryRow`) are saved with "Opslaan" in the top bar, which stays
+  grey until something changed;
 - **Waarvoor** is grouped (Evenementen, Plannen, and for admins the feedback notification), with a
   quick choice on top: Alles, Alleen belangrijk (`IMPORTANT_CATEGORY_IDS`), Niets. **"Alleen mijn trips"**
   (`profiles.notify_own_trips_only`, on by default) limits new activities and new expenses to people who

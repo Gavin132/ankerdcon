@@ -1,20 +1,14 @@
 import { useRef, useState } from "react";
-import { AlertTriangle, Loader2, Pencil, Plus, Smartphone, Trash2, X } from "lucide-react";
+import { AlertTriangle, Loader2, Pencil, Smartphone, Trash2 } from "lucide-react";
 import { validatePhoneNumber } from "../../utils/validation";
-import { ColorSwatch } from "./ColorSwatch";
-import { NAME_COLORS, BANNER_COLORS } from "./constants";
+import { ColorSwatch } from "../../components/profile/ColorSwatch";
+import { NAME_COLORS, getBannerStyle } from "../../utils/profile";
 import type { ProfileState } from "./types";
 import { useCurrentUser, useDeleteAvatar, useDeleteBanner, useUploadAvatar, useUploadBanner } from "../../hooks/useUsers";
 import { prepareAvatarFile } from "../../utils/imageCompression";
 import { avatarColor } from "../../utils/avatar";
 import { BannerCropModal } from "../../components/profile/BannerCropModal";
 import { toast } from "../../store/toast.store";
-
-function getBannerStyle(bannerColor: string, bannerUrl?: string, bannerPosition?: string): React.CSSProperties {
-  if (bannerUrl) return { backgroundImage: `url(${bannerUrl})`, backgroundSize: "cover", backgroundPosition: bannerPosition || "center" };
-  if (bannerColor) return { backgroundColor: bannerColor };
-  return { backgroundColor: "#0F1519" };
-}
 
 interface StepProfileProps {
   state: ProfileState;
@@ -99,7 +93,7 @@ function ProfilePhotos({ bannerColor }: { bannerColor: string }) {
               disabled={deleteBannerMutation.isPending}
               aria-label="Banner verwijderen"
               title="Banner verwijderen"
-              className="hit-area flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-colors hover:bg-ink/90 disabled:opacity-60"
+              className="hit-area flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink/80 text-paper transition-colors hover:bg-ink disabled:opacity-60"
             >
               {deleteBannerMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
             </button>
@@ -110,7 +104,7 @@ function ProfilePhotos({ bannerColor }: { bannerColor: string }) {
             disabled={uploadBannerMutation.isPending}
             aria-label="Banner wijzigen"
             title="Banner wijzigen"
-            className="hit-area flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-transform hover:bg-ink/90 active:scale-95 disabled:opacity-60"
+            className="hit-area flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink/80 text-paper transition-colors hover:bg-ink disabled:opacity-60"
           >
             {uploadBannerMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <Pencil size={12} />}
           </button>
@@ -137,7 +131,7 @@ function ProfilePhotos({ bannerColor }: { bannerColor: string }) {
             disabled={uploadAvatarMutation.isPending}
             aria-label="Profielfoto wijzigen"
             title="Profielfoto wijzigen"
-            className="hit-area absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper transition-transform active:scale-95 disabled:opacity-60"
+            className="hit-area absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper disabled:opacity-60"
           >
             {uploadAvatarMutation.isPending ? <Loader2 size={11} className="animate-spin" /> : <Pencil size={11} />}
           </button>
@@ -168,26 +162,14 @@ function ProfilePhotos({ bannerColor }: { bannerColor: string }) {
 }
 
 export function StepProfile({ state, onChange }: StepProfileProps) {
-  const [aliasInput, setAliasInput] = useState("");
   const phoneError = state.phone ? validatePhoneNumber(state.phone) : null;
-
-  function addAlias() {
-    const trimmed = aliasInput.trim();
-    if (!trimmed || trimmed.length > 30 || state.aliases.includes(trimmed) || state.aliases.length >= 10) return;
-    onChange({ aliases: [...state.aliases, trimmed] });
-    setAliasInput("");
-  }
-
-  function removeAlias(alias: string) {
-    onChange({ aliases: state.aliases.filter((a) => a !== alias) });
-  }
 
   return (
     <div className="flex flex-col gap-5">
       <div>
         <h2 className="font-display text-[34px] font-extrabold uppercase leading-[0.95] tracking-[0.01em] text-ink">Stel je profiel in</h2>
         <p className="mt-2 text-sm leading-relaxed text-ink-2">
-          Alle velden zijn optioneel — je kunt dit later altijd aanpassen.
+          Alle velden zijn optioneel. Aliassen en bannerkleur stel je later in op je profiel.
         </p>
       </div>
 
@@ -196,7 +178,7 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
       <div className="space-y-5">
         {/* Pronouns */}
         <div>
-          <label className="section-label mb-1.5 block">
+          <label className="field-label">
             Voornaamwoorden
           </label>
           <input
@@ -211,7 +193,7 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
 
         {/* Phone */}
         <div>
-          <label className="section-label mb-1.5 block">
+          <label className="field-label">
             Telefoonnummer
           </label>
           <div className="relative">
@@ -238,7 +220,7 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
 
         {/* Bio */}
         <div>
-          <label className="section-label mb-1.5 block">
+          <label className="field-label">
             Bio
           </label>
           <div className="relative">
@@ -258,79 +240,10 @@ export function StepProfile({ state, onChange }: StepProfileProps) {
 
         {/* Name color */}
         <div>
-          <label className="section-label mb-2 block">
+          <label className="field-label">
             Naamkleur
           </label>
-          <ColorSwatch value={state.color} onChange={(v) => onChange({ color: v })} presets={NAME_COLORS} />
-          {state.color && (
-            <div className="mt-2.5 inline-flex items-center rounded-lg bg-sunken px-3 py-1.5">
-              <span className="text-sm font-bold" style={{ color: state.color }}>
-                Voorbeeld naam
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Banner color */}
-        <div>
-          <label className="section-label mb-2 block">
-            Profielbanner
-          </label>
-          <div
-            className="mb-3 h-10 w-full rounded-xl border-1.5 border-line transition-colors"
-            style={{ backgroundColor: state.bannerColor || "#0F1519" }}
-          />
-          <ColorSwatch value={state.bannerColor} onChange={(v) => onChange({ bannerColor: v })} presets={BANNER_COLORS} />
-        </div>
-
-        {/* Aliases */}
-        <div>
-          <label className="section-label mb-1.5 block">
-            Aliassen
-          </label>
-          <p className="mb-2 text-xs leading-relaxed text-ink-3">
-            Bijnamen waaronder andere leden jou kennen (max. 10). Dit maakt het zoeken naar jou makkelijker voor andere leden. Je kunt dit later altijd aanpassen in je profiel.
-          </p>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              maxLength={30}
-              placeholder="bijv. een bijnaam"
-              className="input-field flex-1"
-              value={aliasInput}
-              onChange={(e) => setAliasInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addAlias(); } }}
-            />
-            <button
-              type="button"
-              onClick={addAlias}
-              disabled={!aliasInput.trim() || state.aliases.length >= 10}
-              aria-label="Alias toevoegen"
-              className="flex w-[50px] shrink-0 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink transition-colors hover:border-ink-3 disabled:opacity-40"
-            >
-              <Plus size={15} />
-            </button>
-          </div>
-          {state.aliases.length > 0 && (
-            <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {state.aliases.map((alias) => (
-                <span
-                  key={alias}
-                  className="inline-flex items-center gap-1 rounded-full border-1.5 border-line bg-surface px-2.5 py-1 text-xs font-medium text-ink-2"
-                >
-                  {alias}
-                  <button
-                    type="button"
-                    onClick={() => removeAlias(alias)}
-                    aria-label={`Alias ${alias} verwijderen`}
-                    className="hit-area -mr-1 p-1 text-ink-3 transition-colors hover:text-ink"
-                  >
-                    <X size={11} />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
+          <ColorSwatch value={state.color} onChange={(v) => onChange({ color: v })} presets={NAME_COLORS} on="paper" />
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight, Images, Play, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, X } from "lucide-react";
 import { useUserPhotos } from "../../hooks/useStories";
 import { formatDate } from "../../utils/format";
 import { useBackClose } from "../../hooks/useBackClose";
@@ -35,7 +35,6 @@ export function UserPhotos({ identifier, whose }: { identifier: string; whose?: 
   return (
     <section className="card-surface overflow-hidden">
       <div className="flex items-center gap-2 border-b border-line px-5 pb-3 pt-4 sm:px-6">
-        <Images size={14} className="text-ink-3" />
         <p className="section-label">Foto's</p>
         {photos.length > 0 && <span className="font-mono text-[12px] tabular-nums text-ink-3">{photos.length}</span>}
       </div>
@@ -65,9 +64,7 @@ export function UserPhotos({ identifier, whose }: { identifier: string; whose?: 
                     type="button"
                     onClick={() => setEventId(e.id)}
                     aria-pressed={eventId === e.id}
-                    className={`shrink-0 rounded-full border-1.5 px-3 py-1.5 text-[12.5px] font-semibold transition-colors ${
-                      eventId === e.id ? "border-outline bg-brand text-brand-on" : "border-line bg-surface text-ink-2 hover:border-ink-3"
-                    }`}
+                    className={`chip shrink-0 ${eventId === e.id ? "chip-on" : "chip-off"}`}
                   >
                     {e.name} <span className="font-mono text-[12px] opacity-70">{e.count}</span>
                   </button>
@@ -88,7 +85,7 @@ export function UserPhotos({ identifier, whose }: { identifier: string; whose?: 
                     alt=""
                     loading="lazy"
                     decoding="async"
-                    className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.04]"
+                    className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
                   />
                   {p.media_type === "video" && (
                     <span className="pointer-events-none absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-hero/65 text-white">

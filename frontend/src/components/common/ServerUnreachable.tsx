@@ -1,7 +1,5 @@
-import { motion } from "framer-motion";
 import { WifiOff } from "lucide-react";
-import { StatusLink } from "./StatusLink";
-import { ChemistryJoke } from "./ChemistryJoke";
+import { StatusScreen } from "./StatusScreen";
 
 /**
  * Shown when the signed-in user's profile can't be loaded (backend down, a 5xx,
@@ -11,28 +9,17 @@ import { ChemistryJoke } from "./ChemistryJoke";
  */
 export function ServerUnreachable({ onRetry }: { onRetry: () => void }) {
   return (
-    <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-paper px-6 py-12 text-center">
-      <motion.div
-        className="flex max-w-sm flex-col items-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl pill-warn">
-          <WifiOff size={24} />
-        </div>
-        <h1 className="mt-4 font-display text-[36px] font-extrabold uppercase leading-[0.95] text-ink">
-          Kan de server niet bereiken
-        </h1>
-        <p className="mt-3 max-w-[300px] text-sm leading-relaxed text-ink-2">
-          Controleer je verbinding of probeer het zo nog eens.
-        </p>
-        <ChemistryJoke className="mt-4" />
-        <button type="button" onClick={onRetry} className="btn-primary mt-6 px-4 py-2.5 text-sm">
+    <StatusScreen
+      mark={{ icon: <WifiOff size={24} />, tone: "warn" }}
+      title="Kan de server niet bereiken"
+      statusLink
+      actions={
+        <button type="button" onClick={onRetry} className="btn-primary px-5 py-2.5 text-sm">
           Opnieuw proberen
         </button>
-        <StatusLink className="mt-6" />
-      </motion.div>
-    </div>
+      }
+    >
+      <p>Controleer je verbinding of probeer het zo nog eens.</p>
+    </StatusScreen>
   );
 }

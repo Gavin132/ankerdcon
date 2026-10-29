@@ -12,7 +12,8 @@ function formatReleaseDate(iso: string): string {
   return d.toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" });
 }
 
-/** Flat top bar for the pages outside the app shell: back, title, and home on a fresh entry. */
+/** A release titled with just its number ("2.19.0") reads as "Versie 2.19.0". */
+const releaseTitle = (title: string) => (/^v?\d+(\.\d+)+$/.test(title.trim()) ? `Versie ${title.trim().replace(/^v/, "")}` : title);
 
 export function ChangelogPage() {
   const goBack = useSmartBack(routes.hub);
@@ -23,7 +24,7 @@ export function ChangelogPage() {
       <DetailTopbar title="Wat is nieuw" onBack={goBack} width="2xl" />
 
       <div
-        className="mx-auto max-w-2xl space-y-4 px-4 py-6 md:py-10"
+        className="mx-auto max-w-2xl space-y-5 px-4 py-5 sm:py-8"
         style={{ paddingBottom: "max(3rem, env(safe-area-inset-bottom, 0px))" }}
       >
         {isLoading && (
@@ -40,12 +41,12 @@ export function ChangelogPage() {
           (entries ?? []).map((entry) => (
             <div
               key={entry.id}
-              className="card-surface p-5"
+              className="card-surface overflow-hidden p-5"
             >
-              <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink-3">
+              <p className="text-xs text-ink-3">
                 {formatReleaseDate(entry.released_at)}
               </p>
-              <h2 className="mb-3 mt-1 font-display text-[24px] font-extrabold uppercase leading-[0.95] text-ink">{entry.title}</h2>
+              <h2 className="mb-3 mt-1 font-display text-[24px] font-extrabold uppercase leading-[0.95] text-ink">{releaseTitle(entry.title)}</h2>
               <ul className="space-y-2 border-t border-line pt-3">
                 {entry.items.map((item, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm leading-relaxed text-ink-2">

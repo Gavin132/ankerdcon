@@ -1,6 +1,7 @@
 import { categoriesFor } from "../../constants/notifications";
 import { NotificationChannelPicker } from "../../components/notifications/NotificationChannelPicker";
 import { NoDiscordNotice } from "../../components/notifications/NoDiscordNotice";
+import { NotificationCategoryRow } from "../../components/notifications/NotificationCategoryRow";
 import type { ProfileState } from "./types";
 
 interface StepNotificationsProps {
@@ -36,26 +37,15 @@ export function StepNotifications({ state, onChange, hasDiscord }: StepNotificat
       />
 
       <div className="card-surface divide-y divide-line overflow-hidden">
-        {categoriesFor(false).map((cat) => {
-          const checked = state.notificationCategories.includes(cat.id);
-          return (
-            <label
-              key={cat.id}
-              className="flex cursor-pointer items-start gap-3 px-3.5 py-3 transition-colors hover:bg-sunken"
-            >
-              <input
-                type="checkbox"
-                className="cb mt-0.5"
-                checked={checked}
-                onChange={() => toggleCategory(cat.id)}
-              />
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-ink">{cat.label}</p>
-                <p className="mt-0.5 text-xs text-ink-3">{cat.description}</p>
-              </div>
-            </label>
-          );
-        })}
+        {categoriesFor(false).map((cat) => (
+          <NotificationCategoryRow
+            key={cat.id}
+            label={cat.label}
+            description={cat.description}
+            checked={state.notificationCategories.includes(cat.id)}
+            onChange={() => toggleCategory(cat.id)}
+          />
+        ))}
       </div>
     </div>
   );

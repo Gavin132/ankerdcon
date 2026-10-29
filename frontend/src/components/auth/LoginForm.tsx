@@ -61,12 +61,9 @@ export function LoginForm() {
 
   return (
     <div className="space-y-4">
-      <div className="mb-6 text-center">
-        <h2 className="text-lg font-semibold text-ink">Welkom bij Ankerd Con</h2>
-        <p className="mt-1 text-sm text-ink-3">Koppel je account om verder te gaan</p>
-      </div>
+      <h2 className="mb-6 text-center text-lg font-semibold text-ink">Log in om verder te gaan</h2>
 
-      <div className="relative">
+      <div className="space-y-2">
         <Button
           type="button"
           size="lg"
@@ -78,9 +75,9 @@ export function LoginForm() {
           Inloggen met Discord
           {loading !== "discord" && <LogIn size={18} className="ml-2" />}
         </Button>
-        <span className="pointer-events-none absolute -top-2.5 right-3 rounded-md border-1.5 border-outline bg-surface px-1.5 py-px font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-ink">
-          Aanbevolen
-        </span>
+        <p className="text-center">
+          <span className="pill pill-neutral">Aanbevolen</span>
+        </p>
       </div>
 
       <Button
@@ -101,7 +98,7 @@ export function LoginForm() {
       </p>
 
       {error && (
-        <p className="mt-2 text-xs font-medium text-rose-500 text-center">
+        <p role="alert" className="field-error text-center font-medium">
           {error}
         </p>
       )}

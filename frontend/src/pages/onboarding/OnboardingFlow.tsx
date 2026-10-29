@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, ArrowLeft, Check } from "lucide-react";
+import { Button } from "../../components/common/Button";
 import { validatePhoneNumber } from "../../utils/validation";
 import type { User } from "../../types";
 import { TOTAL_STEPS } from "./constants";
@@ -170,18 +171,15 @@ export function OnboardingFlow({ me, onFinish, doneLabel, onDone, overlay }: Onb
                   <ArrowRight size={16} />
                 </motion.button>
               ) : isLastInputStep ? (
-                <button
+                <Button
                   type="button"
-                  disabled={!canSave || submitting}
+                  disabled={!canSave}
+                  loading={submitting}
                   onClick={() => handleFinish(false)}
-                  className="btn-primary h-11 flex-1 text-sm"
+                  className="flex-1"
                 >
-                  {submitting ? (
-                    <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                  ) : (
-                    <>Opslaan & afronden <Check size={15} /></>
-                  )}
-                </button>
+                  Opslaan &amp; afronden <Check size={15} />
+                </Button>
               ) : (
                 <button
                   type="button"
