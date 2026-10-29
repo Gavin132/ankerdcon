@@ -64,7 +64,10 @@ export const screens = [
   { name: "meal", path: "/meals/m-dinner" },
   { name: "meal-long-title", path: "/meals/m-escape" },
   { name: "meal-viewer", path: "/meals/m-escape", role: "viewer" },
-  { name: "meal-rsvp-sheet", path: "/meals/m-dinner", steps: click(byText(/Aanmelden/)) },
+  // m-game: you are not on the list, so the button is "Aanmelden". m-dinner: you are, so it is "Iemand aanmelden".
+  { name: "meal-rsvp-sheet", path: "/meals/m-game", steps: click(byText(/^\s*Aanmelden$/)) },
+  { name: "meal-rsvp-other-sheet", path: "/meals/m-dinner", steps: click(byText(/Iemand aanmelden/)) },
+  { name: "meal-cancel-sheet", path: "/meals/m-dinner", steps: click(byText(/^\s*Afmelden$/)) },
   { name: "ride", path: "/rides/r-1" },
   { name: "ride-restaurant", path: "/rides/r-7" },
   { name: "ride-viewer", path: "/rides/r-1", role: "viewer" },
