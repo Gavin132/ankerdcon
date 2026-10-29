@@ -9,8 +9,6 @@ interface PagerProps {
   dotLabel: (index: number) => string;
   prevLabel: string;
   nextLabel: string;
-  /** A dot of something that is yours, a shade darker than the others. */
-  isMine?: (index: number) => boolean;
   /** Show the arrows from this width up only: on a phone you swipe, so the dots are enough. */
   arrowsFrom?: "always" | "md";
   className?: string;
@@ -20,11 +18,11 @@ interface PagerProps {
  * The dots and arrows under a row of cards you page through (the Hub's trips, the Agenda's tickets).
  * Dots are 44 px to hit, the active one is a bar; arrows are the same `icon-btn` everywhere.
  */
-export function Pager({ count, index, onChange, dotLabel, prevLabel, nextLabel, isMine, arrowsFrom = "always", className = "" }: PagerProps) {
+export function Pager({ count, index, onChange, dotLabel, prevLabel, nextLabel, arrowsFrom = "always", className = "" }: PagerProps) {
   const arrowClass = `icon-btn border-1.5 border-line bg-surface ${arrowsFrom === "md" ? "max-md:hidden" : ""}`;
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <div className="flex flex-1 flex-wrap items-center">
+      <div className={`flex flex-1 flex-wrap items-center ${arrowsFrom === "md" ? "justify-center md:justify-start" : ""}`}>
         {Array.from({ length: count }, (_, i) => (
           <button
             key={i}
@@ -36,7 +34,7 @@ export function Pager({ count, index, onChange, dotLabel, prevLabel, nextLabel, 
           >
             <span
               className={`block h-1.5 rounded-full transition-all ${
-                i === index ? "w-5 bg-ink" : `w-1.5 ${isMine?.(i) ? "bg-ink-3" : "bg-line hover:bg-ink-3"}`
+                i === index ? "w-5 bg-ink" : "w-1.5 bg-ink-3/50 hover:bg-ink-3"
               }`}
             />
           </button>

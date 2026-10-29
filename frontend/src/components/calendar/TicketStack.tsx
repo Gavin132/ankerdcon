@@ -145,7 +145,6 @@ export function TicketStack({ trips, meals, users, myNames, justJoinedId, onJoin
             dotLabel={(i) => `${trips[i].title}, ${trips[i].dateRange}`}
             prevLabel="Vorig evenement"
             nextLabel="Volgend evenement"
-            isMine={(i) => trips[i].participants.some((p) => myNames.includes(p))}
             arrowsFrom="md"
           />
           <p className="text-center text-[12.5px] text-ink-3">{current + 1} van {trips.length}</p>
