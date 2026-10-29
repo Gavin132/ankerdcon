@@ -41,7 +41,7 @@ export function ToastContainer() {
                 src="/assets/images/ankerd-logo.webp"
                 alt=""
                 className="h-5 w-5 object-contain"
-                style={{ filter: t.type === "success" ? "brightness(0)" : "brightness(0) invert(1)" }}
+                style={{ filter: "brightness(0) invert(1)" }}
               />
             </div>
             <p className="flex-1 text-sm font-medium text-ink leading-tight">

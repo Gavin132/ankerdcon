@@ -181,7 +181,7 @@ export function SettingsPage() {
                       title={a.label}
                       onClick={() => setAccent(a.id)}
                       style={{ backgroundColor: a.swatch }}
-                      className={`hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero transition-colors ${
+                      className={`hit-area flex h-9 w-9 items-center justify-center rounded-full text-brand-on transition-colors ${
                         selected ? "border-1.5 border-outline" : "border-1.5 border-line"
                       }`}
                     >

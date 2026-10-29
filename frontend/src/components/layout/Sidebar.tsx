@@ -36,7 +36,7 @@ function TripWristband() {
       <span aria-hidden className="absolute -left-[7px] top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-outline bg-surface" />
       <span aria-hidden className="absolute -right-[7px] top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-outline bg-surface" />
       <span className="min-w-0 pl-1">
-        <span className="block font-mono text-xs opacity-75">{trip.dateRange}</span>
+        <span className="block font-mono text-xs">{trip.dateRange}</span>
         <span className="block truncate font-display text-[19px] font-extrabold uppercase leading-none">{getGroupTitle(trip.days)}</span>
       </span>
       <span className="pr-1 text-right leading-none">

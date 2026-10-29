@@ -175,7 +175,7 @@ function ChannelRow({
       {trailing ?? (
         <div
           className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-1.5 ${
-            selected ? "border-brand-text bg-brand-text text-brand-on" : "border-line text-transparent"
+            selected ? "border-brand bg-brand text-brand-on" : "border-line text-transparent"
           }`}
         >
           <Check size={12} strokeWidth={3} />
