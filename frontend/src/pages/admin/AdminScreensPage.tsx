@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AlertTriangle, ChevronRight, FileQuestion, ShieldX, WifiOff, X, Bomb, UploadCloud } from "lucide-react";
 import { Link } from "react-router-dom";
+import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { ErrorFallback } from "../../components/common/ErrorBoundary";
 import { ServerUnreachable } from "../../components/common/ServerUnreachable";
@@ -15,7 +16,7 @@ const SCREENS: { key: ScreenKey; label: string; when: string; icon: typeof WifiO
   { key: "unreachable", label: "Kan de server niet bereiken", when: "Je bent ingelogd, maar je profiel kan niet worden geladen (backend offline, 5xx, geen bereik).", icon: WifiOff },
   { key: "forbidden", label: "Geen toegang", when: "Je Discord-account staat niet op de toegangslijst.", icon: ShieldX },
   { key: "forbiddenGoogle", label: "Geen toegang (Google)", when: "Iemand logt in met Google, maar staat (nog) niet op de lijst, vaak omdat die eerder met Discord inlogde.", icon: ShieldX },
-  { key: "notFound", label: "404 — pagina niet gevonden", when: "Een link naar een pagina die niet (meer) bestaat.", icon: FileQuestion },
+  { key: "notFound", label: "404: pagina niet gevonden", when: "Een link naar een pagina die niet (meer) bestaat.", icon: FileQuestion },
   { key: "uploadQueued", label: "Upload wacht op verbinding", when: "Een story- of cosplayfoto kon niet weg door een slechte verbinding, en wordt automatisch opnieuw geprobeerd.", icon: UploadCloud },
 ];
 
@@ -53,7 +54,7 @@ export function AdminScreensPage() {
   const [open, setOpen] = useState<ScreenKey | null>(null);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+    <AdminPage width="narrow">
       <AdminPageHeader
         eyebrow="Testen"
         title="Schermen testen"
@@ -61,6 +62,7 @@ export function AdminScreensPage() {
       />
 
       <div className="space-y-2">
+        <p className="section-label">Voorbeelden</p>
         {SCREENS.map(({ key, label, when, icon: Icon }) => (
           <button
             key={key}
@@ -79,16 +81,21 @@ export function AdminScreensPage() {
           </button>
         ))}
 
+      </div>
+
+      {/* The one that is not a preview: it really crashes the page, so it is set apart. */}
+      <div className="space-y-2">
+        <p className="section-label">Echt testen</p>
         <Link
           to={routes.testError}
-          className="card-surface flex w-full items-center gap-3 p-4 transition-colors hover:border-ink-3"
+          className="notice-warn flex w-full items-center gap-3 p-4 transition-colors hover:border-ink-3"
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink-2">
+          <span className="icon-tile-warn h-9 w-9">
             <Bomb size={16} />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-semibold text-ink">Echte crash veroorzaken</span>
-            <span className="mt-0.5 block text-xs text-ink-3">
+            <span className="mt-0.5 block text-xs text-ink-2">
               Laat de pagina echt crashen: eerst één automatische herlaad, daarna het crashscherm.
             </span>
           </span>
@@ -115,6 +122,6 @@ export function AdminScreensPage() {
           </button>
         </div>
       )}
-    </div>
+    </AdminPage>
   );
 }

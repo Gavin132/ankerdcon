@@ -480,13 +480,13 @@ read-only account) or an admin switches **Alleen kijken** on a member under Gebr
 | Page | For |
 | --- | --- |
 | Dashboard | counts and charts |
-| Gebruikers, Toegangslijst | members, deactivation, and who may log in at all |
+| Gebruikers, Toegangslijst | members and who may log in at all. A member is deactivated with the switch "Account actief" in the edit sheet (or in bulk from the selection strip) |
 | Ritten, Activiteiten | fix or remove anything, remove single passengers |
-| Evenementen, Groepen | trips and their days, series labels, bulk RSVP. Admins also get a pencil on every event page that opens the same edit form |
+| Evenementen, Groepen | trips and their days, series labels, bulk RSVP; "Aankomend" / "Geschiedenis" switches the list. The eye on a row opens the event in the app. Admins also get a pencil on every event page that opens the same edit form |
 | Badges | badge images and who has them |
 | Betalingen | expenses and shares, including forcing a status |
 | Aankondigingen, Wijzigingslog | banners and release notes |
-| CDN | every file in the photo bucket, newest first (24 at a time, more as you scroll; videos load their first frame only near the screen), with its uploader; the "Uploaden" button puts an image or video there and gives a link to embed; the viewer's bin deletes a file, whoever uploaded it; "Download … (zip)" saves the current selection (a feature, or one event for story photos) as one zip |
+| CDN | every file in the photo bucket, newest first (24 at a time, more as you scroll; videos load their first frame only near the screen), with its uploader; the "Uploaden" button puts an image or video there and gives a link to embed; the viewer's bin deletes a file after a question, whoever uploaded it; "Download … (zip)" saves the current selection (a feature, or one event for story photos) as one zip |
 | Inloggen als gebruiker | act as a member for two hours ([security.md](security.md#log-in-as)) |
 | Tijdreis | set the app's clock to test live or finished trips |
 | Feedback | what members sent through Instellingen → Feedback geven, filtered by status (nieuw, gezien, opgelost); anonymous messages show "Anoniem" |

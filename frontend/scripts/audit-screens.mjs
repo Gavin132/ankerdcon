@@ -117,7 +117,7 @@ export const screens = [
   { name: "admin-screens", path: "/admin/screens", role: "admin" },
   { name: "status-crash", path: "/admin/screens", role: "admin", steps: click(byText(/Er ging iets mis/)) },
   { name: "status-unreachable", path: "/admin/screens", role: "admin", steps: click(byText(/Kan de server niet bereiken/)) },
-  { name: "status-forbidden", path: "/admin/screens", role: "admin", steps: click(byText(/^Geen toegang$/)) },
+  { name: "status-forbidden", path: "/admin/screens", role: "admin", steps: click(byText(/^Geen toegang(?! \()/)) },
   { name: "admin-cdn", path: "/admin/cdn", role: "admin" },
   { name: "admin-feedback", path: "/admin/feedback", role: "admin" },
   { name: "admin-preview-onboarding", path: "/admin/preview/onboarding", role: "admin" },

@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronLeft, ChevronRight, Copy, Download, ExternalLink, HardDrive, Loader2, Play, Plus, Trash2, UploadCloud, X } from "lucide-react";
+import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
+import { L } from "./styles";
+import { Segmented } from "../../components/common/Segmented";
+import { askConfirm } from "../../store/confirm.store";
 import { deleteCdnFile, downloadCdnZip, getAdminCdn, quickUpload, type QuickUploadResult } from "../../services/admin.service";
 import { useAdminEvents } from "../../hooks/useAdmin";
 import { toast } from "../../store/toast.store";
@@ -105,22 +109,48 @@ export function AdminCdnPage() {
     }
   }
 
+  const kindOptions = [
+    { value: "all", label: "Alles" },
+    ...Object.keys(data?.counts ?? {}).map((k) => ({
+      value: k,
+      label: (
+        <>
+          {KIND_LABEL[k] ?? k}
+          <span className="font-mono text-xs opacity-70">{data?.counts[k]}</span>
+        </>
+      ),
+      ariaLabel: `${KIND_LABEL[k] ?? k}, ${data?.counts[k]} bestanden`,
+    })),
+  ];
+
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+    <AdminPage>
       <AdminPageHeader
         eyebrow="Beheer"
         title="CDN"
-        subtitle="Elk bestand in de foto-bucket, nieuwste eerst. Bekijk of er niets tussen staat dat er niet hoort."
+        subtitle="Elk bestand in de foto-bucket, nieuwste eerst. Kijk of er niets tussen staat dat er niet hoort."
         action={
-          <button
-            type="button"
-            onClick={() => setUploading((v) => !v)}
-            aria-expanded={uploading}
-            className="btn-primary min-h-[44px] inline-flex items-center gap-1.5 px-4 py-2.5 text-sm"
-          >
-            {uploading ? <X size={16} /> : <Plus size={16} />}
-            {uploading ? "Sluiten" : "Uploaden"}
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => void downloadAll()}
+              disabled={downloading || tooBig || !data || data.total === 0}
+              title={tooBig ? "Te veel voor één zip: kies eerst een onderdeel of evenement." : `Download ${scope} als zip`}
+              className="btn-secondary min-h-[44px] px-4 py-2.5 text-sm disabled:opacity-50"
+            >
+              {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+              {downloading ? `Bezig… ${formatBytes(downloaded ?? 0)}` : `Download ${scope} (zip)`}
+            </button>
+            <button
+              type="button"
+              onClick={() => setUploading((v) => !v)}
+              aria-expanded={uploading}
+              className="btn-primary min-h-[44px] px-4 py-2.5 text-sm"
+            >
+              {uploading ? <X size={16} /> : <Plus size={16} />}
+              {uploading ? "Sluiten" : "Uploaden"}
+            </button>
+          </>
         }
       />
 
@@ -133,52 +163,33 @@ export function AdminCdnPage() {
       )}
 
       {isError ? (
-        <div className="card-surface p-5 text-sm text-rose-700 dark:text-rose-300">
+        <div className="card-surface p-5 text-sm text-bad">
           {error instanceof Error ? error.message : "Kon de bucket niet uitlezen."}
         </div>
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="flex items-center gap-1.5 font-mono text-[12px] tabular-nums text-ink-3">
-              <HardDrive size={13} />
-              {data ? `${data.total} bestanden · ${formatBytes(data.total_size)}` : "…"}
-              {data?.capped && " (afgekapt)"}
-            </span>
-            <span className="mx-1 hidden h-4 w-px bg-line sm:block" />
-            {[{ id: null as string | null, label: "Alles" }, ...Object.keys(data?.counts ?? {}).map((k) => ({ id: k as string | null, label: KIND_LABEL[k] ?? k }))].map((opt) => (
-              <button
-                key={opt.id ?? "all"}
-                type="button"
-                onClick={() => pickKind(opt.id)}
-                aria-pressed={kind === opt.id}
-                className={`rounded-full border-1.5 px-3 py-1.5 text-[12.5px] font-semibold transition-colors ${
-                  kind === opt.id ? "border-outline bg-brand text-brand-on" : "border-line bg-surface text-ink-2 hover:border-ink-3"
-                }`}
-              >
-                {opt.label}
-                {opt.id && <span className="ml-1.5 font-mono text-[11px] opacity-70">{data?.counts[opt.id]}</span>}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => void downloadAll()}
-              disabled={downloading || tooBig || !data || data.total === 0}
-              title={tooBig ? "Te veel voor één zip: kies eerst een onderdeel of evenement." : `Download ${scope} als zip`}
-              className="btn-secondary ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] disabled:opacity-50"
-            >
-              {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-              {downloading ? `Bezig… ${formatBytes(downloaded ?? 0)}` : `Download ${scope} (zip)`}
-            </button>
-          </div>
+          <p className="flex items-center gap-1.5 font-mono text-xs tabular-nums text-ink-3">
+            <HardDrive size={14} />
+            {data ? `${data.total} bestanden · ${formatBytes(data.total_size)}` : "…"}
+            {data?.capped && " (afgekapt)"}
+          </p>
+
+          <Segmented
+            label="Soort bestand"
+            scroll
+            options={kindOptions}
+            value={kind ?? "all"}
+            onChange={(v) => pickKind(v === "all" ? null : v)}
+          />
 
           {kind === "story" && (
-            <div className="flex flex-wrap items-center gap-2">
-              <label htmlFor="cdn-event" className="text-[12.5px] font-semibold text-ink-2">Per evenement</label>
+            <div className="sm:max-w-sm">
+              <label htmlFor="cdn-event" className={L}>Per evenement</label>
               <select
                 id="cdn-event"
                 value={eventId ?? ""}
                 onChange={(e) => pickEvent(e.target.value || null)}
-                className="rounded-lg border-1.5 border-line bg-surface px-3 py-1.5 text-[12.5px] text-ink"
+                className="input-field"
               >
                 <option value="">Alle evenementen</option>
                 {events.map((ev) => (
@@ -188,7 +199,7 @@ export function AdminCdnPage() {
             </div>
           )}
           {tooBig && (
-            <p className="text-[12.5px] text-ink-3">
+            <p className="text-xs text-ink-3">
               Dit is meer dan {formatBytes(data?.download_limit_bytes ?? 0)}, te veel voor één zip. Kies een onderdeel{kind === "story" ? " of een evenement" : ""} en download die apart.
             </p>
           )}
@@ -208,20 +219,20 @@ export function AdminCdnPage() {
                   key={o.key}
                   type="button"
                   onClick={() => setOpenIndex(i)}
-                  className="group relative aspect-square overflow-hidden rounded-xl border-1.5 border-line bg-sunken text-left"
+                  className="relative aspect-square overflow-hidden rounded-xl border-1.5 border-line bg-sunken text-left"
                   title={o.key}
                 >
                   {isVideo(o.key) ? (
                     <>
                       <VideoThumb url={o.url} />
                       <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white">
-                        <Play size={11} fill="currentColor" />
+                        <Play size={12} fill="currentColor" />
                       </span>
                     </>
                   ) : (
-                    <img src={o.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.04]" />
+                    <img src={o.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                   )}
-                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-2 pb-1.5 pt-6 text-[11px] font-semibold leading-tight text-white">
+                  <span className="absolute inset-x-0 bottom-0 bg-black/60 px-2 py-1.5 text-xs font-semibold leading-tight text-white">
                     <span className="block truncate">{o.owner ?? KIND_LABEL[o.kind] ?? o.kind}</span>
                     <span className="block truncate font-normal text-white/70">{formatBytes(o.size)}</span>
                   </span>
@@ -252,12 +263,12 @@ export function AdminCdnPage() {
               setOpenIndex(null);
               await qc.invalidateQueries({ queryKey: ["admin", "cdn"] });
             } catch (e) {
-              toast("error", e instanceof Error ? e.message : "Verwijderen mislukt.");
+              toast("error", e instanceof Error ? e.message : "Kon het bestand niet verwijderen. Probeer het opnieuw.");
             }
           }}
         />
       )}
-    </div>
+    </AdminPage>
   );
 }
 
@@ -286,10 +297,21 @@ function VideoThumb({ url }: { url: string }) {
 }
 
 function Viewer({ item, position, onClose, onPrev, onNext, onDelete }: { item: CdnObject; position: string; onClose: () => void; onPrev?: () => void; onNext?: () => void; onDelete: () => Promise<void> }) {
-  const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  // A new file starts unconfirmed, so one tap never deletes the next one.
-  useEffect(() => setConfirming(false), [item.key]);
+
+  async function askDelete() {
+    const ok = await askConfirm({
+      title: "Bestand definitief verwijderen?",
+      message: "Dit kan niet ongedaan worden gemaakt.",
+      confirmLabel: "Verwijderen",
+      cancelLabel: "Annuleren",
+      destructive: true,
+    });
+    if (!ok) return;
+    setDeleting(true);
+    await onDelete();
+    setDeleting(false);
+  }
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -307,36 +329,15 @@ function Viewer({ item, position, onClose, onPrev, onNext, onDelete }: { item: C
       <div className="flex shrink-0 items-start justify-between gap-3 px-4 py-3 text-white" onClick={(e) => e.stopPropagation()}>
         <div className="min-w-0 text-sm">
           <p className="truncate font-semibold">{item.owner ?? "Onbekende uploader"} · {KIND_LABEL[item.kind] ?? item.kind}</p>
-          <p className="truncate font-mono text-[11.5px] text-white/60">{item.key}</p>
+          <p className="truncate font-mono text-xs text-white/60">{item.key}</p>
           <p className="text-xs text-white/60">
             {formatBytes(item.size)} · {item.last_modified ? formatDateTime(item.last_modified) : "onbekende datum"} · {position}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {confirming ? (
-            <>
-              <button type="button" onClick={() => setConfirming(false)} className="h-9 rounded-full bg-white/10 px-3 text-xs font-semibold hover:bg-white/20">
-                Annuleren
-              </button>
-              <button
-                type="button"
-                disabled={deleting}
-                onClick={async () => {
-                  setDeleting(true);
-                  await onDelete();
-                  setDeleting(false);
-                  setConfirming(false);
-                }}
-                className="h-9 rounded-full bg-rose-600 px-3 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
-              >
-                {deleting ? "Bezig…" : "Definitief verwijderen"}
-              </button>
-            </>
-          ) : (
-            <button type="button" onClick={() => setConfirming(true)} aria-label="Verwijderen" title="Verwijderen" className="hit-area flex h-9 w-9 items-center justify-center rounded-full bg-white/10 hover:bg-rose-600">
-              <Trash2 size={16} />
-            </button>
-          )}
+          <button type="button" onClick={() => void askDelete()} disabled={deleting} aria-label="Verwijderen" title="Verwijderen" className="hit-area flex h-9 w-9 items-center justify-center rounded-full bg-white/10 hover:bg-rose-600 disabled:opacity-50">
+            <Trash2 size={16} />
+          </button>
           <a href={item.url} target="_blank" rel="noopener noreferrer" aria-label="Open in nieuw tabblad" className="hit-area flex h-9 w-9 items-center justify-center rounded-full bg-white/10 hover:bg-white/20">
             <ExternalLink size={16} />
           </a>
@@ -387,7 +388,7 @@ function QuickUpload({ onUploaded }: { onUploaded: () => void }) {
       setResult(res);
       onUploaded();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Uploaden mislukt.");
+      setError(e instanceof Error ? e.message : "Kon het bestand niet uploaden. Probeer het opnieuw.");
     } finally {
       setProgress(null);
       if (input.current) input.current.value = "";
@@ -426,7 +427,7 @@ function QuickUpload({ onUploaded }: { onUploaded: () => void }) {
         )}
       </label>
 
-      {error && <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{error}</p>}
+      {error && <p className="text-sm text-bad" role="alert">{error}</p>}
 
       {result && (
         <div className="space-y-2">
@@ -440,10 +441,10 @@ function QuickUpload({ onUploaded }: { onUploaded: () => void }) {
               value={result.url}
               onFocus={(e) => e.currentTarget.select()}
               aria-label="Link naar het bestand"
-              className="min-w-0 flex-1 rounded-lg border-1.5 border-line bg-sunken px-3 py-2 font-mono text-[12px] text-ink"
+              className="input-field min-w-0 flex-1 !bg-sunken font-mono !text-base sm:!text-xs"
             />
             <button type="button" onClick={copy} className="btn-secondary inline-flex shrink-0 items-center gap-1.5 px-3 py-2 text-sm">
-              {copied ? <Check size={15} /> : <Copy size={15} />}
+              {copied ? <Check size={16} /> : <Copy size={16} />}
               {copied ? "Gekopieerd" : "Kopiëren"}
             </button>
           </div>

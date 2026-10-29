@@ -5,7 +5,9 @@ import { ApiError } from "../../lib/api/client";
 import { useCurrentUser } from "../../hooks/useUsers";
 import { useAuthStore } from "../../store/auth.store";
 import { UserAvatar } from "../../components/common/UserAvatar";
+import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
+import { TAG, PILL_BAD } from "./styles";
 import { AdminSearch } from "./components/AdminSearch";
 import { toast } from "../../store/toast.store";
 
@@ -36,28 +38,28 @@ export function AdminImpersonatePage() {
       // startImpersonation hard-reloads the page — nothing after this runs.
     } catch (err) {
       const detail = err instanceof ApiError ? err.message : null;
-      toast("error", detail || "Inloggen als deze gebruiker is mislukt.");
+      toast("error", detail || "Kon niet inloggen als deze gebruiker. Probeer het opnieuw.");
       setPendingId(null);
     }
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+    <AdminPage width="narrow">
       <AdminPageHeader
         eyebrow="Testen"
         title="Inloggen als gebruiker"
-        subtitle="Bekijk en gebruik de app als een andere gebruiker — handig voor gasten zonder eigen account"
+        subtitle="Gebruik de app als iemand anders, handig voor gasten zonder eigen account"
       />
 
-      <div className="flex items-start gap-2.5 notice-warn px-4 py-3 text-xs text-amber-800 dark:text-amber-300">
-        <ShieldAlert size={15} className="shrink-0 mt-0.5" />
+      <div className="notice-warn flex items-start gap-2.5 p-4 text-sm text-ink">
+        <ShieldAlert size={16} className="mt-0.5 shrink-0 text-warn" />
         <p>
-          Alles wat je doet terwijl je bent ingelogd als iemand anders — RSVP&apos;s, ritten, betalingen — gebeurt écht
-          en op hun naam. Gebruik de knop &ldquo;Terug naar mijn account&rdquo; in de balk bovenaan om te stoppen.
+          Alles wat je doet terwijl je bent ingelogd als iemand anders (aanmeldingen, ritten, betalingen) gebeurt écht
+          en op hun naam. Gebruik &ldquo;Terug naar mijn account&rdquo; in de balk bovenaan om te stoppen.
         </p>
       </div>
 
-      <AdminSearch value={search} onChange={setSearch} placeholder="Zoek op naam..." />
+      <AdminSearch value={search} onChange={setSearch} placeholder="Zoek op naam…" />
 
       {isLoading && (
         <div className="space-y-2">
@@ -80,35 +82,27 @@ export function AdminImpersonatePage() {
             className="card-surface flex items-center gap-3 px-4 py-3"
           >
             <UserAvatar name={user.name} className="h-9 w-9 text-xs shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-semibold text-ink truncate">{user.name}</span>
-                {!user.discord_id && (
-                  <span className="rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2">
-                    Gast
-                  </span>
-                )}
-                {user.is_active === false && (
-                  <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11.5px] font-semibold text-rose-700 dark:bg-rose-500/15 dark:text-rose-300">
-                    Gedeactiveerd
-                  </span>
-                )}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="min-w-0 truncate text-sm font-semibold text-ink">{user.name}</span>
+                {!user.discord_id && <span className={`${TAG} shrink-0`}>Gast</span>}
               </div>
+              {user.is_active === false && <span className={`${PILL_BAD} mt-1`}>Gedeactiveerd</span>}
             </div>
             <button
               type="button"
               disabled={pendingId === user.id || user.is_active === false}
               onClick={() => handleImpersonate(user.id!, user.name)}
-              className="btn-secondary shrink-0 px-3 text-xs"
+              className="btn-secondary shrink-0 px-4 text-sm"
             >
               {pendingId === user.id ? (
                 <>
-                  <UserCog size={13} className="animate-pulse" />
+                  <UserCog size={16} className="animate-pulse" />
                   Bezig…
                 </>
               ) : (
                 <>
-                  <LogIn size={13} />
+                  <LogIn size={16} />
                   Log in als
                 </>
               )}
@@ -116,6 +110,6 @@ export function AdminImpersonatePage() {
           </div>
         ))}
       </div>
-    </div>
+    </AdminPage>
   );
 }

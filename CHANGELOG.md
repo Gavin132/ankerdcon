@@ -35,6 +35,14 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **Admin: Betalingen, Aankondigingen and the other pages.** Betalingen shows the three totals in one card instead of
+  three stacked cards and sets a share's status with a list (Openstaand, Geclaimd, Bevestigd) instead of three lettered
+  circles. Aankondigingen shows the type as a pill with words, a switch for "Actief" and two lines of the message; its
+  sheet, and the sheets of Badges and Wijzigingslog, use the shared footer and switches. The CDN page has the file
+  kinds as a switch row, the zip download next to "Uploaden", flat tiles (no zoom, no gradient), and asks before
+  it deletes a file for good. Badges hides the drag handle on a phone, where dragging never worked. Inloggen als
+  gebruiker, Feedback, Tijdreis and Schermen testen follow the shared frame; "Echte crash veroorzaken" has its own
+  heading and a warning box so it is not tapped by mistake.
 - **Admin: calmer lists and sheets.** Every admin page has the same width, padding and rhythm. The tables use the shared
   header and cell styles (12 px headers, no more 10.5 px), and on a phone a row is two lines: the name and the buttons,
   then the date, place or price, so the name is no longer squeezed to a few letters (Ritten, Activiteiten,

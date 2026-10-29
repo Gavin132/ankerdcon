@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Plus, Megaphone, Info, AlertTriangle } from "lucide-react";
+import { Plus, Megaphone, Info, AlertTriangle, X, MessageSquare, Eye } from "lucide-react";
 import {
   useAdminAnnouncements,
   useCreateAnnouncement,
@@ -7,12 +7,16 @@ import {
   useDeleteAnnouncement,
 } from "../../hooks/useAnnouncements";
 import { AdminDrawer } from "./AdminDrawer";
+import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
+import { DrawerFooter } from "./components/DrawerFooter";
+import { ToggleRow } from "./components/ToggleRow";
+import { Switch } from "../../components/common/Switch";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 import { DiscardChangesConfirm } from "./components/DiscardChangesConfirm";
 import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
-import { F, FS, L, SECTION, SECTION_TITLE } from "./styles";
+import { F, FS, L, TH, TD, TR, PILL_NEUTRAL, PILL_WARN, PILL_BAD } from "./styles";
 import { toast } from "../../store/toast.store";
 import type { Announcement, AnnouncementSeverity } from "../../types";
 
@@ -22,10 +26,10 @@ const SEVERITY_LABEL: Record<AnnouncementSeverity, string> = {
   urgent: "Urgent",
 };
 
-const SEVERITY_CHIP: Record<AnnouncementSeverity, string> = {
-  info: "bg-sunken text-ink-2",
-  warning: "bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300",
-  urgent: "bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300",
+const SEVERITY_PILL: Record<AnnouncementSeverity, string> = {
+  info: PILL_NEUTRAL,
+  warning: PILL_WARN,
+  urgent: PILL_BAD,
 };
 
 const SEVERITY_ICON: Record<AnnouncementSeverity, typeof Info> = {
@@ -72,7 +76,8 @@ function AnnouncementDrawer({
   );
   const [form, setForm] = useState<FormState>(initialForm.current);
 
-  async function handleSave() {
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
     if (!form.message.trim()) return;
     try {
       if (isEdit) {
@@ -89,7 +94,7 @@ function AnnouncementDrawer({
       }
       onClose();
     } catch {
-      toast("error", "Kon aankondiging niet opslaan.");
+      toast("error", "Kon de aankondiging niet opslaan. Probeer het opnieuw.");
     }
   }
 
@@ -104,27 +109,19 @@ function AnnouncementDrawer({
       open={open}
       onClose={requestClose}
       title={isEdit ? "Aankondiging bewerken" : "Nieuwe aankondiging"}
-      subtitle="Zichtbaar boven de navigatiebalk op elke pagina"
+      subtitle="Bovenaan elke pagina in de app"
       footer={
-        <div className="flex gap-3">
-          <button
-            onClick={handleSave}
-            disabled={!isValid || isSaving}
-            className="btn-primary min-h-[44px] flex-1 py-2.5 text-sm"
-          >
-            {isSaving ? "Opslaan..." : isEdit ? "Bijwerken" : "Plaatsen"}
-          </button>
-          <button
-            onClick={requestClose}
-            className="btn-secondary px-4 py-2.5 text-sm"
-          >
-            Annuleren
-          </button>
-        </div>
+        <DrawerFooter
+          onCancel={requestClose}
+          formId="announcement-form"
+          isPending={isSaving}
+          isEdit={isEdit}
+          submitLabel={isEdit ? undefined : "Plaatsen"}
+          disabled={!isValid}
+        />
       }
     >
-      <div className={SECTION}>
-        <p className={SECTION_TITLE}>Aankondiging</p>
+      <form id="announcement-form" onSubmit={handleSave} className="space-y-4">
         <div>
           <label className={L}>Bericht *</label>
           <textarea
@@ -132,7 +129,7 @@ function AnnouncementDrawer({
             rows={3}
             value={form.message}
             onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-            placeholder="bijv. De parkeerplaats bij de locatie is vanaf 10:00 open."
+            placeholder="Bijvoorbeeld: de parkeerplaats bij de locatie is vanaf 10:00 open."
           />
         </div>
         <div>
@@ -147,36 +144,28 @@ function AnnouncementDrawer({
             <option value="urgent">Urgent (rood)</option>
           </select>
         </div>
-        <label className="flex items-center gap-2.5 text-sm text-ink-2 cursor-pointer">
-          <input
-            type="checkbox"
-            className="cb"
-            checked={form.dismissible}
-            onChange={(e) => setForm((f) => ({ ...f, dismissible: e.target.checked }))}
-          />
-          Gebruikers kunnen dit sluiten
-        </label>
-        <label className="flex items-center gap-2.5 text-sm text-ink-2 cursor-pointer">
-          <input
-            type="checkbox"
-            className="cb"
-            checked={form.notify_discord}
-            onChange={(e) => setForm((f) => ({ ...f, notify_discord: e.target.checked }))}
-          />
-          Ook naar het Discord-kanaal sturen
-        </label>
+        <ToggleRow
+          icon={<X size={16} />}
+          label="Gebruikers kunnen dit sluiten"
+          checked={form.dismissible}
+          onChange={() => setForm((f) => ({ ...f, dismissible: !f.dismissible }))}
+        />
+        <ToggleRow
+          icon={<MessageSquare size={16} />}
+          label="Ook naar het Discord-kanaal sturen"
+          checked={form.notify_discord}
+          onChange={() => setForm((f) => ({ ...f, notify_discord: !f.notify_discord }))}
+        />
         {isEdit && (
-          <label className="flex items-center gap-2.5 text-sm text-ink-2 cursor-pointer">
-            <input
-              type="checkbox"
-              className="cb"
-              checked={form.active}
-              onChange={(e) => setForm((f) => ({ ...f, active: e.target.checked }))}
-            />
-            Actief (zichtbaar voor iedereen)
-          </label>
+          <ToggleRow
+            icon={<Eye size={16} />}
+            label="Actief"
+            hint="Zichtbaar voor iedereen."
+            checked={form.active}
+            onChange={() => setForm((f) => ({ ...f, active: !f.active }))}
+          />
         )}
-      </div>
+      </form>
     </AdminDrawer>
     <DiscardChangesConfirm open={confirming} onCancel={cancelDiscard} onConfirm={confirmDiscard} />
     </>
@@ -199,7 +188,7 @@ export function AdminAnnouncementsPage() {
       toast("success", "Aankondiging verwijderd.");
       setConfirmDeleteId(null);
     } catch {
-      toast("error", "Kon aankondiging niet verwijderen.");
+      toast("error", "Kon de aankondiging niet verwijderen. Probeer het opnieuw.");
     }
   }
 
@@ -207,16 +196,16 @@ export function AdminAnnouncementsPage() {
     updateAnnouncement.mutate(
       { id: a.id, active: !a.active },
       {
-        onError: () => toast("error", "Kon status niet wijzigen."),
+        onError: () => toast("error", "Kon de status niet wijzigen. Probeer het opnieuw."),
       },
     );
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+    <AdminPage>
       <AdminPageHeader
         title="Aankondigingen"
-        subtitle={`${announcements.length} aankondiging${announcements.length !== 1 ? "en" : ""}`}
+        subtitle={`${announcements.length} ${announcements.length === 1 ? "aankondiging" : "aankondigingen"}`}
         action={
           <button
             onClick={() => setDrawer("new")}
@@ -232,22 +221,12 @@ export function AdminAnnouncementsPage() {
         <div className="overflow-x-auto">
           <table className="stack-table w-full">
             <thead>
-              <tr className="border-b-1.5 border-line">
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Status
-                </th>
-                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Bericht
-                </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Type
-                </th>
-                <th className="hidden sm:table-cell px-5 py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Geplaatst door
-                </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Acties
-                </th>
+              <tr>
+                <th className={TH}>Bericht</th>
+                <th className={`${TH} hidden sm:table-cell`}>Type</th>
+                <th className={TH}>Actief</th>
+                <th className={`${TH} hidden sm:table-cell`}>Geplaatst door</th>
+                <th className={`${TH} text-right`}>Acties</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -265,43 +244,26 @@ export function AdminAnnouncementsPage() {
               ) : (
                 announcements.map((a) => {
                   const Icon = SEVERITY_ICON[a.severity];
+                  const severity = (
+                    <span className={SEVERITY_PILL[a.severity]}>
+                      <Icon size={14} />
+                      {SEVERITY_LABEL[a.severity]}
+                    </span>
+                  );
                   return (
-                    <tr key={a.id} className="hover:bg-sunken transition-colors">
-                      <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
-                        <button
-                          onClick={() => toggleActive(a)}
-                          title={a.active ? "Actief" : "Inactief"}
-                          aria-label={a.active ? "Actief, tik om uit te zetten" : "Inactief, tik om aan te zetten"}
-                          className={`hit-area inline-flex items-center gap-1.5 rounded-full p-1.5 sm:px-2 sm:py-0.5 text-[11.5px] font-semibold transition-colors ${
-                            a.active
-                              ? "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/25"
-                              : "bg-sunken text-ink-2 hover:text-ink"
-                          }`}
-                        >
-                          <span className={`h-1.5 w-1.5 rounded-full ${a.active ? "bg-emerald-500" : "bg-ink-3"}`} />
-                          <span className="hidden sm:inline">{a.active ? "Actief" : "Inactief"}</span>
-                        </button>
+                    <tr key={a.id} className={`${TR} ${a.active ? "" : "opacity-60"}`}>
+                      <td className={`cell-main ${TD}`}>
+                        <p className="line-clamp-2 max-w-md text-sm text-ink">{a.message}</p>
+                        <div className="mt-1.5 sm:hidden">{severity}</div>
                       </td>
-                      <td className="cell-main px-2.5 sm:px-5 py-2.5 sm:py-3.5">
-                        <p className="text-sm text-ink max-w-[160px] sm:max-w-md truncate">
-                          {a.message}
-                        </p>
+                      <td className={`hidden sm:table-cell ${TD}`}>{severity}</td>
+                      <td className={TD}>
+                        <Switch checked={a.active} onChange={() => toggleActive(a)} label={a.active ? "Actief, tik om uit te zetten" : "Uit, tik om aan te zetten"} />
                       </td>
-                      <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
-                        <span
-                          title={SEVERITY_LABEL[a.severity]}
-                          className={`inline-flex items-center gap-1.5 rounded-full p-1.5 sm:px-2 sm:py-0.5 text-[11.5px] font-semibold ${SEVERITY_CHIP[a.severity]}`}
-                        >
-                          <Icon size={11} />
-                          <span className="hidden sm:inline">{SEVERITY_LABEL[a.severity]}</span>
-                        </span>
+                      <td className={`hidden sm:table-cell ${TD}`}>
+                        <p className="text-sm text-ink-3">{a.created_by ?? "—"}</p>
                       </td>
-                      <td className="hidden sm:table-cell px-5 py-3.5">
-                        <p className="text-sm text-ink-3">
-                          {a.created_by ?? "—"}
-                        </p>
-                      </td>
-                      <td className="cell-actions px-2 sm:px-5 py-2.5 sm:py-3.5" onClick={(e) => e.stopPropagation()}>
+                      <td className={`cell-actions ${TD}`}>
                         <DeleteConfirmActions
                           id={a.id}
                           confirmId={confirmDeleteId}
@@ -310,6 +272,8 @@ export function AdminAnnouncementsPage() {
                           onRequestDelete={() => setConfirmDeleteId(a.id)}
                           onConfirmDelete={() => handleDelete(a.id)}
                           onCancelDelete={() => setConfirmDeleteId(null)}
+                          editLabel="Aankondiging bewerken"
+                          deleteLabel="Aankondiging verwijderen"
                         />
                       </td>
                     </tr>
@@ -326,6 +290,6 @@ export function AdminAnnouncementsPage() {
         announcement={drawer}
         onClose={() => setDrawer(null)}
       />
-    </div>
+    </AdminPage>
   );
 }

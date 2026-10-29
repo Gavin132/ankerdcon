@@ -1,5 +1,6 @@
 import { Clock } from "lucide-react";
 import { useTimeStore } from "../../store/time.store";
+import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { ToggleRow } from "./components/ToggleRow";
 
@@ -10,7 +11,7 @@ export function AdminTimeTravelPage() {
   const setOverride = useTimeStore((s) => s.setOverride);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+    <AdminPage width="narrow">
       <AdminPageHeader
         eyebrow="Testen"
         title="Tijdreis"
@@ -43,6 +44,6 @@ export function AdminTimeTravelPage() {
         Deze voorkeur wordt per browser onthouden (niet gedeeld met andere admins). Wat de app als &quot;nu&quot;
         gebruikt verandert alleen met het klokje zelf.
       </p>
-    </div>
+    </AdminPage>
   );
 }

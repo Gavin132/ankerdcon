@@ -13,14 +13,16 @@ import {
 import { useAdminUsers } from "../../hooks/useAdmin";
 import { uploadBadgeImage } from "../../services/badges.service";
 import { AdminDrawer } from "./AdminDrawer";
+import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
+import { DrawerFooter } from "./components/DrawerFooter";
 import { AdminSearch } from "./components/AdminSearch";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 import { AdminPagination } from "./components/AdminPagination";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 import { DiscardChangesConfirm } from "./components/DiscardChangesConfirm";
 import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
-import { F, L, SECTION, SECTION_TITLE } from "./styles";
+import { F, L, SECTION, SECTION_TITLE, TH, TD, TR, PILL_NEUTRAL } from "./styles";
 import { toast } from "../../store/toast.store";
 import type { Badge, User } from "../../types";
 
@@ -75,13 +77,14 @@ function BadgeDrawer({
       const url = await uploadBadgeImage(file);
       setForm((f) => ({ ...f, image_url: url }));
     } catch {
-      toast("error", "Upload mislukt. Controleer de storage bucket.");
+      toast("error", "Kon de afbeelding niet uploaden. Probeer het opnieuw.");
     } finally {
       setUploading(false);
     }
   }
 
-  async function handleSave() {
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
     if (!form.name || !form.description || !form.image_url) return;
     try {
       if (isEdit) {
@@ -93,7 +96,7 @@ function BadgeDrawer({
       }
       onClose();
     } catch {
-      toast("error", "Kon badge niet opslaan.");
+      toast("error", "Kon de badge niet opslaan. Probeer het opnieuw.");
     }
   }
 
@@ -109,30 +112,21 @@ function BadgeDrawer({
       open={open}
       onClose={requestClose}
       title={isEdit ? "Badge bewerken" : "Nieuwe badge"}
-      subtitle={isEdit ? badge.name : "Voeg een nieuwe badge toe"}
+      subtitle={isEdit ? badge.name : "Een nieuwe badge"}
       footer={
-        <div className="flex gap-3">
-          <button
-            onClick={handleSave}
-            disabled={!isValid || isPending}
-            className="btn-primary min-h-[44px] flex-1 py-2.5 text-sm"
-          >
-            {isSaving ? "Opslaan..." : isEdit ? "Bijwerken" : "Aanmaken"}
-          </button>
-          <button
-            onClick={requestClose}
-            className="btn-secondary px-4 py-2.5 text-sm"
-          >
-            Annuleren
-          </button>
-        </div>
+        <DrawerFooter
+          onCancel={requestClose}
+          formId="badge-form"
+          isPending={isPending}
+          isEdit={isEdit}
+          disabled={!isValid}
+        />
       }
     >
-      <div className={SECTION}>
-        <p className={SECTION_TITLE}>Badge details</p>
+      <form id="badge-form" onSubmit={handleSave} className="space-y-4">
         <div>
           <label className={L}>Naam *</label>
-          <input className={F} value={form.name} onChange={set("name")} placeholder="bijv. Reisleider" />
+          <input className={F} value={form.name} onChange={set("name")} placeholder="Bijvoorbeeld: Reisleider" />
         </div>
         <div>
           <label className={L}>Omschrijving (tooltip) *</label>
@@ -140,13 +134,13 @@ function BadgeDrawer({
             className={F}
             value={form.description}
             onChange={set("description")}
-            placeholder="bijv. Verantwoordelijk voor de reisgroep"
+            placeholder="Bijvoorbeeld: verantwoordelijk voor de reisgroep"
           />
         </div>
         {/* Image input */}
         <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className={L}>Afbeelding *</label>
+          <div className="flex items-center justify-between">
+            <label className={`${L} !mb-0`}>Afbeelding *</label>
             <button
               type="button"
               onClick={() => setUrlMode((v) => !v)}
@@ -161,7 +155,7 @@ function BadgeDrawer({
               className={F}
               value={form.image_url}
               onChange={set("image_url")}
-              placeholder="https://..."
+              placeholder="https://…"
             />
           ) : (
             <>
@@ -195,7 +189,7 @@ function BadgeDrawer({
                 } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {uploading ? (
-                  <p className="text-xs text-ink-3">Uploaden...</p>
+                  <p className="text-xs text-ink-3">Uploaden…</p>
                 ) : (
                   <>
                     <Upload size={18} className="mx-auto mb-1.5 text-ink-3" />
@@ -216,11 +210,11 @@ function BadgeDrawer({
                 alt="Voorbeeld"
                 className="h-9 w-9 rounded-full object-cover border border-line"
               />
-              <span className="text-xs text-ink-3">Preview</span>
+              <span className="text-xs text-ink-3">Voorbeeld</span>
             </div>
           )}
         </div>
-      </div>
+      </form>
     </AdminDrawer>
     <DiscardChangesConfirm open={confirming} onCancel={cancelDiscard} onConfirm={confirmDiscard} />
     </>
@@ -272,7 +266,7 @@ function AssignDrawer({
       open={open}
       onClose={onClose}
       title="Badges toewijzen"
-      subtitle="Selecteer een gebruiker en wijs badges toe"
+      subtitle="Kies een gebruiker en wijs badges toe"
     >
       <div className="space-y-4">
         {/* User search */}
@@ -280,7 +274,7 @@ function AssignDrawer({
           <p className={SECTION_TITLE}>Gebruiker zoeken</p>
           <input
             className={F}
-            placeholder="Zoek op naam of alias..."
+            placeholder="Zoek op naam of alias…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -305,7 +299,7 @@ function AssignDrawer({
                   {user.name}
                 </span>
                 {(user.badge_ids ?? []).length > 0 && (
-                  <span className="rounded-full bg-sunken px-2 py-0.5 font-mono text-[10.5px] font-semibold tabular-nums text-ink-2">
+                  <span className="rounded-full bg-sunken px-2 py-0.5 font-mono text-xs font-semibold tabular-nums text-ink-2">
                     {(user.badge_ids ?? []).length}
                   </span>
                 )}
@@ -392,7 +386,7 @@ function BadgeMembersDrawer({
           {members.map((u) => (
             <div
               key={u.id}
-              className="flex items-center gap-2.5 rounded-xl border border-line bg-paper px-3 py-2"
+              className="flex items-center gap-2.5 rounded-xl border border-line bg-paper py-0.5 pl-3 pr-1.5"
             >
               <UserAvatar name={u.name} user={u} className="h-7 w-7 text-[9px]" />
               <span className="flex-1 text-sm text-ink">{u.name}</span>
@@ -400,11 +394,11 @@ function BadgeMembersDrawer({
                 type="button"
                 onClick={() => u.id && badge && unassign.mutate({ userId: u.id, badgeId: badge.id })}
                 disabled={unassign.isPending}
-                className="hit-area flex h-9 w-9 items-center justify-center rounded-lg text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300 disabled:opacity-40 transition-colors"
-                title="Badge verwijderen"
-                aria-label="Badge verwijderen"
+                className="icon-btn text-ink-3 hover:!bg-bad-soft hover:!text-bad"
+                title="Badge afnemen"
+                aria-label={`Badge van ${u.name} afnemen`}
               >
-                <UserX size={13} />
+                <UserX size={16} />
               </button>
             </div>
           ))}
@@ -462,7 +456,7 @@ export function AdminBadgesPage() {
       toast("success", `${name} verwijderd.`);
       setConfirmDeleteId(null);
     } catch {
-      toast("error", "Kon badge niet verwijderen.");
+      toast("error", "Kon de badge niet verwijderen. Probeer het opnieuw.");
     }
   }
 
@@ -499,17 +493,17 @@ export function AdminBadgesPage() {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+    <AdminPage>
       <AdminPageHeader
         title="Badges"
-        subtitle={`${badges.length} badge${badges.length !== 1 ? "s" : ""}`}
+        subtitle={`${badges.length} ${badges.length === 1 ? "badge" : "badges"}`}
         action={
-          <div className="flex flex-wrap items-center gap-2">
+          <>
             <button
               onClick={() => setAssignOpen(true)}
               className="btn-secondary px-4 py-2.5 text-sm"
             >
-              <Users size={15} />
+              <Users size={16} />
               Toewijzen
             </button>
             <button
@@ -519,34 +513,28 @@ export function AdminBadgesPage() {
               <Plus size={16} />
               Nieuwe badge
             </button>
-          </div>
+          </>
         }
       />
 
       <AdminSearch
         value={search}
         onChange={handleSearch}
-        placeholder="Zoek op naam of omschrijving..."
+        placeholder="Zoek op naam of omschrijving…"
       />
 
       <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
           <table className="stack-table w-full">
             <thead>
-              <tr className="border-b-1.5 border-line">
-                <th className="w-6 sm:w-8 px-1.5 sm:px-3 py-2.5 sm:py-3" />
-                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Badge
+              <tr>
+                <th className={`${TH} hidden w-8 !pr-1 sm:table-cell`}>
+                  <span className="sr-only">Volgorde</span>
                 </th>
-                <th className="hidden sm:table-cell px-5 py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Omschrijving
-                </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Toegewezen aan
-                </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Acties
-                </th>
+                <th className={TH}>Badge</th>
+                <th className={`${TH} hidden sm:table-cell`}>Omschrijving</th>
+                <th className={TH}>Toegewezen aan</th>
+                <th className={`${TH} text-right`}>Acties</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -577,49 +565,45 @@ export function AdminBadgesPage() {
                       onDragOver={(e) => onDragOver(e, badge.id)}
                       onDrop={onDrop}
                       onDragEnd={() => { dragId.current = null; }}
-                      className="hover:bg-sunken transition-colors"
+                      className={TR}
                     >
-                      <td className="pl-1.5 sm:pl-3 pr-0.5 sm:pr-1 py-2.5 sm:py-3.5 cursor-grab active:cursor-grabbing">
-                        <GripVertical size={16} className="text-ink-3" />
+                      {/* Drag to reorder: a mouse thing, so not on a phone */}
+                      <td className={`hidden cursor-grab !pr-1 active:cursor-grabbing sm:table-cell ${TD} w-8`}>
+                        <GripVertical size={16} className="text-ink-3" aria-hidden />
                       </td>
-                      <td className="cell-main px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                      <td className={`cell-main ${TD}`}>
                         <div className="flex items-center gap-2 sm:gap-3">
                           <img
                             src={badge.image_url}
                             alt={badge.name}
                             className="h-7 w-7 shrink-0 rounded-full border border-line object-cover sm:h-9 sm:w-9"
                           />
-                          <p className="text-sm font-semibold text-ink truncate">
+                          <p className="truncate text-sm font-semibold text-ink">
                             {badge.name}
                           </p>
                         </div>
                       </td>
-                      <td className="hidden sm:table-cell px-5 py-3.5">
-                        <p className="text-sm text-ink-3 max-w-xs truncate">
+                      <td className={`hidden sm:table-cell ${TD}`}>
+                        <p className="max-w-xs truncate text-sm text-ink-3">
                           {badge.description}
                         </p>
                       </td>
-                      <td
-                        className="px-2 sm:px-5 py-2.5 sm:py-3.5"
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                      <td className={TD}>
                         {assignedCount > 0 ? (
                           <button
                             type="button"
                             onClick={() => setViewingBadge(badge)}
-                            className="hit-area inline-flex items-center gap-1.5 rounded-full bg-sunken px-2 py-0.5 font-mono text-[11.5px] font-semibold tabular-nums text-ink-2 transition-colors hover:bg-line hover:text-ink"
+                            aria-label={`${assignedCount} ${assignedCount === 1 ? "gebruiker heeft" : "gebruikers hebben"} ${badge.name}, bekijk wie`}
+                            className={`hit-area ${PILL_NEUTRAL} tabular-nums transition-colors hover:bg-line hover:text-ink`}
                           >
-                            <Users size={10} />
+                            <Users size={14} />
                             {assignedCount}
                           </button>
                         ) : (
                           <span className="text-xs text-ink-3">—</span>
                         )}
                       </td>
-                      <td
-                        className="cell-actions px-2 sm:px-5 py-2.5 sm:py-3.5"
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                      <td className={`cell-actions ${TD}`}>
                         <DeleteConfirmActions
                           id={badge.id}
                           confirmId={confirmDeleteId}
@@ -628,6 +612,8 @@ export function AdminBadgesPage() {
                           onRequestDelete={() => setConfirmDeleteId(badge.id)}
                           onConfirmDelete={() => handleDelete(badge.id, badge.name)}
                           onCancelDelete={() => setConfirmDeleteId(null)}
+                          editLabel={`${badge.name} bewerken`}
+                          deleteLabel={`${badge.name} verwijderen`}
                         />
                       </td>
                     </tr>
@@ -667,6 +653,6 @@ export function AdminBadgesPage() {
         users={users}
         onClose={() => setViewingBadge(null)}
       />
-    </div>
+    </AdminPage>
   );
 }
