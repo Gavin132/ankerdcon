@@ -1,7 +1,7 @@
 # Design system
 
 The look approved in September 2026 (see `docs/ui-proposal/ui-rework-proposal.html`):
-flat (buttons alone sit slightly raised), based on the Ankerd anchor mascot. Ink outlines, one blue brand fill (`#57B2F9`), status
+calm and slightly raised (buttons, cards and filter controls sit on a thin plate edge), based on the Ankerd anchor mascot. Ink outlines, one blue brand fill (`#57B2F9`), status
 colours only for status, calm screens.
 
 The tokens live in `frontend/tailwind.config.ts` and `frontend/src/index.css`. To see the
@@ -9,11 +9,11 @@ components in use, look at `pages/trip/TripOverviewTab.tsx` and `components/trip
 
 ## Rules
 
-- **Flat, except buttons.** Cards, sheets, chips, segmented controls, icon buttons and every other surface are flat: no gradients, no `backdrop-blur`, no glass, no soft card shadows, no
+- **Slightly raised: buttons, cards and filter controls; everything else flat.** The plate is a thin light edge on top, a 1px darker edge below and a soft `0 1px 2px` shadow, built from the `--btn-*` tokens (`.btn-bevel`, `.card-surface`, `.chip-off`, the chosen `.segmented-item`). The chosen `.chip-on` is pressed in and the `.segmented` track is a well. Sheets, icon buttons, pills, notices and every other surface are flat: no gradients, no `backdrop-blur`, no glass, no soft card shadows, no
   glows or decorative blurred circles. Nothing lifts or scales on hover
   (`whileHover`, `hover:-translate-y`, `hover:scale`), and nothing shrinks when pressed
   (`active:scale-*`); the press feedback of a flat control is the dim in `index.css`. Hover changes a border or
-  background colour only. The one exception is the raised plate of a button (see Buttons: a thin light edge, a darker lower edge and a soft shadow, built from the `--btn-*` tokens), and a menu or popover keeps `shadow-xl` (`tailwind.config.ts` switches `shadow-sm`,
+  background colour only. The one exception is that plate (see Buttons), and a menu or popover keeps `shadow-xl` (`tailwind.config.ts` switches `shadow-sm`,
   `shadow` and `shadow-md` off, and there are no `shadow-card`, `shadow-hero` or `gradient-card-*` classes). The dotted
   cover pattern of a ticket is the one radial gradient left, and it is a pattern, not a fade.
 - **One bold element per screen** gets the 2px ink outline (`border-2 border-outline`),

@@ -45,7 +45,7 @@ All notable changes to Ankerd Con are documented here.
 
 - **Buttons sit slightly raised.** The blue, outlined, soft grey and red buttons have a light edge on top, a darker
   edge underneath and a soft shadow, so they look like a plate you can press; when you press one it sinks in. The
-  colours are the same as before, and everything else on the page stays flat.
+  colours are the same as before. Cards and the filter chips and Tickets/Recap-style switches get the same, lighter edge, and the chosen chip looks pressed in.
 - **Buttons have a calmer, outline-free look.** The blue button is a plain blue fill without the black outline, the
   other buttons are a thin line on the background, and the red "Verwijderen" is a plain red fill. Inloggen met Google
   has its own soft button under a "of ga verder met" line. Greyed-out buttons are flat grey, and a button that is

@@ -418,7 +418,7 @@
     @apply inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1 text-[13px] font-semibold text-ink-2 transition-colors hover:text-ink;
   }
   .segmented-item[aria-pressed="true"] {
-    @apply bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))];
+    @apply bg-surface text-ink;
   }
 
   /* Label above a form field, and the message under it when it is wrong. */
@@ -531,6 +531,26 @@
       0 1px 2px rgb(var(--btn-shadow) / var(--btn-shadow-a));
     --tw-shadow-colored: var(--tw-shadow);
     box-shadow: var(--tw-ring-offset-shadow, 0 0 transparent), var(--tw-ring-shadow, 0 0 transparent), var(--tw-shadow);
+  }
+  /* The same plate on the things you pick or read as a block: cards and the open filter chips and segmented item. The chosen
+     chip is pressed in, the segmented track is a well the chosen item sits on. Everything else stays flat. */
+  .card-surface,
+  .chip-off {
+    box-shadow:
+      inset 0 1px 0 rgb(var(--btn-edge) / var(--btn-edge-a)),
+      inset 0 -1px 0 rgb(var(--btn-shade) / var(--btn-shade-a)),
+      0 1px 2px rgb(var(--btn-shadow) / var(--btn-shadow-a));
+  }
+  .segmented-item[aria-pressed="true"] {
+    box-shadow:
+      0 0 0 1.5px rgb(var(--outline)),
+      inset 0 1px 0 rgb(var(--btn-edge) / var(--btn-edge-a)),
+      inset 0 -1px 0 rgb(var(--btn-shade) / var(--btn-shade-a)),
+      0 1px 2px rgb(var(--btn-shadow) / var(--btn-shadow-a));
+  }
+  .chip-on,
+  .segmented {
+    box-shadow: inset 0 1px 2px rgb(var(--btn-shade) / calc(var(--btn-shade-a) * 1.5));
   }
   .btn-primary:active:not(:disabled),
   .btn-secondary:active:not(:disabled),
