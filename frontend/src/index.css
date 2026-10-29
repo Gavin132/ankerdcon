@@ -355,7 +355,7 @@
 
   /* Square icon-only button (back, close, edit, delete): 36 px to look at, 44 px to hit. */
   .icon-btn {
-    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink disabled:opacity-40;
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text disabled:opacity-40;
   }
 
   /* Status pill. The meaning is the colour, one set everywhere: ok = done/fine, warn = waiting or needs you,
@@ -380,15 +380,6 @@
   .icon-tile-ok { @apply bg-ok-soft text-ok; }
   .icon-tile-warn { @apply bg-warn-soft text-warn; }
   .icon-tile-bad { @apply bg-bad-soft text-bad; }
-
-  /* The two destructive buttons, same look as <Button variant="danger">. `.btn-danger` is the confirm
-     ("Verwijderen"), `.btn-danger-soft` the quiet one that opens the question. Both are 44 px tall. */
-  .btn-danger {
-    @apply inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-xl border-2 border-bad bg-bad-fill font-semibold text-bad-on transition-opacity duration-75 disabled:cursor-not-allowed disabled:opacity-60;
-  }
-  .btn-danger-soft {
-    @apply inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-bad-soft font-semibold text-bad transition-opacity duration-75 disabled:cursor-not-allowed disabled:opacity-60;
-  }
 
   /* Filter chip: pick one of a few. 36 px to look at, 44 px to hit (see .hit-area). */
   .chip {
@@ -483,21 +474,55 @@
       radial-gradient(circle 7px at 100% 36px, transparent 97%, black) right / 51% 100% no-repeat;
   }
 
-  /* The one bold call to action on a screen: brand blue, ink outline, flat.
-     Nothing moves on hover; a light opacity dip on click is the only feedback. */
-  .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border-2 border-outline bg-brand font-semibold text-brand-on transition-opacity duration-75;
+  /* Buttons: one family, five tiers, all flat (no shadow, nothing moves or scales), 10 px radius, bold label,
+     44 px tall (a smaller one adds `min-h-*` and `hit-area`). <Button variant="..."> uses these same classes.
+       .btn-primary      solid brand fill, no outline: the one main action of a view
+       .btn-secondary    transparent, 1px hairline: every other action
+       .btn-tonal        lifted `bg-surface` fill with a hairline: a neutral action with a bit more body (sign in with Google)
+       .btn-ghost        no fill, no border, quiet text: Annuleren, Terug
+       .btn-danger       solid red fill: the confirm of a destructive action ("Verwijderen")
+       .btn-danger-soft  red text on a soft red tint: the quiet one that only opens the question
+     States, the same for every tier: hover is a small shift (primary and danger a touch lighter, the outlined
+     tiers a darker border), pressed dims, keyboard focus is the brand ring with an offset, disabled is flat grey
+     (`bg-sunken text-ink-3`, no outline, cursor-not-allowed). */
+  .btn-primary,
+  .btn-secondary,
+  .btn-tonal,
+  .btn-ghost,
+  .btn-danger,
+  .btn-danger-soft {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-xl font-bold transition-[opacity,background-color,border-color,color] duration-75;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-2 focus-visible:ring-offset-paper;
+    @apply disabled:cursor-not-allowed;
   }
-  .btn-primary:active:not(:disabled) {
-    opacity: 0.9;
+  .btn-primary { @apply bg-brand text-brand-on hover:enabled:opacity-90; }
+  .btn-secondary { @apply border border-line bg-transparent text-ink hover:enabled:border-ink-3 hover:enabled:bg-sunken/60; }
+  .btn-tonal { @apply border border-line bg-surface text-ink hover:enabled:border-ink-3 hover:enabled:bg-sunken; }
+  .btn-ghost { @apply bg-transparent text-ink-2 hover:enabled:bg-sunken hover:enabled:text-ink; }
+  .btn-danger { @apply bg-bad-fill text-bad-on hover:enabled:opacity-90; }
+  .btn-danger-soft { @apply bg-bad-soft text-bad hover:enabled:opacity-80; }
+  .btn-primary:active:not(:disabled),
+  .btn-danger:active:not(:disabled) {
+    opacity: 0.8;
   }
-  /* The quiet sibling: flat surface, hairline border (same as <Button variant="secondary">). */
-  .btn-secondary {
-    @apply inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-xl border-1.5 border-line bg-surface font-semibold text-ink transition-colors duration-75 hover:border-ink-3 disabled:cursor-not-allowed disabled:opacity-50;
+  .btn-secondary:active:not(:disabled),
+  .btn-tonal:active:not(:disabled),
+  .btn-ghost:active:not(:disabled),
+  .btn-danger-soft:active:not(:disabled) {
+    opacity: 0.8;
+    @apply bg-sunken;
   }
-  /* Disabled reads as disabled, not as a pale blue button: flat, grey, no outline. */
-  .btn-primary:disabled {
-    @apply cursor-not-allowed border-line bg-sunken text-ink-3 opacity-100;
+  /* Disabled reads as disabled, not as a pale button: flat grey, no outline, in every tier but the ghost,
+     which has no fill to grey out and only loses its text colour. */
+  .btn-primary:disabled,
+  .btn-secondary:disabled,
+  .btn-tonal:disabled,
+  .btn-danger:disabled,
+  .btn-danger-soft:disabled {
+    @apply border-transparent bg-sunken text-ink-3 opacity-100;
+  }
+  .btn-ghost:disabled {
+    @apply bg-transparent text-ink-3 opacity-100;
   }
 }
 
