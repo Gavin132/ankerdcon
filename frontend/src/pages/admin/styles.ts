@@ -50,7 +50,6 @@ export const PILL_BAD = "pill pill-bad";
 export const PILL_NEUTRAL = "pill pill-neutral";
 
 /** Selected / unselected filter chip (`.chip` in index.css). */
-export const CHIP = "chip";
 export const CHIP_ON = "chip chip-on";
 export const CHIP_OFF = "chip chip-off";
 

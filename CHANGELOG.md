@@ -35,6 +35,9 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **The "Vervoer regelen" switch of an activity looks like every other switch** (it was a thicker, hand-made one in the
+  edit sheet), and the small status labels on an expense and on today's meal are the same size and shape as the other
+  labels.
 - **Nothing shrinks or zooms when you press or point at it.** The day tiles of a trip and the clickable cards no longer
   shrink under your finger, and the photos in the recap no longer zoom on hover; a press dims the thing like it does
   elsewhere.

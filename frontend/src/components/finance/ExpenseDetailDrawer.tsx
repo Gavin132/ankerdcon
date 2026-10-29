@@ -25,7 +25,7 @@ const STATUS_CONFIG = {
   confirmed: { label: "Verrekend",            pill: "pill-ok" },
 } as const;
 
-const OWN_PART_CONFIG = { label: "Eigen deel", pill: "bg-sunken text-ink-2" };
+const OWN_PART_CONFIG = { label: "Eigen deel", pill: "pill-neutral" };
 const IN_SETTLEMENT_CONFIG = { label: "In afrekening", pill: "bg-brand-soft text-brand-text" };
 
 function StatusIcon({ status }: { status: ExpenseShare["status"] }) {
@@ -152,7 +152,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
 
                     {/* Status + action */}
                     <div className="mt-2 flex items-center gap-2 flex-wrap">
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[12px] font-semibold ${cfg.pill}`}>
+                      <span className={`pill gap-1.5 ${cfg.pill}`}>
                         <StatusIcon status={share.status} />
                         {cfg.label}
                       </span>

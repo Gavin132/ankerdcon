@@ -1,15 +1,16 @@
 import { useId, type ReactNode } from "react";
-import { Switch } from "../../../components/common/Switch";
+import { Switch } from "./Switch";
 
 interface Props {
-  icon: ReactNode;
+  /** Left of the name; leave it out when the row stands alone in a sheet. */
+  icon?: ReactNode;
   label: string;
   hint?: string;
   checked: boolean;
   onChange: () => void;
 }
 
-/** One setting in an admin sheet: icon, name, an optional hint and the on/off `Switch`. */
+/** One on/off setting in a sheet: an optional icon, the name, an optional hint and the `Switch`. */
 export function ToggleRow({ icon, label, hint, checked, onChange }: Props) {
   const labelId = useId();
   return (

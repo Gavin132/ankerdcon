@@ -7,6 +7,7 @@ import { useDeleteMeal, useMealCategories, useUpdateMeal } from "../../hooks/use
 import { mealCategory } from "../../utils/mealCategory";
 import { toast } from "../../store/toast.store";
 import type { CalendarEvent, Meal } from "../../types";
+import { ToggleRow } from "../common/ToggleRow";
 
 interface MealEditSheetProps {
   open: boolean;
@@ -187,24 +188,12 @@ export function MealEditSheet({ open, onClose, meal, events, onDeleted }: MealEd
         </div>
 
         {category.has_transport && (
-        <div className="flex items-center justify-between gap-4 rounded-xl border-1.5 border-line bg-surface px-3.5 py-3">
-          <div className="min-w-0">
-            <p id="meal-edit-transport-label" className="text-[14px] font-semibold text-ink">Vervoer regelen</p>
-            <p className="text-[12px] leading-snug text-ink-3">Er komt een rit naartoe waar mensen zich voor kunnen aanmelden.</p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={transport}
-            aria-labelledby="meal-edit-transport-label"
-            onClick={() => setTransport((v) => !v)}
-            className={`relative h-7 w-12 shrink-0 rounded-full border-2 border-outline transition-colors duration-200 ${transport ? "bg-brand" : "bg-sunken"}`}
-          >
-            <span
-              className={`absolute top-0.5 h-5 w-5 rounded-full border-2 border-outline bg-surface transition-[left] duration-200 ${transport ? "left-[22px]" : "left-0.5"}`}
-            />
-          </button>
-        </div>
+        <ToggleRow
+          label="Vervoer regelen"
+          hint="Er komt een rit naartoe waar mensen zich voor kunnen aanmelden."
+          checked={transport}
+          onChange={() => setTransport((v) => !v)}
+        />
         )}
 
         {/* Removing is a different thing from saving, so it sits apart and asks first. */}

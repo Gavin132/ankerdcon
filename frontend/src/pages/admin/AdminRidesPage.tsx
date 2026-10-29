@@ -24,7 +24,7 @@ import type { Ride } from "../../types";
 import { F, FS, L, TH, TD, TR, TR_SELECTED, TAG } from "./styles";
 import { DIRECTION_LABEL, VEHICLE_LABEL } from "./constants";
 import { AdminPage } from "./components/AdminPage";
-import { ToggleRow } from "./components/ToggleRow";
+import { ToggleRow } from "../../components/common/ToggleRow";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminSearch } from "./components/AdminSearch";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";

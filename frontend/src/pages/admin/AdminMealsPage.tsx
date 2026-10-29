@@ -21,7 +21,7 @@ import { toast } from "../../store/toast.store";
 import type { Meal } from "../../types";
 import { F, L, SECTION, SECTION_TITLE, TH, TD, TR, TR_SELECTED } from "./styles";
 import { AdminPage } from "./components/AdminPage";
-import { ToggleRow } from "./components/ToggleRow";
+import { ToggleRow } from "../../components/common/ToggleRow";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminSearch } from "./components/AdminSearch";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";

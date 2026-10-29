@@ -57,11 +57,7 @@ export function MealTodayCard({ meals, myNames, className = "" }: MealTodayCardP
               {meal.location && <span className="block truncate text-[12px] text-ink-2">{meal.location}</span>}
             </span>
             <span
-              className={`shrink-0 rounded-full px-2 py-0.5 text-[12px] font-semibold ${
-                eating
-                  ? "pill-ok"
-                  : "pill-warn"
-              }`}
+              className={`pill shrink-0 ${eating ? "pill-ok" : "pill-warn"}`}
             >
               {eating ? "Je eet mee" : count > 0 ? `${count} eten mee` : "Nog niemand"}
             </span>

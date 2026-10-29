@@ -5,7 +5,7 @@ import { toast } from "../../store/toast.store";
 import { F, L, TH, TD, TR, PILL_NEUTRAL } from "./styles";
 import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
-import { ToggleRow } from "./components/ToggleRow";
+import { ToggleRow } from "../../components/common/ToggleRow";
 import { ConfirmInline } from "./components/ConfirmInline";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 import { EmptyState } from "../../components/common/EmptyState";

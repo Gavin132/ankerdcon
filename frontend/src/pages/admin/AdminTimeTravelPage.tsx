@@ -2,7 +2,7 @@ import { Clock } from "lucide-react";
 import { useTimeStore } from "../../store/time.store";
 import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
-import { ToggleRow } from "./components/ToggleRow";
+import { ToggleRow } from "../../components/common/ToggleRow";
 
 export function AdminTimeTravelPage() {
   const widgetEnabled = useTimeStore((s) => s.widgetEnabled);

@@ -30,7 +30,7 @@ import { toast } from "../../store/toast.store";
 import { F, L, SECTION, SECTION_TITLE, CHECK_ROW } from "./styles";
 import { EVENT_TYPE_LABEL } from "./constants";
 import { AdminSection } from "./components/AdminSection";
-import { ToggleRow } from "./components/ToggleRow";
+import { ToggleRow } from "../../components/common/ToggleRow";
 import { LocationSearchInput } from "../../components/common/LocationSearchInput";
 import { uploadEventCoverImage } from "../../services/storage.service";
 import { DrawerFooter } from "./components/DrawerFooter";

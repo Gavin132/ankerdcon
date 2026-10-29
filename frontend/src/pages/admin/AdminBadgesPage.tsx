@@ -300,7 +300,7 @@ function AssignDrawer({
                   {user.name}
                 </span>
                 {(user.badge_ids ?? []).length > 0 && (
-                  <span className="rounded-full bg-sunken px-2 py-0.5 font-mono text-xs font-semibold tabular-nums text-ink-2">
+                  <span className="pill pill-neutral font-mono tabular-nums">
                     {(user.badge_ids ?? []).length}
                   </span>
                 )}

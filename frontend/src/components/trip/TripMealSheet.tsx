@@ -4,12 +4,12 @@ import { TripSheet } from "./TripSheet";
 import { Button } from "../common/Button";
 import { CategoryPicker } from "../meal/CategoryPicker";
 import { DayChips } from "./DayChips";
-import { Switch } from "../common/Switch";
 import { useCreateMeal, useMealCategories } from "../../hooks/useMeals";
 import { defaultCategory } from "../../utils/mealCategory";
 import { toast } from "../../store/toast.store";
 import { toDateKey, todayKey } from "../../utils/date";
 import type { Trip } from "../../utils/trips";
+import { ToggleRow } from "../common/ToggleRow";
 
 interface TripMealSheetProps {
   open: boolean;
@@ -166,13 +166,12 @@ export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
 
         {/* A real switch, so it reads as an on/off choice rather than an input. */}
         {category.has_transport && (
-        <div className="flex items-center justify-between gap-4 rounded-xl border-1.5 border-line bg-surface px-3.5 py-3">
-          <div className="min-w-0">
-            <p id="meal-transport-label" className="text-[14px] font-semibold text-ink">Vervoer regelen</p>
-            <p className="text-[12px] leading-snug text-ink-3">Er komt een rit naartoe waar mensen zich voor kunnen aanmelden.</p>
-          </div>
-          <Switch checked={transport} onChange={() => setTransport((v) => !v)} labelledBy="meal-transport-label" />
-        </div>
+        <ToggleRow
+          label="Vervoer regelen"
+          hint="Er komt een rit naartoe waar mensen zich voor kunnen aanmelden."
+          checked={transport}
+          onChange={() => setTransport((v) => !v)}
+        />
         )}
       </div>
     </TripSheet>

@@ -11,7 +11,7 @@ import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 import { DrawerFooter } from "./components/DrawerFooter";
-import { ToggleRow } from "./components/ToggleRow";
+import { ToggleRow } from "../../components/common/ToggleRow";
 import { Switch } from "../../components/common/Switch";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 import { DiscardChangesConfirm } from "./components/DiscardChangesConfirm";

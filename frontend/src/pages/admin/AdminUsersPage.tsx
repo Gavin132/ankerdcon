@@ -26,7 +26,7 @@ import { DrawerFooter } from "./components/DrawerFooter";
 import { DiscardChangesConfirm } from "./components/DiscardChangesConfirm";
 import { AdminBulkBar } from "./components/AdminBulkBar";
 import { RowCheckbox } from "./components/RowCheckbox";
-import { ToggleRow } from "./components/ToggleRow";
+import { ToggleRow } from "../../components/common/ToggleRow";
 import { useTableSelection } from "../../hooks/useTableSelection";
 import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
 import { askConfirm } from "../../store/confirm.store";
