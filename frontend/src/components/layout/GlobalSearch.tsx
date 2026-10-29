@@ -11,6 +11,7 @@ import { UserAvatar } from "../common/UserAvatar";
 import { EmptyState } from "../common/EmptyState";
 import { routes } from "../../config/routes";
 import { isBeforeToday } from "../../utils/date";
+import { rideSearchTitle } from "../../utils/rideSearch";
 import { buildTrip, buildTrips, currentTripId, isTripOver, tripIdForEvent } from "../../utils/trips";
 import { matchSearchActions, type SearchActionId } from "../../utils/searchActions";
 import type { RouteActionState } from "../../hooks/useRouteAction";
@@ -148,7 +149,7 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
         icon: Car,
         rows: rideRows.slice(0, MAX_PER_GROUP).map((r) => ({
           key: r.id,
-          title: resolveDriverName(r.driver, users),
+          title: rideSearchTitle(r, meals, resolveDriverName(r.driver, users)),
           subtitle: [r.start_location, r.end_location].filter(Boolean).join(" → "),
           to: routes.ride.view(r.id),
         })),

@@ -16,6 +16,7 @@ All notable changes to Ankerd Con are documented here.
 
 ### Fixed
 
+- **A ride to a restaurant showed up in search with no name.** It is called "Rit naar <activiteit>" now.
 - **"1 foto's", "1 gingen", "1 ritten verwijderd".** One photo, one person who went and one thing deleted in the admin panel (rides,
   activities, events, groups, users) now use the singular.
 - **The Vervoer tile said "Jij rijdt" for your own journey by public transport.** It says "Met het ov" now.
