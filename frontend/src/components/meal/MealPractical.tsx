@@ -1,4 +1,4 @@
-import { ParkingSquare, Leaf, StickyNote, Bus, MapPin, ExternalLink, Navigation } from "lucide-react";
+import { ExternalLink, Navigation } from "lucide-react";
 import { buildEmbedUrl, buildMapsOpenUrl } from "../../utils/maps";
 import { safeHref } from "../../utils/validation";
 import { mealCategory } from "../../utils/mealCategory";
@@ -8,26 +8,21 @@ interface MealPracticalProps {
   meal: Meal;
 }
 
-function PracticalRow({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+/** One practical fact: a small label and the text under it (no icon: the label says what it is). */
+function PracticalRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-3">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-        {icon}
-      </div>
-      <div className="min-w-0">
-        <p className="section-label mb-0.5">{label}</p>
-        <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink-2">{children}</p>
-      </div>
+    <div className="min-w-0">
+      <p className="section-label mb-0.5">{label}</p>
+      <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink-2">{children}</p>
     </div>
   );
 }
 
 export function MealPractical({ meal }: MealPracticalProps) {
   const category = mealCategory(meal);
-  // Dietary wishes only make sense for a meal; a price-less, car-less kind has no transport row.
-  const showTransport = category.has_transport && meal.transport_needed;
+  // Dietary wishes only make sense for a meal.
   const showDietary = category.is_meal && !!meal.dietary_options;
-  const hasPractical = !!(showTransport || meal.parking_info || showDietary || meal.extra_notes);
+  const hasPractical = !!(meal.parking_info || showDietary || meal.extra_notes);
 
   const hasLocation = !!(meal.location?.trim());
   const embedUrl = hasLocation ? buildEmbedUrl(meal.location) : null;
@@ -37,22 +32,15 @@ export function MealPractical({ meal }: MealPracticalProps) {
 
   if (!hasPractical && !hasLocation && !customUrl) return null;
 
+  // The cards sit straight in the page's column, so they are spaced like every other block of it.
   return (
-    <div className="space-y-4">
+    <>
       {/* ── Location map ─────────────────────────────────────────── */}
       {hasLocation && embedUrl && (
         <div className="card-surface overflow-hidden">
-          {/* Map header */}
-          <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-                <MapPin size={14} />
-              </div>
-              <div className="min-w-0">
-                <p className="section-label">Locatie</p>
-                <p className="truncate text-sm font-semibold text-ink">{meal.location}</p>
-              </div>
-            </div>
+          {/* Map header: the address is in the hero, so the label and the way there are all it needs. */}
+          <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-2">
+            <h2 className="section-label">Kaart</h2>
             {mapsUrl && (
               <a
                 href={mapsUrl}
@@ -81,7 +69,7 @@ export function MealPractical({ meal }: MealPracticalProps) {
       {/* A link but no address: no map to embed, only the way there. */}
       {!hasLocation && mapsUrl && (
         <div className="card-surface flex items-center justify-between gap-3 px-4 py-3">
-          <p className="section-label">Locatie</p>
+          <h2 className="section-label">Locatie</h2>
           <a
             href={mapsUrl}
             target="_blank"
@@ -97,35 +85,29 @@ export function MealPractical({ meal }: MealPracticalProps) {
       {/* ── Practical info ───────────────────────────────────────── */}
       {hasPractical && (
         <div className="card-surface overflow-hidden">
-          <div className="space-y-3 px-4 py-4">
+          <div className="space-y-4 px-4 py-4">
             <h2 className="section-label">Praktisch</h2>
 
-            {showTransport && (
-              <PracticalRow icon={<Bus size={14} />} label="Vervoer">
-                Vervoer is nodig voor deze activiteit.
-              </PracticalRow>
-            )}
-
             {meal.parking_info && (
-              <PracticalRow icon={<ParkingSquare size={14} />} label="Parkeren">
+              <PracticalRow label="Parkeren">
                 {meal.parking_info}
               </PracticalRow>
             )}
 
             {showDietary && (
-              <PracticalRow icon={<Leaf size={14} />} label="Dieetopties">
+              <PracticalRow label="Dieetopties">
                 {meal.dietary_options}
               </PracticalRow>
             )}
 
             {meal.extra_notes && (
-              <PracticalRow icon={<StickyNote size={14} />} label="Extra info">
+              <PracticalRow label="Extra info">
                 {meal.extra_notes}
               </PracticalRow>
             )}
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

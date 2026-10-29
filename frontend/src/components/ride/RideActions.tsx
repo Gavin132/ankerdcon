@@ -1,12 +1,5 @@
-import {
-  ParkingCircle,
-  ExternalLink,
-  MapPin,
-  Navigation,
-  Clock,
-} from "lucide-react";
+import { ExternalLink, Navigation } from "lucide-react";
 import { buildEmbedUrl, buildMapsOpenUrl } from "../../utils/maps";
-import { formatDateTime } from "../../utils/format";
 import type { Ride } from "../../types";
 
 interface RideActionsProps {
@@ -22,27 +15,12 @@ export function RideActions({ ride }: RideActionsProps) {
     ? `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(fromLabel)}&destination=${encodeURIComponent(toLabel)}`
     : buildMapsOpenUrl("", fromLabel);
 
+  // The cards sit straight in the page's column, spaced like every other block of it. The route is in the hero.
   return (
-    <div className="space-y-4">
-      {/* ── Map (always visible) ──────────────────────────────────── */}
+    <>
       <div className="card-surface overflow-hidden">
-        {/* Map header */}
-        <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-              <MapPin size={14} />
-            </div>
-            <div className="min-w-0">
-              <p className="section-label">Route</p>
-              <p className="line-clamp-2 break-words text-sm font-semibold text-ink">
-                {fromLabel}{toLabel !== fromLabel ? ` → ${toLabel}` : ""}
-              </p>
-              <p className="mt-0.5 flex items-start gap-1 text-xs text-ink-2">
-                <Clock size={11} className="mt-0.5 shrink-0 text-ink-3" />
-                <span>Vertrekt om: <span className="font-mono tabular-nums text-ink">{formatDateTime(ride.departure_time)}</span></span>
-              </p>
-            </div>
-          </div>
+        <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-2">
+          <h2 className="section-label">Route</h2>
           <a
             href={openUrl}
             target="_blank"
@@ -50,7 +28,7 @@ export function RideActions({ ride }: RideActionsProps) {
             className="hit-area flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-ink-3"
           >
             <Navigation size={11} />
-            Route
+            Route openen
             <ExternalLink size={10} className="text-ink-3" />
           </a>
         </div>
@@ -67,20 +45,11 @@ export function RideActions({ ride }: RideActionsProps) {
 
       {/* ── Parking info ─────────────────────────────────────────── */}
       {ride.parking_info && (
-        <div className="card-surface overflow-hidden">
-          <div className="flex items-start gap-3 px-4 py-4">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-              <ParkingCircle size={14} />
-            </div>
-            <div className="min-w-0">
-              <p className="section-label mb-0.5">Parkeerinfo</p>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink-2">
-                {ride.parking_info}
-              </p>
-            </div>
-          </div>
+        <div className="card-surface px-4 py-4">
+          <h2 className="section-label mb-0.5">Parkeerinfo</h2>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink-2">{ride.parking_info}</p>
         </div>
       )}
-    </div>
+    </>
   );
 }

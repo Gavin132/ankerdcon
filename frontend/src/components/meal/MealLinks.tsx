@@ -7,8 +7,9 @@ interface MealLinksProps {
 }
 
 const LINK =
-  "flex items-center gap-2.5 rounded-xl border-1.5 border-line bg-surface px-3.5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-3";
+  "flex min-h-11 items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-brand-text transition-colors hover:bg-sunken";
 
+/** The website and the menu: plain rows in one card, each opens in a new tab (hence the arrow icon). */
 export function MealLinks(props: MealLinksProps) {
   const website = safeHref(props.website);
   const menuUrl = safeHref(props.menuUrl);
@@ -16,28 +17,22 @@ export function MealLinks(props: MealLinksProps) {
 
   return (
     <div className="card-surface overflow-hidden">
-      <div className="px-4 py-4">
-        <h2 className="section-label mb-3">Links</h2>
-        <div className="flex flex-wrap gap-2.5">
-          {website && (
-            <a href={website} target="_blank" rel="noopener noreferrer" className={LINK}>
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-sunken text-ink">
-                <Globe size={14} />
-              </span>
-              <span>Website</span>
-              <ExternalLink size={11} className="ml-auto text-ink-3" />
-            </a>
-          )}
-          {menuUrl && (
-            <a href={menuUrl} target="_blank" rel="noopener noreferrer" className={LINK}>
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-sunken text-ink">
-                <BookOpen size={14} />
-              </span>
-              <span>Menu bekijken</span>
-              <ExternalLink size={11} className="ml-auto text-ink-3" />
-            </a>
-          )}
-        </div>
+      <h2 className="section-label px-4 pb-1 pt-4">Links</h2>
+      <div className="divide-y divide-line">
+        {website && (
+          <a href={website} target="_blank" rel="noopener noreferrer" className={LINK}>
+            <Globe size={15} className="shrink-0" />
+            <span className="min-w-0 flex-1">Website</span>
+            <ExternalLink size={13} className="shrink-0 text-ink-3" />
+          </a>
+        )}
+        {menuUrl && (
+          <a href={menuUrl} target="_blank" rel="noopener noreferrer" className={LINK}>
+            <BookOpen size={15} className="shrink-0" />
+            <span className="min-w-0 flex-1">Menu bekijken</span>
+            <ExternalLink size={13} className="shrink-0 text-ink-3" />
+          </a>
+        )}
       </div>
     </div>
   );

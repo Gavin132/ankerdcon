@@ -138,7 +138,8 @@ export function MealDetailPage() {
   return (
     <div className="min-h-dvh bg-paper">
       <DetailTopbar
-        title={meal.meal_name}
+        title="Activiteit"
+        plainTitle
         onBack={goBack}
         onShare={onShare}
         actions={
@@ -156,50 +157,40 @@ export function MealDetailPage() {
         }
       />
 
-      {(() => {
-        const hasSidePanel = !!linkedEvent;
-        return (
-          <div className="mx-auto max-w-3xl space-y-5 px-4 pb-10 pt-5 sm:pt-8">
-            <MealHero
-              meal={meal}
-              linkedEvent={linkedEvent}
-              users={users}
-              onRsvpClick={() => setRsvpOpen(true)}
-              onCancelClick={() => setCancelOpen(true)}
-            />
+      <div className="mx-auto max-w-3xl space-y-5 px-4 pb-10 pt-5 sm:pt-8">
+        <MealHero
+          meal={meal}
+          linkedEvent={linkedEvent}
+          onRsvpClick={() => setRsvpOpen(true)}
+          onCancelClick={() => setCancelOpen(true)}
+        />
 
-            {/* ── Transport for this meal — leads the page, same as the ride
-                  detail page's own car list. ─────────────────────────────── */}
-            {restaurantRide ? (
-              <RestaurantDetailActions ride={restaurantRide} userNames={userNames} users={users} linkedMeal={meal} />
-            ) : (
-              // A read-only member cannot offer a ride, so there is nothing to ask of them.
-              mealCategory(meal).has_transport && meal.transport_needed && linkedEvent && !viewer && (
-                <div className="card-surface flex items-center gap-3 p-4">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-                    <Car size={18} />
-                  </span>
-                  <span className="min-w-0 flex-1 leading-tight">
-                    <span className="block text-sm font-semibold text-ink">Nog geen rit</span>
-                    <span className="block text-xs text-ink-3">Bied een rit aan</span>
-                  </span>
-                  <button type="button" onClick={() => setQuickRideOpen(true)} className="btn-secondary px-4 text-sm">
-                    Ik rijd
-                  </button>
-                </div>
-              )
-            )}
-
-            <div className="space-y-4">
-              <MealPractical meal={meal} />
-              <MealLinks website={meal.website} menuUrl={meal.menu_url} />
-              {hasSidePanel && (
-                <LinkedEventCard event={linkedEvent!} />
-              )}
+        {/* ── Transport for this meal — leads the page, same as the ride
+              detail page's own car list. ─────────────────────────────── */}
+        {restaurantRide ? (
+          <RestaurantDetailActions ride={restaurantRide} userNames={userNames} users={users} linkedMeal={meal} />
+        ) : (
+          // A read-only member cannot offer a ride, so there is nothing to ask of them.
+          mealCategory(meal).has_transport && meal.transport_needed && linkedEvent && !viewer && (
+            <div className="card-surface flex items-center gap-3 p-4">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                <Car size={18} />
+              </span>
+              <span className="min-w-0 flex-1 leading-tight">
+                <span className="block text-sm font-semibold text-ink">Nog geen rit</span>
+                <span className="block text-xs text-ink-3">Bied een rit aan</span>
+              </span>
+              <button type="button" onClick={() => setQuickRideOpen(true)} className="btn-secondary px-4 text-sm">
+                Ik rijd
+              </button>
             </div>
-          </div>
-        );
-      })()}
+          )
+        )}
+
+        <MealPractical meal={meal} />
+        <MealLinks website={meal.website} menuUrl={meal.menu_url} />
+        {linkedEvent && <LinkedEventCard event={linkedEvent} />}
+      </div>
 
       {linkedEvent && (
         <RestaurantQuickDriverModal
@@ -215,8 +206,8 @@ export function MealDetailPage() {
       <Modal
         open={rsvpOpen}
         onClose={() => { setRsvpOpen(false); setRsvpNames([]); }}
-        title={`Aanmelden — ${meal.meal_name}`}
-        description={meal.location || undefined}
+        title="Aanmelden"
+        description={meal.meal_name}
         footer={
           <Button
             onClick={onRsvp}
@@ -246,7 +237,7 @@ export function MealDetailPage() {
       <Modal
         open={cancelOpen}
         onClose={() => { setCancelOpen(false); setCancelNames([]); }}
-        title="Aanmelding annuleren"
+        title="Afmelden"
         description={meal.meal_name}
         footer={
           <Button

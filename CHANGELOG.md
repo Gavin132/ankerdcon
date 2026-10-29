@@ -35,6 +35,17 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **Activity and ride pages are calmer.** The activity header is one kicker line, the name, and three plain lines (when,
+  where, price) instead of five chips; "Vervoer nodig" is said once, in the transport block. The sign-up row is one
+  button: "Aanmelden" until you are on the list, then "Afmelden" and "Iemand aanmelden". The ride header got the
+  departure time, one status chip at a time ("Vertrekt over…" before "Actie vereist"), "+N" for more than five riders
+  and "Deze rit zit vol"; "Uitstappen" is only offered to someone on the ride (or an admin). The top bar says
+  "Activiteit" or "Rit" and the page has one heading.
+- **Restaurant cars:** the "3 personen hebben nog geen rit" banner and the dashed "Auto toevoegen" tile are gone (the box
+  under the cars says who has no car yet, in amber), "Stap in" is the quiet button and "Ik rijd" the one blue one, and a
+  car says "Chauffeur · 4 plekken" with "Uitstappen" as a text button.
+- **Practical info and links of an activity** are plain rows instead of icon squares and boxes in a box; the map card says
+  "Kaart" with the way there, and the linked activity or event on a ride is one tappable card.
 - **Search:** an empty search suggests "Locatie pingen", "Rit aanmaken" and "Parkeerplek", the results of a group are
   one card with a row per result, and "Niks gevonden" is a proper empty state.
 - **Shared controls:** the switches between two or three views (Tickets/Recap, Alles/Waar ik was, the years of the

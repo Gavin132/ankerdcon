@@ -1,9 +1,10 @@
 import { forwardRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Plus, UserMinus } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
 import { UserAvatar } from "../common/UserAvatar";
+import { AvatarStack } from "../common/AvatarStack";
 import { Collapse } from "../common/Collapse";
 import { rideVehicleIcon } from "../../utils/rides";
 import type { RestaurantDriver } from "../../types";
@@ -70,14 +71,14 @@ export const CarCard = forwardRef<HTMLDivElement, CarCardProps>(function CarCard
           <span className="truncate text-[14px] font-semibold text-ink">{driver.name}</span>
           <span className="flex items-center gap-1 text-[12px] text-ink-3">
             <CarIcon size={smallVehicle ? 10 : 12} className="shrink-0" />
-            Chauffeur
+            Chauffeur · {driver.seats} plekken
           </span>
         </div>
       </div>
 
-      {/* ── Footer: riders, actions ── */}
+      {/* ── Footer: riders and how many seats are left, then the actions ── */}
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t border-dashed border-line pt-2.5">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 text-[12px] text-ink-2">
+        <div className="flex min-w-0 items-center gap-2 text-[12px] text-ink-2">
           {driver.passengers.length > 0 ? (
             <button
               type="button"
@@ -86,50 +87,32 @@ export const CarCard = forwardRef<HTMLDivElement, CarCardProps>(function CarCard
               title="Wie rijden er mee?"
               className="hit-area flex items-center gap-1 rounded-lg"
             >
-              <span className="flex -space-x-1.5">
-                {driver.passengers.slice(0, 6).map((p) => (
-                  <UserAvatar key={p} name={p} className="h-6 w-6 text-[9px] !border-surface" />
-                ))}
-                {driver.passengers.length > 6 && (
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-surface bg-sunken font-mono text-[9px] font-semibold text-ink-2">
-                    +{driver.passengers.length - 6}
-                  </span>
-                )}
-              </span>
+              <AvatarStack names={driver.passengers} size="sm" max={5} />
               <ChevronDown size={12} className={`text-ink-3 transition-transform ${namesOpen ? "rotate-180" : ""}`} />
             </button>
           ) : (
             <span className="text-ink-3">Nog geen meerijders</span>
           )}
-          <span className={isFull ? "font-semibold text-rose-700 dark:text-rose-300" : ""}>
-            {isFull ? "Vol" : `${spotsLeft} vrij`}
-          </span>
+          <span className={isFull ? "font-semibold text-bad" : ""}>{isFull ? "Vol" : `${spotsLeft} vrij`}</span>
         </div>
 
         {canAct && (
-          <div className="ml-auto flex items-center gap-1">
+          <div className="ml-auto flex items-center gap-3">
             {driver.passengers.length > 0 && (
               <button
                 type="button"
                 onClick={() => toggle("leave")}
                 disabled={isPending}
-                title="Uitstappen"
-                aria-label="Uitstappen"
                 aria-expanded={action === "leave"}
-                className={`hit-area flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
-                  action === "leave"
-                    ? "pill-bad"
-                    : "text-ink-3 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
-                }`}
+                className={`hit-area text-xs font-semibold transition-colors ${action === "leave" ? "text-bad" : "text-ink-2 hover:text-ink"}`}
               >
-                <UserMinus size={16} />
+                Uitstappen
               </button>
             )}
             {!isFull && (
               <Button
                 size="sm"
-                variant={action === "join" ? "secondary" : "primary"}
-                className="ml-1 !min-h-[36px] !py-1.5"
+                variant="secondary"
                 onClick={() => toggle("join")}
                 aria-expanded={action === "join"}
               >

@@ -133,7 +133,8 @@ export function RideDetailPage() {
   return (
     <div className="min-h-dvh bg-paper">
       <DetailTopbar
-        title={isRestaurant ? `Rit naar ${linkedMeal?.meal_name ?? "restaurant"}` : `${ride.direction === "Inbound" ? "Heen" : "Terug"} · ${ride.driver}`}
+        title="Rit"
+        plainTitle
         onBack={goBack}
         onShare={onShare}
       />
@@ -148,11 +149,17 @@ export function RideDetailPage() {
         />
 
         {isRestaurant ? (
-          <RestaurantDetailActions ride={ride} userNames={userNames} users={users} linkedMeal={linkedMeal} />
+          <>
+            <RestaurantDetailActions ride={ride} userNames={userNames} users={users} linkedMeal={linkedMeal} />
+            {linkedCard}
+          </>
         ) : (
-          <RideActions ride={ride} />
+          // The linked activity is one line, the map is 240 px: it goes first, so it is not pushed below the fold.
+          <>
+            {linkedCard}
+            <RideActions ride={ride} />
+          </>
         )}
-        {linkedCard}
       </div>
 
       {!isRestaurant && (

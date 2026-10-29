@@ -18,12 +18,15 @@ interface AvatarStackProps {
   size?: keyof typeof SIZES;
   /** The ring around each face, to match the background it sits on (default: the card surface). */
   ringClass?: string;
+  /** On the always-dark hero block: the ring takes the hero colour and the "+N" is a light tint. */
+  onDark?: boolean;
   className?: string;
 }
 
 /** Overlapping faces of the people on a list, with a "+N" for the rest. Counts people, not stored names. */
-export function AvatarStack({ names, max = 5, size = "md", ringClass = "!border-surface", className = "" }: AvatarStackProps) {
+export function AvatarStack({ names, max = 5, size = "md", ringClass, onDark = false, className = "" }: AvatarStackProps) {
   const { data: users = [] } = useUsers();
+  ringClass ??= onDark ? "!border-hero" : "!border-surface";
   const people = groupPeople(names, users);
   if (people.length === 0) return null;
   const shown = people.slice(0, max);
@@ -35,7 +38,7 @@ export function AvatarStack({ names, max = 5, size = "md", ringClass = "!border-
       ))}
       {rest > 0 && (
         <span
-          className={`flex shrink-0 items-center justify-center rounded-full border-2 border-surface bg-sunken font-semibold text-ink-2 ${SIZES[size]} ${ringClass}`}
+          className={`flex shrink-0 items-center justify-center rounded-full border-2 border-surface font-semibold ${onDark ? "bg-white/15 text-hero-ink" : "bg-sunken text-ink-2"} ${SIZES[size]} ${ringClass}`}
           aria-label={`nog ${rest}`}
         >
           +{rest}
