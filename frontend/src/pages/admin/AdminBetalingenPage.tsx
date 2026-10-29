@@ -5,6 +5,7 @@ import { useAdminUpdateExpense, useAdminDeleteExpense, useAdminSetShareStatus } 
 import { useCalendar } from "../../hooks/useCalendar";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { formatAmount, formatDateShort } from "../../utils/format";
+import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { ConfirmInline } from "./components/ConfirmInline";
 import { toast } from "../../store/toast.store";
@@ -31,14 +32,17 @@ const STATUS_ORDER: ExpenseShare["status"][] = ["pending", "claimed", "confirmed
 
 function AdminStatusPicker({
   status,
+  who,
   onSetStatus,
 }: {
   status: ExpenseShare["status"];
+  /** Whose share it is, for the screen reader. */
+  who: string;
   onSetStatus: (status: ExpenseShare["status"]) => void;
 }) {
   const [pending, setPending] = useState(false);
 
-  async function handleClick(next: ExpenseShare["status"]) {
+  async function handleChange(next: ExpenseShare["status"]) {
     if (next === status || pending) return;
     setPending(true);
     try {
@@ -49,29 +53,17 @@ function AdminStatusPicker({
   }
 
   return (
-    <div className="flex items-center gap-1 shrink-0">
-      {STATUS_ORDER.map((s) => {
-        const active = s === status;
-        return (
-          <button
-            key={s}
-            type="button"
-            disabled={pending}
-            onClick={() => handleClick(s)}
-            title={STATUS_CONFIG[s].label}
-            aria-label={`Zet op ${STATUS_CONFIG[s].label.toLowerCase()}`}
-            aria-pressed={active}
-            className={`hit-area flex h-6 w-6 items-center justify-center rounded-full border font-mono text-[9.5px] font-semibold transition-colors disabled:opacity-50 ${
-              active
-                ? `border-transparent ${STATUS_CONFIG[s].pill}`
-                : "border-line text-ink-3 hover:text-ink hover:border-ink-3"
-            }`}
-          >
-            {s === "pending" ? "O" : s === "claimed" ? "G" : "B"}
-          </button>
-        );
-      })}
-    </div>
+    <select
+      value={status}
+      disabled={pending}
+      onChange={(e) => handleChange(e.target.value as ExpenseShare["status"])}
+      aria-label={`Status van ${who}`}
+      className="input-field !w-auto min-w-0 py-2 text-base sm:text-sm"
+    >
+      {STATUS_ORDER.map((s) => (
+        <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>
+      ))}
+    </select>
   );
 }
 
@@ -97,7 +89,7 @@ function PersonShareRow({
       </div>
       <span className="shrink-0 text-right font-mono text-sm font-medium tabular-nums text-ink">{formatAmount(share.amount, share.currency)}</span>
       <div><StatusBadge status={share.status} /></div>
-      <div className="flex justify-end"><AdminStatusPicker status={share.status} onSetStatus={(s) => onSetStatus(share.id, s)} /></div>
+      <div className="flex justify-end"><AdminStatusPicker status={share.status} who={share.expenseDescription} onSetStatus={(s) => onSetStatus(share.id, s)} /></div>
     </div>
   );
 }
@@ -142,12 +134,12 @@ function PersonCard({
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-sunken"
       >
-        <UserAvatar name={person.name} className="h-8 w-8 text-[11px] shrink-0" />
+        <UserAvatar name={person.name} className="h-8 w-8 text-[12px] shrink-0" />
 
         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">{person.name}</span>
 
         {/* Status breakdown */}
-        <div className="flex shrink-0 items-center gap-2 font-mono text-xs tabular-nums">
+        <div className="hidden shrink-0 items-center gap-2 font-mono text-xs tabular-nums min-[380px]:flex">
           {person.pending > 0 && (
             <span className="flex items-center gap-1 text-warn">
               <span className="h-1.5 w-1.5 rounded-full bg-warn" />
@@ -162,14 +154,14 @@ function PersonCard({
           )}
           {outstanding === 0 && person.confirmed > 0 && (
             <span className="flex items-center gap-1 font-sans text-ok">
-              <CheckCircle2 size={11} />
-              Vereffend
+              <CheckCircle2 size={14} />
+              Verrekend
             </span>
           )}
         </div>
 
         <span className="w-20 text-right font-mono text-sm font-semibold tabular-nums text-ink">{formatAmount(total)}</span>
-        {open ? <ChevronUp size={14} className="text-ink-3 shrink-0" /> : <ChevronDown size={14} className="text-ink-3 shrink-0" />}
+        {open ? <ChevronUp size={16} className="text-ink-3 shrink-0" /> : <ChevronDown size={16} className="text-ink-3 shrink-0" />}
       </button>
 
       {open && (
@@ -237,8 +229,8 @@ function ExpenseCard({
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-xs text-ink-3">
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-2">
+            <span className="whitespace-nowrap text-xs text-ink-3">
               Betaald door <span className="text-ink-2">{expense.paid_by}</span>
             </span>
             <span className="text-xs text-ink-3">·</span>
@@ -249,20 +241,20 @@ function ExpenseCard({
         <div className="flex items-center gap-2 shrink-0">
           {pendingCount > 0 && (
             <span className="flex items-center gap-1 font-mono text-xs tabular-nums text-warn">
-              <AlertCircle size={12} />{pendingCount}
+              <AlertCircle size={14} />{pendingCount}
             </span>
           )}
           {claimedCount > 0 && (
             <span className="flex items-center gap-1 font-mono text-xs tabular-nums text-ink-2">
-              <Clock size={12} />{claimedCount}
+              <Clock size={14} />{claimedCount}
             </span>
           )}
           {confirmedCount > 0 && (
             <span className="flex items-center gap-1 font-mono text-xs tabular-nums text-ok">
-              <CheckCircle2 size={12} />{confirmedCount}
+              <CheckCircle2 size={14} />{confirmedCount}
             </span>
           )}
-          {open ? <ChevronUp size={14} className="text-ink-3" /> : <ChevronDown size={14} className="text-ink-3" />}
+          {open ? <ChevronUp size={16} className="text-ink-3" /> : <ChevronDown size={16} className="text-ink-3" />}
         </div>
       </button>
 
@@ -273,12 +265,13 @@ function ExpenseCard({
             className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-line"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex min-w-0 items-center gap-2">
               <span className="label-quiet shrink-0">Evenement</span>
               <select
                 value={expense.linked_event_id ?? ""}
                 onChange={(e) => onSetEvent(expense.id, e.target.value || null)}
-                className="input-field max-w-[220px] rounded-lg px-2 py-1.5 text-xs"
+                aria-label="Evenement van deze uitgave"
+                className="input-field !w-auto max-w-[220px] py-2 text-base sm:text-sm"
               >
                 <option value="">Geen evenement</option>
                 {events.map((ev) => (
@@ -308,7 +301,7 @@ function ExpenseCard({
                 <span className="label-quiet flex-1">Deelnemer</span>
                 <span className="label-quiet w-24 shrink-0">Bedrag</span>
                 <span className="label-quiet w-28 shrink-0">Status</span>
-                <span className="w-24 shrink-0" />
+                <span className="w-40 shrink-0" />
               </div>
               {filteredShares.map((share) => (
                 <ShareRow key={share.id} share={share} onSetStatus={onSetStatus} />
@@ -335,8 +328,8 @@ function ShareRow({ share, onSetStatus }: { share: ExpenseShare; onSetStatus: (i
       <div className="sm:w-28 sm:shrink-0">
         <StatusBadge status={share.status} />
       </div>
-      <div className="flex justify-end sm:w-24 sm:shrink-0">
-        <AdminStatusPicker status={share.status} onSetStatus={(s) => onSetStatus(share.id, s)} />
+      <div className="flex justify-end sm:w-40 sm:shrink-0">
+        <AdminStatusPicker status={share.status} who={share.participant} onSetStatus={(s) => onSetStatus(share.id, s)} />
       </div>
     </div>
   );
@@ -458,31 +451,31 @@ export function AdminBetalingenPage() {
   })();
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
-      <AdminPageHeader title="Betalingen" subtitle="Uitgaven & aandelen" />
+    <AdminPage>
+      <AdminPageHeader title="Betalingen" subtitle="Uitgaven en aandelen" />
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-        <div className="card-surface p-4">
-          <div className="mb-2 flex items-center gap-2">
-            <AlertCircle size={14} className="text-warn" />
-            <span className="label-quiet">Openstaand</span>
+      {/* Stats: one card, three cells (three full-width cards pushed the list off the screen) */}
+      <div className="card-surface grid grid-cols-3 divide-x divide-line">
+        <div className="min-w-0 p-2.5 sm:p-4">
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <AlertCircle size={14} className="hidden shrink-0 sm:block text-warn" />
+            <span className="truncate text-xs text-ink-3">Openstaand</span>
           </div>
-          <p className="font-mono text-2xl font-semibold tabular-nums text-ink">{formatAmount(totals.pending)}</p>
+          <p className="truncate font-display text-[22px] font-extrabold leading-none tabular-nums text-ink sm:text-[26px]">{formatAmount(totals.pending)}</p>
         </div>
-        <div className="card-surface p-4">
-          <div className="mb-2 flex items-center gap-2">
-            <Clock size={14} className="text-ink-3" />
-            <span className="label-quiet">Geclaimd</span>
+        <div className="min-w-0 p-2.5 sm:p-4">
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <Clock size={14} className="hidden shrink-0 sm:block text-ink-3" />
+            <span className="truncate text-xs text-ink-3">Geclaimd</span>
           </div>
-          <p className="font-mono text-2xl font-semibold tabular-nums text-ink">{formatAmount(totals.claimed)}</p>
+          <p className="truncate font-display text-[22px] font-extrabold leading-none tabular-nums text-ink sm:text-[26px]">{formatAmount(totals.claimed)}</p>
         </div>
-        <div className="card-surface p-4">
-          <div className="mb-2 flex items-center gap-2">
-            <CheckCircle2 size={14} className="text-ok" />
-            <span className="label-quiet">Bevestigd</span>
+        <div className="min-w-0 p-2.5 sm:p-4">
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <CheckCircle2 size={14} className="hidden shrink-0 sm:block text-ok" />
+            <span className="truncate text-xs text-ink-3">Bevestigd</span>
           </div>
-          <p className="font-mono text-2xl font-semibold tabular-nums text-ink">{formatAmount(totals.confirmed)}</p>
+          <p className="truncate font-display text-[22px] font-extrabold leading-none tabular-nums text-ink sm:text-[26px]">{formatAmount(totals.confirmed)}</p>
         </div>
       </div>
 
@@ -570,7 +563,7 @@ export function AdminBetalingenPage() {
 
         {!isLoading && expenses.length > 0 && openExpenses.length === 0 && (
           <div className="card-surface px-4 py-8 text-center text-sm text-ink-3">
-            Alles is vereffend — check de geschiedenis hieronder.
+            Alles is verrekend. De geschiedenis staat hieronder.
           </div>
         )}
 
@@ -600,19 +593,17 @@ export function AdminBetalingenPage() {
             className="card-surface-hover flex w-full items-center justify-between px-4 py-3 text-left"
           >
             <span className="section-label flex items-center gap-2">
-              <History size={13} />
+              <History size={14} />
               Geschiedenis ({historyExpenses.length})
             </span>
-            {historyOpen ? <ChevronUp size={14} className="text-ink-3" /> : <ChevronDown size={14} className="text-ink-3" />}
+            {historyOpen ? <ChevronUp size={16} className="text-ink-3" /> : <ChevronDown size={16} className="text-ink-3" />}
           </button>
 
           {historyOpen && (
             <div className="space-y-4">
               {historyGroups.map((group) => (
                 <div key={group.label} className="space-y-2">
-                  <p className="font-mono text-[10.5px] uppercase tracking-[0.09em] text-ink-2">
-                    {group.label}
-                  </p>
+                  <p className="label-quiet !text-ink-2">{group.label}</p>
                   {group.expenses.map((expense) => (
                     <ExpenseCard
                       key={expense.id}
@@ -634,6 +625,6 @@ export function AdminBetalingenPage() {
           )}
         </div>
       )}
-    </div>
+    </AdminPage>
   );
 }
