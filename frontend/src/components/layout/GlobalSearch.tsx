@@ -8,6 +8,7 @@ import { useMeals } from "../../hooks/useMeals";
 import { useCosplays } from "../../hooks/useCosplays";
 import { useUsers } from "../../hooks/useUsers";
 import { UserAvatar } from "../common/UserAvatar";
+import { EmptyState } from "../common/EmptyState";
 import { routes } from "../../config/routes";
 import { buildTrip, buildTrips, currentTripId, isTripOver, tripIdForEvent } from "../../utils/trips";
 import { matchSearchActions, type SearchActionId } from "../../utils/searchActions";
@@ -62,6 +63,9 @@ function resolveDriverName(driver: string, users: { name: string; discord_userna
  * Event tab opens on — and say so under the card, so it is never a surprise
  * which event a new ride or meal ends up on.
  */
+/** What the empty search offers to try: things people look for, each of which has a card of its own. */
+const EXAMPLES = ["Locatie pingen", "Rit aanmaken", "Parkeerplek"];
+
 export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -260,25 +264,34 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
 
       <div className="flex-1 overflow-y-auto px-4 py-4">
         {!hasQuery && (
-          <p className="pt-10 text-center text-sm text-ink-3">Typ om te zoeken.</p>
+          <div className="space-y-3 pt-8 text-center">
+            <p className="text-sm text-ink-3">Zoek een evenement, rit, activiteit, cosplay of lid, of probeer:</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {EXAMPLES.map((example) => (
+                <button key={example} type="button" onClick={() => { setQuery(example); inputRef.current?.focus(); }} className="chip chip-off">
+                  {example}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
         {hasQuery && !hasResults && (
-          <p className="pt-10 text-center text-sm text-ink-3">Niks gevonden voor "{query.trim()}".</p>
+          <EmptyState compact icon={<Search size={22} />} title={`Niks gevonden voor “${query.trim()}”`} description="Controleer de spelling of zoek op iets anders." />
         )}
         <div className="space-y-5">
           {groups.map((group) => (
             <div key={group.label}>
-              <p className="mb-1.5 flex items-center gap-1.5 font-mono text-[12px] font-semibold uppercase tracking-[0.06em] text-ink-3">
+              <p className="section-label mb-1.5 flex items-center gap-1.5">
                 <group.icon size={12} />
                 {group.label}
               </p>
-              <div className="space-y-1">
+              <div className="card-surface divide-y divide-line overflow-hidden">
                 {group.rows.map((row) => (
                   <button
                     key={row.key}
                     type="button"
                     onClick={() => go(row.to, row.state)}
-                    className="card-surface-hover flex w-full items-center gap-3 p-3 text-left"
+                    className="flex min-h-11 w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-sunken"
                   >
                     {group.label === "Crew" ? (
                       <UserAvatar name={row.title} className="h-8 w-8 shrink-0 text-[12px]" />

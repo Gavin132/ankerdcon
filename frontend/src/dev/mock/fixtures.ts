@@ -164,10 +164,10 @@ export function buildFixtures(scenario: Scenario, role: Role): Fixtures {
   ];
 
   const rooms: HotelRoom[] = [
-    { id: "k-1", event_id: A, room_number: "214", floor: "2", capacity: 4, occupants: ["Sam", "Alex", "Noor", "Jelle"], instructions: "Sleutel bij de balie" },
-    { id: "k-2", event_id: A, room_number: "216", floor: "2", capacity: 4, occupants: [ME, "Bram"] },
-    { id: "k-3", event_id: A, room_number: null, capacity: 2, occupants: ["Fenna"] },
-    { id: "k-4", event_id: A, room_number: "305", floor: "3", capacity: 3, occupants: [] },
+    { id: "k-1", event_id: "d-hmia-1", room_number: "214", floor: "2", capacity: 4, occupants: ["Sam", "Alex", "Noor", "Jelle"], instructions: "Sleutel bij de balie" },
+    { id: "k-2", event_id: "d-hmia-1", room_number: "216", floor: "2", capacity: 4, occupants: [ME, "Bram"] },
+    { id: "k-3", event_id: "d-hmia-1", room_number: null, capacity: 2, occupants: ["Fenna"] },
+    { id: "k-4", event_id: "d-hmia-1", room_number: "305", floor: "3", capacity: 3, occupants: [] },
   ];
 
   const share = (id: string, expense: string, who: string, amount: number, status: "pending" | "claimed" | "confirmed" = "pending") => ({ id, expense_id: expense, participant: who, amount, status });

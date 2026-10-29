@@ -5,6 +5,7 @@ import { z } from "zod";
 import { Equal, Tag, SlidersHorizontal, X, Plus } from "lucide-react";
 import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
+import { Segmented } from "../common/Segmented";
 import { NamePicker } from "../common/NamePicker";
 import { EventPicker } from "../common/EventPicker";
 import { useCalendar } from "../../hooks/useCalendar";
@@ -278,24 +279,13 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
           <p className={ST}>Verdeling</p>
 
           {/* Mode tabs */}
-          <div className="flex gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]">
-            {SPLIT_MODES.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => setSplitMode(m.id)}
-                aria-pressed={splitMode === m.id}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-[7px] px-3 py-1.5 text-[13px] font-semibold transition-colors ${
-                  splitMode === m.id
-                    ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]"
-                    : "text-ink-2 hover:text-ink"
-                }`}
-              >
-                {m.icon}
-                {m.label}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            label="Verdeling"
+            fill
+            options={SPLIT_MODES.map((m) => ({ value: m.id, label: m.label, icon: m.icon }))}
+            value={splitMode}
+            onChange={setSplitMode}
+          />
 
           {/* ── Gelijk verdeeld ── */}
           {splitMode === "gelijk" && (

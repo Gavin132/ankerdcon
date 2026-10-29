@@ -35,6 +35,12 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **Search:** an empty search suggests "Locatie pingen", "Rit aanmaken" and "Parkeerplek", the results of a group are
+  one card with a row per result, and "Niks gevonden" is a proper empty state.
+- **Shared controls:** the switches between two or three views (Tickets/Recap, Alles/Waar ik was, the years of the
+  stubs, Heen/Terug, Aanmelden/Afmelden, Gelijk/Vast/Handmatig) are one control, and so are the seat choice of a car
+  (2 to 7, "Incl. jezelf") and the faces of a list of people ("+3" counts people, not names). The quick-ride sheet's
+  departure chips are 44 px to hit.
 - **Vervoer sheet:** the headings are small labels with a count ("4 ritten") instead of display titles as big as the
   sheet's own, the list of people without a ride under the sections is gone (each section names them already), "Ik rijd"
   on an activity is the quiet button, a missing car is an amber notice instead of a red dashed box, a ride's row only

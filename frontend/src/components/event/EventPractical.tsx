@@ -1,5 +1,5 @@
 import { ChevronRight } from "lucide-react";
-import { UserAvatar } from "../common/UserAvatar";
+import { AvatarStack } from "../common/AvatarStack";
 import type { CalendarEvent, User } from "../../types";
 
 interface HotelRoom {
@@ -40,7 +40,6 @@ export function EventPractical({
   showHotel = false,
   hotelRooms = [],
   participantCount = 0,
-  users = [],
   onHotelClick,
   bare = false,
 }: EventPracticalProps) {
@@ -100,27 +99,7 @@ export function EventPractical({
                     {hotelRooms.length} {hotelRooms.length === 1 ? "kamer" : "kamers"}
                     {hotelOccupantCount > 0 && ` · ${hotelOccupantCount} van ${participantCount} ingedeeld`}
                   </p>
-                  {hotelRooms.length > 0 && (
-                    <div className="flex -space-x-1.5">
-                      {hotelRooms
-                        .slice(0, 3)
-                        .flatMap((r) => r.occupants.slice(0, 2))
-                        .slice(0, 5)
-                        .map((name, i) => {
-                          const u = users.find(
-                            (x) => x.name === name || x.discord_username === name || x.aliases?.includes(name),
-                          );
-                          return (
-                            <UserAvatar
-                              key={`${name}-${i}`}
-                              name={u?.name ?? name}
-                              user={u}
-                              className="h-5 w-5 text-[7px] !border-[1.5px] !border-surface"
-                            />
-                          );
-                        })}
-                    </div>
-                  )}
+                  <AvatarStack names={hotelRooms.flatMap((r) => r.occupants)} size="xs" max={5} />
                 </div>
               )}
             </div>

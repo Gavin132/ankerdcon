@@ -136,13 +136,13 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
 
         {/* Route summary — editable, so a missing location (e.g. a non-hotel
             event's "home" end) can just be typed in right here. */}
-        <div className="flex items-center gap-2.5 rounded-xl border-1.5 border-line bg-sunken px-4 py-3">
+        <div className="flex min-h-11 items-center gap-2.5 rounded-xl border-1.5 border-line bg-sunken px-4 py-1">
           <input
             type="text"
             value={startLocation}
             onChange={(e) => { setStartLocation(e.target.value); setEdited((v) => ({ ...v, start: true })); }}
             placeholder="Onbekende locatie"
-            className="min-w-0 flex-1 bg-transparent text-base font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-3"
+            className="h-11 min-w-0 flex-1 bg-transparent text-base font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-3"
           />
           <ArrowRight size={14} className="shrink-0 text-ink-3" />
           <input
@@ -150,7 +150,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
             value={endLocation}
             onChange={(e) => { setEndLocation(e.target.value); setEdited((v) => ({ ...v, end: true })); }}
             placeholder="Onbekende locatie"
-            className="min-w-0 flex-1 bg-transparent text-right text-base font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-3"
+            className="h-11 min-w-0 flex-1 bg-transparent text-right text-base font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-3"
           />
         </div>
         {missingLocation && (
@@ -163,7 +163,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
             "when" is never hidden behind a single fiddly datetime-local
             control (its time portion is easy to miss/mistap on mobile). */}
         <div>
-          <label className="section-label mb-1.5 block">
+          <label className="field-label">
             Vertrektijd
           </label>
           <div className="mb-2 flex flex-wrap gap-1.5">
@@ -173,11 +173,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
                 type="button"
                 onClick={() => setDepartureTime(opt.value)}
                 aria-pressed={departureTime === opt.value}
-                className={`rounded-full border-1.5 px-3 py-1.5 text-[12.5px] font-semibold transition-colors ${
-                  departureTime === opt.value
-                    ? "border-outline bg-brand text-brand-on"
-                    : "border-line bg-surface text-ink-2 hover:border-ink-3"
-                }`}
+                className={`chip ${departureTime === opt.value ? "chip-on" : "chip-off"}`}
               >
                 {opt.label}
               </button>
@@ -206,7 +202,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
           <button
             type="button"
             onClick={() => setAdvancedOpen((v) => !v)}
-            className="flex items-center gap-1.5 text-xs font-semibold text-ink-3 transition-colors hover:text-ink"
+            className="hit-area flex items-center gap-1.5 text-xs font-semibold text-ink-3 transition-colors hover:text-ink"
           >
             <motion.span animate={{ rotate: advancedOpen ? 180 : 0 }} transition={{ duration: 0.18 }}>
               <ChevronDown size={13} />

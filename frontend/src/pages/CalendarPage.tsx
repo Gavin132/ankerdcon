@@ -158,6 +158,7 @@ export function CalendarPage() {
             ) : (
               <div className="card-surface">
                 <EmptyState
+                  compact
                   icon={<CalendarDays size={28} />}
                   title="Niks gepland"
                   description="Er staat nog geen nieuw evenement in de agenda. Hieronder vind je alles waar jullie al geweest zijn."
