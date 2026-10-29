@@ -22,8 +22,14 @@
   --cyan-soft: 220 238 251;  /* #DCEEFB */
   --cyan-text: 12 105 187;   /* #0C69BB  brand as text on light (5.6:1 on white, 4.7:1 on --cyan-soft) */
   --on-cyan: 15 21 25;
-  --nav-active-bg: 15 21 25;
-  --nav-active-fg: 245 248 249;
+  /* A chosen chip, the active tab: the ink fill with paper text (brand fill with ink text in dark mode, where ink is
+     light). `--selected-icon` is the icon on it: the accent colour on the ink, ink on the accent. */
+  --selected: 15 21 25;
+  --selected-on: 245 248 249;
+  --selected-icon: var(--cyan);
+  /* The faint anchor marks in the corners of the app (App.tsx), a touch stronger on dark. */
+  --watermark: 0.045;
+  --watermark-small: 0.035;
   /* Status: emerald / amber / rose, five tokens each.
        text  (`text-ok`)       at least 4.5:1 on --surface, --sunken and its own -soft
        soft  (`bg-ok-soft`)    tinted background of a pill, notice or tile
@@ -75,8 +81,11 @@
   --outline: 191 211 218;    /* #BFD3DA */
   --cyan-soft: 15 42 64;     /* #0F2A40 */
   --cyan-text: 137 202 254;  /* #89CAFE */
-  --nav-active-bg: 87 178 249; /* #57B2F9 — matches the light-mode --cyan */
-  --nav-active-fg: 15 21 25;
+  --selected: 87 178 249;    /* #57B2F9, the accent fill (the accent blocks below change it) */
+  --selected-on: 15 21 25;
+  --selected-icon: 15 21 25;
+  --watermark: 0.055;
+  --watermark-small: 0.045;
   --ok: 110 231 183;         /* #6EE7B7 */
   --ok-soft: 19 51 47;       /* emerald at 15% on --surface */
   --ok-line: 29 82 68;       /* emerald at 30% on --surface */
@@ -96,17 +105,17 @@
    white, its dark counterpart on --surface. Ids are mirrored in
    store/theme.store.ts. */
 [data-accent="teal"] { --cyan: 45 212 191; --cyan-soft: 213 245 240; --cyan-text: 11 122 110; }   /* #2DD4BF */
-.dark[data-accent="teal"] { --cyan-soft: 14 51 48; --cyan-text: 126 234 219; --nav-active-bg: 45 212 191; }
+.dark[data-accent="teal"] { --cyan-soft: 14 51 48; --cyan-text: 126 234 219; --selected: 45 212 191; }
 [data-accent="green"] { --cyan: 79 195 138; --cyan-soft: 221 243 231; --cyan-text: 23 120 74; }   /* #4FC38A */
-.dark[data-accent="green"] { --cyan-soft: 15 46 32; --cyan-text: 143 221 181; --nav-active-bg: 79 195 138; }
+.dark[data-accent="green"] { --cyan-soft: 15 46 32; --cyan-text: 143 221 181; --selected: 79 195 138; }
 [data-accent="gold"] { --cyan: 250 204 21; --cyan-soft: 254 243 199; --cyan-text: 146 97 10; }   /* #FACC15 */
-.dark[data-accent="gold"] { --cyan-soft: 61 46 8; --cyan-text: 253 224 71; --nav-active-bg: 250 204 21; }
+.dark[data-accent="gold"] { --cyan-soft: 61 46 8; --cyan-text: 253 224 71; --selected: 250 204 21; }
 [data-accent="orange"] { --cyan: 251 146 60; --cyan-soft: 254 233 214; --cyan-text: 170 73 8; }   /* #FB923C */
-.dark[data-accent="orange"] { --cyan-soft: 68 36 17; --cyan-text: 253 186 116; --nav-active-bg: 251 146 60; }
+.dark[data-accent="orange"] { --cyan-soft: 68 36 17; --cyan-text: 253 186 116; --selected: 251 146 60; }
 [data-accent="pink"] { --cyan: 244 114 182; --cyan-soft: 252 228 241; --cyan-text: 184 35 111; }   /* #F472B6 */
-.dark[data-accent="pink"] { --cyan-soft: 69 22 47; --cyan-text: 249 168 212; --nav-active-bg: 244 114 182; }
+.dark[data-accent="pink"] { --cyan-soft: 69 22 47; --cyan-text: 249 168 212; --selected: 244 114 182; }
 [data-accent="purple"] { --cyan: 167 139 250; --cyan-soft: 237 231 254; --cyan-text: 109 63 216; }   /* #A78BFA */
-.dark[data-accent="purple"] { --cyan-soft: 36 26 69; --cyan-text: 196 181 253; --nav-active-bg: 167 139 250; }
+.dark[data-accent="purple"] { --cyan-soft: 36 26 69; --cyan-text: 196 181 253; --selected: 167 139 250; }
 
 /* ─── Compact density ────────────────────────────────────────────────────────
    Instellingen › Weergave › Compact. Tightens the app's own gap/space-y/padding
@@ -385,7 +394,7 @@
   .chip {
     @apply inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border-1.5 px-3.5 py-1.5 text-xs font-semibold transition-colors;
   }
-  .chip-on { @apply border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on; }
+  .chip-on { @apply border-transparent bg-selected text-selected-on; }
   .chip-off { @apply border-line bg-surface text-ink-2 hover:border-ink-3; }
 
   /* Segmented control: pick one of a few views of the same thing (Tickets / Recap). The track is a sunken

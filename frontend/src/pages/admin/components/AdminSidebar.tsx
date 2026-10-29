@@ -18,7 +18,7 @@ interface Props {
   onClose?: () => void;
 }
 
-const ACTIVE = "bg-[rgb(var(--nav-active-bg))] text-[rgb(var(--nav-active-fg))]";
+const ACTIVE = "bg-selected text-selected-on";
 const IDLE = "text-ink-2 hover:bg-sunken hover:text-ink";
 
 export function AdminSidebar({ collapsed, onClose }: Props) {
@@ -152,7 +152,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
                                     <CIcon
                                       size={14}
                                       strokeWidth={isActive ? 2.4 : 2}
-                                      className={`shrink-0 ${isActive ? "text-brand dark:text-brand-on" : ""}`}
+                                      className={`shrink-0 ${isActive ? "text-selected-icon" : ""}`}
                                     />
                                     <span className="leading-none">{cLabel}</span>
                                   </>
@@ -187,7 +187,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
                           <Icon
                             size={collapsed ? 20 : 16}
                             strokeWidth={isActive ? 2.4 : 2}
-                            className={`shrink-0 ${isActive ? "text-brand dark:text-brand-on" : ""}`}
+                            className={`shrink-0 ${isActive ? "text-selected-icon" : ""}`}
                           />
                           {!collapsed && (
                             <span className="truncate leading-none">{label}</span>

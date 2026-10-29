@@ -225,7 +225,7 @@ export function QuickRideModal({ open, onClose, event, initialDirection, initial
                       Type vervoer
                     </label>
                     <select
-                      className="input-field dark:[color-scheme:dark]"
+                      className="input-field"
                       value={vehicleType}
                       onChange={(e) => setVehicleType(e.target.value as VehicleType)}
                     >

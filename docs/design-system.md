@@ -23,7 +23,7 @@ components in use, look at `pages/trip/TripOverviewTab.tsx` and `components/trip
   `divide-y`). A selected state is never a thicker outline: see Selected below.
 - **Accent colour is a personal setting** (Instellingen → Accentkleur: blue, turquoise, green,
   gold, orange, pink, purple; per device). It only swaps the brand tokens (`--cyan`,
-  `--cyan-soft`, `--cyan-text`, and `--nav-active-bg` in dark mode) through `[data-accent]`
+  `--cyan-soft`, `--cyan-text`, and `--selected` in dark mode) through `[data-accent]`
   blocks in `index.css`; paper, surface, ink and the status colours never change. So **use the
   brand tokens (`bg-brand`, `bg-brand-soft`, `text-brand-text`), not `sky-*`, for anything that
   means "the app's colour"** (spinners, links, selected states), or it stays blue for everyone
@@ -72,6 +72,7 @@ variant is needed with them.
 | `text-ok` / `text-warn` / `text-bad`, `bg-ok-soft` / `bg-warn-soft` / `bg-bad-soft` | status text and its tint (emerald / amber / rose); they switch in dark mode by themselves, so no `dark:` twin |
 | `border-ok-line` / `-warn-line` / `-bad-line`, `bg-ok-fill` / `-warn-fill` / `-bad-fill`, `text-ok-on` / `-warn-on` / `-bad-on` | a notice's border, a solid dot, bar, banner or button, and the text on that solid fill |
 | `bg-scrim/50` | the dark layer behind a sheet, dialog or viewer |
+| `bg-selected`, `text-selected-on`, `text-selected-icon` | a chosen chip (`.chip-on`) and the active tab: the ink fill with paper text (the brand fill with ink text in dark mode), and the icon on it |
 | `bg-hero`, `text-hero-ink`, `text-hero-warn`, `text-hero-bad`, `bg-hero-ink/10` | the always-dark hero panel and what sits on it (the same in both themes) |
 | `bg-avatar-1` .. `bg-avatar-6`, `text-avatar-on` | the fill of an initial without a photo or colour of its own (picked by name), and the white initial |
 
@@ -86,7 +87,7 @@ without `rgb()` so `bg-ink/10` works), exposed as Tailwind colours in `frontend/
 names the meaning (`text-bad`, `bg-warn-soft`), never a palette colour and never a `dark:` twin of one. A vitest test
 (`src/styles.tokens.test.ts`) reads `index.css` and fails when a text colour is under 4.5:1 on the background it is
 used on, in either theme; `npm run check-colors` (`frontend/scripts/check-colors.mjs`) fails on a raw palette class
-(`bg-rose-100`, `text-white`, `from-violet-500` ...), a hex colour or an `rgb(1, 2, 3)` in `src`.
+(`bg-rose-100`, `text-white`, `from-violet-500` ...), a hex colour, an `rgb(1, 2, 3)` or a `dark:` class in `src`. Opacity of the faint anchor marks in the app corners is `opacity-watermark` (a variable that differs per theme, like a colour).
 
 | Token | Light | Dark | Use |
 | --- | --- | --- | --- |
@@ -104,6 +105,7 @@ used on, in either theme; `npm run check-colors` (`frontend/scripts/check-colors
 | `warn-fill` / `warn-on` | `#FBBF24` / `#0F1519` | same | banner, solid dot or badge, and text on it |
 | `bad` / `bad-soft` / `bad-line` | `#BE123C` / `#FFE4E6` / `#FDA4AF` | `#FDA4AF` / `#362029` / `#703D48` | problem, you owe, destructive |
 | `bad-fill` / `bad-on` | `#E11D48` / `#FFFFFF` | same | the danger button, error banner and toast, solid bar, and text on it |
+| `selected` / `selected-on` / `selected-icon` | `#0F1519` / `#F5F8F9` / the accent | `#57B2F9` (the accent) / `#0F1519` / `#0F1519` | a chosen chip and the active tab, so no `dark:` twin is needed; the icon on it is the accent on ink in light, ink on the accent in dark |
 | `hero` / `hero-ink` | `#0F1519` / `#E6F0F3` | same | the always-dark hero panel and its text |
 | `hero-warn` / `hero-bad` | `#FDE68A` / `#FECDD3` | same | warn and bad chip text on the hero |
 | `scrim` | `#080C0F` | same | `bg-scrim/50` behind sheets and viewers; a caption on a photo |

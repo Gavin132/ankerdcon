@@ -528,7 +528,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                   onClick={() => setView("filter")}
                   className={`relative flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
                     activeFilterCount > 0
-                      ? "border-1.5 border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
+                      ? "border-1.5 border-transparent bg-selected text-selected-on"
                       : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"
                   }`}
                 >
@@ -702,7 +702,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                     aria-current={active ? "page" : undefined}
                     className={`hit-area h-9 min-w-[2.25rem] rounded-xl px-2 font-mono text-xs font-semibold tabular-nums transition-colors ${
                       active
-                        ? "border-1.5 border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
+                        ? "border-1.5 border-transparent bg-selected text-selected-on"
                         : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
                     }`}
                   >

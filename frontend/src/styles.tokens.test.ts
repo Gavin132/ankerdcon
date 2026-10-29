@@ -25,6 +25,8 @@ const pairs: [string, string, number][] = [
   ["cyan-text", "surface", 4.5],
   ["cyan-text", "cyan-soft", 4.5],
   ["on-cyan", "cyan", 4.5],
+  // the chosen chip and the active tab
+  ["selected-on", "selected", 7],
   // status text on its tint, on a card and on a well
   ...["ok", "warn", "bad"].flatMap((s): [string, string, number][] => [[s, `${s}-soft`, 4.5], [s, "surface", 4.5], [s, "sunken", 4.5], [`${s}-on`, `${s}-fill`, 4.5]]),
   // text on the always-dark hero
@@ -42,6 +44,12 @@ describe("colour tokens", () => {
       expect(failures).toEqual([]);
     });
   }
+
+  it("the active-tab icon reads on the selected fill in both themes", () => {
+    // light: the accent on the ink; dark: ink on the accent (the accent itself is only known per accent block)
+    expect(contrastRatio(light.cyan, light.selected)).toBeGreaterThanOrEqual(3);
+    expect(contrastRatio(dark["selected-icon"], dark.selected)).toBeGreaterThanOrEqual(3);
+  });
 
   it("white text reads on every avatar fill", () => {
     for (let i = 1; i <= 6; i++) expect(contrastRatio([255, 255, 255], light[`avatar-${i}`])).toBeGreaterThanOrEqual(4.5);

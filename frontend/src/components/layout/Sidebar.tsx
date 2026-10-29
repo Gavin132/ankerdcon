@@ -80,14 +80,14 @@ export function Sidebar() {
               aria-current={active ? "page" : undefined}
               className={`flex items-center justify-center gap-2.5 rounded-lg p-2.5 text-[14px] font-medium transition-colors lg:justify-start lg:px-2.5 lg:py-2 ${
                 active
-                  ? "bg-[rgb(var(--nav-active-bg))] text-[rgb(var(--nav-active-fg))]"
+                  ? "bg-selected text-selected-on"
                   : "text-ink-2 hover:bg-sunken hover:text-ink"
               }`}
             >
               <Icon
                 size={20}
                 strokeWidth={active ? 2.4 : 2}
-                className={`shrink-0 lg:h-4 lg:w-4 ${active ? "text-brand dark:text-brand-on" : ""}`}
+                className={`shrink-0 lg:h-4 lg:w-4 ${active ? "text-selected-icon" : ""}`}
               />
               <span className="hidden lg:inline">{item.label}</span>
             </NavLink>

@@ -238,7 +238,7 @@ function AppBackdrop() {
 
         decoding="async"
         draggable={false}
-        className="absolute -bottom-12 -right-12 w-[380px] select-none opacity-[0.045] dark:opacity-[0.055]"
+        className="absolute -bottom-12 -right-12 w-[380px] select-none opacity-watermark"
         style={{ transform: "rotate(6deg)" }}
       />
       {/* Nerd logo — smaller, top-left, softly rotated */}
@@ -250,7 +250,7 @@ function AppBackdrop() {
 
         decoding="async"
         draggable={false}
-        className="absolute -top-10 -left-10 w-[200px] select-none opacity-[0.035] dark:opacity-[0.045]"
+        className="absolute -top-10 -left-10 w-[200px] select-none opacity-watermark-small"
         style={{ transform: "rotate(-8deg)" }}
       />
     </div>

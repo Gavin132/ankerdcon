@@ -5,6 +5,7 @@
 //   - a Tailwind palette class: bg-rose-100, text-amber-800, border-emerald-300/40, from-violet-500 ...,
 //     and bg-white / text-black (use bg-surface, text-hero-ink, bg-scrim, text-avatar-on, ...)
 //   - a hex colour (#fff, #0F1519) or an rgb()/hsl() with numbers in it
+//   - a `dark:` class: the tokens in index.css switch with the theme by themselves, so a `dark:` twin means a token is missing
 // Not flagged, but counted: the `slate` and `sky` scales. They are remapped to the brand greys and the brand
 // blue in tailwind.config.ts, so they already follow the brand; new code should still use the semantic tokens
 // (ink, surface, line, brand ...), which also follow dark mode.
@@ -17,12 +18,12 @@ const root = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 const src = join(root, "src");
 
 /**
- * The places where a hard-coded colour is right. `kinds` says which of "palette" | "hex" | "rgb" the
+ * The places where a hard-coded colour is right. `kinds` says which of "palette" | "hex" | "rgb" | "dark" the
  * file may contain; every entry says why. Add a line here (with a reason) instead of working around the check.
  */
 const ALLOWED = [
-  { file: /^src\/dev\//, kinds: ["palette", "hex", "rgb"], reason: "mock data and fixtures for ?mock mode", always: true },
-  { file: /\.test\.tsx?$/, kinds: ["palette", "hex", "rgb"], reason: "tests", always: true },
+  { file: /^src\/dev\//, kinds: ["palette", "hex", "rgb", "dark"], reason: "mock data and fixtures for ?mock mode", always: true },
+  { file: /\.test\.tsx?$/, kinds: ["palette", "hex", "rgb", "dark"], reason: "tests", always: true },
   { file: /^src\/utils\/profile\.ts$/, kinds: ["hex"], reason: "NAME_COLORS and BANNER_COLORS: the colours members can pick, stored as data" },
   { file: /^src\/pages\/ProfilePage\.tsx$/, kinds: ["hex"], reason: "colour the picker starts from when the member has none yet" },
   { file: /^src\/pages\/admin\/AdminUsersPage\.tsx$/, kinds: ["hex"], reason: "example in the placeholder of the colour field" },
@@ -44,6 +45,7 @@ const PALETTE = new RegExp(String.raw`(?<![\w-])(?:[a-z0-9-]+:)*!?(?:${PROPS})-(
 const SCALE = new RegExp(String.raw`(?<![\w-])(?:[a-z0-9-]+:)*!?(?:${PROPS})-(slate|sky)-\d{2,3}(?:/\d+)?(?![\w-])`, "g");
 const HEX = /(?<![\w&%])#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b/g;
 const RGB = /\b(?:rgba?|hsla?)\(\s*\d/g;
+const DARK = /(?<![\w-])dark:[\w\[!-]/g;
 
 function walk(dir, out = []) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
@@ -85,12 +87,14 @@ for (const path of walk(src)) {
     check("palette", PALETTE);
     check("hex", HEX);
     check("rgb", RGB);
+    check("dark", DARK);
   });
 }
 
 const sum = (k) => `${scale[k].n} in ${scale[k].files.size} files`;
 console.log(`Approved scales (remapped in tailwind.config.ts): slate ${sum("slate")}, sky ${sum("sky")}.`);
 console.log("New code uses the semantic tokens (docs/design-system.md, \"Colours\").");
+console.log("No `dark:` classes: a colour that changes with the theme is a token.");
 console.log(`Allowed exceptions (${ALLOWED.length}):`);
 for (const a of ALLOWED) console.log(`  ${a.file.source.replace(/\\\//g, "/")}  [${a.kinds.join(", ")}]  ${a.reason}`);
 

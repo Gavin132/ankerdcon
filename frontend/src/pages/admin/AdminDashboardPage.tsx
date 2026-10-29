@@ -170,7 +170,7 @@ function EventRow({ item, users, cosplayCount }: {
             onClick={() => setShowRsvp((v) => !v)}
             className={`hit-area flex min-h-9 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
               showRsvp
-                ? "border-1.5 border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
+                ? "border-1.5 border-transparent bg-selected text-selected-on"
                 : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
             }`}
           >

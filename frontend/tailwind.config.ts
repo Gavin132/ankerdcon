@@ -67,6 +67,8 @@ const config: Config = {
           2: token("ink-2"),
           3: token("ink-3"),
         },
+        // A chosen chip or the active tab: `bg-selected text-selected-on`, with `text-selected-icon` for its icon.
+        selected: { DEFAULT: token("selected"), on: token("selected-on"), icon: token("selected-icon") },
         paper: token("paper"),
         surface: token("surface"),
         sunken: token("sunken"),
@@ -105,6 +107,11 @@ const config: Config = {
         "2xl": "12px",
         hero: "14px",
         sheet: "20px",
+      },
+      // The faint anchor marks behind the app: `opacity-watermark`.
+      opacity: {
+        watermark: "var(--watermark)",
+        "watermark-small": "var(--watermark-small)",
       },
       borderWidth: {
         "1.5": "1.5px",

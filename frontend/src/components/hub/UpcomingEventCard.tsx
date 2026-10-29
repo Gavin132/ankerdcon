@@ -45,7 +45,7 @@ function Stub({ urgency, daysUntil, dayCount, dayNumber }: { urgency: EventUrgen
       {!today && <span className="text-[12px] font-semibold">Nog</span>}
       <span className={`font-display font-black leading-[0.8] ${big.length > 3 ? "text-[34px] sm:text-[38px]" : "text-[52px] sm:text-[88px]"}`}>{big}</span>
       {(unit || sub) && (
-        <span className="text-[12px] leading-snug sm:w-full sm:border-t-1.5 sm:border-ink/35 sm:pt-2 dark:sm:border-hero/35">
+        <span className="text-[12px] leading-snug sm:w-full sm:border-t-1.5 sm:border-brand-on/35 sm:pt-2">
           {unit && <b className="block text-[13px]">{unit}</b>}
           {sub}
         </span>

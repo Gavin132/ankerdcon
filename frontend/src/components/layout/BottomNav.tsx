@@ -22,14 +22,14 @@ export function BottomNav() {
               aria-current={isActive ? "page" : undefined}
               className={`flex min-w-0 flex-col items-center gap-[3px] rounded-xl px-0.5 py-1.5 max-[339px]:px-0 transition-colors ${
                 isActive
-                  ? "bg-[rgb(var(--nav-active-bg))] text-[rgb(var(--nav-active-fg))]"
+                  ? "bg-selected text-selected-on"
                   : "text-ink-3"
               }`}
             >
               <Icon
                 size={20}
                 strokeWidth={isActive ? 2.4 : 1.9}
-                className={isActive ? "text-brand dark:text-brand-on" : ""}
+                className={isActive ? "text-selected-icon" : ""}
               />
               <span className="max-w-full truncate text-[12px] font-semibold leading-none">{item.label}</span>
             </NavLink>

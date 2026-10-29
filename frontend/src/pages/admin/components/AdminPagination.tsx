@@ -64,7 +64,7 @@ export function AdminPagination({
               aria-current={p === page ? "page" : undefined}
               className={`hit-area flex h-9 w-9 items-center justify-center rounded-lg font-mono text-xs font-semibold tabular-nums transition-colors ${
                 p === page
-                  ? "bg-ink text-paper dark:bg-brand dark:text-brand-on"
+                  ? "bg-selected text-selected-on"
                   : "text-ink-2 hover:bg-sunken hover:text-ink"
               }`}
             >

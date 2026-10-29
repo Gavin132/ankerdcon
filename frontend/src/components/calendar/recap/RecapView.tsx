@@ -367,7 +367,7 @@ function Week({ week, monthPrefix, today, trips, tripByDay, selection, selectedT
         const number = key === today
           ? "bg-brand text-brand-on shadow-[inset_0_0_0_1.5px_rgb(var(--outline))] font-semibold"
           : isSelected
-            ? "bg-[rgb(var(--nav-active-bg))] text-[rgb(var(--nav-active-fg))] font-semibold"
+            ? "bg-selected text-selected-on font-semibold"
             : preview
               ? "bg-hero/70 text-hero-ink"
               : outside ? "text-ink-3 opacity-60" : key < today ? "text-ink-2" : "text-ink";

@@ -123,7 +123,7 @@ export function CosplayFilterPanel({ filters, onChange, personOptions, days, cou
             <p className={SECTION_TITLE}>
               Persoon
               {filters.persons.length > 0 && (
-                <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-ink px-1 font-mono text-xs font-semibold text-paper dark:bg-brand dark:text-brand-on">
+                <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-selected px-1 font-mono text-xs font-semibold text-selected-on">
                   {filters.persons.length}
                 </span>
               )}
@@ -148,7 +148,7 @@ export function CosplayFilterPanel({ filters, onChange, personOptions, days, cou
             <p className={SECTION_TITLE}>
               Dag
               {filters.days.length > 0 && (
-                <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-ink px-1 font-mono text-xs font-semibold text-paper dark:bg-brand dark:text-brand-on">
+                <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-selected px-1 font-mono text-xs font-semibold text-selected-on">
                   {filters.days.length}
                 </span>
               )}
@@ -182,7 +182,7 @@ export function CosplayFilterFooter({ activeCount, onReset, onDone }: { activeCo
       <Button variant="ghost" className="flex-1" onClick={onReset} disabled={activeCount === 0}>
         Filters wissen
         {activeCount > 0 && (
-          <span className="ml-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-ink px-1 font-mono text-xs font-semibold text-paper dark:bg-brand dark:text-brand-on">
+          <span className="ml-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-selected px-1 font-mono text-xs font-semibold text-selected-on">
             {activeCount}
           </span>
         )}
