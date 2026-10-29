@@ -39,7 +39,7 @@ export function AddStoryTile({ eventDayId }: AddStoryTileProps) {
         disabled={busy}
         onClick={handleClick}
         aria-label="Foto's of video's toevoegen aan de story"
-        className="relative flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-ink-3/60 transition-colors hover:border-ink-3 disabled:cursor-not-allowed"
+        className="relative flex h-16 w-16 items-center justify-center rounded-full border-1.5 border-dashed border-ink-3/60 transition-colors hover:border-ink-3 disabled:cursor-not-allowed"
       >
         {busy ? (
           <Loader2 size={18} className="animate-spin text-ink-3" />

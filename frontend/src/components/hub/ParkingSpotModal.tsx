@@ -131,9 +131,7 @@ export function ParkingSpotModal({ open, onClose, tripId, manageableDrivers }: P
                   type="button"
                   onClick={() => setDriver(d)}
                   aria-pressed={driver === d}
-                  className={`rounded-full px-3 py-1.5 text-[13px] font-semibold transition-colors ${
-                    driver === d ? "border-2 border-outline bg-brand text-brand-on" : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"
-                  }`}
+                  className={`chip ${driver === d ? "chip-on" : "chip-off"}`}
                 >
                   {d}
                 </button>

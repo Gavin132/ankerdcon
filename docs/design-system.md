@@ -15,7 +15,9 @@ components in use, look at `pages/trip/TripOverviewTab.tsx` and `components/trip
   background colour only.
 - **One bold element per screen** gets the 2px ink outline (`border-2 border-outline`),
   for example the Hub ticket or a trip's headline block. Everything else uses the
-  1.5px `border-line`.
+  1.5px `border-line`. `border-2` is for exactly four things: the primary button, a hero or ticket, a dialog
+  (`ConfirmHost`) and a spinner or avatar ring (which are not boxes). Dividers are 1px (`h-px bg-line`,
+  `divide-y`). A selected state is never a thicker outline: see Selected below.
 - **Accent colour is a personal setting** (Instellingen → Accentkleur: blue, turquoise, green,
   gold, orange, pink, purple; per device). It only swaps the brand tokens (`--cyan`,
   `--cyan-soft`, `--cyan-text`, and `--nav-active-bg` in dark mode) through `[data-accent]`
@@ -223,7 +225,12 @@ Page head pattern (see `TripLayout`, `HubPage`):
 - **Colour dots:** `<ColorSwatch value onChange presets customFallback>` (`components/profile/ColorSwatch.tsx`): "automatic" (a slash), the presets and an optional own colour, 36 px with 10 px between. The name colours and banner colours are in `utils/profile.ts`; near-black and lime are left out of the name colours because they vanish on one of the two themes.
 - **A settings page saves in the top bar:** `Opslaan` in the `DetailTopbar` `actions`, `disabled={!isDirty}` so it is only blue when something changed, plus one line saying what is saved at once (the photo and banner on the profile, the channel on Meldingen). A yes/no setting is a `Switch` row, not a checkbox.
 - **Seat picker:** `<SeatPicker value onChange>` (`components/common/SeatPicker.tsx`): one row of 2 to 7 chips, "Incl. jezelf", in every sheet that asks how many seats a car has.
-- **Selected chip (filters, day chips):** active `bg-ink text-paper` (in dark mode `bg-brand text-brand-on`), inactive `border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3`.
+- **Selected state, two forms.** A **chip** (a short word you pick: filters, days, seat counts, a kind of feedback) is
+  `chip chip-on` (the ink fill; in dark mode the brand fill) against `chip chip-off`. A **tile** (a box with content:
+  the day tiles, a sort option, a driver to choose, a font or an avatar) keeps its 1.5px border and turns
+  `border-outline bg-brand-soft`; a day tile also gets the tick circle. A group where several can be on at once
+  (the flags of a meal category) is a chip with `bg-brand-soft text-brand-text` and a tick. Never `border-2`, never a
+  brand fill with an outline for a choice (the brand fill is the one main button).
 - **Inputs:** `input-field`.
 - **Hero blocks** (event, ride, meal headers): a flat ink block (`bg-hero text-hero-ink`, tokens that stay dark in light mode too,
   rounded 14px, `border-2 border-outline`) or the event image with a flat dark overlay

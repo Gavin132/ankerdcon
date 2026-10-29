@@ -149,9 +149,9 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
                   type="button"
                   onClick={() => onDayChange(on ? null : key)}
                   aria-pressed={on}
-                  className={`min-w-0 rounded-lg px-1 py-1.5 text-center transition-colors ${
-                    on ? "border-2 border-outline" : "border-1.5 border-line hover:border-ink-3"
-                  } ${ev.has_con === false ? "bg-hatch-surface" : "bg-surface"}`}
+                  className={`min-w-0 rounded-lg px-1 py-1.5 text-center transition-colors border-1.5 ${
+                    on ? "border-outline bg-brand-soft" : `border-line hover:border-ink-3 ${ev.has_con === false ? "bg-hatch-surface" : "bg-surface"}`
+                  }`}
                 >
                   <span className="block font-mono text-xs leading-none text-ink-3">
                     {dayShort(date)} {monthShort(date)}

@@ -35,6 +35,10 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **A chosen option looks the same everywhere.** The zone of a location ping, the driver of a parking spot and the kind
+  of feedback are chips that turn dark when chosen (like the filters); the day tiles, the sort options and the
+  accent colours keep their thin border and get a tinted background. Nothing is drawn with a thick outline for being
+  chosen any more.
 - **One scale of rounded corners.** Boxes that hold content (the share lines of an expense, menus, the recap calendar,
   the stub overview) have the same 12 px corners as the other cards, and the odd 9 px and 5 px corners of the day
   tiles, thumbnails and admin fields are gone.

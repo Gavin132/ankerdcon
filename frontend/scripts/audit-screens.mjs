@@ -31,6 +31,7 @@ export const screens = [
   { name: "agenda-past", path: "/calendar", scenario: "past" },
   { name: "finance", path: "/finance" },
   { name: "crew", path: "/crew" },
+  { name: "crew-ping", path: "/crew", steps: click(byText(/Locatie pingen/)) },
 
   // ── Money ──────────────────────────────────────────────────────────────────
   { name: "finance-ritkosten", path: "/finance", scenario: "live", steps: click(byText(/Jij reed/)) },
@@ -77,6 +78,7 @@ export const screens = [
 
   // ── Settings ───────────────────────────────────────────────────────────────
   { name: "settings", path: "/settings" },
+  { name: "settings-feedback", path: "/settings", steps: click(byText(/Feedback geven/)) },
   { name: "notifications", path: "/settings/notifications" },
   { name: "changelog", path: "/settings/changelog" },
 

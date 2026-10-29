@@ -104,7 +104,7 @@ export function CosplayFilterPanel({ filters, onChange, personOptions, days, cou
                   aria-pressed={active}
                   className={`flex items-center gap-2 rounded-xl border-1.5 px-3 py-2.5 text-left transition-colors ${
                     active
-                      ? "border-brand-text bg-brand-soft"
+                      ? "border-outline bg-brand-soft"
                       : "border-line bg-surface text-ink-2 hover:border-ink-3"
                   }`}
                 >

@@ -386,7 +386,7 @@ export function RestaurantDetailActions({
                 aria-pressed={isSelected}
                 className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-left transition-colors ${
                   isSelected
-                    ? "border-1.5 border-outline bg-sunken"
+                    ? "border-1.5 border-outline bg-brand-soft"
                     : isFull
                     ? "cursor-not-allowed border-1.5 border-line opacity-50"
                     : "cursor-pointer border-1.5 border-line hover:border-ink-3"

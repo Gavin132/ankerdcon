@@ -69,9 +69,7 @@ export function FeedbackSheet({ open, onClose }: { open: boolean; onClose: () =>
                 type="button"
                 onClick={() => setKind(k.id)}
                 aria-pressed={kind === k.id}
-                className={`rounded-xl px-3 py-2 text-[13px] font-semibold transition-colors ${
-                  kind === k.id ? "border-2 border-outline bg-brand text-brand-on" : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"
-                }`}
+                className={`chip ${kind === k.id ? "chip-on" : "chip-off"}`}
               >
                 {k.label}
               </button>

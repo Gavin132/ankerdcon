@@ -95,7 +95,7 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
               aria-expanded={isOpen}
               className={`stub-notch relative flex min-h-[136px] flex-col overflow-hidden rounded-xl p-3 text-left transition-colors ${
                 isOpen
-                  ? "border-2 border-outline bg-surface"
+                  ? "border-1.5 border-outline bg-surface"
                   : went
                     ? "border-1.5 border-line bg-surface hover:border-ink-3"
                     : "border-1.5 border-dashed border-line hover:border-ink-3"

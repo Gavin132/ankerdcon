@@ -182,7 +182,7 @@ function BadgeDrawer({
                   if (file) handleFile(file);
                 }}
                 disabled={uploading}
-                className={`w-full rounded-xl border-2 border-dashed px-4 py-5 text-center transition-colors ${
+                className={`w-full rounded-xl border-1.5 border-dashed px-4 py-5 text-center transition-colors ${
                   dragOver
                     ? "border-brand-text bg-brand-soft"
                     : "border-line bg-paper hover:border-ink-3 hover:bg-sunken"

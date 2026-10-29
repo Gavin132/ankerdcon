@@ -541,7 +541,7 @@ export function EventEditDrawer({
                     if (file) handleImageFile(file);
                   }}
                   disabled={imageUploading}
-                  className={`w-full rounded-xl border-2 border-dashed px-4 py-5 text-center transition-colors ${
+                  className={`w-full rounded-xl border-1.5 border-dashed px-4 py-5 text-center transition-colors ${
                     imageDragOver
                       ? "border-brand-text bg-brand-soft"
                       : "border-line bg-paper hover:border-ink-3 hover:bg-sunken"

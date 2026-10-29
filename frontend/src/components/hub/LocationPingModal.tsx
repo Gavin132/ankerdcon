@@ -149,9 +149,7 @@ export function LocationPingModal({ open, onClose, userNames }: Props) {
                 type="button"
                 onClick={() => setZone(z)}
                 aria-pressed={zone === z}
-                className={`rounded-full px-3 py-1.5 text-[13px] font-semibold transition-colors ${
-                  zone === z ? "border-2 border-outline bg-brand text-brand-on" : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"
-                }`}
+                className={`chip ${zone === z ? "chip-on" : "chip-off"}`}
               >
                 {z}
               </button>

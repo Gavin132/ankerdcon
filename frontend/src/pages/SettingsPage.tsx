@@ -182,7 +182,7 @@ export function SettingsPage() {
                       onClick={() => setAccent(a.id)}
                       style={{ backgroundColor: a.swatch }}
                       className={`hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero transition-colors ${
-                        selected ? "border-2 border-outline" : "border-1.5 border-line"
+                        selected ? "border-1.5 border-outline" : "border-1.5 border-line"
                       }`}
                     >
                       {selected && <Check size={16} strokeWidth={3} />}
