@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Search } from "lucide-react";
+import { ChevronLeft, Search } from "lucide-react";
 import { APP_NAME } from "../../constants";
 import { AccountMenu } from "./AccountMenu";
 import { TimeTravelControl } from "../common/TimeTravelWidget";
 import { HEADER_ACTIONS_ID } from "./HeaderAction";
 import { GlobalSearch } from "./GlobalSearch";
+import { useSmartBack } from "../../hooks/useSmartBack";
+import { usePageHeaderStore } from "../../store/pageHeader.store";
+import { routes } from "../../config/routes";
 
 const PAGE_META: Record<string, { title: string; subtitle: string }> = {
   "/": { title: "Hub", subtitle: "Alles op één plek" },
@@ -30,13 +33,22 @@ function pageMeta(pathname: string) {
  */
 export function Header() {
   const { pathname } = useLocation();
-  const meta = pageMeta(pathname);
+  // A detail page names itself and gets a back arrow; the other pages keep their fixed name.
+  const own = usePageHeaderStore((s) => s.header);
+  const meta = own ?? pageMeta(pathname);
+  const goBack = useSmartBack(own?.backTo ?? routes.hub);
   const [searchOpen, setSearchOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-30 border-b-1.5 border-line bg-surface pt-[env(safe-area-inset-top,0px)] lg:bg-paper">
-      <div className="flex h-14 items-center gap-3 px-4 md:px-8 lg:px-10">
-        <img src="/icons/icon-192.png" alt="" className="h-8 w-8 shrink-0 object-contain max-[359px]:hidden md:hidden" />
+      <div className="flex h-14 items-center gap-3 px-4 max-[359px]:gap-2 md:px-8 lg:px-10">
+        {own ? (
+          <button type="button" onClick={goBack} aria-label="Terug" className="icon-btn -ml-2 shrink-0">
+            <ChevronLeft size={20} />
+          </button>
+        ) : (
+          <img src="/icons/icon-192.png" alt="" className="h-8 w-8 shrink-0 object-contain max-[359px]:hidden md:hidden" />
+        )}
 
         <div className="flex min-w-0 flex-1 items-baseline gap-3">
           {/* The Hub has its own heading (the greeting), so there the bar's title is not a second h1. */}

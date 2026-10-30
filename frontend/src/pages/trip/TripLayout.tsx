@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link, Navigate, Outlet, useParams, useSearchParams } from "react-router-dom";
 import { CalendarDays } from "lucide-react";
 import { useCalendar } from "../../hooks/useCalendar";
+import { usePageHeader } from "../../hooks/usePageHeader";
 import { routes } from "../../config/routes";
 import { buildTrip, isTripTabId, visibleTripTabs, type TripTabId } from "../../utils/trips";
 import { rememberTripTab, type TripOutletContext } from "./tripContext";
@@ -21,6 +22,9 @@ export function TripLayout() {
   const { data: events = [], isLoading } = useCalendar();
 
   const trip = isLoading ? null : buildTrip(events, tripId);
+  // The bar gets a back arrow (and, where there is room, the trip's name), so the page does not look like the Agenda card
+  // it was opened from. The name is the small line: a phone's bar is full of buttons and would cut a title to "A…".
+  usePageHeader({ title: "Event", subtitle: trip?.title ?? "Alles voor deze trip", backTo: routes.calendar });
 
   const sheetParam = searchParams.get("sheet") ?? undefined;
   const activeTab: TripTabId = isTripTabId(sheetParam) ? sheetParam : "overview";
