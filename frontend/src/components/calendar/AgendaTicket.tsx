@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { BedDouble, MapPin, Ticket, Utensils } from "lucide-react";
 import { AvatarStack } from "../common/AvatarStack";
+import { InfoChip } from "../common/InfoChip";
 import { TripDayPicker } from "../trip/TripDayPicker";
 import { TripParticipants } from "../trip/TripParticipants";
 import { daysBetween, toDateKey, todayKey } from "../../utils/date";
@@ -92,13 +93,13 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
           >
             {trip.title}
           </Link>
-          <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-2">
-            {trip.location && (
-              <span className="flex min-w-0 items-center gap-1.5"><MapPin size={14} className="shrink-0" /> <span className="truncate">{trip.location}</span></span>
-            )}
-            {hotel && <span className="flex min-w-0 items-center gap-1.5"><BedDouble size={14} className="shrink-0" /> <span className="truncate">{hotel}</span></span>}
-            {hasMeal && <span className="flex items-center gap-1.5"><Utensils size={14} className="shrink-0" /> Activiteit gepland</span>}
-          </p>
+          {(trip.location || hotel || hasMeal) && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {trip.location && <InfoChip icon={<MapPin size={14} />}>{trip.location}</InfoChip>}
+              {hotel && <InfoChip icon={<BedDouble size={14} />}>{hotel}</InfoChip>}
+              {hasMeal && <InfoChip icon={<Utensils size={14} />}>Activiteit gepland</InfoChip>}
+            </div>
+          )}
         </div>
 
         {/* Days of a multi-day trip — tap one to sign up for it or off it */}

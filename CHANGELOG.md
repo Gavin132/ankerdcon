@@ -6,6 +6,12 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+### Changed
+- **Location, hotel and website are chips in the top card of an event.** On the event page, the Hub and the Agenda,
+  where an event is, where people sleep and the event's website are now small rounded chips under the title instead of
+  a line of text that looked like the start of the description. The location and the website on the event page are
+  bordered chips because they open a map or the site; the others are flat.
+
 ---
 
 ## [2.2.0] - 2026-10-30

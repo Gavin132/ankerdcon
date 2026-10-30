@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BedDouble, CalendarDays, MapPin, Music2, PartyPopper, Utensils } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { AvatarStack } from "../common/AvatarStack";
+import { InfoChip } from "../common/InfoChip";
 import { todayKey, toDateKey } from "../../utils/date";
 import { formatDate } from "../../utils/format";
 import { dayShort } from "../../utils/multiDay";
@@ -160,13 +161,13 @@ export function UpcomingEventCard({
             <h2 className="font-display text-[30px] font-black uppercase leading-[0.92] tracking-[0.01em] text-ink group-hover:underline decoration-2 underline-offset-4 sm:text-[38px]">
               {title}
             </h2>
-            <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-2">
-              <span className="flex items-center gap-1.5"><CalendarDays size={14} className="shrink-0" /> {when}</span>
-              {location && <span className="flex min-w-0 items-center gap-1.5"><MapPin size={14} className="shrink-0" /> <span className="truncate">{location}</span></span>}
-              {!isGroupEvent && hasMeal(event.id) && <span className="flex items-center gap-1.5"><Utensils size={14} className="shrink-0" /> Activiteit gepland</span>}
-            </p>
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+              <InfoChip icon={<CalendarDays size={14} />}>{when}</InfoChip>
+              {location && <InfoChip icon={<MapPin size={14} />}>{location}</InfoChip>}
+              {!isGroupEvent && hasMeal(event.id) && <InfoChip icon={<Utensils size={14} />}>Activiteit gepland</InfoChip>}
+            </div>
             {description && (
-              <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-ink-3">{description}</p>
+              <p className="mt-3 line-clamp-2 text-[13px] leading-relaxed text-ink-3">{description}</p>
             )}
           </button>
 

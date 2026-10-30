@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { BedDouble, ExternalLink, Globe, MapPin, Ticket } from "lucide-react";
 import { AvatarStack } from "../common/AvatarStack";
+import { InfoChip } from "../common/InfoChip";
 import { TripDayPicker } from "./TripDayPicker";
 import { TripParticipants } from "./TripParticipants";
 import { daysBetween, toDateKey, todayKey } from "../../utils/date";
@@ -25,7 +26,7 @@ function Description({ text }: { text: string }) {
   }, [text, open]);
 
   return (
-    <div className="mt-2 max-w-2xl">
+    <div className="mt-3 max-w-2xl">
       <p ref={ref} className={`text-[13px] leading-relaxed text-ink-2 ${open ? "" : "line-clamp-3"}`}>{text}</p>
       {(clamped || open) && (
         <button
@@ -120,32 +121,37 @@ export function TripTicket({
           <h1 className="font-display text-[32px] font-black uppercase leading-[0.92] tracking-[0.01em] text-ink [text-wrap:balance] sm:text-[40px] md:text-[30px] lg:text-[38px]">
             {trip.title}
           </h1>
-          <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-2">
-            {trip.location && (
-              <a
-                href={`https://maps.google.com/?q=${encodeURIComponent(trip.location)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hit-area flex min-w-0 items-center gap-1.5 hover:text-ink hover:underline"
-              >
-                <MapPin size={14} className="shrink-0" /> <span className="truncate">{trip.location}</span>
-              </a>
-            )}
-            {hotel && <span className="flex min-w-0 items-center gap-1.5"><BedDouble size={14} className="shrink-0" /> <span className="truncate">{hotel}</span></span>}
-            {websiteUrl && (
-              <a
-                href={websiteUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={`Website van het evenement: ${websiteUrl}`}
-                aria-label={`Website van het evenement, ${siteLabel(websiteUrl)} (opent in een nieuw tabblad)`}
-                className="hit-area flex min-w-0 items-center gap-1.5 hover:text-ink hover:underline"
-              >
-                <Globe size={14} className="shrink-0" /> <span className="truncate">{siteLabel(websiteUrl)}</span>
-                <ExternalLink size={12} className="shrink-0" aria-hidden />
-              </a>
-            )}
-          </p>
+          {/* Where and how to find it: chips, so they read as separate things to tap and not as the first line of the description. */}
+          {(trip.location || hotel || websiteUrl) && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {trip.location && (
+                <a
+                  href={`https://maps.google.com/?q=${encodeURIComponent(trip.location)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="chip chip-off max-w-full"
+                >
+                  <MapPin size={14} className="shrink-0" /> <span className="min-w-0 truncate">{trip.location}</span>
+                </a>
+              )}
+              {hotel && (
+                <InfoChip icon={<BedDouble size={14} />}>{hotel}</InfoChip>
+              )}
+              {websiteUrl && (
+                <a
+                  href={websiteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`Website van het evenement: ${websiteUrl}`}
+                  aria-label={`Website van het evenement, ${siteLabel(websiteUrl)} (opent in een nieuw tabblad)`}
+                  className="chip chip-off max-w-full"
+                >
+                  <Globe size={14} className="shrink-0" /> <span className="min-w-0 truncate">{siteLabel(websiteUrl)}</span>
+                  <ExternalLink size={12} className="shrink-0" aria-hidden />
+                </a>
+              )}
+            </div>
+          )}
           {description && <Description text={description} />}
         </div>
 
