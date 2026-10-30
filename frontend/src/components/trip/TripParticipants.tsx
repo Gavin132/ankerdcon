@@ -1,12 +1,14 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight, UserPlus, Users } from "lucide-react";
+import { ChevronRight, Ticket, UserPlus, Users } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { EmptyState } from "../common/EmptyState";
 import { TripSheet } from "./TripSheet";
 import { routes } from "../../config/routes";
 import { dayShort } from "../../utils/multiDay";
-import { findUser } from "../../utils/people";
+import { useTicketPoll } from "../../hooks/useTicketPoll";
+import { tallyTicketPoll, ticketChoiceOf, VOTE_UNSURE } from "../../utils/ticketPoll";
+import { findUser, type Person } from "../../utils/people";
 import { tripPeople, type Trip, type TripPhase } from "../../utils/trips";
 import type { User } from "../../types";
 
@@ -77,11 +79,21 @@ function ParticipantsSheet({
   // Saturday is one row that says "Alle dagen", not two rows with a day each.
   const isMine = (names: string[]) => names.some((n) => myNames.includes(n));
   const multiDay = trip.days.length > 1;
+  // Which ticket each person has, from the ticket vote. A trip that is over has no use for it.
+  const { data: poll } = useTicketPoll(trip.id, open && phase !== "past");
+  const tally = poll ? tallyTicketPoll(poll, users) : null;
+  const ticketOf = (person: Person): { text: string; muted: boolean } | null => {
+    if (!poll || !tally) return null;
+    const choice = ticketChoiceOf(tally, person);
+    if (choice === null) return poll.status === "open" ? { text: "Nog niet gestemd", muted: true } : null;
+    if (choice === VOTE_UNSURE) return { text: "Ticket nog onbekend", muted: true };
+    return { text: poll.options.find((o) => o.id === choice)?.label ?? "Ticket onbekend", muted: false };
+  };
 
   const people = tripPeople(trip, users)
     .map((person) => {
       const days = trip.days.filter((d) => (d.ev.participants ?? []).some((n) => person.names.includes(n)));
-      return { key: person.names[0], names: person.names, user: person.user ?? findUser(users, person.name), days, display: person.name };
+      return { key: person.names[0], names: person.names, user: person.user ?? findUser(users, person.name), days, display: person.name, ticket: ticketOf(person) };
     })
     .sort((a, b) => Number(isMine(b.names)) - Number(isMine(a.names)) || a.display.localeCompare(b.display, "nl"));
 
@@ -115,7 +127,7 @@ function ParticipantsSheet({
         <EmptyState compact icon={<Users size={22} />} title="Nog niemand aangemeld" />
       ) : (
         <ul className="-mx-2 divide-y divide-line">
-          {people.map(({ key, names, user, days, display }) => {
+          {people.map(({ key, names, user, days, display, ticket }) => {
             const row = (
               <>
                 <UserAvatar name={display} user={user} className="h-10 w-10 shrink-0 text-sm" />
@@ -126,7 +138,17 @@ function ParticipantsSheet({
                       <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[12px] font-semibold text-brand-text">Jij</span>
                     )}
                   </span>
-                  {multiDay && <span className="mt-0.5 block truncate font-mono text-[12px] text-ink-3">{daysText(days)}</span>}
+                  {(multiDay || ticket) && (
+                    <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[12px] text-ink-3">
+                      {multiDay && <span>{daysText(days)}</span>}
+                      {ticket && (
+                        <span className={`inline-flex items-center gap-1 ${ticket.muted ? "" : "font-semibold text-ink-2"}`}>
+                          <Ticket size={12} className="shrink-0" aria-hidden />
+                          {ticket.text}
+                        </span>
+                      )}
+                    </span>
+                  )}
                 </span>
               </>
             );

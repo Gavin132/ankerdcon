@@ -31,6 +31,14 @@ menu; a page can hand it an action with `HeaderAction` (the trip page's share
 button). Personal settings (notifications, Discord, theme, greeting) are under
 **Instellingen** in the account menu.
 
+**Going into an event must be seen.** The Agenda and Hub tickets and the event page's own ticket look alike, so two
+things say the page changed. The top bar of an event page has a back arrow (`usePageHeader`, `store/pageHeader.store.ts`;
+it goes back like the back gesture, or to the Agenda when the link was the first page of the session) and, from `sm` up, the
+trip's name; a phone's bar is full of buttons, so there it only says "Event". And the page slides in from the right when you
+open an event, in from the left when you leave one, and fades between the tabs (`AppShell.tsx`; enter-only, because an exit
+animation moves the bottom nav; the browser's reduce-motion setting turns the sliding off). Moving from one trip to another keeps
+its own slide.
+
 **Event** opens the *current* trip. Old paths (`/transport`, `/food`, `/more`,
 `/members`, …) redirect to their new homes, so bookmarks and shared links keep
 working (`router.tsx`, `config/routes.ts` → `legacy`).
@@ -55,10 +63,10 @@ the trip, the ride buttons and a meal today are the left column and "Voor jou" w
   shared with the Vervoer sheet: the venue on the event side and, on a hotel trip, the hotel on
   the other side except for the first Heen and the last Terug (those are from and to home).
 - **Mijn ticket shortcut** (`TicketShortcutCard.tsx`): one tap to the current trip's ticket
-  sheet, reading straight from the same on-device store as the event page's tile — its text
-  changes depending on whether you've saved one yet. The link (`?openTicket=1`) is a one-shot
-  flag the trip page consumes and strips, not a real deep link — there is nothing server-side
-  for it to point at.
+  in a sheet over the Hub (only the member's own ticket, not the ticket vote: `TicketSheet` with `mineOnly`), reading
+  straight from the same on-device store as the event page's tile — its text changes depending on whether you've
+  saved one yet. `?openTicket=1` on a trip page still opens the sheet once, a one-shot flag that is stripped, not a
+  real deep link — there is nothing server-side for it to point at.
 - **Voor jou** (`ForYouPanel.tsx`, `utils/actionItems.ts`): everything you still
   have to arrange: a trip day without a ride, a restaurant without a car, expenses
   to settle, payment requests and payments waiting for your confirmation. Each item
@@ -74,9 +82,9 @@ the trip, the ride buttons and a meal today are the left column and "Voor jou" w
   is going and a countdown. Tap a day to sign up or off. Tap the avatars to see
   everyone by name (`TripParticipants.tsx`); that list has the "Iemand aanmelden" button (it sits next to the text
   when nobody is on the trip yet). The tilted "Je gaat mee" stamp is only on a trip that is under way or over; before it,
-  the checked day cards and "Jij en 3 anderen" say it. The location line under the title has the place (a Maps link), the
-  hotel and, when the event has a website, a small globe link with its address ("dokomi.de", `siteLabel`; only http(s) links,
-  opens in a new tab).
+  the checked day cards and "Jij en 3 anderen" say it. Under the title are flat chips (`InfoChip`, the same on the
+  Hub and the Agenda): the place (a Maps link), the hotel and, when the event has a website, a globe chip with its address
+  ("dokomi.de", `siteLabel`; only http(s) links, opens in a new tab). The date is the small line above the title on all three cards.
 - The line at the top of the ticket names what kind of trip it is: an admin can tag an event
   **Con**, **Gathering** or **Concert** (`events.event_type` — Admin → Evenementen); untagged
   falls back to "Con" when the trip has con programming (`has_con`) or "Reis" otherwise. Shown
@@ -90,7 +98,7 @@ the trip, the ride buttons and a meal today are the left column and "Voor jou" w
   moved and which way, not just a sudden swap. Admins also get a pencil to edit the event.
 - Below it, a **tile** per part of the trip (`TripTiles.tsx`): Vervoer, Eten,
   Hotel (hotel trips only: address, arrivals and departures, rooms; the dates of the stay are in the sheet's subtitle), Foto's, Cosplay (trips with a convention; never for a concert), Weer,
-  Info (opens the Info sheet), Kosten and Ticket (opens Mijn ticket); the tile labels are
+  Info (opens the Info sheet), Kosten and Ticket (opens Tickets: the vote and Mijn ticket); the tile labels are
   short so they fit. Tiles show the answer ("6 rides, 3 people without a ride
   back") and their order changes before, during and after the trip. The amber "zonder rit" and
   "nergens bij" pills open the names of who is missing (a sheet, `MissingPeopleSheet`).
@@ -105,6 +113,18 @@ the trip, the ride buttons and a meal today are the left column and "Voor jou" w
   that — it doesn't sync to another device and a browser can clear it on its own, so it's a
   convenience, not a permanent archive. Not the same "ticket" as an event's `ticket_url` (where
   to buy one) — that stays under Info.
+- **Kaartverkoop (the ticket vote)** (`TicketVote.tsx`, `hooks/useTicketPoll.ts`, `app/routers/ticket_polls.py`): what
+  used to be a Discord poll. An admin opens it in the Tickets sheet with the ticket options (the event's own ticket types
+  are filled in and can be changed: "Vr + za + zo", "Za + zo", "Alleen zaterdag", each with a price). Members pick one,
+  or "Weet ik nog niet" (somebody who is not going just does not vote), and can change it until the tickets are bought. While the vote is open the
+  Ticket tile is a card of its own, full width and first, with a bar per ticket and a "Stem mee" pill for whoever has not
+  voted; the sheet has the choices, who has not voted yet and, for admins, "Tickets zijn gekocht" (pick the buyer and the
+  ticket: one person buys for everyone) and "Stemming verwijderen". After that the vote is gone from the page: the tile is
+  a small "Gekocht door Sam" line and the sheet says so. Money is not kept here: the buyer adds an expense in Financiën.
+  People are counted once even when they voted under two names (`utils/ticketPoll.ts`, `groupPeople`).
+  The "Wie gaan er mee" list (`TripParticipants.tsx`) shows each person's ticket next to their days: the ticket they
+  voted for, "Ticket nog onbekend" for "Weet ik nog niet", and, while the vote is open, "Nog niet gestemd". The vote is
+  only fetched when the list is opened, and a trip that is over does not show it.
 - Multi-day trips get **day chips** to filter by day.
 
 ## Transport
@@ -448,6 +468,8 @@ appear when the server cannot be reached, the member is not signed in, or the ap
   who asked. **Testmelding** (`POST /users/me/test-notification`, 5 an hour) sends one message through the
   saved channel(s);
 - **payment requests and confirmations**, the same way;
+- **Ticketstemming** (`ticket_vote`), when an admin opens a ticket vote and when the tickets are bought; limited to the
+  trip's people by "Alleen mijn trips";
 - **Nieuwe gebruiker**, for admins only, see below;
 - the in-app **announcement banner** (stacked urgent first, then warning, then info, newest first within each; `utils/announcements.ts`) and **changelog banner** (both admin-written).
 

@@ -175,6 +175,12 @@ def seed(db):
         {"id": "ps2", "trip_id": "T3", "driver": "Zoe", "placed_by": "Pip"},
     ]
     db["feedback"] = [{"id": "f1", "user_name": "Pip"}]
+    db["ticket_polls"] = [{"id": "tp1", "buyer": "Pip"}, {"id": "tp2", "buyer": "Zoe"}]
+    db["ticket_votes"] = [
+        {"id": "v1", "poll_id": "tp1", "voter": "Pip"},    # Timo voted too: Pip's goes
+        {"id": "v2", "poll_id": "tp1", "voter": "Timo"},
+        {"id": "v3", "poll_id": "tp2", "voter": "Pip"},    # moves
+    ]
     db["push_subscriptions"] = []
     db["expenses"] = [
         {"id": "e1", "paid_by": "Pip"},      # Pip paid, Timo and Zoe owe
@@ -284,6 +290,7 @@ def test_a_dry_run_changes_nothing_and_counts(env):
         "feedback": 1,
         "push_subscriptions": 0,
         "badges": 1,
+        "ticket_votes": 2,
     }
     assert body["dropped"] == {"settlements": 1, "ride_costs": 1, "parking_spots": 0, "restaurant_cars": 1}
 
@@ -337,6 +344,10 @@ def test_a_merge_moves_everything_once(env):
     # one row per trip and driver: Pip's T2 row is dropped, T1 is renamed
     assert {(c["trip_id"], c["driver"], c["total_amount"]) for c in db["ride_costs"]} == {("T1", "Timo", 10), ("T2", "Timo", 30)}
     assert [(p["driver"], p["placed_by"]) for p in db["parking_spots"]] == [("Timo", "Zoe"), ("Zoe", "Timo")]
+
+    # one vote per ticket vote: Pip's second vote is dropped, the other renamed; the buyer is renamed too
+    assert {(v["poll_id"], v["voter"]) for v in db["ticket_votes"]} == {("tp1", "Timo"), ("tp2", "Timo")}
+    assert [b["buyer"] for b in db["ticket_polls"]] == ["Timo", "Zoe"]
 
     # the member has the placeholder's badge and name, and the placeholder is gone
     timo = next(p for p in db["profiles"] if p["id"] == "t")
@@ -420,7 +431,7 @@ def test_the_placeholders_own_aliases_move_too(env):
 def test_tables_from_a_later_migration_may_be_missing(env):
     fake, client, _ = env
     seed(fake.db)
-    fake.missing = {"parking_spots", "ride_costs", "feedback", "push_subscriptions", "story_seen"}
+    fake.missing = {"parking_spots", "ride_costs", "feedback", "push_subscriptions", "story_seen", "ticket_votes", "ticket_polls"}
 
     r = merge(client)
 

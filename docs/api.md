@@ -222,6 +222,19 @@ the trip (an `events.id` for a multi-day trip, an `event_days.id` for a single-d
 driver's rides is "current" (for display and for the pin's own 2-hour-after-departure expiry) is
 resolved client-side in `CrewMap.tsx`, not stored here.
 
+### Ticket vote — `/ticket-polls`
+
+| Method and path | Who | What |
+| --- | --- | --- |
+| `GET /ticket-polls/{trip_id}` | member | the trip's ticket vote with its options and votes, or `null` when there is none |
+| `PUT /ticket-polls/{trip_id}` | admin | opens the vote — `{options: [{label, price}]}` (1 to 8; the server gives them ids); 409 when the trip has one already (delete it first) |
+| `PUT /ticket-polls/{trip_id}/vote` | member | `{choice, user_name?}`: a ticket's id or `unsure`; replaces the earlier vote. Members vote for themselves (`act_as`), an admin may vote for someone. 409 once the tickets are bought |
+| `POST /ticket-polls/{trip_id}/bought` | admin | `{buyer, option_id}`: the vote ends, the buyer and ticket are kept; the buyer has to be a member |
+| `DELETE /ticket-polls/{trip_id}` | admin | removes the vote and its votes, so a new one can be opened |
+
+`trip_id` is the frontend's `tripIdOf()` (an `events.id` for a multi-day trip, an `event_days.id` for a single-day
+one); the vote belongs to the event either way. Opening and buying send the `ticket_vote` notification.
+
 ### Ride costs — `/ride-costs`
 
 | Method and path | Who | What |

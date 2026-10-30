@@ -51,6 +51,8 @@ last refreshed from Discord/Google — see [security.md](security.md#authenticat
 | `push_subscriptions` | Web push, per device | `user_name`, `endpoint` (unique — a device's own push-service URL, upserted on resubscribe, deleted when a push comes back 404/410), `p256dh`, `auth`. See [deployment.md#web-push](deployment.md#web-push). |
 | `parking_spots` | Where a driver's car is parked, for the crew map | `trip_id` (plain text, not a foreign key — see the migration's own header for why), `driver`, `lat`/`lng`, `placed_by`. `UNIQUE (trip_id, driver)`: one row per driver per trip, upserted. |
 | `ride_costs` | What a driver spent on a trip, for the ride-cost overview in Financiën | `trip_id` (plain text, like `parking_spots`), `driver`, `total_amount` (the one amount the trip cost the driver), `parking_amount` (unused since the amounts became one: always 0, an older value is added to `total_amount` when read), `updated_at`. `UNIQUE (trip_id, driver)`. `rides.distance_km` / `distance_source` are unused leftovers of an earlier by-distance version. |
+| `ticket_polls` | The ticket vote on a trip ("Kaartverkoop"): one per trip, open until an admin says who bought the tickets | `event_id` (the real parent event, `UNIQUE`, cascades), `status` (`open` or `bought`), `options` (jsonb `[{id, label, price}]`, own ids `o1`, `o2`… because `events.ticket_types` has none), `buyer` (a name), `chosen_option`, `created_at`, `bought_at`. |
+| `ticket_votes` | One vote per member per ticket vote | `poll_id` (cascades), `voter` (a name), `choice` (an option id, or `unsure`), `updated_at`. `UNIQUE (poll_id, voter)`. Kept after the tickets are bought. |
 | `badges` | Badge definitions | `name`, `description`, `image_url`, `display_order`. Members reference them through `profiles.badge_ids`. |
 
 ### Events
@@ -153,6 +155,7 @@ order, not the number in the title.
 | `migration_v2.33_venue_geocoding` | `events.location_lat/lng`, `events.hotel_location_lat/lng`, `meals.location_lat/lng`, `meals.maps_url` — venue pins for the crew map. **Run before the deploy** — the backend writes these columns on every event/meal save. |
 | `migration_v2.34_venue_maps_url` | `events.location_maps_url`, `events.hotel_location_maps_url` — admin-set exact Maps links, for a venue (e.g. a hotel chain) whose address doesn't geocode reliably. **Run before the deploy**, same reason as v2.33. |
 | `migration_v2.35_parking_spots` | `parking_spots` table — one pin per (trip, driver) for the crew map. **Run before the deploy**: setting a spot writes to this table, and it doesn't exist until this runs. |
+| `migration_v2.42_ticket_polls` | `ticket_polls` and `ticket_votes` tables. **Run before the deploy**: until then the ticket vote on the trip page answers 503 (nothing else is affected). |
 | `migration_v2.41_story_thumbnails` | `story_photos.thumb_url` and `preview_url`. Safe to run any time: without them photos are saved without the lighter copies. After running it, make the copies for older photos with `python -m scripts.backfill_story_previews` (in `backend/`). |
 | `migration_v2.40_story_video` | `story_photos.poster_url`, the still frame of a story video. Run before the deploy that lets members add videos; photos work without it. |
 | `migration_v2.39_viewer` | `profiles.is_viewer` and `whitelist.viewer` (read-only members). Safe to leave unrun: without the columns nobody is read-only. Only setting the flag needs them. |
@@ -193,6 +196,7 @@ Run in the SQL editor:
 | v2.39 | `select 1 from information_schema.columns where table_name = 'profiles' and column_name = 'is_viewer'` returns a row |
 | v2.40 | `select 1 from information_schema.columns where table_name = 'story_photos' and column_name = 'poster_url'` returns a row |
 | v2.41 | `select 1 from information_schema.columns where table_name = 'story_photos' and column_name = 'thumb_url'` returns a row |
+| v2.42 | `select to_regclass('public.ticket_polls')` is not null |
 
 `db/check_schema.py` compares `db/schema.sql` with the live database, but
 `schema.sql` is out of date (see below), so it reports differences that are not

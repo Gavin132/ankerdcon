@@ -29,6 +29,7 @@ const GETS: [RegExp, Handler][] = [
   [/^\/api\/announcements\/active$/, (_m, _q, fx) => fx.announcements],
   [/^\/api\/changelog$/, (_m, _q, fx) => fx.changelog],
   [/^\/api\/parking\/([^/]+)$/, (m, _q, fx) => fx.parking.filter((p) => p.trip_id === decodeURIComponent(m[1]))],
+  [/^\/api\/ticket-polls\/([^/]+)$/, (m, _q, fx) => fx.ticketPolls.find((p) => p.trip_id === decodeURIComponent(m[1])) ?? null],
   [/^\/api\/stories\/summary$/, (_m, q, fx) => {
     const wanted = (q.get("event_day_ids") ?? "").split(",").filter(Boolean);
     return Object.fromEntries(Object.entries(fx.storySummary).filter(([id]) => wanted.length === 0 || wanted.includes(id)));
@@ -76,7 +77,7 @@ function mergeAnswer(fx: Fixtures, sourceId: string, body: { target_id?: string;
     expense_shares: fx.expenses.flatMap((e) => e.shares ?? []).filter((s) => s.participant === name).length,
     settlements: 0, cosplays: fx.cosplays.filter((c) => c.user_name === name).length,
     photos: Object.values(fx.storyDays).flat().filter((p) => p.uploaded_by === name).length,
-    stories_seen: 0, ride_costs: 0, parking_spots: 0, feedback: 0, push_subscriptions: 0,
+    stories_seen: 0, ride_costs: 0, parking_spots: 0, feedback: 0, push_subscriptions: 0, ticket_votes: 0,
     badges: (source.badge_ids ?? []).filter((b) => !(target.badge_ids ?? []).includes(b)).length,
   };
   // The one thing the demo drops, so the "niet overgenomen" line has something to show.

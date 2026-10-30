@@ -28,6 +28,8 @@ class Tables:
     PUSH_SUBSCRIPTIONS = "push_subscriptions"
     PARKING_SPOTS  = "parking_spots"
     RIDE_COSTS     = "ride_costs"
+    TICKET_POLLS   = "ticket_polls"
+    TICKET_VOTES   = "ticket_votes"
 
 
 # ── API ───────────────────────────────────────────────────────────

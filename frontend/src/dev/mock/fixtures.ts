@@ -4,7 +4,7 @@
 // short tidy data never shows have something to show up on.
 import type {
   Announcement, Badge, CalendarEvent, ChangelogEntry, Cosplay, Event, EventDay, Expense, Feedback, HotelRoom, Meal, MealCategory,
-  ParkingSpot, Ride, RideCostOverview, SettleUpOverview, StoryDaySummary, StoryPhoto, User, UserStoryPhoto, WhitelistEntry,
+  ParkingSpot, Ride, RideCostOverview, SettleUpOverview, StoryDaySummary, StoryPhoto, TicketPoll, User, UserStoryPhoto, WhitelistEntry,
 } from "../../types";
 import { avatarImage, badgeImage, coverImage, photoImage, thumbImage, wideImage } from "./images";
 import { ago, dateKey, mealTime, rideTime } from "./time";
@@ -77,6 +77,8 @@ export interface Fixtures {
   announcements: Announcement[];
   changelog: ChangelogEntry[];
   parking: ParkingSpot[];
+  /** One open ticket vote (the main trip) and one closed (Dokomi), to see both states. */
+  ticketPolls: (TicketPoll & { trip_id: string })[];
   storyDays: Record<string, StoryPhoto[]>;
   storySummary: Record<string, StoryDaySummary>;
   whitelist: WhitelistEntry[];
@@ -231,6 +233,19 @@ export function buildFixtures(scenario: Scenario, role: Role): Fixtures {
     { id: "p-2", trip_id: A, driver: ME, lat: EXPO.lat - 0.0015, lng: EXPO.lng + 0.002, placed_by: ME, created_at: ago(0) },
   ];
 
+  const ticketPolls: Fixtures["ticketPolls"] = [
+    {
+      id: "tp-1", trip_id: A, event_id: A, status: "open", buyer: null, chosen_option: null,
+      options: [{ id: "o1", label: "Vr + za + zo", price: 120 }, { id: "o2", label: "Za + zo", price: 85 }, { id: "o3", label: "Alleen zaterdag", price: 50 }],
+      votes: [{ voter: "Sam", choice: "o2" }, { voter: "Alex", choice: "o2" }, { voter: "Noor", choice: "o1" }],
+    },
+    {
+      id: "tp-2", trip_id: D, event_id: D, status: "bought", buyer: "Sam", chosen_option: "o1",
+      options: [{ id: "o1", label: "Weekend", price: 64 }, { id: "o2", label: "Zaterdag", price: 38 }],
+      votes: [{ voter: ME, choice: "o1" }, { voter: "Sam", choice: "o1" }],
+    },
+  ];
+
   const dayIds = ["d-hmia-1", "d-hmia-2", "d-hmia-3"];
   const storyDays: Record<string, StoryPhoto[]> = {};
   const storySummary: Record<string, StoryDaySummary> = {};
@@ -258,7 +273,7 @@ export function buildFixtures(scenario: Scenario, role: Role): Fixtures {
     { id: "f-3", kind: "other", message: "Top app!", user_name: "Noor", status: "done", created_at: ago(9) },
   ];
 
-  return { me, users, calendar: days, meals, rides, rooms, expenses, settle, rideCosts, cosplays, badges, announcements, changelog, parking, storyDays, storySummary, whitelist, feedback, mainTripId: A, mainDayIds: dayIds };
+  return { me, users, calendar: days, meals, rides, rooms, expenses, settle, rideCosts, cosplays, badges, announcements, changelog, parking, ticketPolls, storyDays, storySummary, whitelist, feedback, mainTripId: A, mainDayIds: dayIds };
 }
 
 export function userPhotos(fx: Fixtures, who: string): UserStoryPhoto[] {

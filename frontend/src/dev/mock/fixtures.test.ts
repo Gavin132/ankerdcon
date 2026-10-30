@@ -18,6 +18,7 @@ describe.each(scenarios)("the made-up data (%s)", (scenario) => {
       ...fx.rooms.flatMap((r) => r.occupants),
       ...fx.cosplays.map((c) => c.user_name),
       ...fx.expenses.flatMap((e) => [e.paid_by, ...e.shares.map((s) => s.participant)]),
+      ...fx.ticketPolls.flatMap((p) => [...p.votes.map((v) => v.voter), ...(p.buyer ? [p.buyer] : [])]),
     ];
     expect(named.filter((n) => !userNames.has(n))).toEqual([]);
   });

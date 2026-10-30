@@ -47,6 +47,8 @@ export const screens = [
   { name: "trip-rooms", path: `${TRIP}?sheet=rooms` },
   { name: "trip-cosplay", path: `${TRIP}?sheet=cosplay` },
   { name: "trip-photos", path: `${TRIP}?sheet=photos` },
+  { name: "trip-tickets-vote", path: `${TRIP}?openTicket=1` },
+  { name: "trip-tickets-bought", path: "/trips/trip-dokomi?openTicket=1" },
   { name: "trip-transport-form", path: `${TRIP}?sheet=transport`, steps: click(byText(/Rit aanbieden/)) },
   { name: "trip-admin", path: TRIP, role: "admin" },
   { name: "trip-rooms-admin", path: `${TRIP}?sheet=rooms`, role: "admin" },
@@ -88,6 +90,7 @@ export const screens = [
 
   // ── Overlays on the hub ────────────────────────────────────────────────────
   { name: "hub-quick-offer", path: "/", steps: click(byText(/Rit aanbieden/)) },
+  { name: "hub-ticket", path: "/", steps: click(byText(/ticket opgeslagen/i)) },
   { name: "hub-account-menu", path: "/", steps: click(byLabel(/account|menu|profiel/i)) },
   { name: "hub-search", path: "/", steps: click(byLabel(/zoeken/i)) },
   { name: "hub-story-viewer", path: "/", steps: click(byText(/^Vr|^Za|^Zo|^Do/)) },

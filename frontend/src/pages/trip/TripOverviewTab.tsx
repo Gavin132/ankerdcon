@@ -9,6 +9,7 @@ import { useRides } from "../../hooks/useRides";
 import { useCosplays } from "../../hooks/useCosplays";
 import { useExpenses } from "../../hooks/useExpenses";
 import { useStorySummary } from "../../hooks/useStories";
+import { useTicketPoll } from "../../hooks/useTicketPoll";
 import { useTripRsvp } from "../../hooks/useTripRsvp";
 import { useTimeStore } from "../../store/time.store";
 import { toast } from "../../store/toast.store";
@@ -66,15 +67,18 @@ export function TripOverviewTab() {
   const hotelDay = trip.days.find((d) => d.ev.is_hotel)?.ev;
   const { data: rooms = [] } = useHotelRooms(hotelDay?.id ?? "", { enabled: !!hotelDay });
   const { myNames, joinTrip, leaveTrip, toggleDay, manageRsvp } = useTripRsvp();
+  const { data: ticketPoll } = useTicketPoll(trip.id);
+  const voteOpen = ticketPoll?.status === "open";
 
   const [justJoined, setJustJoined] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
   const [weatherOpen, setWeatherOpen] = useState(false);
   const [practicalOpen, setPracticalOpen] = useState(false);
   const [ticketOpen, setTicketOpen] = useState(false);
-  // A Hub shortcut can link straight here with ?openTicket=1 (the sheet itself
-  // isn't part of the ?sheet= routing, since it's purely local/per-device —
-  // this is a one-shot flag, not a real deep link anyone else could open).
+  // ?openTicket=1 opens the ticket sheet once (the sheet itself isn't part of the
+  // ?sheet= routing, since it's purely local/per-device — this is a one-shot flag,
+  // not a real deep link anyone else could open). The Hub's shortcut no longer
+  // uses it: that opens the sheet over the Hub; the mobile audit does.
   const [searchParams, setSearchParams] = useSearchParams();
   useEffect(() => {
     if (!searchParams.get("openTicket")) return;
@@ -163,8 +167,10 @@ export function TripOverviewTab() {
     expenses: true,
     tickets: phase !== "past",
   };
-  const small = TILE_ORDER[phase].filter((id) => {
-    if (!shown[id] || id === "photos") return false;
+  // While a ticket vote is open its card takes a row of its own, at the top, and is no half tile that could be stretched.
+  const order = voteOpen && shown.tickets ? (["tickets", ...TILE_ORDER[phase].filter((id) => id !== "tickets")] as TileId[]) : TILE_ORDER[phase];
+  const small = order.filter((id) => {
+    if (!shown[id] || id === "photos" || (id === "tickets" && voteOpen)) return false;
     if (id === "transport" || id === "food" || id === "rooms") return phase === "past";
     if (id === "expenses") return !(phase === "past" && tripCosts(trip, expenses, myNames).open > 0);
     return true;
@@ -180,7 +186,7 @@ export function TripOverviewTab() {
     photos: <PhotosTile trip={trip} phase={phase} summary={storySummary} onOpenDay={setViewDayId} uploadDayId={uploadDay?.ev.id} />,
     practical: shown.practical && <PracticalTile info={info} trip={trip} onOpen={() => setPracticalOpen(true)} wide={wideId === "practical"} />,
     expenses: <ExpensesTile trip={trip} phase={phase} expenses={expenses} myNames={myNames} wide={wideId === "expenses"} />,
-    tickets: shown.tickets && <TicketTile trip={trip} onOpen={() => setTicketOpen(true)} wide={wideId === "tickets"} />,
+    tickets: shown.tickets && <TicketTile trip={trip} poll={ticketPoll} onOpen={() => setTicketOpen(true)} wide={wideId === "tickets"} />,
   };
 
   return (
@@ -224,7 +230,7 @@ export function TripOverviewTab() {
 
           {/* Dense flow fills the gaps a missing tile (no hotel, no con) would leave. */}
           <div className="grid grid-flow-dense grid-cols-2 gap-3 lg:grid-cols-4">
-            {TILE_ORDER[phase].map((id) => tiles[id] && <Fragment key={id}>{tiles[id]}</Fragment>)}
+            {order.map((id) => tiles[id] && <Fragment key={id}>{tiles[id]}</Fragment>)}
           </div>
         </motion.div>
       </div>
@@ -245,7 +251,7 @@ export function TripOverviewTab() {
       {trip.isHotel && <TripRoomsSheet open={activeTab === "rooms"} onClose={closeSheet} />}
       {trip.location && <WeatherSheet open={weatherOpen} onClose={() => setWeatherOpen(false)} trip={trip} />}
       <PracticalSheet open={practicalOpen} onClose={() => setPracticalOpen(false)} info={info} trip={trip} />
-      <TicketSheet open={ticketOpen} onClose={() => setTicketOpen(false)} trip={trip} />
+      <TicketSheet open={ticketOpen} onClose={() => setTicketOpen(false)} trip={trip} poll={ticketPoll} />
 
       <StoryViewer eventDayId={viewDayId ?? ""} open={viewDayId !== null} onClose={() => setViewDayId(null)} />
     </div>

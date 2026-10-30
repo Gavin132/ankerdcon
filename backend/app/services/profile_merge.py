@@ -74,7 +74,7 @@ def is_placeholder(profile: dict) -> bool:
 KINDS = (
     "rides", "meals", "trip_days", "hotel_rooms", "expenses", "expense_shares", "settlements",
     "cosplays", "photos", "stories_seen", "ride_costs", "parking_spots", "feedback",
-    "push_subscriptions", "badges",
+    "push_subscriptions", "badges", "ticket_votes",
 )
 # What was thrown away instead of moved, because it would have been a duplicate or a payment to oneself.
 DROPPED_KINDS = ("settlements", "ride_costs", "parking_spots", "restaurant_cars")
@@ -258,6 +258,33 @@ def _plan_renames(ctx: _Ctx) -> None:
         plan.counts[kind] += len(rows)
         plan.ops.append(lambda t=table, c=column: _write(f"rename {t}.{c}", lambda: (
             supabase.table(t).update({c: new}).in_(c, ctx.old_list).execute()
+        )))
+
+
+def _plan_ticket_votes(ctx: _Ctx) -> None:
+    """A member has one vote per ticket vote: the placeholder's is dropped when the member voted too, else
+    it is renamed. The buyer of a vote is renamed without being counted (it is a name on a card, not something
+    the member did)."""
+    plan, old, new = ctx.plan, ctx.old, ctx.new
+    rows = _select(
+        Tables.TICKET_VOTES, "id, poll_id, voter", optional=True,
+        where=lambda q: q.in_("voter", [*ctx.old_list, new]),
+    )
+    taken = {r["poll_id"] for r in rows if r["voter"] == new}
+    for row in (r for r in rows if r["voter"] in old):
+        plan.counts["ticket_votes"] += 1
+        if row["poll_id"] in taken:
+            plan.ops.append(lambda i=row["id"]: _write("drop duplicate ticket vote", lambda: (
+                supabase.table(Tables.TICKET_VOTES).delete().eq("id", i).execute()
+            )))
+        else:
+            taken.add(row["poll_id"])
+            plan.ops.append(lambda i=row["id"]: _write("rename ticket_votes.voter", lambda: (
+                supabase.table(Tables.TICKET_VOTES).update({"voter": new}).eq("id", i).execute()
+            )))
+    if _select(Tables.TICKET_POLLS, "id", optional=True, where=lambda q: q.in_("buyer", ctx.old_list)):
+        plan.ops.append(lambda: _write("rename ticket_polls.buyer", lambda: (
+            supabase.table(Tables.TICKET_POLLS).update({"buyer": new}).in_("buyer", ctx.old_list).execute()
         )))
 
 
@@ -487,6 +514,7 @@ def plan_merge(source: dict, target: dict) -> MergePlan:
     _plan_lists(ctx)
     _plan_renames(ctx)
     _plan_per_trip(ctx)
+    _plan_ticket_votes(ctx)
     _plan_profile(ctx)
     return plan
 

@@ -61,6 +61,7 @@ class NotificationCategory:
     MEAL_CREATED = "meal_created"
     FEEDBACK_SUBMITTED = "feedback_submitted"
     NEW_USER = "new_user"
+    TICKET_VOTE = "ticket_vote"
 
 
 ALL_CATEGORIES: list[str] = [
@@ -74,6 +75,7 @@ ALL_CATEGORIES: list[str] = [
     NotificationCategory.MEAL_CREATED,
     NotificationCategory.FEEDBACK_SUBMITTED,
     NotificationCategory.NEW_USER,
+    NotificationCategory.TICKET_VOTE,
 ]
 
 # Categories only admins can have. Choosing one is refused for anyone else (see
@@ -97,6 +99,7 @@ _PUSH_TITLES: dict[str, str] = {
     NotificationCategory.MEAL_CREATED: "Nieuwe activiteit",
     NotificationCategory.FEEDBACK_SUBMITTED: "Nieuwe feedback",
     NotificationCategory.NEW_USER: "Nieuwe gebruiker",
+    NotificationCategory.TICKET_VOTE: "Ticketstemming",
 }
 
 

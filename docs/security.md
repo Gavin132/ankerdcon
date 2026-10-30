@@ -133,7 +133,8 @@ thread that can never fail the login. Claiming a stub and an admin adding a prof
 - **What it touches.** By id: `settlements` (`from_user_id`, `to_user_id`, `created_by`). By name (the placeholder's name and
   its aliases): `rides` (`driver`, `passengers`, the cars in `restaurant_drivers`), `meals` (`participants`, `created_by`),
   `event_days.participants`, `hotel_rooms.occupants`, `expenses.paid_by`, `expense_shares.participant`, `cosplays.user_name`,
-  `story_photos.uploaded_by`, `story_seen.user_name`, `ride_costs.driver`, `parking_spots` (`driver`, `placed_by`),
+  `story_photos.uploaded_by`, `story_seen.user_name`, `ride_costs.driver`, `parking_spots` (`driver`, `placed_by`), `ticket_votes.voter` (one vote per ticket vote: the
+  placeholder's is dropped when the member voted too), `ticket_polls.buyer`,
   `feedback.user_name`, `push_subscriptions.user_name`. On the member's profile: `badge_ids` gain the placeholder's, and
   `aliases` gain its names. Tables from a later migration that has not been run are skipped.
 - **Never twice.** In a name list the placeholder's name is replaced by the member's, or just removed when the member is on it

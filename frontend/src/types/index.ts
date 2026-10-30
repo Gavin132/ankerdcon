@@ -421,6 +421,29 @@ export interface RsvpRequest {
   user_name: string;
 }
 
+// Ticket vote on a trip (Kaartverkoop)
+export interface TicketPollOption {
+  id: string;
+  label: string;
+  price: number;
+}
+
+export interface TicketPollVote {
+  voter: string;
+  /** An option id, or "unsure". */
+  choice: string;
+}
+
+export interface TicketPoll {
+  id: string;
+  event_id: string;
+  status: "open" | "bought";
+  options: TicketPollOption[];
+  votes: TicketPollVote[];
+  buyer: string | null;
+  chosen_option: string | null;
+}
+
 // Payments
 export interface TicketType {
   title: string;

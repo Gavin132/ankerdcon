@@ -151,6 +151,13 @@ class RideCostRoutes:
     TRIP = "/{trip_id}"
 
 
+class TicketPollRoutes:
+    PREFIX = "/ticket-polls"
+    TRIP = "/{trip_id}"
+    VOTE = "/{trip_id}/vote"
+    BOUGHT = "/{trip_id}/bought"
+
+
 class AdminRoutes:
     PREFIX = "/admin"
     STATS = "/stats"

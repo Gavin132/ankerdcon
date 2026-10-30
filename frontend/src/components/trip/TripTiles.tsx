@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { BedDouble, Camera, Car, ChevronRight, CloudSun, FileText, Info, Plus, Sparkles, Ticket as TicketIcon, Trash2, Upload, Utensils, Wallet } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
+import { Segmented } from "../common/Segmented";
+import { StartTicketVote, TicketBars, TicketBoughtView, TicketVoteView, choiceLabel } from "./TicketVote";
 import { AvatarStack } from "../common/AvatarStack";
 import { OutlierRow } from "./Outliers";
 import { Button } from "../common/Button";
@@ -15,21 +17,23 @@ import { EventLinks } from "../event/EventLinks";
 import { TileText, TilePill, TileValue, TripTile } from "./TripTile";
 import { useRouteAction } from "../../hooks/useRouteAction";
 import { useIsViewer } from "../../hooks/useIsViewer";
+import { useMyNames } from "../../hooks/useUsers";
 import { activityCount, mealCategory } from "../../utils/mealCategory";
 import { useEventWeather } from "../../hooks/useEventWeather";
 import { useUsers } from "../../hooks/useUsers";
+import { myTicketChoice, tallyTicketPoll } from "../../utils/ticketPoll";
 import { routes } from "../../config/routes";
 import { getNow } from "../../store/time.store";
 import { parseEventDate, splitDateTime, toDateKey, todayKey } from "../../utils/date";
 import { dayShort } from "../../utils/multiDay";
 import { rideHow } from "../../utils/transportView";
 import { practicalTopics } from "../../utils/practicalInfo";
-import { countOf, formatAmount, formatBytes } from "../../utils/format";
+import { countOf, formatAmount, formatBytes, formatTicketSaleStart } from "../../utils/format";
 import { defaultTripDayId, tripGaps, tripInfo, tripMeals, tripRides, tripOutliers, tripRoomGaps, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
 import { groupPeople } from "../../utils/people";
 import { useLocalTicketsStore } from "../../store/localTickets.store";
 import type { LocalTicket } from "../../utils/localTickets";
-import type { CalendarEvent, Cosplay, Expense, HotelRoom, Meal, Ride, StoryDaySummary, User } from "../../types";
+import type { CalendarEvent, Cosplay, Expense, HotelRoom, Meal, Ride, StoryDaySummary, TicketPoll, User } from "../../types";
 
 /** The small "add" button in the corner of a tile: the standard blue, as a 36 px square like every icon button. */
 const ADD_BUTTON_CLASS = "icon-btn bg-brand text-brand-on hover:bg-brand hover:text-brand-on hover:opacity-90";
@@ -573,13 +577,52 @@ const TICKET_MAX_BYTES = 15 * 1024 * 1024; // 15 MB — generous for a screensho
 const TICKET_ACCEPT = "image/jpeg,image/png,image/webp,application/pdf";
 
 /** Answers "have I saved my ticket for this trip" — nothing here ever leaves the device. */
-export function TicketTile({ trip, onOpen, wide }: { trip: Trip; onOpen: () => void; wide?: boolean }) {
+export function TicketTile({ trip, poll, onOpen, wide }: { trip: Trip; poll?: TicketPoll | null; onOpen: () => void; wide?: boolean }) {
   const items = useLocalTicketsStore((s) => s.items);
   const hydrate = useLocalTicketsStore((s) => s.hydrate);
+  const { data: users = [] } = useUsers();
+  const { myNames } = useMyNames();
+  const viewer = useIsViewer();
   useEffect(() => {
     hydrate();
   }, [hydrate]);
   const count = items.filter((t) => t.eventId === trip.id).length;
+
+  // A vote that is open takes the whole row; once the tickets are bought it is a small line again.
+  if (poll?.status === "open") {
+    const tally = tallyTicketPoll(poll, users);
+    const myChoice = myTicketChoice(poll, myNames);
+    const sale = tripInfo(trip).ticket_sale_start;
+    return (
+      <TripTile
+        icon={TicketIcon}
+        label="Tickets"
+        onOpen={onOpen}
+        size="full"
+        pill={myChoice === null && !viewer ? <TilePill>Stem mee</TilePill> : undefined}
+      >
+        <TicketBars tally={tally} myChoice={myChoice} />
+        <TileText>
+          {tally.voters.length === 0 ? "Nog niemand gestemd" : `${tally.voters.length} ${tally.voters.length === 1 ? "persoon" : "mensen"} gestemd`}
+          {sale && ` · verkoop start ${formatTicketSaleStart(sale)}`}
+        </TileText>
+      </TripTile>
+    );
+  }
+
+  if (poll?.status === "bought") {
+    const mine = choiceLabel(poll, myTicketChoice(poll, myNames));
+    return (
+      <TripTile icon={TicketIcon} label="Tickets" onOpen={onOpen} size={wide ? "wide" : "small"}>
+        <TileValue>Gekocht</TileValue>
+        <TileText>
+          Door {poll.buyer}
+          {mine && ` · jij koos: ${mine}`}
+          {count > 0 && ` · ${count} ${count === 1 ? "bestand" : "bestanden"} op dit toestel`}
+        </TileText>
+      </TripTile>
+    );
+  }
 
   return (
     <TripTile icon={TicketIcon} label="Ticket" onOpen={onOpen} size={wide ? "wide" : "small"}>
@@ -643,7 +686,14 @@ function TicketRow({ ticket, onDelete }: { ticket: LocalTicket; onDelete: () => 
  * never uploaded, never visible to anyone else, not even an admin. That also means it doesn't
  * follow you to another device, and a browser can clear it on its own (low on storage, a
  * reinstall) — worth keeping a copy somewhere else too for anything you can't afford to lose. */
-export function TicketSheet({ open, onClose, trip }: { open: boolean; onClose: () => void; trip: Trip }) {
+export function TicketSheet({
+  open, onClose, trip, poll, mineOnly,
+}: { open: boolean; onClose: () => void; trip: Trip; poll?: TicketPoll | null; /** Only the member's own ticket, no vote (the Hub's shortcut). */ mineOnly?: boolean }) {
+  const { me } = useMyNames();
+  const [view, setView] = useState<"buy" | "mine">("buy");
+  // The vote is a view of its own when there is one, or when an admin can start one.
+  const hasBuy = !mineOnly && (!!poll || !!me?.is_admin);
+  const shown = hasBuy ? view : "mine";
   const items = useLocalTicketsStore((s) => s.items);
   const add = useLocalTicketsStore((s) => s.add);
   const remove = useLocalTicketsStore((s) => s.remove);
@@ -671,38 +721,59 @@ export function TicketSheet({ open, onClose, trip }: { open: boolean; onClose: (
   }
 
   return (
-    <TripSheet open={open} onClose={onClose} title="Mijn ticket" subtitle={trip.title}>
-      <div className="mb-4 flex items-start gap-2.5 rounded-xl border-1.5 border-line bg-sunken px-3.5 py-3 text-xs leading-relaxed text-ink-2">
-        <TicketIcon size={14} className="mt-0.5 shrink-0 text-ink-3" />
-        <p>Alleen op dit toestel opgeslagen — niet in de cloud, niet zichtbaar voor anderen (ook niet voor beheerders).</p>
-      </div>
+    <TripSheet open={open} onClose={onClose} title={hasBuy ? "Tickets" : "Mijn ticket"} subtitle={trip.title}>
+      {hasBuy && (
+        <Segmented
+          label="Tickets"
+          fill
+          className="mb-4"
+          options={[{ value: "buy", label: poll?.status === "bought" ? "Gekocht" : "Kopen" }, { value: "mine", label: "Mijn ticket" }]}
+          value={shown}
+          onChange={setView}
+        />
+      )}
+      {shown === "buy" && (
+        <>
+          {poll?.status === "open" && <TicketVoteView trip={trip} poll={poll} />}
+          {poll?.status === "bought" && <TicketBoughtView trip={trip} poll={poll} />}
+          {!poll && <StartTicketVote trip={trip} />}
+        </>
+      )}
+      {shown === "mine" && (
+        <>
+          <div className="mb-4 flex items-start gap-2.5 rounded-xl border-1.5 border-line bg-sunken px-3.5 py-3 text-xs leading-relaxed text-ink-2">
+            <TicketIcon size={14} className="mt-0.5 shrink-0 text-ink-3" />
+            <p>Alleen op dit toestel opgeslagen — niet in de cloud, niet zichtbaar voor anderen (ook niet voor beheerders).</p>
+          </div>
 
-      <input
-        ref={fileInput}
-        id="ticket-file"
-        type="file"
-        accept={TICKET_ACCEPT}
-        className="sr-only"
-        onChange={(e) => void handleFile(e.target.files?.[0])}
-      />
-      <label
-        htmlFor="ticket-file"
-        className="mb-4 flex cursor-pointer items-center justify-center gap-2 rounded-xl border-1.5 border-dashed border-line px-4 py-4 text-sm font-semibold text-ink transition-colors hover:border-ink-3"
-      >
-        <Upload size={16} className="text-ink-3" />
-        Ticket toevoegen (foto of PDF)
-      </label>
+          <input
+            ref={fileInput}
+            id="ticket-file"
+            type="file"
+            accept={TICKET_ACCEPT}
+            className="sr-only"
+            onChange={(e) => void handleFile(e.target.files?.[0])}
+          />
+          <label
+            htmlFor="ticket-file"
+            className="mb-4 flex cursor-pointer items-center justify-center gap-2 rounded-xl border-1.5 border-dashed border-line px-4 py-4 text-sm font-semibold text-ink transition-colors hover:border-ink-3"
+          >
+            <Upload size={16} className="text-ink-3" />
+            Ticket toevoegen (foto of PDF)
+          </label>
 
-      {error && <p className="mb-4 text-sm text-bad" role="alert">{error}</p>}
+          {error && <p className="mb-4 text-sm text-bad" role="alert">{error}</p>}
 
-      {mine.length === 0 ? (
-        <p className="py-6 text-center text-sm text-ink-3">Nog geen ticket toegevoegd.</p>
-      ) : (
-        <div className="space-y-2">
-          {mine.map((t) => (
-            <TicketRow key={t.id} ticket={t} onDelete={() => remove(t.id)} />
-          ))}
-        </div>
+          {mine.length === 0 ? (
+            <p className="py-6 text-center text-sm text-ink-3">Nog geen ticket toegevoegd.</p>
+          ) : (
+            <div className="space-y-2">
+              {mine.map((t) => (
+                <TicketRow key={t.id} ticket={t} onDelete={() => remove(t.id)} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </TripSheet>
   );
