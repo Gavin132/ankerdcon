@@ -6,11 +6,32 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+---
+
+## [2.2.1] - 2026-10-30
+
+### Added
+- **Vote on the tickets in the app** instead of in Discord. On an event's page the Tickets tile now holds the vote: an
+  admin opens it with the ticket options (for example "Vr + za + zo", "Za + zo", "Alleen zaterdag", with prices),
+  everyone picks one, or "Weet ik nog niet" (if you are not going, you just do not vote), and can change it until the tickets are bought. While the
+  vote is open it is a card of its own at the top of the page with a bar per ticket and a "Stem mee" label for whoever has
+  not voted; the sheet shows who still has to. An admin closes it with "Tickets zijn gekocht" and picks who bought them
+  (one person buys for everyone); after that the page only says "Gekocht door ..." and the vote is out of the way. Money
+  is settled as usual with an expense in Financiën. Instellingen > Meldingen has a new "Ticketstemming" switch for when
+  a vote opens and when the tickets are bought.
+
 ### Changed
+- **"Wie gaan er mee" shows everyone's ticket.** When the trip has a ticket vote, each person in the list has their
+  ticket next to the days they go: the one they voted for, "Ticket nog onbekend", or "Nog niet gestemd" while the vote is open.
+- **Opening an event is easier to notice.** The top bar of an event page has a back arrow (and the event's name on wider
+  screens), and the page slides in from the right when you open an event from the Agenda or the Hub, and back out to the
+  left when you leave it. Switching between the other pages fades instead of swapping at once.
+- **The ticket shortcut on the Hub opens your ticket over the Hub.** It used to jump to the event page; now your own saved ticket slides up over the Hub, and only that, without the ticket vote.
 - **Location, hotel and website are chips in the top card of an event.** On the event page, the Hub and the Agenda,
   where an event is, where people sleep and the event's website are now small rounded chips under the title instead of
-  a line of text that looked like the start of the description. The location and the website on the event page are
-  bordered chips because they open a map or the site; the others are flat.
+  a line of text that looked like the start of the description. They look the same everywhere, and the location (opens
+  a map) and the website (with its address, for example "dokomi.de") can be tapped on all three. The Hub card now has the
+  date above the title like the other two, instead of in a chip, and shows the website too, as the Agenda does.
 
 ---
 
