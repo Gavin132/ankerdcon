@@ -92,6 +92,11 @@ export function formatTicketSaleStart(raw: string): string {
   return raw;
 }
 
+/** Google Maps search for a place, for a location chip. */
+export function mapsUrl(place: string): string {
+  return `https://maps.google.com/?q=${encodeURIComponent(place)}`;
+}
+
 /** A link's short name for a label: the address without "https://", "www." or the path ("https://www.dokomi.de/en/tickets" → "dokomi.de"). */
 export function siteLabel(url: string): string {
   try {

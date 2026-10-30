@@ -1,12 +1,14 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BedDouble, MapPin, Ticket, Utensils } from "lucide-react";
+import { BedDouble, Globe, MapPin, Ticket, Utensils } from "lucide-react";
 import { AvatarStack } from "../common/AvatarStack";
 import { InfoChip } from "../common/InfoChip";
 import { TripDayPicker } from "../trip/TripDayPicker";
 import { TripParticipants } from "../trip/TripParticipants";
 import { daysBetween, toDateKey, todayKey } from "../../utils/date";
-import { tripImage, tripPeople, type Trip, type TripDay } from "../../utils/trips";
+import { tripImage, tripInfo, tripPeople, type Trip, type TripDay } from "../../utils/trips";
+import { mapsUrl, siteLabel } from "../../utils/format";
+import { safeHref } from "../../utils/validation";
 import { routes } from "../../config/routes";
 import { getNow } from "../../store/time.store";
 import type { Meal, User } from "../../types";
@@ -42,6 +44,7 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
   const myDays = trip.days.filter((d) => d.ev.participants.some(isMine));
   const going = myDays.length > 0;
   const hotel = trip.days.map((d) => d.ev.hotel_location).find(Boolean);
+  const websiteUrl = safeHref(tripInfo(trip).website);
   const eventType = trip.days.find((d) => d.ev.event_type)?.ev.event_type ?? null;
   const mealIds = new Set(meals.map((m) => m.linked_event_id).filter(Boolean));
   const hasMeal = trip.days.some((d) => mealIds.has(d.ev.id));
@@ -93,10 +96,21 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
           >
             {trip.title}
           </Link>
-          {(trip.location || hotel || hasMeal) && (
+          {(trip.location || hotel || websiteUrl || hasMeal) && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              {trip.location && <InfoChip icon={<MapPin size={14} />}>{trip.location}</InfoChip>}
+              {trip.location && <InfoChip icon={<MapPin size={14} />} href={mapsUrl(trip.location)}>{trip.location}</InfoChip>}
               {hotel && <InfoChip icon={<BedDouble size={14} />}>{hotel}</InfoChip>}
+              {websiteUrl && (
+                <InfoChip
+                  icon={<Globe size={14} />}
+                  href={websiteUrl}
+                  external
+                  title={`Website van het evenement: ${websiteUrl}`}
+                  ariaLabel={`Website van het evenement, ${siteLabel(websiteUrl)} (opent in een nieuw tabblad)`}
+                >
+                  {siteLabel(websiteUrl)}
+                </InfoChip>
+              )}
               {hasMeal && <InfoChip icon={<Utensils size={14} />}>Activiteit gepland</InfoChip>}
             </div>
           )}

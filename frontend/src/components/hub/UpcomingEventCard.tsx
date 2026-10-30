@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BedDouble, CalendarDays, MapPin, Music2, PartyPopper, Utensils } from "lucide-react";
+import { BedDouble, Globe, MapPin, Music2, PartyPopper, Utensils } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { AvatarStack } from "../common/AvatarStack";
 import { InfoChip } from "../common/InfoChip";
-import { todayKey, toDateKey } from "../../utils/date";
-import { formatDate } from "../../utils/format";
-import { dayShort } from "../../utils/multiDay";
+import { parseEventDate, todayKey, toDateKey } from "../../utils/date";
+import { formatDate, mapsUrl, siteLabel } from "../../utils/format";
+import { safeHref } from "../../utils/validation";
+import { dayShort, formatDateRange } from "../../utils/multiDay";
 import { findUser as findMember, groupPeople } from "../../utils/people";
 import type { CalendarEvent, Meal, User } from "../../types";
 import type { AnchorRect } from "../common/UserProfilePopup";
@@ -103,11 +104,14 @@ export function UpcomingEventCard({
   const coverImage = dayEvents.map((ev) => ev.image_url).find(Boolean) ?? null;
   const description = dayEvents.map((ev) => ev.description).find(Boolean) ?? null;
   const location = dayEvents.map((ev) => ev.location).find(Boolean) ?? null;
+  const websiteUrl = safeHref(dayEvents.map((ev) => ev.website).find(Boolean));
   const isHotel = dayEvents.some((ev) => ev.is_hotel);
   const eventType = dayEvents.find((ev) => ev.event_type)?.event_type ?? null;
   const isTravelOnly = !isGroupEvent && event.has_con === false && !event.event_type;
   const title = isGroupEvent ? groupTitle : event.event_name;
-  const when = isGroupEvent ? groupDateRange : formatDate(event.date);
+  // The short form the other ticket cards use ("za 7 nov"); the long one only when the date cannot be read.
+  const eventDate = parseEventDate(event.date);
+  const when = isGroupEvent ? groupDateRange : eventDate ? formatDateRange([eventDate]) : formatDate(event.date);
   // One person per entry, not per name they are signed up under (see utils/people.ts).
   const participants = groupPeople(dayEvents.flatMap((ev) => ev.participants ?? []), users).map((person) => person.name);
 
@@ -153,23 +157,39 @@ export function UpcomingEventCard({
 
         {/* ── Body ── */}
         <div className="flex flex-1 flex-col gap-4 p-4 sm:px-6 sm:py-5">
-          <button
-            type="button"
-            onClick={() => onNavigate(event.id)}
-            className="group text-left after:absolute after:inset-0 after:z-0 after:content-['']"
-          >
-            <h2 className="font-display text-[30px] font-black uppercase leading-[0.92] tracking-[0.01em] text-ink group-hover:underline decoration-2 underline-offset-4 sm:text-[38px]">
-              {title}
-            </h2>
-            <div className="mt-2.5 flex flex-wrap items-center gap-2">
-              <InfoChip icon={<CalendarDays size={14} />}>{when}</InfoChip>
-              {location && <InfoChip icon={<MapPin size={14} />}>{location}</InfoChip>}
-              {!isGroupEvent && hasMeal(event.id) && <InfoChip icon={<Utensils size={14} />}>Activiteit gepland</InfoChip>}
-            </div>
+          <div>
+            <button
+              type="button"
+              onClick={() => onNavigate(event.id)}
+              className="group block text-left after:absolute after:inset-0 after:z-0 after:content-['']"
+            >
+              <span className="mb-1.5 block font-mono text-xs font-semibold text-ink">{when}</span>
+              <h2 className="font-display text-[30px] font-black uppercase leading-[0.92] tracking-[0.01em] text-ink group-hover:underline decoration-2 underline-offset-4 sm:text-[38px]">
+                {title}
+              </h2>
+            </button>
+            {/* Links, so they sit above the card-wide tap target (`z-10`) instead of inside the button. */}
+            {(location || websiteUrl || (!isGroupEvent && hasMeal(event.id))) && (
+              <div className="relative z-10 mt-2.5 flex flex-wrap items-center gap-2">
+                {location && <InfoChip icon={<MapPin size={14} />} href={mapsUrl(location)}>{location}</InfoChip>}
+                {websiteUrl && (
+                  <InfoChip
+                    icon={<Globe size={14} />}
+                    href={websiteUrl}
+                    external
+                    title={`Website van het evenement: ${websiteUrl}`}
+                    ariaLabel={`Website van het evenement, ${siteLabel(websiteUrl)} (opent in een nieuw tabblad)`}
+                  >
+                    {siteLabel(websiteUrl)}
+                  </InfoChip>
+                )}
+                {!isGroupEvent && hasMeal(event.id) && <InfoChip icon={<Utensils size={14} />}>Activiteit gepland</InfoChip>}
+              </div>
+            )}
             {description && (
               <p className="mt-3 line-clamp-2 text-[13px] leading-relaxed text-ink-3">{description}</p>
             )}
-          </button>
+          </div>
 
           {/* Days of a multi-day trip — travel-only days are hatched */}
           {isGroupEvent && (

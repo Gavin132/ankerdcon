@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { BedDouble, ExternalLink, Globe, MapPin, Ticket } from "lucide-react";
+import { BedDouble, Globe, MapPin, Ticket } from "lucide-react";
 import { AvatarStack } from "../common/AvatarStack";
 import { InfoChip } from "../common/InfoChip";
 import { TripDayPicker } from "./TripDayPicker";
@@ -8,7 +8,7 @@ import { TripParticipants } from "./TripParticipants";
 import { daysBetween, toDateKey, todayKey } from "../../utils/date";
 import { tripImage, tripPeople, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
 import { getNow } from "../../store/time.store";
-import { siteLabel } from "../../utils/format";
+import { mapsUrl, siteLabel } from "../../utils/format";
 import { safeHref } from "../../utils/validation";
 import { useIsViewer } from "../../hooks/useIsViewer";
 import type { User } from "../../types";
@@ -125,30 +125,21 @@ export function TripTicket({
           {(trip.location || hotel || websiteUrl) && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {trip.location && (
-                <a
-                  href={`https://maps.google.com/?q=${encodeURIComponent(trip.location)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="chip chip-off max-w-full"
-                >
-                  <MapPin size={14} className="shrink-0" /> <span className="min-w-0 truncate">{trip.location}</span>
-                </a>
+                <InfoChip icon={<MapPin size={14} />} href={mapsUrl(trip.location)}>{trip.location}</InfoChip>
               )}
               {hotel && (
                 <InfoChip icon={<BedDouble size={14} />}>{hotel}</InfoChip>
               )}
               {websiteUrl && (
-                <a
+                <InfoChip
+                  icon={<Globe size={14} />}
                   href={websiteUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  external
                   title={`Website van het evenement: ${websiteUrl}`}
-                  aria-label={`Website van het evenement, ${siteLabel(websiteUrl)} (opent in een nieuw tabblad)`}
-                  className="chip chip-off max-w-full"
+                  ariaLabel={`Website van het evenement, ${siteLabel(websiteUrl)} (opent in een nieuw tabblad)`}
                 >
-                  <Globe size={14} className="shrink-0" /> <span className="min-w-0 truncate">{siteLabel(websiteUrl)}</span>
-                  <ExternalLink size={12} className="shrink-0" aria-hidden />
-                </a>
+                  {siteLabel(websiteUrl)}
+                </InfoChip>
               )}
             </div>
           )}
