@@ -44,7 +44,7 @@ Postgres on Supabase. Only the backend talks to it (see
 
 | Table | Purpose | Notes |
 | --- | --- | --- |
-| `profiles` | One row per member | `id` is the Supabase auth user id. `name`, `aliases` (former names), `discord_id`, `discord_username`, `email`, `avatar_url`, banner (`banner_color`, `banner_url`, `banner_position`), `color`, `font`, `bio`, `pronouns`, `phone_number`, `live_location_ping` (JSON text), `badge_ids`, `is_viewer` (read-only member, see [features.md](features.md#read-only-members-kijkers)), `notification_categories` (the keys of `NotificationCategory`; `feedback_submitted` and `new_user` are admin-only and not set by default), `notify_own_trips_only` (only hear about activities and expenses of trips you go on; default true), `allow_dm`, `show_greeting`, `is_admin`, `is_active`, `is_first_login`, `onboarding_completed`, `avatar_synced_at` (when the avatar was
+| `profiles` | One row per member | `id` is the Supabase auth user id. `name`, `aliases` (former names), `discord_id`, `discord_username`, `email`, `avatar_url`, banner (`banner_color`, `banner_url`, `banner_position`), `color`, `font`, `bio`, `pronouns`, `phone_number`, `live_location_ping` (JSON text), `badge_ids`, `is_viewer` (read-only member, see [features.md](features.md#read-only-members-kijkers)), `notification_categories` (the keys of `NotificationCategory`; `feedback_submitted` and `new_user` are admin-only and not set by default), `notify_own_trips_only` (only hear about activities and expenses of trips you go on; default true), `quiet_hours_start` / `quiet_hours_end` (hours 0-23, Dutch time; both NULL: no quiet hours; no category DM or push in between, see migration v2.44), `allow_dm`, `show_greeting`, `is_admin`, `is_active`, `is_first_login`, `onboarding_completed`, `avatar_synced_at` (when the avatar was
 last refreshed from Discord/Google — see [security.md](security.md#authentication)), `avatar_custom`
 (true once a member uploads their own picture — stops the resync from overwriting it). Created by the backend after a whitelisted login, or by an admin as a stub (a *placeholder*: no email, discord_username or avatar) that is claimed at first login or merged into the real profile by an admin ([security.md](security.md#placeholders-and-merging), which lists every table and column a merge rewrites). Never by a database trigger. |
 | `whitelist` | Who may log in | `discord_id` and/or `email`; one of them is required. `viewer`: whoever gets in through this entry gets a read-only account. |
@@ -72,7 +72,7 @@ last refreshed from Discord/Google — see [security.md](security.md#authenticat
 | `meals` | Planned activities (started as meals) | `category_id` (→ `meal_categories`), `meal_name`, `time`, `location` + `location_lat`/`location_lng` (resolved the same way as an event's, for the crew map), `maps_url` (an optional exact Google Maps link — its own coordinates win over geocoding `location` when given), `cost`, `transport_needed`, `participants`, `linked_event_id` (a day), `created_by`, and links and notes. |
 | `meal_categories` | Kinds of activity | `name` (unique), `sort_order`, and four switches: `has_signup`, `has_cost`, `has_transport`, `is_meal`. Managed by admins; `meals.category_id` is `ON DELETE RESTRICT`. |
 | `cosplays` | A character worn by a member | `user_name`, `character_name`, `series`, `notes`, `inspo_images` (max 3, enforced by the API), `linked_event_ids` (days). |
-| `story_photos` | Photos and videos in a day's story | `event_day_id`, `uploaded_by` (a name), `image_url` (the original, or the video), `seq` (global, increasing). `poster_url` (a video's still frame), `thumb_url` (480 px, for grids) and `preview_url` (1280 px, for the viewer, only for a big photo) are lighter WebP/JPEG files stored beside it; NULL until made. |
+| `story_photos` | Photos and videos in a day's story | `event_day_id`, `uploaded_by` (a name), `image_url` (the original, or the video), `seq` (global, increasing). `poster_url` (a video's still frame), `thumb_url` (480 px, for grids) and `preview_url` (1280 px, for the viewer, only for a big photo) are lighter WebP/JPEG files stored beside it; NULL until made. `taken_on` (date): NULL for a photo of the event day itself, else the day exactly one day before or after it that the photo was taken (shown as a day of its own in the trip's photo card; no event day is made for it). |
 | `story_seen` | How far each member has watched a day | `(user_name, event_day_id)`, `last_seen_seq`. |
 
 ### Money
@@ -155,6 +155,8 @@ order, not the number in the title.
 | `migration_v2.33_venue_geocoding` | `events.location_lat/lng`, `events.hotel_location_lat/lng`, `meals.location_lat/lng`, `meals.maps_url` — venue pins for the crew map. **Run before the deploy** — the backend writes these columns on every event/meal save. |
 | `migration_v2.34_venue_maps_url` | `events.location_maps_url`, `events.hotel_location_maps_url` — admin-set exact Maps links, for a venue (e.g. a hotel chain) whose address doesn't geocode reliably. **Run before the deploy**, same reason as v2.33. |
 | `migration_v2.35_parking_spots` | `parking_spots` table — one pin per (trip, driver) for the crew map. **Run before the deploy**: setting a spot writes to this table, and it doesn't exist until this runs. |
+| `migration_v2.44_quiet_hours` | `profiles.quiet_hours_start` and `quiet_hours_end`. Safe to run any time: without them quiet hours cannot be saved (the app says so) and notifications go out as before. |
+| `migration_v2.43_story_photo_days` | `story_photos.taken_on`. Safe to run any time: without it a photo of the day before or after an event is saved on its nearest event day instead. |
 | `migration_v2.42_ticket_polls` | `ticket_polls` and `ticket_votes` tables. **Run before the deploy**: until then the ticket vote on the trip page answers 503 (nothing else is affected). |
 | `migration_v2.41_story_thumbnails` | `story_photos.thumb_url` and `preview_url`. Safe to run any time: without them photos are saved without the lighter copies. After running it, make the copies for older photos with `python -m scripts.backfill_story_previews` (in `backend/`). |
 | `migration_v2.40_story_video` | `story_photos.poster_url`, the still frame of a story video. Run before the deploy that lets members add videos; photos work without it. |
@@ -197,6 +199,8 @@ Run in the SQL editor:
 | v2.40 | `select 1 from information_schema.columns where table_name = 'story_photos' and column_name = 'poster_url'` returns a row |
 | v2.41 | `select 1 from information_schema.columns where table_name = 'story_photos' and column_name = 'thumb_url'` returns a row |
 | v2.42 | `select to_regclass('public.ticket_polls')` is not null |
+| v2.43 | `select 1 from information_schema.columns where table_name = 'story_photos' and column_name = 'taken_on'` returns a row |
+| v2.44 | `select 1 from information_schema.columns where table_name = 'profiles' and column_name = 'quiet_hours_start'` returns a row |
 
 `db/check_schema.py` compares `db/schema.sql` with the live database, but
 `schema.sql` is out of date (see below), so it reports differences that are not

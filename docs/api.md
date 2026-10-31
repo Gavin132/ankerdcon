@@ -60,10 +60,13 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `GET /users/` | member | all members |
 | `GET /users/me` | member | your own profile |
 | `GET /users/{id or name}` | member | one profile, by id or name |
-| `PUT /users/preferences` | member | edit your profile (colour, bio, notifications, …). `notification_categories` containing an admin-only category (`feedback_submitted`, `new_user`) is a 403 for anyone who is not an admin; an unknown category is a 422 |
+| `PUT /users/preferences` | member | edit your profile (colour, bio, notifications, …). `notification_categories` containing an admin-only category (`feedback_submitted`, `new_user`) is a 403 for anyone who is not an admin; an unknown category is a 422. `quiet_hours_start` and `quiet_hours_end` (0-23, both or neither, not equal) set the quiet hours, `quiet_hours_off: true` clears them (422 on an incomplete window; 503 "Stille uren zijn nog niet beschikbaar" before migration v2.44) |
 | `PATCH /users/name` | member | rename yourself (the old name becomes an alias) |
 | `POST /users/me/onboarding` | member | finish onboarding (same rule for admin-only notification categories) |
 | `POST /users/me/link-discord` | member | link a Discord account to a Google login |
+| `DELETE /users/me/discord` | member (also read-only) | forget the linked Discord account on the profile, after the browser has unlinked it from the login (`supabase.auth.unlinkIdentity`); 409 while Discord is still on the login, 400 when none is linked |
+| `POST /users/me/deletion-request` | member (also read-only) | ask for the account and data to be deleted: saved as a message under Admin → Feedback and sent to **every active admin** as a DM/push, whatever notifications they chose (`broadcast_category_dm(admins_always=True)`); at most 2 a day (429). The app does not delete anything itself |
+| `GET /users/me/export` | member | everything stored about you as one JSON download: profile (never the login hash), the days you go, your rides, activities, expenses and shares, cosplays, photos, ticket votes and feedback, found by every name you go by |
 | `POST /users/me/test-notification` | member | send yourself one message through your saved channel(s); 5 an hour |
 | `PUT /users/{id}/location` | member | set a location ping (for yourself, via `act_as`) |
 | `POST /users/banner`, `DELETE /users/banner` | member | upload or remove your banner |
@@ -130,11 +133,11 @@ Best-effort throughout; neither resolving means no pin.
 
 | Method and path | Who | What |
 | --- | --- | --- |
-| `GET /stories/summary?event_day_ids=a,b` | member | per day: photo count, newest photo, whether there is anything unseen |
+| `GET /stories/summary?event_day_ids=a,b` | member | per day: photo count, newest photo, whether there is anything unseen. `photo_count` is the event day itself; photos of the day just before or after the event are in `extra_days` (`date`, `photo_count`, `preview_url`) |
 | `GET /stories/user/{id or name}` | member | every photo one member uploaded, with its event |
-| `GET /stories/{day}` | member | a day's photos in order, each with `media_type` and, where they exist, `thumb_url` (grids), `preview_url` (the viewer, only for a big photo) and `poster_url` (a video's still frame); `image_url` is always the full original |
-| `GET /stories/{day}/download-all` | member | the day's photos as one zip, streamed while it is built (413 above 300 photos; a file MinIO can't read is skipped) |
-| `POST /stories/{day}` | member | upload a photo (multipart, field `file`, max 15 MB), or a video (`file` as MP4/MOV/WebM, max 80 MB, plus the still frame as field `poster`). Photos and videos come back with `media_type` (`image`/`video`, from the file name) and `poster_url` |
+| `GET /stories/{day}[?taken_on=YYYY-MM-DD]` | member | a day's photos in order (with `taken_on`: those of that day beside the event instead), each with `media_type` and, where they exist, `thumb_url` (grids), `preview_url` (the viewer, only for a big photo) and `poster_url` (a video's still frame); `image_url` is always the full original |
+| `GET /stories/{day}/download-all[?taken_on=]` | member | the day's photos (or those of one day beside the event) as one zip, streamed while it is built (413 above 300 photos; a file MinIO can't read is skipped) |
+| `POST /stories/{day}[?taken_on=YYYY-MM-DD]` | member | upload (`taken_on`: the day it was taken when that is exactly one day before or after this day, else 422) a photo (multipart, field `file`, max 15 MB), or a video (`file` as MP4/MOV/WebM, max 80 MB, plus the still frame as field `poster`). Photos and videos come back with `media_type` (`image`/`video`, from the file name) and `poster_url` |
 | `GET /stories/{day}/seen`, `PUT /stories/{day}/seen` | member | your watch progress |
 | `GET /stories/photos/{id}/download` | member | the original, as a download |
 | `DELETE /stories/photos/{id}` | uploader | remove |

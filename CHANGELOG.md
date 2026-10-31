@@ -8,6 +8,38 @@ All notable changes to Ankerd Con are documented here.
 
 ---
 
+## [2.2.2] - 2026-10-31
+
+### Added
+- **Photos go to the day they were taken.** The app reads when a photo was taken and files it under that day, of whichever
+  trip, whether you add it from the event page or from the Hub. A photo from the day before or after an event gets a day
+  of its own in the Foto's card (for example "2 op ma" after a Friday to Sunday con); anything further away goes to the
+  nearest day of an event. A photo without a date (a screenshot, a forward) and a video still go to the day you started
+  from. The days beside an event only show in the event page's Foto's card.
+- **Stille uren.** Under Instellingen > Meldingen you can choose hours (for example 23:00 to 08:00) in which you get no
+  Discord message or push for the notifications you switched on. What you miss in that time is not sent later. A payment
+  request to you still arrives.
+- **Instagram** next to YouTube in Instellingen > Delen & links, which now starts with the two.
+- **Databesparing** under Instellingen > Weergave, for this device: a story loads nothing ahead and a video only
+  after you tap "Video afspelen".
+- **Discord in Instellingen.** Once linked, it shows which account, and you can unlink it as long as you can still sign
+  in another way (so you cannot lock yourself out).
+- **Mijn gegevens.** "Mijn gegevens downloaden" gives a file with what the app has stored about you (profile, the days
+  you go, rides, activities, expenses, cosplays, photos, votes and feedback). "Account laten verwijderen" sends a
+  beheerder the request: every admin gets a message (they cannot switch it off) and removes the account.
+
+### Changed
+- **"Ticketstemming" and "stemming" are now "ticket poll" and "poll"** in the app, the notification settings and the
+  messages members get.
+- **"Alleen belangrijk" no longer switches on the reminders** a day before and on the day of an event, and does switch
+  on "Nieuwe activiteit".
+- **"Wat is nieuw" moved from the account menu to Instellingen**, as a row under Feedback geven in the App block.
+- **Calmer ticket cards.** In the Agenda the day boxes are gone: the card shows the start of the event's description instead, and on a trip of several days "Ik ga mee" opens a sheet where you pick the days (a single day is still one tap), and once you are going you tap the "Je gaat mee" sticker to sign off every day: the "Afmelden" and "Dagen aanpassen" links are gone. Single days are changed on the event page. The countdown says "285 dagen" instead of "285 dagen te gaan" so "Ik ga mee" stays on its line on narrow phones, and the Hub card drops the small "3 dagen" under the countdown (during an event it still says "dag 2 van 3").
+- **The website chip just says "Website"** (the address is in its tooltip), and the hotel chip comes last, so the short
+  chips stay together on a line when the hotel's name is long.
+
+---
+
 ## [2.2.1] - 2026-10-30
 
 ### Added
@@ -17,7 +49,7 @@ All notable changes to Ankerd Con are documented here.
   vote is open it is a card of its own at the top of the page with a bar per ticket and a "Stem mee" label for whoever has
   not voted; the sheet shows who still has to. An admin closes it with "Tickets zijn gekocht" and picks who bought them
   (one person buys for everyone); after that the page only says "Gekocht door ..." and the vote is out of the way. Money
-  is settled as usual with an expense in Financiën. Instellingen > Meldingen has a new "Ticketstemming" switch for when
+  is settled as usual with an expense in Financiën. Instellingen > Meldingen has a new "Ticket poll" switch for when
   a vote opens and when the tickets are bought.
 
 ### Changed

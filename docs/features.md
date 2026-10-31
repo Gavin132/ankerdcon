@@ -83,8 +83,8 @@ the trip, the ride buttons and a meal today are the left column and "Voor jou" w
   everyone by name (`TripParticipants.tsx`); that list has the "Iemand aanmelden" button (it sits next to the text
   when nobody is on the trip yet). The tilted "Je gaat mee" stamp is only on a trip that is under way or over; before it,
   the checked day cards and "Jij en 3 anderen" say it. Under the title are flat chips (`InfoChip`, the same on the
-  Hub and the Agenda): the place (a Maps link), the hotel and, when the event has a website, a globe chip with its address
-  ("dokomi.de", `siteLabel`; only http(s) links, opens in a new tab). The date is the small line above the title on all three cards.
+  Hub and the Agenda): the place (a Maps link), the hotel and, when the event has a website, a globe chip that says "Website"
+  (short on purpose, so the chips fit on a phone; the address is the tooltip and the screen-reader label via `siteLabel`; only http(s) links, opens in a new tab). The date is the small line above the title on all three cards.
 - The line at the top of the ticket names what kind of trip it is: an admin can tag an event
   **Con**, **Gathering** or **Concert** (`events.event_type` — Admin → Evenementen); untagged
   falls back to "Con" when the trip has con programming (`has_con`) or "Reis" otherwise. Shown
@@ -119,7 +119,7 @@ the trip, the ride buttons and a meal today are the left column and "Voor jou" w
   or "Weet ik nog niet" (somebody who is not going just does not vote), and can change it until the tickets are bought. While the vote is open the
   Ticket tile is a card of its own, full width and first, with a bar per ticket and a "Stem mee" pill for whoever has not
   voted; the sheet has the choices, who has not voted yet and, for admins, "Tickets zijn gekocht" (pick the buyer and the
-  ticket: one person buys for everyone) and "Stemming verwijderen". After that the vote is gone from the page: the tile is
+  ticket: one person buys for everyone) and "Poll verwijderen". After that the vote is gone from the page: the tile is
   a small "Gekocht door Sam" line and the sheet says so. Money is not kept here: the buyer adds an expense in Financiën.
   People are counted once even when they voted under two names (`utils/ticketPoll.ts`, `groupPeople`).
   The "Wie gaan er mee" list (`TripParticipants.tsx`) shows each person's ticket next to their days: the ticket they
@@ -266,8 +266,18 @@ the form is open; saving waits until nothing is queued.
   30, uploaded one after the other, **oldest first by when they were taken**. The story shows
   upload order, so uploading in capture order is what sorts them. The date is the EXIF
   `DateTimeOriginal` (`utils/photoDate.ts`), read from the original because the canvas
-  compression strips EXIF, with the file's `lastModified` as fallback. One toast sums up the
+  compression strips EXIF, with the file's `lastModified` as fallback for the order only. One toast sums up the
   batch; after a network failure the rest is queued without waiting out more timeouts.
+- **A photo goes to the day it was taken** (`routePhotoDay`, `utils/storyDay.ts`, in `useStoryPhotoPicker`), not to the day
+  the page or the Hub tile happens to point at. Only the EXIF date counts: a photo without one (a screenshot, a
+  forward) and every video go to the day the upload started from, because their file date is when they were saved.
+  Across every event: on an event day, that day (of whichever trip); exactly **one day before or after** an
+  event, a day of its own in the trip's Foto's card, kept as a photo of the nearest event day with the date it was
+  taken (`story_photos.taken_on`, migration v2.43; an event day is something people sign up for, so none is made for photos);
+  further away, the nearest event day. Between two equally near days the earlier one wins. Those days beside an
+  event are in `extra_days` of the summary, are opened with `?taken_on=` and have no ring and no "unseen"
+  marker, so they are only in the event page's Foto's card, not in the Hub's rings, the recap or its totals. The toast
+  says when photos went to another day than the one you were on.
 - **Videos** (MP4, MOV, WebM, up to 80 MB) go in the same story. The phone makes a still frame of
   the video (`utils/videoPoster.ts`; a dark frame if the browser cannot decode it) and sends both;
   the server checks the bytes really are a video, stores the file untouched (no re-encoding, no
@@ -461,14 +471,16 @@ appear when the server cannot be reached, the member is not signed in, or the ap
   categories (a `Switch` row each, `NotificationCategoryRow`) are saved with "Opslaan" in the top bar, which stays
   grey until something changed;
 - **Waarvoor** is grouped (Evenementen, Plannen, and for admins the feedback notification), with a
-  quick choice on top: Alles, Alleen belangrijk (`IMPORTANT_CATEGORY_IDS`), Niets. **"Alleen mijn trips"**
+  quick choice on top: Alles, Alleen belangrijk (`IMPORTANT_CATEGORY_IDS`: new events, ticket sales, new expenses, the ticket poll and new
+  activities, not the reminders a day before or on the day itself), Niets. **Stille uren** (`profiles.quiet_hours_start/end`, migration v2.44; `in_quiet_hours` in `notification_service.py`): between two hours (Dutch time,
+  may run past midnight) a member gets no category DM or push; it is skipped, not sent later, and a payment request still arrives. **"Alleen mijn trips"**
   (`profiles.notify_own_trips_only`, on by default) limits new activities and new expenses to people who
   are going on that trip (everyone signed up for any of its days; for an expense also whoever shares in it);
   rides already only went to people on that day. Event and ticket-sale notifications stay for everyone
   who asked. **Testmelding** (`POST /users/me/test-notification`, 5 an hour) sends one message through the
   saved channel(s);
 - **payment requests and confirmations**, the same way;
-- **Ticketstemming** (`ticket_vote`), when an admin opens a ticket vote and when the tickets are bought; limited to the
+- **Ticket poll** (`ticket_vote`), when an admin opens a ticket vote and when the tickets are bought; limited to the
   trip's people by "Alleen mijn trips";
 - **Nieuwe gebruiker**, for admins only, see below;
 - the in-app **announcement banner** (stacked urgent first, then warning, then info, newest first within each; `utils/announcements.ts`) and **changelog banner** (both admin-written).
@@ -535,14 +547,20 @@ read-only account) or an admin switches **Alleen kijken** on a member under Gebr
   the mascot, profile, notifications and a feature tour. Admins can preview it.
 - **Instellingen** (`pages/SettingsPage.tsx`): notifications, Discord link, dark
   theme, accent colour, density (comfortable/compact, see [design-system.md](design-system.md#rules)),
-  greeting, QR code to the app, the credits, and **Feedback geven**: a sheet where a member
+  greeting, **Databesparing** (per device: `store/dataSaver.store.ts`; the story viewer loads nothing ahead and a video
+  only after a tap on "Video afspelen"), a **Discord** row that shows the linked account and, only while the login has another way
+  in (`hooks/useLoginProviders.ts`), unlinks it (`unlinkDiscordAccount`: the browser unlinks the identity, which Supabase refuses for the
+  last one, then `DELETE /users/me/discord` clears the profile), **Mijn gegevens** (**Mijn gegevens downloaden**: `GET /users/me/export`,
+  `services/member_export.py`; **Account laten verwijderen**: not done by the app, `POST /users/me/deletion-request` saves a message under Admin → Feedback and tells
+  every active admin by DM/push, which they cannot switch off; they delete the account in Admin → Gebruikers), the links (YouTube, Instagram, source code) and QR code to the app, the credits, **Wat is nieuw** (the changelog, under Feedback geven in App; it used to be in the
+  account menu, which is now only Mijn profiel, Instellingen, Beheer for admins and Uitloggen) and **Feedback geven**: a sheet where a member
   sends a bug, idea or remark (optionally anonymous, with no name stored) that admins read under
   Admin → Feedback. Admins can also switch on **Nieuwe feedback** in their notification settings
   (category `feedback_submitted`, in `ADMIN_ONLY_CATEGORIES`): a DM or push per message, anonymous ones
   without a name; only an admin can choose it and a broadcast skips a profile that no longer is one.
   The same group, "Voor beheerders", holds **Nieuwe gebruiker** (category `new_user`, off by default, see
   [Nieuwe gebruiker](#nieuwe-gebruiker-melding-voor-admins) below).
-- **Wijzigingslog** (`pages/ChangelogPage.tsx`): release notes written in the admin
+- **Wijzigingslog** (`pages/ChangelogPage.tsx`, shown as "Wat is nieuw", opened from Instellingen > App): release notes written in the admin
   panel and stored in the database (not `CHANGELOG.md`, which is for developers).
 
 ## Admin panel
