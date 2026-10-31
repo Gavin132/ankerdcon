@@ -16,12 +16,8 @@ ticked off — `CHANGELOG.md` and git history are the record.
 Open items before or around the next deploy. New migrations go here until they are run, in
 the order they must be run, with the Supabase SQL editor; see
 [docs/deployment.md](docs/deployment.md#database-migrations) for how to check what has already
-been applied. (Migrations v2.19 (apart from its last line, below) and v2.25 up to v2.42 are done.)
+been applied. (Migrations v2.19 (apart from its last line, below) and v2.25 up to v2.44 are done.)
 
-- [ ] Run `db/migrations/migration_v2.43_story_photo_days.sql` (photos of the day before or after an event). Safe any time:
-      until then such a photo is saved on its nearest event day, and nothing else is affected.
-- [ ] Run `db/migrations/migration_v2.44_quiet_hours.sql` (stille uren). Safe any time: until then quiet hours cannot be saved
-      (the app says so) and nothing else is affected.
 - [ ] Make the event covers that are already uploaded lighter (new ones are resized on upload): in `backend/`,
       `python -m scripts.shrink_event_covers --dry-run` to see which, then without `--dry-run`; add
       `--delete-old` to remove the big originals as well. Until then the Hub and agenda load them at full size.
