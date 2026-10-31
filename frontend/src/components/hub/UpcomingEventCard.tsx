@@ -40,14 +40,15 @@ function Stub({ urgency, daysUntil, dayCount, dayNumber }: { urgency: EventUrgen
   const underway = today && dayNumber !== null && dayNumber > 1;
   const big = underway ? "Nu" : today ? "Vandaag" : String(daysUntil);
   const unit = underway ? "bezig" : today ? "" : daysUntil === 1 ? "dag" : "dagen";
-  const sub = underway ? `dag ${dayNumber} van ${dayCount}` : dayCount > 1 ? `${dayCount} dagen` : "";
+  // Only while under way: how many days the trip lasts is on the card itself, and "nog 285 dagen" needs no second "3 dagen".
+  const sub = underway ? `dag ${dayNumber} van ${dayCount}` : "";
 
   return (
     <div className="flex items-center justify-center gap-3 border-t-2 border-dashed border-outline bg-brand px-4 py-2.5 text-brand-on sm:flex-col sm:gap-2 sm:border-l-2 sm:border-t-0 sm:px-4 sm:py-5 sm:text-center">
       {!today && <span className="text-[12px] font-semibold">Nog</span>}
       <span className={`font-display font-black leading-[0.8] ${big.length > 3 ? "text-[34px] sm:text-[38px]" : "text-[52px] sm:text-[88px]"}`}>{big}</span>
       {(unit || sub) && (
-        <span className="text-[12px] leading-snug sm:w-full sm:border-t-1.5 sm:border-brand-on/35 sm:pt-2">
+        <span className={`text-[12px] leading-snug ${sub ? "sm:w-full sm:border-t-1.5 sm:border-brand-on/35 sm:pt-2" : ""}`}>
           {unit && <b className="block text-[13px]">{unit}</b>}
           {sub}
         </span>
@@ -180,7 +181,7 @@ export function UpcomingEventCard({
                     title={`Website van het evenement: ${websiteUrl}`}
                     ariaLabel={`Website van het evenement, ${siteLabel(websiteUrl)} (opent in een nieuw tabblad)`}
                   >
-                    {siteLabel(websiteUrl)}
+                    Website
                   </InfoChip>
                 )}
                 {!isGroupEvent && hasMeal(event.id) && <InfoChip icon={<Utensils size={14} />}>Activiteit gepland</InfoChip>}

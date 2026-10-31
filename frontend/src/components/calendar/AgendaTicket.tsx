@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { BedDouble, Globe, MapPin, Ticket, Utensils } from "lucide-react";
 import { AvatarStack } from "../common/AvatarStack";
 import { InfoChip } from "../common/InfoChip";
 import { TripDayPicker } from "../trip/TripDayPicker";
+import { TripSheet } from "../trip/TripSheet";
 import { TripParticipants } from "../trip/TripParticipants";
 import { daysBetween, toDateKey, todayKey } from "../../utils/date";
 import { tripImage, tripInfo, tripPeople, type Trip, type TripDay } from "../../utils/trips";
@@ -35,6 +37,9 @@ interface AgendaTicketProps {
  */
 export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, onLeave, onToggleDay }: AgendaTicketProps) {
   const image = tripImage(trip);
+  // A trip of several days asks which days; a single day is just a button.
+  const [pickingDays, setPickingDays] = useState(false);
+  const multiDay = trip.days.length > 1;
   const today = todayKey();
   const firstKey = toDateKey(trip.days[0].date);
   const daysUntil = daysBetween(today, firstKey);
@@ -44,7 +49,9 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
   const myDays = trip.days.filter((d) => d.ev.participants.some(isMine));
   const going = myDays.length > 0;
   const hotel = trip.days.map((d) => d.ev.hotel_location).find(Boolean);
-  const websiteUrl = safeHref(tripInfo(trip).website);
+  const info = tripInfo(trip);
+  const websiteUrl = safeHref(info.website);
+  const description = info.description?.trim();
   const eventType = trip.days.find((d) => d.ev.event_type)?.ev.event_type ?? null;
   const mealIds = new Set(meals.map((m) => m.linked_event_id).filter(Boolean));
   const hasMeal = trip.days.some((d) => mealIds.has(d.ev.id));
@@ -99,7 +106,6 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
           {(trip.location || hotel || websiteUrl || hasMeal) && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {trip.location && <InfoChip icon={<MapPin size={14} />} href={mapsUrl(trip.location)}>{trip.location}</InfoChip>}
-              {hotel && <InfoChip icon={<BedDouble size={14} />}>{hotel}</InfoChip>}
               {websiteUrl && (
                 <InfoChip
                   icon={<Globe size={14} />}
@@ -108,16 +114,18 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
                   title={`Website van het evenement: ${websiteUrl}`}
                   ariaLabel={`Website van het evenement, ${siteLabel(websiteUrl)} (opent in een nieuw tabblad)`}
                 >
-                  {siteLabel(websiteUrl)}
+                  Website
                 </InfoChip>
               )}
               {hasMeal && <InfoChip icon={<Utensils size={14} />}>Activiteit gepland</InfoChip>}
+              {/* Last: a hotel's name is the longest chip, and in the middle it pushed the website onto a line of its own. */}
+              {hotel && <InfoChip icon={<BedDouble size={14} />}>{hotel}</InfoChip>}
             </div>
           )}
         </div>
 
-        {/* Days of a multi-day trip — tap one to sign up for it or off it */}
-        {trip.days.length > 1 && <TripDayPicker trip={trip} myNames={myNames} onToggleDay={onToggleDay} />}
+        {/* A taste of the event; the days to sign up for are on the event page. */}
+        {description && <p className="line-clamp-3 text-[13px] leading-relaxed text-ink-2">{description}</p>}
 
         <div className="mt-auto flex items-center gap-2.5">
           <TripParticipants trip={trip} users={users} myNames={myNames}>
@@ -139,44 +147,54 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
             {isLive ? "Nu" : daysUntil}
           </span>
           <span className="pb-0.5 text-[13px] leading-tight text-ink-2">
-            {isLive ? "bezig" : daysUntil === 1 ? "dag te gaan" : "dagen te gaan"}
+            {isLive ? "bezig" : daysUntil === 1 ? "dag" : "dagen"}
           </span>
         </div>
 
         {going && (
-          <motion.span
-            aria-hidden
+          // The sticker is also the way off: one tap signs you off every day of the trip.
+          <motion.button
+            type="button"
+            onClick={onLeave}
+            aria-label={`Je gaat mee naar ${trip.title}. Tik om je af te melden.`}
+            title="Tik om je af te melden"
             initial={justJoined ? { scale: 1.8, rotate: -24, opacity: 0 } : false}
             animate={{ scale: 1, rotate: -12, opacity: 1 }}
+            whileTap={{ scale: 0.94 }}
             transition={{ type: "spring", stiffness: 520, damping: 22 }}
-            className="pointer-events-none shrink-0 rounded-lg md:absolute border-[2.5px] border-brand-text bg-surface/80 px-2 pb-0.5 pt-1 text-center font-display text-[18px] font-black uppercase leading-[0.9] text-brand-text md:right-4 md:top-[130px] md:text-[22px]"
+            className="shrink-0 cursor-pointer rounded-lg md:absolute border-[2.5px] border-brand-text bg-surface/80 px-2 pb-0.5 pt-1 text-center font-display text-[18px] font-black uppercase leading-[0.9] text-brand-text md:right-4 md:top-[130px] md:text-[22px]"
           >
             Je gaat
             <br />
             mee
-          </motion.span>
+          </motion.button>
         )}
 
-        {/* Multi-day trips sign up per day (see the day boxes); only a single day needs a button. */}
-        {trip.days.length === 1 && (
+        {/* One day signs up at once; several days ask which ones first (the sheet below), so nobody is signed up for days they never chose. Signing off is the sticker above. */}
+        {!going && (
           <div className="flex flex-col items-end gap-2 md:items-stretch">
-            {going ? (
-              <button
-                type="button"
-                onClick={onLeave}
-                className="hit-area text-[12.5px] font-semibold text-ink-3 transition-colors hover:text-ink hover:underline md:text-left"
-              >
-                Toch niet? Afmelden
-              </button>
-            ) : (
-              <button type="button" onClick={onJoin} className="btn-primary px-4">
-                <Ticket size={16} />
-                Ik ga mee
-              </button>
-            )}
+            <button type="button" onClick={multiDay ? () => setPickingDays(true) : onJoin} className="btn-primary px-4">
+              <Ticket size={16} />
+              Ik ga mee
+            </button>
           </div>
         )}
       </div>
+      {multiDay && (
+        <TripSheet
+          open={pickingDays}
+          onClose={() => setPickingDays(false)}
+          title="Aanmelden"
+          subtitle={trip.title}
+          footer={
+            <button type="button" onClick={() => setPickingDays(false)} className="btn-primary w-full px-4">
+              Klaar
+            </button>
+          }
+        >
+          <TripDayPicker trip={trip} myNames={myNames} onToggleDay={onToggleDay} />
+        </TripSheet>
+      )}
     </article>
   );
 }

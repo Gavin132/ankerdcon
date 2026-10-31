@@ -127,9 +127,6 @@ export function TripTicket({
               {trip.location && (
                 <InfoChip icon={<MapPin size={14} />} href={mapsUrl(trip.location)}>{trip.location}</InfoChip>
               )}
-              {hotel && (
-                <InfoChip icon={<BedDouble size={14} />}>{hotel}</InfoChip>
-              )}
               {websiteUrl && (
                 <InfoChip
                   icon={<Globe size={14} />}
@@ -138,8 +135,12 @@ export function TripTicket({
                   title={`Website van het evenement: ${websiteUrl}`}
                   ariaLabel={`Website van het evenement, ${siteLabel(websiteUrl)} (opent in een nieuw tabblad)`}
                 >
-                  {siteLabel(websiteUrl)}
+                  Website
                 </InfoChip>
+              )}
+              {/* Last: a hotel's name is the longest chip, and in the middle it pushed the website onto a line of its own. */}
+              {hotel && (
+                <InfoChip icon={<BedDouble size={14} />}>{hotel}</InfoChip>
               )}
             </div>
           )}
