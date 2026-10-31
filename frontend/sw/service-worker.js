@@ -20,7 +20,13 @@
 // the update, and keeps serving the previous build's caches indefinitely.
 const VERSION = "__SW_VERSION__";
 const SHELL_CACHE = `ankerd-shell-${VERSION}`;
-const ASSET_CACHE = `ankerd-assets-${VERSION}`;
+// Not per version, unlike the shell: a file with a hash in its name never changes, so builds can share one cache. A
+// phone that opens a copy of the shell from an earlier build (the server was slow or restarting, see shellFirst) needs
+// that build's own scripts, and a cache deleted with the old version left it asking the network for files the new
+// deploy no longer has, or waiting for a server that does not answer, which is a blank page.
+const ASSET_CACHE = "ankerd-assets";
+// Roughly two or three builds of hashed files; the oldest go first.
+const ASSET_CACHE_MAX_ENTRIES = 300;
 
 // Enough to render the first screen offline; everything else arrives via the
 // fetch handler as it gets used.
@@ -95,14 +101,47 @@ self.addEventListener("notificationclick", (event) => {
   );
 });
 
+// A script that is not in the cache must come from the network, but not forever: a server that accepts the connection
+// and does not answer left the page blank, with nothing to say why. After this the request fails, which the page
+// (public/boot-guard.js) can see and recover from.
+const ASSET_NETWORK_TIMEOUT_MS = 15000;
+
+async function fetchWithTimeout(request, ms) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(request, { signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Drops the oldest entries once the cache holds more than it should (keys come back in the order they were added). */
+async function trimAssetCache(cache) {
+  const keys = await cache.keys();
+  for (const key of keys.slice(0, Math.max(0, keys.length - ASSET_CACHE_MAX_ENTRIES))) await cache.delete(key);
+}
+
 /** Build output is named after its own content, so a hit can be served with no questions asked. */
 async function cacheFirst(request) {
   const cache = await caches.open(ASSET_CACHE);
   const hit = await cache.match(request);
   if (hit) return hit;
-  const response = await fetch(request);
-  if (response.ok) cache.put(request, response.clone());
-  return response;
+  let failure;
+  // Twice: the first request after a phone has been asleep often fails on a connection that is not up yet.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const response = await fetchWithTimeout(request, ASSET_NETWORK_TIMEOUT_MS);
+      if (response.ok) {
+        await cache.put(request, response.clone());
+        trimAssetCache(cache);
+      }
+      return response;
+    } catch (err) {
+      failure = err;
+    }
+  }
+  throw failure;
 }
 
 /**
