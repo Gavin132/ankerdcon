@@ -188,7 +188,7 @@ to be reachable from the app's container as well as from members.
 | `CORS_ORIGINS` | the same address (comma-separated if there are several). Since the frontend is served by the backend itself this only matters if you open the API from another origin; the compose file defaults it to `APP_URL`. |
 | `CALENDAR_FEED_TOKEN` | a random secret for the calendar subscription link. Generate one: `openssl rand -base64 32`, or `python -c "import secrets; print(secrets.token_urlsafe(32))"`. Leave empty to derive it from the JWT secret; set a new value to invalidate every shared link. |
 | `RATE_LIMIT_PER_MINUTE` | requests per client per minute before HTTP 429. Default 600, and writes get a quarter of it. |
-| `APP_ENV` | build-time only. `dev` builds the orange "beta" icon and title, empty (the default) is the live app. |
+| `APP_ENV` | build-time only. `dev` builds the orange "beta" icon and title and forces the orange accent colour (`__DEV_BUILD__`, no accent picker), empty (the default) is the live app. |
 | `API_DOCS_ENABLED` | keep `false` (the compose file forces it). |
 
 ---

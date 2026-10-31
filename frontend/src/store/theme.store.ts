@@ -33,7 +33,11 @@ function getInitialDark(): boolean {
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
 
+/** The dev site is always orange, whatever was chosen, so it cannot be mistaken for the real app. */
+const DEV_ACCENT: AccentId = "orange";
+
 function getInitialAccent(): AccentId {
+  if (__DEV_BUILD__) return DEV_ACCENT;
   try {
     const stored = localStorage.getItem(ACCENT_KEY);
     if (isAccent(stored)) return stored;
@@ -91,6 +95,7 @@ export const useThemeStore = create<ThemeStore>((set) => ({
       return { isDark: next };
     }),
   setAccent: (accent) => {
+    if (__DEV_BUILD__) return;
     applyAccent(accent);
     try {
       if (accent === "blue") localStorage.removeItem(ACCENT_KEY);

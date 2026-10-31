@@ -1,6 +1,8 @@
 /// <reference types="vite/client" />
 
 declare const __APP_VERSION__: string;
+/** True in a build made with APP_ENV=dev (the dev site). */
+declare const __DEV_BUILD__: boolean;
 declare const __BUILD_ID__: string;
 
 interface ImportMetaEnv {

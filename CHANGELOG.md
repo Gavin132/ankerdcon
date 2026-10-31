@@ -10,6 +10,9 @@ All notable changes to Ankerd Con are documented here.
 - **You can take your vote back in the ticket poll** ("Mijn stem intrekken"), until the tickets are bought.
 - **You can fill in the ticket poll for someone else.** Ask around, then choose the member under "Stem voor iemand anders" and pick their ticket (or take their vote back).
 
+### Changed
+- **The splash screen of the installed app is now the dark page colour** (`#0D1216`) instead of white. The status bar keeps the header's colour.
+
 ### Fixed
 - **In Settings, "Ankerd" in the "Powered by" line no longer drops to a new line on narrow phones.**
 

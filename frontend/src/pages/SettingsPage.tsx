@@ -251,6 +251,7 @@ export function SettingsPage() {
               <Switch checked={isDark} onChange={toggleTheme} label="Donker thema" />
             </div>
 
+            {!__DEV_BUILD__ && (
             <div className="px-4 py-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
@@ -283,6 +284,7 @@ export function SettingsPage() {
                 })}
               </div>
             </div>
+            )}
 
             <div className="px-4 py-3">
               <div className="flex items-center gap-3">

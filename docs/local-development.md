@@ -222,7 +222,7 @@ Read by `frontend/vite.config.ts`, not exposed to the browser.
 
 | Variable | Effect |
 | --- | --- |
-| `APP_ENV=dev` | builds the dev variant: orange launcher icon and manifest |
+| `APP_ENV=dev` | builds the dev variant: orange launcher icon, manifest and accent colour (the picker is hidden) |
 | `ALLOWED_HOST` | host name the dev server accepts (default `localhost`) |
 | `BACKEND_URL` | where the dev proxy sends `/api` (default `http://localhost:8000`) |
 | `PORT` | dev server port (default 5173) |
