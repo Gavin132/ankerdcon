@@ -1,6 +1,6 @@
 import re
 from typing import Literal, Optional
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class User(BaseModel):
@@ -36,6 +36,9 @@ class User(BaseModel):
     notification_categories: list[str] = []
     # Only get a notification about a trip's activities and expenses when going on that trip.
     notify_own_trips_only: bool = True
+    # No category notification by Discord DM or push between these two hours (0-23, Dutch time); both None: off.
+    quiet_hours_start: Optional[int] = None
+    quiet_hours_end: Optional[int] = None
     created_at: Optional[str] = None
 
 class UpdateNameRequest(BaseModel):
@@ -74,6 +77,20 @@ class UpdatePreferencesRequest(BaseModel):
     show_greeting: Optional[bool] = None
     notify_own_trips_only: Optional[bool] = None
     notification_categories: Optional[list[str]] = None
+    quiet_hours_start: Optional[int] = Field(None, ge=0, le=23)
+    quiet_hours_end: Optional[int] = Field(None, ge=0, le=23)
+    # Switches the quiet hours off (the two hours above cannot say "none": an absent field means "leave as it is").
+    quiet_hours_off: Optional[bool] = None
+
+    @model_validator(mode="after")
+    def quiet_hours_make_a_window(self):
+        if self.quiet_hours_off:
+            return self
+        if (self.quiet_hours_start is None) != (self.quiet_hours_end is None):
+            raise ValueError("Kies een begintijd en een eindtijd voor de stille uren.")
+        if self.quiet_hours_start is not None and self.quiet_hours_start == self.quiet_hours_end:
+            raise ValueError("De stille uren mogen niet op hetzelfde uur beginnen en eindigen.")
+        return self
 
     @field_validator("notification_categories")
     @classmethod

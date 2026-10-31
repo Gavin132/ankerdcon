@@ -24,10 +24,11 @@ export const apiRoutes = {
 
   // ── Event-day photo stories ─────────────────────────────────────
   stories: {
-    byDay:   (eventDayId: string) => `/api/stories/${eventDayId}`,
+    /** `takenOn`: a day just before or after the event (the photos of it, or the date a new photo was taken). */
+    byDay:   (eventDayId: string, takenOn?: string | null) => `/api/stories/${eventDayId}${takenOn ? `?taken_on=${takenOn}` : ""}`,
     photo:   (photoId: string) => `/api/stories/photos/${photoId}`,
     download: (photoId: string) => `/api/stories/photos/${photoId}/download`,
-    downloadAll: (eventDayId: string) => `/api/stories/${eventDayId}/download-all`,
+    downloadAll: (eventDayId: string, takenOn?: string | null) => `/api/stories/${eventDayId}/download-all${takenOn ? `?taken_on=${takenOn}` : ""}`,
     seen:    (eventDayId: string) => `/api/stories/${eventDayId}/seen`,
     byUser:  (identifier: string) => `/api/stories/user/${encodeURIComponent(identifier)}`,
     summary: (eventDayIds: string[]) => `/api/stories/summary?event_day_ids=${eventDayIds.map(encodeURIComponent).join(",")}`,
@@ -95,6 +96,9 @@ export const apiRoutes = {
     banner:      "/api/users/banner",
     avatar:      "/api/users/avatar",
     linkDiscord: "/api/users/me/link-discord",
+    discord:     "/api/users/me/discord",
+    exportMe:    "/api/users/me/export",
+    deletionRequest: "/api/users/me/deletion-request",
     testNotification: "/api/users/me/test-notification",
     byId:        (identifier: string) => `/api/users/${identifier}`,
     location:    (identifier: string) => `/api/users/${identifier}/location`,

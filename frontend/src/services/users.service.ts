@@ -1,5 +1,7 @@
 import { apiClient, UPLOAD_TIMEOUT_MS } from "../lib/api/client";
 import { apiRoutes } from "../config/api-routes";
+import { supabase } from "./supabase";
+import { filenameFromContentDisposition, triggerBlobDownload } from "../utils/downloadFile";
 import type { UpdateNameRequest, UpdatePreferencesRequest, User, LocationPingRequest } from "../types";
 
 export async function getCurrentUser(): Promise<User> {
@@ -64,6 +66,37 @@ export async function deleteAvatar(): Promise<void> {
 export async function linkDiscordAccount(): Promise<User> {
   const { data } = await apiClient.post<User>(apiRoutes.users.linkDiscord);
   return data;
+}
+
+/** The ways this member can sign in (`google`, `discord`). Unlinking one is only possible while another is left. */
+export async function getLoginProviders(): Promise<string[]> {
+  const { data, error } = await supabase.auth.getUserIdentities();
+  if (error) throw error;
+  return (data?.identities ?? []).map((i) => i.provider);
+}
+
+/** Unlinks Discord from the login (the browser's own session does that, and Supabase refuses it for the last way to
+ * sign in) and then lets the backend forget it on the profile. */
+export async function unlinkDiscordAccount(): Promise<void> {
+  const { data, error: listError } = await supabase.auth.getUserIdentities();
+  if (listError) throw listError;
+  const discord = data?.identities.find((i) => i.provider === "discord");
+  if (discord) {
+    const { error } = await supabase.auth.unlinkIdentity(discord);
+    if (error) throw error;
+  }
+  await apiClient.delete(apiRoutes.users.discord);
+}
+
+/** Asks the admins to delete the member's account and data; every active admin is told. */
+export async function requestAccountDeletion(): Promise<void> {
+  await apiClient.post(apiRoutes.users.deletionRequest);
+}
+
+/** Everything the app has stored about the member, saved through the browser's normal download flow. */
+export async function downloadMyData(): Promise<void> {
+  const res = await apiClient.get<Blob>(apiRoutes.users.exportMe, { responseType: "blob" });
+  triggerBlobDownload(res.data, filenameFromContentDisposition(res.headers["content-disposition"], "ankerd-con-mijn-gegevens.json"));
 }
 
 export interface CompleteOnboardingPayload {

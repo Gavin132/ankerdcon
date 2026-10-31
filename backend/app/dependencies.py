@@ -288,6 +288,8 @@ _VIEWER_WRITABLE: tuple[tuple[frozenset[str], re.Pattern[str]], ...] = tuple(
         ("POST", r"^/api/users/me/test-notification$"),
         ("POST|DELETE", r"^/api/users/(avatar|banner)$"),    # their own picture
         ("POST", r"^/api/users/me/link-discord$"),
+        ("DELETE", r"^/api/users/me/discord$"),
+        ("POST", r"^/api/users/me/deletion-request$"),        # they may still ask for their account to go
         ("POST|DELETE", r"^/api/push/subscribe$"),
         ("POST", r"^/api/feedback/?$"),                      # they may still say what is wrong
         ("PUT", r"^/api/stories/[^/]+/seen$"),               # watching a story marks it seen

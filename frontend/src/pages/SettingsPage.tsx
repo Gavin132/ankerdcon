@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -13,9 +14,14 @@ import {
   Moon,
   Github,
   Youtube,
+  Instagram,
   Palette,
   Check,
   Rows3,
+  Sparkles,
+  Gauge,
+  Download,
+  UserX,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { FeedbackSheet } from "../components/settings/FeedbackSheet";
@@ -23,12 +29,19 @@ import { useNavigate } from "react-router-dom";
 import { useCurrentUser, useUpdatePreferences } from "../hooks/useUsers";
 import { useSmartBack } from "../hooks/useSmartBack";
 import { ACCENTS, useThemeStore, type Density } from "../store/theme.store";
+import { useDataSaverStore } from "../store/dataSaver.store";
 import { startDiscordLink } from "../services/auth.service";
 import { routes } from "../config/routes";
 import { listContainer, listItem } from "../utils/motion";
 import { toast } from "../store/toast.store";
 import { InstallHint, useInstallKind } from "../components/common/InstallHint";
 import { Switch } from "../components/common/Switch";
+import { Button } from "../components/common/Button";
+import { askConfirm } from "../store/confirm.store";
+import { useLoginProviders } from "../hooks/useLoginProviders";
+import { downloadMyData, requestAccountDeletion, unlinkDiscordAccount } from "../services/users.service";
+import { QUERY_KEYS } from "../constants";
+import { ApiError } from "../lib/api/client";
 
 const ROW =
   "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-sunken active:bg-sunken";
@@ -40,7 +53,7 @@ const PANEL_ROWS = "divide-y divide-line border-t border-line";
 /**
  * Instellingen, opened from the avatar menu: the one place for personal
  * settings — notifications, Discord, theme, greeting — plus sharing links
- * and the app version. Profile, changelog and logout live in the avatar menu.
+ * and the app version with what is new. Profile and logout live in the avatar menu.
  */
 export function SettingsPage() {
   const navigate = useNavigate();
@@ -49,6 +62,13 @@ export function SettingsPage() {
   const [linkingDiscord, setLinkingDiscord] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const { data: me } = useCurrentUser();
+  const qc = useQueryClient();
+  const providers = useLoginProviders(!!me?.discord_id);
+  // Discord can only go while there is another way to sign in; the browser's login refuses the last one anyway.
+  const canUnlinkDiscord = !!providers && providers.some((x) => x !== "discord");
+  const [unlinking, setUnlinking] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [requestingDeletion, setRequestingDeletion] = useState(false);
   const installKind = useInstallKind();
   const updatePreferences = useUpdatePreferences();
   const isDark = useThemeStore((s) => s.isDark);
@@ -57,6 +77,8 @@ export function SettingsPage() {
   const setAccent = useThemeStore((s) => s.setAccent);
   const density = useThemeStore((s) => s.density);
   const setDensity = useThemeStore((s) => s.setDensity);
+  const dataSaver = useDataSaverStore((s) => s.on);
+  const toggleDataSaver = useDataSaverStore((s) => s.toggle);
 
   const DENSITY_OPTIONS: { id: Density; label: string }[] = [
     { id: "comfortable", label: "Comfortabel" },
@@ -70,6 +92,57 @@ export function SettingsPage() {
     } catch {
       setLinkingDiscord(false);
       toast("error", "Kon Discord-koppeling niet starten. Probeer het opnieuw.");
+    }
+  }
+
+  async function onUnlinkDiscord() {
+    const ok = await askConfirm({
+      title: "Discord ontkoppelen?",
+      message: "Je krijgt dan geen berichten meer van de Discord-bot. Inloggen kan nog met je andere account en je kunt Discord later opnieuw koppelen.",
+      confirmLabel: "Ontkoppelen",
+      cancelLabel: "Annuleren",
+    });
+    if (!ok) return;
+    setUnlinking(true);
+    try {
+      await unlinkDiscordAccount();
+      await qc.invalidateQueries({ queryKey: QUERY_KEYS.currentUser });
+      await qc.invalidateQueries({ queryKey: ["loginProviders"] });
+      toast("success", "Discord is ontkoppeld.");
+    } catch {
+      toast("error", "Kon Discord niet ontkoppelen. Probeer het opnieuw.");
+    } finally {
+      setUnlinking(false);
+    }
+  }
+
+  async function onDownloadData() {
+    setExporting(true);
+    try {
+      await downloadMyData();
+    } catch {
+      toast("error", "Kon je gegevens niet downloaden. Probeer het opnieuw.");
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function onRequestDeletion() {
+    const ok = await askConfirm({
+      title: "Account laten verwijderen?",
+      message: "De beheerders krijgen een melding en verwijderen je account en je gegevens. Dat gebeurt niet meteen. Je kunt eerst je gegevens downloaden.",
+      confirmLabel: "Verzoek versturen",
+      cancelLabel: "Annuleren",
+    });
+    if (!ok) return;
+    setRequestingDeletion(true);
+    try {
+      await requestAccountDeletion();
+      toast("success", "Je verzoek is verstuurd. Een beheerder neemt contact op.");
+    } catch (e) {
+      toast("error", e instanceof ApiError && e.status === 429 ? "Je verzoek is al verstuurd. Een beheerder neemt contact op." : "Kon je verzoek niet versturen. Probeer het opnieuw.");
+    } finally {
+      setRequestingDeletion(false);
     }
   }
 
@@ -112,6 +185,25 @@ export function SettingsPage() {
                 </div>
                 <ChevronRight size={16} className="shrink-0 text-ink-3" />
               </button>
+            )}
+            {me?.discord_id && (
+              <div className="flex w-full items-center gap-3 px-4 py-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                  <MessageSquare size={16} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-semibold text-ink">Discord gekoppeld</p>
+                  <p className="truncate text-[12.5px] text-ink-3">
+                    {me.discord_username ? `@${me.discord_username}` : "Je Discord-account"}
+                    {providers && !canUnlinkDiscord ? " · je logt alleen met Discord in" : ""}
+                  </p>
+                </div>
+                {canUnlinkDiscord && (
+                  <Button size="sm" variant="secondary" onClick={onUnlinkDiscord} loading={unlinking}>
+                    Ontkoppelen
+                  </Button>
+                )}
+              </div>
             )}
             {me && (
               <div className="flex w-full items-center gap-3 px-4 py-3">
@@ -219,6 +311,45 @@ export function SettingsPage() {
                 })}
               </div>
             </div>
+
+            <div className="flex w-full items-center gap-3 px-4 py-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                <Gauge size={16} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold text-ink">Databesparing</p>
+                <p className="text-[12.5px] text-ink-3">Een story laadt niets vooruit en een video pas als je op afspelen tikt</p>
+              </div>
+              <Switch checked={dataSaver} onChange={toggleDataSaver} label="Databesparing" />
+            </div>
+          </div>
+        </motion.section>
+
+        {/* Mijn gegevens */}
+        <motion.section variants={listItem} className={PANEL}>
+          <p className="section-label px-4 pb-2.5 pt-3.5">Mijn gegevens</p>
+          <div className={PANEL_ROWS}>
+            <button onClick={onDownloadData} disabled={exporting} className={`${ROW} disabled:opacity-60`}>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                <Download size={16} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold text-ink">{exporting ? "Bezig met downloaden…" : "Mijn gegevens downloaden"}</p>
+                <p className="text-[12.5px] text-ink-3">Alles wat de app over jou bewaart, als bestand</p>
+              </div>
+              <ChevronRight size={16} className="shrink-0 text-ink-3" />
+            </button>
+
+            <button onClick={onRequestDeletion} disabled={requestingDeletion} className={`${ROW} disabled:opacity-60`}>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-bad-soft text-bad">
+                <UserX size={16} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold text-bad">Account laten verwijderen</p>
+                <p className="text-[12.5px] text-ink-3">De beheerders verwijderen je account en je gegevens</p>
+              </div>
+              <ChevronRight size={16} className="shrink-0 text-ink-3" />
+            </button>
           </div>
         </motion.section>
 
@@ -226,6 +357,28 @@ export function SettingsPage() {
         <motion.section variants={listItem} className={PANEL}>
           <p className="section-label px-4 pb-2.5 pt-3.5">Delen &amp; links</p>
           <div className={PANEL_ROWS}>
+            <a href="https://www.youtube.com/@ankerd" target="_blank" rel="noopener noreferrer" className={ROW}>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                <Youtube size={16} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold text-ink">YouTube</p>
+                <p className="text-[12.5px] text-ink-3">Bekijk het YouTube-kanaal</p>
+              </div>
+              <ExternalLink size={14} className="shrink-0 text-ink-3" />
+            </a>
+
+            <a href="https://www.instagram.com/ankerd_official/" target="_blank" rel="noopener noreferrer" className={ROW}>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                <Instagram size={16} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold text-ink">Instagram</p>
+                <p className="text-[12.5px] text-ink-3">Volg Ankerd op Instagram</p>
+              </div>
+              <ExternalLink size={14} className="shrink-0 text-ink-3" />
+            </a>
+
             <button onClick={() => setQrOpen((v) => !v)} aria-expanded={qrOpen} className={ROW}>
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
                 <QrCode size={16} />
@@ -267,17 +420,6 @@ export function SettingsPage() {
               </div>
               <ExternalLink size={14} className="shrink-0 text-ink-3" />
             </a>
-
-            <a href="https://www.youtube.com/@ankerd" target="_blank" rel="noopener noreferrer" className={ROW}>
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-                <Youtube size={16} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-semibold text-ink">YouTube</p>
-                <p className="text-[12.5px] text-ink-3">Bekijk het YouTube-kanaal</p>
-              </div>
-              <ExternalLink size={14} className="shrink-0 text-ink-3" />
-            </a>
           </div>
         </motion.section>
 
@@ -292,6 +434,17 @@ export function SettingsPage() {
               <div className="flex-1 min-w-0">
                 <p className="text-[14px] font-semibold text-ink">Feedback geven</p>
                 <p className="text-[12.5px] text-ink-3">Een bug, idee of iets anders, ook anoniem</p>
+              </div>
+              <ChevronRight size={16} className="shrink-0 text-ink-3" />
+            </button>
+
+            <button onClick={() => navigate(routes.changelog)} className={ROW}>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                <Sparkles size={16} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold text-ink">Wat is nieuw</p>
+                <p className="text-[12.5px] text-ink-3">Wat er in de app is veranderd</p>
               </div>
               <ChevronRight size={16} className="shrink-0 text-ink-3" />
             </button>
@@ -319,7 +472,6 @@ export function SettingsPage() {
                 </p>
               </div>
             </div>
-
           </div>
         </motion.section>
       </motion.div>

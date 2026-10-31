@@ -4,7 +4,7 @@ import time
 import uuid
 
 from fastapi.concurrency import run_in_threadpool
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Response, UploadFile, status
 
 from app import messages as M
 from app.config import Settings, get_settings
@@ -16,9 +16,10 @@ from app.core.uploads import clean_image, read_capped
 from app.dependencies import _is_admin, act_as, get_current_user, _strip_discriminator
 from app.models.user import CompleteOnboardingRequest, LocationPingRequest, UpdateNameRequest, UpdatePreferencesRequest, User
 from app.routes import UserRoutes
-from app.services import notification_service
+from app.services import member_export, notification_service
 from app.services.profile_merge import is_placeholder
 from app.services.notification_service import ADMIN_ONLY_CATEGORIES
+from app.services.discord_bot import escape_markdown
 from app.core.database import supabase
 
 logger = get_logger(__name__)
@@ -136,7 +137,12 @@ def update_preferences(
         "show_greeting":           body.show_greeting,
         "notify_own_trips_only":   body.notify_own_trips_only,
         "notification_categories": body.notification_categories,
+        "quiet_hours_start":       body.quiet_hours_start,
+        "quiet_hours_end":         body.quiet_hours_end,
     }.items() if v is not None}
+    if body.quiet_hours_off:
+        updates["quiet_hours_start"] = None
+        updates["quiet_hours_end"] = None
 
     if not updates:
         return
@@ -147,6 +153,9 @@ def update_preferences(
         response = supabase.table(Tables.PROFILES).update(updates).eq("name", current_user).execute()
     except Exception as e:
         logger.error("Failed to update preferences for %s: %s", current_user, e)
+        # The quiet hours need migration v2.44: say so, instead of a database error that tells nothing.
+        if "quiet_hours" in str(e):
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Stille uren zijn nog niet beschikbaar. Probeer het later opnieuw.")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
     if not response.data:
@@ -386,6 +395,111 @@ def link_discord(current_user: str = Depends(get_current_user)) -> User:
 
     logger.info("Auth: linked Discord account %s to profile %s", discord_id, current_user)
     return updated.data[0]
+
+
+@router.delete(UserRoutes.DISCORD, status_code=status.HTTP_204_NO_CONTENT)
+def unlink_discord(current_user: str = Depends(get_current_user)) -> None:
+    """Forget the linked Discord account on the profile, after the app has unlinked that identity from the login.
+
+    The unlinking itself is done by the browser (`supabase.auth.unlinkIdentity`), which Supabase only allows
+    while another way to sign in is left, so a member cannot lock themselves out. This route then clears what
+    the profile kept of it (no more DMs from the bot) and refuses while the identity is still there, so it
+    cannot be used to make the profile and the login disagree.
+    """
+    try:
+        resp = supabase.table(Tables.PROFILES).select("id, discord_id").eq("name", current_user).execute()
+    except Exception as e:
+        logger.error("Unlink Discord: failed to fetch profile for %s: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profiel niet gevonden.")
+    profile = resp.data[0]
+    if not profile.get("discord_id"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Er is geen Discord-account gekoppeld.")
+
+    try:
+        identities = supabase.auth.admin.get_user_by_id(profile["id"]).user.identities or []
+    except Exception as e:
+        logger.error("Unlink Discord: failed to fetch auth identities for %s: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if any(i.provider == "discord" for i in identities):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Discord is nog gekoppeld aan je login. Ontkoppel het via Instellingen en probeer het opnieuw.",
+        )
+
+    try:
+        supabase.table(Tables.PROFILES).update({"discord_id": None, "discord_username": None}).eq("id", profile["id"]).execute()
+    except Exception as e:
+        logger.error("Unlink Discord: failed to update profile for %s: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    logger.info("Auth: unlinked Discord account %s from profile %s", profile["discord_id"], current_user)
+
+
+# Kept in memory per process, like the feedback limit: a request is one message, not something to repeat.
+_DELETION_REQUEST_MAX_PER_DAY = 2
+_deletion_requested: dict[str, list[float]] = {}
+
+
+@router.post(UserRoutes.DELETION_REQUEST, status_code=status.HTTP_204_NO_CONTENT)
+def request_account_deletion(
+    background_tasks: BackgroundTasks,
+    current_user: str = Depends(get_current_user),
+    settings: Settings = Depends(get_settings),
+) -> None:
+    """A member asks for their account and data to be deleted. The app does not delete it itself (people are
+    stored by name in many places, so an admin does it, see the merge and delete tools), but the request is
+    saved where the admins read feedback and every active admin is told, whatever notifications they chose."""
+    now = time.monotonic()
+    recent = [t for t in _deletion_requested.get(current_user, []) if now - t < 86_400]
+    if len(recent) >= _DELETION_REQUEST_MAX_PER_DAY:
+        _deletion_requested[current_user] = recent
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Je verzoek is al verstuurd. Een beheerder neemt contact op.")
+    try:
+        supabase.table(Tables.FEEDBACK).insert({
+            "kind": "other",
+            "message": "Verzoek: verwijder mijn account en mijn gegevens.",
+            "user_name": current_user,
+        }).execute()
+    except Exception as e:
+        logger.error("Failed to save the deletion request of %s: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    recent.append(now)
+    _deletion_requested[current_user] = recent
+
+    base = (settings.app_url or "").rstrip("/")
+    background_tasks.add_task(
+        notification_service.broadcast_category_dm,
+        settings.discord_bot_token,
+        notification_service.NotificationCategory.ACCOUNT_DELETION,
+        M.DM_DELETION_REQUEST.format(name=escape_markdown(current_user), link_line=f"\n{base}/admin/users" if base else ""),
+        url="/admin/users",
+        admins_always=True,
+    )
+
+
+@router.get(UserRoutes.EXPORT)
+def export_my_data(current_user: str = Depends(get_current_user)) -> Response:
+    """Everything the app has stored about the signed-in member, as one JSON file to download."""
+    try:
+        resp = supabase.table(Tables.PROFILES).select("*").eq("name", current_user).execute()
+    except Exception as e:
+        logger.error("Export: failed to fetch profile for %s: %s", current_user, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    if not resp.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profiel niet gevonden.")
+    profile = resp.data[0]
+    aliases = [a for a in (profile.get("aliases") or []) if a]
+    taken = {a.casefold() for a in _names_claimed_by_others(aliases, current_user)}
+    names = [profile["name"], *[a for a in aliases if a.casefold() not in taken]]
+
+    data = member_export.build_export(profile, names)
+    body = json.dumps(data, ensure_ascii=False, indent=2, default=str)
+    return Response(
+        content=body,
+        media_type="application/json",
+        headers={"Content-Disposition": 'attachment; filename="ankerd-con-mijn-gegevens.json"'},
+    )
 
 
 @router.get(UserRoutes.DETAIL, response_model=User)

@@ -25,6 +25,8 @@ const WRITABLE: { methods: string[]; path: RegExp }[] = [
   { methods: ["post"], path: /^\/api\/users\/me\/test-notification$/ },
   { methods: ["post", "delete"], path: /^\/api\/users\/(avatar|banner)$/ },
   { methods: ["post"], path: /^\/api\/users\/me\/link-discord$/ },
+  { methods: ["delete"], path: /^\/api\/users\/me\/discord$/ },
+  { methods: ["post"], path: /^\/api\/users\/me\/deletion-request$/ },
   { methods: ["post", "delete"], path: /^\/api\/push\/subscribe$/ },
   { methods: ["post"], path: /^\/api\/feedback\/?$/ },
   { methods: ["put"], path: /^\/api\/stories\/[^/]+\/seen$/ },

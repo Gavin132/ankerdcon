@@ -16,6 +16,10 @@ import { NoDiscordNotice } from "../components/notifications/NoDiscordNotice";
 import { toast } from "../store/toast.store";
 import { Switch } from "../components/common/Switch";
 
+const HOURS = Array.from({ length: 24 }, (_, h) => h);
+const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
+interface QuietHours { on: boolean; start: number; end: number }
+
 const PRESETS: { id: NotificationPreset; label: string }[] = [
   { id: "all", label: "Alles" },
   { id: "important", label: "Alleen belangrijk" },
@@ -31,30 +35,41 @@ export function NotificationSettingsPage() {
   const [draftAllowDm, setDraftAllowDm] = useState(true);
   const [draftCategories, setDraftCategories] = useState<string[]>([]);
   const [draftOwnTrips, setDraftOwnTrips] = useState(true);
-  const [savedSnapshot, setSavedSnapshot] = useState<{ allowDm: boolean; categories: string[]; ownTrips: boolean } | null>(null);
+  const [draftQuiet, setDraftQuiet] = useState<QuietHours>({ on: false, start: 23, end: 8 });
+  const [savedSnapshot, setSavedSnapshot] = useState<{ allowDm: boolean; categories: string[]; ownTrips: boolean; quiet: QuietHours } | null>(null);
 
   useEffect(() => {
     if (user && !initialized) {
       const allowDm = user.allow_dm ?? true;
       const categories = user.notification_categories ?? [];
       const ownTrips = user.notify_own_trips_only ?? true;
+      const quiet: QuietHours = {
+        on: user.quiet_hours_start != null && user.quiet_hours_end != null,
+        start: user.quiet_hours_start ?? 23,
+        end: user.quiet_hours_end ?? 8,
+      };
       setDraftAllowDm(allowDm);
       setDraftCategories(categories);
       setDraftOwnTrips(ownTrips);
-      setSavedSnapshot({ allowDm, categories, ownTrips });
+      setDraftQuiet(quiet);
+      setSavedSnapshot({ allowDm, categories, ownTrips, quiet });
       setInitialized(true);
     }
   }, [user, initialized]);
 
   const isDirty = useMemo(() => {
     if (!savedSnapshot) return false;
+    const q = savedSnapshot.quiet;
+    // The hours only count while the quiet hours are on.
+    const quietChanged = draftQuiet.on !== q.on || (draftQuiet.on && (draftQuiet.start !== q.start || draftQuiet.end !== q.end));
     return (
+      quietChanged ||
       draftAllowDm !== savedSnapshot.allowDm ||
       draftOwnTrips !== savedSnapshot.ownTrips ||
       draftCategories.length !== savedSnapshot.categories.length ||
       draftCategories.some((c) => !savedSnapshot.categories.includes(c))
     );
-  }, [savedSnapshot, draftAllowDm, draftOwnTrips, draftCategories]);
+  }, [savedSnapshot, draftAllowDm, draftOwnTrips, draftCategories, draftQuiet]);
 
   const blocker = useUnsavedChangesGuard(isDirty);
 
@@ -68,8 +83,9 @@ export function NotificationSettingsPage() {
         allow_dm: draftAllowDm,
         notify_own_trips_only: draftOwnTrips,
         notification_categories: categoriesToSave(draftCategories, !!user?.is_admin),
+        ...(draftQuiet.on ? { quiet_hours_start: draftQuiet.start, quiet_hours_end: draftQuiet.end } : { quiet_hours_off: true }),
       });
-      setSavedSnapshot({ allowDm: draftAllowDm, categories: draftCategories, ownTrips: draftOwnTrips });
+      setSavedSnapshot({ allowDm: draftAllowDm, categories: draftCategories, ownTrips: draftOwnTrips, quiet: draftQuiet });
       toast("success", "Meldingen opgeslagen.");
     } catch {
       toast("error", "Je meldingen konden niet worden opgeslagen. Probeer het opnieuw.");
@@ -98,7 +114,7 @@ export function NotificationSettingsPage() {
         width="2xl"
         actions={
           // Same as the profile: in reach, and only blue when there is something to save.
-          <Button size="sm" onClick={onSave} disabled={!isDirty} loading={updateMutation.isPending}>
+          <Button size="sm" onClick={onSave} disabled={!isDirty || (draftQuiet.on && draftQuiet.start === draftQuiet.end)} loading={updateMutation.isPending}>
             <Save size={14} />
             Opslaan
           </Button>
@@ -179,11 +195,54 @@ export function NotificationSettingsPage() {
             );
           })}
 
+          <div className="card-surface overflow-hidden">
+            <div className="flex items-center justify-between gap-4 px-4 py-3.5">
+              <div className="min-w-0">
+                <p id="quiet-hours-label" className="text-[14px] font-semibold text-ink">Stille uren</p>
+                <p className="mt-0.5 text-[12.5px] text-ink-3">
+                  Tussen deze uren krijg je geen Discord-bericht of push voor bovenstaande meldingen. Wat je in die tijd mist, wordt
+                  niet later nagestuurd.
+                </p>
+              </div>
+              <Switch checked={draftQuiet.on} onChange={() => setDraftQuiet((q) => ({ ...q, on: !q.on }))} labelledBy="quiet-hours-label" />
+            </div>
+            {draftQuiet.on && (
+              <div className="flex flex-wrap items-center gap-3 border-t border-line px-4 py-3">
+                <label className="flex items-center gap-2 text-[13px] text-ink-2">
+                  Van
+                  <select
+                    value={draftQuiet.start}
+                    onChange={(e) => setDraftQuiet((q) => ({ ...q, start: Number(e.target.value) }))}
+                    className="input-field w-auto"
+                    aria-label="Stille uren vanaf"
+                  >
+                    {HOURS.map((h) => <option key={h} value={h}>{hourLabel(h)}</option>)}
+                  </select>
+                </label>
+                <label className="flex items-center gap-2 text-[13px] text-ink-2">
+                  tot
+                  <select
+                    value={draftQuiet.end}
+                    onChange={(e) => setDraftQuiet((q) => ({ ...q, end: Number(e.target.value) }))}
+                    className="input-field w-auto"
+                    aria-label="Stille uren tot"
+                  >
+                    {HOURS.map((h) => <option key={h} value={h}>{hourLabel(h)}</option>)}
+                  </select>
+                </label>
+                {draftQuiet.start === draftQuiet.end && (
+                  <p className="w-full text-[12.5px] text-bad" role="alert">Kies een ander begin- of eindtijd: nu zijn ze gelijk.</p>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="card-surface px-4 py-3.5">
             <p className="section-label">Altijd aan</p>
             <p className="mt-1 text-[12.5px] leading-relaxed text-ink-3">
               Een betaalverzoek aan jou, of de melding dat iemand betaald heeft en jij moet bevestigen, krijg je altijd.
               Los hiervan blijft het openbare Discord-kanaal alles posten, ook voor mensen die de app niet gebruiken.
+              {isAdmin && " Als beheerder krijg je ook altijd een melding als iemand zijn account wil laten verwijderen."}
             </p>
           </div>
         </motion.div>

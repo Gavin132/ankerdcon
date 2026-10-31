@@ -35,6 +35,9 @@ Adding a new category:
 
 from __future__ import annotations
 
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from app.config import get_settings
 from app.constants import Tables
 from app.core.database import supabase
@@ -62,6 +65,8 @@ class NotificationCategory:
     FEEDBACK_SUBMITTED = "feedback_submitted"
     NEW_USER = "new_user"
     TICKET_VOTE = "ticket_vote"
+    # Not one to choose (so not in ALL_CATEGORIES): every active admin gets it, see `broadcast_category_dm(admins_always=True)`.
+    ACCOUNT_DELETION = "account_deletion"
 
 
 ALL_CATEGORIES: list[str] = [
@@ -99,7 +104,8 @@ _PUSH_TITLES: dict[str, str] = {
     NotificationCategory.MEAL_CREATED: "Nieuwe activiteit",
     NotificationCategory.FEEDBACK_SUBMITTED: "Nieuwe feedback",
     NotificationCategory.NEW_USER: "Nieuwe gebruiker",
-    NotificationCategory.TICKET_VOTE: "Ticketstemming",
+    NotificationCategory.TICKET_VOTE: "Ticket poll",
+    NotificationCategory.ACCOUNT_DELETION: "Account verwijderen",
 }
 
 
@@ -120,15 +126,29 @@ def trip_names_for_day(day_id: str | None) -> set[str] | None:
     return {name for d in days for name in (d.get("participants") or [])}
 
 
+def in_quiet_hours(start: int | None, end: int | None, hour: int) -> bool:
+    """Whether `hour` (0-23) falls in a member's quiet hours: from `start` up to, not including, `end`,
+    which may run past midnight (23 to 8). Without both there are none."""
+    if start is None or end is None or start == end:
+        return False
+    return start <= hour < end if start < end else hour >= start or hour < end
+
+
+def _local_hour() -> int:
+    """The hour it is for the members: they set their quiet hours in Dutch time."""
+    return datetime.now(ZoneInfo("Europe/Amsterdam")).hour
+
+
 def _fetch_profiles(category: str) -> list[dict]:
-    """The profiles a broadcast chooses from. Asks for the own-trips setting too, but a database that
-    does not have that column yet (the migration has not run) must not silence every notification."""
+    """The profiles a broadcast chooses from. Asks for the own-trips and quiet-hours settings too, but a database
+    that does not have those columns yet (the migrations have not run) must not silence every notification."""
     columns = "name, discord_id, notification_categories, is_active, allow_dm, is_admin"
-    try:
-        return supabase.table(Tables.PROFILES).select(f"{columns}, notify_own_trips_only").execute().data
-    except Exception as e:
-        logger.warning("Notification broadcast (%s): own-trips setting unavailable, ignoring it: %s", category, e)
-        return supabase.table(Tables.PROFILES).select(columns).execute().data
+    for extra in ("notify_own_trips_only, quiet_hours_start, quiet_hours_end", "notify_own_trips_only"):
+        try:
+            return supabase.table(Tables.PROFILES).select(f"{columns}, {extra}").execute().data
+        except Exception as e:
+            logger.warning("Notification broadcast (%s): settings (%s) unavailable, ignoring them: %s", category, extra, e)
+    return supabase.table(Tables.PROFILES).select(columns).execute().data
 
 
 def broadcast_category_dm(
@@ -138,6 +158,7 @@ def broadcast_category_dm(
     eligible_names: set[str] | None = None,
     trip_names: set[str] | None = None,
     url: str = "/",
+    admins_always: bool = False,
 ) -> None:
     """Send `content` to every active, opted-in user for `category` — as a
     Discord DM (needs `allow_dm` + a linked account), a push (needs a
@@ -153,6 +174,9 @@ def broadcast_category_dm(
 
     `url` is the page a tapped push notification opens (a path in the app).
 
+    `admins_always` is for what an admin must not miss and so cannot be switched off (a member asking for their
+    account to be deleted): it goes to every active admin, whatever categories they chose, and to nobody else.
+
     Fire-and-forget — intended for `background_tasks.add_task`. Never raises;
     a failed fetch or a single failed send must never break the caller.
     """
@@ -164,10 +188,16 @@ def broadcast_category_dm(
 
     dm_sent = 0
     push_names: list[str] = []
+    hour = _local_hour()
     for profile in profiles:
         if not profile.get("is_active", True):
             continue
-        if category not in (profile.get("notification_categories") or []):
+        if in_quiet_hours(profile.get("quiet_hours_start"), profile.get("quiet_hours_end"), hour):
+            continue
+        if admins_always:
+            if not profile.get("is_admin"):
+                continue
+        elif category not in (profile.get("notification_categories") or []):
             continue
         if category in ADMIN_ONLY_CATEGORIES and not profile.get("is_admin"):
             continue

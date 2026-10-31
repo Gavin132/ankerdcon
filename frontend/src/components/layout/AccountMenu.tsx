@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronsUpDown, LogOut, Settings, Shield, Sparkles, User } from "lucide-react";
+import { ChevronsUpDown, LogOut, Settings, Shield, User } from "lucide-react";
 import { routes } from "../../config/routes";
 import { useAuthStore } from "../../store/auth.store";
 import { useUser } from "../../hooks/useUsers";
@@ -169,10 +169,6 @@ export function AccountMenu({ variant = "avatar" }: AccountMenuProps) {
               <button role="menuitem" onClick={() => go(routes.settings)} className={itemClass}>
                 <Settings size={14} className="shrink-0 text-ink-3" />
                 Instellingen
-              </button>
-              <button role="menuitem" onClick={() => go(routes.changelog)} className={itemClass}>
-                <Sparkles size={14} className="shrink-0 text-ink-3" />
-                Wat is nieuw
               </button>
               {me?.is_admin && (
                 <button role="menuitem" onClick={() => go(routes.admin.base)} className={itemClass}>

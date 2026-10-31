@@ -46,6 +46,9 @@ class UserRoutes:
     BANNER = "/banner"
     AVATAR = "/avatar"
     LINK_DISCORD = "/me/link-discord"
+    DISCORD = "/me/discord"
+    EXPORT = "/me/export"
+    DELETION_REQUEST = "/me/deletion-request"
     TEST_NOTIFICATION = "/me/test-notification"
 
 

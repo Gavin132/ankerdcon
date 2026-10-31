@@ -99,6 +99,9 @@ export interface User {
   notification_categories?: string[];
   /** Only hear about a trip's new activities and expenses when going on that trip (default on). */
   notify_own_trips_only?: boolean;
+  /** No category notification by Discord DM or push from `start` up to `end` (hours 0-23, Dutch time); both null: off. */
+  quiet_hours_start?: number | null;
+  quiet_hours_end?: number | null;
   created_at?: string;
 }
 
@@ -121,6 +124,10 @@ export interface UpdatePreferencesRequest {
   show_greeting?: boolean;
   notify_own_trips_only?: boolean;
   notification_categories?: string[];
+  quiet_hours_start?: number;
+  quiet_hours_end?: number;
+  /** Switches the quiet hours off. */
+  quiet_hours_off?: boolean;
 }
 
 export interface LocationPingRequest {
@@ -313,6 +320,8 @@ export interface StoryPhoto {
   preview_url?: string | null;
   media_type: "image" | "video";
   created_at: string;
+  /** Set for a photo of the day just before or after the event, which has no event day of its own. */
+  taken_on?: string | null;
 }
 
 /** A photo on someone's profile, with the event it was taken at. */
@@ -355,11 +364,20 @@ export interface StorySeenState {
   last_seen_seq: number;
 }
 
+/** A day just before or after an event that only has photos: no ring, no seen marker. */
+export interface StoryExtraDay {
+  date: string;
+  photo_count: number;
+  preview_url: string;
+}
+
 export interface StoryDaySummary {
+  /** The event day itself; the photos of the days around it are in `extra_days`. */
   photo_count: number;
   latest_seq: number;
   has_unseen: boolean;
   preview_url: string;
+  extra_days?: StoryExtraDay[];
 }
 
 // Cosplays
