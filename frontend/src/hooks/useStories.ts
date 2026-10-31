@@ -13,10 +13,10 @@ import type { StoryDaySummary, StorySeenState } from "../types";
  * others are watching, and the ring (from the summary) already says there's a
  * new photo — so opening the story has to ask again instead of trusting a list
  * cached up to STALE_TIME ago, or the new photo is missing until it's reopened. */
-export function useStoryPhotos(eventDayId: string, options?: { enabled?: boolean; alwaysFresh?: boolean }) {
+export function useStoryPhotos(eventDayId: string, options?: { enabled?: boolean; alwaysFresh?: boolean; takenOn?: string | null }) {
   return useQuery({
-    queryKey: QUERY_KEYS.storyDay(eventDayId),
-    queryFn: () => getStoryPhotos(eventDayId),
+    queryKey: QUERY_KEYS.storyDay(eventDayId, options?.takenOn),
+    queryFn: () => getStoryPhotos(eventDayId, options?.takenOn),
     staleTime: options?.alwaysFresh ? 0 : STALE_TIME,
     enabled: options?.enabled ?? !!eventDayId,
   });

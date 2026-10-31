@@ -89,7 +89,7 @@ export function TripOverviewTab() {
     // Runs once, right after mount — not on every searchParams change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const [viewDayId, setViewDayId] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<{ dayId: string; takenOn: string | null } | null>(null);
   const [switcherOpen, setSwitcherOpen] = useState(false);
 
   // Swipe sideways to the next or previous trip (chronological, like the switcher's list).
@@ -183,7 +183,7 @@ export function TripOverviewTab() {
     rooms: shown.rooms && <RoomsTile trip={trip} phase={phase} rooms={rooms} users={users} myNames={myNames} wide={wideId === "rooms"} />,
     cosplay: shown.cosplay && <CosplayTile trip={trip} cosplays={cosplays} myNames={myNames} wide={wideId === "cosplay"} />,
     weather: shown.weather && <WeatherTile trip={trip} onOpen={() => setWeatherOpen(true)} wide={wideId === "weather"} />,
-    photos: <PhotosTile trip={trip} phase={phase} summary={storySummary} onOpenDay={setViewDayId} uploadDayId={uploadDay?.ev.id} />,
+    photos: <PhotosTile trip={trip} phase={phase} summary={storySummary} onOpenDay={(dayId, takenOn = null) => setViewing({ dayId, takenOn })} uploadDayId={uploadDay?.ev.id} />,
     practical: shown.practical && <PracticalTile info={info} trip={trip} onOpen={() => setPracticalOpen(true)} wide={wideId === "practical"} />,
     expenses: <ExpensesTile trip={trip} phase={phase} expenses={expenses} myNames={myNames} wide={wideId === "expenses"} />,
     tickets: shown.tickets && <TicketTile trip={trip} poll={ticketPoll} onOpen={() => setTicketOpen(true)} wide={wideId === "tickets"} />,
@@ -253,7 +253,7 @@ export function TripOverviewTab() {
       <PracticalSheet open={practicalOpen} onClose={() => setPracticalOpen(false)} info={info} trip={trip} />
       <TicketSheet open={ticketOpen} onClose={() => setTicketOpen(false)} trip={trip} poll={ticketPoll} />
 
-      <StoryViewer eventDayId={viewDayId ?? ""} open={viewDayId !== null} onClose={() => setViewDayId(null)} />
+      <StoryViewer eventDayId={viewing?.dayId ?? ""} takenOn={viewing?.takenOn} open={viewing !== null} onClose={() => setViewing(null)} />
     </div>
   );
 }

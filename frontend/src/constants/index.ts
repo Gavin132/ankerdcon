@@ -46,7 +46,7 @@ export const QUERY_KEYS = {
   cosplays: ["cosplays"] as const,
   expenses: ["expenses"] as const,
 
-  storyDay: (eventDayId: string) => ["stories", eventDayId] as const,
+  storyDay: (eventDayId: string, takenOn?: string | null) => (takenOn ? ["stories", eventDayId, "on", takenOn] : ["stories", eventDayId]) as readonly string[],
   storySeen: (eventDayId: string) => ["stories", eventDayId, "seen"] as const,
   storySummary: (eventDayIds: string[]) => ["stories", "summary", ...eventDayIds] as const,
   userPhotos: (identifier: string) => ["stories", "user", identifier] as const,

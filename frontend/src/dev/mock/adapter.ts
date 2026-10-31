@@ -36,7 +36,7 @@ const GETS: [RegExp, Handler][] = [
   }],
   [/^\/api\/stories\/user\/([^/]+)$/, (m, _q, fx) => userPhotos(fx, decodeURIComponent(m[1]) === "u-gavin" ? ME : decodeURIComponent(m[1]))],
   [/^\/api\/stories\/([^/]+)\/seen$/, (m) => ({ event_day_id: m[1], last_seen_seq: 0 })],
-  [/^\/api\/stories\/([^/]+)$/, (m, _q, fx) => fx.storyDays[m[1]] ?? []],
+  [/^\/api\/stories\/([^/]+)$/, (m, q, fx) => (fx.storyDays[m[1]] ?? []).filter((p) => (p.taken_on ?? null) === (q.get("taken_on") ?? null))],
   [/^\/api\/weather\/geocode$/, (_m, q) => geocodeAnswer(q.get("name") ?? "")],
   [/^\/api\/weather\/forecast$/, (_m, q) => forecastAnswer(q.get("date") ?? "")],
   [/^\/api\/weather\/archive$/, (_m, q) => archiveAnswer(q.get("start_date") ?? "2016-01-01", q.get("end_date") ?? "2025-12-31")],

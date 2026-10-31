@@ -14,6 +14,8 @@ const STORE = "story_photos";
 export interface PendingStoryPhoto {
   id: string;
   eventDayId: string;
+  /** The day just before or after the event the photo was taken, when it has no event day of its own. */
+  takenOn?: string | null;
   blob: Blob;
   createdAt: number;
 }
@@ -47,8 +49,8 @@ async function withStore<T>(mode: IDBTransactionMode, run: (store: IDBObjectStor
   }
 }
 
-export async function addPendingStoryPhoto(eventDayId: string, blob: Blob): Promise<PendingStoryPhoto> {
-  const item: PendingStoryPhoto = { id: crypto.randomUUID(), eventDayId, blob, createdAt: Date.now() };
+export async function addPendingStoryPhoto(eventDayId: string, blob: Blob, takenOn?: string | null): Promise<PendingStoryPhoto> {
+  const item: PendingStoryPhoto = { id: crypto.randomUUID(), eventDayId, takenOn: takenOn ?? null, blob, createdAt: Date.now() };
   await withStore("readwrite", (store) => store.put(item));
   return item;
 }

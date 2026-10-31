@@ -14,7 +14,7 @@ interface PendingStoryUploadsState {
   hydrate: () => Promise<void>;
   /** Returns null when it couldn't even be queued (IndexedDB unavailable,
    * e.g. a private-browsing tab) — the caller falls back to a plain error. */
-  add: (eventDayId: string, blob: Blob) => Promise<PendingStoryPhoto | null>;
+  add: (eventDayId: string, blob: Blob, takenOn?: string | null) => Promise<PendingStoryPhoto | null>;
   remove: (id: string) => Promise<void>;
 }
 
@@ -30,9 +30,9 @@ export const usePendingStoryUploadsStore = create<PendingStoryUploadsState>((set
       set({ hydrated: true });
     }
   },
-  add: async (eventDayId, blob) => {
+  add: async (eventDayId, blob, takenOn) => {
     try {
-      const item = await addPendingStoryPhoto(eventDayId, blob);
+      const item = await addPendingStoryPhoto(eventDayId, blob, takenOn);
       set((s) => ({ items: [...s.items, item] }));
       return item;
     } catch {

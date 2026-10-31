@@ -365,21 +365,33 @@ const UPLOAD_BUTTON_CLASS = ADD_BUTTON_CLASS;
  * trip ticket's camera icon) so adding a photo doesn't require hunting for
  * it elsewhere.
  */
-export function PhotosTile({ trip, phase, summary, onOpenDay, uploadDayId }: { trip: Trip; phase: TripPhase; summary?: Record<string, StoryDaySummary>; onOpenDay: (dayId: string) => void; uploadDayId?: string }) {
+export function PhotosTile({ trip, phase, summary, onOpenDay, uploadDayId }: { trip: Trip; phase: TripPhase; summary?: Record<string, StoryDaySummary>; onOpenDay: (dayId: string, takenOn?: string | null) => void; uploadDayId?: string }) {
   const viewer = useIsViewer();
-  const perDay = trip.days.map((d) => ({ day: d, s: summary?.[d.ev.id] }));
-  const total = perDay.reduce((sum, x) => sum + (x.s?.photo_count ?? 0), 0);
+  // A day of the event, and the days just before or after it that only have photos (`extra_days`: they are no event
+  // day, so they only exist here), in the order of the calendar.
+  const entries = trip.days
+    .flatMap((day) => {
+      const s = summary?.[day.ev.id];
+      const own = s && s.photo_count > 0 ? [{ key: day.ev.id, dayId: day.ev.id, takenOn: null as string | null, date: day.date, count: s.photo_count, preview: s.preview_url }] : [];
+      const around = (s?.extra_days ?? []).flatMap((x) => {
+        const date = parseEventDate(x.date);
+        return date ? [{ key: `${day.ev.id}@${x.date}`, dayId: day.ev.id, takenOn: x.date as string | null, date, count: x.photo_count, preview: x.preview_url }] : [];
+      });
+      return [...own, ...around];
+    })
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+  const total = entries.reduce((sum, x) => sum + x.count, 0);
   const today = todayKey();
-  const todayEntry = perDay.find((x) => toDateKey(x.day.date) === today);
-  const todayCount = todayEntry?.s?.photo_count ?? 0;
-  const previews = perDay.filter((x) => x.s && x.s.photo_count > 0 && x.s.preview_url);
-  const primaryDay = (todayEntry?.s?.photo_count ? todayEntry : [...previews].reverse()[0])?.day.ev.id;
+  const todayEntry = entries.find((x) => toDateKey(x.date) === today);
+  const todayCount = todayEntry?.count ?? 0;
+  const previews = entries.filter((x) => x.preview);
+  const primary = todayEntry ?? [...previews].reverse()[0];
 
   return (
     <TripTile
       icon={Camera}
       label="Foto's"
-      onOpen={total > 0 && primaryDay ? () => onOpenDay(primaryDay) : undefined}
+      onOpen={total > 0 && primary ? () => onOpenDay(primary.dayId, primary.takenOn) : undefined}
       action={uploadDayId && !viewer && <StoryUploadButton eventDayId={uploadDayId} className={UPLOAD_BUTTON_CLASS} />}
       size={phase === "past" ? "full" : "wide"}
     >
@@ -394,20 +406,20 @@ export function PhotosTile({ trip, phase, summary, onOpenDay, uploadDayId }: { t
         <>
           <TileValue>{phase === "live" && todayCount > 0 ? `${todayCount} vandaag` : countOf(total, "foto", "foto's")}</TileValue>
           <TileText>
-            {trip.days.length > 1
-              ? perDay.filter((x) => (x.s?.photo_count ?? 0) > 0).map((x) => `${x.s!.photo_count} op ${dayShort(x.day.date)}`).join(", ")
+            {trip.days.length > 1 || entries.length > 1
+              ? entries.map((x) => `${x.count} op ${dayShort(x.date)}`).join(", ")
               : `${total} in de story`}
           </TileText>
           <span className="flex items-center gap-1.5">
             {previews.map((x) => (
               <button
-                key={x.day.ev.id}
+                key={x.key}
                 type="button"
-                onClick={() => onOpenDay(x.day.ev.id)}
-                aria-label={`Foto's van ${dayShort(x.day.date)}`}
+                onClick={() => onOpenDay(x.dayId, x.takenOn)}
+                aria-label={`Foto's van ${dayShort(x.date)}`}
                 className="relative rounded-md"
               >
-                <img src={x.s!.preview_url} alt="" className="h-16 w-12 rounded-md object-cover" />
+                <img src={x.preview} alt="" className="h-16 w-12 rounded-md object-cover" />
               </button>
             ))}
           </span>

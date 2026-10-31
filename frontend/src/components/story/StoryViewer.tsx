@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { animate, motion, AnimatePresence, useDragControls, useMotionValue, useTransform } from "framer-motion";
-import { X, Trash2, Share2, Download, FolderDown, Loader2, Volume2, VolumeX } from "lucide-react";
+import { X, Trash2, Share2, Download, FolderDown, Loader2, Play, Volume2, VolumeX } from "lucide-react";
 import { useStoryPhotos, useMarkStorySeen, useDeleteStoryPhoto } from "../../hooks/useStories";
 import { useMyNames } from "../../hooks/useUsers";
 import { useBackClose } from "../../hooks/useBackClose";
+import { useDataSaverStore } from "../../store/dataSaver.store";
 import { downloadAllStoryPhotos, downloadStoryPhoto } from "../../services/stories.service";
 import { toast } from "../../store/toast.store";
 import { UserAvatar } from "../common/UserAvatar";
@@ -19,10 +20,12 @@ interface StoryViewerProps {
   onClose: () => void;
   /** Photo to start on (position in the day's story). Defaults to the first. */
   initialIndex?: number;
+  /** Shows the photos of a day just before or after the event instead of the event day itself. */
+  takenOn?: string | null;
 }
 
 /** Full-screen Instagram-style tap-through photo story. */
-export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: StoryViewerProps) {
+export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0, takenOn = null }: StoryViewerProps) {
   // Latched, not the raw prop — a caller that stores "which day is open" as
   // a single `string | null` (see HubPage.tsx) naturally passes an empty
   // string in the same render that flips `open` to false, while the exit
@@ -30,9 +33,13 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
   // below correctly scoped for the whole close animation instead of firing
   // requests against an empty id.
   const [activeEventDayId, setActiveEventDayId] = useState(eventDayId);
+  const [activeTakenOn, setActiveTakenOn] = useState(takenOn);
   useEffect(() => {
-    if (eventDayId) setActiveEventDayId(eventDayId);
-  }, [eventDayId]);
+    if (eventDayId) {
+      setActiveEventDayId(eventDayId);
+      setActiveTakenOn(takenOn);
+    }
+  }, [eventDayId, takenOn]);
 
   // `open` alone isn't enough to gate the fetch: on the render where a story
   // first opens, `open` flips true one render before the latching effect
@@ -40,7 +47,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
   // initial empty string for that one render — firing a request against
   // "" (a 404, since the backend route needs a real id segment). Requiring
   // a non-empty id too keeps the query disabled until the effect catches up.
-  const { data: photos = [] } = useStoryPhotos(activeEventDayId, { enabled: open && !!activeEventDayId, alwaysFresh: true });
+  const { data: photos = [] } = useStoryPhotos(activeEventDayId, { enabled: open && !!activeEventDayId, alwaysFresh: true, takenOn: activeTakenOn });
   const { isMine } = useMyNames();
   const markSeen = useMarkStorySeen(activeEventDayId);
   const deletePhoto = useDeleteStoryPhoto(activeEventDayId);
@@ -59,6 +66,9 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
   const [muted, setMuted] = useState(false);
   const [buffering, setBuffering] = useState(false);
   const [failedVideoId, setFailedVideoId] = useState<string | null>(null);
+  // Data saver (Instellingen): a video is only fetched once it has been tapped, and nothing is loaded ahead.
+  const dataSaver = useDataSaverStore((s) => s.on);
+  const [tappedVideos, setTappedVideos] = useState<Set<string>>(() => new Set());
   const videoProgress = useMotionValue(0);
 
   useEffect(() => {
@@ -66,7 +76,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
       setIndex(initialIndex);
       highestSeqRef.current = 0;
     }
-  }, [open, eventDayId]);
+  }, [open, eventDayId, takenOn]);
 
   // dragY lives on this component, not the sheet it drags — the sheet unmounts
   // on close but this doesn't, so a swipe-close leaves it sitting wherever the
@@ -88,14 +98,15 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
   // black rather than the old picture). A video only gets its still frame loaded
   // ahead: the video itself is far too big to fetch on a guess.
   useEffect(() => {
-    if (!open) return;
+    if (!open || dataSaver) return;
     for (const p of [photos[index + 1], photos[index + 2]]) {
       if (p) new Image().src = p.media_type === "video" ? (p.poster_url ?? "") : fullImage(p);
     }
-  }, [open, index, photos]);
+  }, [open, index, photos, dataSaver]);
 
   const currentId = photos[index]?.id;
   const currentIsVideo = photos[index]?.media_type === "video";
+  const heldVideo = dataSaver && currentIsVideo && !!currentId && !tappedVideos.has(currentId);
 
   // The progress bar. A video's follows the video itself (the story moves on when it ends, see onEnded);
   // a photo's, and that of a video this device cannot play, fills over SLIDE_DURATION_MS and then moves on.
@@ -141,9 +152,10 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
   }
 
   const flushSeen = useCallback(() => {
-    if (highestSeqRef.current > 0) markSeen.mutate(highestSeqRef.current);
+    // A day beside the event has no ring, so nothing to mark: its photos must not move the event day's marker.
+    if (!activeTakenOn && highestSeqRef.current > 0) markSeen.mutate(highestSeqRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eventDayId]);
+  }, [eventDayId, activeTakenOn]);
 
   const handleClose = useCallback(() => {
     flushSeen();
@@ -227,7 +239,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
   async function handleDownloadAll() {
     setDownloadingAll(true);
     try {
-      await downloadAllStoryPhotos(activeEventDayId);
+      await downloadAllStoryPhotos(activeEventDayId, activeTakenOn);
     } catch {
       toast("error", "Kon de foto's niet downloaden.");
     } finally {
@@ -376,7 +388,21 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
 
           {/* Photo + tap zones */}
           <div className="relative flex-1 min-h-0">
-            {current.media_type === "video" ? (
+            {heldVideo ? (
+              <>
+                {current.poster_url && (
+                  <img src={current.poster_url} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none object-contain" />
+                )}
+                <button
+                  type="button"
+                  onClick={() => setTappedVideos((s) => new Set(s).add(current.id))}
+                  className="btn-primary absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 gap-2 px-4"
+                >
+                  <Play size={16} />
+                  Video afspelen
+                </button>
+              </>
+            ) : current.media_type === "video" ? (
               <>
                 <video
                   key={current.id}

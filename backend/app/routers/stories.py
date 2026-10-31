@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from collections import defaultdict
+from datetime import date
 
 from fastapi.concurrency import run_in_threadpool
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
@@ -16,7 +17,7 @@ from app.core.thumbnails import POSTER_SUFFIX, PREVIEW_SUFFIX, THUMB_SUFFIX, der
 from app.core.uploads import clean_image, read_capped, sniff_video
 from app.core.zip_stream import stream_zip
 from app.dependencies import get_current_user, is_own_name
-from app.models.story import MarkStorySeenRequest, StoryDaySummary, StoryPhoto, StorySeenState, UserStoryPhoto
+from app.models.story import MarkStorySeenRequest, StoryDaySummary, StoryExtraDay, StoryPhoto, StorySeenState, UserStoryPhoto
 from app.routes import StoryRoutes
 
 logger = get_logger(__name__)
@@ -52,6 +53,41 @@ def _require_day_id(event_day_id: str) -> None:
     503/500 instead of a clear 422."""
     if not event_day_id:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="event_day_id ontbreekt.")
+
+
+def _preview_of(photo: dict) -> str:
+    # Shown small (the ring, a trip's cover): the thumbnail, never the full-size photo.
+    return photo.get("thumb_url") or photo.get("poster_url") or photo["image_url"]
+
+
+def _clean_taken_on(taken_on: str | None, day_date: str | None) -> str | None:
+    """The date to keep with a photo of this event day: None for a photo of the day itself, the date for a
+    photo of the day just before or after it, and an error for anything further away (the app files those
+    on the nearest event day, so a request like that is a mistake)."""
+    if not taken_on:
+        return None
+    try:
+        taken = date.fromisoformat(taken_on)
+        day = date.fromisoformat(day_date[:10]) if day_date else None
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="De datum van de foto klopt niet.")
+    if day is None:
+        return None
+    gap = abs((taken - day).days)
+    if gap == 0:
+        return None
+    if gap == 1:
+        return taken.isoformat()
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail="Deze foto is te lang voor of na het evenement genomen voor deze dag.",
+    )
+
+
+def _of_day(photos: list[dict], taken_on: str | None) -> list[dict]:
+    """The photos of the event day itself, or (with `taken_on`) of the one extra day. Filtered here, not in the
+    query, so it works on a database that has not had migration v2.43 yet."""
+    return [p for p in photos if (p.get("taken_on") or None) == (taken_on or None)]
 
 
 # Registered before the LIST/{event_day_id} route below — FastAPI matches
@@ -100,14 +136,23 @@ def get_story_summary(
 
     result: dict[str, StoryDaySummary] = {}
     for day_id, day_photos in by_day.items():
-        newest = max(day_photos, key=lambda p: p["seq"])
+        own = _of_day(day_photos, None)
+        around: dict[str, list[dict]] = defaultdict(list)
+        for p in day_photos:
+            if p.get("taken_on"):
+                around[p["taken_on"]].append(p)
+        extra_days = [
+            StoryExtraDay(date=d, photo_count=len(ps), preview_url=_preview_of(max(ps, key=lambda p: p["seq"])))
+            for d, ps in sorted(around.items())
+        ]
+        newest = max(own, key=lambda p: p["seq"]) if own else None
         last_seen = seen_by_day.get(day_id, 0)
         result[day_id] = StoryDaySummary(
-            photo_count=len(day_photos),
-            latest_seq=newest["seq"],
-            has_unseen=newest["seq"] > last_seen,
-            # Shown small (the ring, a trip's cover): the thumbnail, never the full-size photo.
-            preview_url=newest.get("thumb_url") or newest.get("poster_url") or newest["image_url"],
+            photo_count=len(own),
+            latest_seq=newest["seq"] if newest else 0,
+            has_unseen=bool(newest) and newest["seq"] > last_seen,
+            preview_url=_preview_of(newest) if newest else "",
+            extra_days=extra_days,
         )
     return result
 
@@ -171,16 +216,20 @@ def list_user_photos(identifier: str, _: str = Depends(get_current_user)):
             id=p["id"], image_url=p["image_url"], poster_url=p.get("poster_url"), thumb_url=p.get("thumb_url"),
             preview_url=p.get("preview_url"), created_at=p["created_at"],
             event_day_id=p["event_day_id"],
-            event_id=event_id, event_name=name_by_event.get(event_id), date=day.get("date"),
+            event_id=event_id, event_name=name_by_event.get(event_id), date=p.get("taken_on") or day.get("date"),
         ))
     return out
 
 
 @router.get(StoryRoutes.LIST, response_model=list[StoryPhoto])
-def list_story_photos(event_day_id: str, _: str = Depends(get_current_user)):
+def list_story_photos(
+    event_day_id: str,
+    taken_on: str | None = Query(None, description="One of the days around the event, instead of the event day itself"),
+    _: str = Depends(get_current_user),
+):
     _require_day_id(event_day_id)
     try:
-        return (
+        photos = (
             supabase.table(Tables.STORY_PHOTOS)
             .select("*")
             .eq("event_day_id", event_day_id)
@@ -188,6 +237,7 @@ def list_story_photos(event_day_id: str, _: str = Depends(get_current_user)):
             .execute()
             .data
         )
+        return _of_day(photos, taken_on)
     except Exception as e:
         logger.error("Failed to list story photos for day %s: %s", event_day_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
@@ -208,7 +258,7 @@ def _discard(keys: list[str]) -> None:
 
 
 def _store_story_photo(
-    event_day_id: str, current_user: str, content: bytes, poster: bytes | None = None,
+    event_day_id: str, current_user: str, content: bytes, poster: bytes | None = None, taken_on: str | None = None,
 ) -> dict:
     """A photo, or (with `poster`) a video: both end up as one `story_photos` row, with the lighter
     copies (thumbnail, and for a big photo a preview) that grids and the viewer show instead of the original."""
@@ -232,7 +282,7 @@ def _store_story_photo(
     try:
         day_row = (
             supabase.table(Tables.EVENT_DAYS)
-            .select("event_id")
+            .select("event_id, date")
             .eq("id", event_day_id)
             .execute()
         )
@@ -242,6 +292,8 @@ def _store_story_photo(
     if not day_row.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evenementdag niet gevonden.")
     event_id = day_row.data[0]["event_id"]
+    # Checked before anything is stored, so a refused date leaves no files behind.
+    taken_on = _clean_taken_on(taken_on, day_row.data[0].get("date"))
 
     base = f"{event_id}/{event_day_id}/{uuid.uuid4().hex}"
     key = f"{base}.{ext}"
@@ -280,17 +332,30 @@ def _store_story_photo(
         "preview_url": urls.get(f"{base}{PREVIEW_SUFFIX}"),
     }
     row = {**base_row, **{c: v for c, v in derived.items() if v}}
+    if taken_on:
+        row["taken_on"] = taken_on
     try:
-        try:
-            resp = supabase.table(Tables.STORY_PHOTOS).insert(row).execute()
-        except Exception as first:
-            # A database that has not had migration v2.41 yet has no thumb_url / preview_url: keep taking
-            # photos without the lighter copies rather than refusing every upload until it has run.
-            lean = {c: v for c, v in row.items() if c not in ("thumb_url", "preview_url")}
-            if lean == row:
-                raise
-            logger.warning("Saving the story photo without thumbnails (migration v2.41 not run?): %s", first)
-            resp = supabase.table(Tables.STORY_PHOTOS).insert(lean).execute()
+        # A database that has not had migration v2.41 / v2.43 yet lacks thumb_url, preview_url / taken_on: keep
+        # taking photos (without the lighter copies, on the nearest event day) rather than refusing every upload
+        # until it has run. Each fallback drops only what the previous one still had.
+        no_day = {c: v for c, v in row.items() if c != "taken_on"}
+        lean = {c: v for c, v in no_day.items() if c not in ("thumb_url", "preview_url")}
+        attempts = [row]
+        for candidate in (no_day, lean):
+            if candidate not in attempts:
+                attempts.append(candidate)
+        resp = None
+        saved = row
+        for number, candidate in enumerate(attempts):
+            try:
+                resp = supabase.table(Tables.STORY_PHOTOS).insert(candidate).execute()
+                saved = candidate
+                break
+            except Exception as failure:
+                if number == len(attempts) - 1:
+                    raise
+                logger.warning("Saving the story photo with fewer columns (migration v2.41 / v2.43 not run?): %s", failure)
+        if "thumb_url" not in saved:
             for extra_key in (f"{base}{THUMB_SUFFIX}", f"{base}{PREVIEW_SUFFIX}"):
                 if extra_key in stored:
                     stored.remove(extra_key)
@@ -312,6 +377,7 @@ async def upload_story_photo(
     event_day_id: str,
     file: UploadFile = File(...),
     poster: UploadFile | None = File(None),
+    taken_on: str | None = Query(None, description="The day just before or after the event this was taken, if it was"),
     current_user: str = Depends(get_current_user),
 ):
     """A photo, or a video with the still frame (`poster`) the phone made of it. What the bytes
@@ -328,7 +394,7 @@ async def upload_story_photo(
 
     content = await read_capped(file, _VIDEO_MAX_BYTES if is_video else _MAX_BYTES)
     poster_bytes = await read_capped(poster, _POSTER_MAX_BYTES) if is_video and poster else None
-    return await run_in_threadpool(_store_story_photo, event_day_id, current_user, content, poster_bytes)
+    return await run_in_threadpool(_store_story_photo, event_day_id, current_user, content, poster_bytes, taken_on)
 
 
 @router.delete(StoryRoutes.DETAIL, status_code=status.HTTP_204_NO_CONTENT)
@@ -413,19 +479,24 @@ def _day_zip_entries(photos: list[dict]):
 
 
 @router.get(StoryRoutes.DOWNLOAD_ALL)
-def download_all_story_photos(event_day_id: str, current_user: str = Depends(get_current_user)):
+def download_all_story_photos(
+    event_day_id: str,
+    current_user: str = Depends(get_current_user),
+    taken_on: str | None = Query(None, description="One of the days around the event, instead of the event day itself"),
+):
     """Every photo of this day as one zip, for a member to keep after the trip — the
     same photos `list_story_photos` already shows them, streamed while it is built."""
     _require_day_id(event_day_id)
     try:
         photos = (
             supabase.table(Tables.STORY_PHOTOS)
-            .select("id, seq, uploaded_by, image_url")
+            .select("*")
             .eq("event_day_id", event_day_id)
             .order("seq")
             .execute()
             .data
         ) or []
+        photos = _of_day(photos, taken_on)
         day_row = supabase.table(Tables.EVENT_DAYS).select("date").eq("id", event_day_id).execute()
     except Exception as e:
         logger.error("Failed to list story photos for zip, day %s: %s", event_day_id, e)
@@ -439,8 +510,8 @@ def download_all_story_photos(event_day_id: str, current_user: str = Depends(get
             detail="Te veel foto's voor één zip. Download ze los via de foto zelf.",
         )
 
-    date = day_row.data[0]["date"] if day_row.data else None
-    label = f"fotos-{date}" if date else "fotos"
+    day_date = taken_on or (day_row.data[0]["date"] if day_row.data else None)
+    label = f"fotos-{day_date}" if day_date else "fotos"
     return StreamingResponse(
         stream_zip(_day_zip_entries(photos)),
         media_type="application/zip",

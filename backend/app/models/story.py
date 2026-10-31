@@ -24,6 +24,8 @@ class StoryPhoto(BaseModel):
     thumb_url: Optional[str] = None
     preview_url: Optional[str] = None
     created_at: str
+    # Only for a photo of a day with no event day of its own (see migration v2.43); None for a photo of the event day.
+    taken_on: Optional[str] = None
 
     @computed_field
     @property
@@ -40,11 +42,20 @@ class MarkStorySeenRequest(BaseModel):
     seq: int
 
 
+class StoryExtraDay(BaseModel):
+    """A day just before or after an event that only has photos: no event day, so no ring and no seen marker."""
+    date: str
+    photo_count: int
+    preview_url: str
+
+
 class StoryDaySummary(BaseModel):
+    """The photos of one event day. `photo_count` is the day itself; photos of the days around it are in `extra_days`."""
     photo_count: int
     latest_seq: int
     has_unseen: bool
     preview_url: str
+    extra_days: list[StoryExtraDay] = []
 
 
 class UserStoryPhoto(BaseModel):

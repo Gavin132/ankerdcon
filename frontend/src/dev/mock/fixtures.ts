@@ -261,6 +261,17 @@ export function buildFixtures(scenario: Scenario, role: Role): Fixtures {
     });
     if (count > 0) storySummary[id] = { photo_count: count, latest_seq: seq, has_unseen: dayIndex === 0, preview_url: thumbImage(seq) };
   });
+  // Photos of the day after the con, which has no event day: kept on its last day with the date they were taken.
+  const afterDate = dateKey(start + 3);
+  const after: StoryPhoto[] = [0, 1].map((i) => {
+    seq += 1;
+    return {
+      id: `ph-${seq}`, event_day_id: "d-hmia-3", seq, uploaded_by: NAMES[i], created_at: ago(1), media_type: "image" as const, taken_on: afterDate,
+      image_url: photoImage(seq), thumb_url: thumbImage(seq), preview_url: photoImage(seq), poster_url: null,
+    };
+  });
+  storyDays["d-hmia-3"] = after;
+  storySummary["d-hmia-3"] = { photo_count: 0, latest_seq: 0, has_unseen: false, preview_url: "", extra_days: [{ date: afterDate, photo_count: after.length, preview_url: thumbImage(seq) }] };
 
   const whitelist: WhitelistEntry[] = [
     { id: "w-1", discord_id: "123456789012345678", email: null, created_at: ago(200) },

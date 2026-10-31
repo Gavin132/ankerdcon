@@ -72,26 +72,26 @@ def _read_zip(response) -> zipfile.ZipFile:
 
 
 def test_zip_has_one_named_file_per_photo(photos):
-    response = stories.download_all_story_photos(DAY, "Sam")
+    response = stories.download_all_story_photos(DAY, "Sam", None)
     zf = _read_zip(response)
     assert sorted(zf.namelist()) == ["001-Sam.jpg", "002-Alex.jpg"]
     assert zf.read("001-Sam.jpg") == f"{DAY[:8]}/{DAY}/1.jpg".encode()
 
 
 def test_filename_uses_the_days_date(photos):
-    response = stories.download_all_story_photos(DAY, "Sam")
+    response = stories.download_all_story_photos(DAY, "Sam", None)
     assert response.headers["content-disposition"] == 'attachment; filename="fotos-2026-09-28.zip"'
 
 
 def test_any_signed_in_member_may_download_it(photos):
     # No admin dependency on this route — just needs a current_user, whoever it is.
-    stories.download_all_story_photos(DAY, "Alex")
+    stories.download_all_story_photos(DAY, "Alex", None)
 
 
 def test_a_day_with_no_photos_is_a_404(monkeypatch):
     monkeypatch.setattr(stories, "supabase", FakeSupabase([], [{"id": DAY, "date": "2026-09-28"}]))
     with pytest.raises(HTTPException) as e:
-        stories.download_all_story_photos(DAY, "Sam")
+        stories.download_all_story_photos(DAY, "Sam", None)
     assert e.value.status_code == 404
 
 
@@ -99,7 +99,7 @@ def test_too_many_photos_is_refused_before_it_starts(monkeypatch):
     rows = [_photo(i, "Sam") for i in range(1, stories._DAY_ZIP_MAX_FILES + 2)]
     monkeypatch.setattr(stories, "supabase", FakeSupabase(rows, [{"id": DAY, "date": "2026-09-28"}]))
     with pytest.raises(HTTPException) as e:
-        stories.download_all_story_photos(DAY, "Sam")
+        stories.download_all_story_photos(DAY, "Sam", None)
     assert e.value.status_code == 413
 
 
@@ -110,11 +110,11 @@ def test_an_unreadable_photo_is_skipped_not_fatal(photos, monkeypatch):
         return key.encode(), "image/jpeg"
 
     monkeypatch.setattr(stories.minio_client, "get_object_bytes", flaky)
-    zf = _read_zip(stories.download_all_story_photos(DAY, "Sam"))
+    zf = _read_zip(stories.download_all_story_photos(DAY, "Sam", None))
     assert zf.namelist() == ["002-Alex.jpg"]
 
 
 def test_missing_event_day_id_is_422():
     with pytest.raises(HTTPException) as e:
-        stories.download_all_story_photos("", "Sam")
+        stories.download_all_story_photos("", "Sam", None)
     assert e.value.status_code == 422
