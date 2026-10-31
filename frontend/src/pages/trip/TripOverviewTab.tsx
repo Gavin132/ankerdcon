@@ -1,8 +1,6 @@
-import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { motion } from "framer-motion";
 import { useCalendar, useHotelRooms } from "../../hooks/useCalendar";
-import { useSwipe } from "../../hooks/useSwipe";
 import { useUsers } from "../../hooks/useUsers";
 import { useMeals } from "../../hooks/useMeals";
 import { useRides } from "../../hooks/useRides";
@@ -20,13 +18,14 @@ import { ShareButton } from "../../components/common/ShareButton";
 import { TripEditButton } from "../../components/trip/TripEditButton";
 import { TripSwitcher, TripSwitcherButton } from "../../components/trip/TripSwitcher";
 import { SwipeHint } from "../../components/trip/SwipeHint";
+import { Carousel } from "../../components/common/Carousel";
 import { TripRsvpModal } from "../../components/calendar/TripRsvpModal";
 import { StoryViewer } from "../../components/story/StoryViewer";
 import {
   CosplayTile, ExpensesTile, FoodTile, PhotosTile, PracticalSheet, PracticalTile, RoomsTile, TicketSheet, TicketTile, TransportTile, WeatherSheet, WeatherTile,
   hasPracticalInfo, tripCosts,
 } from "../../components/trip/TripTiles";
-import { buildTrips, tripInfo, tripOutliers, tripPhase, tripUploadDay, type TripDay, type TripPhase } from "../../utils/trips";
+import { buildTrips, tripInfo, tripOutliers, tripPhase, tripUploadDay, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
 import { useTrip } from "./tripContext";
 import { TripTransportSheet } from "./TripTransportTab";
 import { TripCosplaySheet } from "./TripCosplayTab";
@@ -42,21 +41,11 @@ const TILE_ORDER: Record<TripPhase, TileId[]> = {
   past: [...CORE_TILES, "expenses", "cosplay"],
 };
 
-// A short slide + fade in when moving to another trip (swipe, the switcher's
-// arrows or its list) — enough to read as "this moved that way", not a showy
-// page transition. Enter-only on purpose: an exit animation has to keep the old
-// content mounted next to the new one, which changes the page height for a few
-// frames and made the fixed bottom nav jump on phones.
-const SLIDE_OFFSET_PX = 28;
-
 /**
- * Event › Overzicht: the trip's ticket with a tile per part of the trip.
- * Tiles summarise and link to their own page, where things get changed;
- * only read-only info (weather, practical) unfolds in place.
+ * One trip's Overzicht: its ticket and a tile per part of the trip. `active` is the trip the URL is on: the others are the
+ * slides beside it in the carousel, there to be swiped to, so only the active one owns the sheets that open over the page.
  */
-export function TripOverviewTab() {
-  const { trip, activeTab, dayId } = useTrip();
-  const navigate = useNavigate();
+function TripOverviewPanel({ trip, active }: { trip: Trip; active: boolean }) {
   useTimeStore((s) => s.override); // re-render when the time-travel override changes
   const { data: users = [] } = useUsers();
   const { data: meals = [] } = useMeals();
@@ -81,7 +70,7 @@ export function TripOverviewTab() {
   // uses it: that opens the sheet over the Hub; the mobile audit does.
   const [searchParams, setSearchParams] = useSearchParams();
   useEffect(() => {
-    if (!searchParams.get("openTicket")) return;
+    if (!active || !searchParams.get("openTicket")) return;
     setTicketOpen(true);
     const next = new URLSearchParams(searchParams);
     next.delete("openTicket");
@@ -90,42 +79,6 @@ export function TripOverviewTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [viewing, setViewing] = useState<{ dayId: string; takenOn: string | null } | null>(null);
-  const [switcherOpen, setSwitcherOpen] = useState(false);
-
-  // Swipe sideways to the next or previous trip (chronological, like the switcher's list).
-  const pageRef = useRef<HTMLDivElement>(null);
-  const { data: calendar = [] } = useCalendar();
-  const allTrips = buildTrips(calendar);
-  const at = allTrips.findIndex((t) => t.id === trip.id);
-  // Bumped on every trip switch (swipe or otherwise) — the swipe hint below
-  // watches this to cut itself short the moment its lesson is no longer needed.
-  const [tripSwitchCount, setTripSwitchCount] = useState(0);
-  const goToTrip = (index: number) => {
-    const target = allTrips[index];
-    if (!target) return;
-    setTripSwitchCount((c) => c + 1);
-    navigate(routes.trip.view(target.id));
-    window.scrollTo(0, 0);
-  };
-  // Which way the new content slides in: from the right when moving to a later
-  // trip (the same direction a finger dragged), from the left for an earlier
-  // one. Worked out from where we came from, so it also holds for the switcher.
-  const previous = useRef({ id: trip.id, at });
-  let slideFrom: number | null = null;
-  if (previous.current.id !== trip.id && previous.current.at >= 0 && at >= 0) {
-    slideFrom = at > previous.current.at ? SLIDE_OFFSET_PX : -SLIDE_OFFSET_PX;
-  }
-  useEffect(() => {
-    previous.current = { id: trip.id, at };
-  }, [trip.id, at]);
-  useSwipe(pageRef, {
-    enabled: at >= 0 && activeTab === "overview",
-    onLeft: () => goToTrip(at + 1),
-    onRight: () => goToTrip(at - 1),
-  });
-
-  /** Closes whichever sheet the URL currently has open, back to plain Overzicht. */
-  const closeSheet = () => navigate(routes.trip.view(trip.id, "overview", dayId ?? undefined), { replace: true });
 
   const phase = tripPhase(trip);
   const info = tripInfo(trip);
@@ -134,24 +87,6 @@ export function TripOverviewTab() {
   async function onToggleDay(day: TripDay) {
     const joined = await toggleDay(day);
     if (joined) setJustJoined(true);
-  }
-
-  async function onShare() {
-    const url = `${window.location.origin}${routes.trip.view(trip.id)}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: trip.title, url });
-      } catch {
-        // user cancelled the share sheet — not an error
-      }
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(url);
-      toast("success", "Link gekopieerd!");
-    } catch {
-      toast("error", "Kon de link niet kopiëren.");
-    }
   }
 
   // Which tiles are there, and which of them are one column wide: with an odd number of those the last one is
@@ -190,71 +125,133 @@ export function TripOverviewTab() {
   };
 
   return (
-    <div ref={pageRef} className="space-y-4">
+    <>
+      <div className="space-y-4">
+        <TripTicket
+          trip={trip}
+          phase={phase}
+          users={users}
+          myNames={myNames}
+          description={info.description}
+          hotel={info.hotel_location}
+          website={info.website ?? undefined}
+          justJoined={justJoined}
+          onToggleDay={onToggleDay}
+          onJoin={() => {
+            setJustJoined(true);
+            joinTrip(trip);
+          }}
+          onLeave={() => {
+            setJustJoined(false);
+            leaveTrip(trip);
+          }}
+          onManage={() => setManageOpen(true)}
+        />
+
+        {/* Dense flow fills the gaps a missing tile (no hotel, no con) would leave. */}
+        <div className="grid grid-flow-dense grid-cols-2 gap-3 lg:grid-cols-4">
+          {order.map((id) => tiles[id] && <Fragment key={id}>{tiles[id]}</Fragment>)}
+        </div>
+      </div>
+
+      <TripRsvpModal
+        trip={active && manageOpen ? trip : null}
+        users={users}
+        onClose={() => setManageOpen(false)}
+        onConfirm={manageRsvp}
+      />
+
+      {active && (
+        <>
+          {trip.location && <WeatherSheet open={weatherOpen} onClose={() => setWeatherOpen(false)} trip={trip} />}
+          <PracticalSheet open={practicalOpen} onClose={() => setPracticalOpen(false)} info={info} trip={trip} />
+          <TicketSheet open={ticketOpen} onClose={() => setTicketOpen(false)} trip={trip} poll={ticketPoll} />
+          <StoryViewer eventDayId={viewing?.dayId ?? ""} takenOn={viewing?.takenOn} open={viewing !== null} onClose={() => setViewing(null)} />
+        </>
+      )}
+    </>
+  );
+}
+
+/**
+ * Event › Overzicht: the trips as a row you swipe through, each with its ticket and a tile per part of the trip
+ * (`TripOverviewPanel`). Swiping to the next trip moves the URL to it, and the URL moving (the switcher) glides the row there:
+ * the same `Carousel` as the Hub and the Agenda, so paging through events moves the same way everywhere. Tiles summarise
+ * and link to their own page, where things get changed; only read-only info (weather, practical) unfolds in place.
+ */
+export function TripOverviewTab() {
+  const { trip, activeTab, dayId } = useTrip();
+  const navigate = useNavigate();
+  const { myNames } = useTripRsvp();
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+
+  // The trips, chronological like the switcher's list: the carousel pages through them.
+  const { data: calendar = [] } = useCalendar();
+  const allTrips = buildTrips(calendar);
+  const at = allTrips.findIndex((t) => t.id === trip.id);
+  // Bumped on every trip switch (swipe or otherwise) — the swipe hint below
+  // watches this to cut itself short the moment its lesson is no longer needed.
+  const [tripSwitchCount, setTripSwitchCount] = useState(0);
+  const goToTrip = (index: number) => {
+    const target = allTrips[index];
+    if (!target) return;
+    setTripSwitchCount((c) => c + 1);
+    navigate(routes.trip.view(target.id));
+    window.scrollTo(0, 0);
+  };
+
+  /** Closes whichever sheet the URL currently has open, back to plain Overzicht. */
+  const closeSheet = () => navigate(routes.trip.view(trip.id, "overview", dayId ?? undefined), { replace: true });
+
+  async function onShare() {
+    const url = `${window.location.origin}${routes.trip.view(trip.id)}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: trip.title, url });
+      } catch {
+        // user cancelled the share sheet — not an error
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast("success", "Link gekopieerd!");
+    } catch {
+      toast("error", "Kon de link niet kopiëren.");
+    }
+  }
+
+  return (
+    <div className="space-y-4">
       <SwipeHint enabled={at >= 0 && activeTab === "overview" && allTrips.length > 1} dismissedBy={tripSwitchCount} />
       <HeaderAction>
         <TripSwitcherButton iconOnly onClick={() => setSwitcherOpen(true)} />
         <TripEditButton trip={trip} />
         <ShareButton onClick={onShare} />
       </HeaderAction>
-      {/* overflow-x-clip: the sliding content must never widen the page, or the
-          browser lets it pan sideways and the fixed bottom nav shifts with it. */}
-      <div className="overflow-x-clip">
-        <motion.div
-          key={trip.id}
-          initial={slideFrom === null ? false : { opacity: 0, x: slideFrom }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.22, ease: "easeOut" }}
-          className="space-y-4"
-        >
-          <TripTicket
-            trip={trip}
-            phase={phase}
-            users={users}
-            myNames={myNames}
-            description={info.description}
-            hotel={info.hotel_location}
-            website={info.website ?? undefined}
-            justJoined={justJoined}
-            onToggleDay={onToggleDay}
-            onJoin={() => {
-              setJustJoined(true);
-              joinTrip(trip);
-            }}
-            onLeave={() => {
-              setJustJoined(false);
-              leaveTrip(trip);
-            }}
-            onManage={() => setManageOpen(true)}
-          />
 
-          {/* Dense flow fills the gaps a missing tile (no hotel, no con) would leave. */}
-          <div className="grid grid-flow-dense grid-cols-2 gap-3 lg:grid-cols-4">
-            {order.map((id) => tiles[id] && <Fragment key={id}>{tiles[id]}</Fragment>)}
-          </div>
-        </motion.div>
-      </div>
+      {at >= 0 ? (
+        <Carousel
+          items={allTrips}
+          itemKey={(t) => t.id}
+          index={at}
+          onIndexChange={goToTrip}
+          gap="gap-4"
+          // Only the trip in view and the ones beside it are drawn; the rest are empty slides, so a long list of trips
+          // does not load every trip's rides, rooms and photos at once.
+          renderItem={(t, i) => (Math.abs(i - at) <= 1 ? <TripOverviewPanel trip={t} active={t.id === trip.id} /> : <div aria-hidden className="h-24" />)}
+        />
+      ) : (
+        <TripOverviewPanel trip={trip} active />
+      )}
 
       <TripSwitcherButton onClick={() => setSwitcherOpen(true)} />
       <TripSwitcher open={switcherOpen} onClose={() => setSwitcherOpen(false)} currentId={trip.id} myNames={myNames} />
-
-      <TripRsvpModal
-        trip={manageOpen ? trip : null}
-        users={users}
-        onClose={() => setManageOpen(false)}
-        onConfirm={manageRsvp}
-      />
 
       {/* Every other part of the trip opens as a sheet over this page instead of its own route. */}
       <TripTransportSheet open={activeTab === "transport"} onClose={closeSheet} />
       {trip.hasCon && <TripCosplaySheet open={activeTab === "cosplay"} onClose={closeSheet} />}
       {trip.isHotel && <TripRoomsSheet open={activeTab === "rooms"} onClose={closeSheet} />}
-      {trip.location && <WeatherSheet open={weatherOpen} onClose={() => setWeatherOpen(false)} trip={trip} />}
-      <PracticalSheet open={practicalOpen} onClose={() => setPracticalOpen(false)} info={info} trip={trip} />
-      <TicketSheet open={ticketOpen} onClose={() => setTicketOpen(false)} trip={trip} poll={ticketPoll} />
-
-      <StoryViewer eventDayId={viewing?.dayId ?? ""} takenOn={viewing?.takenOn} open={viewing !== null} onClose={() => setViewing(null)} />
     </div>
   );
 }
-

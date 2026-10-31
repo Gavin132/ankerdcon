@@ -8,6 +8,27 @@ All notable changes to Ankerd Con are documented here.
 
 ---
 
+## [2.2.3] - 2026-10-31
+
+### Changed
+- **Swiping between events moves the same everywhere.** The Hub's carousel animation (the next card comes in beside the one
+  leaving, as your finger drags) is now also how the Agenda's tickets and the trips on the event page move; the fading and
+  stacked cards are gone. The Agenda tickets got dots under them like the Hub's.
+- **The event page's countdown says "xx dagen"**, like the Agenda, and "Ik ga mee" stays on the same line.
+
+### Fixed
+- **The ticket sheet opens smoothly, also with a big ticket saved.** The list used to draw your ticket photo at full size in a small box,
+  so the browser decoded the whole picture while the sheet slid up. It now shows a small copy of it (made once; an older ticket gets
+  its copy the first time the sheet is open for a moment). The file you open is still the original.
+- **Uploads show how far they are**, and an event cover is made small before it is sent, so a 3 MB phone photo goes in a fraction of the time.
+  A thin bar across the top says "Uploaden… 63%", and "Verwerken…" once the file has arrived.
+- **The installed app could show a white page and then "Ankerd Con kan niet starten".** A stale copy on the phone (the old page asking
+  for scripts that were gone, or a script request waiting forever on a slow server) now repairs itself: the app
+  keeps the scripts of the previous version, gives a script request 15 seconds, and if it still has not started clears
+  its own cache and loads again once, instead of waiting for you to pull the page down.
+
+---
+
 ## [2.2.2] - 2026-10-31
 
 ### Added

@@ -52,7 +52,7 @@ the trip, the ride buttons and a meal today are the left column and "Voor jou" w
   once a day has photos or the trip is a day away; weeks before, it would be empty circles.
 - **Upcoming trip ticket** (`components/hub/UpcomingEventCard.tsx`): the nearest
   trip with a countdown, its days and who is going. More than one upcoming trip becomes a
-  carousel (`UpcomingEventsCarousel.tsx`): swipe it or use the dots (`Pager`; the arrows show from `md`).
+  carousel (`UpcomingEventsCarousel.tsx`, the shared `components/common/Carousel.tsx`: the browser's own scroll-snap, so the finger drags the row and a tap on a dot glides; the Agenda and the event page page the same way): swipe it or use the dots (`Pager`; the arrows show from `md`).
   It never moves by itself. On a phone the row is as tall as the card in view; from `lg` up all cards are as tall as the
   tallest one, so paging does not move the dots or anything below.
 - **Quick ride buttons** (`QuickRideTiles.tsx`, straight under the trip; **today's meals**, `MealTodayCard.tsx`, is the
@@ -91,11 +91,12 @@ the trip, the ride buttons and a meal today are the left column and "Voor jou" w
   the same way in the Agenda ticket and the Hub's upcoming-trip card.
 - A calendar button in the top bar, and "Andere evenementen" under the tiles, open a list of every
   trip to jump to another one (`TripSwitcher.tsx`); on a phone you can also swipe sideways to the
-  next or previous trip (`hooks/useSwipe.ts`) — a one-time pill (`SwipeHint.tsx`) points this out
+  next or previous trip. The trips are the slides of one **`Carousel`** (`components/common/Carousel.tsx`, the same row as the Hub and the
+  Agenda): the next trip comes in beside the one leaving as the finger drags, and the URL follows once the swipe has settled; the
+  switcher, going the other way round, glides the row to the trip. Only the trip in view and the two beside it are drawn
+  (`TripOverviewPanel`), the rest are empty slides. A one-time pill (`SwipeHint.tsx`) points the swipe out
   the first time a device lands on a page it can actually swipe on, then never shows again (or
-  the moment a real swipe happens, whichever comes first). The ticket and tiles slide and fade in
-  the direction swiped (`tripSlideVariants` in `TripOverviewTab.tsx`), so it's clear something
-  moved and which way, not just a sudden swap. Admins also get a pencil to edit the event.
+  the moment a real swipe happens, whichever comes first). Admins also get a pencil to edit the event.
 - Below it, a **tile** per part of the trip (`TripTiles.tsx`): Vervoer, Eten,
   Hotel (hotel trips only: address, arrivals and departures, rooms; the dates of the stay are in the sheet's subtitle), Foto's, Cosplay (trips with a convention; never for a concert), Weer,
   Info (opens the Info sheet), Kosten and Ticket (opens Tickets: the vote and Mijn ticket); the tile labels are
@@ -111,7 +112,9 @@ the trip, the ride buttons and a meal today are the left column and "Voor jou" w
   not in the shared photo bucket or the database: nobody else can see it, not other members and
   not admins, and there is nothing server-side to secure. The trade-off is the flip side of
   that — it doesn't sync to another device and a browser can clear it on its own, so it's a
-  convenience, not a permanent archive. Not the same "ticket" as an event's `ticket_url` (where
+  convenience, not a permanent archive. The list draws a small square copy of an image ticket (`makeTicketThumbnail`, made when it is
+  saved, and once for tickets saved before that, a moment after the sheet has opened), never the original: a 44 px picture of a
+  phone photo made the browser decode the whole file and the sheet stutter while it opened. Not the same "ticket" as an event's `ticket_url` (where
   to buy one) — that stays under Info.
 - **Kaartverkoop (the ticket vote)** (`TicketVote.tsx`, `hooks/useTicketPoll.ts`, `app/routers/ticket_polls.py`): what
   used to be a Discord poll. An admin opens it in the Tickets sheet with the ticket options (the event's own ticket types
@@ -262,6 +265,12 @@ the form is open; saving waits until nothing is queued.
   before this existed have no copies and show the original until the backfill has made theirs. Deleting a
   photo (yourself, or an admin on the CDN page) deletes its copies too, and the CDN page does not list them
   as files of their own. Needs migration v2.41 (without it photos are still taken, just without copies).
+- **Every upload shows how far it is.** The API client (`lib/api/client.ts`) reports the progress of any request that carries a
+  file to `store/uploadProgress.store.ts`, and `UploadProgress` (in `AppShell`) shows one thin bar across the top with "Uploaden… 63%" for
+  the whole app, and "Verwerken…" once the file has arrived and the server is still storing it. Uploads under 150 KB are over before
+  a bar could be read, so they show none. An event cover is also made small before it is sent (1600 px, the size the server keeps
+  anyway; not a PNG or GIF), which is most of the difference on a slow connection. The server logs where a cover spends its time
+  (`Stored a event-cover: ... processing ... storing`).
 - **Several at once** (`hooks/useStoryPhotoPicker.ts`, shared by both entry points): up to
   30, uploaded one after the other, **oldest first by when they were taken**. The story shows
   upload order, so uploading in capture order is what sorts them. The date is the EXIF
@@ -361,8 +370,8 @@ by hand, by members or admins.
 
 `pages/CalendarPage.tsx`, `components/calendar/`.
 
-- **Upcoming trips** are a stack of tickets to swipe through, with "Ik ga mee"
-  (all days at once) and "Anderen aanmelden".
+- **Upcoming trips** are tickets in a row to swipe through (`TicketStack.tsx`, the shared `Carousel`, dots and arrows from `md`
+  under it), with "Ik ga mee" (a sheet to pick the days on a trip of several days) and, once you are going, the "Je gaat mee" sticker to sign off.
 - **Recap** looks back: days of past trips show their photos (grey when you did not
   go), and a past trip opens a look-back with who went and the rides and dinners.
 - Past trips are collected as stubs per year.

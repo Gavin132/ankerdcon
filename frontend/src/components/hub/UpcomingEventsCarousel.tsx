@@ -1,5 +1,4 @@
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
-import { Pager } from "../common/Pager";
+import { Carousel } from "../common/Carousel";
 import { UpcomingEventCard, type EventUrgency } from "./UpcomingEventCard";
 import { parseEventDate } from "../../utils/date";
 import { getNow } from "../../store/time.store";
@@ -78,49 +77,13 @@ export function UpcomingEventsCarousel({
   onNavigate,
   onParticipantClick,
 }: UpcomingEventsCarouselProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [index, setIndex] = useState(0);
-
-  const handleScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el || el.clientWidth === 0) return;
-    setIndex(Math.round(el.scrollLeft / el.clientWidth));
-  }, []);
-
-  function scrollToIndex(i: number) {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
-  }
-
-  const itemCount = items.length;
-
-  // On a phone the row is as tall as the card in view, not the tallest card: otherwise a short card sits above an
-  // empty gap on its way to the dots. Re-measured when the card changes size (a list of names opening).
-  // From `lg` up all cards are as tall as the tallest one (the row stretches them), so paging does not move the dots,
-  // the arrows or anything below the carousel.
-  const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [height, setHeight] = useState<number | undefined>(undefined);
-  useLayoutEffect(() => {
-    const slide = slideRefs.current[index];
-    if (!slide) return;
-    const measure = () => setHeight(Math.ceil(slide.getBoundingClientRect().height));
-    measure();
-    if (typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(measure);
-    observer.observe(slide);
-    return () => observer.disconnect();
-  }, [index, itemCount]);
-
   if (items.length === 0) return null;
-
-  const cardProps = cardPropsFor(items[0], allEvents);
 
   // Nothing to page through — render the plain card, no carousel chrome.
   if (items.length === 1) {
     return (
       <UpcomingEventCard
-        {...cardProps}
+        {...cardPropsFor(items[0], allEvents)}
         meals={meals}
         users={users}
         onNavigate={onNavigate}
@@ -129,46 +92,27 @@ export function UpcomingEventsCarousel({
     );
   }
 
+  // The shared swipe row (components/common/Carousel.tsx): the Agenda and the event page page through events the same way.
   return (
-    <div>
-      <div className="relative">
-        <div
-          ref={scrollRef}
-          onScroll={handleScroll}
-          style={{ "--row-h": height === undefined ? undefined : `${height}px` } as React.CSSProperties}
-          className="flex h-[var(--row-h)] items-start overflow-x-auto overflow-y-hidden snap-x snap-mandatory gap-3 scroll-smooth transition-[height] duration-200 lg:h-auto lg:items-stretch [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {items.map((item, i) => (
-            // The cards out of view are cut off by the row's height, so they are not for the keyboard or a screen reader either.
-            <div
-              key={keyFor(item)}
-              ref={(el) => { slideRefs.current[i] = el; }}
-              className="w-full shrink-0 snap-center"
-              {...(i !== index ? ({ inert: "" } as object) : {})}
-            >
-              <UpcomingEventCard
-                {...cardPropsFor(item, allEvents)}
-                meals={meals}
-                users={users}
-                onNavigate={onNavigate}
-                onParticipantClick={onParticipantClick}
-              />
-            </div>
-          ))}
-        </div>
-
-      </div>
-
-      <Pager
-        className="mt-3"
-        count={items.length}
-        index={index}
-        onChange={scrollToIndex}
-        dotLabel={(i) => `Ga naar evenement ${i + 1}`}
-        prevLabel="Vorig evenement"
-        nextLabel="Volgend evenement"
-        arrowsFrom="md"
-      />
-    </div>
+    <Carousel
+      items={items}
+      itemKey={keyFor}
+      equalHeightFromLg
+      pager={{
+        dotLabel: (i) => `Ga naar evenement ${i + 1}`,
+        prevLabel: "Vorig evenement",
+        nextLabel: "Volgend evenement",
+        arrowsFrom: "md",
+      }}
+      renderItem={(item) => (
+        <UpcomingEventCard
+          {...cardPropsFor(item, allEvents)}
+          meals={meals}
+          users={users}
+          onNavigate={onNavigate}
+          onParticipantClick={onParticipantClick}
+        />
+      )}
+    />
   );
 }

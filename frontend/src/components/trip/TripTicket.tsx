@@ -98,7 +98,7 @@ export function TripTicket({
 
   const dayNumber = trip.days.findIndex((d) => toDateKey(d.date) === today) + 1;
   const count = {
-    upcoming: { big: String(daysBetween(today, firstKey)), small: daysBetween(today, firstKey) === 1 ? "dag te gaan" : "dagen te gaan" },
+    upcoming: { big: String(daysBetween(today, firstKey)), small: daysBetween(today, firstKey) === 1 ? "dag" : "dagen" },
     live: { big: "Nu", small: trip.days.length > 1 && dayNumber > 0 ? `bezig, dag ${dayNumber} van ${trip.days.length}` : "bezig" },
     past: { big: String(daysBetween(lastKey, today)), small: daysBetween(lastKey, today) === 1 ? "dag geleden" : "dagen geleden" },
   }[phase];
