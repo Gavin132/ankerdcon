@@ -1,11 +1,16 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BedDouble, MapPin, Music2, PartyPopper, Ticket, Utensils } from "lucide-react";
-import { UserAvatar } from "../common/UserAvatar";
+import { BedDouble, Globe, MapPin, Ticket, Utensils } from "lucide-react";
+import { AvatarStack } from "../common/AvatarStack";
+import { InfoChip } from "../common/InfoChip";
 import { TripDayPicker } from "../trip/TripDayPicker";
+import { TripSheet } from "../trip/TripSheet";
 import { TripParticipants } from "../trip/TripParticipants";
 import { daysBetween, toDateKey, todayKey } from "../../utils/date";
-import { tripImage, type Trip, type TripDay } from "../../utils/trips";
+import { tripImage, tripInfo, tripPeople, type Trip, type TripDay } from "../../utils/trips";
+import { mapsUrl, siteLabel } from "../../utils/format";
+import { safeHref } from "../../utils/validation";
 import { routes } from "../../config/routes";
 import { getNow } from "../../store/time.store";
 import type { Meal, User } from "../../types";
@@ -32,6 +37,9 @@ interface AgendaTicketProps {
  */
 export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, onLeave, onToggleDay }: AgendaTicketProps) {
   const image = tripImage(trip);
+  // A trip of several days asks which days; a single day is just a button.
+  const [pickingDays, setPickingDays] = useState(false);
+  const multiDay = trip.days.length > 1;
   const today = todayKey();
   const firstKey = toDateKey(trip.days[0].date);
   const daysUntil = daysBetween(today, firstKey);
@@ -41,6 +49,9 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
   const myDays = trip.days.filter((d) => d.ev.participants.some(isMine));
   const going = myDays.length > 0;
   const hotel = trip.days.map((d) => d.ev.hotel_location).find(Boolean);
+  const info = tripInfo(trip);
+  const websiteUrl = safeHref(info.website);
+  const description = info.description?.trim();
   const eventType = trip.days.find((d) => d.ev.event_type)?.ev.event_type ?? null;
   const mealIds = new Set(meals.map((m) => m.linked_event_id).filter(Boolean));
   const hasMeal = trip.days.some((d) => mealIds.has(d.ev.id));
@@ -48,47 +59,39 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
   const when = `${trip.dateRange}${year !== getNow().getFullYear() ? ` ${year}` : ""}`;
 
   const summary = [
-    eventType === "gathering" ? "Gathering" : eventType === "concert" ? "Concert" : trip.hasCon ? "Con" : "Reis",
+    eventType === "gathering" ? "Feestje" : eventType === "concert" ? "Concert" : trip.hasCon ? "Con" : "Reis",
     trip.days.length === 1 ? "1 dag" : `${trip.days.length} dagen`,
     trip.isHotel ? "hotel" : null,
   ].filter(Boolean).join(" · ");
 
-  const participants = [...trip.participants].sort((a, b) => Number(isMine(b)) - Number(isMine(a)));
-  const findUser = (p: string) => users.find((u) => u.name === p || u.discord_username === p || u.aliases?.includes(p));
+  // One avatar per person, not per name they happen to be signed up under (see utils/people.ts).
+  const participants = tripPeople(trip, users).map((person) => person.name).sort((a, b) => Number(isMine(b)) - Number(isMine(a)));
   const others = participants.filter((p) => !isMine(p)).length;
   const crewText = going
     ? others === 0 ? "Alleen jij" : `Jij en ${others} ${others === 1 ? "ander" : "anderen"}`
     : participants.length === 0 ? "Nog niemand aangemeld" : `${participants.length} gaan mee`;
 
   return (
-    <article className="ticket-notch grid grid-cols-[minmax(0,1fr)] overflow-hidden rounded-[14px] border-2 border-outline bg-surface md:grid-cols-[200px_minmax(0,1fr)_168px] lg:grid-cols-[240px_minmax(0,1fr)_188px]">
+    <article className="ticket-notch grid grid-cols-[minmax(0,1fr)] overflow-hidden rounded-hero border-2 border-outline bg-surface md:grid-cols-[200px_minmax(0,1fr)_168px] lg:grid-cols-[240px_minmax(0,1fr)_188px]">
       {/* ── Cover ── */}
       <Link
         to={routes.trip.view(trip.id)}
         draggable={false}
         aria-label={`Open ${trip.title}`}
-        className="relative block h-40 overflow-hidden bg-[#0F1519] sm:h-52 md:h-auto md:min-h-[300px]"
+        className={`relative block overflow-hidden bg-hero md:h-auto md:min-h-[300px] ${image ? "h-40 sm:h-52" : "h-14 sm:h-16"}`}
       >
         {image ? (
-          <img src={image} alt="" draggable={false} className="absolute inset-0 h-full w-full object-cover" />
+          <img src={image} alt="" draggable={false} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
         ) : (
-          <span
-            className="absolute inset-0 flex flex-col justify-end gap-1 p-4 text-[#E6F0F3]"
-            style={{
-              backgroundImage: "radial-gradient(circle, rgb(var(--cyan) / .45) 1.4px, transparent 1.8px)",
-              backgroundSize: "12px 12px",
-            }}
-          >
-            <span className="font-display text-[34px] font-black uppercase leading-[0.9] [text-wrap:balance] md:text-[40px]">
-              {trip.title}
-            </span>
+          <span aria-hidden className="absolute inset-0 flex items-center justify-center bg-hero text-hero-ink/40">
+            <Ticket size={32} />
           </span>
         )}
       </Link>
 
       {/* ── Body ── */}
       <div className="flex min-w-0 flex-col gap-3.5 p-4 sm:p-5 md:px-6">
-        <p className="font-mono text-[12px] font-semibold uppercase tracking-[0.06em] text-ink">
+        <p className="font-mono text-xs font-semibold text-ink">
           {when} <span className="font-normal text-ink-3">· {summary}</span>
         </p>
 
@@ -100,35 +103,33 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
           >
             {trip.title}
           </Link>
-          <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-2">
-            {trip.location && (
-              <span className="flex min-w-0 items-center gap-1.5"><MapPin size={13} className="shrink-0" /> <span className="truncate">{trip.location}</span></span>
-            )}
-            {hotel && <span className="flex min-w-0 items-center gap-1.5"><BedDouble size={13} className="shrink-0" /> <span className="truncate">{hotel}</span></span>}
-            {hasMeal && <span className="flex items-center gap-1.5"><Utensils size={13} className="shrink-0" /> Activiteit gepland</span>}
-            {eventType === "gathering" && <span className="flex items-center gap-1.5"><PartyPopper size={13} className="shrink-0" /> Feestje</span>}
-            {eventType === "concert" && <span className="flex items-center gap-1.5"><Music2 size={13} className="shrink-0" /> Concert</span>}
-          </p>
+          {(trip.location || hotel || websiteUrl || hasMeal) && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {trip.location && <InfoChip icon={<MapPin size={14} />} href={mapsUrl(trip.location)}>{trip.location}</InfoChip>}
+              {websiteUrl && (
+                <InfoChip
+                  icon={<Globe size={14} />}
+                  href={websiteUrl}
+                  external
+                  title={`Website van het evenement: ${websiteUrl}`}
+                  ariaLabel={`Website van het evenement, ${siteLabel(websiteUrl)} (opent in een nieuw tabblad)`}
+                >
+                  Website
+                </InfoChip>
+              )}
+              {hasMeal && <InfoChip icon={<Utensils size={14} />}>Activiteit gepland</InfoChip>}
+              {/* Last: a hotel's name is the longest chip, and in the middle it pushed the website onto a line of its own. */}
+              {hotel && <InfoChip icon={<BedDouble size={14} />}>{hotel}</InfoChip>}
+            </div>
+          )}
         </div>
 
-        {/* Days of a multi-day trip — tap one to sign up for it or off it */}
-        {trip.days.length > 1 && <TripDayPicker trip={trip} myNames={myNames} onToggleDay={onToggleDay} />}
+        {/* A taste of the event; the days to sign up for are on the event page. */}
+        {description && <p className="line-clamp-3 text-[13px] leading-relaxed text-ink-2">{description}</p>}
 
         <div className="mt-auto flex items-center gap-2.5">
           <TripParticipants trip={trip} users={users} myNames={myNames}>
-          {participants.length > 0 && (
-            <span className="flex -space-x-1.5">
-              {participants.slice(0, 6).map((p) => {
-                const u = findUser(p);
-                return <UserAvatar key={p} name={u?.name ?? p} user={u} className="h-7 w-7 text-[10px] !border-surface" />;
-              })}
-              {participants.length > 6 && (
-                <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-sunken font-mono text-[10px] font-semibold text-ink-2">
-                  +{participants.length - 6}
-                </span>
-              )}
-            </span>
-          )}
+          <AvatarStack names={participants} />
           <span className="text-[13px] text-ink-2">
             {crewText}
             {going && myDays.length < trip.days.length && (
@@ -146,44 +147,54 @@ export function AgendaTicket({ trip, meals, users, myNames, justJoined, onJoin, 
             {isLive ? "Nu" : daysUntil}
           </span>
           <span className="pb-0.5 text-[13px] leading-tight text-ink-2">
-            {isLive ? "bezig" : daysUntil === 1 ? "dag te gaan" : "dagen te gaan"}
+            {isLive ? "bezig" : daysUntil === 1 ? "dag" : "dagen"}
           </span>
         </div>
 
         {going && (
-          <motion.span
-            aria-hidden
+          // The sticker is also the way off: one tap signs you off every day of the trip.
+          <motion.button
+            type="button"
+            onClick={onLeave}
+            aria-label={`Je gaat mee naar ${trip.title}. Tik om je af te melden.`}
+            title="Tik om je af te melden"
             initial={justJoined ? { scale: 1.8, rotate: -24, opacity: 0 } : false}
             animate={{ scale: 1, rotate: -12, opacity: 1 }}
+            whileTap={{ scale: 0.94 }}
             transition={{ type: "spring", stiffness: 520, damping: 22 }}
-            className="pointer-events-none shrink-0 rounded-lg md:absolute border-[2.5px] border-brand-text bg-surface/80 px-2 pb-0.5 pt-1 text-center font-display text-[18px] font-black uppercase leading-[0.9] text-brand-text md:right-4 md:top-[130px] md:text-[22px]"
+            className="shrink-0 cursor-pointer rounded-lg md:absolute border-[2.5px] border-brand-text bg-surface/80 px-2 pb-0.5 pt-1 text-center font-display text-[18px] font-black uppercase leading-[0.9] text-brand-text md:right-4 md:top-[130px] md:text-[22px]"
           >
             Je gaat
             <br />
             mee
-          </motion.span>
+          </motion.button>
         )}
 
-        {/* Multi-day trips sign up per day (see the day boxes); only a single day needs a button. */}
-        {trip.days.length === 1 && (
+        {/* One day signs up at once; several days ask which ones first (the sheet below), so nobody is signed up for days they never chose. Signing off is the sticker above. */}
+        {!going && (
           <div className="flex flex-col items-end gap-2 md:items-stretch">
-            {going ? (
-              <button
-                type="button"
-                onClick={onLeave}
-                className="text-[12.5px] font-semibold text-ink-3 transition-colors hover:text-ink hover:underline md:text-left"
-              >
-                Toch niet? Afmelden
-              </button>
-            ) : (
-              <button type="button" onClick={onJoin} className="btn-primary h-11 px-4 text-[14px]">
-                <Ticket size={16} />
-                Ik ga mee
-              </button>
-            )}
+            <button type="button" onClick={multiDay ? () => setPickingDays(true) : onJoin} className="btn-primary px-4">
+              <Ticket size={16} />
+              Ik ga mee
+            </button>
           </div>
         )}
       </div>
+      {multiDay && (
+        <TripSheet
+          open={pickingDays}
+          onClose={() => setPickingDays(false)}
+          title="Aanmelden"
+          subtitle={trip.title}
+          footer={
+            <button type="button" onClick={() => setPickingDays(false)} className="btn-primary w-full px-4">
+              Klaar
+            </button>
+          }
+        >
+          <TripDayPicker trip={trip} myNames={myNames} onToggleDay={onToggleDay} />
+        </TripSheet>
+      )}
     </article>
   );
 }

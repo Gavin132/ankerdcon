@@ -38,12 +38,12 @@ export function WeatherCard({ weather }: { weather: EventWeather }) {
           : "Zeer hoog";
   const uvColor =
     weather.uv_index <= 2
-      ? "text-emerald-600 dark:text-emerald-400"
+      ? "text-ok"
       : weather.uv_index <= 5
-        ? "text-amber-600 dark:text-amber-400"
+        ? "text-warn"
         : weather.uv_index <= 7
-          ? "text-orange-600 dark:text-orange-400"
-          : "text-rose-600 dark:text-rose-400";
+          ? "text-warn"
+          : "text-bad";
 
   const advice = getWeatherAdvice(weather);
 
@@ -106,7 +106,7 @@ export function WeatherCard({ weather }: { weather: EventWeather }) {
             className="flex items-center justify-center gap-1 px-1.5 py-2"
           >
             <Icon size={12} className={`${cls} shrink-0`} />
-            <p className="truncate font-mono text-[11px] leading-none tabular-nums">
+            <p className="truncate font-mono text-[12px] leading-none tabular-nums">
               <span className="font-semibold text-ink">{value}</span>
               <span className="font-medium text-ink-3"> {sub}</span>
             </p>
@@ -123,7 +123,7 @@ export function WeatherCard({ weather }: { weather: EventWeather }) {
                 key={slot.hour}
                 className="flex flex-col items-center gap-0.5"
               >
-                <p className="font-mono text-[10px] font-medium tabular-nums text-ink-3">
+                <p className="font-mono text-[12px] font-medium tabular-nums text-ink-3">
                   {slot.hour}u
                 </p>
                 <span className="text-xl leading-none">{slot.icon}</span>
@@ -131,7 +131,7 @@ export function WeatherCard({ weather }: { weather: EventWeather }) {
                   {slot.temp}°
                 </p>
                 {slot.precip_prob > 0 && (
-                  <p className="font-mono text-[9px] font-semibold tabular-nums text-brand-text">
+                  <p className="font-mono text-[12px] font-semibold tabular-nums text-brand-text">
                     {slot.precip_prob}%
                   </p>
                 )}
@@ -158,7 +158,7 @@ export function ClimateAverageCard({ climate }: { climate: ClimateAverage }) {
       {/* Header */}
       <div className="px-4 pb-4 pt-4">
         <div className="mb-2 flex items-center gap-1.5">
-          <History size={11} className="text-ink-3" />
+          <History size={12} className="text-ink-3" />
           <p className="section-label">
             Historisch gemiddelde
           </p>
@@ -201,9 +201,9 @@ export function WeatherSkeleton() {
   return (
     <div className="card-surface animate-pulse overflow-hidden">
       <div className="space-y-2.5 px-4 py-4">
-        <div className="h-3 w-28 rounded bg-sunken" />
+        <div className="h-3 w-28 rounded-md bg-sunken" />
         <div className="h-10 w-24 rounded-lg bg-sunken" />
-        <div className="h-3 w-40 rounded bg-sunken" />
+        <div className="h-3 w-40 rounded-md bg-sunken" />
       </div>
       <div className="grid grid-cols-2 divide-x divide-line border-t border-line">
         {[...Array(2)].map((_, i) => (
@@ -220,7 +220,7 @@ export function WeatherSkeleton() {
       </div>
       <div className="flex items-center gap-3 border-t border-line px-4 py-3.5">
         <div className="h-8 w-8 shrink-0 rounded-lg bg-sunken" />
-        <div className="h-3 flex-1 rounded bg-sunken" />
+        <div className="h-3 flex-1 rounded-md bg-sunken" />
       </div>
     </div>
   );

@@ -6,13 +6,15 @@ import { UserAvatar } from "../common/UserAvatar";
 import { useClaimShare, useConfirmShare, useDeleteExpense } from "../../hooks/useExpenses";
 import { formatAmount, formatDate } from "../../utils/format";
 import { toast } from "../../store/toast.store";
+import { findUser, isOwnName } from "../../utils/people";
 import type { Expense, ExpenseShare, User } from "../../types";
 
 interface Props {
   expense: Expense | null;
   onClose: () => void;
   users: User[];
-  me: string | undefined;
+  /** Every name the signed-in member is stored under (`useMyNames`). */
+  myNames: string[];
 }
 
 function resolveUser(name: string, users: User[]) {
@@ -20,13 +22,13 @@ function resolveUser(name: string, users: User[]) {
 }
 
 const STATUS_CONFIG = {
-  pending:   { label: "Te betalen",           pill: "bg-sunken text-ink-2" },
-  claimed:   { label: "Wacht op bevestiging", pill: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300" },
-  confirmed: { label: "Verrekend",            pill: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" },
+  pending:   { label: "Te betalen",           pill: "pill-bad" },
+  claimed:   { label: "Wacht op bevestiging", pill: "pill-warn" },
+  confirmed: { label: "Verrekend",            pill: "pill-ok" },
 } as const;
 
-const OWN_PART_CONFIG = { label: "Eigen deel", pill: "bg-sunken text-ink-2" };
-const IN_SETTLEMENT_CONFIG = { label: "In afrekening", pill: "bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300" };
+const OWN_PART_CONFIG = { label: "Eigen deel", pill: "pill-neutral" };
+const IN_SETTLEMENT_CONFIG = { label: "In afrekening", pill: "bg-brand-soft text-brand-text" };
 
 function StatusIcon({ status }: { status: ExpenseShare["status"] }) {
   if (status === "confirmed") return <CheckCircle2 size={12} />;
@@ -34,14 +36,15 @@ function StatusIcon({ status }: { status: ExpenseShare["status"] }) {
   return                             <Circle       size={12} />;
 }
 
-export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
+export function ExpenseDetailDrawer({ expense, onClose, users, myNames }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const claimMutation   = useClaimShare();
   const confirmMutation = useConfirmShare();
   const deleteMutation  = useDeleteExpense();
 
-  const isPayer = expense?.paid_by === me;
+  const isPayer = isOwnName(myNames, expense?.paid_by);
+  const payer   = expense ? findUser(users, expense.paid_by) : undefined;
 
   async function handleClaim(shareId: string) {
     try {
@@ -62,7 +65,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
   }
 
   async function handleDelete() {
-    if (!expense || !me) return;
+    if (!expense || myNames.length === 0) return;
     try {
       await deleteMutation.mutateAsync(expense.id);
       toast("success", `"${expense.description}" verwijderd.`);
@@ -88,7 +91,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
       <div className="space-y-5">
 
         {/* ── Amount hero ─────────────────────────────────────── */}
-        <div className="flex items-center justify-between gap-3 rounded-xl border-1.5 border-line bg-surface px-4 py-3">
+        <div className="flex items-center justify-between card-surface gap-3 px-4 py-3">
           <div className="flex min-w-0 items-center gap-3">
             <UserAvatar
               name={expense.paid_by}
@@ -105,7 +108,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
               {formatAmount(expense.amount, expense.currency)}
             </p>
             {totalShares > 0 && (
-              <p className="mt-1 font-mono text-[11.5px] tabular-nums text-ink-3">{confirmedCount}/{totalShares} verrekend</p>
+              <p className="mt-1 font-mono text-[12px] tabular-nums text-ink-3">{confirmedCount}/{totalShares} verrekend</p>
             )}
           </div>
         </div>
@@ -119,11 +122,11 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
             <div className="card-surface divide-y divide-line overflow-hidden">
               {expense.shares.map((share) => {
                 // The payer's own part of the bill — settled from the start, nothing to pay or confirm.
-                const isOwnPart = share.participant === expense.paid_by;
+                const isOwnPart = share.participant === expense.paid_by || (!!payer && findUser(users, share.participant) === payer);
                 // Being paid as part of a settle-up payment (Afrekenen) — handled there.
                 const inSettlement = !!share.settlement_id && share.status !== "confirmed";
                 const cfg       = isOwnPart ? OWN_PART_CONFIG : inSettlement ? IN_SETTLEMENT_CONFIG : STATUS_CONFIG[share.status];
-                const isMe      = share.participant === me;
+                const isMe      = isOwnName(myNames, share.participant);
                 const canClaim  = isMe && !isOwnPart && !inSettlement && share.status === "pending";
                 // Straight from pending too, for cash handed over in person.
                 const canConfirm = isPayer && !isOwnPart && !inSettlement && share.status !== "confirmed";
@@ -139,11 +142,11 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
                       <UserAvatar
                         name={share.participant}
                         user={resolveUser(share.participant, users)}
-                        className="h-7 w-7 shrink-0 text-[10px]"
+                        className="h-7 w-7 shrink-0 text-[12px]"
                       />
                       <span className="flex-1 truncate text-[13.5px] font-semibold text-ink">
                         {share.participant}
-                        {isMe && <span className="ml-1.5 text-[11px] font-medium text-ink-3">(jij)</span>}
+                        {isMe && <span className="ml-1.5 text-[12px] font-medium text-ink-3">(jij)</span>}
                       </span>
                       <span className="shrink-0 font-mono text-[14px] font-semibold tabular-nums text-ink">
                         {formatAmount(share.amount, expense.currency)}
@@ -152,7 +155,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
 
                     {/* Status + action */}
                     <div className="mt-2 flex items-center gap-2 flex-wrap">
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${cfg.pill}`}>
+                      <span className={`pill gap-1.5 ${cfg.pill}`}>
                         <StatusIcon status={share.status} />
                         {cfg.label}
                       </span>
@@ -163,7 +166,7 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
                           type="button"
                           onClick={() => handleClaim(share.id)}
                           disabled={isLoading}
-                          className="btn-primary ml-auto rounded-lg px-3 py-1 text-[12px] disabled:opacity-50"
+                          className="btn-primary btn-compact ml-auto px-3"
                         >
                           Ik heb betaald
                         </button>
@@ -173,14 +176,14 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
                           type="button"
                           onClick={() => handleConfirm(share.id)}
                           disabled={isLoading}
-                          className="ml-auto flex items-center gap-1.5 rounded-lg border-1.5 border-emerald-700 bg-emerald-600 px-3 py-1 text-[12px] font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50 dark:border-emerald-400"
+                          className="btn-primary btn-compact ml-auto px-3"
                         >
-                          <Check size={11} />
+                          <Check size={12} />
                           Ontvangen
                         </button>
                       )}
                       {share.status === "confirmed" && (
-                        <CheckCircle2 size={14} className="ml-auto text-emerald-600 dark:text-emerald-400" />
+                        <CheckCircle2 size={14} className="ml-auto text-ok" />
                       )}
                     </div>
                   </div>
@@ -197,23 +200,23 @@ export function ExpenseDetailDrawer({ expense, onClose, users, me }: Props) {
               <button
                 type="button"
                 onClick={() => setConfirmDelete(true)}
-                className="flex items-center gap-2 text-sm font-semibold text-ink-3 transition-colors hover:text-rose-600 dark:hover:text-rose-400"
+                className="flex min-h-11 items-center gap-2 text-sm font-semibold text-ink-3 transition-colors hover:text-bad"
               >
                 <Trash2 size={14} />
                 Uitgave verwijderen
               </button>
             ) : (
-              <div className="space-y-3 rounded-xl bg-rose-100 p-3 dark:bg-rose-500/15">
-                <p className="text-xs font-semibold text-rose-700 dark:text-rose-300">
+              <div className="space-y-3 rounded-xl bg-bad-soft p-3">
+                <p className="text-xs font-semibold text-bad">
                   Weet je zeker dat je "{expense.description}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.
                 </p>
                 <div className="flex gap-2">
-                  <Button variant="ghost" className="flex-1 text-xs" onClick={() => setConfirmDelete(false)}>
+                  <Button variant="secondary" className="flex-1" onClick={() => setConfirmDelete(false)}>
                     Annuleren
                   </Button>
                   <Button
                     variant="danger"
-                    className="flex-1 text-xs"
+                    className="flex-1"
                     loading={deleteMutation.isPending}
                     onClick={handleDelete}
                   >

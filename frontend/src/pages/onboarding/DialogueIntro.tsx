@@ -173,7 +173,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
         style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom,0px))" }}
       >
         <div
-          className="overflow-hidden rounded-[14px] border-2 border-outline bg-surface"
+          className="overflow-hidden rounded-hero border-2 border-outline bg-surface"
           onClick={handleBoxTap}
         >
           {/* Name bar */}
@@ -187,7 +187,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
               <span className="section-label">Mascotte</span>
             </div>
             {phase === "talking" && (
-              <span className="font-mono text-[11px] tabular-nums text-ink-3">{lineIndex + 1} / {introLines.length}</span>
+              <span className="font-mono text-[12px] tabular-nums text-ink-3">{lineIndex + 1} / {introLines.length}</span>
             )}
           </div>
 
@@ -210,9 +210,9 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
 
                 {showCaret && phase === "talking" && (
                   <div className="mt-3 flex items-center gap-1.5">
-                    <span className="text-[11px] text-ink-3">Tik om verder te gaan</span>
+                    <span className="text-[12px] text-ink-3">Tik om verder te gaan</span>
                     <motion.span
-                      className="text-[11px] text-ink-3"
+                      className="text-[12px] text-ink-3"
                       animate={{ opacity: [0.3, 0.9, 0.3] }}
                       transition={{ repeat: Infinity, duration: 1.2 }}
                     >▼</motion.span>
@@ -225,7 +225,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.4, duration: 0.25 }}
                     onClick={e => { e.stopPropagation(); onDone(); }}
-                    className="btn-primary mt-4 px-5 py-2.5 text-sm"
+                    className="btn-primary mt-4 px-5"
                   >
                     Aan de slag! <ArrowRight size={14} />
                   </motion.button>
@@ -255,7 +255,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                       <span className="text-xl leading-none w-7 text-center">{stop.emoji}</span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-ink">{stop.label}</p>
-                        <p className="mt-0.5 text-[11px] text-ink-3">{stop.tag}</p>
+                        <p className="mt-0.5 text-[12px] text-ink-3">{stop.tag}</p>
                       </div>
                       <AnimatePresence>
                         {conIndex === i && (
@@ -266,7 +266,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                             transition={{ duration: 0.12 }}
                           >
                             <div className="flex h-5 w-5 items-center justify-center rounded-full bg-ink text-paper">
-                              <Check size={11} strokeWidth={3} />
+                              <Check size={12} strokeWidth={3} />
                             </div>
                           </motion.div>
                         )}
@@ -278,7 +278,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                 <div className="flex justify-end">
                   <motion.button
                     onClick={handleConConfirm}
-                    className="btn-primary px-5 py-2.5 text-sm"
+                    className="btn-primary px-5"
                   >
                     Volgende <ArrowRight size={14} />
                   </motion.button>
@@ -308,7 +308,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                         disabled={birthYear <= YEAR_MIN}
                         className="flex h-11 w-11 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink transition-colors hover:border-ink-3 disabled:opacity-30"
                       >
-                        <Minus size={18} />
+                        <Minus size={16} />
                       </motion.button>
 
                       {/* Year display */}
@@ -325,7 +325,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                             {birthYear}
                           </motion.span>
                         </AnimatePresence>
-                        <span className="mt-1 font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">
+                        <span className="mt-1 font-mono text-xs text-ink-3">
                           {new Date().getFullYear() - birthYear} jaar oud
                         </span>
                       </div>
@@ -340,7 +340,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                         disabled={birthYear >= YEAR_MAX}
                         className="flex h-11 w-11 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink transition-colors hover:border-ink-3 disabled:opacity-30"
                       >
-                        <Plus size={18} />
+                        <Plus size={16} />
                       </motion.button>
                     </div>
 
@@ -364,7 +364,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                       onKeyDown={e => { if (e.key === "Enter") { commitYearInput(); (e.target as HTMLInputElement).blur(); } }}
                       className="w-36 bg-transparent text-center font-display text-[56px] font-extrabold leading-none tabular-nums text-ink focus:outline-none"
                     />
-                    <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">
+                    <span className="font-mono text-xs text-ink-3">
                       {new Date().getFullYear() - birthYear} jaar oud · {YEAR_MIN}–{YEAR_MAX}
                     </span>
                   </div>
@@ -381,7 +381,7 @@ export function DialogueIntro({ me, onDone }: { me: User | undefined; onDone: ()
                 <div className="flex justify-end">
                   <motion.button
                     onClick={handleYearConfirm}
-                    className="btn-primary px-5 py-2.5 text-sm"
+                    className="btn-primary px-5"
                   >
                     Klaar! <ArrowRight size={14} />
                   </motion.button>

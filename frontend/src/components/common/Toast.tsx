@@ -7,7 +7,8 @@ export function ToastContainer() {
   const { toasts, removeToast } = useToastStore();
 
   return createPortal(
-    <div className="fixed left-1/2 z-[300] flex -translate-x-1/2 flex-col items-center gap-2 pointer-events-none w-full max-w-sm px-4 bottom-[calc(6rem+env(safe-area-inset-bottom,0px))] md:bottom-6">
+    // A live region: a screen reader reads out a message as it appears.
+    <div role="status" aria-live="polite" className="fixed left-1/2 z-[300] flex -translate-x-1/2 flex-col items-center gap-2 pointer-events-none w-full max-w-sm px-4 bottom-[calc(6rem+env(safe-area-inset-bottom,0px))] md:bottom-6">
       <AnimatePresence>
         {toasts.map((t) => (
           <motion.div
@@ -16,8 +17,15 @@ export function ToastContainer() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.18 }}
-            className={`pointer-events-auto flex w-full items-center gap-3 rounded-xl border-1.5 bg-surface px-3 py-2.5 shadow-xl ${
-              t.type === "error" ? "border-rose-500" : "border-outline"
+            // Swipe it sideways to send it away, instead of waiting for it to go.
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.7}
+            onDragEnd={(_, info) => {
+              if (Math.abs(info.offset.x) > 80 || Math.abs(info.velocity.x) > 500) removeToast(t.id);
+            }}
+            className={`pointer-events-auto flex w-full items-center gap-3 rounded-xl border-1.5 bg-surface px-3 py-2.5 ${
+              t.type === "error" ? "border-bad-fill" : "border-outline"
             }`}
           >
             <div
@@ -25,25 +33,26 @@ export function ToastContainer() {
                 t.type === "success"
                   ? "bg-brand"
                   : t.type === "error"
-                  ? "bg-rose-600"
-                  : "bg-slate-600"
+                  ? "bg-bad-fill"
+                  : "bg-hero"
               }`}
             >
               <img
                 src="/assets/images/ankerd-logo.webp"
                 alt=""
                 className="h-5 w-5 object-contain"
-                style={{ filter: t.type === "success" ? "brightness(0)" : "brightness(0) invert(1)" }}
+                style={{ filter: "brightness(0) invert(1)" }}
               />
             </div>
             <p className="flex-1 text-sm font-medium text-ink leading-tight">
               {t.message}
             </p>
             <button
+              aria-label="Sluiten"
               onClick={() => removeToast(t.id)}
-              className="shrink-0 flex h-6 w-6 items-center justify-center rounded-md text-ink-3 hover:text-ink hover:bg-sunken transition-colors"
+              className="hit-area shrink-0 flex h-6 w-6 items-center justify-center rounded-md text-ink-3 hover:text-ink hover:bg-sunken transition-colors"
             >
-              <X size={13} />
+              <X size={14} />
             </button>
           </motion.div>
         ))}

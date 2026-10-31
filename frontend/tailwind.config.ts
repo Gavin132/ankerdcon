@@ -21,12 +21,8 @@ const slate = {
   950: "#080C0F",
 };
 
-// 400 is the brand blue (#57B2F9, a more saturated pass on the lightened
-// #67B0E9, which itself lightened Gavin's original #48A0E5). 200-600 got the
-// same +18 HSL-saturation bump at their own lightness, contrast-checked so
-// the many existing `bg-sky-500 text-white` buttons stay readable (500 still
-// clears 3:1, 600 still clears 4.5:1 against white); 700+ are untouched
-// since they're already high-contrast and rarely the color someone notices.
+// The legacy `sky-*` / `ankerd-*` scale. Nothing in the app uses it any more (the `brand` tokens in index.css do), so it
+// was not moved when the brand fill became the deeper #0078D4 for white labels; 400 is the old, paler brand blue.
 const blue = {
   50: "#EEF6FD",
   100: "#DCEEFB",
@@ -44,6 +40,9 @@ const blue = {
 const token = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
 
 const config: Config = {
+  // `hover:` styles apply only on devices that can hover. Without it a tap on a phone leaves the
+  // hover state stuck on the element until the next tap elsewhere.
+  future: { hoverOnlyWhenSupported: true },
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   darkMode: "class",
   theme: {
@@ -52,16 +51,30 @@ const config: Config = {
         slate,
         sky: blue,
         ankerd: blue,
+        // The always-dark panel of a hero (meal, ride, cover) and its text, the same in light and dark mode.
+        // `warn` and `bad` are the chip text colours on it (the status tokens switch with the theme).
+        hero: { DEFAULT: token("hero"), ink: token("hero-ink"), warn: token("hero-warn"), bad: token("hero-bad") },
+        // The dark layer behind sheets, dialogs and viewers: `bg-scrim/50`.
+        scrim: token("scrim"),
+        // The fill of the initial of someone without a photo or colour of their own: `bg-avatar-1` .. `bg-avatar-6`.
+        avatar: { 1: token("avatar-1"), 2: token("avatar-2"), 3: token("avatar-3"), 4: token("avatar-4"), 5: token("avatar-5"), 6: token("avatar-6"), on: token("avatar-on") },
         ink: {
           DEFAULT: token("ink"),
           2: token("ink-2"),
           3: token("ink-3"),
         },
+        // A chosen chip or the active tab: `bg-selected text-selected-on`, with `text-selected-icon` for its icon.
+        selected: { DEFAULT: token("selected"), on: token("selected-on"), icon: token("selected-icon") },
         paper: token("paper"),
         surface: token("surface"),
         sunken: token("sunken"),
         line: token("line"),
         outline: token("outline"),
+        // Status: text (`text-ok`), soft background (`bg-ok-soft`), border (`border-ok-line`), solid fill
+        // (`bg-ok-fill`) and the text on that fill (`text-ok-on`). They switch in dark mode by themselves.
+        ok: { DEFAULT: token("ok"), soft: token("ok-soft"), line: token("ok-line"), fill: token("ok-fill"), on: token("ok-on") },
+        warn: { DEFAULT: token("warn"), soft: token("warn-soft"), line: token("warn-line"), fill: token("warn-fill"), on: token("warn-on") },
+        bad: { DEFAULT: token("bad"), soft: token("bad-soft"), line: token("bad-line"), fill: token("bad-fill"), on: token("bad-on") },
         brand: {
           DEFAULT: token("cyan"),
           soft: token("cyan-soft"),
@@ -81,10 +94,20 @@ const config: Config = {
         // calmer one step lighter.
         black: "800",
       },
+      // The radius scale (docs/design-system.md): sm 2 (tiny marks), md 6 (tags, bars, thumbnails), lg 8
+      // (icon buttons and squares), xl 10 (buttons, inputs, notices), 2xl 12 (cards, menus, dialogs), hero 14
+      // (hero blocks and tickets), sheet 20 (top corners of a bottom sheet), full (pills, avatars).
+      // `xl` is 10px here, not Tailwind's 12px, and 2xl is 12px, not 16px.
       borderRadius: {
         xl: "10px",
         "2xl": "12px",
-        "3xl": "16px",
+        hero: "14px",
+        sheet: "20px",
+      },
+      // The faint anchor marks behind the app: `opacity-watermark`.
+      opacity: {
+        watermark: "var(--watermark)",
+        "watermark-small": "var(--watermark-small)",
       },
       borderWidth: {
         "1.5": "1.5px",
@@ -93,8 +116,8 @@ const config: Config = {
         "3": "3px",
       },
       // Flat: no soft card shadows, no hard offset button shadows either.
-      // Only floating layers (menus, drawers, modals) keep a quiet shadow so
-      // they separate from the page.
+      // Only floating layers (menus, popovers) keep a quiet shadow so they separate
+      // from the page; sm, md and the plain `shadow` are switched off so a stray one draws nothing.
       boxShadow: {
         sm: "none",
         DEFAULT: "none",
@@ -102,12 +125,6 @@ const config: Config = {
         lg: "0 8px 24px rgb(15 21 25 / 0.10)",
         xl: "0 12px 32px rgb(15 21 25 / 0.14)",
         "2xl": "0 16px 48px rgb(15 21 25 / 0.18)",
-        card: "none",
-        "card-hover": "none",
-        hero: "none",
-        modal: "0 16px 48px rgb(15 21 25 / 0.18)",
-        stat: "none",
-        glow: "none",
       },
       backgroundImage: {
         hatch: "repeating-linear-gradient(135deg, rgb(var(--ink) / 0.07) 0 6px, transparent 6px 12px)",

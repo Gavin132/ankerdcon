@@ -11,6 +11,26 @@ class AdminCreateUserRequest(BaseModel):
     name: str
     discord_id: Optional[str] = None
     is_admin: bool = False
+    is_viewer: bool = False
+
+
+class MergeUserRequest(BaseModel):
+    """Fold a placeholder profile (the one in the URL) into a real member."""
+    target_id: str
+    # A preview unless asked otherwise: nothing is moved or deleted on a request that forgot the field.
+    dry_run: bool = True
+
+
+class MergeUserResult(BaseModel):
+    dry_run: bool
+    source_name: str
+    target_name: str
+    # What moves, per kind (rides, meals, ...), and what is dropped instead because it would be a
+    # duplicate or a payment to oneself. See app/services/profile_merge.py.
+    counts: dict[str, int]
+    dropped: dict[str, int]
+    # The placeholder's names that become aliases of the member.
+    alias_names: list[str]
 
 
 class AdminUpdateUserRequest(BaseModel):
@@ -20,6 +40,7 @@ class AdminUpdateUserRequest(BaseModel):
     bio: Optional[str] = None
     color: Optional[str] = None
     is_admin: Optional[bool] = None
+    is_viewer: Optional[bool] = None
     is_active: Optional[bool] = None
     aliases: Optional[list[str]] = None
 
@@ -162,14 +183,6 @@ class BulkDeleteMealsRequest(BaseModel):
 
 class BulkDeleteEventGroupsRequest(BaseModel):
     group_ids: list[str]
-
-
-class AdminUpdateHotelRoomRequest(BaseModel):
-    room_number: Optional[str] = None
-    floor: Optional[str] = None
-    instructions: Optional[str] = None
-    capacity: Optional[int] = None
-    occupants: Optional[list[str]] = None
 
 
 class BulkRsvpRequest(BaseModel):

@@ -1,19 +1,16 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Clock, Timer, AlertCircle, CalendarDays, Users, Utensils, Plus, UserMinus } from "lucide-react";
+import { Clock, Timer, CalendarDays, MapPin, Users, Utensils, Plus, UserMinus, AlertCircle } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
-import { UserProfilePopup, type AnchorRect } from "../common/UserProfilePopup";
-import { useCalendar } from "../../hooks/useCalendar";
-import { useAuthStore } from "../../store/auth.store";
+import { HeroActions, HeroChip, HeroButton, heroChipClass } from "../common/HeroActions";
+import { HeroPeople } from "../common/HeroPeople";
+import { useCurrentUser } from "../../hooks/useUsers";
+import { useIsViewer } from "../../hooks/useIsViewer";
+import { useIsOnList } from "../../hooks/useIsOnList";
+import { findUser } from "../../utils/people";
+import { formatDateTime } from "../../utils/format";
 import { getRideStatus, formatCountdown, rideLocationLabel, rideVehicleIcon } from "../../utils/rides";
 import { routes } from "../../config/routes";
 import type { CalendarEvent, Meal, Ride, User } from "../../types";
-
-const CLOSED_RECT: AnchorRect = { top: 0, left: 0, right: 0, height: 0 };
-
-/** White-ish mono chip on the ink hero. */
-const CHIP =
-  "inline-flex items-center gap-1.5 rounded-md border border-white/25 bg-white/10 px-2 py-[3px] font-mono text-[10.5px] font-semibold uppercase tracking-[0.05em] text-[#E6F0F3]";
 
 interface RideHeroProps {
   ride: Ride;
@@ -26,12 +23,11 @@ interface RideHeroProps {
   onLeaveClick?: () => void;
 }
 
-/** Flat ink hero for a ride: route in the display face, mono chips, brand-blue "Stap in". */
+/** Flat ink hero for a ride: chips, the route in the display face, the driver, and the sign-up row. */
 export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, onLeaveClick }: RideHeroProps) {
-  const { data: calendarEvents } = useCalendar();
-  const currentUser = useAuthStore((s) => s.currentUser);
-  const [popupUser, setPopupUser] = useState<User | null>(null);
-  const [popupAnchorRect, setPopupAnchorRect] = useState<AnchorRect>(CLOSED_RECT);
+  const viewer = useIsViewer();
+  const { data: me } = useCurrentUser();
+  const onRide = useIsOnList(ride.passengers);
   const { status, minutesUntil } = getRideStatus(ride.departure_time);
   const isPT = ride.is_public_transport;
   const isRecent = status === "recent";
@@ -47,199 +43,146 @@ export function RideHero({ ride, linkedEvent, linkedMeal, users, onClaimClick, o
     ? linkedMeal?.location || "Onbekende locatie"
     : rideLocationLabel(ride.end_location, linkedEvent, isInbound ? "Con locatie" : "Bestemming");
   const toIsPlaceholder = isRestaurant ? !linkedMeal?.location : !ride.end_location;
+  // A restaurant ride has no route: it is "the way to the meal". The meal is the title, its place a small line under it.
+  const restaurantTitle = linkedMeal?.meal_name ?? ride.start_location;
+  const restaurantPlace = linkedMeal?.location || ride.start_location;
 
-  const { Icon: TransportIcon, small: smallVehicle } = rideVehicleIcon(ride.driver, users, ride.total_seats, isPT);
+  const { Icon: TransportIcon } = rideVehicleIcon(ride.driver, users, isPT);
 
-  function resolveUser(stored: string) {
-    return users.find(
-      (u) =>
-        u.name === stored ||
-        u.discord_username === stored ||
-        u.aliases?.includes(stored),
-    );
-  }
+  // A viewer (read-only member) sees who is in the car, but gets no buttons.
+  const canAct = status !== "recent" && status !== "past" && !viewer;
+  const showSignup = !isRestaurant && (onClaimClick || onLeaveClick) && (ride.passengers.length > 0 || canAct);
+  // "Uitstappen" is for someone on the ride (or an admin, who sorts out other people's rides).
+  const canLeave = !!onLeaveClick && ride.passengers.length > 0 && (onRide || !!me?.is_admin);
 
-  function openPopup(user: User, e: React.MouseEvent<HTMLElement>) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setPopupAnchorRect({ top: rect.top, left: rect.left, right: rect.right, height: rect.height });
-    setPopupUser(user);
-  }
-
-  const canAct = status !== "recent" && status !== "past";
-  const showSignup = !isRestaurant && (onClaimClick || onLeaveClick);
+  // One status chip at a time, the most pressing first: leaving now > leaving soon > gone > something to do.
+  const statusChip: { tone: "neutral" | "warn" | "bad"; icon: React.ReactNode; text: string } | null =
+    status === "urgent"
+      ? { tone: "bad", icon: <Timer size={12} />, text: `Vertrekt over ${formatCountdown(minutesUntil)}!` }
+      : status === "soon"
+        ? { tone: "warn", icon: <Timer size={12} />, text: `Vertrekt over ${formatCountdown(minutesUntil)}` }
+        : isRecent
+          ? { tone: "neutral", icon: <Clock size={12} />, text: "Vertrokken" }
+          : ride.action_required && !isPast
+            ? { tone: "warn", icon: <AlertCircle size={12} />, text: "Actie vereist" }
+            : null;
 
   return (
     <section
-      className={`overflow-hidden rounded-[14px] border-2 border-outline bg-[#0F1519] text-[#E6F0F3] ${isRecent || isPast ? "opacity-80" : ""}`}
+      className={`overflow-hidden rounded-hero border-2 border-outline bg-hero text-hero-ink ${isRecent || isPast ? "opacity-80" : ""}`}
     >
       <div className="px-5 py-5 sm:px-7 sm:py-6">
-
-        {/* Action required */}
-        {ride.action_required && !isPast && (
-          <div className="mb-4 inline-flex items-center gap-2 rounded-md border border-amber-300/40 bg-amber-400/15 px-2.5 py-1.5 text-xs font-semibold text-amber-200">
-            <AlertCircle size={13} className="shrink-0" />
-            Actie vereist — bekijk de passagierslijst
-          </div>
-        )}
-
-        {/* Chips row */}
+        {/* Chips: what it belongs to, which way, when, and at most one status. */}
         <div className="mb-4 flex flex-wrap items-center gap-1.5">
           {linkedMeal && (
-            <Link to={routes.meal.view(linkedMeal.id)} className={`${CHIP} transition-colors hover:bg-white/20`}>
-              <Utensils size={11} />
+            <Link to={routes.meal.view(linkedMeal.id)} className={`hit-area ${heroChipClass()} transition-colors hover:bg-hero-ink/20`}>
+              <Utensils size={12} />
               {linkedMeal.meal_name}
             </Link>
           )}
           {linkedEvent && !linkedMeal && (
-            <Link to={routes.event.view(linkedEvent.id)} className={`${CHIP} transition-colors hover:bg-white/20`}>
-              <CalendarDays size={11} />
+            <Link to={routes.event.view(linkedEvent.id)} className={`hit-area ${heroChipClass()} transition-colors hover:bg-hero-ink/20`}>
+              <CalendarDays size={12} />
               {linkedEvent.event_name}
             </Link>
           )}
-          <span className={CHIP}>
-            <TransportIcon size={smallVehicle ? 9 : 11} />
-            {isPT ? "Openbaar vervoer" : ride.direction === "Inbound" ? "Heen" : ride.direction === "Outbound" ? "Terug" : "Restaurant"}
-          </span>
-          {!isPT && !isRecent && !isPast && ride.direction !== "Restaurant" && (
-            <span
-              className={
-                ride.is_full
-                  ? "inline-flex items-center gap-1.5 rounded-md border border-rose-300/40 bg-rose-500/20 px-2 py-[3px] font-mono text-[10.5px] font-semibold uppercase tracking-[0.05em] text-rose-200"
-                  : CHIP
-              }
-            >
-              <Users size={11} />
-              {ride.is_full
-                ? "Vol"
-                : `${ride.seats_left} ${ride.seats_left === 1 ? "plek" : "plekken"} vrij`}
-            </span>
+          {/* A restaurant ride with its meal already says what it is; the chip is for one without. */}
+          {!(isRestaurant && linkedMeal) && (
+            <HeroChip>
+              <TransportIcon size={12} />
+              {isPT ? "Openbaar vervoer" : isInbound ? "Heen" : ride.direction === "Outbound" ? "Terug" : "Restaurant"}
+            </HeroChip>
+          )}
+          <HeroChip className="normal-case tracking-normal">
+            <Clock size={12} />
+            {formatDateTime(ride.departure_time)}
+          </HeroChip>
+          {!isPT && !isRestaurant && !isRecent && !isPast && !ride.is_full && (
+            <HeroChip>
+              <Users size={12} />
+              {`${ride.seats_left} ${ride.seats_left === 1 ? "plek" : "plekken"} vrij`}
+            </HeroChip>
+          )}
+          {statusChip && (
+            <HeroChip tone={statusChip.tone}>
+              {statusChip.icon}
+              {statusChip.text}
+            </HeroChip>
           )}
         </div>
 
-        {/* Route: from (small) → to (title) */}
-        <div className="grid grid-cols-[12px_minmax(0,1fr)] gap-x-3">
-          <i aria-hidden className="mt-[5px] block h-[11px] w-[11px] rounded-full border-2 border-[#E6F0F3]" />
+        {isRestaurant ? (
           <div className="min-w-0">
-            <p className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-white/55">Van</p>
-            <p className="truncate text-[15px] font-semibold text-white/85">{fromLabel}</p>
-          </div>
-          <i aria-hidden className="ml-[4.5px] my-1 block h-4 w-0.5 bg-white/25" />
-          <span aria-hidden />
-          <i aria-hidden className="mt-[5px] block h-[11px] w-[11px] rounded-full border-2 border-[#E6F0F3] bg-[#E6F0F3]" />
-          <div className="min-w-0">
-            <p className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-white/55">Naar</p>
-            <h1
-              className={`break-words font-display font-extrabold uppercase leading-[0.95] tracking-[0.005em] ${
-                toIsPlaceholder ? "text-[26px] text-white/55 sm:text-[30px]" : "text-[34px] text-[#E6F0F3] sm:text-[42px]"
-              }`}
-            >
-              {toLabel}
+            <h1 className="line-clamp-3 break-words font-display text-[30px] font-extrabold uppercase leading-[0.95] tracking-[0.005em] text-hero-ink sm:line-clamp-none sm:text-[42px]">
+              {restaurantTitle}
             </h1>
+            {restaurantPlace !== restaurantTitle && (
+              <p className="mt-2 flex items-start gap-1.5 text-sm leading-snug text-hero-ink/75">
+                <MapPin size={14} className="mt-[3px] shrink-0" />
+                {restaurantPlace}
+              </p>
+            )}
           </div>
-        </div>
-
-        {/* Countdown */}
-        {(status === "urgent" || status === "soon" || status === "recent") && (
-          <div className="mt-4 flex flex-wrap gap-1.5">
-            <span
-              className={
-                status === "urgent"
-                  ? "inline-flex items-center gap-1.5 rounded-md border border-rose-300/40 bg-rose-500/20 px-2 py-[3px] font-mono text-[10.5px] font-semibold uppercase tracking-[0.05em] text-rose-200"
-                  : status === "soon"
-                    ? "inline-flex items-center gap-1.5 rounded-md border border-amber-300/40 bg-amber-400/15 px-2 py-[3px] font-mono text-[10.5px] font-semibold uppercase tracking-[0.05em] text-amber-200"
-                    : CHIP
-              }
-            >
-              {status === "recent" ? <Clock size={11} /> : <Timer size={11} />}
-              {status === "urgent" && `Vertrekt over ${formatCountdown(minutesUntil)}!`}
-              {status === "soon" && `Vertrekt over ${formatCountdown(minutesUntil)}`}
-              {status === "recent" && "Vertrokken"}
-            </span>
+        ) : (
+          // Route: from (small) → to (title)
+          <div className="grid grid-cols-[12px_minmax(0,1fr)] gap-x-3">
+            <i aria-hidden className="mt-[5px] block h-[11px] w-[11px] rounded-full border-2 border-hero-ink" />
+            <div className="min-w-0">
+              <p className="label-quiet text-hero-ink/70">Van</p>
+              <p className="truncate text-[15px] font-semibold text-hero-ink/90">{fromLabel}</p>
+            </div>
+            <i aria-hidden className="ml-[4.5px] my-1 block h-4 w-0.5 bg-hero-ink/25" />
+            <span aria-hidden />
+            <i aria-hidden className="mt-[5px] block h-[11px] w-[11px] rounded-full border-2 border-hero-ink bg-hero-ink" />
+            <div className="min-w-0">
+              <p className="label-quiet text-hero-ink/70">Naar</p>
+              <h1
+                className={`line-clamp-3 break-words font-display font-extrabold uppercase leading-[0.95] tracking-[0.005em] sm:line-clamp-none ${
+                  toIsPlaceholder ? "text-[26px] text-hero-ink/70 sm:text-[30px]" : "text-[30px] text-hero-ink sm:text-[42px]"
+                }`}
+              >
+                {toLabel}
+              </h1>
+            </div>
           </div>
         )}
 
-        {/* Driver / Organizer */}
-        {!isPT && (
+        {/* Driver (a restaurant ride has several cars, listed below) */}
+        {!isPT && !isRestaurant && ride.driver && (
           <div className="mt-5 flex items-center gap-2.5">
             <UserAvatar
               name={ride.driver}
-              user={resolveUser(ride.driver)}
-              className="h-9 w-9 text-xs !border-[#0F1519]"
+              user={findUser(users, ride.driver)}
+              className="h-9 w-9 text-xs !border-hero"
             />
             <div className="leading-tight">
-              <p className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-white/55">
-                {ride.direction === "Restaurant" ? "Organisator" : "Chauffeur"}
-              </p>
-              <p className="text-sm font-semibold text-[#E6F0F3]">{ride.driver}</p>
+              <p className="label-quiet text-hero-ink/70">Chauffeur</p>
+              <p className="text-sm font-semibold text-hero-ink">{ride.driver}</p>
             </div>
           </div>
         )}
 
         {/* Passengers + sign-up */}
         {showSignup && (
-          <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-dashed border-white/20 pt-4">
-            {ride.passengers.length > 0 && (
-              <div className="flex items-center gap-3">
-                <div className="flex -space-x-2">
-                  {ride.passengers.slice(0, 8).map((p) => {
-                    const u = resolveUser(p);
-                    return u ? (
-                      <button key={p} type="button" onClick={(e) => openPopup(u, e)} className="rounded-full" aria-label={u.name}>
-                        <UserAvatar
-                          name={u.name}
-                          user={u}
-                          className="h-8 w-8 text-[10px] !border-[#0F1519]"
-                        />
-                      </button>
-                    ) : (
-                      <UserAvatar
-                        key={p}
-                        name={p}
-                        className="h-8 w-8 text-[10px] !border-[#0F1519]"
-                      />
-                    );
-                  })}
-                </div>
-                <p className="text-sm text-white/65">
-                  <span className="font-mono font-semibold tabular-nums text-[#E6F0F3]">{ride.passengers.length}</span>{" "}
-                  {ride.passengers.length === 1 ? "meerijder" : "meerijders"}
-                </p>
-              </div>
-            )}
+          <HeroPeople names={ride.passengers} singular="meerijder" plural="meerijders">
             {canAct && (
-              <div className="ml-auto flex items-center gap-2">
-                {onLeaveClick && ride.passengers.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={onLeaveClick}
-                    className="flex items-center gap-1.5 rounded-xl border-1.5 border-white/25 px-3 py-2 text-xs font-semibold text-[#E6F0F3] transition-colors hover:border-white/50"
-                  >
-                    <UserMinus size={13} /> Uitstappen
-                  </button>
+              <HeroActions>
+                {canLeave && (
+                  <HeroButton onClick={onLeaveClick}>
+                    <UserMinus size={14} /> Uitstappen
+                  </HeroButton>
                 )}
                 {onClaimClick && !ride.is_full && (
-                  <button
-                    type="button"
-                    onClick={onClaimClick}
-                    className="btn-primary px-3.5 py-2 text-xs"
-                  >
-                    <Plus size={13} /> Stap in
-                  </button>
+                  <HeroButton onClick={onClaimClick}>
+                    <Plus size={14} /> Stap in
+                  </HeroButton>
                 )}
-              </div>
+                {ride.is_full && <p className="text-xs text-hero-ink/75">Deze rit zit vol</p>}
+              </HeroActions>
             )}
-          </div>
+          </HeroPeople>
         )}
       </div>
-
-      <UserProfilePopup
-        user={popupUser}
-        open={popupUser !== null}
-        isOwn={currentUser === popupUser?.id}
-        anchorRect={popupAnchorRect}
-        onClose={() => setPopupUser(null)}
-        calendarEvents={calendarEvents}
-      />
     </section>
   );
 }

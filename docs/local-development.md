@@ -222,7 +222,7 @@ Read by `frontend/vite.config.ts`, not exposed to the browser.
 
 | Variable | Effect |
 | --- | --- |
-| `APP_ENV=dev` | builds the dev variant: orange launcher icon and manifest |
+| `APP_ENV=dev` | builds the dev variant: orange launcher icon, manifest and accent colour (the picker is hidden) |
 | `ALLOWED_HOST` | host name the dev server accepts (default `localhost`) |
 | `BACKEND_URL` | where the dev proxy sends `/api` (default `http://localhost:8000`) |
 | `PORT` | dev server port (default 5173) |
@@ -240,8 +240,9 @@ API and the frontend build read that file.
 | `backend/` | `python -m pytest` | 57 tests: settle-up maths and flow, admin guards, link handling, CDN classification. They run against an in-memory stand-in for Supabase and need no network. Install the tools with `pip install -r backend/requirements-dev.txt`. |
 | `frontend/` | `npx tsc --noEmit` | type-check |
 | `frontend/` | `npm run build` | type-check plus production build. Output goes to `backend/dist` (gitignored), which the backend then serves. |
-| `frontend/` | `npm test` | Vitest. One test file so far: the car-loading maths in `src/utils/carBalance.test.ts`. |
+| `frontend/` | `npm test` | Vitest: the car-loading maths, avatars, back stack, people, and the colours (`src/styles.tokens.test.ts` checks the contrast of every text/background token pair in `index.css`, light and dark; `src/utils/profile.test.ts` the readable name colour). |
 | `frontend/` | `npm run lint` | ESLint |
+| `frontend/` | `npm run check-colors` | fails on a hard-coded colour in `src`: a Tailwind palette class (`bg-rose-100`, `text-white`), a hex or `rgb(1, 2, 3)`. Colours are tokens (`text-bad`, `bg-warn-soft`); the few legitimate literals are in `ALLOWED` in `scripts/check-colors.mjs` ([design-system.md](design-system.md#colours)). |
 
 There are hardly any frontend tests. To look at a component in isolation without
 logging in, render it from a throwaway page with its data preloaded into a
@@ -271,6 +272,70 @@ the page afterwards.
   unregister it in the browser's devtools (Application → Service workers).
 
 ---
+
+## Mock mode
+
+The app on made-up data, signed in as nobody, so every screen can be opened at a phone size without a login, the
+backend or a database. **Development only** (`npm run dev`): `main.tsx` loads `src/dev/` behind
+`import.meta.env.DEV`, so a production build has none of it, and nothing it does reaches a server.
+
+Open `http://localhost:5173/?mock`, and add what you want:
+
+| Option | Values | What it does |
+| --- | --- | --- |
+| `scenario` | `upcoming` (default), `live`, `past` | where the main trip (HMIA 2026 Brussel, three days) stands: coming up, on right now (day two is today), or over |
+| `role` | `member` (default), `admin`, `viewer` | who is signed in: an ordinary member, an admin (admin pages, extra buttons) or a read-only member |
+| `delay` | milliseconds | holds every answer back, to see loading and skeleton states |
+
+For example `/finance?mock&scenario=live&role=admin&delay=800`. The tab remembers the options (sessionStorage), so
+reloading or typing another path stays in mock mode; close the tab to leave it.
+
+What is where:
+
+- `src/dev/mock/fixtures.ts`: the data, typed with the app's own types. It is deliberately awkward: a very long name
+  and activity title, a full car, a trip only some people attend, an empty list, so layouts meet what real data
+  does. Dates are counted from today. `fixtures.test.ts` keeps it consistent (everyone named exists, links point at
+  something, seat counts add up).
+- `src/dev/mock/adapter.ts`: answers requests (it replaces axios's network adapter). A read with no entry answers
+  `[]` and is listed in `window.__mock.unhandled`; a change is accepted and forgotten, the next read shows the fixtures
+  again. Add a line to `GETS` when a new screen needs data. The one change with a made-up answer is the preview and the merge of a
+  placeholder (`POST /api/admin/users/{id}/merge`), counted from the fixtures; the fixtures hold two placeholders (Tess and one with
+  a long name), so Admin > Gebruikers can be checked.
+- `src/lib/mockMode.ts`: the one flag the rest of the app knows. It keeps the sign-in listener quiet and keeps made-up
+  data out of the saved query cache.
+
+### The mobile audit
+
+`npm run mobile-audit` opens every screen listed in `scripts/audit-screens.mjs` in mock mode at phone widths, runs
+the layout check in `src/dev/audit.ts` (`window.__audit()`, also usable from the console) and writes
+`playwright-out/audit/report.md` with a screenshot of every screen. It looks for:
+
+| Finding | Severity | What it means |
+| --- | --- | --- |
+| `clipped-text` | error | text an `overflow: hidden` parent cuts off, even by a pixel |
+| `clipped-box` | warn | a control, icon or picture an `overflow: hidden` parent shaves a corner, ring or badge off |
+| `offscreen`, `page-scrolls-sideways` | error / warn | text or a box past the screen edge; the page scrolls sideways |
+| `broken-image` | error | a picture that did not load |
+| `small-tap-target` | warn (info from 40 px) | a control under 44×44 px, counting the invisible `hit-area` box |
+| `small-text` | info | text under 12 px |
+| `truncated` | info | text shortened with "…" (one line or `line-clamp`), which is on purpose |
+
+A scroll box is not a problem (what is inside it can be reached), and neither is an ellipsis; both are only mentioned.
+
+```bash
+npm run mobile-audit                          # 320 and 390 px, light, "upcoming"
+npm run mobile-audit -- --full                # 320 360 390 430 px, light and dark, all three scenarios
+npm run mobile-audit -- --only trip,finance   # screens whose name contains one of these
+npm run mobile-audit -- --info                # also the small text and the truncations
+npm run mobile-audit -- --browser webkit      # Safari's engine
+npm run mobile-audit -- --selftest            # checks the check itself on deliberately broken elements
+npm run mobile-audit -- --buttons             # button heights on every screen at 390 and 1280 px, dark: standard 44 / 40, compact 40 / 36
+```
+
+It needs the dev server and a Playwright browser (`npx playwright install chromium`); if only an older Chromium is
+installed it uses that. The exit code is 1 when there are errors. **Run it after changing layout, and add a screen to
+`audit-screens.mjs` for a new page or sheet.** It finds what can be measured; it cannot tell that something looks
+odd, so also look at the screenshots.
 
 ## Testing in WebKit (iPhone)
 

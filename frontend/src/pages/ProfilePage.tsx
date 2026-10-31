@@ -2,18 +2,17 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { routes } from "../config/routes";
 import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
-import { useSmartBack, isFreshEntry } from "../hooks/useSmartBack";
+import { useSmartBack } from "../hooks/useSmartBack";
 import { useCurrentTripRoomNumbers } from "../hooks/useTripRooms";
 import { useBadges } from "../hooks/useBadges";
-import { HomeLinkButton } from "../components/common/HomeLinkButton";
+import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { DiscordIcon } from "../components/common/DiscordIcon";
 import { UserPhotos } from "../components/profile/UserPhotos";
 import { UnsavedChangesModal } from "../components/common/UnsavedChangesModal";
 import {
-  ArrowLeft,
-  Check,
   AlertTriangle,
   BedDouble,
+  Eye,
   Phone,
   MapPin,
   Pencil,
@@ -22,6 +21,7 @@ import {
   Smartphone,
   Plus,
   Trash2,
+  UserX,
   X,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -39,20 +39,17 @@ import {
   useDeleteAvatar,
 } from "../hooks/useUsers";
 import { BannerCropModal } from "../components/profile/BannerCropModal";
+import { ColorSwatch } from "../components/profile/ColorSwatch";
+import { EmptyState } from "../components/common/EmptyState";
 import { BadgeIcon } from "../components/common/BadgeIcon";
 import { useAuthStore } from "../store/auth.store";
-import { avatarColor } from "../utils/avatar";
+import { avatarColor, avatarSrc } from "../utils/avatar";
 import { prepareAvatarFile } from "../utils/imageCompression";
+import { FONT_MAP, NAME_COLORS, BANNER_COLORS, getBannerStyle, readableNameColor } from "../utils/profile";
+import { useThemeStore } from "../store/theme.store";
 import { toast } from "../store/toast.store";
 import { validateDisplayName, validatePhoneNumber } from "../utils/validation";
 import type { Badge, FontOption, User } from "../types";
-
-const FONT_MAP: Record<string, string> = {
-  mono: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-  serif: 'Georgia, Cambria, "Times New Roman", Times, serif',
-  cursive: "cursive",
-  display: 'Impact, "Arial Black", sans-serif',
-};
 
 const FONT_OPTIONS: { value: FontOption; label: string }[] = [
   { value: "default", label: "Standaard" },
@@ -61,79 +58,6 @@ const FONT_OPTIONS: { value: FontOption; label: string }[] = [
   { value: "cursive", label: "Cursief" },
   { value: "display", label: "Display" },
 ];
-
-const NAME_COLORS = [
-  "#0f172a",
-  "#0ea5e9",
-  "#8b5cf6",
-  "#10b981",
-  "#f43f5e",
-  "#f59e0b",
-  "#6366f1",
-  "#ec4899",
-  "#14b8a6",
-  "#a3e635",
-  "#64748b",
-];
-
-const BANNER_COLORS = [
-  "#0f172a",
-  "#1e293b",
-  "#1a1a2e",
-  "#2d1b69",
-  "#0c4a6e",
-  "#14532d",
-  "#7c2d12",
-  "#1c1917",
-  "#0369a1",
-  "#064e3b",
-  "#4c0519",
-  "#292524",
-];
-
-function getBannerStyle(
-  bannerColor: string,
-  bannerUrl?: string,
-  bannerPosition?: string,
-): React.CSSProperties {
-  if (bannerUrl)
-    return {
-      backgroundImage: `url(${bannerUrl})`,
-      backgroundSize: "cover",
-      backgroundPosition: bannerPosition || "center",
-    };
-  if (bannerColor) return { backgroundColor: bannerColor };
-  return { backgroundColor: "#0F1519" };
-}
-
-const topBarButtonClass =
-  "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink";
-
-// ─── Sticky top bar ───────────────────────────────────────────────────────────
-
-function TopBar({ title, onBack }: { title: string; onBack: () => void }) {
-  return (
-    <div
-      className="sticky top-0 z-10 border-b-1.5 border-line bg-surface px-3 sm:px-5"
-      style={{
-        paddingTop: "max(0.625rem, env(safe-area-inset-top, 0px))",
-        paddingBottom: "0.625rem",
-      }}
-    >
-      <div className="mx-auto flex max-w-3xl items-center gap-2">
-        <button onClick={onBack} aria-label="Terug" className={topBarButtonClass}>
-          <ArrowLeft size={18} />
-        </button>
-        <p className="min-w-0 flex-1 truncate text-[15px] font-semibold text-ink">
-          {title}
-        </p>
-        {isFreshEntry() && (
-          <HomeLinkButton size={16} className={topBarButtonClass} />
-        )}
-      </div>
-    </div>
-  );
-}
 
 // ─── Field wrapper ────────────────────────────────────────────────────────────
 
@@ -150,66 +74,9 @@ function Field({
 }) {
   return (
     <div className={className}>
-      <label className="section-label mb-1.5 block">{label}</label>
+      <label className="field-label">{label}</label>
       {children}
       {hint && <p className="mt-1.5 text-xs text-ink-3">{hint}</p>}
-    </div>
-  );
-}
-
-// ─── Color swatch row ─────────────────────────────────────────────────────────
-
-function ColorPicker({
-  value,
-  onChange,
-  presets,
-  fallback = "#94a3b8",
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  presets: string[];
-  fallback?: string;
-}) {
-  return (
-    <div className="flex flex-wrap items-center gap-2.5">
-      <button
-        type="button"
-        onClick={() => onChange("")}
-        className={`flex h-7 w-7 items-center justify-center rounded-full border-1.5 border-line bg-sunken ring-2 ring-offset-2 ring-offset-surface transition-shadow ${
-          value === "" ? "ring-outline" : "ring-transparent hover:ring-line"
-        }`}
-        title="Automatisch"
-      >
-        {value === "" && <Check size={11} strokeWidth={3} className="text-ink" />}
-      </button>
-
-      {presets.map((c) => (
-        <button
-          key={c}
-          type="button"
-          onClick={() => onChange(value === c ? "" : c)}
-          className={`flex h-7 w-7 items-center justify-center rounded-full ring-2 ring-offset-2 ring-offset-surface transition-shadow ${
-            value === c ? "ring-outline" : "ring-transparent hover:ring-line"
-          }`}
-          style={{ backgroundColor: c }}
-          title={c}
-        >
-          {value === c && <Check size={11} strokeWidth={3} className="text-white" />}
-        </button>
-      ))}
-
-      <div className="relative h-7 w-7">
-        <input
-          type="color"
-          value={value || fallback}
-          onChange={(e) => onChange(e.target.value)}
-          className="absolute inset-0 z-10 h-full w-full cursor-pointer rounded-full opacity-0"
-          title="Aangepaste kleur"
-        />
-        <div className="flex h-7 w-7 items-center justify-center rounded-full border-1.5 border-dashed border-ink-3 bg-surface text-ink-2">
-          <Plus size={13} />
-        </div>
-      </div>
     </div>
   );
 }
@@ -303,9 +170,9 @@ function ProfileHead({
                 disabled={bannerDeleting}
                 aria-label="Banner verwijderen"
                 title="Banner verwijderen"
-                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-colors hover:bg-ink/90 disabled:opacity-60"
+                className="hit-area flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-ink/80 text-paper transition-colors hover:bg-ink disabled:opacity-60"
               >
-                {bannerDeleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                {bannerDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
               </button>
             )}
             <button
@@ -314,9 +181,9 @@ function ProfileHead({
               disabled={bannerUploading}
               aria-label="Banner wijzigen"
               title="Banner wijzigen"
-              className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-transform hover:bg-ink/90 active:scale-95 disabled:opacity-60"
+              className="hit-area flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-ink/80 text-paper transition-colors hover:bg-ink disabled:opacity-60"
             >
-              {bannerUploading ? <Loader2 size={13} className="animate-spin" /> : <Pencil size={13} />}
+              {bannerUploading ? <Loader2 size={14} className="animate-spin" /> : <Pencil size={14} />}
             </button>
           </div>
         )}
@@ -329,7 +196,7 @@ function ProfileHead({
           <div className="relative -mt-[44px] shrink-0">
             <div
               className={`flex h-[88px] w-[88px] items-center justify-center overflow-hidden rounded-full border-4 border-surface ${
-                !hasAvatar ? `bg-gradient-to-br ${avatarColor(user.name)}` : ""
+                !hasAvatar ? avatarColor(user.name) : ""
               }`}
               style={
                 !hasAvatar && avatarColorValue
@@ -339,13 +206,13 @@ function ProfileHead({
             >
               {hasAvatar ? (
                 <img
-                  src={user.avatar_url}
+                  src={avatarSrc(user.avatar_url!, 112)}
                   alt={user.name}
                   className="h-full w-full object-cover"
                   onError={onAvatarError}
                 />
               ) : (
-                <span className="text-3xl font-bold text-white">
+                <span className="text-3xl font-bold text-avatar-on">
                   {user.name[0].toUpperCase()}
                 </span>
               )}
@@ -364,7 +231,7 @@ function ProfileHead({
                     disabled={avatarDeleting}
                     aria-label="Profielfoto verwijderen"
                     title="Profielfoto verwijderen"
-                    className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink/70 text-paper backdrop-blur-sm transition-colors hover:bg-ink/90 disabled:opacity-60"
+                    className="hit-area flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink/80 text-paper transition-colors hover:bg-ink disabled:opacity-60"
                   >
                     {avatarDeleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
                   </button>
@@ -375,10 +242,10 @@ function ProfileHead({
                   disabled={avatarUploading}
                   aria-label="Profielfoto wijzigen"
                   title="Profielfoto wijzigen"
-                  className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper transition-transform active:scale-95 disabled:opacity-60"
+                  className="hit-area flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-ink text-paper disabled:opacity-60"
                 >
                   {avatarUploading ? (
-                    <Loader2 size={13} className="animate-spin" />
+                    <Loader2 size={14} className="animate-spin" />
                   ) : (
                     <Pencil size={12} />
                   )}
@@ -466,7 +333,7 @@ function ViewProfile({
           {room && (
             <div className="flex items-center gap-2.5 text-sm text-ink-2">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-                <BedDouble size={15} />
+                <BedDouble size={16} />
               </span>
               Kamer {room}
             </div>
@@ -474,17 +341,17 @@ function ViewProfile({
           {user.phone_number && (
             <div className="flex items-center gap-2.5 text-sm">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-                <Phone size={15} />
+                <Phone size={16} />
               </span>
-              <a href={`tel:${user.phone_number}`} className="font-medium text-brand-text">
+              <a href={`tel:${user.phone_number}`} className="hit-area font-medium text-brand-text">
                 {user.phone_number}
               </a>
             </div>
           )}
           {isPingFresh(user.live_location_ping) && (
             <div className="flex items-center gap-2.5 text-sm text-ink-2">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
-                <MapPin size={15} />
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg pill-ok">
+                <MapPin size={16} />
               </span>
               <LocationPingDisplay
                 raw={user.live_location_ping}
@@ -500,6 +367,7 @@ function ViewProfile({
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export function ProfilePage() {
+  const isDark = useThemeStore((s) => s.isDark);
   const { userId } = useParams<{ userId: string }>();
   const decodedName = userId ? decodeURIComponent(userId) : "";
   // `?preview=1` shows your own profile the way others see it.
@@ -709,7 +577,7 @@ export function ProfilePage() {
     displayBannerPosition || undefined,
   );
   const nameStyle: React.CSSProperties = {
-    color: displayColor || undefined,
+    color: readableNameColor(displayColor, isDark),
     fontFamily:
       displayFont && displayFont !== "default"
         ? FONT_MAP[displayFont]
@@ -720,22 +588,25 @@ export function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-paper">
-        <LoadingSpinner />
+      <div className="min-h-[100dvh] bg-paper">
+        <DetailTopbar title="Profiel" onBack={goBack} />
+        <div className="flex justify-center py-24">
+          <LoadingSpinner />
+        </div>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-3 bg-paper px-6">
-        <p className="text-sm font-semibold text-ink">Gebruiker niet gevonden</p>
-        <button
-          onClick={goBack}
-          className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
-        >
-          <ArrowLeft size={13} /> Terug
-        </button>
+      <div className="min-h-[100dvh] bg-paper">
+        <DetailTopbar title="Profiel" onBack={goBack} />
+        <EmptyState
+          icon={<UserX size={22} />}
+          title="Profiel niet gevonden"
+          description="Dit lid bestaat niet (meer), of de link klopt niet."
+          action={<Button onClick={goBack}>Terug</Button>}
+        />
       </div>
     );
   }
@@ -745,7 +616,7 @@ export function ProfilePage() {
   if (!isOwn) {
     return (
       <div className="min-h-[100dvh] bg-paper">
-        <TopBar title={user.name} onBack={goBack} />
+        <DetailTopbar title="Profiel" onBack={goBack} />
         <div
           className="mx-auto max-w-3xl px-4 py-5 sm:px-6 sm:py-8"
           style={{
@@ -780,10 +651,36 @@ export function ProfilePage() {
 
   return (
     <div className="min-h-[100dvh] bg-paper">
-      <TopBar title={user.name} onBack={goBack} />
+      <DetailTopbar
+        title="Profiel"
+        onBack={goBack}
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => navigate(`${routes.profile.view(decodedName)}?preview=1`)}
+              className="icon-btn"
+              aria-label="Zo zien anderen je profiel"
+              title="Zo zien anderen je profiel"
+            >
+              <Eye size={16} />
+            </button>
+            {/* Always in reach, and only blue when there is something to save. */}
+            <Button
+              size="sm"
+              onClick={onSave}
+              disabled={!isDirty}
+              loading={updateMutation.isPending || renameMutation.isPending}
+            >
+              <Save size={14} />
+              Opslaan
+            </Button>
+          </>
+        }
+      />
 
       <motion.div
-        className="mx-auto max-w-3xl space-y-5 px-4 py-5 sm:px-6 sm:py-8"
+        className="mx-auto max-w-3xl space-y-5 px-4 py-5 sm:py-8"
         style={{ paddingBottom: "max(3rem, env(safe-area-inset-bottom, 0px))" }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -808,42 +705,24 @@ export function ProfilePage() {
           onDeleteBanner={onBannerDelete}
           bannerDeleting={deleteBannerMutation.isPending}
           hasBanner={!!user.banner_url}
-          actions={
-            <>
-              <input
-                ref={avatarInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                className="hidden"
-                onChange={onAvatarFileChange}
-              />
-              <input
-                ref={bannerInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp"
-                className="hidden"
-                onChange={onBannerFileChange}
-              />
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => navigate(`${routes.profile.view(decodedName)}?preview=1`)}
-                className="hidden sm:flex"
-              >
-                <Pencil size={13} />
-                Bekijk profiel
-              </Button>
-              <Button
-                size="sm"
-                onClick={onSave}
-                loading={updateMutation.isPending || renameMutation.isPending}
-              >
-                <Save size={13} />
-                Opslaan
-              </Button>
-            </>
-          }
         />
+        <input
+          ref={avatarInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          className="hidden"
+          onChange={onAvatarFileChange}
+        />
+        <input
+          ref={bannerInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/gif,image/webp"
+          className="hidden"
+          onChange={onBannerFileChange}
+        />
+        <p className="-mt-2 px-1 text-xs text-ink-3">
+          Foto en banner worden meteen opgeslagen. De rest sla je op met Opslaan, bovenin.
+        </p>
 
         {/* ── Persoonlijke info ──────────────────────────────────────────── */}
         <Card
@@ -859,13 +738,13 @@ export function ProfilePage() {
               <input
                 type="text"
                 maxLength={30}
-                className={`input-field ${nameError && draftName !== user.name ? "!border-rose-500 dark:!border-rose-400" : ""}`}
+                className={`input-field ${nameError && draftName !== user.name ? "!border-bad-fill" : ""}`}
                 value={draftName}
                 onChange={(e) => setDraftName(e.target.value)}
               />
               {nameError && draftName !== user.name && (
-                <p className="mt-1.5 flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400">
-                  <AlertTriangle size={11} /> {nameError}
+                <p className="field-error flex items-center gap-1">
+                  <AlertTriangle size={12} /> {nameError}
                 </p>
               )}
             </Field>
@@ -898,16 +777,17 @@ export function ProfilePage() {
                 />
                 <input
                   type="tel"
+                  autoComplete="tel"
                   maxLength={20}
-                  className={`input-field pl-9 ${phoneError && draftPhone ? "!border-rose-500 dark:!border-rose-400" : ""}`}
+                  className={`input-field pl-9 ${phoneError && draftPhone ? "!border-bad-fill" : ""}`}
                   placeholder="+31 6 12345678"
                   value={draftPhone}
                   onChange={(e) => setDraftPhone(e.target.value)}
                 />
               </div>
               {phoneError && draftPhone && (
-                <p className="mt-1.5 flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400">
-                  <AlertTriangle size={11} /> {phoneError}
+                <p className="field-error flex items-center gap-1">
+                  <AlertTriangle size={12} /> {phoneError}
                 </p>
               )}
             </Field>
@@ -923,7 +803,7 @@ export function ProfilePage() {
                   value={draftBio}
                   onChange={(e) => setDraftBio(e.target.value)}
                 />
-                <span className="pointer-events-none absolute bottom-3 right-3 select-none font-mono text-[11px] text-ink-3">
+                <span className="pointer-events-none absolute bottom-3 right-3 select-none font-mono text-[12px] text-ink-3">
                   {200 - draftBio.length}
                 </span>
               </div>
@@ -957,6 +837,7 @@ export function ProfilePage() {
                 <button
                   type="button"
                   disabled={!aliasInput.trim() || draftAliases.includes(aliasInput.trim()) || draftAliases.length >= 10}
+                  aria-label="Alias toevoegen"
                   onClick={() => {
                     const trimmed = aliasInput.trim();
                     if (trimmed && !draftAliases.includes(trimmed) && draftAliases.length < 10) {
@@ -980,9 +861,10 @@ export function ProfilePage() {
                       <button
                         type="button"
                         onClick={() => setDraftAliases(draftAliases.filter((a) => a !== alias))}
-                        className="text-ink-3 transition-colors hover:text-rose-600 dark:hover:text-rose-400"
+                        aria-label={`Alias ${alias} verwijderen`}
+                        className="hit-area -mr-1 p-1 text-ink-3 transition-colors hover:text-bad"
                       >
-                        <X size={11} />
+                        <X size={12} />
                       </button>
                     </span>
                   ))}
@@ -1000,27 +882,7 @@ export function ProfilePage() {
           <div className="space-y-6">
             {/* Naamkleur */}
             <Field label="Naamkleur">
-              <ColorPicker
-                value={draftColor}
-                onChange={setDraftColor}
-                presets={NAME_COLORS}
-              />
-              {draftColor && (
-                <div className="mt-3 inline-flex items-center rounded-lg bg-sunken px-3 py-1.5">
-                  <span
-                    className="text-sm font-bold"
-                    style={{
-                      color: draftColor,
-                      fontFamily:
-                        draftFont !== "default"
-                          ? FONT_MAP[draftFont]
-                          : undefined,
-                    }}
-                  >
-                    {user.name}
-                  </span>
-                </div>
-              )}
+              <ColorSwatch value={draftColor} onChange={setDraftColor} presets={NAME_COLORS} customFallback="#94a3b8" />
             </Field>
 
             {/* Lettertype */}
@@ -1051,7 +913,7 @@ export function ProfilePage() {
                         Aa
                       </span>
                       <span
-                        className={`font-mono text-[10px] uppercase tracking-[0.05em] ${isActive ? "text-ink" : "text-ink-3"}`}
+                        className={`font-mono text-xs ${isActive ? "text-ink" : "text-ink-3"}`}
                       >
                         {label}
                       </span>
@@ -1060,22 +922,12 @@ export function ProfilePage() {
                 })}
               </div>
             </Field>
-          </div>
-        </Card>
 
-        {/* ── Bannerkleur ──────────────────────────────────────────────── */}
-        <Card title="Bannerkleur" subtitle="Gebruikt als er geen bannerafbeelding is ingesteld.">
-          {/* Live preview strip */}
-          <div
-            className="mb-4 h-14 w-full rounded-xl border-1.5 border-line"
-            style={getBannerStyle(draftBanner)}
-          />
-          <ColorPicker
-            value={draftBanner}
-            onChange={setDraftBanner}
-            presets={BANNER_COLORS}
-            fallback="#1e293b"
-          />
+            {/* Bannerkleur */}
+            <Field label="Bannerkleur" hint="Gebruikt als er geen bannerafbeelding is ingesteld.">
+              <ColorSwatch value={draftBanner} onChange={setDraftBanner} presets={BANNER_COLORS} customFallback="#1e293b" />
+            </Field>
+          </div>
         </Card>
 
         <UserPhotos identifier={user.id ?? user.name} />

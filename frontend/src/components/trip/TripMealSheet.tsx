@@ -3,12 +3,13 @@ import { CalendarPlus } from "lucide-react";
 import { TripSheet } from "./TripSheet";
 import { Button } from "../common/Button";
 import { CategoryPicker } from "../meal/CategoryPicker";
+import { DayChips } from "./DayChips";
 import { useCreateMeal, useMealCategories } from "../../hooks/useMeals";
 import { defaultCategory } from "../../utils/mealCategory";
 import { toast } from "../../store/toast.store";
 import { toDateKey, todayKey } from "../../utils/date";
-import { dayShort, monthShort } from "../../utils/multiDay";
 import type { Trip } from "../../utils/trips";
+import { ToggleRow } from "../common/ToggleRow";
 
 interface TripMealSheetProps {
   open: boolean;
@@ -86,7 +87,7 @@ export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
       subtitle={trip.title}
       footer={
         <Button onClick={save} loading={createMutation.isPending} disabled={!canSave} className="w-full">
-          <CalendarPlus size={15} />
+          <CalendarPlus size={16} />
           Activiteit opslaan
         </Button>
       }
@@ -95,7 +96,7 @@ export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
         <CategoryPicker categories={categories} value={category.id} onChange={(c) => setCategoryId(c.id)} />
 
         <div>
-          <label htmlFor="meal-name" className="section-label mb-2 block">{category.is_meal ? "Waar eten we?" : "Wat gaan we doen?"}</label>
+          <label htmlFor="meal-name" className="field-label">{category.is_meal ? "Waar eten we?" : "Wat gaan we doen?"}</label>
           <input
             id="meal-name"
             className="input-field"
@@ -106,33 +107,20 @@ export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
           />
         </div>
 
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
+        {trip.days.length > 1 && (
           <div>
-            <p className="section-label mb-2">Dag</p>
-            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Dag">
-              {trip.days.map((d) => (
-                <button
-                  key={d.ev.id}
-                  type="button"
-                  onClick={() => setDayId(d.ev.id)}
-                  aria-pressed={dayId === d.ev.id}
-                  className={`rounded-xl px-3 py-2 text-[13px] font-semibold transition-colors ${
-                    dayId === d.ev.id ? "border-2 border-outline bg-brand text-brand-on" : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"
-                  }`}
-                >
-                  {dayShort(d.date)} {d.date.getDate()} {monthShort(d.date)}
-                </button>
-              ))}
-            </div>
+            <p className="field-label">Dag</p>
+            <DayChips days={trip.days} value={dayId} onChange={(id) => id && setDayId(id)} />
           </div>
-          <div>
-            <label htmlFor="meal-time" className="section-label mb-2 block">Tijd</label>
-            <input id="meal-time" type="time" className="input-field w-[110px]" value={time} onChange={(e) => setTime(e.target.value)} />
-          </div>
+        )}
+
+        <div className="max-w-[150px]">
+          <label htmlFor="meal-time" className="field-label">Tijd</label>
+          <input id="meal-time" type="time" className="input-field" value={time} onChange={(e) => setTime(e.target.value)} />
         </div>
 
         <div>
-          <label htmlFor="meal-location" className="section-label mb-2 block">Locatie (optioneel)</label>
+          <label htmlFor="meal-location" className="field-label">Locatie (optioneel)</label>
           <input
             id="meal-location"
             className="input-field"
@@ -144,7 +132,7 @@ export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
         </div>
 
         <div>
-          <label htmlFor="meal-maps-url" className="section-label mb-2 block">Google Maps-link (optioneel)</label>
+          <label htmlFor="meal-maps-url" className="field-label">Google Maps-link (optioneel)</label>
           <input
             id="meal-maps-url"
             type="url"
@@ -161,7 +149,7 @@ export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
 
         {category.has_cost && (
         <div>
-          <label htmlFor="meal-cost" className="section-label mb-2 block">Prijs p.p. (optioneel)</label>
+          <label htmlFor="meal-cost" className="field-label">Prijs p.p. (optioneel)</label>
           <div className="relative">
             <span aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-3">€</span>
             <input
@@ -178,24 +166,12 @@ export function TripMealSheet({ open, onClose, trip }: TripMealSheetProps) {
 
         {/* A real switch, so it reads as an on/off choice rather than an input. */}
         {category.has_transport && (
-        <div className="flex items-center justify-between gap-4 rounded-xl border-1.5 border-line bg-surface px-3.5 py-3">
-          <div className="min-w-0">
-            <p id="meal-transport-label" className="text-[14px] font-semibold text-ink">Vervoer regelen</p>
-            <p className="text-[12px] leading-snug text-ink-3">Er komt een rit naartoe waar mensen zich voor kunnen aanmelden.</p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={transport}
-            aria-labelledby="meal-transport-label"
-            onClick={() => setTransport((v) => !v)}
-            className={`relative h-7 w-12 shrink-0 rounded-full border-2 border-outline transition-colors duration-200 ${transport ? "bg-brand" : "bg-sunken"}`}
-          >
-            <span
-              className={`absolute top-0.5 h-5 w-5 rounded-full border-2 border-outline bg-surface transition-[left] duration-200 ${transport ? "left-[22px]" : "left-0.5"}`}
-            />
-          </button>
-        </div>
+        <ToggleRow
+          label="Vervoer regelen"
+          hint="Er komt een rit naartoe waar mensen zich voor kunnen aanmelden."
+          checked={transport}
+          onChange={() => setTransport((v) => !v)}
+        />
         )}
       </div>
     </TripSheet>

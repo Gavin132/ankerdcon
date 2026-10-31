@@ -58,7 +58,12 @@ DM_EVENT_REMINDER_1D = "⏰ **Morgen is het zover: {event_name}**\n📅 {date}{l
 DM_EVENT_REMINDER_DAY_OF = "🎉 **Vandaag is het zover: {event_name}!**{location_line}"
 DM_RIDE_CREATED = "🚗 **{driver} heeft een nieuwe rit aangemaakt**\n🕐 Vertrek: {departure_time}\n📍 Vanaf: {start_location}\n\nOpen de app om je aan te melden."
 DM_EXPENSE_CREATED = "💸 **{paid_by} heeft een nieuwe uitgave toegevoegd**\n💰 {amount:.2f} {currency} — {description}\n\nOpen de app om je aandeel te verrekenen."
+DM_TEST_NOTIFICATION = "🔔 **Testmelding**\nDit is een proefbericht van Ankerd Con. Zie je dit, dan werken je meldingen."
 DM_FEEDBACK_SUBMITTED = "💬 **Nieuwe feedback ({kind}){from_line}**\n{message}\n\nLees en beoordeel hem onder Admin → Feedback."
+DM_DELETION_REQUEST = "🗑️ **{name} wil het account laten verwijderen**\nVerwijder het account en de gegevens onder Admin → Gebruikers.{link_line}"
+DM_NEW_USER = "👋 **{name} heeft voor het eerst ingelogd**\nIs dit iemand van een placeholder? Voeg samen via Admin → Gebruikers.{link_line}"
+DM_TICKET_VOTE_OPENED = "🎟️ **Kies je ticket voor {event_name}**\nStem in de app welk ticket je wilt: {options}."
+DM_TICKET_VOTE_BOUGHT = "🎟️ **De tickets voor {event_name} zijn gekocht door {buyer}**\nGekozen: {option}."
 DM_MEAL_CREATED = "📅 **Nieuwe activiteit: {meal_name}**\n🕐 {time}{location_line}\n\nOpen de app om je aan te melden."
 
 # Settling up — personal DMs to the other member of a settlement (not an

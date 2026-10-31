@@ -12,12 +12,14 @@ import { useCurrentUser, useUsers } from "../../hooks/useUsers";
 import { useRestaurantCars } from "../../hooks/useRestaurantCars";
 import { formatTime } from "../../utils/format";
 import { getRideStatus } from "../../utils/rides";
+import { restaurantCarGaps } from "../../utils/restaurantCars";
 import { listItem } from "../../utils/motion";
 import { routes } from "../../config/routes";
+import { useIsViewer } from "../../hooks/useIsViewer";
 import type { Meal, Ride, RestaurantDriver } from "../../types";
+import { MINE_CLASS } from "./mine";
 
 /** The member's own car. Same blue as their row under Heen and Terug (RideRow). */
-const MINE_CLASS = "bg-[#0D75D1] text-white dark:bg-[#1A6FC9]";
 
 /** "Timo, Els en Noor" */
 function listNames(names: string[]): string {
@@ -43,6 +45,7 @@ interface CarRowProps {
  * or out one tap away.
  */
 function CarRow({ driver, departure, canAct, userNames, mine, expanded, onToggle, cars }: CarRowProps) {
+  const viewer = useIsViewer();
   const [action, setAction] = useState<"join" | "leave" | null>(null);
   const [joinNames, setJoinNames] = useState<string[]>([]);
   const [leaveNames, setLeaveNames] = useState<string[]>([]);
@@ -85,23 +88,23 @@ function CarRow({ driver, departure, canAct, userNames, mine, expanded, onToggle
         </span>
         <span className="min-w-0 flex-1 leading-[1.3]">
           <span className={`block truncate text-[14px] font-semibold ${mine ? "" : "text-ink-2"}`}>{driver.name}</span>
-          <span className={`block truncate text-[12px] ${mine ? "text-white/85" : "text-ink-3"}`}>{sub}</span>
+          <span className={`block truncate text-[12px] ${mine ? "text-ink-2" : "text-ink-3"}`}>{sub}</span>
         </span>
         <span className="shrink-0 text-right leading-[1.3]">
-          <span className={`block text-[12px] ${isFull ? "font-semibold" : ""} ${mine ? "text-white/90" : "text-ink-2"}`}>
+          <span className={`block text-[12px] ${isFull ? "font-semibold" : ""} ${mine ? "text-ink-2" : "text-ink-2"}`}>
             {isFull ? "Vol" : `${spotsLeft} vrij`}
           </span>
         </span>
         <ChevronDown
           size={14}
-          className={`shrink-0 transition-transform duration-200 ${expanded ? "rotate-180" : ""} ${mine ? "text-white/85" : "text-ink-3"}`}
+          className={`shrink-0 transition-transform duration-200 ${expanded ? "rotate-180" : ""} ${mine ? "text-ink-2" : "text-ink-3"}`}
         />
       </button>
 
       <Collapse open={expanded}>
         <div className="space-y-2.5 pb-4 pl-[92px] pr-4 pt-3 text-[12.5px] text-ink-2">
           <div className="flex items-start gap-2">
-            <Users size={13} className="mt-0.5 shrink-0 text-ink-3" />
+            <Users size={14} className="mt-0.5 shrink-0 text-ink-3" />
             <span>
               {driver.passengers.length > 0
                 ? `${listNames(driver.passengers)} ${driver.passengers.length === 1 ? "rijdt" : "rijden"} mee`
@@ -109,7 +112,7 @@ function CarRow({ driver, departure, canAct, userNames, mine, expanded, onToggle
             </span>
           </div>
 
-          {canAct && (
+          {canAct && !viewer && (
             <div className="space-y-2.5 pt-1">
               {action ? (
                 <>
@@ -120,7 +123,7 @@ function CarRow({ driver, departure, canAct, userNames, mine, expanded, onToggle
                   )}
                   <div className="flex gap-2">
                     <Button size="sm" variant="secondary" onClick={() => setAction(null)}>
-                      Annuleer
+                      Annuleren
                     </Button>
                     <Button
                       size="sm"
@@ -130,7 +133,7 @@ function CarRow({ driver, departure, canAct, userNames, mine, expanded, onToggle
                       disabled={names.length === 0}
                       onClick={submit}
                     >
-                      {action === "join" ? <Plus size={15} /> : <UserMinus size={15} />}
+                      {action === "join" ? <Plus size={16} /> : <UserMinus size={16} />}
                       {names.length === 0
                         ? "Selecteer een naam"
                         : action === "join"
@@ -148,7 +151,7 @@ function CarRow({ driver, departure, canAct, userNames, mine, expanded, onToggle
                     </Button>
                   )}
                   {driver.passengers.length > 0 && (
-                    <Button size="sm" variant="secondary" onClick={() => open("leave")}>
+                    <Button size="sm" onClick={() => open("leave")}>
                       <UserMinus size={14} />
                       Uitstappen
                     </Button>
@@ -168,6 +171,7 @@ function CarRow({ driver, departure, canAct, userNames, mine, expanded, onToggle
  * then every car going there as a row, the same look as Heen and Terug.
  */
 export function RestaurantRideGroup({ ride, userNames }: { ride: Ride; userNames: string[] }) {
+  const viewer = useIsViewer();
   const [driverOpen, setDriverOpen] = useState(false);
   const [expandedCar, setExpandedCar] = useState<string | null>(null);
   const { data: meals = [] } = useMeals();
@@ -183,10 +187,9 @@ export function RestaurantRideGroup({ ride, userNames }: { ride: Ride; userNames
   const canAct = status !== "past" && status !== "recent";
 
   const drivers = ride.restaurant_drivers ?? [];
-  const driverNames = new Set(drivers.map((d) => d.name));
-  const assignedPax = new Set(drivers.flatMap((d) => d.passengers));
-  const unassigned = cars.attendees.filter((a) => !driverNames.has(a) && !assignedPax.has(a));
-  const canOfferRide = canAct && !!linkedMeal && !!linkedEvent;
+  // People, not names: the same worked out for the Hub and the ride page (`restaurantCarGaps`).
+  const { unassigned } = restaurantCarGaps(cars.attendees, drivers, users);
+  const canOfferRide = canAct && !viewer && !!linkedMeal && !!linkedEvent;
 
   const resolve = (stored: string) =>
     users.find((u) => u.name === stored || u.discord_username === stored || u.aliases?.includes(stored))?.name ?? stored;
@@ -198,25 +201,25 @@ export function RestaurantRideGroup({ ride, userNames }: { ride: Ride; userNames
       <div className="flex items-center gap-2">
         <Link
           to={linkedMeal ? routes.meal.view(linkedMeal.id) : routes.ride.view(ride.id)}
-          className="flex min-w-0 flex-1 items-center gap-2 rounded-lg py-0.5 text-left transition-colors hover:text-ink"
+          className="hit-area flex min-w-0 flex-1 items-center gap-2 rounded-lg py-0.5 text-left transition-colors hover:text-ink"
         >
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-sunken text-ink">
             <CalendarClock size={12} />
           </span>
           <span className="truncate text-[13px] font-semibold text-ink">{linkedMeal?.meal_name ?? "Activiteit"}</span>
-          <ChevronRight size={13} className="shrink-0 text-ink-3" />
+          <ChevronRight size={16} className="shrink-0 text-ink-3" />
         </Link>
         {canOfferRide && (
-          <button type="button" onClick={() => setDriverOpen(true)} className="btn-primary h-8 shrink-0 px-3 text-xs">
-            <Car size={13} /> Ik rijd
+          <button type="button" onClick={() => setDriverOpen(true)} className="btn-primary shrink-0 px-3">
+            <Car size={14} /> Ik rijd
           </button>
         )}
       </div>
 
       {drivers.length === 0 ? (
         canAct && (
-          <p className="flex items-center gap-1.5 rounded-xl border-1.5 border-dashed border-rose-400 bg-rose-50 px-3.5 py-3 text-[12.5px] font-semibold text-rose-700 dark:border-rose-400/60 dark:bg-rose-500/10 dark:text-rose-300">
-            <AlertCircle size={13} className="shrink-0" />
+          <p className="notice-warn flex items-center gap-1.5 px-3.5 py-3 text-[12.5px] font-semibold text-warn">
+            <AlertCircle size={14} className="shrink-0" />
             Nog geen auto's — wie rijdt er?
           </p>
         )
@@ -239,8 +242,8 @@ export function RestaurantRideGroup({ ride, userNames }: { ride: Ride; userNames
       )}
 
       {drivers.length > 0 && unassigned.length > 0 && canAct && (
-        <p className="flex items-center gap-1.5 text-[12.5px] font-semibold text-rose-700 dark:text-rose-300">
-          <AlertCircle size={13} className="shrink-0" />
+        <p className="flex items-center gap-1.5 text-[12.5px] font-semibold text-warn">
+          <AlertCircle size={14} className="shrink-0" />
           {unassigned.length} {unassigned.length === 1 ? "persoon heeft" : "personen hebben"} nog geen auto
         </p>
       )}
@@ -263,6 +266,7 @@ export function RestaurantRideGroup({ ride, userNames }: { ride: Ride; userNames
  * the shared ride and registers you as its first car (see RestaurantQuickDriverModal).
  */
 export function RestaurantMealPrompt({ meal }: { meal: Meal }) {
+  const viewer = useIsViewer();
   const [open, setOpen] = useState(false);
   const { data: events = [] } = useCalendar();
   const event = meal.linked_event_id ? events.find((e) => e.id === meal.linked_event_id) : undefined;
@@ -270,19 +274,21 @@ export function RestaurantMealPrompt({ meal }: { meal: Meal }) {
 
   return (
     <motion.div variants={listItem}>
-      <div className="flex items-center gap-2.5 rounded-xl border-1.5 border-dashed border-rose-400 bg-rose-50 p-3 dark:border-rose-400/60 dark:bg-rose-500/10">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface text-rose-700 dark:bg-rose-500/15 dark:text-rose-300">
-          <CalendarClock size={15} />
+      <div className="notice-warn flex items-center gap-2.5 p-3">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface text-warn">
+          <CalendarClock size={16} />
         </span>
         <span className="min-w-0 flex-1 leading-tight">
           <span className="block truncate text-[13px] font-semibold text-ink">{meal.meal_name}</span>
-          <span className="block text-[12px] text-rose-700 dark:text-rose-300">
+          <span className="block text-[12px] text-warn">
             <span className="font-mono tabular-nums">{formatTime(meal.time)}</span> · nog geen auto's
           </span>
         </span>
-        <button type="button" onClick={() => setOpen(true)} className="btn-primary h-8 shrink-0 px-3 text-xs">
-          <Car size={13} /> Ik rijd
-        </button>
+        {!viewer && (
+          <button type="button" onClick={() => setOpen(true)} className="btn-primary shrink-0 px-3">
+            <Car size={14} /> Ik rijd
+          </button>
+        )}
       </div>
       <RestaurantQuickDriverModal open={open} onClose={() => setOpen(false)} event={event} meal={meal} />
     </motion.div>

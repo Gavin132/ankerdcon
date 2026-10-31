@@ -1,15 +1,16 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight, UserPlus, Users } from "lucide-react";
+import { ChevronRight, Ticket, UserPlus, Users } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
+import { EmptyState } from "../common/EmptyState";
 import { TripSheet } from "./TripSheet";
 import { routes } from "../../config/routes";
 import { dayShort } from "../../utils/multiDay";
-import type { Trip, TripPhase } from "../../utils/trips";
+import { useTicketPoll } from "../../hooks/useTicketPoll";
+import { tallyTicketPoll, ticketChoiceOf, VOTE_UNSURE } from "../../utils/ticketPoll";
+import { findUser, type Person } from "../../utils/people";
+import { tripPeople, type Trip, type TripPhase } from "../../utils/trips";
 import type { User } from "../../types";
-
-const findUser = (users: User[], name: string) =>
-  users.find((u) => u.name === name || u.discord_username === name || u.aliases?.includes(name));
 
 interface TripParticipantsProps {
   trip: Trip;
@@ -31,9 +32,22 @@ interface TripParticipantsProps {
  */
 export function TripParticipants({ trip, users, myNames, phase, onManage, children }: TripParticipantsProps) {
   const [open, setOpen] = useState(false);
-  const count = trip.participants.length;
+  const count = tripPeople(trip, users).length;
 
-  if (count === 0) return <>{children}</>;
+  // With nobody on it there is no list to open, so the way to sign someone up sits right here.
+  if (count === 0) {
+    return (
+      <>
+        {children}
+        {onManage && (
+          <button type="button" onClick={onManage} className="btn-primary btn-compact px-3.5">
+            <UserPlus size={14} className="shrink-0" />
+            Iemand aanmelden
+          </button>
+        )}
+      </>
+    );
+  }
 
   return (
     <>
@@ -42,10 +56,10 @@ export function TripParticipants({ trip, users, myNames, phase, onManage, childr
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
         aria-label={`Bekijk wie er ${phase === "past" ? "waren" : "meegaan"} (${count})`}
-        className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg text-left transition-opacity hover:opacity-80 active:opacity-70"
+        className="hit-area flex min-w-0 flex-1 items-center gap-2.5 rounded-lg text-left transition-opacity hover:opacity-80 active:opacity-70"
       >
         {children}
-        <ChevronRight size={14} className="shrink-0 text-ink-3" aria-hidden />
+        <ChevronRight size={16} className="shrink-0 text-ink-3" aria-hidden />
       </button>
       <ParticipantsSheet open={open} onClose={() => setOpen(false)} trip={trip} users={users} myNames={myNames} phase={phase} onManage={onManage} />
     </>
@@ -61,16 +75,27 @@ function ParticipantsSheet({
   phase,
   onManage,
 }: Omit<TripParticipantsProps, "children"> & { open: boolean; onClose: () => void }) {
-  const isMine = (name: string) => myNames.includes(name);
+  // Whichever name someone goes by counts: a member signed up as "Sam" on Friday and under their old name on
+  // Saturday is one row that says "Alle dagen", not two rows with a day each.
+  const isMine = (names: string[]) => names.some((n) => myNames.includes(n));
   const multiDay = trip.days.length > 1;
+  // Which ticket each person has, from the ticket vote. A trip that is over has no use for it.
+  const { data: poll } = useTicketPoll(trip.id, open && phase !== "past");
+  const tally = poll ? tallyTicketPoll(poll, users) : null;
+  const ticketOf = (person: Person): { text: string; muted: boolean } | null => {
+    if (!poll || !tally) return null;
+    const choice = ticketChoiceOf(tally, person);
+    if (choice === null) return poll.status === "open" ? { text: "Nog niet gestemd", muted: true } : null;
+    if (choice === VOTE_UNSURE) return { text: "Ticket nog onbekend", muted: true };
+    return { text: poll.options.find((o) => o.id === choice)?.label ?? "Ticket onbekend", muted: false };
+  };
 
-  const people = [...trip.participants]
-    .map((name) => {
-      const user = findUser(users, name);
-      const days = trip.days.filter((d) => (d.ev.participants ?? []).includes(name));
-      return { name, user, days, display: user?.name ?? name };
+  const people = tripPeople(trip, users)
+    .map((person) => {
+      const days = trip.days.filter((d) => (d.ev.participants ?? []).some((n) => person.names.includes(n)));
+      return { key: person.names[0], names: person.names, user: person.user ?? findUser(users, person.name), days, display: person.name, ticket: ticketOf(person) };
     })
-    .sort((a, b) => Number(isMine(b.name)) - Number(isMine(a.name)) || a.display.localeCompare(b.display, "nl"));
+    .sort((a, b) => Number(isMine(b.names)) - Number(isMine(a.names)) || a.display.localeCompare(b.display, "nl"));
 
   const daysText = (days: typeof people[number]["days"]) =>
     days.length === trip.days.length ? "Alle dagen" : days.map((d) => `${dayShort(d.date)} ${d.date.getDate()}`).join(" · ");
@@ -90,7 +115,7 @@ function ParticipantsSheet({
               onClose();
               onManage();
             }}
-            className="btn-secondary flex w-full items-center justify-center gap-2 px-4 py-3 text-sm"
+            className="btn-primary flex w-full items-center justify-center gap-2 px-4"
           >
             <UserPlus size={16} />
             {phase === "past" ? "Aanmeldingen aanpassen" : "Iemand aanmelden"}
@@ -99,31 +124,36 @@ function ParticipantsSheet({
       }
     >
       {people.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-12 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
-            <Users size={22} />
-          </span>
-          <p className="text-sm font-semibold text-ink">Nog niemand aangemeld</p>
-        </div>
+        <EmptyState compact icon={<Users size={22} />} title="Nog niemand aangemeld" />
       ) : (
         <ul className="-mx-2 divide-y divide-line">
-          {people.map(({ name, user, days, display }) => {
+          {people.map(({ key, names, user, days, display, ticket }) => {
             const row = (
               <>
                 <UserAvatar name={display} user={user} className="h-10 w-10 shrink-0 text-sm" />
                 <span className="min-w-0 flex-1 leading-tight">
                   <span className="flex items-center gap-2">
                     <span className="truncate text-[14.5px] font-semibold text-ink">{display}</span>
-                    {isMine(name) && (
-                      <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[10.5px] font-semibold text-brand-text">Jij</span>
+                    {isMine(names) && (
+                      <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[12px] font-semibold text-brand-text">Jij</span>
                     )}
                   </span>
-                  {multiDay && <span className="mt-0.5 block truncate font-mono text-[11px] text-ink-3">{daysText(days)}</span>}
+                  {(multiDay || ticket) && (
+                    <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[12px] text-ink-3">
+                      {multiDay && <span>{daysText(days)}</span>}
+                      {ticket && (
+                        <span className={`inline-flex items-center gap-1 ${ticket.muted ? "" : "font-semibold text-ink-2"}`}>
+                          <Ticket size={12} className="shrink-0" aria-hidden />
+                          {ticket.text}
+                        </span>
+                      )}
+                    </span>
+                  )}
                 </span>
               </>
             );
             return (
-              <li key={name}>
+              <li key={key}>
                 {user?.id ? (
                   <Link
                     to={routes.profile.view(user.id)}
@@ -131,7 +161,7 @@ function ParticipantsSheet({
                     className="flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-sunken active:bg-sunken"
                   >
                     {row}
-                    <ChevronRight size={14} className="shrink-0 text-ink-3" />
+                    <ChevronRight size={16} className="shrink-0 text-ink-3" />
                   </Link>
                 ) : (
                   <div className="flex items-center gap-3 px-2 py-2.5">{row}</div>

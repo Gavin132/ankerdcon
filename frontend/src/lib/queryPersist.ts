@@ -1,5 +1,6 @@
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import type { Query } from "@tanstack/react-query";
+import { isMockMode } from "./mockMode";
 
 /**
  * Where the last known server data is kept between visits. Reading it back on
@@ -31,6 +32,8 @@ export const queryPersister = createSyncStoragePersister({
  * the risk of showing something outdated.
  */
 export function shouldPersistQuery(query: Query): boolean {
+  // Made-up data (mock mode) must never end up in the cache a real session would read back.
+  if (isMockMode()) return false;
   if (query.state.status !== "success") return false;
   const key = query.queryKey;
   return !(Array.isArray(key) && (key[0] === "admin" || key[2] === "seen"));

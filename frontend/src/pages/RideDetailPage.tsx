@@ -17,6 +17,7 @@ import { RestaurantDetailActions } from "../components/ride/RestaurantDetailActi
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { NamePicker } from "../components/common/NamePicker";
+import { DetailSkeleton } from "../components/common/Skeleton";
 
 export function RideDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -89,7 +90,7 @@ export function RideDetailPage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: ride ? (isRestaurant ? `Restaurant · ${ride.start_location}` : `${ride.direction} · ${ride.driver}`) : undefined,
+          title: ride ? (isRestaurant ? `Rit naar ${linkedMeal?.meal_name ?? "restaurant"}` : `${ride.direction} · ${ride.driver}`) : undefined,
           url,
         });
       } catch {
@@ -107,18 +108,16 @@ export function RideDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-paper">
+      <div className="min-h-dvh bg-paper">
         <DetailTopbar title="Laden…" onBack={goBack} />
-        <div className="flex items-center justify-center py-24">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-ink border-t-transparent" />
-        </div>
+        <DetailSkeleton />
       </div>
     );
   }
 
   if (!ride) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-paper px-4 text-center">
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-paper px-4 text-center">
         <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
           <Car size={22} />
         </span>
@@ -131,13 +130,14 @@ export function RideDetailPage() {
   const isPT = ride.is_public_transport;
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-dvh bg-paper">
       <DetailTopbar
-        title={isRestaurant ? `Restaurant · ${ride.start_location}` : `${ride.direction === "Inbound" ? "Heen" : "Terug"} · ${ride.driver}`}
+        title="Rit"
+        plainTitle
         onBack={goBack}
         onShare={onShare}
       />
-      <div className="mx-auto max-w-3xl space-y-5 px-4 pb-10 pt-4 sm:pt-6">
+      <div className="mx-auto max-w-3xl space-y-5 px-4 pb-10 pt-5 sm:pt-8">
         <RideHero
           ride={ride}
           linkedEvent={linkedEvent}
@@ -148,11 +148,17 @@ export function RideDetailPage() {
         />
 
         {isRestaurant ? (
-          <RestaurantDetailActions ride={ride} userNames={userNames} users={users} linkedMeal={linkedMeal} />
+          <>
+            <RestaurantDetailActions ride={ride} userNames={userNames} users={users} linkedMeal={linkedMeal} />
+            {linkedCard}
+          </>
         ) : (
-          <RideActions ride={ride} />
+          // The linked activity is one line, the map is 240 px: it goes first, so it is not pushed below the fold.
+          <>
+            {linkedCard}
+            <RideActions ride={ride} />
+          </>
         )}
-        {linkedCard}
       </div>
 
       {!isRestaurant && (
@@ -162,32 +168,31 @@ export function RideDetailPage() {
             open={claimOpen}
             onClose={() => { setClaimOpen(false); setClaimNames([]); }}
             title="Stap in"
-            description={`${ride.start_location} → ${ride.end_location || "Bestemming"}${isPT ? "" : ` · ${ride.seats_left} ${ride.seats_left === 1 ? "plek" : "plekken"} vrij`}`}
-            accent="from-brand"
-          >
-            <div className="space-y-3">
-              <NamePicker
-                multiple
-                options={availableToJoin}
-                value={claimNames}
-                onChange={setClaimNames}
-                maxSelect={isPT ? undefined : ride.seats_left}
-                color="sky"
-              />
+            description={isPT ? undefined : `${ride.seats_left} ${ride.seats_left === 1 ? "plek" : "plekken"} vrij`}
+            footer={
               <Button
                 onClick={handleClaim}
                 loading={claimMutation.isPending}
                 className="w-full"
                 disabled={claimNames.length === 0}
               >
-                <Plus size={15} />
+                <Plus size={16} />
                 {claimNames.length === 0
                   ? "Selecteer een naam"
                   : claimNames.length === 1
                     ? `${claimNames[0]} stapt in`
                     : `${claimNames.length} personen stappen in`}
               </Button>
-            </div>
+            }
+          >
+            <NamePicker
+              multiple
+              options={availableToJoin}
+              value={claimNames}
+              onChange={setClaimNames}
+              maxSelect={isPT ? undefined : ride.seats_left}
+              color="sky"
+            />
           </Modal>
 
           {/* Uitstappen modal */}
@@ -195,17 +200,8 @@ export function RideDetailPage() {
             open={leaveOpen}
             onClose={() => { setLeaveOpen(false); setLeaveNames([]); }}
             title="Uitstappen"
-            description="Wie stappen er uit?"
-            accent="from-rose-500"
-          >
-            <div className="space-y-3">
-              <NamePicker
-                multiple
-                options={ride.passengers}
-                value={leaveNames}
-                onChange={setLeaveNames}
-                color="rose"
-              />
+            description="Wie stapt er uit?"
+            footer={
               <Button
                 onClick={handleLeave}
                 variant="danger"
@@ -219,7 +215,15 @@ export function RideDetailPage() {
                     ? `${leaveNames[0]} uitstappen`
                     : `${leaveNames.length} personen uitstappen`}
               </Button>
-            </div>
+            }
+          >
+            <NamePicker
+              multiple
+              options={ride.passengers}
+              value={leaveNames}
+              onChange={setLeaveNames}
+              color="rose"
+            />
           </Modal>
         </>
       )}

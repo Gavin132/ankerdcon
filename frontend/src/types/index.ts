@@ -22,6 +22,8 @@ export interface WhitelistEntry {
   id: string;
   discord_id: string | null;
   email: string | null;
+  /** Whoever gets in through this entry gets a read-only account. */
+  viewer?: boolean;
   created_at: string | null;
 }
 
@@ -83,14 +85,23 @@ export interface User {
   discord_id?: string;
   discord_username?: string;
   is_admin?: boolean;
+  /** Read-only: can look at everything, change nothing (see lib/viewerMode.ts). */
+  is_viewer?: boolean;
   is_active?: boolean;
   is_first_login?: boolean;
+  /** Made by an admin and never logged in to: a stand-in that can be merged into the real member (see utils/mergePreview.ts). */
+  is_placeholder?: boolean;
   onboarding_completed?: boolean;
   allow_dm?: boolean;
   show_greeting?: boolean;
   aliases?: string[];
   badge_ids?: string[];
   notification_categories?: string[];
+  /** Only hear about a trip's new activities and expenses when going on that trip (default on). */
+  notify_own_trips_only?: boolean;
+  /** No category notification by Discord DM or push from `start` up to `end` (hours 0-23, Dutch time); both null: off. */
+  quiet_hours_start?: number | null;
+  quiet_hours_end?: number | null;
   created_at?: string;
 }
 
@@ -111,7 +122,12 @@ export interface UpdatePreferencesRequest {
   aliases?: string[];
   allow_dm?: boolean;
   show_greeting?: boolean;
+  notify_own_trips_only?: boolean;
   notification_categories?: string[];
+  quiet_hours_start?: number;
+  quiet_hours_end?: number;
+  /** Switches the quiet hours off. */
+  quiet_hours_off?: boolean;
 }
 
 export interface LocationPingRequest {
@@ -212,6 +228,39 @@ export interface RestaurantUnassignRequest {
 }
 
 // Meals
+// Ride costs: what passengers owe a driver for a trip (an overview, nothing is booked).
+// Everyone pays the driver of the first ride they took to the trip; the amount is shared equally.
+export interface RidePassengerCost {
+  name: string;
+  amount: number;
+}
+
+export interface DriverCostSheet {
+  trip_id: string;
+  driver: string;
+  /** Everything the trip cost the driver; null while nothing is entered. */
+  amount?: number | null;
+  /** Who shares it with the driver (the driver not included), also before an amount is entered. */
+  group: string[];
+  passengers: RidePassengerCost[];
+  own_share?: number | null;
+  /** How many rides the driver drove in this trip. */
+  rides: number;
+  /** The date of the last of them (YYYY-MM-DD). */
+  last_ride: string;
+}
+
+export interface PassengerCostLine {
+  trip_id: string;
+  driver: string;
+  amount: number;
+}
+
+export interface RideCostOverview {
+  as_driver: DriverCostSheet[];
+  as_passenger: PassengerCostLine[];
+}
+
 /** A kind of activity (Eten, Activiteit, Groepsfoto, ...), managed by admins. The flags
  * say which parts of the form and the page its items have. */
 export interface MealCategory {
@@ -261,14 +310,28 @@ export interface StoryPhoto {
   event_day_id: string;
   seq: number;
   uploaded_by: string;
+  /** A photo, or the video file itself. */
   image_url: string;
+  /** The still frame of a video; null for photos. */
+  poster_url?: string | null;
+  /** A small copy for grids; null for what was added before they existed (use `image_url`). */
+  thumb_url?: string | null;
+  /** A 1280 px copy for the story viewer, only for a photo bigger than that (see `utils/storyMedia`). */
+  preview_url?: string | null;
+  media_type: "image" | "video";
   created_at: string;
+  /** Set for a photo of the day just before or after the event, which has no event day of its own. */
+  taken_on?: string | null;
 }
 
 /** A photo on someone's profile, with the event it was taken at. */
 export interface UserStoryPhoto {
   id: string;
   image_url: string;
+  poster_url?: string | null;
+  thumb_url?: string | null;
+  preview_url?: string | null;
+  media_type: "image" | "video";
   created_at: string;
   event_day_id: string;
   event_id?: string | null;
@@ -301,11 +364,20 @@ export interface StorySeenState {
   last_seen_seq: number;
 }
 
+/** A day just before or after an event that only has photos: no ring, no seen marker. */
+export interface StoryExtraDay {
+  date: string;
+  photo_count: number;
+  preview_url: string;
+}
+
 export interface StoryDaySummary {
+  /** The event day itself; the photos of the days around it are in `extra_days`. */
   photo_count: number;
   latest_seq: number;
   has_unseen: boolean;
   preview_url: string;
+  extra_days?: StoryExtraDay[];
 }
 
 // Cosplays
@@ -367,6 +439,29 @@ export interface RsvpRequest {
   user_name: string;
 }
 
+// Ticket vote on a trip (Kaartverkoop)
+export interface TicketPollOption {
+  id: string;
+  label: string;
+  price: number;
+}
+
+export interface TicketPollVote {
+  voter: string;
+  /** An option id, or "unsure". */
+  choice: string;
+}
+
+export interface TicketPoll {
+  id: string;
+  event_id: string;
+  status: "open" | "bought";
+  options: TicketPollOption[];
+  votes: TicketPollVote[];
+  buyer: string | null;
+  chosen_option: string | null;
+}
+
 // Payments
 export interface TicketType {
   title: string;
@@ -384,11 +479,34 @@ export interface HotelRoom {
   created_at?: string;
 }
 
+/** Somebody who was taken out of another room because they were put in this one (a person sleeps in one room). */
+export interface RoomMove {
+  name: string;
+  room_id: string;
+  room_number: string | null;
+}
+
+/** What a write to a room moved: who left which other room. Empty when nobody did. */
+export interface HotelRoomMoves {
+  moved: RoomMove[];
+}
+
+export type HotelRoomCreated = HotelRoom & HotelRoomMoves;
+
 export interface CreateHotelRoomRequest {
   room_number?: string;
   floor?: string;
   instructions?: string;
   capacity?: number;
+  occupants?: string[];
+}
+
+/** Editing a room: `null` clears a field, leaving it out keeps it; `occupants` replaces the whole list. */
+export interface UpdateHotelRoomRequest {
+  room_number?: string | null;
+  floor?: string | null;
+  instructions?: string | null;
+  capacity?: number | null;
   occupants?: string[];
 }
 
@@ -496,7 +614,7 @@ export type TabId = "hub" | "trip" | "calendar" | "finance" | "crew";
 export type BaseProps = {
   options: string[];
   placeholder?: string;
-  color?: "sky" | "rose" | "green" | "violet";
+  color?: "sky" | "rose" | "green";
 };
 
 export type SingleProps = BaseProps & {

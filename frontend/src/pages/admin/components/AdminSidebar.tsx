@@ -4,7 +4,7 @@ import {
   ChevronDown,
   ArrowLeft,
   LogOut,
-  Menu,
+  X,
 } from "lucide-react";
 import { routes } from "../../../config/routes";
 import { useAuthStore } from "../../../store/auth.store";
@@ -18,7 +18,7 @@ interface Props {
   onClose?: () => void;
 }
 
-const ACTIVE = "bg-[rgb(var(--nav-active-bg))] text-[rgb(var(--nav-active-fg))]";
+const ACTIVE = "bg-selected text-selected-on";
 const IDLE = "text-ink-2 hover:bg-sunken hover:text-ink";
 
 export function AdminSidebar({ collapsed, onClose }: Props) {
@@ -48,6 +48,10 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
     }
   }
 
+  // In the phone drawer every row is 44 px tall; the desktop sidebar stays compact.
+  const tall = onClose ? "min-h-11" : "";
+  const tallChild = onClose ? "min-h-10 hit-area" : "";
+
   return (
     <div className="flex h-full flex-col">
       {/* Logo */}
@@ -59,7 +63,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
         <img src="/icons/icon-192.png" alt="" className="h-9 w-9 shrink-0 object-contain" />
         {!collapsed && (
           <div className="min-w-0">
-            <p className="font-mono text-[10px] uppercase leading-none tracking-[0.08em] text-ink-3">
+            <p className="label-quiet leading-none">
               Ankerd Con
             </p>
             <p className="mt-0.5 font-display text-[22px] font-black uppercase leading-none tracking-[0.02em] text-ink">
@@ -70,9 +74,10 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
         {onClose && (
           <button
             onClick={onClose}
-            className="ml-auto flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+            aria-label="Menu sluiten"
+            className="icon-btn ml-auto"
           >
-            <Menu size={16} />
+            <X size={16} />
           </button>
         )}
       </div>
@@ -84,9 +89,9 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
             {!collapsed && (
               <button
                 onClick={() => toggleGroup(group.key)}
-                className="flex w-full items-center justify-between px-2.5 pb-1.5 pt-3"
+                className={`flex w-full items-center justify-between px-2.5 pb-1.5 pt-3 ${tall}`}
               >
-                <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-3">
+                <span className="section-label">
                   {group.label}
                 </span>
                 <ChevronDown
@@ -117,7 +122,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
                       <div key={path}>
                         <button
                           onClick={() => setExpandedItems((prev) => ({ ...prev, [path]: !isExpanded }))}
-                          className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] transition-colors ${
+                          className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] transition-colors ${tall} ${
                             isChildActive ? "font-semibold text-ink" : `font-medium ${IDLE}`
                           }`}
                         >
@@ -137,7 +142,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
                                 end={cEnd}
                                 onClick={onClose}
                                 className={({ isActive }) =>
-                                  `flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors ${
+                                  `flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors ${tallChild} ${
                                     isActive ? ACTIVE : IDLE
                                   }`
                                 }
@@ -147,7 +152,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
                                     <CIcon
                                       size={14}
                                       strokeWidth={isActive ? 2.4 : 2}
-                                      className={`shrink-0 ${isActive ? "text-brand dark:text-brand-on" : ""}`}
+                                      className={`shrink-0 ${isActive ? "text-selected-icon" : ""}`}
                                     />
                                     <span className="leading-none">{cLabel}</span>
                                   </>
@@ -172,7 +177,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
                           ? `flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${
                               isActive ? ACTIVE : IDLE
                             }`
-                          : `flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] font-medium transition-colors ${
+                          : `flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] font-medium transition-colors ${tall} ${
                               isActive ? ACTIVE : IDLE
                             }`
                       }
@@ -180,9 +185,9 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
                       {({ isActive }) => (
                         <>
                           <Icon
-                            size={collapsed ? 19 : 16}
+                            size={collapsed ? 20 : 16}
                             strokeWidth={isActive ? 2.4 : 2}
-                            className={`shrink-0 ${isActive ? "text-brand dark:text-brand-on" : ""}`}
+                            className={`shrink-0 ${isActive ? "text-selected-icon" : ""}`}
                           />
                           {!collapsed && (
                             <span className="truncate leading-none">{label}</span>
@@ -203,6 +208,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
         {collapsed ? (
           <button
             title="Terug naar app"
+            aria-label="Terug naar app"
             onClick={() => { navigate(routes.hub); onClose?.(); }}
             className={`mx-auto flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${IDLE}`}
           >
@@ -211,7 +217,7 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
         ) : (
           <button
             onClick={() => { navigate(routes.hub); onClose?.(); }}
-            className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] font-medium transition-colors ${IDLE}`}
+            className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] font-medium transition-colors ${tall} ${IDLE}`}
           >
             <ArrowLeft size={16} className="shrink-0" />
             Terug naar app
@@ -223,8 +229,9 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
             <UserAvatar name={me?.name ?? ""} className="h-7 w-7 text-[9px]" />
             <button
               title="Uitloggen"
+              aria-label="Uitloggen"
               onClick={handleLogout}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-rose-600 dark:hover:text-rose-400"
+              className="icon-btn hover:text-bad"
             >
               <LogOut size={14} />
             </button>
@@ -242,8 +249,9 @@ export function AdminSidebar({ collapsed, onClose }: Props) {
             </div>
             <button
               title="Uitloggen"
+              aria-label="Uitloggen"
               onClick={handleLogout}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-rose-600 dark:hover:text-rose-400"
+              className="icon-btn hover:text-bad"
             >
               <LogOut size={14} />
             </button>

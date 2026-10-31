@@ -38,14 +38,15 @@ export function AddStoryTile({ eventDayId }: AddStoryTileProps) {
         type="button"
         disabled={busy}
         onClick={handleClick}
-        className="relative flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-ink-3/60 transition-colors hover:border-ink-3 disabled:cursor-not-allowed"
+        aria-label="Foto's of video's toevoegen aan de story"
+        className="relative flex h-16 w-16 items-center justify-center rounded-full border-1.5 border-dashed border-ink-3/60 transition-colors hover:border-ink-3 disabled:cursor-not-allowed"
       >
         {busy ? (
-          <Loader2 size={18} className="animate-spin text-ink-3" />
+          <Loader2 size={16} className="animate-spin text-ink-3" />
         ) : pendingCount > 0 ? (
-          <UploadCloud size={18} className="text-amber-600 dark:text-amber-400" />
+          <UploadCloud size={16} className="text-warn" />
         ) : (
-          <ImagePlus size={18} className="text-ink-3" />
+          <ImagePlus size={16} className="text-ink-3" />
         )}
         <span
           className={`absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-1.5 ${
@@ -55,15 +56,17 @@ export function AddStoryTile({ eventDayId }: AddStoryTileProps) {
           <Plus size={12} strokeWidth={3} />
         </span>
         {pendingCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 font-mono text-[9px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-warn-fill px-1 font-mono text-[12px] font-bold text-warn-on">
             {pendingCount}
           </span>
         )}
       </button>
-      <span className="max-w-full truncate font-mono text-[10.5px] font-semibold uppercase text-ink-2">
-        {picker.progress && picker.progress.total > 1
-          ? `${picker.progress.done}/${picker.progress.total}`
-          : "Toevoegen"}
+      <span className="max-w-full truncate text-[12px] font-semibold text-ink-2">
+        {picker.progress?.fraction !== undefined
+          ? `${Math.round(picker.progress.fraction * 100)}%`
+          : picker.progress && picker.progress.total > 1
+            ? `${picker.progress.done}/${picker.progress.total}`
+            : "Toevoegen"}
       </span>
     </div>
   );

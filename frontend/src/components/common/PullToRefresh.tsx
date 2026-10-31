@@ -53,7 +53,7 @@ export function PullToRefresh() {
           }
         >
           <RefreshCw
-            size={15}
+            size={16}
             className={`transition-colors duration-150 ${
               progress >= 1 || isRefreshing ? "text-ink" : "text-ink-3"
             }`}

@@ -41,18 +41,17 @@ import {
   updateAdminMeal,
   updateAdminRide,
   updateAdminUser,
-  adminUpdateHotelRoom,
   adminDeleteHotelRoom,
   updateAdminExpense,
   deleteAdminExpense,
   setAdminShareStatus,
   impersonateAdminUser,
+  mergeAdminUser,
   type AdminCreateEventPayload,
   type AdminCreateEventDayPayload,
   type AdminCreateMealPayload,
   type AdminCreateUserPayload,
   type AdminUpdateEventPayload,
-  type AdminUpdateHotelRoomPayload,
   type AdminUpdateMealPayload,
   type AdminUpdateRidePayload,
   type AdminUpdateUserPayload,
@@ -139,6 +138,40 @@ export function useAdminBulkDeactivateUsers() {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.adminUsers });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.users });
     },
+  });
+}
+
+/** What merging this placeholder into that member would move. Always asked fresh: the answer is only true now. */
+export function useAdminMergePreview(sourceId: string | undefined, targetId: string | undefined) {
+  return useQuery({
+    queryKey: QUERY_KEYS.adminMergePreview(sourceId ?? "", targetId ?? ""),
+    queryFn: () => mergeAdminUser(sourceId!, targetId!, true),
+    enabled: !!sourceId && !!targetId,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  });
+}
+
+/** Merges a placeholder into a member. Whatever the placeholder was on changes name, so everything that shows names is refetched. */
+export function useAdminMergeUser() {
+  const qc = useQueryClient();
+  const refresh = () => {
+    for (const queryKey of [
+      QUERY_KEYS.adminUsers, QUERY_KEYS.users, QUERY_KEYS.userNames, QUERY_KEYS.userBase, QUERY_KEYS.currentUser,
+      QUERY_KEYS.rides, QUERY_KEYS.rideCosts, QUERY_KEYS.meals, QUERY_KEYS.calendar, QUERY_KEYS.cosplays,
+      QUERY_KEYS.expenses, QUERY_KEYS.settlements, QUERY_KEYS.badges,
+      QUERY_KEYS.adminRides, QUERY_KEYS.adminMeals, QUERY_KEYS.adminEvents, QUERY_KEYS.adminEventDays, QUERY_KEYS.adminStats,
+      ["hotel-rooms"], ["admin", "hotel-rooms"], ["stories"], ["parking"],
+    ]) {
+      qc.invalidateQueries({ queryKey });
+    }
+  };
+  return useMutation({
+    mutationFn: ({ sourceId, targetId }: { sourceId: string; targetId: string }) => mergeAdminUser(sourceId, targetId, false),
+    onSuccess: refresh,
+    // Also after a failure: a merge that stopped halfway has already moved some of it.
+    onError: refresh,
   });
 }
 
@@ -359,18 +392,6 @@ export function useAdminBulkRsvpEvent() {
 }
 
 // ── Hotel Room (admin) hooks ──────────────────────────────────────────────────
-
-export function useAdminUpdateHotelRoom() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ eventId, roomId, payload }: { eventId: string; roomId: string; payload: AdminUpdateHotelRoomPayload }) =>
-      adminUpdateHotelRoom(eventId, roomId, payload),
-    onSuccess: (_d, { eventId }) => {
-      qc.invalidateQueries({ queryKey: ["hotel-rooms", eventId] });
-      qc.invalidateQueries({ queryKey: ["admin", "hotel-rooms", eventId] });
-    },
-  });
-}
 
 export function useAdminDeleteHotelRoom() {
   const qc = useQueryClient();

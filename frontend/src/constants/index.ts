@@ -8,6 +8,7 @@ export const STATUS_PAGE_URL = "https://status.ankerd.org/";
 
 export const QUERY_KEYS = {
   rides:     ["rides"]     as const,
+  rideCosts: ["ride-costs"] as const,
   meals:     ["meals"]     as const,
   calendar:  ["calendar"]  as const,
   users:     ["users"]     as const,
@@ -27,6 +28,8 @@ export const QUERY_KEYS = {
   // Admin
   adminStats:  ["admin", "stats"]  as const,
   adminUsers:  ["admin", "users"]  as const,
+  /** What merging a placeholder into a member would move. Under `adminUsers`, so every change to the users drops it. */
+  adminMergePreview: (sourceId: string, targetId: string) => ["admin", "users", "merge-preview", sourceId, targetId] as const,
   adminRides:  ["admin", "rides"]  as const,
   adminMeals:  ["admin", "meals"]  as const,
   adminMealCategories: ["admin", "meal-categories"] as const,
@@ -43,7 +46,7 @@ export const QUERY_KEYS = {
   cosplays: ["cosplays"] as const,
   expenses: ["expenses"] as const,
 
-  storyDay: (eventDayId: string) => ["stories", eventDayId] as const,
+  storyDay: (eventDayId: string, takenOn?: string | null) => (takenOn ? ["stories", eventDayId, "on", takenOn] : ["stories", eventDayId]) as readonly string[],
   storySeen: (eventDayId: string) => ["stories", eventDayId, "seen"] as const,
   storySummary: (eventDayIds: string[]) => ["stories", "summary", ...eventDayIds] as const,
   userPhotos: (identifier: string) => ["stories", "user", identifier] as const,
@@ -52,6 +55,7 @@ export const QUERY_KEYS = {
   adminHotelRooms: (eventId: string) => ["admin", "hotel-rooms", eventId] as const,
 
   parking: (tripId: string) => ["parking", tripId] as const,
+  ticketPoll: (tripId: string) => ["ticket-poll", tripId] as const,
 };
 
 export const STALE_TIME = 30_000; // 30 seconds
@@ -89,7 +93,8 @@ export const sizeClasses = {
   lg: "h-12 w-12",
 };
 
-// ─── Color tokens ─────────────────────────────────────────────────────────────
+// ─── Name picker colours ──────────────────────────────────────────────────────
+// `sky` follows the accent colour (brand), `rose` is "taking someone off", `green` "adding someone".
 
 export const TOKENS = {
   sky: {
@@ -99,43 +104,31 @@ export const TOKENS = {
     chipX: "text-brand-text/60 hover:text-brand-text",
     check: "text-brand-text",
     bar: "bg-brand",
-    barFull: "bg-amber-400",
-    counter: "text-slate-400",
-    counterFull: "text-amber-500",
+    barFull: "bg-warn-fill",
+    counter: "text-ink-3",
+    counterFull: "text-warn",
   },
   rose: {
-    dot: "bg-rose-500",
-    activeRow: "bg-rose-50 dark:bg-rose-900/20",
-    chip: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
-    chipX: "text-rose-400 hover:text-rose-600 dark:hover:text-rose-200",
-    check: "text-rose-500",
-    bar: "bg-rose-400",
-    barFull: "bg-amber-400",
-    counter: "text-slate-400",
-    counterFull: "text-amber-500",
+    dot: "bg-bad-fill",
+    activeRow: "bg-bad-soft",
+    chip: "bg-bad-soft text-bad",
+    chipX: "text-bad/60 hover:text-bad",
+    check: "text-bad",
+    bar: "bg-bad-fill",
+    barFull: "bg-warn-fill",
+    counter: "text-ink-3",
+    counterFull: "text-warn",
   },
   green: {
-    dot: "bg-emerald-500",
-    activeRow: "bg-emerald-50 dark:bg-emerald-900/20",
-    chip: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
-    chipX:
-      "text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-200",
-    check: "text-emerald-500",
-    bar: "bg-emerald-400",
-    barFull: "bg-amber-400",
-    counter: "text-slate-400",
-    counterFull: "text-amber-500",
-  },
-  violet: {
-    dot: "bg-violet-500",
-    activeRow: "bg-violet-50 dark:bg-violet-900/20",
-    chip: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
-    chipX: "text-violet-400 hover:text-violet-700 dark:hover:text-violet-200",
-    check: "text-violet-500",
-    bar: "bg-violet-400",
-    barFull: "bg-amber-400",
-    counter: "text-slate-400",
-    counterFull: "text-amber-500",
+    dot: "bg-ok-fill",
+    activeRow: "bg-ok-soft",
+    chip: "bg-ok-soft text-ok",
+    chipX: "text-ok/60 hover:text-ok",
+    check: "text-ok",
+    bar: "bg-ok-fill",
+    barFull: "bg-warn-fill",
+    counter: "text-ink-3",
+    counterFull: "text-warn",
   },
 } as const;
 

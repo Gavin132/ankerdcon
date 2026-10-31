@@ -26,6 +26,12 @@ export function todayKey(): string {
   return toDateKey(getNow());
 }
 
+/** True when a "YYYY-MM-DD HH:MM" (or ISO) value falls on a day before today, by the app's clock. */
+export function isBeforeToday(value: string): boolean {
+  const day = value.trim().split(/[ T]/)[0];
+  return !!day && day < todayKey();
+}
+
 /** Whole days from `fromKey` to `toKey` (both YYYY-MM-DD), positive when
  * `toKey` is later. */
 export function daysBetween(fromKey: string, toKey: string): number {

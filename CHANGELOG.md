@@ -7,6 +7,578 @@ All notable changes to Ankerd Con are documented here.
 ## [Unreleased]
 
 ### Added
+- **You can take your vote back in the ticket poll** ("Mijn stem intrekken"), until the tickets are bought.
+- **You can fill in the ticket poll for someone else.** Ask around, then choose the member under "Stem voor iemand anders" and pick their ticket (or take their vote back).
+
+### Changed
+- **The splash screen of the installed app is now the dark page colour** (`#0D1216`) instead of white. The status bar keeps the header's colour.
+
+### Fixed
+- **In Settings, "Ankerd" in the "Powered by" line no longer drops to a new line on narrow phones.**
+
+---
+
+## [2.2.3] - 2026-10-31
+
+### Changed
+- **Swiping between events moves the same everywhere.** The Hub's carousel animation (the next card comes in beside the one
+  leaving, as your finger drags) is now also how the Agenda's tickets and the trips on the event page move; the fading and
+  stacked cards are gone. The Agenda tickets got dots under them like the Hub's.
+- **The event page's countdown says "xx dagen"**, like the Agenda, and "Ik ga mee" stays on the same line.
+
+### Fixed
+- **The ticket sheet opens smoothly, also with a big ticket saved.** The list used to draw your ticket photo at full size in a small box,
+  so the browser decoded the whole picture while the sheet slid up. It now shows a small copy of it (made once; an older ticket gets
+  its copy the first time the sheet is open for a moment). The file you open is still the original.
+- **Uploads show how far they are**, and an event cover is made small before it is sent, so a 3 MB phone photo goes in a fraction of the time.
+  A thin bar across the top says "Uploaden… 63%", and "Verwerken…" once the file has arrived.
+- **The installed app could show a white page and then "Ankerd Con kan niet starten".** A stale copy on the phone (the old page asking
+  for scripts that were gone, or a script request waiting forever on a slow server) now repairs itself: the app
+  keeps the scripts of the previous version, gives a script request 15 seconds, and if it still has not started clears
+  its own cache and loads again once, instead of waiting for you to pull the page down.
+
+---
+
+## [2.2.2] - 2026-10-31
+
+### Added
+- **Photos go to the day they were taken.** The app reads when a photo was taken and files it under that day, of whichever
+  trip, whether you add it from the event page or from the Hub. A photo from the day before or after an event gets a day
+  of its own in the Foto's card (for example "2 op ma" after a Friday to Sunday con); anything further away goes to the
+  nearest day of an event. A photo without a date (a screenshot, a forward) and a video still go to the day you started
+  from. The days beside an event only show in the event page's Foto's card.
+- **Stille uren.** Under Instellingen > Meldingen you can choose hours (for example 23:00 to 08:00) in which you get no
+  Discord message or push for the notifications you switched on. What you miss in that time is not sent later. A payment
+  request to you still arrives.
+- **Instagram** next to YouTube in Instellingen > Delen & links, which now starts with the two.
+- **Databesparing** under Instellingen > Weergave, for this device: a story loads nothing ahead and a video only
+  after you tap "Video afspelen".
+- **Discord in Instellingen.** Once linked, it shows which account, and you can unlink it as long as you can still sign
+  in another way (so you cannot lock yourself out).
+- **Mijn gegevens.** "Mijn gegevens downloaden" gives a file with what the app has stored about you (profile, the days
+  you go, rides, activities, expenses, cosplays, photos, votes and feedback). "Account laten verwijderen" sends a
+  beheerder the request: every admin gets a message (they cannot switch it off) and removes the account.
+
+### Changed
+- **"Ticketstemming" and "stemming" are now "ticket poll" and "poll"** in the app, the notification settings and the
+  messages members get.
+- **"Alleen belangrijk" no longer switches on the reminders** a day before and on the day of an event, and does switch
+  on "Nieuwe activiteit".
+- **"Wat is nieuw" moved from the account menu to Instellingen**, as a row under Feedback geven in the App block.
+- **Calmer ticket cards.** In the Agenda the day boxes are gone: the card shows the start of the event's description instead, and on a trip of several days "Ik ga mee" opens a sheet where you pick the days (a single day is still one tap), and once you are going you tap the "Je gaat mee" sticker to sign off every day: the "Afmelden" and "Dagen aanpassen" links are gone. Single days are changed on the event page. The countdown says "285 dagen" instead of "285 dagen te gaan" so "Ik ga mee" stays on its line on narrow phones, and the Hub card drops the small "3 dagen" under the countdown (during an event it still says "dag 2 van 3").
+- **The website chip just says "Website"** (the address is in its tooltip), and the hotel chip comes last, so the short
+  chips stay together on a line when the hotel's name is long.
+
+---
+
+## [2.2.1] - 2026-10-30
+
+### Added
+- **Vote on the tickets in the app** instead of in Discord. On an event's page the Tickets tile now holds the vote: an
+  admin opens it with the ticket options (for example "Vr + za + zo", "Za + zo", "Alleen zaterdag", with prices),
+  everyone picks one, or "Weet ik nog niet" (if you are not going, you just do not vote), and can change it until the tickets are bought. While the
+  vote is open it is a card of its own at the top of the page with a bar per ticket and a "Stem mee" label for whoever has
+  not voted; the sheet shows who still has to. An admin closes it with "Tickets zijn gekocht" and picks who bought them
+  (one person buys for everyone); after that the page only says "Gekocht door ..." and the vote is out of the way. Money
+  is settled as usual with an expense in Financiën. Instellingen > Meldingen has a new "Ticket poll" switch for when
+  a vote opens and when the tickets are bought.
+
+### Changed
+- **"Wie gaan er mee" shows everyone's ticket.** When the trip has a ticket vote, each person in the list has their
+  ticket next to the days they go: the one they voted for, "Ticket nog onbekend", or "Nog niet gestemd" while the vote is open.
+- **Opening an event is easier to notice.** The top bar of an event page has a back arrow (and the event's name on wider
+  screens), and the page slides in from the right when you open an event from the Agenda or the Hub, and back out to the
+  left when you leave it. Switching between the other pages fades instead of swapping at once.
+- **The ticket shortcut on the Hub opens your ticket over the Hub.** It used to jump to the event page; now your own saved ticket slides up over the Hub, and only that, without the ticket vote.
+- **Location, hotel and website are chips in the top card of an event.** On the event page, the Hub and the Agenda,
+  where an event is, where people sleep and the event's website are now small rounded chips under the title instead of
+  a line of text that looked like the start of the description. They look the same everywhere, and the location (opens
+  a map) and the website (with its address, for example "dokomi.de") can be tapped on all three. The Hub card now has the
+  date above the title like the other two, instead of in a chip, and shows the website too, as the Agenda does.
+
+---
+
+## [2.2.0] - 2026-10-30
+
+### Added
+- **Admins can get a heads-up when somebody logs in for the first time.** Instellingen > Meldingen has a new switch
+  "Nieuwe gebruiker" for admins (off until you switch it on, not visible to members). When someone logs in for the first
+  time and gets a new profile, you get a message "Sam heeft voor het eerst ingelogd. Is dit iemand van een placeholder?
+  Voeg samen via Admin > Gebruikers.", as a Discord message or a push, whichever you have chosen. It does not appear when a
+  placeholder is linked to a login automatically or when you add a profile yourself.
+- **The event's website is linked in the top card of an event**, on the line with the location and the hotel
+  (a globe and the address, for example "dokomi.de"). It opens in a new tab.
+
+- **Admins can merge a placeholder into the real member.** A member who had not logged in yet can be put on rides,
+  meals and expenses through a placeholder profile (Admin > Gebruikers). When that person logs in they get a profile of
+  their own; "Voeg samen met…" on the placeholder shows what would move (rides, activities, trip days, rooms,
+  expenses, settlements, cosplays, photos and so on), and on confirming it moves all of it to the member, makes the
+  placeholder's name one of the member's former names and removes the placeholder. Placeholders have a pill and a filter.
+
+### Fixed
+- **Someone could be in several hotel rooms at once.** A person sleeps in one room now: picking a room for someone ("Ik slaap
+  hier", or in the room form) moves them out of their other room, also when they were put in under another name of theirs
+  (a rename or their Discord username), and you are told who moved ("Sam is verplaatst van kamer 12 naar kamer 4."). A room that is
+  full still says no, and then nobody leaves their old room. If a room already has someone who is in two rooms, the Hotel sheet
+  now says so ("Sam staat in 2 kamers") and marks their name; choose a room for them again to fix it.
+- **The Hotel sheet counted names, not people:** "7 van 25 ingedeeld" while 24 people had signed up (one of them under
+  two names). It counts people now, and also says how many beds the rooms have ("12 kamers · 24 plaatsen · 0 van 24
+  ingedeeld"), so rooms that are made but still empty are clear.
+- **The list of names slid out of sight when you searched near the bottom of the window.** In "Wie gaat er mee?" and
+  every other name search, the list now opens above the field when there is no room under it, and is never taller
+  than the room it has.
+
+- **"Nog geen auto" for a restaurant counted names, not people.** Someone on the list under two names (a rename or their Discord username) was counted twice, or shown without a car while they sat in one under their other name. The Hub, the ride page and the Vervoer sheet now work it out the same way, per person.
+- **Search still found cosplays of a concert**, and led to a page without a Cosplay sheet. A concert has no cosplay, so those no longer show up, and an old link to one opens the event's overview.
+- **An urgent announcement could sit under an info one.** The banners at the top now stack urgent first, then warning, then info, newest first within each.
+- **After a rename you could no longer delete your own old things.** An old ride, expense, cosplay or photo of yours, and the
+  shares on your old expenses, stayed out of reach (and out of the Financiën totals) because they carry your old name. Your
+  former names and Discord username count as yours now; other members' names never do.
+- **The Info tile said "0 onderwerpen" for an event with only a ticket sale date.** It counts that as tickets now.
+- **Admin: deleting an activity left its ride to the restaurant behind**, with the people still signed up in it. The ride goes
+  with the activity, as when its maker deletes it.
+- **Deactivating members in bulk did not take them off their events.** The selection strip only switched the account off,
+  although it said they would leave every event and get a Discord message; it does both now, like the switch in the edit sheet.
+- **A deactivated or deleted member stayed in their hotel room and in restaurant cars**, and kept their former name on rides,
+  activities and days. They are taken off all of those now.
+- **Admin: clearing a hotel room's number, floor, notes or capacity did nothing.** The old value came back after saving; an
+  emptied field is cleared now.
+- **A failed Discord link told you to try again "via je profiel"**; linking is in Instellingen.
+- **Admin: giving or taking a badge, or dragging badges into another order, failed without a word.** It says so now, and the
+  list goes back to the saved order.
+- **A ride to a restaurant showed up in search with no name.** It is called "Rit naar <activiteit>" now.
+- **"1 foto's", "1 gingen", "1 ritten verwijderd".** One photo, one person who went and one thing deleted in the admin panel (rides,
+  activities, events, groups, users) now use the singular.
+- **The Vervoer tile said "Jij rijdt" for your own journey by public transport.** It says "Met het ov" now.
+- **Two people could take the last seat in a car to a restaurant.** Only the button checked for a full car; the server
+  now refuses the second one with "Deze auto is vol.".
+- **A restaurant ride named the restaurant twice.** Its page said "Van: <restaurant>" and "Naar: <restaurant>" and
+  put the full address in the big title. It now shows the meal's name as the title, the address under it, and the
+  top bar says "Rit naar <meal>".
+- **Betalingen overflowed on a phone.** The rows of an expanded expense ran past the edge of the screen; they are two
+  lines now (who and how much, then the status). The filter is the four status buttons plus one list of expenses
+  instead of a button per expense.
+- **Deleting a day of an event had no question.** It also took the sign-ups and rides of that day with it. It now asks
+  first, and taking someone off a day asks too.
+- **The row checkboxes in the admin tables were 16 px to hit** on a phone; they are 44 px now.
+- **The admin "Admin-rechten" switch did not count as a change**, so closing the sheet after only toggling it gave no
+  warning about unsaved changes.
+- **Counts of people used the number of names.** Someone signed up under two names (a rename or a Discord username)
+  counted twice in "N mee" on the day tiles, the meal and ride sign-ups and the plan of a trip. They count once now.
+- **A long description of an event was cut off** with no way to read it; "Meer" opens the rest.
+- **The Google Maps link of an activity was saved but never used.** The Route button now opens it, also for an
+  activity without an address.
+- **A read-only member was offered "Nog geen rit… Tik om een auto aan te bieden"** on an activity and could press
+  "Uitstappen" on a ride; both are left out for them now.
+- **The Discord hint pointed at the profile** ("koppel Discord via je profiel"). Linking Discord is in Instellingen.
+- **Time travel was ignored in the admin dashboard greeting, the events list (upcoming or history), the changelog's
+  default date and the default time of a restaurant ride.** They follow the app's clock now.
+- **The time-travel page described a floating button that is no longer there.** It is called "Tijdreis" and talks about
+  the clock in the bar.
+- **The changelog page of the admin panel printed the date as 2026-10-22.**
+
+### Changed
+- **Every member can edit a hotel room and put other members in it.** The pen on a room in the Hotel sheet is no longer
+  only for admins: change the room number, floor, notes and number of people, and choose who sleeps there (so you can sign
+  up others, or take them off). Only members can be chosen, and a room cannot get more people than its capacity. Deleting
+  a room is still for admins, and so is everything for a read-only member: they can only look.
+- **The Hotel sheet's buttons are hidden for a read-only member**, who could not use them anyway.
+- **The Info tile with a "Let op" no longer lists the topics under the warning.** It repeated the headings you see
+  when you open the tile. Without a "Let op" the tile still shows the count and the topics.
+- **On a computer, the cards in the Hub carousel are all the same height**, so the dots, the arrows and the ride
+  buttons below no longer jump when you page. On a phone the row still follows the card in view.
+- **The add buttons on the Event page tiles (the "+" on Activiteiten, the camera on Foto's) are blue** like the other action buttons.
+- **The two ride buttons on the Hub are straight under the trip**, above "Voor jou".
+- **All buttons are the same height everywhere:** 44 px on a phone and 40 px on a computer (a few tight places, such
+  as the buttons on a meal or ride header, a confirm in a table row or a small button in a card, use a slightly
+  smaller one: 40 px and 36 px). The Crew buttons and the login buttons follow it too.
+- **"Rit aanbieden" and "Meerijden" on the Hub are two equal blue buttons** with the icon beside the name, so
+  "Rit aanbieden" no longer breaks over two lines on a phone.
+- **Search no longer lists old rides.** Searching for a driver or a place finds rides from today onwards only.
+- **A concert has no Cosplay card, tab or search suggestion.** Other events (cons, gatherings, trips) keep them.
+- **In the admin users list, an admin is a shield on the corner of the profile picture**, in your accent colour, instead
+  of an "Admin" label, and "Placeholder" is a small grey line under the name.
+
+- **Every action button is blue now.** "Andere evenementen", "Route", "Tickets kopen", "Officiële website", "Parkeerplek", "Locatie pingen", "Afmelden", "Iemand aanmelden" and the other buttons that used to be an empty outline are the same blue as the rest; only "Annuleren" next to a confirm stays outlined, and the small add buttons (photo, "+" on Activiteiten) stay grey.
+- **The "Praktisch" tile is called "Info"** and shows the number of topics small, with the topics under it, so it fits on a phone. The text under "Parkeerplek" and "Locatie pingen" is gone: tapping "Parkeerplek" still tells you when it cannot be saved.
+- **The blue buttons are a deeper blue with white labels.** Buttons, the chosen filter and the active tab in dark mode, switches
+  and the countdown stub use a deeper blue so the white text on them reads well, and the accent colours in Instellingen
+  are deeper to match (gold is now a dark amber).
+- **Buttons have a calmer, outline-free look.** The blue button is a plain blue fill without the black outline, the
+  other buttons are a thin line on the background, and the red "Verwijderen" is a plain red fill. Inloggen met Google
+  has its own soft button under a "of ga verder met" line. Greyed-out buttons are flat grey, and a button that is
+  busy keeps its size while the spinner turns.
+- **The "Vervoer regelen" switch of an activity looks like every other switch** (it was a thicker, hand-made one in the
+  edit sheet), and the small status labels on an expense and on today's meal are the same size and shape as the other
+  labels.
+- **Nothing shrinks or zooms when you press or point at it.** The day tiles of a trip and the clickable cards no longer
+  shrink under your finger, and the photos in the recap no longer zoom on hover; a press dims the thing like it does
+  elsewhere.
+- **All text fields in the admin panel are as big as the ones in the rest of the app** (16 px text and the same
+  height, on a computer too). The fields in the sheets, the search boxes and the filters of Betalingen used to be
+  smaller on a wide screen.
+- **Icons come in a fixed set of sizes** (12, 14, 16, 20, 22), so the same icon is the same size everywhere; the little
+  icons that were 9 to 11 px are 12 now, and the vehicle icon of a ride no longer shrinks for a small car.
+- **Empty lists look the same everywhere.** "Geen gebruikers gevonden", "Nog geen groepen", "Nog geen auto's aangemeld"
+  and the other empty lists in the admin panel, the cosplay filters, the profile photos and the trip pages are one
+  empty state: an icon, a short title, sometimes one line of help or a button.
+- **Detail pages of an activity and a ride show a grey outline of the page while they load** instead of a lone spinner,
+  and the spinner you see when the app starts is blue everywhere (also on the dark start screen).
+- **A chosen option looks the same everywhere.** The zone of a location ping, the driver of a parking spot and the kind
+  of feedback are chips that turn dark when chosen (like the filters); the day tiles, the sort options and the
+  accent colours keep their thin border and get a tinted background. Nothing is drawn with a thick outline for being
+  chosen any more.
+- **One scale of rounded corners.** Boxes that hold content (the share lines of an expense, menus, the recap calendar,
+  the stub overview) have the same 12 px corners as the other cards, and the odd 9 px and 5 px corners of the day
+  tiles, thumbnails and admin fields are gone.
+- **Dates and counts are written like a sentence, labels in capitals.** The date of an event on the ticket, in the
+  recap and in the sidebar, the day tiles of the recap, the date of a meal, the opening line of the login page and
+  the sentences on the splash and onboarding screens no longer shout in capitals; capitals are kept for the labels
+  that name a group or a field ("Van", "Naar", "Chauffeur", the table headers) and for tags and chips.
+- **Nothing is smaller than 12 px any more**: the counters on the filters of the cosplay page and the warning badge of
+  the admin panel are bigger, and the tab bar keeps its 12 px labels on the narrowest phones.
+- **Colours are the same everywhere, in light and in dark mode.** Warnings, errors, "ok" messages, the red delete
+  buttons, the coloured banners, the chips on the dark headers and the initials of members without a photo now use one
+  shared set of colours instead of being coloured one by one, so a screen can no longer look different in dark mode
+  than the rest. Brand-coloured text on a light blue background is a touch darker so it reads better.
+- **Your name colour is readable on every theme.** A name colour that would disappear on the dark (or light) page, like
+  a dark purple on the dark profile page, is shown a bit lighter (or darker) there; the colour you picked is not
+  changed.
+- **Admin: Betalingen, Aankondigingen and the other pages.** Betalingen shows the three totals in one card instead of
+  three stacked cards and sets a share's status with a list (Openstaand, Geclaimd, Bevestigd) instead of three lettered
+  circles. Aankondigingen shows the type as a pill with words, a switch for "Actief" and two lines of the message; its
+  sheet, and the sheets of Badges and Wijzigingslog, use the shared footer and switches. The CDN page has the file
+  kinds as a switch row, the zip download next to "Uploaden", flat tiles (no zoom, no gradient), and asks before
+  it deletes a file for good. Badges hides the drag handle on a phone, where dragging never worked. Inloggen als
+  gebruiker, Feedback, Tijdreis and Schermen testen follow the shared frame; "Echte crash veroorzaken" has its own
+  heading and a warning box so it is not tapped by mistake.
+- **Admin: calmer lists and sheets.** Every admin page has the same width, padding and rhythm. The tables use the shared
+  header and cell styles (12 px headers, no more 10.5 px), and on a phone a row is two lines: the name and the buttons,
+  then the date, place or price, so the name is no longer squeezed to a few letters (Ritten, Activiteiten,
+  Evenementen). Gebruikers shows a pill only for what is not normal (Admin, Kijker, Inactief); deactivating a
+  member moved into the edit sheet as the switch "Account actief" and the bulk bar, and both ask first, because it
+  takes the member off every event. Evenementen has "Aankomend" /
+  "Geschiedenis" as a switch next to the group filter, shows the dates once ("17 – 19 nov. 2026 · 3 dagen"), calls the
+  tag "Soort evenement" (Con, Bijeenkomst, Concert), has a separate "Bekijken in de app" button instead of a clickable
+  row, and its sheet folds Tickets & links and Praktische info away for an existing event. Faces in the tables count
+  people, not stored names. The sheets use switches for yes/no (hotel, car available, vervoer nodig) and a 44 px
+  line for the "Con" checkbox of a day.
+- **Admin: smaller things.** The search box is 44 px tall; the pager buttons are spaced so they do not overlap; the
+  page loading state is the outline of a page instead of a spinner; the dashboard greeting follows the page rules
+  ("Beheer" above your name, normal-case date line) and its chart takes the theme and accent colours; the category
+  flags are a soft tint with a tick; the Toegangslijst has labelled fields; hints are 12 px; every sheet's save button
+  says "Opslaan" (edit) or "Toevoegen" (new).
+- **Profile, settings and Meldingen:** "Opslaan" and the new "Zo zien anderen je profiel" button (an eye, on a phone too)
+  are in the top bar of the profile; Opslaan is only blue when something changed, and the same goes for Meldingen, where
+  the categories are switches instead of checkboxes and a line says the channel is applied at once. Form labels are
+  normal field labels, the banner colour moved into "Weergave", the colour dots have a slash for "automatisch", the
+  unreadable near-black and lime name colours are gone from the choices, and a profile that is loading or not found
+  keeps its top bar. Instellingen says "Voor dit apparaat" once, "Begroeting tonen" sits under Account, and GitHub and
+  YouTube show an arrow out instead of a chevron. "Wat is nieuw" has the spacing of the other pages and "Versie 2.19.0"
+  for a bare number.
+- **Error screens (404, geen toegang, server onbereikbaar, crash)** are built the same way: logo or icon, a title, what to
+  do and the buttons first; the joke follows, and the technical message and the feedback form are behind "Technische
+  details". The login page says "Log in om verder te gaan" once, the "Aanbevolen" tag is a pill under the Discord button
+  and an error there is announced to screen readers. The profile step of onboarding is shorter (no aliases, no banner
+  colour, no second preview).
+- **Financiën is calmer.** A row of Afrekenen or Ritkosten is two lines and the amount says which way the money goes
+  (red = you pay, green = you receive); a pill is only there where you have to do something ("Te betalen",
+  "Bevestigen", "Wacht op bevestiging", "Invullen"). On a phone the list of expenses and its add button come right after
+  what you owe, and the group's totals ("Betaald per persoon", top 3) come last. The settlement sheet has one blue
+  button (the payment link is a quiet one), no longer shows the amount four times and says since when instead of the
+  amount in its title. "Ontvangen" and "Ik heb betaald" in an expense are quiet buttons. The new-expense form is plain
+  fields instead of five cards, in the order description, amount, date, paid by, event. The Ritkosten sheet has a one-line
+  intro and Opslaan under the form, and the total and your share are two rows. A long expense title shows on two lines.
+- **Activity and ride pages are calmer.** The activity header is one kicker line, the name, and three plain lines (when,
+  where, price) instead of five chips; "Vervoer nodig" is said once, in the transport block. The sign-up row is one
+  button: "Aanmelden" until you are on the list, then "Afmelden" and "Iemand aanmelden". The ride header got the
+  departure time, one status chip at a time ("Vertrekt over…" before "Actie vereist"), "+N" for more than five riders
+  and "Deze rit zit vol"; "Uitstappen" is only offered to someone on the ride (or an admin). The top bar says
+  "Activiteit" or "Rit" and the page has one heading.
+- **Restaurant cars:** the "3 personen hebben nog geen rit" banner and the dashed "Auto toevoegen" tile are gone (the box
+  under the cars says who has no car yet, in amber), "Stap in" is the quiet button and "Ik rijd" the one blue one, and a
+  car says "Chauffeur · 4 plekken" with "Uitstappen" as a text button.
+- **Practical info and links of an activity** are plain rows instead of icon squares and boxes in a box; the map card says
+  "Kaart" with the way there, and the linked activity or event on a ride is one tappable card.
+- **Search:** an empty search suggests "Locatie pingen", "Rit aanmaken" and "Parkeerplek", the results of a group are
+  one card with a row per result, and "Niks gevonden" is a proper empty state.
+- **Shared controls:** the switches between two or three views (Tickets/Recap, Alles/Waar ik was, the years of the
+  stubs, Heen/Terug, Aanmelden/Afmelden, Gelijk/Vast/Handmatig) are one control, and so are the seat choice of a car
+  (2 to 7, "Incl. jezelf") and the faces of a list of people ("+3" counts people, not names). The quick-ride sheet's
+  departure chips are 44 px to hit.
+- **Vervoer sheet:** the headings are small labels with a count ("4 ritten") instead of display titles as big as the
+  sheet's own, the list of people without a ride under the sections is gone (each section names them already), "Ik rijd"
+  on an activity is the quiet button, a missing car is an amber notice instead of a red dashed box, a ride's row only
+  shows "doel" when the car is short of it, and the form asks the seats the same way as the quick-ride sheets.
+- **Hotel sheet:** the numbers ("4 kamers · 7 van 14 ingedeeld") are at the top and the two buttons sit in the footer
+  ("Meerdere", "Nieuwe kamer"). A room card says "1 van 2 bezet" once instead of three times, a full room has no
+  button, and your own room is outlined in the app colour instead of the heavy black border.
+- **Cosplay sheet:** the dashed "Cosplay toevoegen" card is gone (the button above the list does it), a cosplay's
+  days read "di 27 · do 29 okt" in plain text and the photo count only shows when there are photos.
+- **Forms in the trip sheets** have their save button in the footer, with the labels above the fields in the same style
+  everywhere.
+- **Event page tiles:** the "Vervoer" tile lost its Heen/Terug bars (the "zonder rit" pill says who is missing), the
+  "+" on Activiteiten and the camera on Foto's are the same quiet button, the info tile is called "Praktisch" and
+  says how many topics it holds, an odd small tile at the end is stretched over the row instead of leaving half of it
+  empty, and the day cards read "Di", "Wo" above the number (the month is for screen readers).
+- **Hotel sheet:** the dates of the stay are in the title bar, the address is a link, and late arrivals and early
+  leavers read the same here and in "Praktisch" ("komt do 19 nov", "vertrekt wo 18 nov", "alleen di, do").
+- **Adding an activity:** the day is chosen with the same chips as everywhere else (and only asked when the trip has
+  more than one day), and "Vervoer regelen" is the app's usual switch.
+- **A calmer Hub.** "Voor jou" comes right after the trip on a phone, above the meal, ride and shortcut cards. Only
+  what is yours to fix is coloured (no ride for you, money to pay); the rest of the rows and the count are grey. The
+  trip carousel no longer swaps cards by itself (swipe or use the dots), the story row waits until there is something
+  to see, the two ride tiles share one grey line instead of repeating it, and the ticket says "Vandaag" or
+  "Nu bezig, dag 2 van 3" once instead of three times.
+- **Agenda:** "Abonneren" is "Agenda-link" with a "Kopieer link" and a "Google Calendar" button instead of a raw link,
+  the cards behind the top ticket no longer print the next trips' names (the counter says "1 van 4"), and the
+  dots and arrows are the same as on the Hub and 44 px to hit.
+- **Crew:** a member's Discord name only shows when it differs from their name, the "location shared" dot no longer
+  pulses, and an empty search is a proper empty state.
+- **The Event ticket is shorter on a phone** (a lower cover, none for a trip without a picture), and "Iemand aanmelden"
+  moved from the ticket to the list of people who are going.
+- **Easier to hit on a phone.** Small controls are 44 px to hit now, and spaced so two of them no longer share a
+  touch area: the edit and delete buttons of a hotel room, the colour swatches and alias chips on your profile, the
+  paging buttons and search clear button in the admin panel, the arrows of an activity category, the delete
+  buttons of a ride and a room, "Sluiten" and "Alle dagen" in the recap, the buttons of the crew and crash screens, the account
+  menu rows and the onboarding footer.
+- **Screen readers:** icon-only buttons now have a name (story viewer, search, tiles, admin tables, alias and name
+  chips), the story viewer, the search and the cosplay picture are dialogs that close with Escape, a tile of the
+  Event page is one link instead of a link with buttons inside it, and the account menu is a real menu.
+- **Admin: activity categories** use the same on/off chips as the rest of the app, the up and down arrows sit side
+  by side, the feedback status buttons are chips, and a metric on the dashboard that goes nowhere is no longer a button.
+- **Cosplay inspiration:** the link to the original picture is in the picture's own view ("Bekijk origineel") instead
+  of a hover-only corner icon that did not exist on a phone.
+- **One word for everything.** "Evenement" everywhere instead of the English "event" (the agenda, the recap, finance,
+  admin, a few error messages), "Meldingen" instead of "Notificaties", "Toegangslijst" instead of
+  "Whitelist", "Beheer" instead of "Admin portal". Buttons say "Annuleren", "Verwijderen" and "Kopiëren"; "1 groep"
+  instead of "1 groepen". In the admin panel rides read Heen / Terug and Auto / Openbaar vervoer instead of
+  Inbound / Outbound / Car / Public Transport, and the activities page says "Activiteiten" throughout.
+- **Settled money says "Verrekend"** (it was "Afgerond" in the settle-up list), the balance card says "Netto te
+  ontvangen" / "Netto te betalen", and a request to pay shows "Te betalen".
+- **Login page:** a smaller title and the text "Het ledenportaal voor Ankerd-evenementen" / "Alleen voor Ankerd-leden".
+- **Collected stubs:** the tilted "Geweest / Gemist" stamp is gone (a missed one is dashed and says "Gemist" in its
+  footer) and the stats read "evenementen mee" and "hotelverblijven".
+- **Event page tiles** say "Geen ritten", "Niets gepland", "Geen kosten" and "Foto's" when empty, and the
+  transport tile reads "Heen: met Sam, di 07:30 · Terug: nog geen rit".
+- **Admin: event groups** is a list that turns into cards on a phone, with a shorter placeholder and buttons you can hit.
+- **Announcement bar:** a warning is amber with dark text (it was white on amber, hard to read), an info message is a
+  quiet strip instead of a near-black bar, a long message shows two lines instead of one and has an arrow to open it,
+  and the close button no longer sits inside the button that opens the message. On a phone with a notch the text no
+  longer starts under it.
+- **"Nieuwe versie beschikbaar"** is a strip at the top of the screen (with "Herladen") instead of a bar floating
+  over the tab bar with a bouncy entrance.
+- **Admin, selecting rows:** "N geselecteerd" with Deactiveren / Verwijderen is a block above the table, not a bar
+  floating over the last rows and the page buttons. Deleting asks in a dialog.
+- **Admin, deleting one row** asks "Verwijderen? Annuleren Verwijderen" with big buttons; the red button is red
+  everywhere (and "Sluiten zonder opslaan" is no longer the blue one).
+- **Admin top bar:** the page name is no longer written twice (top bar and title); the bar says "Admin".
+- **Admin tables on a phone:** a row's name takes what is left of the line and its buttons stay where they are, so
+  rows no longer wrap differently depending on how long a name is.
+- **Profile:** "Opslaan" is in the top bar, grey while nothing has changed and blue when there is something to save;
+  a line under the head says that the photo and banner are saved right away.
+- **Rides and activities:** the buttons in the dark header (Afmelden, Uitstappen, Aanmelden, Stap in) are the same
+  height on both pages; the main button of the Aanmelden, Afmelden, Stap in and Uitstappen sheets sits at the bottom
+  of the sheet; "Nog geen rit" is a calm row with an "Ik rijd" button instead of a red dashed button.
+- **The car you ride in** is a soft tint with a bar on the left, in your accent colour, instead of a solid blue block.
+- Prices are always written "€ 37,50" and file sizes "3,2 MB".
+
+
+- **Hub:** "Ticket opgeslagen" and "Locatie pingen" are two rows of one card instead of two cards, and the row of
+  event cards is as tall as the card you are looking at (no empty gap above the dots when a shorter card is shown).
+  The cards out of view can no longer be reached with the keyboard.
+- **Transport:** "Rit aanbieden" for Heen and Terug is the quiet button, so "Ik rijd" is the one blue button; with no
+  ride yet the sheet says "Nog geen rit, zonder vervoer: …" once instead of twice.
+- **Spacing:** the Hub, Agenda, profile, settings, meal and ride pages use the same space between blocks and the
+  same page padding, which also lines the content up with the title bar.
+- **Easier to hit:** blue buttons, the "Toch niet? Afmelden" links, "Iemand aanmelden", the "zonder rit" and "nergens
+  bij" pills, the location link and the list of who is going all have a 44 px area to tap.
+
+---
+
+## [2.1.5] - 2026-10-28
+
+### Fixed
+
+- **Removing a car from a restaurant ride made the other cars jump.** The cars did not pass the browser what it
+  needs to keep the rest in place while one leaves (a React warning in the console said so); they do now.
+- **A member who was renamed (or signed up by their Discord username) showed up twice in "Wie gaan er mee".**
+  Sign-ups store names, so someone on Saturday under their Discord username and on Sunday under their name was two
+  names on the list, each with one day, instead of one person with "Alle dagen". They are now one person everywhere
+  a trip's people are shown or counted: the list, the avatars and "Jij en 3 anderen" on the tickets, the Hub card,
+  the recap, and the checks for who is missing a ride, a meal or a hotel room or is only there some days (a ride
+  or room listing them under either name counts).
+- **Reloading an admin page sent you to the Hub.** While the app was still restoring its saved data, the admin
+  check read "no answer yet" as "not an admin". It now waits for the answer.
+- **The "Iemand aanmelden" button in the participants list had no styling** (plain text on a bare strip); the
+  quiet button style it relied on did not exist. It does now, and so does the same button on the trip switcher
+  and the CDN page.
+- **The search no longer slides under the tab bar** on a phone, so the last results can be reached.
+- **Cut-off and squeezed bits on small phones (320 px wide):** the "Locatie pingen" button on Crew, the sign-up
+  count on an activity, the day cards (the tick no longer sits on "DI NOV"), the settle-up and ritkosten rows (the
+  title was cut to a dozen letters; the status pill now sits under it), the route card of a ride, the cosplay
+  toolbar and its date pills, the arrival and departure list of a hotel, the "Nieuw" label under your story.
+- **The story row now runs to the edge of the screen** instead of stopping 16 px short.
+- **The swipe hint for other trips sits above the tab bar** instead of over the banners at the top, and has no shadow.
+- **Admin on a phone:** the whitelist's delete buttons were pushed off the screen by long addresses, the new-day
+  row of the event drawer lost its buttons, event rows on the dashboard collapsed to one letter, the header
+  buttons wrapped and clipped, and the menu drawer left a shadow strip along the screen edge.
+- **A restaurant ride without a named organiser no longer shows an empty "?"** under the title.
+- **Compact density now also tightens half steps** (gaps and paddings like 1.5 and 2.5), which it silently skipped.
+
+### Changed
+
+- **Calmer screens:** the "what's new" bar is a soft blue strip instead of a solid blue one, and it only shows when
+  there is no announcement, so the top of a phone screen holds one bar at most; the hotel sheet is a plain list
+  divided by lines instead of a card inside the sheet; the "Installeren" button and the iPhone steps line up with
+  the text of the install card instead of sitting under its icon; the one-time swipe hint is a dark pill instead of
+  an outlined card; the Praktisch sheet has no icons in front of some of its headings and no extra side
+  indent, so every heading starts at the same edge and the text gets the full width; the days on the Hub card are written like the days on the event page (`DI OKT`); a cosplay
+  card lists its days in one line (`DI 27 · DO 29 OKT`) instead of a box per day; the place of an activity is no
+  longer in capitals; the profile page has the same title bar as the other pages ("Profiel") instead of repeating
+  the name; the admin dashboard's "Alle evenementen" no longer wraps and long places end in "…" instead of being
+  cut off. Warning and success notices share one look (`notice-warn`, `notice-ok`).
+- **Easier to hit:** the close button on the announcement and "what's new" bars, the dots and arrows of the Hub
+  carousel, "N gaan mee", "Nog N tonen", the back and home buttons, the avatar in the header and the switches
+  all have a 44 px area to tap (they look the same).
+- **Buttons that cannot be pressed yet look flat and grey** instead of a washed-out blue block with a grey outline.
+- **One switch everywhere** (Instellingen and Meldingen used two different ones).
+- **The admin tables turn into cards on a phone.** Users, rides, activities, events, badges, announcements and the
+  changelog no longer need sideways scrolling to reach edit and delete: each row is a card with the name on top and
+  the status and buttons below. The page headers say which part of the admin you are in, and their buttons share
+  the full width on a phone. Admin buttons are all at least 44 px tall.
+- **Greyer text is easier to read.** The muted grey is a shade darker (and lighter in dark mode), enough for small
+  text to be readable; the same grey as before, just with more contrast.
+- **The same look for the same thing:** one status pill (green = fine, amber = waiting for you, red = you owe),
+  one filter chip, one label and error style for forms. "Te betalen" is now red everywhere (it was grey in the
+  expense details). Popups ("Aanmelden", "Aankondiging", cancel a ride) are sheets like everything else, instead of
+  full-screen pages.
+- **The Hub card of a short event no longer has a big empty gap** (it was stretched to the height of the tallest one).
+- **Accent colours** no longer leave one lonely colour on the second row.
+
+---
+
+## [2.1.4] - 2026-10-20
+
+The back gesture closes a story instead of leaving the app, and a home server that is off shows an error
+within seconds instead of after a minute. The Cloudflare Worker needs deploying again for the second one
+(`npx wrangler deploy` in `cloudflare/`). No migrations.
+
+### Fixed
+
+- **Back gesture closes the story instead of leaving the app.** A story, a photo opened big on a profile,
+  a profile card, the banner crop and the "Grote video" question now each take their own step in the history,
+  like a sheet already did. Before, opening a story as the first thing in the app left nothing for the back
+  gesture to step back over, so it left the app.
+- **A server that is off no longer means a minute of spinner.** The Cloudflare page now appears after 8
+  seconds instead of up to 100 (it needs `npx wrangler deploy` once). An installed app, or one visited before,
+  opens on its saved data instead of an error page. Reading from the app gives up after 15 seconds instead of 30,
+  and a long wait on the loading screen says "De server reageert traag" after 6.
+- **Deleting a story file from the admin CDN page also removes its thumbnails** when its database row is already
+  gone (after its event was deleted, say); the copies are found by name.
+
+---
+
+## [2.1.3] - 2026-10-15
+
+Photos and covers that load lighter, a phone pass (bigger touch areas, readable text, the right keyboards,
+press feedback), a card that helps put the app on the home screen, and a story timer that
+respects reduced motion. Needs migration v2.41 (see `TODO.md`) and, for what is already uploaded, two
+scripts (`scripts.backfill_story_previews`, `scripts.shrink_event_covers`).
+
+### Added
+
+- **"Zet Ankerd Con op je beginscherm."** On a phone, a card on the Hub (and a row in Instellingen) helps
+  install the app: one tap on Android, the two Share-menu steps on iPhone, where an installed app is also
+  what makes push messages possible. "Sluiten" hides it for 30 days.
+- **Swipe a message sideways to dismiss it.** The little messages ("Opgeslagen") can be swiped away, and a
+  screen reader reads them out.
+
+### Changed
+
+- **Easier to hit on a phone.** About 90 small buttons (close, copy, delete, switches) now have a touch
+  area of at least 44 px without looking any different. A tap on a phone no longer leaves a button looking
+  pressed (hover styles only apply where the device can hover), and whatever you press dims for a moment
+  so you can see it registered.
+- **Text is no longer tiny.** Labels, chips, hints and the tab bar were 9 to 11.5 px in about 150 places;
+  they are 12 px now. (The initials in a small avatar circle keep their size.)
+- **Lighter on mobile data.** Event covers are saved as at most 1600 px of WebP instead of the up to 10 MB
+  they came as; profile pictures ask Discord and Google for the size they are shown at instead of the
+  full-size file; and pictures lower on a page only load when you get there. Covers uploaded earlier shrink
+  with a script (see `TODO.md`).
+- **Fewer surprises with the keyboard.** Amount fields open a keypad with a decimal point, counts a plain
+  number pad, search boxes say "Zoek" on the Enter key, and the place fields of the quick ride and the
+  global search no longer make iPhones zoom in.
+- **Full-screen pages fit the visible screen on iPhone** (the meal and ride pages, the admin) instead of
+  running under Safari's toolbar.
+- **Animations follow "reduce motion".** If a phone is set to reduce motion, transitions are skipped. The
+  story timer, which used to be an animation, now runs on its own so it still moves on.
+- **Photos load much lighter.** Grids (profiles, the trip look-back, the story ring) used to load every
+  photo at full size, up to 2560 px and about a megabyte each, which adds up on mobile data. Each photo now
+  has a small thumbnail for grids and, when it is big, a 1280 px preview for the story viewer, made when it
+  is uploaded. Download, the day's zip and Delen still give the full original. Photos added before this show
+  the original until their copies have been made (see `TODO.md`). Needs migration v2.41.
+
+---
+
+## [2.1.2] - 2026-10-15
+
+Videos in stories, read-only members (kijkers), what passengers owe the driver (ritkosten), calmer
+notification settings, sheets that stack over each other, and a faster onboarding and notification
+card. Needs migrations v2.36 to v2.40 (already run on the live database).
+
+### Added
+
+- **Videos in stories.** Add a video (MP4, MOV or WebM, up to 80 MB) to a story the same way as a
+  photo, alone or mixed with photos. It plays full screen with sound (a speaker button if the browser
+  starts it muted), the progress bar follows the video and the story moves on when it ends. Videos
+  show up in the profile and trip photo grids with a play badge. Videos are not compressed: one over
+  80 MB is refused straight away, and one over 25 MB asks first (it can take long on mobile data).
+  A video needs migration v2.40.
+- **Read-only members ("kijkers").** Someone can now be allowed to look at the app but not take part, and
+  still has to be on the whitelist: tick **Alleen kijken** on the whitelist entry (or on a member under
+  Admin → Gebruikers). They see everything, get a slim "Je kunt alleen meekijken" bar, and no buttons to
+  sign up, offer a ride, add an activity, expense, cosplay or photo, share a location or a parking
+  spot. The server refuses every change they try anyway, apart from their own settings, notifications,
+  feedback and watching stories. Admins are never read-only. Needs migration v2.39.
+- **Notification settings, tidied.** The categories are grouped (Evenementen, Plannen), with a quick choice
+  on top (Alles, Alleen belangrijk, Niets). A new switch **"Alleen mijn trips"**, on by default, limits the
+  notifications for new activities and expenses to the trips you are going on (rides already worked that
+  way). The channel card has a **Testmelding** button that sends you one message, so you can see it
+  arrive. Betaalverzoeken are listed as always on. Needs migration v2.38 to change the switch.
+- **Ritkosten: what passengers owe the driver.** In Financiën, under Afrekenen, a driver enters what the
+  trip cost them (fuel, tolls and parking in one amount) and sees what each passenger owes. One simple
+  rule: **everyone pays the driver of the first ride they took to the trip**, and the amount is shared
+  equally by the driver and the people in that car. Switching cars later in the trip changes nothing, so
+  nobody ends up with a list of tiny amounts. It is an overview, not a payment: ask for it with a Tikkie.
+  Passengers see "Jij betaalt <naam>". Needs migration v2.37.
+- **"Vertel wat er gebeurde" on the crash screen ("Er ging iets mis").** One tap opens a small box;
+  what you write goes to Admin → Feedback as a bug, with the page and the technical message added
+  automatically. It is on that screen only: the others cannot use it (the server is unreachable, you
+  are not signed in, or the app did not start).
+
+### Fixed
+
+- Settings → Notificaties said "Kies welke Discord DM's je ontvangt"; it now says you choose how
+  (Discord or push) and for what.
+- **The "Meldingen via" card (Discord or push) took seconds to appear** in the notification settings and
+  in onboarding: nothing was shown until the app had asked the browser whether this device is
+  subscribed, and it did that by waiting for a service worker, which never arrives in a dev build and
+  can be slow on a first visit (it gave up after 8 seconds). The card now shows at once; what is
+  already known (no push here, install the app first, blocked) is there immediately, and only the
+  Pushmeldingen row says "Even kijken…" for a moment. The lookup asks for the registration that
+  exists instead of waiting for one, and gives up after 1.5 seconds.
+- **The onboarding test screen (Admin → Preview: Onboarding) was a copy of the real onboarding,
+  not the real thing**, and had drifted: the progress bar was another colour, the done screen
+  another button. Both now render the same flow (`OnboardingFlow`); the test screen only differs in
+  that nothing is saved and "done" leads back to the admin panel.
+- **New members never saw the done screen ("Je bent er klaar voor!")**: saving marked them as
+  finished, and the page that sends finished members to the hub did so at once. It no longer does
+  while they are finishing it.
+- The done screen pointed to a "Meer" page that no longer exists; it says Instellingen under your
+  avatar now.
+
+### Added
 
 - **Admins can get a notification for new feedback.** Under Instellingen → Notificaties admins have an
   extra switch, "Nieuwe feedback", that only they see. It sends a Discord DM or a push (whichever you
@@ -15,6 +587,10 @@ All notable changes to Ankerd Con are documented here.
 
 ### Changed
 
+- **A sheet that opens over another sheet no longer hides it.** The one underneath slides down to just above
+  the new one and shows only its top bar, dimmed, like a page laid over a page; closing the new sheet
+  (tap the dimmed area, Escape or back) brings the first one back. It applies to every sheet that opens over
+  another, such as "Ik rijd" in Vervoer or bulk rooms in Kamers.
 - **The admin CDN page loads a screenful at a time** (24 files, whole rows) and fetches more as you
   scroll down, instead of asking for 60 at once and then everything again on "Toon meer". Videos
   fetch their first frame only when they come near the screen. Paging through the viewer keeps

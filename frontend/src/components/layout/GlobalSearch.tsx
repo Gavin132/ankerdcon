@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Search, X, CalendarDays, Car, Utensils, Sparkles, Users, Zap, MapPin, BedDouble, Camera, Wallet } from "lucide-react";
 import { useCalendar } from "../../hooks/useCalendar";
@@ -7,8 +8,11 @@ import { useMeals } from "../../hooks/useMeals";
 import { useCosplays } from "../../hooks/useCosplays";
 import { useUsers } from "../../hooks/useUsers";
 import { UserAvatar } from "../common/UserAvatar";
+import { EmptyState } from "../common/EmptyState";
 import { routes } from "../../config/routes";
-import { buildTrip, buildTrips, currentTripId, isTripOver, tripIdForEvent } from "../../utils/trips";
+import { isBeforeToday } from "../../utils/date";
+import { rideSearchTitle } from "../../utils/rideSearch";
+import { buildTrip, buildTrips, cosplayTripId, currentTripId, isTripOver } from "../../utils/trips";
 import { matchSearchActions, type SearchActionId } from "../../utils/searchActions";
 import type { RouteActionState } from "../../hooks/useRouteAction";
 
@@ -61,6 +65,9 @@ function resolveDriverName(driver: string, users: { name: string; discord_userna
  * Event tab opens on — and say so under the card, so it is never a surprise
  * which event a new ride or meal ends up on.
  */
+/** What the empty search offers to try: things people look for, each of which has a card of its own. */
+const EXAMPLES = ["Locatie pingen", "Rit aanmaken", "Parkeerplek"];
+
 export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -77,8 +84,9 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
     if (!q) return [];
 
     const trips = buildTrips(events).filter((t) => matches(q, t.title, t.location));
+    // Old rides would bury the ones that matter: only today and later are found here.
     const rideRows = rides.filter((r) =>
-      matches(q, resolveDriverName(r.driver, users), r.start_location, r.end_location),
+      !isBeforeToday(r.departure_time) && matches(q, resolveDriverName(r.driver, users), r.start_location, r.end_location),
     );
     const mealRows = meals.filter((m) => matches(q, m.meal_name, m.location));
     const cosplayRows = cosplays.filter((c) => matches(q, c.character_name, c.series, c.user_name));
@@ -141,7 +149,7 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
         icon: Car,
         rows: rideRows.slice(0, MAX_PER_GROUP).map((r) => ({
           key: r.id,
-          title: resolveDriverName(r.driver, users),
+          title: rideSearchTitle(r, meals, resolveDriverName(r.driver, users)),
           subtitle: [r.start_location, r.end_location].filter(Boolean).join(" → "),
           to: routes.ride.view(r.id),
         })),
@@ -165,7 +173,8 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
         icon: Sparkles,
         rows: cosplayRows
           .map((c) => {
-            const tripId = c.linked_event_ids[0] ? tripIdForEvent(events, c.linked_event_ids[0]) : null;
+            // A concert has no Cosplay sheet, so a cosplay linked only to one is not offered.
+            const tripId = cosplayTripId(events, c.linked_event_ids);
             return tripId
               ? {
                   key: c.id,
@@ -194,6 +203,17 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
     return out.filter((g) => g.rows.length > 0);
   }, [query, events, rides, meals, cosplays, users]);
 
+  // Give focus back to what opened the search when it closes. The opener is read while rendering the opening:
+  // by the time an effect runs, the search box has already taken the focus.
+  const openerRef = useRef<HTMLElement | null>(null);
+  const wasOpen = useRef(false);
+  if (open && !wasOpen.current) openerRef.current = document.activeElement as HTMLElement | null;
+  wasOpen.current = open;
+  useEffect(() => {
+    if (!open) return;
+    return () => openerRef.current?.focus?.();
+  }, [open]);
+
   function go(to: string, state?: RouteActionState) {
     setQuery("");
     onClose();
@@ -210,24 +230,37 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
   const hasQuery = query.trim().length > 0;
   const hasResults = groups.length > 0;
 
-  return (
-    <div className="fixed inset-0 z-[450] flex flex-col bg-paper" style={{ paddingTop: "env(safe-area-inset-top,0px)" }}>
+  // In a portal: the header is a stacking context of its own, which would keep this under the tab bar.
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Zoeken"
+      onKeyDown={(e) => { if (e.key === "Escape") handleClose(); }}
+      className="fixed inset-0 z-[450] flex flex-col bg-paper"
+      style={{ paddingTop: "env(safe-area-inset-top,0px)" }}
+    >
       <div className="flex shrink-0 items-center gap-2 border-b-1.5 border-line px-4 py-3">
         <Search size={16} className="shrink-0 text-ink-3" />
         <input
           ref={inputRef}
           autoFocus
           type="search"
+          enterKeyHint="search"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Zoek events, ritten, crew, of wat je wilt doen…"
-          className="min-w-0 flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-3"
+          placeholder="Zoek in de app…"
+          className="h-11 min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-ink-3"
         />
         <button
           type="button"
           onClick={handleClose}
           aria-label="Zoeken sluiten"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+          className="icon-btn"
         >
           <X size={16} />
         </button>
@@ -235,28 +268,37 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
 
       <div className="flex-1 overflow-y-auto px-4 py-4">
         {!hasQuery && (
-          <p className="pt-10 text-center text-sm text-ink-3">Typ om te zoeken.</p>
+          <div className="space-y-3 pt-8 text-center">
+            <p className="text-sm text-ink-3">Zoek een evenement, rit, activiteit, cosplay of lid, of probeer:</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {EXAMPLES.map((example) => (
+                <button key={example} type="button" onClick={() => { setQuery(example); inputRef.current?.focus(); }} className="chip chip-off">
+                  {example}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
         {hasQuery && !hasResults && (
-          <p className="pt-10 text-center text-sm text-ink-3">Niks gevonden voor "{query.trim()}".</p>
+          <EmptyState compact icon={<Search size={22} />} title={`Niks gevonden voor “${query.trim()}”`} description="Controleer de spelling of zoek op iets anders." />
         )}
         <div className="space-y-5">
           {groups.map((group) => (
             <div key={group.label}>
-              <p className="mb-1.5 flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">
+              <p className="section-label mb-1.5 flex items-center gap-1.5">
                 <group.icon size={12} />
                 {group.label}
               </p>
-              <div className="space-y-1">
+              <div className="card-surface divide-y divide-line overflow-hidden">
                 {group.rows.map((row) => (
                   <button
                     key={row.key}
                     type="button"
                     onClick={() => go(row.to, row.state)}
-                    className="card-surface-hover flex w-full items-center gap-3 p-3 text-left"
+                    className="flex min-h-11 w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-sunken"
                   >
                     {group.label === "Crew" ? (
-                      <UserAvatar name={row.title} className="h-8 w-8 shrink-0 text-[11px]" />
+                      <UserAvatar name={row.title} className="h-8 w-8 shrink-0 text-[12px]" />
                     ) : (
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink-2">
                         {row.icon ? <row.icon size={14} /> : <group.icon size={14} />}
@@ -273,6 +315,7 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQueries } from "@tanstack/react-query";
-import { BedDouble, Camera, ChevronRight, MapPin, X } from "lucide-react";
+import { BedDouble, Camera, ChevronRight, MapPin, Play, X } from "lucide-react";
 import { UserAvatar } from "../../common/UserAvatar";
 import { StoryViewer } from "../../story/StoryViewer";
 import { TripPlanList } from "./TripPlanList";
 import { getStoryPhotos } from "../../../services/stories.service";
+import { gridImage } from "../../../utils/storyMedia";
 import { QUERY_KEYS, STALE_TIME } from "../../../constants";
 import { daysBetween, toDateKey, todayKey } from "../../../utils/date";
 import { dayShort, monthShort } from "../../../utils/multiDay";
-import { tripImage, type Trip } from "../../../utils/trips";
+import { tripImage, tripPeople, type Trip } from "../../../utils/trips";
+import { findUser as findMember } from "../../../utils/people";
 import { routes } from "../../../config/routes";
 import type { Meal, Ride, StoryDaySummary, User } from "../../../types";
 
@@ -74,11 +76,11 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
     : totalPhotos;
   const loading = photoQueries.some((q) => q.isLoading);
   const tiles = photos.slice(0, GRID_SIZE);
-  const names = [...trip.participants].sort((a, b) => Number(myNames.includes(b)) - Number(myNames.includes(a)));
-  const findUser = (p: string) => users.find((u) => u.name === p || u.discord_username === p || u.aliases?.includes(p));
+  const names = tripPeople(trip, users).map((person) => person.name).sort((a, b) => Number(myNames.includes(b)) - Number(myNames.includes(a)));
+  const findUser = (p: string) => findMember(users, p);
 
   const stats = [
-    { value: trip.participants.length, label: went ? "waren erbij" : "gingen" },
+    { value: names.length, label: went ? "waren erbij" : "gingen" },
     { value: totalPhotos, label: totalPhotos === 1 ? "foto" : "foto's" },
     nights > 0
       ? { value: nights, label: nights === 1 ? "hotelnacht" : "hotelnachten" }
@@ -86,19 +88,19 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
   ];
 
   return (
-    <article className="overflow-hidden rounded-[14px] border-2 border-outline bg-surface">
+    <article className="overflow-hidden rounded-hero border-2 border-outline bg-surface">
       {/* ── Cover with stamp ── */}
-      <div className="relative h-32 bg-[#0F1519]">
+      <div className="relative h-32 bg-hero">
         {cover && (
-          <img src={cover} alt="" className={`h-full w-full object-cover ${went ? "" : "opacity-60 grayscale"}`} />
+          <img src={cover} alt="" loading="lazy" decoding="async" className={`h-full w-full object-cover ${went ? "" : "opacity-60 grayscale"}`} />
         )}
         <button
           type="button"
           onClick={onClose}
           aria-label="Sluiten"
-          className="absolute left-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-[#0F1519]/70 text-white transition-colors hover:bg-[#0F1519]"
+          className="hit-area absolute left-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-hero/70 text-hero-ink transition-colors hover:bg-hero"
         >
-          <X size={15} />
+          <X size={16} />
         </button>
         <span
           className={`absolute -bottom-3.5 right-3 -rotate-[9deg] rounded-lg border-[2.5px] bg-surface px-2.5 pt-1 font-display text-[20px] font-black uppercase leading-none ${
@@ -111,7 +113,7 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
 
       <div className="flex flex-col gap-3.5 p-4">
         <div>
-          <p className="font-mono text-[12px] font-semibold uppercase tracking-[0.05em] text-ink">
+          <p className="font-mono text-xs font-semibold text-ink">
             {trip.dateRange} {trip.days[0].date.getFullYear()} <span className="font-normal text-ink-3">· {ago(lastKey)}</span>
           </p>
           <Link
@@ -121,15 +123,15 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
             {trip.title}
           </Link>
           <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-2">
-            {location && <span className="flex min-w-0 items-center gap-1.5"><MapPin size={13} className="shrink-0" /><span className="truncate">{location}</span></span>}
-            {hotel && <span className="flex min-w-0 items-center gap-1.5"><BedDouble size={13} className="shrink-0" /><span className="truncate">{hotel}</span></span>}
+            {location && <span className="flex min-w-0 items-center gap-1.5"><MapPin size={14} className="shrink-0" /><span className="truncate">{location}</span></span>}
+            {hotel && <span className="flex min-w-0 items-center gap-1.5"><BedDouble size={14} className="shrink-0" /><span className="truncate">{hotel}</span></span>}
           </p>
         </div>
 
-        <dl className="grid grid-cols-3 rounded-[10px] border-1.5 border-line">
+        <dl className="grid grid-cols-3 rounded-xl border-1.5 border-line">
           {stats.map((s, i) => (
             <div key={s.label} className={`flex flex-col-reverse px-2.5 py-2 ${i > 0 ? "border-l-1.5 border-line" : ""}`}>
-              <dt className="text-[11.5px] text-ink-2">{s.label}</dt>
+              <dt className="text-[12px] text-ink-2">{s.label}</dt>
               <dd className="font-display text-[26px] font-extrabold leading-none tabular-nums text-ink">{s.value}</dd>
             </div>
           ))}
@@ -147,16 +149,16 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
                   type="button"
                   onClick={() => onDayChange(on ? null : key)}
                   aria-pressed={on}
-                  className={`min-w-0 rounded-[9px] px-1 py-1.5 text-center transition-colors ${
-                    on ? "border-2 border-outline" : "border-1.5 border-line hover:border-ink-3"
-                  } ${ev.has_con === false ? "bg-hatch-surface" : "bg-surface"}`}
+                  className={`min-w-0 rounded-lg px-1 py-1.5 text-center transition-colors border-1.5 ${
+                    on ? "border-outline bg-brand-soft" : `border-line hover:border-ink-3 ${ev.has_con === false ? "bg-hatch-surface" : "bg-surface"}`
+                  }`}
                 >
-                  <span className="block font-mono text-[10px] uppercase leading-none tracking-[0.06em] text-ink-3">
+                  <span className="block font-mono text-xs leading-none text-ink-3">
                     {dayShort(date)} {monthShort(date)}
                   </span>
                   <span className="block font-display text-[22px] font-extrabold leading-none text-ink">{date.getDate()}</span>
-                  <span className="mt-0.5 flex items-center justify-center gap-1 text-[10.5px] leading-none text-ink-2">
-                    <Camera size={10} /> {photoCount(ev.id)}
+                  <span className="mt-0.5 flex items-center justify-center gap-1 text-[12px] leading-none text-ink-2">
+                    <Camera size={12} /> {photoCount(ev.id)}
                   </span>
                 </button>
               );
@@ -169,7 +171,7 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
           <div className="mb-1.5 flex items-baseline justify-between gap-2">
             <p className="section-label">Foto's{dayKey ? ` · ${DAYS[new Date(`${dayKey}T00:00:00`).getDay()]}` : ""}</p>
             {dayKey && (
-              <button type="button" onClick={() => onDayChange(null)} className="section-label !text-brand-text hover:underline">
+              <button type="button" onClick={() => onDayChange(null)} className="hit-area text-[12.5px] font-semibold text-brand-text hover:underline">
                 Alle dagen
               </button>
             )}
@@ -193,15 +195,20 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
                         type="button"
                         onClick={() => setViewer({ dayId, index })}
                         aria-label={`Foto ${i + 1} van ${shownTotal}`}
-                        className="group relative aspect-square overflow-hidden rounded-lg bg-sunken"
+                        className="relative aspect-square overflow-hidden rounded-lg bg-sunken"
                       >
-                        <img src={photo.image_url} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.04]" />
+                        <img src={gridImage(photo)} alt="" loading="lazy" className="h-full w-full object-cover" />
+                        {photo.media_type === "video" && (
+                          <span className="pointer-events-none absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-hero/65 text-hero-ink">
+                            <Play size={12} fill="currentColor" />
+                          </span>
+                        )}
                         {isLast ? (
-                          <span className="absolute inset-0 flex items-center justify-center bg-[#0F1519]/65 font-display text-[24px] font-extrabold text-white">
+                          <span className="absolute inset-0 flex items-center justify-center bg-hero/65 font-display text-[24px] font-extrabold text-hero-ink">
                             +{shownTotal - tiles.length + 1}
                           </span>
                         ) : (
-                          <UserAvatar name={photo.uploaded_by} className="absolute bottom-1 left-1 h-5 w-5 text-[8px] !border-[#0F1519]/40" />
+                          <UserAvatar name={photo.uploaded_by} className="absolute bottom-1 left-1 h-5 w-5 text-[8px] !border-hero/40" />
                         )}
                       </button>
                     );
@@ -242,10 +249,10 @@ export function TripLookback({ trip, dayKey, onDayChange, onClose, myNames, user
 
         <Link
           to={routes.trip.view(trip.id)}
-          className="flex items-center justify-between rounded-[10px] border-1.5 border-line px-3 py-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
+          className="flex items-center justify-between rounded-xl border-1.5 border-line px-3 py-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
         >
           Naar de trip
-          <ChevronRight size={15} className="text-ink-3" />
+          <ChevronRight size={16} className="text-ink-3" />
         </Link>
       </div>
 

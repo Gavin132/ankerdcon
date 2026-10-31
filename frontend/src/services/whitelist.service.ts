@@ -5,6 +5,7 @@ import type { WhitelistEntry } from "../types";
 export interface CreateWhitelistEntryPayload {
   discord_id?: string;
   email?: string;
+  viewer?: boolean;
 }
 
 export async function getAdminWhitelist(): Promise<WhitelistEntry[]> {

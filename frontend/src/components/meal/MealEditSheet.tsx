@@ -7,6 +7,7 @@ import { useDeleteMeal, useMealCategories, useUpdateMeal } from "../../hooks/use
 import { mealCategory } from "../../utils/mealCategory";
 import { toast } from "../../store/toast.store";
 import type { CalendarEvent, Meal } from "../../types";
+import { ToggleRow } from "../common/ToggleRow";
 
 interface MealEditSheetProps {
   open: boolean;
@@ -97,7 +98,7 @@ export function MealEditSheet({ open, onClose, meal, events, onDeleted }: MealEd
       subtitle={meal.meal_name}
       footer={
         <Button onClick={save} loading={updateMutation.isPending} disabled={!canSave} className="w-full">
-          <Save size={15} />
+          <Save size={16} />
           Wijzigingen opslaan
         </Button>
       }
@@ -187,31 +188,19 @@ export function MealEditSheet({ open, onClose, meal, events, onDeleted }: MealEd
         </div>
 
         {category.has_transport && (
-        <div className="flex items-center justify-between gap-4 rounded-xl border-1.5 border-line bg-surface px-3.5 py-3">
-          <div className="min-w-0">
-            <p id="meal-edit-transport-label" className="text-[14px] font-semibold text-ink">Vervoer regelen</p>
-            <p className="text-[12px] leading-snug text-ink-3">Er komt een rit naartoe waar mensen zich voor kunnen aanmelden.</p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={transport}
-            aria-labelledby="meal-edit-transport-label"
-            onClick={() => setTransport((v) => !v)}
-            className={`relative h-7 w-12 shrink-0 rounded-full border-2 border-outline transition-colors duration-200 ${transport ? "bg-brand" : "bg-sunken"}`}
-          >
-            <span
-              className={`absolute top-0.5 h-5 w-5 rounded-full border-2 border-outline bg-surface transition-[left] duration-200 ${transport ? "left-[22px]" : "left-0.5"}`}
-            />
-          </button>
-        </div>
+        <ToggleRow
+          label="Vervoer regelen"
+          hint="Er komt een rit naartoe waar mensen zich voor kunnen aanmelden."
+          checked={transport}
+          onChange={() => setTransport((v) => !v)}
+        />
         )}
 
         {/* Removing is a different thing from saving, so it sits apart and asks first. */}
         <div className="border-t-1.5 border-line pt-5">
           {confirmDelete ? (
-            <div className="space-y-3 rounded-xl border-1.5 border-rose-300 bg-rose-50 p-3.5 dark:border-rose-400/40 dark:bg-rose-500/10">
-              <p className="text-[13px] leading-snug text-rose-800 dark:text-rose-200">
+            <div className="space-y-3 rounded-xl border-1.5 border-bad-line bg-bad-soft p-3.5">
+              <p className="text-[13px] leading-snug text-bad">
                 <b>{meal.meal_name}</b> verwijderen?
                 {meal.participants.length > 0 &&
                   ` ${meal.participants.length} ${meal.participants.length === 1 ? "aanmelding gaat" : "aanmeldingen gaan"} mee.`}
@@ -219,7 +208,7 @@ export function MealEditSheet({ open, onClose, meal, events, onDeleted }: MealEd
               </p>
               <div className="flex gap-2">
                 <Button variant="danger" onClick={remove} loading={deleteMutation.isPending} className="flex-1">
-                  <Trash2 size={15} />
+                  <Trash2 size={16} />
                   Ja, verwijderen
                 </Button>
                 <Button variant="secondary" onClick={() => setConfirmDelete(false)} disabled={deleteMutation.isPending} className="flex-1">
@@ -231,7 +220,7 @@ export function MealEditSheet({ open, onClose, meal, events, onDeleted }: MealEd
             <button
               type="button"
               onClick={() => setConfirmDelete(true)}
-              className="flex items-center gap-2 text-[13px] font-semibold text-rose-700 transition-colors hover:text-rose-900 dark:text-rose-300 dark:hover:text-rose-200"
+              className="flex items-center gap-2 text-[13px] font-semibold text-bad transition-opacity hover:opacity-80"
             >
               <Trash2 size={14} />
               Activiteit verwijderen

@@ -49,6 +49,36 @@ On every request to a configured hostname, the Worker fetches the origin and:
 - **The logo is embedded** as a data URI in the script, not fetched from the (possibly down)
   origin, so it still shows when nothing else does.
 
+## How long it waits
+
+Without a limit, a visitor to a dead home server watches a loading spinner for as long as Cloudflare does:
+about 15 seconds to connect (a 522) and 100 seconds to answer (a 524), and when the home network drops while the
+connection still looks open, the full 100. So the Worker gives the origin only seconds to *start* answering (the
+response headers, not the whole body):
+
+| Request | Limit | Why |
+| --- | --- | --- |
+| a page load (`Accept: text/html`) | 8 s | the one a person is waiting on |
+| any other GET/HEAD (the app's reads, files) | 25 s | the app's own limit for a read is 15 s, so it notices first |
+| anything that sends something (POST, PUT, uploads) | none | the time an upload takes is not the server being down |
+
+On a timeout the page shows **522** ("Verbinding verlopen", which explains it as the home network or router).
+The timer is cleared the moment the headers arrive, so a long download (the day's zip) is never cut short.
+`NAVIGATION_TIMEOUT_MS` and `READ_TIMEOUT_MS` are at the top of the script; the tests are in
+`frontend/src/utils/errorPageWorker.test.ts`. After changing the script, deploy it again (`npx wrangler deploy`).
+
+A phone that has the app installed does not see this page at all when the server is down: its service worker
+serves the saved app (see [Offline behaviour](#offline-behaviour-on-the-phone) below).
+
+### Offline behaviour on the phone
+
+- **The service worker** (`frontend/sw/service-worker.js`) gives a page load 6 seconds. If the server does not
+  answer, **or answers with a 5xx** (this Worker's error page included), it serves the saved app shell instead, so
+  the app opens on its saved data (the query cache in localStorage) rather than on an error page. A browser with no
+  saved shell yet (a first visit) gets the Worker's page.
+- **The app** gives a read 15 seconds (`GET_TIMEOUT_MS` in `lib/api/client.ts`; a change keeps 30), the sign-in
+  check shows "De server reageert traag" after 6 seconds, and "Kan de server niet bereiken" after at most 15.
+
 ## The one thing it can't guarantee
 
 For **502/503/504** — the origin answers, just with an error — this is completely reliable:

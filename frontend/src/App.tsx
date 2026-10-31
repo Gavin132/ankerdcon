@@ -3,13 +3,16 @@ import { RouterProvider } from "react-router-dom";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { QUERY_CACHE_MAX_AGE, clearPersistedQueries, queryPersister, shouldPersistQuery } from "./lib/queryPersist";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, MotionConfig } from "framer-motion";
 import { router } from "./router";
 import { ToastContainer } from "./components/common/Toast";
 import { SplashScreen } from "./components/splash/SplashScreen";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
 import { ImpersonationBanner } from "./components/common/ImpersonationBanner";
 import { OfflineBanner } from "./components/common/OfflineBanner";
+import { ViewerBanner } from "./components/common/ViewerBanner";
+import { ConfirmHost } from "./components/common/ConfirmHost";
+import { captureInstallPrompt } from "./utils/install";
 import { UpdateBanner } from "./components/layout/UpdateBanner";
 import { useThemeStore } from "./store/theme.store";
 import { useSplash } from "./hooks/useSplash";
@@ -18,10 +21,15 @@ import { usePendingStoryUploadsFlusher } from "./hooks/usePendingStoryUploads";
 // Add these two imports!
 import { supabase } from "./services/supabase";
 import { useAuthStore, PENDING_LOGIN_REDIRECT_KEY, PENDING_DISCORD_LINK_KEY } from "./store/auth.store";
+import { isMockMode } from "./lib/mockMode";
 import { ApiError } from "./lib/api/client";
 import { linkDiscordAccount } from "./services/users.service";
 import { QUERY_KEYS } from "./constants";
 import { toast } from "./store/toast.store";
+import { LoadingSpinner } from "./components/common/LoadingSpinner";
+
+// The browser offers to install the app through an event that fires once, early: catch it before anything renders.
+captureInstallPrompt();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -81,6 +89,8 @@ function AuthSync() {
       setInitialized();
       return;
     }
+    // Mock mode (development only) is signed in already and has no Supabase session to listen to.
+    if (isMockMode()) return;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
@@ -114,7 +124,7 @@ function AuthSync() {
                 toast("success", "Discord-account gekoppeld!");
               })
               .catch(() => {
-                toast("error", "Koppelen van Discord is niet gelukt. Probeer het opnieuw via je profiel.");
+                toast("error", "Koppelen van Discord is niet gelukt. Probeer het opnieuw via Instellingen.");
               });
           }
         } catch {
@@ -228,7 +238,7 @@ function AppBackdrop() {
 
         decoding="async"
         draggable={false}
-        className="absolute -bottom-12 -right-12 w-[380px] select-none opacity-[0.045] dark:opacity-[0.055]"
+        className="absolute -bottom-12 -right-12 w-[380px] select-none opacity-watermark"
         style={{ transform: "rotate(6deg)" }}
       />
       {/* Nerd logo — smaller, top-left, softly rotated */}
@@ -240,7 +250,7 @@ function AppBackdrop() {
 
         decoding="async"
         draggable={false}
-        className="absolute -top-10 -left-10 w-[200px] select-none opacity-[0.035] dark:opacity-[0.045]"
+        className="absolute -top-10 -left-10 w-[200px] select-none opacity-watermark-small"
         style={{ transform: "rotate(-8deg)" }}
       />
     </div>
@@ -257,7 +267,7 @@ function PendingUploadsSync() {
 function RouteFallback() {
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-paper">
-      <div className="h-8 w-8 rounded-full border-2 border-ink-3 border-t-transparent animate-spin" />
+      <LoadingSpinner />
     </div>
   );
 }
@@ -265,6 +275,9 @@ function RouteFallback() {
 export function App() {
   return (
     <ErrorBoundary>
+      {/* Animations follow the device's "reduce motion" setting: transforms are skipped, fades stay. Nothing
+          the app depends on may be an animation (the story timer is driven by hand for that reason). */}
+      <MotionConfig reducedMotion="user">
       {/* Restores the last known data from localStorage before the first paint,
           so the app opens on real content and revalidates behind it instead of
           showing skeletons until the network answers. `buster` is the app
@@ -284,15 +297,18 @@ export function App() {
         <StaleResumeGuard />
         <PendingUploadsSync />
         <AppBackdrop />
+        <UpdateBanner />
         <ImpersonationBanner />
         <OfflineBanner />
+        <ViewerBanner />
         <Suspense fallback={<RouteFallback />}>
           <RouterProvider router={router} />
         </Suspense>
         <ToastContainer />
-        <UpdateBanner />
+        <ConfirmHost />
         <SplashController />
       </PersistQueryClientProvider>
+      </MotionConfig>
     </ErrorBoundary>
   );
 }

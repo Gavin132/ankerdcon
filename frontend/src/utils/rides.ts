@@ -16,21 +16,17 @@ function resolveDriverUser(driverName: string, users: User[]): User | undefined 
 }
 
 /**
- * Which icon a ride's vehicle gets, and whether it should render a size
- * down. Public transport always gets the train, telegy always gets his
- * truck regardless of seats, and otherwise a car — full size for a 5-seater,
- * a size smaller for anything with 4 seats or fewer so a compact car reads
- * as visibly smaller than a full one at a glance.
+ * Which icon a ride's vehicle gets. Public transport always gets the train,
+ * telegy always gets his truck regardless of seats, and otherwise a car.
  */
 export function rideVehicleIcon(
   driverName: string,
   users: User[],
-  totalSeats: number,
   isPublicTransport = false,
-): { Icon: LucideIcon; small: boolean } {
-  if (isPublicTransport) return { Icon: Train, small: false };
-  if (resolveDriverUser(driverName, users)?.id === TELEGY_USER_ID) return { Icon: Truck, small: false };
-  return { Icon: Car, small: totalSeats <= 4 };
+): { Icon: LucideIcon } {
+  if (isPublicTransport) return { Icon: Train };
+  if (resolveDriverUser(driverName, users)?.id === TELEGY_USER_ID) return { Icon: Truck };
+  return { Icon: Car };
 }
 
 export type RideStatus = "upcoming" | "soon" | "urgent" | "recent" | "past";

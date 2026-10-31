@@ -152,7 +152,7 @@ Discord channel), **personal DMs** through the bot, and **web push**
 category (`event_created`, `ticket_sale`, `event_reminder_*`, `ride_created`,
 `expense_created`, `meal_created`) — the category list is channel-agnostic, it says what a
 member wants to hear about, not how. A DM additionally needs "DM's toestaan" and a linked
-Discord account; push needs only a subscription (Instellingen → Notificaties, or onboarding)
+Discord account; push needs only a subscription (Instellingen → Meldingen, or onboarding)
 to exist for that device. Payment requests are personal, sent the same two ways, DM needing
 only the master switch. All of it is fire-and-forget: a failed DM or push never fails the
 request, and a push that comes back 404/410 (device gone) deletes its own subscription row.

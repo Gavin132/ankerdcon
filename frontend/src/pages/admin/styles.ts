@@ -1,58 +1,54 @@
 /** Shared Tailwind class strings for the admin portal (flat design, see docs/design-system.md). */
 
-/** Text input inside admin drawers. Compact version of `input-field`. */
-export const F =
-  "input-field rounded-[9px] px-3 py-2.5 text-base sm:text-sm";
+/** Text input inside admin drawers: the one `input-field` (16 px, so iOS does not zoom, 48 px tall). */
+export const F = "input-field";
 
 /** Use for <select> elements. `.dark .input-field` sets the dark color-scheme so native options stay readable. */
-export const FS =
-  "input-field rounded-[9px] px-3 py-2.5 text-base sm:text-sm";
+export const FS = "input-field";
 
-export const L = "mb-1 block text-xs font-medium text-ink-2";
+export const L = "field-label";
 
-/** Uppercase section title inside a SECTION card. */
-export const SECTION_TITLE =
-  "font-mono text-[10.5px] font-semibold uppercase tracking-[0.09em] text-ink-3";
+/** The title of a block of fields in a sheet ("Basisgegevens"). */
+export const SECTION_TITLE = "section-label";
 
-export const SECTION =
-  "space-y-3 rounded-xl border-1.5 border-line bg-surface p-4";
+/** A block of fields in a sheet: no card of its own (the sheet is the card), a divider between blocks. */
+export const SECTION = "space-y-3 border-t border-line pt-5 first:border-t-0 first:pt-0";
 
 /** Flat panel that holds a table or a list. */
 export const PANEL = "card-surface overflow-hidden";
 
 /** Table header row cells (`<th>`). */
-export const TH =
-  "whitespace-nowrap border-b-1.5 border-line px-4 py-2 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3";
+export const TH = "th";
 
-/** Table body cells (`<td>`). Pair rows with `TR`. */
-export const TD = "border-b border-line px-4 py-3 align-middle text-[13.5px] text-ink";
+/** Table body cells (`<td>`). On a phone `.stack-table` takes the padding away again; the `<tbody>` has `divide-y`. */
+export const TD = "px-5 py-3.5 align-middle";
 
-/** Table body row: hover sunken, no border on the last row. */
-export const TR = "transition-colors hover:bg-sunken [&:last-child>td]:border-b-0";
+/** Table body row: hover sunken. A selected row (the checkbox is ticked) is `TR_SELECTED` instead of the hover. */
+export const TR = "group transition-colors hover:bg-sunken";
+export const TR_SELECTED = "group transition-colors bg-brand-soft/50 hover:bg-brand-soft/70";
 
-/** Primary action (brand blue, ink outline, hard shadow). Add padding and text size. */
-export const BTN_PRIMARY = "btn-primary px-4 py-2.5 text-sm disabled:opacity-50";
+/** Primary action (`.btn-primary`: brand fill, no outline, flat). Its height is the standard one of the button scale (index.css). */
+export const BTN_PRIMARY = "btn-primary px-4";
 
-/** Secondary action. */
-export const BTN_SECONDARY =
-  "inline-flex items-center justify-center gap-2 rounded-xl border-1.5 border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-3 disabled:opacity-50";
+/** Secondary action (`.btn-secondary`: transparent, 1px hairline). */
+export const BTN_SECONDARY = "btn-secondary px-4";
 
-/** Small uppercase mono tag. */
-export const TAG =
-  "inline-flex items-center rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2";
+/** A checkbox with its text: the whole line is the hit area (44 px). */
+export const CHECK_ROW = "flex min-h-11 cursor-pointer items-center gap-2.5 text-sm text-ink-2";
 
-/** Status pills. */
-export const PILL = "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11.5px] font-semibold";
-export const PILL_OK = `${PILL} bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300`;
-export const PILL_WARN = `${PILL} bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300`;
-export const PILL_BAD = `${PILL} bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300`;
-export const PILL_NEUTRAL = `${PILL} bg-sunken text-ink-2`;
+/** Small uppercase tag next to a name ("Gast", "Kijker"). */
+export const TAG = "tag";
 
-/** Selected / unselected filter chip. */
-export const CHIP = "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors";
-export const CHIP_ON = `${CHIP} border-1.5 border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on`;
-export const CHIP_OFF = `${CHIP} border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3`;
+/** Status pills (`.pill` in index.css). */
+export const PILL = "pill";
+export const PILL_OK = "pill pill-ok";
+export const PILL_WARN = "pill pill-warn";
+export const PILL_BAD = "pill pill-bad";
+export const PILL_NEUTRAL = "pill pill-neutral";
 
-/** Square icon button (edit, delete, close). */
-export const ICON_BTN =
-  "flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink disabled:opacity-40";
+/** Selected / unselected filter chip (`.chip` in index.css). */
+export const CHIP_ON = "chip chip-on";
+export const CHIP_OFF = "chip chip-off";
+
+/** Square icon button (edit, delete, close): `.icon-btn` in index.css. */
+export const ICON_BTN = "icon-btn";

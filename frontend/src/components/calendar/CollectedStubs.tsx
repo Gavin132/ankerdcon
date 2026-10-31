@@ -6,8 +6,11 @@ import { useStorySummary } from "../../hooks/useStories";
 import { StoryRing } from "../story/StoryRing";
 import { StoryViewer } from "../story/StoryViewer";
 import { dayShort } from "../../utils/multiDay";
-import { tripImage, type Trip } from "../../utils/trips";
+import { tripImage, tripPeople, type Trip } from "../../utils/trips";
+import { useUsers } from "../../hooks/useUsers";
+import { Segmented } from "../common/Segmented";
 import { routes } from "../../config/routes";
+import { countOf } from "../../utils/format";
 
 interface CollectedStubsProps {
   /** Past trips, newest first. */
@@ -22,6 +25,7 @@ interface CollectedStubsProps {
  * photos and a link to the trip.
  */
 export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
+  const { data: users = [] } = useUsers();
   const years = [...new Set(trips.map((t) => t.days[0].date.getFullYear()))];
   const [pickedYear, setYear] = useState<number | null>(null);
   const year = pickedYear !== null && years.includes(pickedYear) ? pickedYear : years[0];
@@ -45,9 +49,9 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
   const open = yearTrips.find((t) => t.id === openId) ?? null;
 
   const stats = [
-    { value: `${mine.length}/${yearTrips.length}`, label: "events mee" },
+    { value: `${mine.length}/${yearTrips.length}`, label: "evenementen mee" },
     { value: conDays, label: conDays === 1 ? "con-dag" : "con-dagen" },
-    { value: hotelTrips, label: hotelTrips === 1 ? "hoteltrip" : "hoteltrips" },
+    { value: hotelTrips, label: hotelTrips === 1 ? "hotelverblijf" : "hotelverblijven" },
     { value: photos, label: "foto's gedeeld" },
   ];
 
@@ -56,25 +60,17 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h2 className="font-display text-[26px] font-extrabold uppercase leading-none text-ink">Geweest in {year}</h2>
         {years.length > 1 && (
-          <div className="flex max-w-full gap-1 overflow-x-auto rounded-[10px] border-1.5 border-line bg-sunken p-[3px]" role="group" aria-label="Jaar">
-            {years.map((y) => (
-              <button
-                key={y}
-                type="button"
-                onClick={() => { setYear(y); setOpenId(null); }}
-                aria-pressed={y === year}
-                className={`shrink-0 rounded-[7px] px-2.5 py-1 font-mono text-[12px] font-semibold transition-colors ${
-                  y === year ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]" : "text-ink-2 hover:text-ink"
-                }`}
-              >
-                {y}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            label="Jaar"
+            scroll
+            options={years.map((y) => ({ value: String(y), label: <span className="tabular-nums">{y}</span> }))}
+            value={String(year)}
+            onChange={(y) => { setYear(Number(y)); setOpenId(null); }}
+          />
         )}
       </div>
 
-      <dl className="grid grid-cols-2 overflow-hidden rounded-xl border-1.5 border-line bg-surface sm:grid-cols-4">
+      <dl className="grid grid-cols-2 overflow-hidden card-surface sm:grid-cols-4">
         {stats.map((s, i) => (
           <div
             key={s.label}
@@ -98,34 +94,27 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
               type="button"
               onClick={() => setOpenId(isOpen ? null : t.id)}
               aria-expanded={isOpen}
-              className={`stub-notch relative flex min-h-[136px] flex-col overflow-hidden rounded-[10px] p-3 text-left transition-colors ${
+              className={`stub-notch relative flex min-h-[136px] flex-col overflow-hidden rounded-xl p-3 text-left transition-colors ${
                 isOpen
-                  ? "border-2 border-outline bg-surface"
+                  ? "border-1.5 border-outline bg-surface"
                   : went
                     ? "border-1.5 border-line bg-surface hover:border-ink-3"
                     : "border-1.5 border-dashed border-line hover:border-ink-3"
               }`}
             >
-              <span className="border-b-1.5 border-dashed border-line pb-1.5 font-mono text-[11px] uppercase tracking-[0.06em] text-ink-3">
+              <span className="border-b-1.5 border-dashed border-line pb-1.5 text-[12px] text-ink-3">
                 {t.dateRange}
               </span>
               {thumb && (
-                <span className={`mt-2.5 block h-11 overflow-hidden rounded-md bg-[#0F1519] ${went ? "" : "opacity-50 grayscale"}`}>
-                  <img src={thumb} alt="" className="h-full w-full object-cover" />
+                <span className={`mt-2.5 block h-11 overflow-hidden rounded-md bg-hero ${went ? "" : "opacity-50 grayscale"}`}>
+                  <img src={thumb} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                 </span>
               )}
               <span className={`mt-2 font-display text-[20px] font-extrabold uppercase leading-[0.95] [text-wrap:balance] ${went ? "text-ink" : "text-ink-3"}`}>
                 {t.title}
               </span>
               <span className="mt-auto pt-2 text-[12px] text-ink-2">
-                {t.participants.length} gingen{tripPhotos > 0 ? ` · ${tripPhotos} foto's` : ""}
-              </span>
-              <span
-                className={`absolute right-2.5 top-10 -rotate-[10deg] rounded-md border-2 bg-surface/80 px-1.5 pt-0.5 font-display text-[14px] font-black uppercase leading-tight ${
-                  went ? "border-brand-text text-brand-text" : "border-dashed border-ink-3 text-ink-3"
-                }`}
-              >
-                {went ? "Geweest" : "Gemist"}
+                {went ? "" : "Gemist · "}{countOf(tripPeople(t, users).length, "ging", "gingen")}{tripPhotos > 0 ? ` · ${countOf(tripPhotos, "foto", "foto's")}` : ""}
               </span>
             </button>
           );
@@ -148,8 +137,8 @@ export function CollectedStubs({ trips, myNames }: CollectedStubsProps) {
                 className="flex items-center gap-2 text-[14px] font-semibold text-ink hover:underline"
               >
                 <span className="min-w-0 truncate">{open.title}</span>
-                <span className="shrink-0 font-mono text-[11.5px] uppercase text-ink-3">{open.dateRange}</span>
-                <ChevronRight size={14} className="ml-auto shrink-0 text-ink-3" />
+                <span className="shrink-0 text-[12px] font-normal text-ink-3">{open.dateRange}</span>
+                <ChevronRight size={16} className="ml-auto shrink-0 text-ink-3" />
               </Link>
               {photosOf(open) > 0 ? (
                 <div className="flex gap-3 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

@@ -1,5 +1,5 @@
-import { Clock, ExternalLink, Globe, Ticket } from "lucide-react";
-import { formatCurrency, formatTicketSaleStart } from "../../utils/format";
+import { ExternalLink, Globe, Ticket } from "lucide-react";
+import { formatAmount, formatTicketSaleStart } from "../../utils/format";
 import { safeHref } from "../../utils/validation";
 import type { CalendarEvent } from "../../types";
 
@@ -18,13 +18,16 @@ export function EventLinks({ event, bare = false }: EventLinksProps) {
   const hasSaleInfo = !!event.ticket_sale_start;
 
   const linkButton =
-    "flex flex-1 items-center justify-center gap-2 rounded-xl border-1.5 border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-3";
+    "btn-primary flex-1 px-4";
+
+  // Inside a sheet the sheet already has its own side padding; in a card the rows bring theirs.
+  const pad = bare ? "py-3.5" : "px-5 py-4";
 
   const content = (
       <div className="divide-y divide-line">
         {/* Ticket prices */}
         {hasTickets && (
-          <div className="px-5 py-4">
+          <div className={pad}>
             <p className="section-label mb-2.5">
               Tickets
             </p>
@@ -33,7 +36,7 @@ export function EventLinks({ event, bare = false }: EventLinksProps) {
                 <div key={i} className="flex items-center justify-between gap-4">
                   <span className="text-sm text-ink-2">{t.title}</span>
                   <span className="shrink-0 font-mono text-sm font-semibold tabular-nums text-ink">
-                    {formatCurrency(t.price)}
+                    {formatAmount(t.price)}
                   </span>
                 </div>
               ))}
@@ -43,24 +46,19 @@ export function EventLinks({ event, bare = false }: EventLinksProps) {
 
         {/* Sale start */}
         {hasSaleInfo && (
-          <div className="flex items-center gap-3 px-5 py-4">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
-              <Clock size={14} />
-            </div>
-            <div>
-              <p className="section-label mb-0.5">
-                Verkoop start
-              </p>
-              <p className="font-mono text-sm font-semibold tabular-nums text-ink">
-                {formatTicketSaleStart(event.ticket_sale_start!)}
-              </p>
-            </div>
+          <div className={pad}>
+            <p className="section-label mb-1">
+              Verkoop start
+            </p>
+            <p className="font-mono text-sm font-semibold tabular-nums text-ink">
+              {formatTicketSaleStart(event.ticket_sale_start!)}
+            </p>
           </div>
         )}
 
         {/* CTA buttons */}
         {hasCTAs && (
-          <div className="flex flex-col gap-2.5 px-5 py-4 sm:flex-row">
+          <div className={`flex flex-col gap-2.5 sm:flex-row ${pad}`}>
             {ticketUrl && (
               <a
                 href={ticketUrl}
@@ -68,9 +66,9 @@ export function EventLinks({ event, bare = false }: EventLinksProps) {
                 rel="noopener noreferrer"
                 className={linkButton}
               >
-                <Ticket size={15} />
+                <Ticket size={16} />
                 Tickets kopen
-                <ExternalLink size={12} className="ml-0.5 text-ink-3" />
+                <ExternalLink size={12} className="ml-0.5" />
               </a>
             )}
             {websiteUrl && (
@@ -80,9 +78,9 @@ export function EventLinks({ event, bare = false }: EventLinksProps) {
                 rel="noopener noreferrer"
                 className={linkButton}
               >
-                <Globe size={15} />
+                <Globe size={16} />
                 Officiële website
-                <ExternalLink size={12} className="ml-0.5 text-ink-3" />
+                <ExternalLink size={12} className="ml-0.5" />
               </a>
             )}
           </div>

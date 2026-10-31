@@ -60,7 +60,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Entiteiten",
     items: [
       { label: "Gebruikers",  path: routes.admin.users,  icon: Users },
-      { label: "Whitelist",   path: routes.admin.whitelist, icon: ListChecks },
+      { label: "Toegangslijst", path: routes.admin.whitelist, icon: ListChecks },
       { label: "Ritten",      path: routes.admin.rides,  icon: Car },
       {
         label: "Activiteiten",
@@ -93,36 +93,24 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Preview: Onboarding", path: routes.admin.previewOnboarding, icon: FlaskConical },
       { label: "Inloggen als gebruiker", path: routes.admin.impersonate, icon: UserCog },
-      { label: "Tijdreis-widget", path: routes.admin.timeTravel, icon: Clock },
+      { label: "Tijdreis", path: routes.admin.timeTravel, icon: Clock },
       { label: "Schermen testen", path: routes.admin.screens, icon: AlertTriangle },
     ],
   },
 ];
 
-export const PAGE_TITLES: Record<string, string> = {
-  [routes.admin.base]:        "Dashboard",
-  [routes.admin.users]:       "Gebruikers",
-  [routes.admin.whitelist]:   "Whitelist",
-  [routes.admin.rides]:       "Ritten",
-  [routes.admin.meals]:       "Activiteiten",
-  [routes.admin.mealCategories]: "Activiteitscategorieën",
-  [routes.admin.events]:      "Evenementen",
-  [routes.admin.eventGroups]: "Evenementgroepen",
-  [routes.admin.badges]:      "Badges",
-  [routes.admin.betalingen]:  "Betalingen",
-  [routes.admin.announcements]: "Aankondigingen",
-  [routes.admin.impersonate]: "Inloggen als gebruiker",
-  [routes.admin.changelog]: "Wijzigingslog",
-  [routes.admin.timeTravel]: "Tijdreis-widget",
-  [routes.admin.screens]: "Schermen testen",
-  [routes.admin.cdn]: "CDN",
-  [routes.admin.feedback]: "Feedback",
+/** The API stores the English values; admins read these. */
+export const EVENT_TYPE_LABEL: Record<string, string> = {
+  con: "Con",
+  gathering: "Bijeenkomst",
+  concert: "Concert",
 };
-
-// Ride direction tags are told apart by their label, not by colour (flat design:
-// no decorative colours).
-export const DIRECTION_COLORS: Record<string, string> = {
-  Inbound:    "text-ink-2",
-  Outbound:   "text-ink-2",
-  Restaurant: "text-ink-2",
+export const DIRECTION_LABEL: Record<string, string> = {
+  Inbound: "Heen",
+  Outbound: "Terug",
+  Restaurant: "Restaurant",
+};
+export const VEHICLE_LABEL: Record<string, string> = {
+  Car: "Auto",
+  "Public Transport": "Openbaar vervoer",
 };

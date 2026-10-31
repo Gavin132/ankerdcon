@@ -3,8 +3,10 @@ import { Check } from "lucide-react";
 import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
-import { dayShort, monthShort } from "../../utils/multiDay";
+import { Segmented } from "../common/Segmented";
+import { SelectableDayCards } from "../trip/SelectableDayCards";
 import type { Trip } from "../../utils/trips";
+import { groupPeople } from "../../utils/people";
 import type { User } from "../../types";
 
 interface TripRsvpModalProps {
@@ -65,73 +67,38 @@ export function TripRsvpModal({ trip: openTrip, users, onClose, onConfirm }: Tri
           className="w-full"
           onClick={() => { onConfirm(mode, names, dayIds); onClose(); }}
         >
-          <Check size={15} />
+          <Check size={16} />
           {label}
         </Button>
       }
     >
       {trip && (
         <div className="space-y-4">
-          <div className="flex gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]" role="group" aria-label="Aan- of afmelden">
-            {(["join", "leave"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => { setMode(m); setNames([]); }}
-                aria-pressed={mode === m}
-                className={`flex-1 rounded-[7px] px-3 py-1.5 text-[13px] font-semibold transition-colors ${
-                  mode === m ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]" : "text-ink-2 hover:text-ink"
-                }`}
-              >
-                {m === "join" ? "Aanmelden" : "Afmelden"}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            label="Aan- of afmelden"
+            fill
+            options={[{ value: "join", label: "Aanmelden" }, { value: "leave", label: "Afmelden" }]}
+            value={mode}
+            onChange={(m) => { setMode(m); setNames([]); }}
+          />
 
           {multiDay && (
             <div>
               <p className="section-label mb-2">Dagen</p>
-              <div className="grid grid-cols-3 gap-2">
-                {trip.days.map(({ ev, date }) => {
-                  const on = dayIds.includes(ev.id);
-                  return (
-                    <button
-                      key={ev.id}
-                      type="button"
-                      onClick={() => toggleDay(ev.id)}
-                      aria-pressed={on}
-                      className={`relative min-w-0 rounded-[10px] border-1.5 px-1.5 pb-2 pt-3 text-center transition-[colors,transform] active:scale-[0.97] ${
-                        on ? "border-brand-text bg-brand-soft" : "border-line bg-surface hover:border-ink-3"
-                      }`}
-                    >
-                      <span
-                        aria-hidden
-                        className={`absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full border-1.5 ${
-                          on ? "border-brand-text bg-brand text-brand-on" : "border-ink-3 bg-surface"
-                        }`}
-                      >
-                        {on && <Check size={9} strokeWidth={3} />}
-                      </span>
-                      <span className="block font-mono text-[10px] uppercase leading-none tracking-[0.08em] text-ink-3">
-                        {dayShort(date)} {monthShort(date)}
-                      </span>
-                      <span className="block font-display text-[24px] font-extrabold leading-none text-ink">
-                        {date.getDate()}
-                      </span>
-                      <span className="mt-1 block truncate text-[11px] leading-none text-ink-2">
-                        {ev.has_con === false ? "Reisdag" : `${ev.participants.length} mee`}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+              <SelectableDayCards
+                days={trip.days}
+                selected={dayIds}
+                onToggle={toggleDay}
+                caption={({ ev }) => (ev.has_con === false ? "Reisdag" : `${groupPeople(ev.participants ?? [], users).length} mee`)}
+                label="Dagen"
+              />
             </div>
           )}
 
           <div>
             <p className="section-label mb-2">Namen</p>
             {mode === "leave" && options.length === 0 ? (
-              <p className="text-[13px] text-ink-3">Er is nog niemand aangemeld voor {multiDay ? "deze dagen" : "dit event"}.</p>
+              <p className="text-[13px] text-ink-3">Er is nog niemand aangemeld voor {multiDay ? "deze dagen" : "dit evenement"}.</p>
             ) : (
               <NamePicker
                 multiple

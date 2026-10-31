@@ -1,34 +1,44 @@
 import { forwardRef, useState } from "react";
-import { BedDouble, Plus, Layers, Users, Pencil, Trash2, X, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
+import { BedDouble, Plus, Layers, Pencil, Trash2, X, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   useHotelRooms,
   useCreateHotelRoom,
+  useUpdateHotelRoom,
   useBulkCreateHotelRooms,
   useAssignHotelRoom,
   useLeaveHotelRoom,
 } from "../../hooks/useCalendar";
-import { useAdminUpdateHotelRoom, useAdminDeleteHotelRoom } from "../../hooks/useAdmin";
-import { useUsers, useCurrentUser } from "../../hooks/useUsers";
+import { useAdminDeleteHotelRoom } from "../../hooks/useAdmin";
+import { useIsViewer } from "../../hooks/useIsViewer";
+import { useUsers, useCurrentUser, useMyNames } from "../../hooks/useUsers";
 import { UserAvatar } from "../../components/common/UserAvatar";
+import { AvatarStack } from "../../components/common/AvatarStack";
+import { EmptyState } from "../../components/common/EmptyState";
 import { NamePicker } from "../../components/common/NamePicker";
 import { TripSheet } from "../../components/trip/TripSheet";
 import { Button } from "../../components/common/Button";
+import { ApiError } from "../../lib/api/client";
 import { toast } from "../../store/toast.store";
-import { HotelInfoCard } from "../../components/event/HotelInfoCard";
-import { tripInfo, tripRoomGaps } from "../../utils/trips";
+import { HotelInfoCard, stayRange } from "../../components/event/HotelInfoCard";
+import { tripInfo, tripRoomGaps, tripRoomSummary } from "../../utils/trips";
+import { groupPeople } from "../../utils/people";
+import {
+  duplicateNotice,
+  joinNames,
+  moveHint,
+  otherRoomsOf,
+  peopleInOtherRooms,
+  peopleInSeveralRooms,
+  roomLabel,
+  roomMoveMessage,
+  type RoomDuplicate,
+} from "../../utils/rooms";
+import { roomCreatePayload, roomEditPayload, type RoomFormValues } from "../../utils/roomForm";
 import { useTrip } from "./tripContext";
-import type { HotelRoom } from "../../types";
+import type { HotelRoom, User } from "../../types";
 
 // ── Room form modal ────────────────────────────────────────────────────────────
-
-interface RoomFormValues {
-  room_number: string;
-  floor: string;
-  instructions: string;
-  capacity: string;
-  occupants: string[];
-}
 
 function RoomModal({
   open,
@@ -36,18 +46,21 @@ function RoomModal({
   room,
   eventId,
   userNames,
-  isAdmin,
+  rooms,
+  users,
 }: {
   open: boolean;
   onClose: () => void;
   room: HotelRoom | null; // null = create mode
   eventId: string;
   userNames: string[];
-  isAdmin: boolean;
+  /** Every room of the hotel and every member: who is picked and already sleeps elsewhere is moved, and the form says so. */
+  rooms: HotelRoom[];
+  users: User[];
 }) {
   const isEdit = room !== null;
   const createRoom = useCreateHotelRoom();
-  const updateRoom = useAdminUpdateHotelRoom();
+  const updateRoom = useUpdateHotelRoom();
 
   const [values, setValues] = useState<RoomFormValues>({
     room_number: room?.room_number ?? "",
@@ -58,41 +71,30 @@ function RoomModal({
   });
 
   const isPending = createRoom.isPending || updateRoom.isPending;
+  // A person sleeps in one room: whoever is picked and sleeps in another room now is moved here.
+  const movingHere = moveHint(peopleInOtherRooms(values.occupants, rooms, users, room?.id ?? null));
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const roomLabel = values.room_number.trim() || "Kamer";
-    const capacity = values.capacity.trim() ? Number(values.capacity) : undefined;
+    const name = values.room_number.trim() || "Kamer";
     try {
+      let moved;
       if (isEdit) {
-        await updateRoom.mutateAsync({
-          eventId,
-          roomId: room.id,
-          payload: {
-            room_number: values.room_number.trim() || undefined,
-            floor: values.floor.trim() || undefined,
-            instructions: values.instructions.trim() || undefined,
-            capacity,
-            occupants: values.occupants,
-          },
-        });
-        toast("success", `${roomLabel} bijgewerkt.`);
+        ({ moved } = await updateRoom.mutateAsync({ eventId, roomId: room.id, payload: roomEditPayload(values) }));
+        toast("success", `${name} bijgewerkt.`);
       } else {
-        await createRoom.mutateAsync({
+        ({ moved } = await createRoom.mutateAsync({
           eventId,
-          payload: {
-            room_number: values.room_number.trim() || undefined,
-            floor: values.floor.trim() || undefined,
-            instructions: values.instructions.trim() || undefined,
-            capacity,
-            occupants: values.occupants,
-          },
-        });
-        toast("success", `${roomLabel} aangemaakt.`);
+          payload: roomCreatePayload(values),
+        }));
+        toast("success", `${name} aangemaakt.`);
       }
+      const movedText = roomMoveMessage(moved, values.room_number.trim() || null);
+      if (movedText) toast("info", movedText);
       onClose();
-    } catch {
-      toast("error", "Kon kamer niet opslaan.");
+    } catch (err) {
+      // A refusal that says what is wrong ("more people than beds", "unknown member") is shown as it is.
+      toast("error", err instanceof ApiError && err.status === 400 ? err.message : "Kon kamer niet opslaan.");
     }
   }
 
@@ -103,11 +105,17 @@ function RoomModal({
       stacked
       title={isEdit ? `${room?.room_number || "Kamer"} bewerken` : "Nieuwe kamer"}
       subtitle={isEdit ? "Pas de kamerdetails aan" : "Voeg een hotelkamer toe aan dit evenement"}
+      footer={
+        <Button type="submit" form="room-form" loading={isPending} className="w-full">
+          <BedDouble size={16} />
+          {isEdit ? "Opslaan" : "Kamer aanmaken"}
+        </Button>
+      }
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form id="room-form" onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="section-label mb-1.5 block">
+            <label className="field-label">
               Kamernummer
             </label>
             <input
@@ -119,11 +127,12 @@ function RoomModal({
             />
           </div>
           <div>
-            <label className="section-label mb-1.5 block">
+            <label className="field-label">
               Capaciteit
             </label>
             <input
               type="number"
+              inputMode="numeric"
               min={1}
               className="input-field"
               placeholder="bijv. 2"
@@ -133,37 +142,33 @@ function RoomModal({
           </div>
         </div>
 
-        {isAdmin && (
-          <div>
-            <label className="section-label mb-1.5 block">
-              Verdieping
-            </label>
-            <input
-              className="input-field"
-              placeholder="2e verdieping"
-              value={values.floor}
-              onChange={(e) => setValues((v) => ({ ...v, floor: e.target.value }))}
-            />
-          </div>
-        )}
-
-        {isAdmin && (
-          <div>
-            <label className="section-label mb-1.5 block">
-              Routebeschrijving / instructies
-            </label>
-            <textarea
-              className="input-field resize-none"
-              rows={3}
-              placeholder="Bijv. Neem lift A naar verdieping 3, dan links de gang in..."
-              value={values.instructions}
-              onChange={(e) => setValues((v) => ({ ...v, instructions: e.target.value }))}
-            />
-          </div>
-        )}
+        <div>
+          <label className="field-label">
+            Verdieping
+          </label>
+          <input
+            className="input-field"
+            placeholder="2e verdieping"
+            value={values.floor}
+            onChange={(e) => setValues((v) => ({ ...v, floor: e.target.value }))}
+          />
+        </div>
 
         <div>
-          <label className="section-label mb-1.5 block">
+          <label className="field-label">
+            Routebeschrijving / instructies
+          </label>
+          <textarea
+            className="input-field resize-none"
+            rows={3}
+            placeholder="Bijv. Neem lift A naar verdieping 3, dan links de gang in..."
+            value={values.instructions}
+            onChange={(e) => setValues((v) => ({ ...v, instructions: e.target.value }))}
+          />
+        </div>
+
+        <div>
+          <label className="field-label">
             Bewoners
           </label>
           <NamePicker
@@ -173,12 +178,8 @@ function RoomModal({
             onChange={(names) => setValues((v) => ({ ...v, occupants: names }))}
             color="sky"
           />
+          {movingHere && <p className="mt-1.5 text-[12.5px] leading-snug text-ink-3">{movingHere}</p>}
         </div>
-
-        <Button type="submit" loading={isPending} className="w-full">
-          <BedDouble size={16} />
-          {isEdit ? "Opslaan" : "Kamer aanmaken"}
-        </Button>
       </form>
     </TripSheet>
   );
@@ -234,8 +235,20 @@ function BulkRoomModal({
   }
 
   return (
-    <TripSheet open={open} onClose={onClose} stacked title="Kamers in bulk toevoegen">
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <TripSheet
+      open={open}
+      onClose={onClose}
+      stacked
+      title="Meerdere kamers"
+      subtitle="Maak er in één keer een stel aan"
+      footer={
+        <Button type="submit" form="bulk-room-form" loading={bulkCreate.isPending} className="w-full" disabled={totalRooms === 0}>
+          <BedDouble size={16} />
+          {totalRooms === 0 ? "Vul minstens één groep in" : `${totalRooms} ${totalRooms === 1 ? "kamer" : "kamers"} aanmaken`}
+        </Button>
+      }
+    >
+      <form id="bulk-room-form" onSubmit={handleSubmit} className="space-y-4">
         <p className="text-sm text-ink-3">
           Bijv. 10 kamers voor 2 personen, 2 kamers voor 3 personen. Kamernummers vul je later in, als je inchecked.
         </p>
@@ -243,11 +256,12 @@ function BulkRoomModal({
           {batches.map((batch, i) => (
             <div key={i} className="flex items-end gap-2">
               <div className="flex-1">
-                <label className="section-label mb-1.5 block">
+                <label className="field-label">
                   Aantal kamers
                 </label>
                 <input
                   type="number"
+                  inputMode="numeric"
                   min={1}
                   className="input-field"
                   placeholder="10"
@@ -256,11 +270,12 @@ function BulkRoomModal({
                 />
               </div>
               <div className="flex-1">
-                <label className="section-label mb-1.5 block">
+                <label className="field-label">
                   Personen per kamer
                 </label>
                 <input
                   type="number"
+                  inputMode="numeric"
                   min={1}
                   className="input-field"
                   placeholder="2"
@@ -269,12 +284,8 @@ function BulkRoomModal({
                 />
               </div>
               {batches.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeBatch(i)}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
-                >
-                  <X size={15} />
+                <button type="button" onClick={() => removeBatch(i)} aria-label={`Groep ${i + 1} verwijderen`} className="icon-btn mb-0.5">
+                  <X size={16} />
                 </button>
               )}
             </div>
@@ -284,16 +295,11 @@ function BulkRoomModal({
         <button
           type="button"
           onClick={addBatch}
-          className="flex items-center gap-1.5 text-xs font-semibold text-brand-text hover:underline"
+          className="hit-area flex items-center gap-1.5 text-[12.5px] font-semibold text-brand-text hover:underline"
         >
-          <Plus size={13} />
+          <Plus size={14} />
           Nog een groep
         </button>
-
-        <Button type="submit" loading={bulkCreate.isPending} className="w-full" disabled={totalRooms === 0}>
-          <BedDouble size={16} />
-          {totalRooms === 0 ? "Vul minstens één groep in" : `${totalRooms} ${totalRooms === 1 ? "kamer" : "kamers"} aanmaken`}
-        </Button>
       </form>
     </TripSheet>
   );
@@ -306,6 +312,13 @@ interface RoomCardProps {
   eventId: string;
   users: ReturnType<typeof useUsers>["data"] & {};
   currentUserName: string | undefined;
+  /** Every name the signed-in member can be on this room under (`useMyNames`). */
+  myNames: string[];
+  /** People who are in more than one room (rooms made before the rule): their name gets a mark. */
+  duplicates: RoomDuplicate[];
+  /** Whether the member may change anything (not a read-only member): the pen and the sign-up buttons. */
+  canEdit: boolean;
+  /** Only an admin deletes a room. */
   isAdmin: boolean;
   onEdit: (room: HotelRoom) => void;
   onDelete: (room: HotelRoom) => void;
@@ -318,6 +331,9 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
   eventId,
   users,
   currentUserName,
+  myNames,
+  duplicates,
+  canEdit,
   isAdmin,
   onEdit,
   onDelete,
@@ -326,24 +342,29 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
   const assignRoom = useAssignHotelRoom();
   const leaveRoom = useLeaveHotelRoom();
 
-  const isMine = !!currentUserName && room.occupants.includes(currentUserName);
-  const isFull = room.capacity != null && room.occupants.length >= room.capacity;
-  const resolveUser = (name: string) =>
-    (users ?? []).find((u) => u.name === name || u.discord_username === name || u.aliases?.includes(name));
+  // On the room under the current name or under a former one (a rename, a Discord username).
+  const myStoredNames = room.occupants.filter((o) => myNames.includes(o));
+  const isMine = myStoredNames.length > 0;
+  // People, not stored names: someone on the room under two names is one bed.
+  const people = groupPeople(room.occupants, users ?? []);
+  const isFull = room.capacity != null && people.length >= room.capacity;
 
   async function handleSelfAssign() {
     if (!currentUserName) return;
     try {
-      await assignRoom.mutateAsync({ eventId, roomId: room.id, userNames: [currentUserName] });
-    } catch {
-      toast("error", "Kon je niet aanmelden voor deze kamer — mogelijk zit hij al vol.");
+      // A person sleeps in one room: the backend moves me out of my other room and says so.
+      const { moved } = await assignRoom.mutateAsync({ eventId, roomId: room.id, userNames: [currentUserName], alsoNames: myNames });
+      const movedText = roomMoveMessage(moved, room.room_number);
+      if (movedText) toast("info", movedText);
+    } catch (err) {
+      toast("error", err instanceof ApiError && err.status === 400 ? err.message : "Kon je niet aanmelden voor deze kamer — mogelijk zit hij al vol.");
     }
   }
 
   async function handleSelfLeave() {
-    if (!currentUserName) return;
+    if (myStoredNames.length === 0) return;
     try {
-      await leaveRoom.mutateAsync({ eventId, roomId: room.id, userName: currentUserName });
+      for (const userName of myStoredNames) await leaveRoom.mutateAsync({ eventId, roomId: room.id, userName });
     } catch {
       toast("error", "Kon je niet afmelden van deze kamer.");
     }
@@ -358,7 +379,7 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className={`flex min-w-0 flex-col gap-3 rounded-[12px] bg-surface p-4 ${isMine ? "border-2 border-outline" : "border-1.5 border-line"}`}
+      className={`flex min-w-0 flex-col gap-3 rounded-2xl bg-surface p-4 border-1.5 ${isMine ? "border-brand-text" : "border-line"}`}
     >
       {/* Header row: the room number, big */}
       <div className="flex items-start justify-between gap-2">
@@ -372,64 +393,61 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
               Nog geen nummer
             </span>
           )}
-          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-            {room.floor && (
-              <span className="inline-flex items-center rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2">
-                {room.floor}
-              </span>
-            )}
-            <span className="font-mono text-[10.5px] uppercase tracking-[0.06em] tabular-nums text-ink-3">
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+            {room.floor && <span className="tag">{room.floor}</span>}
+            <span className="text-[12.5px] tabular-nums text-ink-3">
               {room.capacity != null
-                ? `${room.occupants.length}/${room.capacity} bezet`
-                : room.occupants.length === 0
+                ? `${people.length} van ${room.capacity} bezet`
+                : people.length === 0
                   ? "Leeg"
-                  : `${room.occupants.length} ${room.occupants.length === 1 ? "persoon" : "personen"}`}
+                  : `${people.length} ${people.length === 1 ? "persoon" : "personen"}`}
             </span>
-            {isMine && (
-              <span className="inline-flex items-center rounded-full bg-brand px-2 py-0.5 text-[11px] font-semibold text-brand-on">
-                Jij
-              </span>
-            )}
-            {isFull && (
-              <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
-                Vol
-              </span>
-            )}
+            {isMine && <span className="pill pill-neutral">Jij</span>}
           </div>
         </div>
 
-        {/* Admin action buttons */}
-        {isAdmin && (
-          <div className="flex shrink-0 items-center gap-1">
+        {/* Every member edits (and puts others in); only an admin deletes. */}
+        {canEdit && (
+          <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
               onClick={() => onEdit(room)}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+              className="icon-btn"
               title="Bewerken"
+              aria-label={`Kamer ${room.room_number ?? ""} bewerken`.replace("  ", " ")}
             >
-              <Pencil size={13} />
+              <Pencil size={16} />
             </button>
-            <button
-              type="button"
-              onClick={() => onDelete(room)}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
-              title="Verwijderen"
-            >
-              <Trash2 size={13} />
-            </button>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => onDelete(room)}
+                className="icon-btn"
+                title="Verwijderen"
+                aria-label={`Kamer ${room.room_number ?? ""} verwijderen`.replace("  ", " ")}
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
           </div>
         )}
       </div>
 
       {/* Occupants: names below the number */}
-      {room.occupants.length > 0 && (
+      {people.length > 0 && (
         <p className="break-words text-[13px] leading-snug text-ink-2">
-          {room.occupants.map((name, i) => {
-            const displayName = resolveUser(name)?.name ?? name;
+          {people.map((person, i) => {
+            const also = otherRoomsOf(person, room, duplicates);
+            const alsoText = `Staat ook in ${joinNames(also.map(roomLabel))}`;
             return (
-              <span key={name}>
+              <span key={person.name}>
                 {i > 0 && ", "}
-                <span className={name === currentUserName ? "font-semibold text-ink" : undefined}>{displayName}</span>
+                <span className={person.names.some((n) => myNames.includes(n)) ? "font-semibold text-ink" : undefined}>{person.name}</span>
+                {also.length > 0 && (
+                  <span className="pill pill-warn ml-1.5 align-middle" title={alsoText} aria-label={`${person.name}: ${alsoText}`}>
+                    {also.length === 1 && also[0].room_number ? `Ook in kamer ${also[0].room_number}` : also.length === 1 ? "Ook in een andere kamer" : `Ook in ${also.length} andere kamers`}
+                  </span>
+                )}
               </span>
             );
           })}
@@ -447,37 +465,23 @@ const RoomCard = forwardRef<HTMLDivElement, RoomCardProps>(function RoomCard({
               type="button"
               onClick={() => setExpanded((v) => !v)}
               aria-expanded={expanded}
-              className="mt-0.5 flex items-center gap-0.5 text-[11px] font-semibold text-brand-text hover:underline"
+              className="mt-0.5 flex items-center gap-0.5 text-[12px] font-semibold text-brand-text hover:underline"
             >
-              {expanded ? <><ChevronUp size={11} /> Minder</> : <><ChevronDown size={11} /> Meer</>}
+              {expanded ? <><ChevronUp size={12} /> Minder</> : <><ChevronDown size={12} /> Meer</>}
             </button>
           )}
         </div>
       )}
 
-      {/* Self-assign / leave button */}
-      {currentUserName && (
-        <div className="mt-auto border-t border-dashed border-line pt-3">
+      {/* Self-assign / leave: a full room has nothing to offer. */}
+      {canEdit && currentUserName && (isMine || !isFull) && (
+        <div className="mt-auto pt-1">
           {isMine ? (
-            <button
-              type="button"
-              onClick={handleSelfLeave}
-              disabled={isPending}
-              className="w-full rounded-xl border-1.5 border-line bg-surface py-2 text-xs font-semibold text-rose-700 transition-colors hover:border-rose-300 hover:bg-rose-50 disabled:opacity-50 dark:text-rose-300 dark:hover:border-rose-400/40 dark:hover:bg-rose-500/10"
-            >
+            <button type="button" onClick={handleSelfLeave} disabled={isPending} className="btn-primary w-full">
               {isPending ? "Bezig…" : "Verlaat kamer"}
             </button>
-          ) : isFull ? (
-            <div className="w-full rounded-xl bg-sunken py-2 text-center text-xs font-semibold text-ink-3">
-              Kamer is vol
-            </div>
           ) : (
-            <button
-              type="button"
-              onClick={handleSelfAssign}
-              disabled={isPending}
-              className="w-full rounded-xl border-1.5 border-line bg-surface py-2 text-xs font-semibold text-ink transition-colors hover:border-ink-3 disabled:opacity-50"
-            >
+            <button type="button" onClick={handleSelfAssign} disabled={isPending} className="btn-primary w-full">
               {isPending ? "Bezig…" : "Ik slaap hier"}
             </button>
           )}
@@ -509,7 +513,9 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
   const { data: currentUser } = useCurrentUser();
 
   const isAdmin = currentUser?.is_admin ?? false;
+  const canEdit = !useIsViewer();
   const currentUserName = currentUser?.name;
+  const { myNames } = useMyNames();
 
   const deleteRoom = useAdminDeleteHotelRoom();
 
@@ -521,20 +527,15 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
   const userNames = users.map((u) => u.name);
 
   // Stats
-  const assignedNames = new Set(rooms.flatMap((r) => r.occupants));
-  const eventAttendees = trip.participants;
-  const unassigned = tripRoomGaps(trip, rooms);
+  const summary = tripRoomSummary(trip, rooms, users);
+  const unassigned = tripRoomGaps(trip, rooms, users);
+  const duplicates = peopleInSeveralRooms(rooms, users);
   const info = tripInfo(trip);
 
   if (!event) {
     return (
       <TripSheet open={open} onClose={onClose} title="Hotel">
-        <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
-            <BedDouble size={22} />
-          </span>
-          <p className="text-sm font-semibold text-ink">Dit event heeft geen hotel</p>
-        </div>
+        <EmptyState icon={<BedDouble size={22} />} title="Dit evenement heeft geen hotel" />
       </TripSheet>
     );
   }
@@ -558,75 +559,80 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
   // the sheet's own animated panel, not the viewport.
   const deleteConfirmFooter = confirmDeleteId ? (
     <div className="flex items-center gap-3">
-      <AlertCircle size={16} className="shrink-0 text-rose-600 dark:text-rose-400" />
+      <AlertCircle size={16} className="shrink-0 text-bad" />
       <p className="flex-1 text-sm font-semibold text-ink">Kamer verwijderen?</p>
-      <button
-        type="button"
-        onClick={() => setConfirmDeleteId(null)}
-        className="rounded-xl px-3 py-1.5 text-xs font-semibold text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
-      >
-        Annuleer
-      </button>
-      <button
+      <Button size="sm" variant="secondary" onClick={() => setConfirmDeleteId(null)}>
+        Annuleren
+      </Button>
+      <Button
+        size="sm"
+        variant="danger"
+        loading={deleteRoom.isPending}
         onClick={() => {
           const room = rooms.find((r) => r.id === confirmDeleteId);
           if (room) handleDelete(room);
         }}
-        disabled={deleteRoom.isPending}
-        className="rounded-xl border-2 border-rose-800 bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors disabled:opacity-50 dark:border-rose-400"
       >
-        {deleteRoom.isPending ? "Bezig…" : "Verwijder"}
-      </button>
+        Verwijderen
+      </Button>
     </div>
-  ) : undefined;
+  ) : !canEdit ? undefined : (
+    <div className="grid grid-cols-2 gap-2">
+      <button type="button" onClick={() => setBulkModalOpen(true)} className="btn-primary min-w-0 px-3">
+        <Layers size={16} className="shrink-0" />
+        Meerdere
+      </button>
+      <Button onClick={() => setModalRoom("new")} className="min-w-0 px-3">
+        <Plus size={16} className="shrink-0" />
+        Nieuwe kamer
+      </Button>
+    </div>
+  );
 
   return (
-    <TripSheet open={open} onClose={onClose} title="Hotel" subtitle={trip.title} footer={deleteConfirmFooter}>
+    <TripSheet open={open} onClose={onClose} title="Hotel" subtitle={`${stayRange(trip)} · ${trip.title}`} footer={deleteConfirmFooter}>
 
       <div className="space-y-5">
 
         <HotelInfoCard event={info} trip={trip} />
 
+        {/* The numbers first: how many rooms, how many people are in one. */}
+        <p className="section-label">
+          {summary.rooms} {summary.rooms === 1 ? "kamer" : "kamers"} · {summary.seats !== null && `${summary.seats} ${summary.seats === 1 ? "plaats" : "plaatsen"} · `}{summary.assigned} van {summary.people} ingedeeld
+        </p>
+
+        {/* Rooms made before "a person sleeps in one room" can still hold somebody twice: say so, they fix it by picking a room again. */}
+        {duplicates.length > 0 && (
+          <div className="notice-warn flex items-start gap-3 px-4 py-3.5" role="status">
+            <AlertCircle size={16} className="mt-0.5 shrink-0 text-warn" />
+            <div className="min-w-0 flex-1">
+              <p className="break-words text-sm font-semibold leading-tight text-warn">{duplicateNotice(duplicates)}</p>
+              <p className="mt-1 text-[12.5px] leading-snug text-ink-2">
+                Een persoon slaapt in één kamer. Kies opnieuw een kamer voor {duplicates.length === 1 ? "deze persoon" : "hen"} ("Ik slaap hier"
+                of Bewerken): {duplicates.length === 1 ? "die gaat" : "ze gaan"} dan uit de andere kamers.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* ── Room grid ─────────────────────────────────────────────── */}
         {isLoading ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="card-surface animate-pulse p-4">
-                <div className="mb-2 h-8 w-16 rounded bg-sunken" />
-                <div className="mb-4 h-3 w-24 rounded bg-sunken" />
-                <div className="h-3 w-40 rounded bg-sunken" />
+                <div className="mb-2 h-8 w-16 rounded-md bg-sunken" />
+                <div className="mb-4 h-3 w-24 rounded-md bg-sunken" />
+                <div className="h-3 w-40 rounded-md bg-sunken" />
               </div>
             ))}
           </div>
         ) : rooms.length === 0 ? (
-          <div className="flex flex-col items-center gap-5 py-16 text-center">
-            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
-              <BedDouble size={22} />
-            </span>
-            <div>
-              <p className="text-sm font-semibold text-ink">Nog geen kamers aangemaakt</p>
-              <p className="mt-1 text-xs text-ink-3">Maak de eerste kamer aan en wijs leden toe.</p>
-            </div>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => setBulkModalOpen(true)}
-                className="flex items-center gap-2 rounded-xl border-1.5 border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-3"
-              >
-                <Layers size={16} />
-                Kamers in bulk
-              </button>
-              <button
-                type="button"
-                onClick={() => setModalRoom("new")}
-                className="btn-primary px-4 py-2.5 text-sm"
-              >
-                <Plus size={16} />
-                Eerste kamer toevoegen
-              </button>
-            </div>
-          </div>
+          <EmptyState
+            compact
+            icon={<BedDouble size={22} />}
+            title="Nog geen kamers aangemaakt"
+            description="Maak de eerste kamer aan en wijs leden toe."
+          />
         ) : (
           <motion.div
             className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2"
@@ -642,6 +648,9 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
                   eventId={id!}
                   users={users}
                   currentUserName={currentUserName}
+                  myNames={myNames}
+                  duplicates={duplicates}
+                  canEdit={canEdit}
                   isAdmin={isAdmin}
                   onEdit={(r) => setModalRoom(r)}
                   onDelete={handleDelete}
@@ -653,46 +662,31 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
 
         {/* ── Unassigned strip ──────────────────────────────────────── */}
         {unassigned.length > 0 && (
-          <div className="rounded-xl border-1.5 border-amber-200 bg-amber-50 dark:border-amber-500/25 dark:bg-amber-500/10">
+          <div className="notice-warn">
             <button
               type="button"
               onClick={() => setUnassignedOpen((v) => !v)}
               aria-expanded={unassignedOpen}
               className="flex w-full items-start gap-3 px-4 py-3.5 text-left"
             >
-              <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-700 dark:text-amber-300" />
+              <AlertCircle size={16} className="mt-0.5 shrink-0 text-warn" />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold leading-tight text-amber-800 dark:text-amber-300">
+                <p className="text-sm font-semibold leading-tight text-warn">
                   {unassigned.length} {unassigned.length === 1 ? "deelnemer heeft" : "deelnemers hebben"} nog geen kamer
                 </p>
                 {!unassignedOpen && (
-                  <div className="mt-1.5 flex -space-x-1.5">
-                    {unassigned.slice(0, 10).map((name) => {
-                      const u = users.find((x) => x.name === name || x.discord_username === name || x.aliases?.includes(name));
-                      return (
-                        <UserAvatar
-                          key={name}
-                          name={u?.name ?? name}
-                          user={u}
-                          className="h-6 w-6 text-[8px] !border-amber-50 dark:!border-[#241d0e]"
-                        />
-                      );
-                    })}
-                    {unassigned.length > 10 && (
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-amber-50 bg-amber-200 font-mono text-[8px] font-semibold text-amber-800 dark:border-[#241d0e] dark:bg-amber-500/25 dark:text-amber-200">
-                        +{unassigned.length - 10}
-                      </div>
-                    )}
+                  <div className="mt-1.5">
+                    <AvatarStack names={unassigned} size="sm" max={10} ringClass="!border-warn-soft" />
                   </div>
                 )}
               </div>
               <ChevronDown
                 size={16}
-                className={`mt-0.5 shrink-0 text-amber-700 transition-transform dark:text-amber-300 ${unassignedOpen ? "rotate-180" : ""}`}
+                className={`mt-0.5 shrink-0 text-warn transition-transform ${unassignedOpen ? "rotate-180" : ""}`}
               />
             </button>
             {unassignedOpen && (
-              <ul className="space-y-2 border-t border-amber-200 px-4 py-3 dark:border-amber-500/25">
+              <ul className="space-y-2 border-t border-warn-line px-4 py-3">
                 {unassigned.map((name) => {
                   const u = users.find((x) => x.name === name || x.discord_username === name || x.aliases?.includes(name));
                   return (
@@ -707,34 +701,6 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
           </div>
         )}
 
-        {/* ── Summary + actions ──────────────────────────────────────── */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="flex items-center gap-1.5 text-[13px] text-ink-2">
-            <BedDouble size={14} className="text-ink-3" />
-            <b className="font-mono font-semibold tabular-nums text-ink">{rooms.length}</b> {rooms.length === 1 ? "kamer" : "kamers"}
-          </span>
-          <span className="ml-3 flex items-center gap-1.5 text-[13px] text-ink-2">
-            <Users size={14} className="text-ink-3" />
-            <b className="font-mono font-semibold tabular-nums text-ink">{assignedNames.size}</b> van <span className="font-mono tabular-nums">{eventAttendees.length}</span> ingedeeld
-          </span>
-          <span className="flex-1" />
-          <button
-            type="button"
-            onClick={() => setBulkModalOpen(true)}
-            className="flex shrink-0 items-center gap-1.5 rounded-xl border-1.5 border-line bg-surface px-3 py-2 text-xs font-semibold text-ink transition-colors hover:border-ink-3"
-          >
-            <Layers size={14} />
-            Bulk
-          </button>
-          <button
-            type="button"
-            onClick={() => setModalRoom("new")}
-            className="btn-primary shrink-0 px-3 py-2 text-xs"
-          >
-            <Plus size={14} />
-            Kamer
-          </button>
-        </div>
       </div>
 
       {/* ── Create / Edit modal ─────────────────────────────────────── */}
@@ -745,7 +711,8 @@ export function TripRoomsSheet({ open, onClose }: { open: boolean; onClose: () =
         room={modalRoom === "new" ? null : (modalRoom ?? null)}
         eventId={id!}
         userNames={userNames}
-        isAdmin={isAdmin}
+        rooms={rooms}
+        users={users}
       />
 
       {/* ── Bulk create modal ────────────────────────────────────────── */}

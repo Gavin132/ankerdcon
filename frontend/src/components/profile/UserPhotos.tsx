@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight, Images, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, X, Image } from "lucide-react";
 import { useUserPhotos } from "../../hooks/useStories";
 import { formatDate } from "../../utils/format";
+import { useBackClose } from "../../hooks/useBackClose";
+import { fullImage, gridImage } from "../../utils/storyMedia";
 import type { UserStoryPhoto } from "../../types";
+import { EmptyState } from "../common/EmptyState";
 
 const ALL = "all";
 
@@ -20,7 +23,7 @@ export function UserPhotos({ identifier, whose }: { identifier: string; whose?: 
     const seen = new Map<string, { id: string; name: string; count: number }>();
     for (const p of photos) {
       const id = p.event_id ?? "unknown";
-      const entry = seen.get(id) ?? { id, name: p.event_name ?? "Onbekend event", count: 0 };
+      const entry = seen.get(id) ?? { id, name: p.event_name ?? "Onbekend evenement", count: 0 };
       entry.count += 1;
       seen.set(id, entry);
     }
@@ -33,9 +36,8 @@ export function UserPhotos({ identifier, whose }: { identifier: string; whose?: 
   return (
     <section className="card-surface overflow-hidden">
       <div className="flex items-center gap-2 border-b border-line px-5 pb-3 pt-4 sm:px-6">
-        <Images size={14} className="text-ink-3" />
         <p className="section-label">Foto's</p>
-        {photos.length > 0 && <span className="font-mono text-[11px] tabular-nums text-ink-3">{photos.length}</span>}
+        {photos.length > 0 && <span className="font-mono text-[12px] tabular-nums text-ink-3">{photos.length}</span>}
       </div>
 
       <div className="space-y-4 p-5 sm:p-6">
@@ -46,15 +48,13 @@ export function UserPhotos({ identifier, whose }: { identifier: string; whose?: 
             ))}
           </div>
         ) : photos.length === 0 ? (
-          <p className="py-4 text-center text-sm text-ink-3">
-            {whose ? `${whose} heeft nog geen foto's toegevoegd.` : "Nog geen foto's toegevoegd."}
-          </p>
+          <EmptyState compact icon={<Image size={22} />} title={whose ? `${whose} heeft nog geen foto's toegevoegd` : "Nog geen foto's toegevoegd"} />
         ) : (
           <>
             {events.length > 1 && (
               <div
                 role="group"
-                aria-label="Filter op event"
+                aria-label="Filter op evenement"
                 className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
                 {[{ id: ALL, name: "Alles", count: photos.length }, ...events].map((e) => (
@@ -63,11 +63,9 @@ export function UserPhotos({ identifier, whose }: { identifier: string; whose?: 
                     type="button"
                     onClick={() => setEventId(e.id)}
                     aria-pressed={eventId === e.id}
-                    className={`shrink-0 rounded-full border-1.5 px-3 py-1.5 text-[12.5px] font-semibold transition-colors ${
-                      eventId === e.id ? "border-outline bg-brand text-brand-on" : "border-line bg-surface text-ink-2 hover:border-ink-3"
-                    }`}
+                    className={`chip shrink-0 ${eventId === e.id ? "chip-on" : "chip-off"}`}
                   >
-                    {e.name} <span className="font-mono text-[11px] opacity-70">{e.count}</span>
+                    {e.name} <span className="font-mono text-[12px] opacity-70">{e.count}</span>
                   </button>
                 ))}
               </div>
@@ -82,12 +80,17 @@ export function UserPhotos({ identifier, whose }: { identifier: string; whose?: 
                   className="group relative aspect-square overflow-hidden rounded-lg bg-sunken"
                 >
                   <img
-                    src={p.image_url}
+                    src={gridImage(p)}
                     alt=""
                     loading="lazy"
                     decoding="async"
-                    className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.04]"
+                    className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
                   />
+                  {p.media_type === "video" && (
+                    <span className="pointer-events-none absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-hero/65 text-hero-ink">
+                      <Play size={12} fill="currentColor" />
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -121,6 +124,7 @@ function Lightbox({
   onPrev?: () => void;
   onNext?: () => void;
 }) {
+  useBackClose(true, onClose);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -132,17 +136,17 @@ function Lightbox({
   }, [onClose, onPrev, onNext]);
 
   const arrow =
-    "absolute top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20";
+    "absolute top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-hero-ink/10 text-hero-ink transition-colors hover:bg-hero-ink/20";
 
   return createPortal(
-    <div className="fixed inset-0 z-[500] flex flex-col bg-black/95" onClick={onClose} role="dialog" aria-modal="true" aria-label="Foto">
+    <div className="fixed inset-0 z-[500] flex flex-col bg-scrim/95" onClick={onClose} role="dialog" aria-modal="true" aria-label="Foto">
       <div
-        className="flex shrink-0 items-center justify-between gap-3 px-4 py-3 text-white"
+        className="flex shrink-0 items-center justify-between gap-3 px-4 py-3 text-hero-ink"
         style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top, 0px))" }}
       >
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{photo.event_name ?? "Onbekend event"}</p>
-          <p className="truncate text-xs text-white/60">
+          <p className="truncate text-sm font-semibold">{photo.event_name ?? "Onbekend evenement"}</p>
+          <p className="truncate text-xs text-hero-ink/60">
             {[photo.date ? formatDate(photo.date) : null, position].filter(Boolean).join(" · ")}
           </p>
         </div>
@@ -150,13 +154,26 @@ function Lightbox({
           type="button"
           onClick={onClose}
           aria-label="Sluiten"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 hover:bg-white/20"
+          className="hit-area flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-hero-ink/10 hover:bg-hero-ink/20"
         >
-          <X size={18} />
+          <X size={16} />
         </button>
       </div>
       <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 pb-4">
-        <img src={photo.image_url} alt="" className="max-h-full max-w-full object-contain" onClick={(e) => e.stopPropagation()} />
+        {photo.media_type === "video" ? (
+          <video
+            key={photo.id}
+            src={photo.image_url}
+            poster={photo.poster_url ?? undefined}
+            controls
+            autoPlay
+            playsInline
+            className="max-h-full max-w-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <img src={fullImage(photo)} alt="" className="max-h-full max-w-full object-contain" onClick={(e) => e.stopPropagation()} />
+        )}
         {onPrev && (
           <button type="button" aria-label="Vorige" className={`${arrow} left-3`} onClick={(e) => { e.stopPropagation(); onPrev(); }}>
             <ChevronLeft size={22} />

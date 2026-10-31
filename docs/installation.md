@@ -188,7 +188,7 @@ to be reachable from the app's container as well as from members.
 | `CORS_ORIGINS` | the same address (comma-separated if there are several). Since the frontend is served by the backend itself this only matters if you open the API from another origin; the compose file defaults it to `APP_URL`. |
 | `CALENDAR_FEED_TOKEN` | a random secret for the calendar subscription link. Generate one: `openssl rand -base64 32`, or `python -c "import secrets; print(secrets.token_urlsafe(32))"`. Leave empty to derive it from the JWT secret; set a new value to invalidate every shared link. |
 | `RATE_LIMIT_PER_MINUTE` | requests per client per minute before HTTP 429. Default 600, and writes get a quarter of it. |
-| `APP_ENV` | build-time only. `dev` builds the orange "beta" icon and title, empty (the default) is the live app. |
+| `APP_ENV` | build-time only. `dev` builds the orange "beta" icon and title and forces the orange accent colour (`__DEV_BUILD__`, no accent picker), empty (the default) is the live app. |
 | `API_DOCS_ENABLED` | keep `false` (the compose file forces it). |
 
 ---
@@ -391,7 +391,7 @@ the beta's `HOST_PORT`.
    ```
 
    Reload the app; the admin panel appears in the menu. Add everyone else under **Admin →
-   Whitelist** from now on.
+   Toegangslijst** from now on.
 5. Work through the check-list:
 
    - [ ] the Hub loads after login
@@ -421,6 +421,7 @@ old image again.
 | Symptom | Likely cause |
 | --- | --- |
 | The build fails with "set SUPABASE_URL" | a required value is missing from the stack's variables (compose stops on purpose) |
+| The installed app is a white page for up to a minute and then says "kan niet starten" with "Geen foutmelding ontvangen", and pulling the page down fixes it | A stale copy on the phone: the cached shell asked for scripts that were no longer there, or a script request hung while the server was slow or restarting. Since 2.2.3 the service worker keeps hashed scripts across builds and gives a script request 15 seconds (two tries), and `public/boot-guard.js` removes the worker and its caches and reloads once by itself after 20 seconds (or 4 seconds after an error) before it shows the message; it remembers that for ten minutes so a phone that really cannot start gets the message, not a loop |
 | One member (often an older iPhone) cannot open the app at all | A screen (added after 2.0.2) says "Ankerd Con kan niet starten" with the errors and browser it saw (`public/boot-guard.js`); ask for a screenshot of it. Usual causes: iOS too old for the bundle, a stale cached copy (Settings → Safari → Clear History and Website Data), a content blocker or DNS filter blocking the site or Supabase, or opening the link inside another app's built-in browser (Google sign-in refuses those) |
 | The page loads but is blank, the console says the Supabase URL is missing | the image was built without `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY`; set them and rebuild |
 | `/api/health` works but `/` returns 404 | the frontend was not built into the image (`backend/dist` missing). Use the root `Dockerfile`, not `backend/Dockerfile`. |

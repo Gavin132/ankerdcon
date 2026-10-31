@@ -98,11 +98,11 @@ export function ParkingSpotModal({ open, onClose, tripId, manageableDrivers }: P
         <div>
           <p className="section-label mb-2">Positie</p>
           {coords ? (
-            <div className="flex items-center gap-3 rounded-xl border-1.5 border-emerald-200 bg-emerald-50 px-3.5 py-3 dark:border-emerald-400/30 dark:bg-emerald-500/10">
-              <Check size={16} className="shrink-0 text-emerald-700 dark:text-emerald-300" />
+            <div className="flex items-center gap-3 notice-ok px-3.5 py-3">
+              <Check size={16} className="shrink-0 text-ok" />
               <div className="min-w-0 flex-1 leading-tight">
-                <p className="text-[13px] font-semibold text-emerald-800 dark:text-emerald-300">Locatie gevonden</p>
-                <p className="font-mono text-[11px] text-emerald-700 dark:text-emerald-300">±{Math.round(coords.accuracy)} m</p>
+                <p className="text-[13px] font-semibold text-ok">Locatie gevonden</p>
+                <p className="font-mono text-[12px] text-ok">±{Math.round(coords.accuracy)} m</p>
               </div>
               <button type="button" onClick={locate} className="shrink-0 text-xs font-semibold text-brand-text hover:underline">
                 Opnieuw
@@ -114,7 +114,7 @@ export function ParkingSpotModal({ open, onClose, tripId, manageableDrivers }: P
               Gebruik mijn locatie
             </Button>
           )}
-          {geoError && <p className="mt-2 text-xs text-rose-600 dark:text-rose-300">{geoError}</p>}
+          {geoError && <p className="mt-2 text-xs text-bad">{geoError}</p>}
         </div>
 
         <div>
@@ -131,9 +131,7 @@ export function ParkingSpotModal({ open, onClose, tripId, manageableDrivers }: P
                   type="button"
                   onClick={() => setDriver(d)}
                   aria-pressed={driver === d}
-                  className={`rounded-full px-3 py-1.5 text-[13px] font-semibold transition-colors ${
-                    driver === d ? "border-2 border-outline bg-brand text-brand-on" : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"
-                  }`}
+                  className={`chip ${driver === d ? "chip-on" : "chip-off"}`}
                 >
                   {d}
                 </button>

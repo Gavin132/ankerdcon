@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { animate, motion, AnimatePresence, useDragControls, useMotionValue, useTransform } from "framer-motion";
-import { X, Trash2, Share2, Download, FolderDown, Loader2 } from "lucide-react";
+import { X, Trash2, Share2, Download, FolderDown, Loader2, Play, Volume2, VolumeX } from "lucide-react";
 import { useStoryPhotos, useMarkStorySeen, useDeleteStoryPhoto } from "../../hooks/useStories";
-import { useCurrentUser } from "../../hooks/useUsers";
+import { useMyNames } from "../../hooks/useUsers";
+import { useBackClose } from "../../hooks/useBackClose";
+import { useDataSaverStore } from "../../store/dataSaver.store";
 import { downloadAllStoryPhotos, downloadStoryPhoto } from "../../services/stories.service";
 import { toast } from "../../store/toast.store";
 import { UserAvatar } from "../common/UserAvatar";
+import { fullImage } from "../../utils/storyMedia";
 import type { StoryPhoto } from "../../types";
 
 const SLIDE_DURATION_MS = 5000;
@@ -17,10 +20,12 @@ interface StoryViewerProps {
   onClose: () => void;
   /** Photo to start on (position in the day's story). Defaults to the first. */
   initialIndex?: number;
+  /** Shows the photos of a day just before or after the event instead of the event day itself. */
+  takenOn?: string | null;
 }
 
 /** Full-screen Instagram-style tap-through photo story. */
-export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: StoryViewerProps) {
+export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0, takenOn = null }: StoryViewerProps) {
   // Latched, not the raw prop — a caller that stores "which day is open" as
   // a single `string | null` (see HubPage.tsx) naturally passes an empty
   // string in the same render that flips `open` to false, while the exit
@@ -28,9 +33,13 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
   // below correctly scoped for the whole close animation instead of firing
   // requests against an empty id.
   const [activeEventDayId, setActiveEventDayId] = useState(eventDayId);
+  const [activeTakenOn, setActiveTakenOn] = useState(takenOn);
   useEffect(() => {
-    if (eventDayId) setActiveEventDayId(eventDayId);
-  }, [eventDayId]);
+    if (eventDayId) {
+      setActiveEventDayId(eventDayId);
+      setActiveTakenOn(takenOn);
+    }
+  }, [eventDayId, takenOn]);
 
   // `open` alone isn't enough to gate the fetch: on the render where a story
   // first opens, `open` flips true one render before the latching effect
@@ -38,8 +47,8 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
   // initial empty string for that one render — firing a request against
   // "" (a 404, since the backend route needs a real id segment). Requiring
   // a non-empty id too keeps the query disabled until the effect catches up.
-  const { data: photos = [] } = useStoryPhotos(activeEventDayId, { enabled: open && !!activeEventDayId, alwaysFresh: true });
-  const { data: me } = useCurrentUser();
+  const { data: photos = [] } = useStoryPhotos(activeEventDayId, { enabled: open && !!activeEventDayId, alwaysFresh: true, takenOn: activeTakenOn });
+  const { isMine } = useMyNames();
   const markSeen = useMarkStorySeen(activeEventDayId);
   const deletePhoto = useDeleteStoryPhoto(activeEventDayId);
 
@@ -51,12 +60,23 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
   const dragBackground = useTransform(dragY, [0, 320], ["rgba(8,12,15,1)", "rgba(8,12,15,0.25)"]);
   const highestSeqRef = useRef(0);
 
+  // Video: sound on if the browser lets it (opening the story was a tap, so it usually does),
+  // otherwise muted with the speaker button to turn it on. One choice for the whole story.
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [muted, setMuted] = useState(false);
+  const [buffering, setBuffering] = useState(false);
+  const [failedVideoId, setFailedVideoId] = useState<string | null>(null);
+  // Data saver (Instellingen): a video is only fetched once it has been tapped, and nothing is loaded ahead.
+  const dataSaver = useDataSaverStore((s) => s.on);
+  const [tappedVideos, setTappedVideos] = useState<Set<string>>(() => new Set());
+  const videoProgress = useMotionValue(0);
+
   useEffect(() => {
     if (open) {
       setIndex(initialIndex);
       highestSeqRef.current = 0;
     }
-  }, [open, eventDayId]);
+  }, [open, eventDayId, takenOn]);
 
   // dragY lives on this component, not the sheet it drags — the sheet unmounts
   // on close but this doesn't, so a swipe-close leaves it sitting wherever the
@@ -75,23 +95,88 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
   // Photos are big and the connection is often poor: start loading the next
   // two while this one is on screen, so tapping on doesn't leave the previous
   // photo sitting there (the <img> is keyed per photo, so a slow one shows
-  // black rather than the old picture).
+  // black rather than the old picture). A video only gets its still frame loaded
+  // ahead: the video itself is far too big to fetch on a guess.
   useEffect(() => {
-    if (!open) return;
+    if (!open || dataSaver) return;
     for (const p of [photos[index + 1], photos[index + 2]]) {
-      if (p) new Image().src = p.image_url;
+      if (p) new Image().src = p.media_type === "video" ? (p.poster_url ?? "") : fullImage(p);
     }
-  }, [open, index, photos]);
+  }, [open, index, photos, dataSaver]);
+
+  const currentId = photos[index]?.id;
+  const currentIsVideo = photos[index]?.media_type === "video";
+  const heldVideo = dataSaver && currentIsVideo && !!currentId && !tappedVideos.has(currentId);
+
+  // The progress bar. A video's follows the video itself (the story moves on when it ends, see onEnded);
+  // a photo's, and that of a video this device cannot play, fills over SLIDE_DURATION_MS and then moves on.
+  // Driven by hand rather than by an animation: it is a timer the story depends on, which must not be
+  // skipped when the person asked their device for reduced motion (see MotionConfig in App.tsx).
+  const timed = !!currentId && (!currentIsVideo || failedVideoId === currentId);
+  useEffect(() => {
+    videoProgress.set(0);
+    setBuffering(false);
+    if (!open || !currentId) return;
+    let frame = 0;
+    if (timed) {
+      let elapsed = 0;
+      let last = performance.now();
+      const tick = (now: number) => {
+        // A hidden tab stops asking for frames; the gap after it must not count as time spent on the photo.
+        elapsed += Math.min(now - last, 250);
+        last = now;
+        videoProgress.set(Math.min(1, elapsed / SLIDE_DURATION_MS));
+        if (elapsed >= SLIDE_DURATION_MS) nextRef.current();
+        else frame = requestAnimationFrame(tick);
+      };
+      frame = requestAnimationFrame(tick);
+    } else {
+      const tick = () => {
+        const v = videoRef.current;
+        if (v && v.duration) videoProgress.set(v.currentTime / v.duration);
+        frame = requestAnimationFrame(tick);
+      };
+      frame = requestAnimationFrame(tick);
+    }
+    return () => cancelAnimationFrame(frame);
+  }, [open, currentId, timed, videoProgress]);
+
+  function startVideo(v: HTMLVideoElement) {
+    v.muted = muted;
+    v.play().catch(() => {
+      // Sound is not allowed without a tap on this page: play on mute, the speaker button undoes it.
+      v.muted = true;
+      setMuted(true);
+      v.play().catch(() => {});
+    });
+  }
 
   const flushSeen = useCallback(() => {
-    if (highestSeqRef.current > 0) markSeen.mutate(highestSeqRef.current);
+    // A day beside the event has no ring, so nothing to mark: its photos must not move the event day's marker.
+    if (!activeTakenOn && highestSeqRef.current > 0) markSeen.mutate(highestSeqRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eventDayId]);
+  }, [eventDayId, activeTakenOn]);
 
   const handleClose = useCallback(() => {
     flushSeen();
     onClose();
   }, [flushSeen, onClose]);
+
+  // The back gesture closes the story. Without an entry of its own it left the app when the story was the first
+  // thing opened (a story is state, not a page, so there was nothing for the gesture to step back over).
+  useBackClose(open, handleClose);
+
+  // Escape closes it, as it does every other layer over a page.
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      e.stopPropagation(); // a sheet underneath should stay open
+      handleClose();
+    }
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [open, handleClose]);
 
   const next = useCallback(() => {
     // Side effects (flushSeen/onClose) belong here, in the event handler —
@@ -104,6 +189,9 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
     }
     setIndex(index + 1);
   }, [index, photos.length, flushSeen, onClose]);
+
+  const nextRef = useRef(next);
+  nextRef.current = next;
 
   const prev = useCallback(() => {
     setIndex((i) => Math.max(0, i - 1));
@@ -135,13 +223,14 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = blobUrl;
-      a.download = `ankerd-story-${photo.created_at.slice(0, 10)}.jpg`;
+      const ext = photo.image_url.split("?")[0].split(".").pop() || "jpg";
+      a.download = `ankerd-story-${photo.created_at.slice(0, 10)}.${ext}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(blobUrl);
     } catch {
-      toast("error", "Kon foto niet downloaden.");
+      toast("error", "Kon het bestand niet downloaden.");
     } finally {
       setDownloadingId(null);
     }
@@ -150,7 +239,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
   async function handleDownloadAll() {
     setDownloadingAll(true);
     try {
-      await downloadAllStoryPhotos(activeEventDayId);
+      await downloadAllStoryPhotos(activeEventDayId, activeTakenOn);
     } catch {
       toast("error", "Kon de foto's niet downloaden.");
     } finally {
@@ -181,6 +270,9 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
         // a short one springs back. The tap zones and buttons still work for
         // plain taps (a drag past the threshold cancels the click itself).
         <motion.div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Story"
           className="fixed inset-0 z-[600] flex flex-col"
           style={{ y: dragY, backgroundColor: dragBackground }}
           initial={{ opacity: 0 }}
@@ -210,18 +302,9 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
           {/* Progress bars */}
           <div className="flex gap-1 px-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] shrink-0">
             {photos.map((p, i) => (
-              <div key={p.id} className="h-[3px] flex-1 rounded-full bg-white/25 overflow-hidden">
-                {i < index && <div className="h-full w-full bg-white" />}
-                {i === index && (
-                  <motion.div
-                    key={index}
-                    className="h-full bg-white origin-left"
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ duration: SLIDE_DURATION_MS / 1000, ease: "linear" }}
-                    onAnimationComplete={next}
-                  />
-                )}
+              <div key={p.id} className="h-[3px] flex-1 rounded-full bg-hero-ink/25 overflow-hidden">
+                {i < index && <div className="h-full w-full bg-hero-ink" />}
+                {i === index && <motion.div className="h-full w-full bg-hero-ink origin-left" style={{ scaleX: videoProgress }} />}
               </div>
             ))}
           </div>
@@ -230,13 +313,29 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
           <div className="flex items-center justify-between px-4 py-3 shrink-0">
             <div className="flex items-center gap-2 min-w-0">
               <UserAvatar name={current.uploaded_by} className="h-6 w-6 text-[9px] !border-0" />
-              <p className="truncate text-xs font-semibold text-[#E6F0F3]">{current.uploaded_by}</p>
+              <p className="truncate text-xs font-semibold text-hero-ink">{current.uploaded_by}</p>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
+              {current.media_type === "video" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nowMuted = !muted;
+                    setMuted(nowMuted);
+                    if (videoRef.current) videoRef.current.muted = nowMuted;
+                  }}
+                  aria-label={muted ? "Geluid aan" : "Geluid uit"}
+                  className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-hero-ink/10 hover:text-hero-ink"
+                >
+                  {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => handleShare(current.image_url)}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
+                aria-label="Delen"
+                title="Delen"
+                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-hero-ink/10 hover:text-hero-ink"
               >
                 <Share2 size={16} />
               </button>
@@ -246,7 +345,7 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                 onClick={handleDownloadAll}
                 title="Download alle foto's van deze dag als zip"
                 aria-label="Download alle foto's van deze dag"
-                className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3] disabled:opacity-50"
+                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-hero-ink/10 hover:text-hero-ink disabled:opacity-50"
               >
                 {downloadingAll ? <Loader2 size={16} className="animate-spin" /> : <FolderDown size={16} />}
               </button>
@@ -254,7 +353,9 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                 type="button"
                 disabled={downloadingId === current.id}
                 onClick={() => handleDownload(current)}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3] disabled:opacity-50"
+                aria-label="Foto downloaden"
+                title="Foto downloaden"
+                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-hero-ink/10 hover:text-hero-ink disabled:opacity-50"
               >
                 {downloadingId === current.id ? (
                   <Loader2 size={16} className="animate-spin" />
@@ -262,11 +363,13 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
                   <Download size={16} />
                 )}
               </button>
-              {me?.name === current.uploaded_by && (
+              {isMine(current.uploaded_by) && (
                 <button
                   type="button"
                   onClick={() => handleDelete(current.id)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
+                  aria-label="Foto verwijderen"
+                  title="Foto verwijderen"
+                  className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-hero-ink/10 hover:text-hero-ink"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -274,22 +377,67 @@ export function StoryViewer({ eventDayId, open, onClose, initialIndex = 0 }: Sto
               <button
                 type="button"
                 onClick={handleClose}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-[#E6F0F3]/75 transition-colors hover:bg-white/10 hover:text-[#E6F0F3]"
+                aria-label="Sluiten"
+                title="Sluiten"
+                className="hit-area flex h-9 w-9 items-center justify-center rounded-full text-hero-ink/75 transition-colors hover:bg-hero-ink/10 hover:text-hero-ink"
               >
-                <X size={20} />
+                <X size={16} />
               </button>
             </div>
           </div>
 
           {/* Photo + tap zones */}
           <div className="relative flex-1 min-h-0">
-            <img
-              key={current.id}
-              src={current.image_url}
-              alt=""
-              draggable={false}
-              className="absolute inset-0 h-full w-full select-none object-contain"
-            />
+            {heldVideo ? (
+              <>
+                {current.poster_url && (
+                  <img src={current.poster_url} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none object-contain" />
+                )}
+                <button
+                  type="button"
+                  onClick={() => setTappedVideos((s) => new Set(s).add(current.id))}
+                  className="btn-primary absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 gap-2 px-4"
+                >
+                  <Play size={16} />
+                  Video afspelen
+                </button>
+              </>
+            ) : current.media_type === "video" ? (
+              <>
+                <video
+                  key={current.id}
+                  ref={videoRef}
+                  src={current.image_url}
+                  poster={current.poster_url ?? undefined}
+                  playsInline
+                  preload="auto"
+                  disablePictureInPicture
+                  draggable={false}
+                  className="absolute inset-0 h-full w-full select-none object-contain"
+                  onLoadedMetadata={(e) => startVideo(e.currentTarget)}
+                  onWaiting={() => setBuffering(true)}
+                  onPlaying={() => setBuffering(false)}
+                  onEnded={next}
+                  onError={() => setFailedVideoId(current.id)}
+                />
+                {buffering && failedVideoId !== current.id && (
+                  <Loader2 size={28} className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-spin text-hero-ink/80" />
+                )}
+                {failedVideoId === current.id && (
+                  <p className="pointer-events-none absolute inset-x-6 top-1/2 -translate-y-1/2 text-center text-sm text-hero-ink/80">
+                    Deze video kan op dit apparaat niet worden afgespeeld. Je kunt hem wel downloaden.
+                  </p>
+                )}
+              </>
+            ) : (
+              <img
+                key={current.id}
+                src={fullImage(current)}
+                alt=""
+                draggable={false}
+                className="absolute inset-0 h-full w-full select-none object-contain"
+              />
+            )}
             <button type="button" aria-label="Vorige" onClick={prev} className="absolute inset-y-0 left-0 w-1/3" />
             <button type="button" aria-label="Volgende" onClick={next} className="absolute inset-y-0 right-0 w-2/3" />
           </div>

@@ -110,6 +110,8 @@ export function LocationSearchInput({
         </div>
         <input
           type="text"
+          enterKeyHint="search"
+          autoCorrect="off"
           value={query}
           onChange={(e) => handleInput(e.target.value)}
           onFocus={() => results.length > 0 && setOpen(true)}
@@ -122,16 +124,17 @@ export function LocationSearchInput({
           <button
             type="button"
             onClick={clear}
-            className="absolute right-3 text-ink-3 hover:text-ink transition-colors"
+            aria-label="Zoekopdracht wissen"
+            className="hit-area absolute right-1.5 flex h-9 w-9 items-center justify-center text-ink-3 hover:text-ink transition-colors"
           >
-            <X size={13} />
+            <X size={16} />
           </button>
         )}
       </div>
 
       {/* ── Dropdown results ───────────────────────────────── */}
       {open && results.length > 0 && (
-        <div className="absolute z-50 left-0 right-0 mt-1 rounded-xl border-1.5 border-line bg-surface shadow-xl overflow-hidden">
+        <div className="absolute z-50 left-0 right-0 mt-1 card-surface shadow-xl overflow-hidden">
           {results.map((place) => {
             const parts = place.display_name.split(",");
             const name = parts[0].trim();
@@ -145,7 +148,7 @@ export function LocationSearchInput({
                            hover:bg-sunken transition-colors
                            border-b border-line last:border-0"
               >
-                <MapPin size={13} className="text-ink-3 shrink-0 mt-0.5" />
+                <MapPin size={14} className="text-ink-3 shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-ink truncate">{name}</p>
                   {sub && <p className="text-xs text-ink-3 truncate mt-0.5">{sub}</p>}
@@ -153,7 +156,7 @@ export function LocationSearchInput({
               </button>
             );
           })}
-          <p className="px-3.5 py-2 text-[10px] text-ink-3 border-t border-line">
+          <p className="px-3.5 py-2 text-[12px] text-ink-3 border-t border-line">
             © OpenStreetMap contributors
           </p>
         </div>

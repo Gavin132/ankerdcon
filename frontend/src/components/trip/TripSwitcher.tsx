@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { CalendarRange, ChevronRight } from "lucide-react";
+import { CalendarRange, ChevronRight, CalendarDays } from "lucide-react";
 import { useCalendar } from "../../hooks/useCalendar";
 import { routes } from "../../config/routes";
 import { buildTrips, tripPhase, type Trip, type TripPhase } from "../../utils/trips";
 import { TripSheet } from "./TripSheet";
+import { EmptyState } from "../common/EmptyState";
 
 const PAST_SHOWN = 8;
 
@@ -22,15 +23,15 @@ function TripRow({ trip, current, going, onPick }: { trip: Trip; current: boolea
       >
         <span className="min-w-0 flex-1 leading-tight">
           <span className="block truncate text-[14.5px] font-semibold text-ink">{trip.title}</span>
-          <span className="mt-0.5 block truncate font-mono text-[11px] text-ink-3">
+          <span className="mt-0.5 block truncate font-mono text-[12px] text-ink-3">
             {trip.dateRange}
             {trip.location ? ` · ${trip.location}` : ""}
           </span>
         </span>
-        {current && <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[10.5px] font-semibold text-brand-text">Dit event</span>}
-        {!current && PHASE_LABEL[phase] && <span className="shrink-0 rounded-full bg-brand px-2 py-0.5 text-[10.5px] font-semibold text-brand-on">{PHASE_LABEL[phase]}</span>}
-        {going && !current && <span className="shrink-0 text-[11px] font-semibold text-ink-3">Jij gaat mee</span>}
-        <ChevronRight size={14} className="shrink-0 text-ink-3" />
+        {current && <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[12px] font-semibold text-brand-text">Dit evenement</span>}
+        {!current && PHASE_LABEL[phase] && <span className="shrink-0 rounded-full bg-brand px-2 py-0.5 text-[12px] font-semibold text-brand-on">{PHASE_LABEL[phase]}</span>}
+        {going && !current && <span className="shrink-0 text-[12px] font-semibold text-ink-3">Jij gaat mee</span>}
+        <ChevronRight size={16} className="shrink-0 text-ink-3" />
       </Link>
     </li>
   );
@@ -68,13 +69,13 @@ export function TripSwitcher({ open, onClose, currentId, myNames }: { open: bool
             {pastShown.map((t) => <TripRow key={t.id} trip={t} current={t.id === currentId} going={goingTo(t)} onPick={onClose} />)}
           </ul>
           {past.length > PAST_SHOWN && !showAllPast && (
-            <button type="button" onClick={() => setShowAllPast(true)} className="mt-2 text-xs font-semibold text-brand-text hover:underline">
+            <button type="button" onClick={() => setShowAllPast(true)} className="hit-area mt-2 text-xs font-semibold text-brand-text hover:underline">
               Toon alle {past.length}
             </button>
           )}
         </section>
       )}
-      {trips.length === 0 && <p className="py-8 text-center text-sm text-ink-3">Nog geen evenementen.</p>}
+      {trips.length === 0 && <EmptyState compact icon={<CalendarDays size={22} />} title="Nog geen evenementen" />}
     </TripSheet>
   );
 }
@@ -87,12 +88,12 @@ export function TripSwitcherButton({ iconOnly, onClick }: { iconOnly?: boolean; 
       onClick={onClick}
       title="Andere evenementen"
       aria-label="Andere evenementen"
-      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+      className="icon-btn"
     >
-      <CalendarRange size={17} />
+      <CalendarRange size={16} />
     </button>
   ) : (
-    <button type="button" onClick={onClick} className="btn-secondary flex w-full items-center justify-center gap-2 px-4 py-3 text-sm">
+    <button type="button" onClick={onClick} className="btn-primary flex w-full items-center justify-center gap-2 px-4">
       <CalendarRange size={16} />
       Andere evenementen
     </button>

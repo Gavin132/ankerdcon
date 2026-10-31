@@ -85,17 +85,17 @@ function CopyField({ label, value, display }: { label: string; value: string; di
   return (
     <div className="flex items-center justify-between gap-3 px-3 py-2.5">
       <div className="min-w-0">
-        <p className="text-[11.5px] font-semibold text-ink-3">{label}</p>
+        <p className="text-[12px] font-semibold text-ink-3">{label}</p>
         <p className="truncate font-mono text-[13.5px] font-semibold tabular-nums text-ink">{display ?? value}</p>
       </div>
       <button
         type="button"
         onClick={copy}
-        className="inline-flex shrink-0 items-center gap-1 rounded-lg border-1.5 border-line px-2 py-1 text-[12px] font-semibold text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
-        aria-label={`Kopieer ${label.toLowerCase()}`}
+        className="btn-secondary btn-compact shrink-0 gap-1 px-3"
+        aria-label={`${label} kopiëren`}
       >
-        {copied ? <Check size={12} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={12} />}
-        {copied ? "Gekopieerd" : "Kopieer"}
+        {copied ? <Check size={12} className="text-ok" /> : <Copy size={12} />}
+        {copied ? "Gekopieerd" : "Kopiëren"}
       </button>
     </div>
   );
@@ -157,7 +157,7 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
   let footer: React.ReactNode = null;
 
   const hero = (
-    <div className="flex items-center justify-between gap-3 rounded-xl border-1.5 border-line bg-surface px-4 py-3">
+    <div className="flex items-center justify-between card-surface gap-3 px-4 py-3">
       <div className="flex min-w-0 items-center gap-3">
         <UserAvatar name={otherName} user={users.find((u) => u.id === otherId)} className="h-10 w-10 shrink-0 text-sm" />
         <div className="min-w-0">
@@ -213,7 +213,7 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
             <CopyField label="Omschrijving" value={`Ankerd afrekening ${otherName}`} />
           </div>
           <div>
-            <label className="mb-1.5 block text-[12.5px] font-semibold text-ink-2" htmlFor="settle-link">Betaallink</label>
+            <label className="field-label" htmlFor="settle-link">Betaallink</label>
             <input
               id="settle-link"
               type="url"
@@ -224,22 +224,22 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
               onChange={(e) => setRequestUrl(e.target.value)}
             />
             {linkProblem ? (
-              <p className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">{linkProblem}</p>
+              <p className="field-error font-medium">{linkProblem}</p>
             ) : (
               <p className="mt-1.5 text-xs text-ink-3">Maak in je bank-app een betaalverzoek van {formatAmount(amount, currency)} (Tikkie, bunq, PayPal, Revolut, Klarna, ING, Rabo, ABN AMRO, SNS, ASN, RegioBank, Knab) en plak de link hier.</p>
             )}
           </div>
-          <div className="flex items-center gap-3 text-[11.5px] font-semibold uppercase tracking-wide text-ink-3">
+          <div className="flex items-center gap-3 text-xs font-semibold text-ink-3">
             <span className="h-px flex-1 bg-line" /> of <span className="h-px flex-1 bg-line" />
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-[12.5px] font-semibold text-ink-2" htmlFor="settle-iban">IBAN</label>
+              <label className="field-label" htmlFor="settle-iban">IBAN</label>
               <input id="settle-iban" className="input-field font-mono" placeholder="NL00 BANK 0123 4567 89" autoComplete="off"
                 value={iban} onChange={(e) => setIban(e.target.value)} />
             </div>
             <div>
-              <label className="mb-1.5 block text-[12.5px] font-semibold text-ink-2" htmlFor="settle-name">Op naam van</label>
+              <label className="field-label" htmlFor="settle-name">Op naam van</label>
               <input id="settle-name" className="input-field" placeholder="Naam rekeninghouder" maxLength={70}
                 value={accountName} onChange={(e) => setAccountName(e.target.value)} />
             </div>
@@ -271,7 +271,8 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
     const link = s.request_url ? linkInfo(s.request_url) : null;
     const d = describeSettlement(s, meId);
     title = d.title;
-    subtitle = formatAmount(s.amount, s.currency);
+    // The amount is in the hero and in the Bedrag row; the subtitle says since when.
+    subtitle = s.created_at ? `Sinds ${formatDate(s.created_at)}` : "";
 
     const howToPay = (
       <div className="space-y-3">
@@ -280,9 +281,9 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
             href={s.request_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-primary flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-[14px]"
+            className="btn-primary flex w-full items-center justify-center gap-2 px-4"
           >
-            <ExternalLink size={15} />
+            <ExternalLink size={16} />
             Betalen via {link.provider ?? "betaallink"}
             <span className="font-mono text-[12px] font-medium opacity-80">({link.host})</span>
           </a>
@@ -296,12 +297,12 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
     );
 
     if (s.status === "confirmed") {
-      body = <Note>Afgerond{s.confirmed_at ? ` op ${formatDate(s.confirmed_at)}` : ""}. Alle aandelen tussen jullie tot dat moment zijn verrekend.</Note>;
+      body = <Note>Verrekend{s.confirmed_at ? ` op ${formatDate(s.confirmed_at)}` : ""}. Alle aandelen tussen jullie tot dat moment zijn verrekend.</Note>;
     } else if (s.status === "requested" && iPay) {
       body = (
         <div className="space-y-4">
           {howToPay}
-          <Note>Controleer dat het bedrag in je bank-app {formatAmount(s.amount, s.currency)} is. Betaald? Meld het hieronder.</Note>
+          <Note>Controleer het bedrag in je bank-app. Betaald? Meld het hieronder.</Note>
         </div>
       );
       footer = (
@@ -334,7 +335,7 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
     } else if (!iPay) {
       body = (
         <div className="space-y-4">
-          <Note>Kijk in je bank-app of {formatAmount(s.amount, s.currency)} van {d.other} binnen is, en bevestig het dan.</Note>
+          <Note>Kijk in je bank-app of het bedrag van {d.other} binnen is, en bevestig het dan.</Note>
         </div>
       );
       footer = (
@@ -350,7 +351,7 @@ export function SettlementDrawer({ target, onClose, users, meId }: Props) {
         </div>
       );
     } else {
-      body = <Note>{d.other} moet nog bevestigen dat {formatAmount(s.amount, s.currency)} binnen is.</Note>;
+      body = <Note>{d.other} moet nog bevestigen dat het bedrag binnen is.</Note>;
       footer = (
         <Button variant="ghost" className="w-full" loading={busy}
           onClick={() => run(() => withdraw.mutateAsync(s.id), "Melding ingetrokken.", "Kon niet intrekken.")}>

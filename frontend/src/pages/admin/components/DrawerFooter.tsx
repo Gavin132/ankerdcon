@@ -5,9 +5,14 @@ interface Props {
   formId: string;
   isPending: boolean;
   isEdit: boolean;
+  /** The main button when it is not the usual "Opslaan" / "Toevoegen" ("Plaatsen" for a post that goes live). */
+  submitLabel?: string;
+  /** The form cannot be saved yet (a required field is empty). */
+  disabled?: boolean;
 }
 
-export function DrawerFooter({ onCancel, formId, isPending, isEdit }: Props) {
+/** Footer of an admin sheet: "Annuleren" and the blue button that submits the form with `formId`. */
+export function DrawerFooter({ onCancel, formId, isPending, isEdit, submitLabel, disabled }: Props) {
   return (
     <div className="flex gap-2">
       <button
@@ -20,10 +25,10 @@ export function DrawerFooter({ onCancel, formId, isPending, isEdit }: Props) {
       <button
         type="submit"
         form={formId}
-        disabled={isPending}
+        disabled={isPending || disabled}
         className={`flex-1 ${BTN_PRIMARY}`}
       >
-        {isPending ? "Opslaan..." : isEdit ? "Bijwerken" : "Aanmaken"}
+        {isPending ? "Opslaan…" : (submitLabel ?? (isEdit ? "Opslaan" : "Toevoegen"))}
       </button>
     </div>
   );

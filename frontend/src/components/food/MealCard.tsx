@@ -114,7 +114,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
           {/* ── Header ──────────────────────────────────────────── */}
           <div className="flex items-start gap-2.5">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-              <UtensilsCrossed size={15} strokeWidth={2} />
+              <UtensilsCrossed size={16} strokeWidth={2} />
             </span>
             <div className="min-w-0 flex-1">
               <h3 className="text-[14.5px] font-semibold leading-snug text-ink">{meal.meal_name}</h3>
@@ -124,7 +124,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
             </div>
             <div className="shrink-0 text-right leading-tight">
               <p className="font-mono text-[15px] font-semibold tabular-nums text-ink">{formatTime(meal.time)}</p>
-              <p className="font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-3">{formatDate(meal.time)}</p>
+              <p className="font-mono text-xs text-ink-3">{formatDate(meal.time)}</p>
             </div>
           </div>
 
@@ -143,8 +143,8 @@ export function MealCard({ meal, userNames }: MealCardProps) {
                 </span>
               ) : null}
               {meal.transport_needed && (
-                <span className="inline-flex items-center gap-1 rounded-md border border-line px-1.5 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2">
-                  <Bus size={11} />
+                <span className="tag gap-1 py-0.5">
+                  <Bus size={12} />
                   Vervoer nodig
                 </span>
               )}
@@ -155,9 +155,9 @@ export function MealCard({ meal, userNames }: MealCardProps) {
             <Link
               to={routes.event.view(linkedEvent.id)}
               onClick={(e) => e.stopPropagation()}
-              className="inline-flex max-w-full items-center gap-1 self-start rounded-md border border-line px-1.5 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
+              className="tag max-w-full gap-1 self-start py-0.5 transition-colors hover:border-ink-3 hover:text-ink"
             >
-              <Link2 size={10} className="shrink-0" />
+              <Link2 size={12} className="shrink-0" />
               <span className="truncate">{linkedEvent.event_name}</span>
             </Link>
           )}
@@ -191,7 +191,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setCancelOpen(true); }}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
+                  className="icon-btn hover:bg-bad-soft hover:text-bad"
                   title="Afmelden"
                 >
                   <UserMinus size={14} />
@@ -201,18 +201,18 @@ export function MealCard({ meal, userNames }: MealCardProps) {
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); exportMealToIcs(meal); }}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+                className="icon-btn"
                 title="Exporteer naar kalender"
               >
                 <CalendarPlus size={14} />
               </button>
 
-              <Button size="sm" variant="primary" className="ml-1 !min-h-[36px] !py-1.5" onClick={(e) => { e.stopPropagation(); setRsvpOpen(true); }}>
-                <UserCheck size={13} />
+              <Button size="sm" variant="primary" className="ml-1" onClick={(e) => { e.stopPropagation(); setRsvpOpen(true); }}>
+                <UserCheck size={14} />
                 Aanmelden
               </Button>
 
-              <ChevronRight size={14} className="ml-0.5 shrink-0 text-ink-3" />
+              <ChevronRight size={16} className="ml-0.5 shrink-0 text-ink-3" />
             </div>
           </div>
 
@@ -270,7 +270,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
             color="green"
           />
           <Button onClick={onRsvp} loading={rsvpMutation.isPending} className="w-full" disabled={rsvpNames.length === 0}>
-            <UserCheck size={15} />
+            <UserCheck size={16} />
             {rsvpNames.length === 0 ? "Selecteer een naam" : rsvpNames.length === 1 ? `${rsvpNames[0]} aanmelden` : `${rsvpNames.length} personen aanmelden`}
           </Button>
         </div>
@@ -286,7 +286,7 @@ export function MealCard({ meal, userNames }: MealCardProps) {
         <div className="space-y-3">
           <NamePicker multiple options={safeParticipants} value={cancelNames} onChange={setCancelNames} color="rose" />
           <Button variant="danger" onClick={onCancel} loading={cancelMutation.isPending} className="w-full" disabled={cancelNames.length === 0}>
-            <UserMinus size={15} />
+            <UserMinus size={16} />
             {cancelNames.length === 0 ? "Selecteer een naam" : cancelNames.length === 1 ? `${cancelNames[0]} afmelden` : `${cancelNames.length} personen afmelden`}
           </Button>
         </div>

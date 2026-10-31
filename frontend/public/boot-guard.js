@@ -41,6 +41,58 @@
     return !!root && root.childNodes.length > 0;
   }
 
+  // A copy of the app that will not start is often the phone's own stale one (an old shell asking for scripts that are gone,
+  // or a worker that left the page waiting). Starting over without it is what pulling the page down does by hand, so it is
+  // done once before the message below: the worker and its caches are removed and the page is loaded again. Remembered for
+  // ten minutes, so a phone that really cannot start gets the message instead of a loop of reloads.
+  var RECOVER_KEY = "ankerd-boot-recovered";
+  var recovering = false;
+  function recoveredRecently() {
+    try {
+      var at = Number(sessionStorage.getItem(RECOVER_KEY));
+      return !!at && new Date().getTime() - at < 10 * 60 * 1000;
+    } catch (e) {
+      return true; // no storage to remember it in: never risk a loop
+    }
+  }
+  function recover() {
+    try {
+      sessionStorage.setItem(RECOVER_KEY, String(new Date().getTime()));
+    } catch (e) {
+      return false;
+    }
+    recovering = true;
+    var work = [];
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+        work.push(
+          navigator.serviceWorker.getRegistrations().then(function (list) {
+            return Promise.all(list.map(function (r) { return r.unregister(); }));
+          }),
+        );
+      }
+      if (window.caches && window.caches.keys) {
+        work.push(
+          window.caches.keys().then(function (names) {
+            return Promise.all(names.map(function (n) { return window.caches.delete(n); }));
+          }),
+        );
+      }
+    } catch (e) {
+      // carry on with whatever could be started
+    }
+    var done = false;
+    function reload() {
+      if (done) return;
+      done = true;
+      window.location.reload();
+    }
+    setTimeout(reload, 4000); // whatever is stuck must not hold the reload back
+    if (window.Promise) window.Promise.all(work).then(reload, reload);
+    else reload();
+    return true;
+  }
+
   function show() {
     if (box) return;
     var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -89,6 +141,10 @@
       if (seconds > 30) clearInterval(timer);
       return;
     }
-    if (!box && document.body && ((errors.length && seconds >= 4) || seconds >= 25)) show();
+    if (box || recovering || !document.body) return;
+    var failed = errors.length && seconds >= 4;
+    // Nothing started and nothing said for 20 seconds is a request that hangs: try starting over once before giving up.
+    if ((failed || seconds >= 20) && !recoveredRecently() && recover()) return;
+    if (failed || seconds >= 25) show();
   }, 1000);
 })();

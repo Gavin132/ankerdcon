@@ -48,32 +48,32 @@ export function SwipeHint({ enabled, dismissedBy }: { enabled: boolean; dismisse
   }, [dismissedBy]);
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] flex justify-center px-4 pt-3" style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top, 0px))" }}>
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex justify-center px-4" style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 84px)" }}>
       <AnimatePresence>
         {show && (
           <motion.div
-            initial={{ y: -16, opacity: 0 }}
+            initial={{ y: 16, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -16, opacity: 0 }}
+            exit={{ y: 16, opacity: 0 }}
             transition={{ type: "spring", damping: 24, stiffness: 300 }}
-            className="flex items-center gap-2 rounded-[12px] border-2 border-outline bg-surface px-3.5 py-2 text-ink shadow-xl"
+            className="flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-paper"
           >
             <motion.span
               aria-hidden
               animate={{ x: [0, -3, 0] }}
               transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
-              className="flex shrink-0 text-ink-3"
+              className="flex shrink-0 text-paper/60"
             >
-              <ChevronLeft size={15} />
+              <ChevronLeft size={16} />
             </motion.span>
             <span className="text-[12.5px] font-semibold">Swipe voor andere evenementen</span>
             <motion.span
               aria-hidden
               animate={{ x: [0, 3, 0] }}
               transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
-              className="flex shrink-0 text-ink-3"
+              className="flex shrink-0 text-paper/60"
             >
-              <ChevronRight size={15} />
+              <ChevronRight size={16} />
             </motion.span>
           </motion.div>
         )}

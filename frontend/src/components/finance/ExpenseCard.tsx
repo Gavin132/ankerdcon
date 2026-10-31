@@ -2,12 +2,14 @@ import { motion } from "framer-motion";
 import { UserAvatar } from "../common/UserAvatar";
 import { formatAmount, formatDate } from "../../utils/format";
 import { listItem } from "../../utils/motion";
+import { isOwnName } from "../../utils/people";
 import type { Expense, User } from "../../types";
 
 interface Props {
   expense: Expense;
   users: User[];
-  me: string | undefined;
+  /** Every name the signed-in member is stored under (`useMyNames`). */
+  myNames: string[];
   onClick: () => void;
   /** Name of the trip the expense is linked to, if any. */
   tripTitle?: string;
@@ -17,22 +19,22 @@ function resolveUser(name: string, users: User[]) {
   return users.find((u) => u.name === name || u.discord_username === name || u.aliases?.includes(name));
 }
 
-const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-[11.5px] font-semibold before:h-1.5 before:w-1.5 before:rounded-full before:bg-current before:content-['']";
+const PILL = "pill gap-1.5 before:h-1.5 before:w-1.5 before:rounded-full before:bg-current before:content-['']";
 
 const STATUS_PILL = {
-  confirmed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  claimed:   "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
-  pending:   "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
+  confirmed: "pill-ok",
+  claimed:   "pill-warn",
+  pending:   "pill-bad",
 } as const;
 
 /** One expense as a row in the Financiën list panel. */
-export function ExpenseCard({ expense, users, me, onClick, tripTitle }: Props) {
+export function ExpenseCard({ expense, users, myNames, onClick, tripTitle }: Props) {
   const confirmedCount = expense.shares.filter((s) => s.status === "confirmed").length;
   const totalShares    = expense.shares.length;
   const allConfirmed   = totalShares > 0 && confirmedCount === totalShares;
 
-  const myShare = expense.shares.find((s) => s.participant === me);
-  const iAm    = expense.paid_by === me;
+  const myShare = expense.shares.find((s) => isOwnName(myNames, s.participant));
+  const iAm    = isOwnName(myNames, expense.paid_by);
 
   return (
     <motion.div variants={listItem}>
@@ -87,11 +89,11 @@ export function ExpenseCard({ expense, users, me, onClick, tripTitle }: Props) {
               <span className="mt-1.5 flex items-center justify-end gap-2 whitespace-nowrap">
                 <span className="hidden h-1.5 w-12 overflow-hidden rounded-full sm:block bg-sunken shadow-[inset_0_0_0_1px_rgb(var(--line))]" aria-hidden>
                   <span
-                    className="block h-full bg-emerald-500"
+                    className="block h-full bg-ok-fill"
                     style={{ width: `${(confirmedCount / totalShares) * 100}%` }}
                   />
                 </span>
-                <span className="font-mono text-[11.5px] tabular-nums text-ink-3">{confirmedCount}/{totalShares} verrekend</span>
+                <span className="font-mono text-[12px] tabular-nums text-ink-3">{confirmedCount}/{totalShares} verrekend</span>
               </span>
             )
           )}

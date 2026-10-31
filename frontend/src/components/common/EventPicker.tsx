@@ -31,7 +31,7 @@ export function EventPicker({
   events,
   value,
   onChange,
-  placeholder = "Zoek event…",
+  placeholder = "Zoek evenement…",
 }: EventPickerProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -93,14 +93,14 @@ export function EventPicker({
                 <p className="text-sm font-semibold text-ink truncate">
                   {selectedEvent.event_name}
                 </p>
-                <p className="font-mono text-[11px] text-ink-3">
+                <p className="font-mono text-[12px] text-ink-3">
                   {formatDateWithDay(selectedEvent.date)}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={handleClear}
-                className="shrink-0 flex h-6 w-6 items-center justify-center rounded-md text-ink-3 hover:text-ink hover:bg-sunken transition-colors"
+                className="hit-area shrink-0 flex h-6 w-6 items-center justify-center rounded-md text-ink-3 hover:text-ink hover:bg-sunken transition-colors"
               >
                 <X size={12} />
               </button>
@@ -112,11 +112,12 @@ export function EventPicker({
       {/* Search input */}
       <div className="relative">
         <Search
-          size={13}
+          size={14}
           className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3"
         />
         <input
           className="input-field pl-8"
+          enterKeyHint="search"
           placeholder={placeholder}
           value={query}
           onChange={(e) => {
@@ -137,11 +138,11 @@ export function EventPicker({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15 }}
-            className="max-h-[220px] overflow-y-auto overscroll-contain rounded-xl border-1.5 border-line bg-surface shadow-xl divide-y divide-line"
+            className="max-h-[220px] overflow-y-auto overscroll-contain card-surface shadow-xl divide-y divide-line"
           >
             {filtered.length === 0 ? (
               <p className="px-4 py-4 text-center text-xs text-ink-3">
-                {query ? `Geen resultaten voor "${query}"` : "Geen events beschikbaar"}
+                {query ? `Geen resultaten voor "${query}"` : "Geen evenementen beschikbaar"}
               </p>
             ) : (
               filtered.map((event) => {
@@ -158,19 +159,19 @@ export function EventPicker({
                     }`}
                   >
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken">
-                      <CalendarDays size={15} className="text-ink" />
+                      <CalendarDays size={16} className="text-ink" />
                     </div>
                     <span className="flex-1 min-w-0">
                       <span className="block text-sm font-semibold text-ink truncate">
                         {event.event_name}
                       </span>
-                      <span className="block text-[11px] text-ink-3 truncate">
+                      <span className="block text-[12px] text-ink-3 truncate">
                         {formatDateWithDay(event.date)}
                         {event.location ? ` · ${event.location}` : ""}
                       </span>
                     </span>
                     {isSelected && (
-                      <Check size={15} className="shrink-0 text-ink" />
+                      <Check size={16} className="shrink-0 text-ink" />
                     )}
                   </button>
                 );

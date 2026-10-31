@@ -29,6 +29,7 @@ class CalendarRoutes:
     LEAVE_BULK = "/{event_id}/leave/bulk"
     HOTEL_ROOMS = "/{event_id}/hotel-rooms"
     HOTEL_ROOMS_BULK = "/{event_id}/hotel-rooms/bulk"
+    HOTEL_ROOM = "/{event_id}/hotel-rooms/{room_id}"
     HOTEL_ROOM_ASSIGN = "/{event_id}/hotel-rooms/{room_id}/assign"
     HOTEL_ROOM_LEAVE = "/{event_id}/hotel-rooms/{room_id}/leave"
 
@@ -45,6 +46,10 @@ class UserRoutes:
     BANNER = "/banner"
     AVATAR = "/avatar"
     LINK_DISCORD = "/me/link-discord"
+    DISCORD = "/me/discord"
+    EXPORT = "/me/export"
+    DELETION_REQUEST = "/me/deletion-request"
+    TEST_NOTIFICATION = "/me/test-notification"
 
 
 class MealRoutes:
@@ -143,6 +148,19 @@ class MealCategoryRoutes:
     LIST = ""
 
 
+class RideCostRoutes:
+    PREFIX = "/ride-costs"
+    LIST = ""
+    TRIP = "/{trip_id}"
+
+
+class TicketPollRoutes:
+    PREFIX = "/ticket-polls"
+    TRIP = "/{trip_id}"
+    VOTE = "/{trip_id}/vote"
+    BOUGHT = "/{trip_id}/bought"
+
+
 class AdminRoutes:
     PREFIX = "/admin"
     STATS = "/stats"
@@ -157,6 +175,7 @@ class AdminRoutes:
     USERS_BULK_DELETE = "/users/bulk-delete"
     USERS_BULK_DEACTIVATE = "/users/bulk-deactivate"
     USER_BADGE = "/users/{user_id}/badges/{badge_id}"
+    USER_MERGE = "/users/{source_id}/merge"
     IMPERSONATE = "/impersonate/{user_id}"
 
     # Images (event covers, badges) — uploaded through the backend, never

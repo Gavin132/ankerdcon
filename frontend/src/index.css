@@ -15,15 +15,59 @@
   --sunken: 235 241 243;     /* #EBF1F3  wells, hover rows */
   --ink: 15 21 25;           /* #0F1519  text, outlines */
   --ink-2: 74 90 99;         /* #4A5A63  secondary text */
-  --ink-3: 116 131 138;      /* #74838A  muted text */
+  --ink-3: 96 111 119;       /* #606F77  muted text (4.6:1 on --sunken, 5.2:1 on white) */
   --line: 213 222 226;       /* #D5DEE2  borders */
   --outline: 15 21 25;       /* #0F1519  bold outline */
-  --cyan: 87 178 249;        /* #57B2F9  the one brand fill (brand blue, +18 saturation) */
+  --cyan: 0 120 212;         /* #0078D4  the one brand fill: deep enough for a white label (4.53:1) */
   --cyan-soft: 220 238 251;  /* #DCEEFB */
-  --cyan-text: 13 117 209;   /* #0D75D1  brand as text on light (4.7:1 on white) */
-  --on-cyan: 15 21 25;
-  --nav-active-bg: 15 21 25;
-  --nav-active-fg: 245 248 249;
+  --cyan-text: 12 105 187;   /* #0C69BB  brand as text on light (5.6:1 on white, 4.7:1 on --cyan-soft) */
+  --on-cyan: 255 255 255;    /* the label on every brand fill, accents included */
+  /* A chosen chip, the active tab: the ink fill with paper text (the brand fill with a white label in dark mode, where
+     ink is light). `--selected-icon` is the icon on it: a light tint of the accent on the ink, white on the accent. */
+  --selected: 15 21 25;
+  --selected-on: 245 248 249;
+  --selected-icon: 137 202 254;  /* #89CAFE, the accent's dark-mode text colour */
+  /* The faint anchor marks in the corners of the app (App.tsx), a touch stronger on dark. */
+  --watermark: 0.045;
+  --watermark-small: 0.035;
+  /* Status: emerald / amber / rose, five tokens each.
+       text  (`text-ok`)       at least 4.5:1 on --surface, --sunken and its own -soft
+       soft  (`bg-ok-soft`)    tinted background of a pill, notice or tile
+       line  (`border-ok-line`) border of a notice
+       fill  (`bg-ok-fill`)    solid colour for dots, bars, banners and the destructive button
+       on    (`text-ok-on`)    text or icon on the fill, at least 4.5:1 */
+  --ok: 4 120 87;            /* #047857 */
+  --ok-soft: 209 250 229;    /* #D1FAE5 */
+  --ok-line: 167 243 208;    /* #A7F3D0 */
+  --ok-fill: 16 185 129;     /* #10B981 */
+  --ok-on: 15 21 25;
+  --warn: 146 64 14;         /* #92400E */
+  --warn-soft: 254 243 199;  /* #FEF3C7 */
+  --warn-line: 252 211 77;   /* #FCD34D */
+  --warn-fill: 251 191 36;   /* #FBBF24 */
+  --warn-on: 15 21 25;
+  --bad: 190 18 60;          /* #BE123C */
+  --bad-soft: 255 228 230;   /* #FFE4E6 */
+  --bad-line: 253 164 175;   /* #FDA4AF */
+  --bad-fill: 225 29 72;     /* #E11D48 */
+  --bad-on: 255 255 255;
+  /* The always-dark hero panel and what sits on it: same in light and dark mode (never use the status text
+     tokens there, they switch with the theme). */
+  --hero: 15 21 25;          /* #0F1519 */
+  --hero-ink: 230 240 243;   /* #E6F0F3 */
+  --hero-warn: 253 230 138;  /* #FDE68A  amber chip text on the hero */
+  --hero-bad: 254 205 211;   /* #FECDD3  rose chip text on the hero */
+  /* Dark layer behind sheets, dialogs and viewers (`bg-scrim/50`), and under a caption on a photo. */
+  --scrim: 8 12 15;          /* #080C0F */
+  /* Fill behind the initial of someone without a photo or colour of their own, picked by name.
+     White text is at least 4.5:1 on all six, in both themes. */
+  --avatar-1: 13 117 209;    /* #0D75D1 */
+  --avatar-2: 4 120 87;      /* #047857 */
+  --avatar-3: 180 83 9;      /* #B45309 */
+  --avatar-4: 190 18 60;     /* #BE123C */
+  --avatar-5: 74 90 99;      /* #4A5A63 */
+  --avatar-6: 162 28 175;    /* #A21CAF */
+  --avatar-on: 255 255 255;  /* the initial on them */
 }
 
 .dark {
@@ -32,34 +76,48 @@
   --sunken: 16 22 26;        /* #10161A */
   --ink: 230 240 243;        /* #E6F0F3 */
   --ink-2: 160 176 184;      /* #A0B0B8 */
-  --ink-3: 110 126 134;      /* #6E7E86 */
+  --ink-3: 125 141 149;      /* #7D8D95  (5.1:1 on --surface) */
   --line: 36 48 57;          /* #243039 */
   --outline: 191 211 218;    /* #BFD3DA */
   --cyan-soft: 15 42 64;     /* #0F2A40 */
   --cyan-text: 137 202 254;  /* #89CAFE */
-  --nav-active-bg: 87 178 249; /* #57B2F9 — matches the light-mode --cyan */
-  --nav-active-fg: 15 21 25;
+  --selected: 0 120 212;     /* #0078D4, the accent fill (the accent blocks below change it) */
+  --selected-on: 255 255 255;
+  --selected-icon: 255 255 255;
+  --watermark: 0.055;
+  --watermark-small: 0.045;
+  --ok: 110 231 183;         /* #6EE7B7 */
+  --ok-soft: 19 51 47;       /* emerald at 15% on --surface */
+  --ok-line: 29 82 68;       /* emerald at 30% on --surface */
+  --warn: 252 211 77;        /* #FCD34D */
+  --warn-soft: 54 47 29;     /* amber at 15% on --surface */
+  --warn-line: 88 66 26;     /* amber at 30% on --surface */
+  --bad: 253 164 175;        /* #FDA4AF */
+  --bad-soft: 54 32 41;      /* rose at 15% on --surface */
+  --bad-line: 112 61 72;     /* rose at 40% on --surface */
 }
 
 /* ─── Accent colours ─────────────────────────────────────────────────────────
    Instellingen › Accentkleur. Only the brand tokens change (fill, tint, text
-   colour); paper, surface, ink and every status colour stay put. Blue, the
-   default, is the :root/.dark values above and sets no attribute. Fill and
-   `--on-cyan` (dark ink) work on every fill; --cyan-text is at least 4.5:1 on
-   white, its dark counterpart on --surface. Ids are mirrored in
-   store/theme.store.ts. */
-[data-accent="teal"] { --cyan: 45 212 191; --cyan-soft: 213 245 240; --cyan-text: 11 122 110; }   /* #2DD4BF */
-.dark[data-accent="teal"] { --cyan-soft: 14 51 48; --cyan-text: 126 234 219; --nav-active-bg: 45 212 191; }
-[data-accent="green"] { --cyan: 79 195 138; --cyan-soft: 221 243 231; --cyan-text: 23 120 74; }   /* #4FC38A */
-.dark[data-accent="green"] { --cyan-soft: 15 46 32; --cyan-text: 143 221 181; --nav-active-bg: 79 195 138; }
-[data-accent="gold"] { --cyan: 250 204 21; --cyan-soft: 254 243 199; --cyan-text: 146 97 10; }   /* #FACC15 */
-.dark[data-accent="gold"] { --cyan-soft: 61 46 8; --cyan-text: 253 224 71; --nav-active-bg: 250 204 21; }
-[data-accent="orange"] { --cyan: 251 146 60; --cyan-soft: 254 233 214; --cyan-text: 170 73 8; }   /* #FB923C */
-.dark[data-accent="orange"] { --cyan-soft: 68 36 17; --cyan-text: 253 186 116; --nav-active-bg: 251 146 60; }
-[data-accent="pink"] { --cyan: 244 114 182; --cyan-soft: 252 228 241; --cyan-text: 184 35 111; }   /* #F472B6 */
-.dark[data-accent="pink"] { --cyan-soft: 69 22 47; --cyan-text: 249 168 212; --nav-active-bg: 244 114 182; }
-[data-accent="purple"] { --cyan: 167 139 250; --cyan-soft: 237 231 254; --cyan-text: 109 63 216; }   /* #A78BFA */
-.dark[data-accent="purple"] { --cyan-soft: 36 26 69; --cyan-text: 196 181 253; --nav-active-bg: 167 139 250; }
+   colour, the icon on the light-mode active tab); paper, surface, ink and every
+   status colour stay put. Blue, the default, is the :root/.dark values above and
+   sets no attribute. Every fill is deep enough for the white `--on-cyan` label
+   (at least 4.5:1, guarded by styles.tokens.test.ts); --cyan-text is at least
+   4.5:1 on white, its dark counterpart on --surface. Ids and swatches are
+   mirrored in store/theme.store.ts. The dark blocks restate --selected-icon,
+   because a [data-accent] block alone would beat `.dark` (same specificity, later). */
+[data-accent="teal"] { --cyan: 13 124 114; --cyan-soft: 213 245 240; --cyan-text: 11 122 110; --selected-icon: 126 234 219; }   /* #0D7C72 */
+.dark[data-accent="teal"] { --cyan-soft: 14 51 48; --cyan-text: 126 234 219; --selected: 13 124 114; --selected-icon: 255 255 255; }
+[data-accent="green"] { --cyan: 21 128 61; --cyan-soft: 221 243 231; --cyan-text: 23 120 74; --selected-icon: 143 221 181; }   /* #15803D */
+.dark[data-accent="green"] { --cyan-soft: 15 46 32; --cyan-text: 143 221 181; --selected: 21 128 61; --selected-icon: 255 255 255; }
+[data-accent="gold"] { --cyan: 166 101 6; --cyan-soft: 254 243 199; --cyan-text: 146 97 10; --selected-icon: 253 224 71; }   /* #A66506 */
+.dark[data-accent="gold"] { --cyan-soft: 61 46 8; --cyan-text: 253 224 71; --selected: 166 101 6; --selected-icon: 255 255 255; }
+[data-accent="orange"] { --cyan: 202 72 14; --cyan-soft: 254 233 214; --cyan-text: 170 73 8; --selected-icon: 253 186 116; }   /* #CA480E */
+.dark[data-accent="orange"] { --cyan-soft: 68 36 17; --cyan-text: 253 186 116; --selected: 202 72 14; --selected-icon: 255 255 255; }
+[data-accent="pink"] { --cyan: 219 39 119; --cyan-soft: 252 228 241; --cyan-text: 184 35 111; --selected-icon: 249 168 212; }   /* #DB2777 */
+.dark[data-accent="pink"] { --cyan-soft: 69 22 47; --cyan-text: 249 168 212; --selected: 219 39 119; --selected-icon: 255 255 255; }
+[data-accent="purple"] { --cyan: 130 66 240; --cyan-soft: 237 231 254; --cyan-text: 109 63 216; --selected-icon: 196 181 253; }   /* #8242F0 */
+.dark[data-accent="purple"] { --cyan-soft: 36 26 69; --cyan-text: 196 181 253; --selected: 130 66 240; --selected-icon: 255 255 255; }
 
 /* ─── Compact density ────────────────────────────────────────────────────────
    Instellingen › Weergave › Compact. Tightens the app's own gap/space-y/padding
@@ -70,60 +128,60 @@
    touched; page-level spacing (6 and up) is left alone so density doesn't reflow
    whole pages, only the density of what's on them. Applied via
    store/theme.store.ts (`density-compact` class on <html>). */
-.density-compact .gap-1.5 { gap: 0.25rem; }
+.density-compact .gap-1\.5 { gap: 0.25rem; }
 .density-compact .gap-2 { gap: 0.375rem; }
-.density-compact .gap-2.5 { gap: 0.5rem; }
+.density-compact .gap-2\.5 { gap: 0.5rem; }
 .density-compact .gap-3 { gap: 0.5rem; }
-.density-compact .gap-3.5 { gap: 0.625rem; }
+.density-compact .gap-3\.5 { gap: 0.625rem; }
 .density-compact .gap-4 { gap: 0.75rem; }
 .density-compact .gap-5 { gap: 0.875rem; }
-.density-compact .gap-x-1.5 { column-gap: 0.25rem; }
+.density-compact .gap-x-1\.5 { column-gap: 0.25rem; }
 .density-compact .gap-x-2 { column-gap: 0.375rem; }
-.density-compact .gap-x-2.5 { column-gap: 0.5rem; }
+.density-compact .gap-x-2\.5 { column-gap: 0.5rem; }
 .density-compact .gap-x-3 { column-gap: 0.5rem; }
-.density-compact .gap-x-3.5 { column-gap: 0.625rem; }
+.density-compact .gap-x-3\.5 { column-gap: 0.625rem; }
 .density-compact .gap-x-4 { column-gap: 0.75rem; }
 .density-compact .gap-x-5 { column-gap: 0.875rem; }
-.density-compact .gap-y-1.5 { row-gap: 0.25rem; }
+.density-compact .gap-y-1\.5 { row-gap: 0.25rem; }
 .density-compact .gap-y-2 { row-gap: 0.375rem; }
-.density-compact .gap-y-2.5 { row-gap: 0.5rem; }
+.density-compact .gap-y-2\.5 { row-gap: 0.5rem; }
 .density-compact .gap-y-3 { row-gap: 0.5rem; }
-.density-compact .gap-y-3.5 { row-gap: 0.625rem; }
+.density-compact .gap-y-3\.5 { row-gap: 0.625rem; }
 .density-compact .gap-y-4 { row-gap: 0.75rem; }
 .density-compact .gap-y-5 { row-gap: 0.875rem; }
-.density-compact .space-y-1.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.25rem; }
+.density-compact .space-y-1\.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.25rem; }
 .density-compact .space-y-2 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.375rem; }
-.density-compact .space-y-2.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.5rem; }
+.density-compact .space-y-2\.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.5rem; }
 .density-compact .space-y-3 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.5rem; }
-.density-compact .space-y-3.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.625rem; }
+.density-compact .space-y-3\.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.625rem; }
 .density-compact .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.75rem; }
 .density-compact .space-y-5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.875rem; }
-.density-compact .space-x-1.5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.25rem; }
+.density-compact .space-x-1\.5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.25rem; }
 .density-compact .space-x-2 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.375rem; }
-.density-compact .space-x-2.5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.5rem; }
+.density-compact .space-x-2\.5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.5rem; }
 .density-compact .space-x-3 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.5rem; }
-.density-compact .space-x-3.5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.625rem; }
+.density-compact .space-x-3\.5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.625rem; }
 .density-compact .space-x-4 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.75rem; }
 .density-compact .space-x-5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.875rem; }
-.density-compact .p-1.5 { padding: 0.25rem; }
+.density-compact .p-1\.5 { padding: 0.25rem; }
 .density-compact .p-2 { padding: 0.375rem; }
-.density-compact .p-2.5 { padding: 0.5rem; }
+.density-compact .p-2\.5 { padding: 0.5rem; }
 .density-compact .p-3 { padding: 0.5rem; }
-.density-compact .p-3.5 { padding: 0.625rem; }
+.density-compact .p-3\.5 { padding: 0.625rem; }
 .density-compact .p-4 { padding: 0.75rem; }
 .density-compact .p-5 { padding: 0.875rem; }
-.density-compact .px-1.5 { padding-left: 0.25rem; padding-right: 0.25rem; }
+.density-compact .px-1\.5 { padding-left: 0.25rem; padding-right: 0.25rem; }
 .density-compact .px-2 { padding-left: 0.375rem; padding-right: 0.375rem; }
-.density-compact .px-2.5 { padding-left: 0.5rem; padding-right: 0.5rem; }
+.density-compact .px-2\.5 { padding-left: 0.5rem; padding-right: 0.5rem; }
 .density-compact .px-3 { padding-left: 0.5rem; padding-right: 0.5rem; }
-.density-compact .px-3.5 { padding-left: 0.625rem; padding-right: 0.625rem; }
+.density-compact .px-3\.5 { padding-left: 0.625rem; padding-right: 0.625rem; }
 .density-compact .px-4 { padding-left: 0.75rem; padding-right: 0.75rem; }
 .density-compact .px-5 { padding-left: 0.875rem; padding-right: 0.875rem; }
-.density-compact .py-1.5 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+.density-compact .py-1\.5 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
 .density-compact .py-2 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
-.density-compact .py-2.5 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.density-compact .py-2\.5 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
 .density-compact .py-3 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-.density-compact .py-3.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+.density-compact .py-3\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
 .density-compact .py-4 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
 .density-compact .py-5 { padding-top: 0.875rem; padding-bottom: 0.875rem; }
 
@@ -163,6 +221,12 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  /* On a touchscreen nothing hovers, so a tap needs its own feedback: whatever is pressed dims for a moment.
+     :where() keeps this at the lowest specificity, so a component with its own pressed state wins. */
+  :where(button:not(:disabled), a[href], [role="button"], summary):active {
+    opacity: 0.7;
+  }
+
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-thumb { border-radius: 9999px; background-color: rgb(var(--line)); }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -182,8 +246,10 @@
     transition: background-color 0.1s ease, border-color 0.1s ease;
   }
 
-  input[type="checkbox"].cb:hover {
-    border-color: rgb(var(--ink));
+  @media (hover: hover) {
+    input[type="checkbox"].cb:hover {
+      border-color: rgb(var(--ink));
+    }
   }
 
   input[type="checkbox"].cb:checked,
@@ -196,38 +262,12 @@
   }
 
   input[type="checkbox"].cb:checked {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3e%3cpath d='M2.5 6.5l2.5 2.5 4.5-5.5' stroke='%230F1519' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3e%3cpath d='M2.5 6.5l2.5 2.5 4.5-5.5' stroke='%23FFFFFF' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
   }
 
   input[type="checkbox"].cb:indeterminate {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3e%3cpath d='M2.5 6h7' stroke='%230F1519' stroke-width='1.8' stroke-linecap='round'/%3e%3c/svg%3e");
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3e%3cpath d='M2.5 6h7' stroke='%23FFFFFF' stroke-width='1.8' stroke-linecap='round'/%3e%3c/svg%3e");
   }
-
-  /* Former frosted-glass surfaces are solid now (glass was tried and rejected). */
-  .glass {
-    background: rgb(var(--surface));
-    border: 1.5px solid rgb(var(--line));
-  }
-
-  .glass-dark {
-    background: #0F1519;
-    border: 1.5px solid rgb(255 255 255 / 0.12);
-  }
-
-  /* The old blue gradients, flattened. Brand = brand blue with ink text;
-     hero = the dark ink block used behind a trip's headline. */
-  .gradient-brand {
-    background: #2A84CC;
-  }
-
-  .gradient-hero {
-    background-color: #0F1519;
-  }
-
-  .gradient-card-blue { background: #2A84CC; }
-  .gradient-card-green { background: #1FA971; }
-  .gradient-card-amber { background: #E89B0C; }
-  .gradient-card-violet { background: #7C3AED; }
 
   .card-surface {
     border-radius: 12px;
@@ -236,20 +276,168 @@
   }
 
   .card-surface-hover {
-    @apply card-surface transition-[colors,transform] duration-150;
+    @apply card-surface transition-colors duration-150;
   }
 
-  .card-surface-hover:active {
-    transform: scale(0.985);
+  @media (hover: hover) {
+    .card-surface-hover:hover {
+      border-color: rgb(var(--ink-3));
+    }
   }
 
-  .card-surface-hover:hover {
-    border-color: rgb(var(--ink-3));
+  /* A small control (an icon button) that is still easy to hit with a thumb: an invisible box around it
+     grows its touch area to 44 px (never smaller than the control itself), without changing the layout.
+     Not for a control that clips its own overflow: the box would be cut off with it. */
+  .hit-area,
+  .chip,
+  .icon-btn,
+  .segmented-item,
+  .btn-primary,
+  .btn-secondary,
+  .btn-tonal,
+  .btn-ghost,
+  .btn-danger,
+  .btn-danger-soft {
+    position: relative;
+  }
+
+  .hit-area::after,
+  .chip::after,
+  .icon-btn::after,
+  .segmented-item::after,
+  .btn-primary::after,
+  .btn-secondary::after,
+  .btn-tonal::after,
+  .btn-ghost::after,
+  .btn-danger::after,
+  .btn-danger-soft::after {
+    content: "";
+    position: absolute;
+    top: min(0px, calc((100% - 44px) / 2));
+    bottom: min(0px, calc((100% - 44px) / 2));
+    left: min(0px, calc((100% - 44px) / 2));
+    right: min(0px, calc((100% - 44px) / 2));
+  }
+
+  /* A data table that turns into a list of cards on a phone: no sideways scrolling to reach the edit and delete
+     buttons. Put it on the <table>, `cell-main` on the cell that names the row (it takes the first line) and
+     `cell-actions` on the cell with the buttons (pushed to the right). Cells with `hidden` stay hidden. */
+  @media (max-width: 639px) {
+    .stack-table,
+    .stack-table tbody {
+      display: block;
+      width: 100%;
+    }
+    .stack-table thead {
+      display: none;
+    }
+    .stack-table tbody tr {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 0.75rem;
+      padding: 0.75rem 1rem;
+    }
+    .stack-table tbody td:not(.hidden) {
+      display: block;
+      width: auto;
+      padding: 0;
+      border: 0;
+    }
+    .stack-table tbody td[colspan] {
+      flex: 1 1 100%;
+      padding: 0;
+    }
+    .stack-table .cell-main {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+    .stack-table .cell-main p {
+      max-width: none;
+    }
+    .stack-table .cell-actions {
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    /* "Verwijderen? Annuleren Verwijderen" (ConfirmInline) is wide: it gets a line of its own. */
+    .stack-table .cell-actions:has([data-confirm]) {
+      flex: 1 1 100%;
+    }
+  }
+
+  /* Square icon-only button (back, close, edit, delete): 36 px to look at, 44 px to hit. */
+  .icon-btn {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text disabled:opacity-40;
+  }
+
+  /* Status pill. The meaning is the colour, one set everywhere: ok = done/fine, warn = waiting or needs you,
+     bad = you owe / went wrong, neutral = information. */
+  .pill {
+    @apply inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[12px] font-semibold;
+  }
+  .pill-ok { @apply bg-ok-soft text-ok; }
+  .pill-warn { @apply bg-warn-soft text-warn; }
+  .pill-bad { @apply bg-bad-soft text-bad; }
+  .pill-neutral { @apply bg-sunken text-ink-2; }
+
+  /* Notice box: a short message in a bordered block. warn = needs your attention, ok = all fine. */
+  .notice-warn { @apply rounded-xl border-1.5 border-warn-line bg-warn-soft; }
+  .notice-ok { @apply rounded-xl border-1.5 border-ok-line bg-ok-soft; }
+  .notice-bad { @apply rounded-xl border-1.5 border-bad-line bg-bad-soft; }
+
+  /* Square icon tile in a status colour (add the size, e.g. `h-8 w-8`). The neutral one is `bg-sunken text-ink`. */
+  .icon-tile-ok,
+  .icon-tile-warn,
+  .icon-tile-bad { @apply flex shrink-0 items-center justify-center rounded-lg; }
+  .icon-tile-ok { @apply bg-ok-soft text-ok; }
+  .icon-tile-warn { @apply bg-warn-soft text-warn; }
+  .icon-tile-bad { @apply bg-bad-soft text-bad; }
+
+  /* Filter chip: pick one of a few. 36 px to look at, 44 px to hit (see .hit-area). */
+  .chip {
+    @apply inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border-1.5 px-3.5 py-1.5 text-xs font-semibold transition-colors;
+  }
+  .chip-on { @apply border-transparent bg-selected text-selected-on; }
+  .chip-off { @apply border-line bg-surface text-ink-2 hover:border-ink-3; }
+
+  /* Segmented control: pick one of a few views of the same thing (Tickets / Recap). The track is a sunken
+     well, the chosen item a surface with the ink outline. 36 px to look at, 44 px to hit. Use <Segmented>. */
+  .segmented {
+    @apply inline-flex max-w-full gap-1 rounded-xl border-1.5 border-line bg-sunken p-[3px];
+  }
+  .segmented-item {
+    @apply inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1 text-[13px] font-semibold text-ink-2 transition-colors hover:text-ink;
+  }
+  .segmented-item[aria-pressed="true"] {
+    @apply bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))];
+  }
+
+  /* Label above a form field, and the message under it when it is wrong. */
+  .field-label {
+    @apply mb-1.5 block text-[12.5px] font-semibold text-ink-2;
+  }
+  .field-error {
+    @apply mt-1.5 text-xs text-bad;
   }
 
   /* Small uppercase mono label above a group ("Voor jou", "Deze week"). */
   .section-label {
-    @apply font-mono text-[11px] font-semibold uppercase tracking-[0.09em] text-ink-3;
+    @apply font-mono text-[12px] font-semibold uppercase tracking-[0.09em] text-ink-3;
+  }
+
+  /* The quieter sibling of `.section-label`: kickers above a title and table headers. */
+  .label-quiet {
+    @apply font-mono text-xs font-medium uppercase tracking-[0.06em] text-ink-3;
+  }
+
+  /* Table header cell (admin tables). */
+  .th {
+    @apply label-quiet whitespace-nowrap border-b-1.5 border-line px-4 py-2 text-left;
+  }
+
+  /* Small uppercase tag next to a name ("Gast", "Kijker"). */
+  .tag {
+    @apply inline-flex items-center rounded-md border border-line px-1.5 font-mono text-xs uppercase tracking-[0.05em] text-ink-2;
   }
 
   .input-field {
@@ -259,7 +447,7 @@
   }
 
   .avatar {
-    @apply flex items-center justify-center rounded-full font-bold text-white;
+    @apply flex items-center justify-center rounded-full font-bold text-avatar-on;
   }
 
   /* Agenda ticket: two punched notches where the stub tears off. On phones the
@@ -267,21 +455,21 @@
      column, 170px wide and 190px from lg. */
   .ticket-notch {
     -webkit-mask:
-      radial-gradient(circle 11px at 0 calc(100% - 118px), transparent 97%, #000) left / 51% 100% no-repeat,
-      radial-gradient(circle 11px at 100% calc(100% - 118px), transparent 97%, #000) right / 51% 100% no-repeat;
+      radial-gradient(circle 11px at 0 calc(100% - 118px), transparent 97%, black) left / 51% 100% no-repeat,
+      radial-gradient(circle 11px at 100% calc(100% - 118px), transparent 97%, black) right / 51% 100% no-repeat;
     mask:
-      radial-gradient(circle 11px at 0 calc(100% - 118px), transparent 97%, #000) left / 51% 100% no-repeat,
-      radial-gradient(circle 11px at 100% calc(100% - 118px), transparent 97%, #000) right / 51% 100% no-repeat;
+      radial-gradient(circle 11px at 0 calc(100% - 118px), transparent 97%, black) left / 51% 100% no-repeat,
+      radial-gradient(circle 11px at 100% calc(100% - 118px), transparent 97%, black) right / 51% 100% no-repeat;
   }
   @media (min-width: 768px) {
     .ticket-notch {
       --stub: 170px;
       -webkit-mask:
-        radial-gradient(circle 11px at calc(100% - var(--stub)) 0, transparent 97%, #000) top / 100% 51% no-repeat,
-        radial-gradient(circle 11px at calc(100% - var(--stub)) 100%, transparent 97%, #000) bottom / 100% 51% no-repeat;
+        radial-gradient(circle 11px at calc(100% - var(--stub)) 0, transparent 97%, black) top / 100% 51% no-repeat,
+        radial-gradient(circle 11px at calc(100% - var(--stub)) 100%, transparent 97%, black) bottom / 100% 51% no-repeat;
       mask:
-        radial-gradient(circle 11px at calc(100% - var(--stub)) 0, transparent 97%, #000) top / 100% 51% no-repeat,
-        radial-gradient(circle 11px at calc(100% - var(--stub)) 100%, transparent 97%, #000) bottom / 100% 51% no-repeat;
+        radial-gradient(circle 11px at calc(100% - var(--stub)) 0, transparent 97%, black) top / 100% 51% no-repeat,
+        radial-gradient(circle 11px at calc(100% - var(--stub)) 100%, transparent 97%, black) bottom / 100% 51% no-repeat;
     }
   }
   @media (min-width: 1024px) {
@@ -291,36 +479,77 @@
   /* A collected stub on Agenda › Geweest: small notches at the perforation. */
   .stub-notch {
     -webkit-mask:
-      radial-gradient(circle 7px at 0 36px, transparent 97%, #000) left / 51% 100% no-repeat,
-      radial-gradient(circle 7px at 100% 36px, transparent 97%, #000) right / 51% 100% no-repeat;
+      radial-gradient(circle 7px at 0 36px, transparent 97%, black) left / 51% 100% no-repeat,
+      radial-gradient(circle 7px at 100% 36px, transparent 97%, black) right / 51% 100% no-repeat;
     mask:
-      radial-gradient(circle 7px at 0 36px, transparent 97%, #000) left / 51% 100% no-repeat,
-      radial-gradient(circle 7px at 100% 36px, transparent 97%, #000) right / 51% 100% no-repeat;
+      radial-gradient(circle 7px at 0 36px, transparent 97%, black) left / 51% 100% no-repeat,
+      radial-gradient(circle 7px at 100% 36px, transparent 97%, black) right / 51% 100% no-repeat;
   }
 
-  /* The one bold call to action on a screen: brand blue, ink outline, flat.
-     Nothing moves on hover; a light opacity dip on click is the only feedback. */
-  .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border-2 border-outline bg-brand font-semibold text-brand-on transition-opacity duration-75;
+  /* Buttons: one family, five tiers, all flat (no shadow, nothing moves or scales), 10 px radius, bold label.
+     <Button variant="..."> uses these same classes. ONE height scale for every tier, set here and nowhere else:
+       standard   44 px on a phone, 40 px from the `lg` breakpoint (1024 px) up; 14 px label
+       compact    `.btn-compact` on top: 40 px, 36 px from `lg` up; 13 px label. For a tight place (a hero's action row, a table
+                  row, a tile header, an inline confirm pair); <Button size="sm"> is this one.
+     A caller adds layout only (width, `flex-1`, `shrink-0`, margin, horizontal padding), never a height (`min-h-*`, `h-*`), vertical
+     padding or text size. The 44 px a thumb needs is kept by the invisible box of `::after` above, so a 40 px button is still easy to hit.
+       .btn-primary      solid brand fill, white label: the standard action button, alone or in a row
+       .btn-secondary    transparent, 1px hairline: only the cancelling partner of a confirm (Annuleren) and a quiet extra
+       .btn-tonal        lifted `bg-surface` fill with a hairline: a neutral action with a bit more body (sign in with Google)
+       .btn-ghost        no fill, no border, quiet text: Annuleren, Terug
+       .btn-danger       solid red fill: the confirm of a destructive action ("Verwijderen")
+       .btn-danger-soft  red text on a soft red tint: the quiet one that only opens the question
+     States, the same for every tier: hover is a small shift (primary and danger a touch lighter, the outlined
+     tiers a darker border), pressed dims, keyboard focus is the brand ring with an offset, disabled is flat grey
+     (`bg-sunken text-ink-3`, no outline, cursor-not-allowed). */
+  .btn-primary,
+  .btn-secondary,
+  .btn-tonal,
+  .btn-ghost,
+  .btn-danger,
+  .btn-danger-soft {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-bold transition-[opacity,background-color,border-color,color] duration-75 lg:min-h-10;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-2 focus-visible:ring-offset-paper;
+    @apply disabled:cursor-not-allowed;
   }
-  .btn-primary:active:not(:disabled) {
-    opacity: 0.9;
+  /* The compact modifier. Defined right after the family so it wins over the standard height, on a phone and on a computer. */
+  .btn-compact {
+    @apply min-h-10 text-[13px] lg:min-h-9;
+  }
+  .btn-primary { @apply bg-brand text-brand-on hover:enabled:opacity-90; }
+  .btn-secondary { @apply border border-line bg-transparent text-ink hover:enabled:border-ink-3 hover:enabled:bg-sunken/60; }
+  .btn-tonal { @apply border border-line bg-surface text-ink hover:enabled:border-ink-3 hover:enabled:bg-sunken; }
+  .btn-ghost { @apply bg-transparent text-ink-2 hover:enabled:bg-sunken hover:enabled:text-ink; }
+  .btn-danger { @apply bg-bad-fill text-bad-on hover:enabled:opacity-90; }
+  .btn-danger-soft { @apply bg-bad-soft text-bad hover:enabled:opacity-80; }
+  .btn-primary:active:not(:disabled),
+  .btn-danger:active:not(:disabled) {
+    opacity: 0.8;
+  }
+  .btn-secondary:active:not(:disabled),
+  .btn-tonal:active:not(:disabled),
+  .btn-ghost:active:not(:disabled),
+  .btn-danger-soft:active:not(:disabled) {
+    opacity: 0.8;
+    @apply bg-sunken;
+  }
+  /* Disabled reads as disabled, not as a pale button: flat grey, no outline, in every tier but the ghost,
+     which has no fill to grey out and only loses its text colour. */
+  .btn-primary:disabled,
+  .btn-secondary:disabled,
+  .btn-tonal:disabled,
+  .btn-danger:disabled,
+  .btn-danger-soft:disabled {
+    @apply border-transparent bg-sunken text-ink-3 opacity-100;
+  }
+  .btn-ghost:disabled {
+    @apply bg-transparent text-ink-3 opacity-100;
   }
 }
 
 @layer utilities {
-  .text-gradient {
-    color: rgb(var(--cyan-text));
-  }
-
-  .shadow-card,
-  .shadow-elevated,
-  .shadow-hero {
-    box-shadow: none;
-  }
-
   .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-2;
   }
 
   .safe-bottom {
@@ -341,32 +570,6 @@
   color-scheme: dark;
 }
 
-.dark .gradient-brand,
-.dark .gradient-card-blue {
-  background: #1F6CB0;
-}
-
-/* ── Global Tailwind utility overrides in dark mode ─────────────────────── */
-/* Specificity: 2 selectors (.dark + .class) beats single-class Tailwind utilities */
-
-/* Text */
-.dark .text-slate-900 { color: #E6F0F3; }
-.dark .text-slate-800 { color: #D5E2E7; }
-.dark .text-slate-700 { color: #BCC8CE; }
-
-/* Backgrounds */
-.dark .bg-slate-50  { background-color: #141B20; }
-.dark .bg-slate-100 { background-color: #1E2A31; }
-
-/* Borders */
-.dark .border-slate-100 { border-color: #1E2A31; }
-.dark .border-slate-200 { border-color: #243039; }
-
-/* Dividers */
-.dark .divide-slate-50 > :not([hidden]) ~ :not([hidden]) {
-  border-color: #1E2A31;
-}
-
 /* `truncate` clips on all sides, which shears the descenders (g, j, y) off
    text with a tight line-height — the display font and every `leading-none`
    label. Clip sideways only so the ellipsis still works but nothing below the
@@ -380,6 +583,7 @@
   min-width: 0;
 }
 
+/* colours:allowed:start (map tiles are inverted by a filter, so their background is a literal) */
 /* Crew map, dark theme: OpenStreetMap only ships a light style, so its tiles
    are inverted (hue-rotated back so water stays blue). Pins and controls are
    outside the tile pane and keep their own colours. */
@@ -389,6 +593,7 @@
 .crew-map-dark .leaflet-container {
   background: #1b2227;
 }
+/* colours:allowed:end */
 .crew-pin {
   background: none;
   border: none;

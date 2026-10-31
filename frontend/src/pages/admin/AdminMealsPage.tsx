@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Euro, Clock, Bus, MapPin } from "lucide-react";
+import { Plus, Clock, Bus, MapPin, UtensilsCrossed } from "lucide-react";
 import { LocationSearchInput } from "../../components/common/LocationSearchInput";
-import { formatDateTime } from "../../utils/format";
+import { countOf, formatAmount, formatDateTime } from "../../utils/format";
 import {
   useAdminMeals,
   useAdminCreateMeal,
@@ -15,11 +15,13 @@ import {
 } from "../../hooks/useAdmin";
 import { useCalendar } from "../../hooks/useCalendar";
 import { useMealCategories } from "../../hooks/useMeals";
-import { UserAvatar } from "../../components/common/UserAvatar";
+import { AvatarStack } from "../../components/common/AvatarStack";
 import { AdminDrawer } from "./AdminDrawer";
 import { toast } from "../../store/toast.store";
 import type { Meal } from "../../types";
-import { F, L, SECTION, SECTION_TITLE } from "./styles";
+import { F, L, SECTION, SECTION_TITLE, TH, TD, TR, TR_SELECTED } from "./styles";
+import { AdminPage } from "./components/AdminPage";
+import { ToggleRow } from "../../components/common/ToggleRow";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminSearch } from "./components/AdminSearch";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
@@ -29,8 +31,10 @@ import { DrawerFooter } from "./components/DrawerFooter";
 import { DiscardChangesConfirm } from "./components/DiscardChangesConfirm";
 import { ParticipantList } from "./components/ParticipantList";
 import { AdminBulkBar } from "./components/AdminBulkBar";
+import { RowCheckbox } from "./components/RowCheckbox";
 import { useTableSelection } from "../../hooks/useTableSelection";
 import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
+import { EmptyState } from "../../components/common/EmptyState";
 
 const PAGE_SIZE = 15;
 
@@ -75,6 +79,8 @@ function MealDrawer({
     register,
     control,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isDirty },
   } = useForm<MealForm>({
     resolver: zodResolver(mealSchema),
@@ -95,6 +101,8 @@ function MealDrawer({
       extra_notes: isEdit ? (meal.extra_notes ?? "") : "",
     },
   });
+
+  const transportNeeded = watch("transport_needed");
 
   async function onSubmit(values: MealForm) {
     const payload = {
@@ -141,8 +149,8 @@ function MealDrawer({
     <AdminDrawer
       open={open}
       onClose={requestClose}
-      title={isEdit ? "Maaltijd bewerken" : "Nieuwe maaltijd"}
-      subtitle={isEdit ? meal.meal_name : "Voeg een food event toe"}
+      title={isEdit ? "Activiteit bewerken" : "Nieuwe activiteit"}
+      subtitle={isEdit ? meal.meal_name : "Voeg een activiteit toe"}
       footer={
         <DrawerFooter
           onCancel={requestClose}
@@ -165,7 +173,7 @@ function MealDrawer({
             placeholder="Pizzeria Roma"
           />
           {errors.meal_name && (
-            <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
+            <p className="field-error">
               {errors.meal_name.message}
             </p>
           )}
@@ -176,7 +184,7 @@ function MealDrawer({
             <label className={L}>Datum & tijd *</label>
             <input {...register("time")} type="datetime-local" className={F} />
             {errors.time && (
-              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
+              <p className="field-error">
                 {errors.time.message}
               </p>
             )}
@@ -207,9 +215,8 @@ function MealDrawer({
               />
             )}
           />
-          <p className="text-[10px] text-ink-3 mt-1.5">
-            Zoek een naam of adres — selecteer een resultaat om de locatie te
-            bevestigen met een kaartpreview.
+          <p className="mt-1.5 text-xs text-ink-3">
+            Zoek een naam of adres en kies een resultaat om de locatie te bevestigen op de kaart.
           </p>
         </div>
 
@@ -218,21 +225,19 @@ function MealDrawer({
           <input
             {...register("maps_url")}
             className={F}
-            placeholder="https://maps.app.goo.gl/..."
+            placeholder="https://maps.app.goo.gl/…"
           />
-          <p className="text-[10px] text-ink-3 mt-1.5">
-            Opent direct de juiste plek vanaf de crew-kaart. Zonder een locatie hierboven krijgt dit etentje geen pin.
+          <p className="mt-1.5 text-xs text-ink-3">
+            Opent direct de juiste plek vanaf de crewkaart. Zonder locatie hierboven krijgt deze activiteit geen pin.
           </p>
         </div>
 
-        <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-line bg-paper px-3 py-2.5 hover:bg-sunken transition-colors">
-          <input
-            type="checkbox"
-            {...register("transport_needed")}
-            className="cb"
-          />
-          <span className="text-sm text-ink-2">Transport nodig</span>
-        </label>
+        <ToggleRow
+          icon={<Bus size={16} />}
+          label="Vervoer nodig"
+          checked={!!transportNeeded}
+          onChange={() => setValue("transport_needed", !transportNeeded, { shouldDirty: true })}
+        />
 
         {/* ── Extended info ─────────────────────────────────────────── */}
         <div className={SECTION}>
@@ -289,7 +294,7 @@ function MealDrawer({
               {...register("description")}
               rows={3}
               className={`${F} resize-none`}
-              placeholder="Extra context over het restaurant, sfeer, dresscode..."
+              placeholder="Extra context over het restaurant, sfeer, dresscode…"
             />
           </div>
         </div>
@@ -298,12 +303,12 @@ function MealDrawer({
           <p className={SECTION_TITLE}>Praktisch</p>
 
           <div>
-            <label className={L}>Dieet opties</label>
+            <label className={L}>Dieetopties</label>
             <textarea
               {...register("dietary_options")}
               rows={2}
               className={`${F} resize-none`}
-              placeholder="Vegetarisch, vegan, glutenvrij beschikbaar..."
+              placeholder="Vegetarisch, vegan, glutenvrij beschikbaar…"
             />
           </div>
 
@@ -313,7 +318,7 @@ function MealDrawer({
               {...register("parking_info")}
               rows={2}
               className={`${F} resize-none`}
-              placeholder="Parkeergarage op 200m, gratis na 18:00..."
+              placeholder="Parkeergarage op 200m, gratis na 18:00…"
             />
           </div>
 
@@ -323,7 +328,7 @@ function MealDrawer({
               {...register("extra_notes")}
               rows={2}
               className={`${F} resize-none`}
-              placeholder="Reservering vereist, ID meenemen..."
+              placeholder="Reservering vereist, ID meenemen…"
             />
           </div>
         </div>
@@ -382,10 +387,10 @@ export function AdminMealsPage() {
     const ids = [...selectedIds];
     try {
       await bulkDeleteMutation.mutateAsync(ids);
-      toast("success", `${ids.length} maaltijden verwijderd.`);
+      toast("success", `${countOf(ids.length, "activiteit", "activiteiten")} verwijderd.`);
       clearSelection();
     } catch {
-      toast("error", "Kon maaltijden niet verwijderen.");
+      toast("error", "Kon de activiteiten niet verwijderen. Probeer het opnieuw.");
     }
   }
 
@@ -400,22 +405,22 @@ export function AdminMealsPage() {
       toast("success", `${name} verwijderd.`);
       setConfirmDeleteId(null);
     } catch {
-      toast("error", "Kon maaltijd niet verwijderen.");
+      toast("error", "Kon de activiteit niet verwijderen. Probeer het opnieuw.");
     }
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+    <AdminPage>
       <AdminPageHeader
-        title="Maaltijden"
-        subtitle={`${meals.length} food events`}
+        title="Activiteiten"
+        subtitle={`${meals.length} ${meals.length === 1 ? "activiteit" : "activiteiten"}`}
         action={
           <button
             onClick={() => setDrawer("new")}
-            className="btn-primary gap-2 px-4 py-2.5 text-sm"
+            className="btn-primary gap-2 px-4"
           >
             <Plus size={16} />
-            Nieuwe maaltijd
+            Nieuwe activiteit
           </button>
         }
       />
@@ -423,40 +428,30 @@ export function AdminMealsPage() {
       <AdminSearch
         value={search}
         onChange={handleSearch}
-        placeholder="Zoek op naam of locatie..."
+        placeholder="Zoek op naam of locatie…"
+      />
+
+      <AdminBulkBar
+        itemsLabel="activiteiten"
+        count={selectedIds.size}
+        isPending={bulkDeleteMutation.isPending}
+        onDelete={handleBulkDelete}
+        onClear={clearSelection}
       />
 
       <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="stack-table w-full">
             <thead>
-              <tr className="border-b-1.5 border-line">
-                <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    ref={(el) => {
-                      if (el) el.indeterminate = indeterminate;
-                    }}
-                    onChange={selectAll}
-                    className="cb"
-                  />
+              <tr>
+                <th className={`${TH} w-10 !pr-2`}>
+                  <RowCheckbox checked={allSelected} indeterminate={indeterminate} onChange={selectAll} label="Alles selecteren" />
                 </th>
-                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Maaltijd
-                </th>
-                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Tijd
-                </th>
-                <th className="hidden sm:table-cell px-5 py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Kosten
-                </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Deelnemers
-                </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Acties
-                </th>
+                <th className={TH}>Activiteit</th>
+                <th className={`${TH} hidden sm:table-cell`}>Tijd</th>
+                <th className={`${TH} hidden sm:table-cell`}>Kosten</th>
+                <th className={`${TH} hidden sm:table-cell`}>Deelnemers</th>
+                <th className={`${TH} text-right`}>Acties</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -464,108 +459,69 @@ export function AdminMealsPage() {
                 <AdminTableSkeleton cols={6} rows={3} />
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-5 py-10 text-center text-sm text-ink-3"
-                  >
-                    Geen maaltijden gevonden.
+                  <td colSpan={6}>
+                    <EmptyState compact icon={<UtensilsCrossed size={22} />} title="Geen activiteiten gevonden" />
                   </td>
                 </tr>
               ) : (
-                paginated.map((meal) => (
-                  <tr
-                    key={meal.id}
-                    className={`transition-colors ${selectedIds.has(meal.id) ? "bg-brand-soft/50 hover:bg-brand-soft/70" : "hover:bg-sunken"}`}
-                  >
-                    <td
-                      className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3.5"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleSelect(meal.id);
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(meal.id)}
-                        onChange={() => toggleSelect(meal.id)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="cb"
-                      />
-                    </td>
-                    <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
-                      <p className="text-sm font-semibold text-ink truncate max-w-[160px] sm:max-w-none">
-                        {meal.meal_name}
-                      </p>
-                      {meal.location && (
-                        <div className="flex items-center gap-1 mt-0.5">
-                          <MapPin size={10} className="text-ink-3 shrink-0" />
-                          <span className="text-xs text-ink-3 truncate max-w-[140px] sm:max-w-none">
-                            {meal.location}
-                          </span>
+                paginated.map((meal) => {
+                  const isSelected = selectedIds.has(meal.id);
+                  return (
+                    <tr key={meal.id} className={isSelected ? TR_SELECTED : TR}>
+                      <td className={`${TD} w-10 !pr-2`} onClick={(e) => { e.stopPropagation(); toggleSelect(meal.id); }}>
+                        <RowCheckbox checked={isSelected} onChange={() => toggleSelect(meal.id)} label={`Selecteer ${meal.meal_name}`} />
+                      </td>
+                      <td className={`cell-main ${TD}`}>
+                        <p className="truncate text-sm font-semibold text-ink">{meal.meal_name}</p>
+                        {meal.location && (
+                          <div className="mt-0.5 flex items-center gap-1">
+                            <MapPin size={12} className="shrink-0 text-ink-3" />
+                            <span className="truncate text-xs text-ink-3">{meal.location}</span>
+                          </div>
+                        )}
+                        {/* On a phone the other columns are hidden; the row is these lines. */}
+                        <p className="mt-0.5 text-xs text-ink-3 sm:hidden">
+                          {formatDateTime(meal.time)} · {formatAmount(meal.cost)}
+                        </p>
+                      </td>
+                      <td className={`hidden sm:table-cell ${TD}`}>
+                        <div className="flex items-center gap-1.5">
+                          <Clock size={14} className="shrink-0 text-ink-3" />
+                          <span className="whitespace-nowrap font-mono text-sm text-ink-2">{formatDateTime(meal.time)}</span>
                         </div>
-                      )}
-                    </td>
-                    <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
-                      <div className="flex items-center gap-1.5">
-                        <Clock size={12} className="text-ink-3 shrink-0" />
-                        <span className="text-sm font-mono text-ink-2 whitespace-nowrap">
-                          {formatDateTime(meal.time)}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="hidden sm:table-cell px-5 py-3.5">
-                      <div className="flex items-center gap-1">
-                        <Euro size={12} className="text-ink-3" />
-                        <span className="font-mono text-sm tabular-nums text-ink-2">
-                          {meal.cost.toFixed(2)}
-                        </span>
-                      </div>
-                      {meal.transport_needed && (
-                        <div className="flex items-center gap-1 mt-0.5">
-                          <Bus size={10} className="text-ink-3" />
-                          <span className="text-[10.5px] text-ink-3">
-                            Transport
-                          </span>
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
-                      <div className="flex -space-x-1.5">
+                      </td>
+                      <td className={`hidden sm:table-cell ${TD}`}>
+                        <span className="font-mono text-sm tabular-nums text-ink-2">{formatAmount(meal.cost)}</span>
+                        {meal.transport_needed && (
+                          <div className="mt-0.5 flex items-center gap-1">
+                            <Bus size={12} className="text-ink-3" />
+                            <span className="text-xs text-ink-3">Vervoer nodig</span>
+                          </div>
+                        )}
+                      </td>
+                      <td className={`hidden sm:table-cell ${TD}`}>
                         {meal.participants.length === 0 ? (
                           <span className="text-xs text-ink-3">—</span>
                         ) : (
-                          <>
-                            {meal.participants.slice(0, 4).map((p) => (
-                              <UserAvatar
-                                key={p}
-                                name={p}
-                                className="h-5 w-5 sm:h-6 sm:w-6 text-[7px] sm:text-[8px] ring-2 ring-surface"
-                              />
-                            ))}
-                            {meal.participants.length > 4 && (
-                              <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full ring-2 ring-surface bg-sunken text-[8px] sm:text-[9px] font-bold text-ink-2">
-                                +{meal.participants.length - 4}
-                              </span>
-                            )}
-                          </>
+                          <AvatarStack names={meal.participants} size="sm" max={4} />
                         )}
-                      </div>
-                    </td>
-                    <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
-                      <DeleteConfirmActions
-                        id={meal.id}
-                        confirmId={confirmDeleteId}
-                        isPending={deleteMutation.isPending}
-                        onEdit={() => setDrawer(meal)}
-                        onRequestDelete={() => setConfirmDeleteId(meal.id)}
-                        onConfirmDelete={() =>
-                          handleDelete(meal.id, meal.meal_name)
-                        }
-                        onCancelDelete={() => setConfirmDeleteId(null)}
-                      />
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className={`cell-actions ${TD}`}>
+                        <DeleteConfirmActions
+                          id={meal.id}
+                          confirmId={confirmDeleteId}
+                          isPending={deleteMutation.isPending}
+                          onEdit={() => setDrawer(meal)}
+                          onRequestDelete={() => setConfirmDeleteId(meal.id)}
+                          onConfirmDelete={() => handleDelete(meal.id, meal.meal_name)}
+                          onCancelDelete={() => setConfirmDeleteId(null)}
+                          editLabel={`${meal.meal_name} bewerken`}
+                          deleteLabel={`${meal.meal_name} verwijderen`}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -588,13 +544,6 @@ export function AdminMealsPage() {
         meal={drawer}
         onClose={() => setDrawer(null)}
       />
-
-      <AdminBulkBar
-        count={selectedIds.size}
-        isPending={bulkDeleteMutation.isPending}
-        onDelete={handleBulkDelete}
-        onClear={clearSelection}
-      />
-    </div>
+    </AdminPage>
   );
 }

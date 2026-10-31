@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ZoomIn, ZoomOut, Upload } from "lucide-react";
+import { X, ZoomIn, ZoomOut, Upload, Loader2 } from "lucide-react";
 import { Button } from "../common/Button";
+import { useBackClose } from "../../hooks/useBackClose";
 
 const ASPECT  = 3;     // 3:1 banner ratio
 const OUT_W   = 1200;  // canvas output width
@@ -35,6 +36,8 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
   const [pos, setPos]         = useState({ x: 0, y: 0 });
   const [imgReady, setImgReady] = useState(false);
   const [saving, setSaving]   = useState(false);
+
+  useBackClose(open, onClose);
 
   const objUrl = useRef<string | null>(null);
   const isGif  = file?.type === "image/gif";
@@ -187,7 +190,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 z-[200] bg-slate-950/50"
+            className="fixed inset-0 z-[200] bg-scrim/50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -197,7 +200,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
 
           {/* Panel — slides up from bottom */}
           <motion.div
-            className="fixed z-[201] overflow-hidden rounded-2xl border-1.5 border-line bg-surface shadow-xl"
+            className="fixed z-[201] overflow-hidden card-surface shadow-xl"
             style={{
               bottom: "max(1rem, env(safe-area-inset-bottom, 1rem))",
               left: "50%",
@@ -223,9 +226,9 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
               </div>
               <button
                 onClick={onClose}
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+                className="icon-btn"
               >
-                <X size={15} />
+                <X size={16} />
               </button>
             </div>
 
@@ -233,7 +236,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
             <div className="p-4 pb-3">
               <div
                 ref={containerRef}
-                className="relative overflow-hidden rounded-xl bg-[#0F1519] select-none touch-none"
+                className="relative overflow-hidden rounded-xl bg-hero select-none touch-none"
                 style={{
                   aspectRatio: `${ASPECT} / 1`,
                   cursor: dragging.current ? "grabbing" : "grab",
@@ -263,18 +266,18 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
                 {/* Loading spinner */}
                 {!imgReady && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="h-6 w-6 rounded-full border-2 border-white/20 border-t-white/70 animate-spin" />
+                    <Loader2 size={20} className="animate-spin text-hero-ink/70" />
                   </div>
                 )}
 
                 {/* Rule-of-thirds overlay */}
                 {imgReady && (
                   <div className="pointer-events-none absolute inset-0">
-                    <div className="absolute inset-x-0 top-1/3 h-px bg-white/10" />
-                    <div className="absolute inset-x-0 top-2/3 h-px bg-white/10" />
-                    <div className="absolute inset-y-0 left-1/3 w-px bg-white/10" />
-                    <div className="absolute inset-y-0 left-2/3 w-px bg-white/10" />
-                    <div className="absolute inset-0 rounded-xl ring-1 ring-white/20" />
+                    <div className="absolute inset-x-0 top-1/3 h-px bg-hero-ink/10" />
+                    <div className="absolute inset-x-0 top-2/3 h-px bg-hero-ink/10" />
+                    <div className="absolute inset-y-0 left-1/3 w-px bg-hero-ink/10" />
+                    <div className="absolute inset-y-0 left-2/3 w-px bg-hero-ink/10" />
+                    <div className="absolute inset-0 rounded-xl ring-1 ring-hero-ink/20" />
                   </div>
                 )}
               </div>
@@ -285,7 +288,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
                   <button
                     type="button"
                     onClick={() => applyZoom(Math.max(1, zoom - 0.1))}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+                    className="icon-btn"
                   >
                     <ZoomOut size={14} />
                   </button>
@@ -301,7 +304,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
                   <button
                     type="button"
                     onClick={() => applyZoom(Math.min(MAX_ZOOM, zoom + 0.1))}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+                    className="icon-btn"
                   >
                     <ZoomIn size={14} />
                   </button>
@@ -324,7 +327,7 @@ export function BannerCropModal({ open, file, onClose, onConfirm }: Props) {
                 disabled={!imgReady}
                 onClick={handleConfirm}
               >
-                <Upload size={13} />
+                <Upload size={14} />
                 {isGif ? "Uploaden" : "Bijsnijden & uploaden"}
               </Button>
             </div>

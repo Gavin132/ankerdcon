@@ -5,7 +5,7 @@ import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import { Link } from "react-router-dom";
 import { ExternalLink } from "lucide-react";
 import { useThemeStore } from "../../store/theme.store";
-import { avatarColor, personInitial } from "../../utils/avatar";
+import { avatarColor, avatarSrc, personInitial } from "../../utils/avatar";
 import { parsePing, pingAgo, pingMapUrl } from "../../utils/locationPing";
 import { tripMeals, type Trip } from "../../utils/trips";
 import { useParkingSpots } from "../../hooks/useParking";
@@ -46,7 +46,7 @@ function avatarDisc(user: User, offset: number, z: number): string {
   const custom = user.color?.startsWith("#");
   const initial = `<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 15px/1 Poppins,system-ui,sans-serif;color:#fff">${escapeHtml(personInitial(user.name))}</span>`;
   const photo = user.avatar_url
-    ? `<img src="${escapeHtml(user.avatar_url)}" alt="${name}" onerror="this.style.display='none'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />`
+    ? `<img src="${escapeHtml(avatarSrc(user.avatar_url, 40))}" loading="lazy" decoding="async" alt="${name}" onerror="this.style.display='none'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />`
     : "";
   const bg = custom ? `background:${escapeHtml(user.color)};` : "";
   return `<div class="${custom ? "" : avatarColor(user.name)}" style="${bg}position:absolute;left:${offset}px;top:0;z-index:${z};width:40px;height:40px;border-radius:9999px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);overflow:hidden">${initial}${photo}</div>`;
@@ -346,7 +346,7 @@ export default function CrewMap({ users, onOpenProfile, trip, meals, rides, allU
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      Route <ExternalLink size={10} />
+                      Route <ExternalLink size={12} />
                     </a>
                   </div>
                 ))}
@@ -375,16 +375,16 @@ export default function CrewMap({ users, onOpenProfile, trip, meals, rides, allU
                 </p>
                 {p.outboundRide ? (
                   <>
-                    <p className="text-neutral-600">Vertrekt om {formatTime(p.outboundRide.departure_time)}</p>
+                    <p className="text-hero/70">Vertrekt om {formatTime(p.outboundRide.departure_time)}</p>
                     <Link
                       to={routes.ride.view(p.outboundRide.id)}
                       className="mt-1 inline-flex items-center gap-0.5 text-[12px] font-semibold text-brand-text hover:underline"
                     >
-                      Naar de rit <ExternalLink size={10} />
+                      Naar de rit <ExternalLink size={12} />
                     </Link>
                   </>
                 ) : (
-                  <p className="text-neutral-600">Nog geen terugrit gepland.</p>
+                  <p className="text-hero/70">Nog geen terugrit gepland.</p>
                 )}
               </div>
             </Popup>
@@ -398,8 +398,8 @@ export default function CrewMap({ users, onOpenProfile, trip, meals, rides, allU
                   <div key={p.user.name} className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate font-semibold">{p.user.name}</p>
-                      <p className="truncate text-neutral-600">{p.text || p.zone || "Locatie gedeeld"}</p>
-                      <p className="font-mono text-[11px] text-neutral-500">
+                      <p className="truncate text-hero/70">{p.text || p.zone || "Locatie gedeeld"}</p>
+                      <p className="font-mono text-[12px] text-hero/70">
                         {[p.text ? p.zone : null, p.at ? pingAgo(p.at) : null].filter(Boolean).join(" · ")}
                       </p>
                     </div>
@@ -415,7 +415,7 @@ export default function CrewMap({ users, onOpenProfile, trip, meals, rides, allU
                         Profiel
                       </button>
                       <a className="inline-flex items-center gap-0.5 text-brand-text hover:underline" href={pingMapUrl(p.lat, p.lng)} target="_blank" rel="noopener noreferrer">
-                        Route <ExternalLink size={10} />
+                        Route <ExternalLink size={12} />
                       </a>
                     </div>
                   </div>

@@ -16,22 +16,26 @@ is described at the bottom, in case it needs to come back.
 - **Backend:** two helpers in `backend/app/dependencies.py` decide who an action is for:
   - `act_for_anyone(current_user, requested)` returns the requested name, or your own
     when none is given. Used for the sign-ups above: meals (RSVP, cancel), rides (claim or
-    leave a seat, restaurant drivers and assignments), trip days (RSVP, leave) and hotel
-    rooms (create with occupants, assign, leave).
+    leave a seat, restaurant drivers and assignments), trip days (RSVP, leave), ticket votes (cast and withdraw) and hotel
+    rooms (create with occupants, assign, leave, and the room form's list of occupants, `PUT /calendar/{day}/hotel-rooms/{room}`).
   Adding a name (as opposed to taking one off) must be a member's name, checked against the
     profiles, so nobody can fill a ride or a room with made-up names.
-  - `act_as(current_user, requested)` is the strict one: your own name (or a former name
+  - `act_as(current_user, requested)` is the strict one: your own name (or a former name or Discord username
     of yours that no other profile uses), or anyone for an admin. Used for `paid_by` on an
     expense, location pings, creating a cosplay and the driver of a new ride.
   - Settle-up (`/api/settlements`) uses neither: a settlement is always started, paid and
     confirmed as the signed-in member, because it involves their bank details. An admin who
     needs to act there has to use "log in as" ([security.md](security.md#log-in-as)).
 - **Frontend:** the name pickers for the sign-ups offer every name. `useActingPermissions()`
-  in `frontend/src/hooks/useUsers.ts` mirrors `act_as` and is still used by the pickers
+  in `frontend/src/hooks/useUsers.ts` mirrors `act_as` (with `useMyNames()`: every name of the signed-in member) and is still used by the pickers
   for the restricted things (`CreateExpenseDrawer`, `LocationPingModal`, `TripCosplayTab`,
   `CosplayDetailView`):
   - `actable(names)` filters a list of names;
   - `canActFor(name)` checks one name.
+
+The people who are signed up this way may be **placeholders**: profiles an admin made for someone who has not logged in
+yet. When that person has their own profile, an admin merges the placeholder into it and every sign-up, seat and expense
+share follows ([security.md](security.md#placeholders-and-merging)).
 
 Because anyone can be signed up or off without their consent, consider logging who made
 each change if that ever becomes a problem.

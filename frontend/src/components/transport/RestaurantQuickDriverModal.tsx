@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { Car } from "lucide-react";
 import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
+import { SeatPicker } from "../common/SeatPicker";
 import { useCurrentUser } from "../../hooks/useUsers";
 import { useRsvpMeal } from "../../hooks/useMeals";
 import { useCreateRide, useAddRestaurantDriver, useClaimSeat } from "../../hooks/useRides";
 import { toast } from "../../store/toast.store";
 import { splitDateTime, toDateTimeLocal } from "../../utils/date";
+import { getNow } from "../../store/time.store";
 import type { CalendarEvent, Meal, Ride } from "../../types";
 
 interface RestaurantQuickDriverModalProps {
@@ -41,7 +43,7 @@ export function RestaurantQuickDriverModal({ open, onClose, event, meal, existin
     if (!open) return;
     setSeats(5);
     const fallback = new Date(meal.time.replace(" ", "T"));
-    setDepartureTime(toDateTimeLocal(isNaN(fallback.getTime()) ? new Date() : fallback));
+    setDepartureTime(toDateTimeLocal(isNaN(fallback.getTime()) ? getNow() : fallback));
   }, [open, meal.time]);
 
   const alreadyDriving = !!existingRide?.restaurant_drivers?.some((d) => d.name === driver);
@@ -84,7 +86,7 @@ export function RestaurantQuickDriverModal({ open, onClose, event, meal, existin
 
   const footer = !alreadyDriving && (
     <Button onClick={onSubmit} loading={isPending} className="w-full">
-      <Car size={15} />
+      <Car size={16} />
       {existingRide ? `Rijd mee met ${seats} plaatsen` : `Rit aanmaken met ${seats} plaatsen`}
     </Button>
   );
@@ -99,7 +101,7 @@ export function RestaurantQuickDriverModal({ open, onClose, event, meal, existin
     >
       <div className="space-y-5">
         {alreadyDriving ? (
-          <p className="rounded-xl bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+          <p className="notice-warn px-4 py-3 text-sm font-semibold text-warn">
             Je staat al als chauffeur geregistreerd voor deze rit. Pas je aantal plaatsen aan via de ritdetails.
           </p>
         ) : (
@@ -126,29 +128,7 @@ export function RestaurantQuickDriverModal({ open, onClose, event, meal, existin
               </div>
             )}
 
-            <div>
-              <label className="section-label mb-1.5 block">
-                Totaal aantal plekken in je auto
-              </label>
-              <div className="flex gap-2">
-                {[2, 3, 4, 5, 6, 7].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setSeats(n)}
-                    aria-pressed={seats === n}
-                    className={`flex h-10 flex-1 items-center justify-center rounded-xl font-mono text-sm font-semibold tabular-nums transition-colors ${
-                      seats === n
-                        ? "border-2 border-outline bg-brand text-brand-on"
-                        : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-              <p className="mt-1.5 text-xs text-ink-3">Incl. jezelf</p>
-            </div>
+            <SeatPicker value={seats} onChange={setSeats} />
           </>
         )}
       </div>

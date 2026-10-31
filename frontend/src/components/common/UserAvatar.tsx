@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useUsers } from "../../hooks/useUsers";
-import { avatarColor, personInitial } from "../../utils/avatar";
+import { avatarColor, avatarPx, avatarSrc, personInitial } from "../../utils/avatar";
 import type { User } from "../../types";
 
 interface UserAvatarProps {
@@ -23,14 +23,16 @@ export function UserAvatar({
   const useInlineColor = user?.color && user.color.startsWith("#");
   const showImg = !!user?.avatar_url && !imgError;
 
-  const sharedClass = `flex shrink-0 items-center justify-center rounded-full border-2 border-surface font-bold text-white ${className}`;
+  const sharedClass = `flex shrink-0 items-center justify-center rounded-full border-2 border-surface font-bold text-avatar-on ${className}`;
 
   if (showImg) {
     return (
       <img
-        src={user.avatar_url}
+        src={avatarSrc(user.avatar_url!, avatarPx(className))}
         alt={name}
         title={name}
+        loading="lazy"
+        decoding="async"
         className={`${sharedClass} object-cover`}
         style={style}
         onError={() => setImgError(true)}

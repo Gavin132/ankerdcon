@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { subscribePush, unsubscribePush } from "../services/push.service";
-import { getPushState, subscribeToPush, unsubscribeFromPush, type PushState } from "../utils/push";
+import { getPushState, immediatePushState, subscribeToPush, unsubscribeFromPush, type PushState } from "../utils/push";
 
 /** Live push-subscription state for this device/browser, plus the two
  * actions to change it — the state reflects the real browser subscription
@@ -8,7 +8,9 @@ import { getPushState, subscribeToPush, unsubscribeFromPush, type PushState } fr
  * correct even across devices, reinstalls or a permission revoked outside
  * the app. */
 export function usePush() {
-  const [state, setState] = useState<PushState | "loading">("loading");
+  // What is known at once (no support, install first, blocked) is there on the first render;
+  // only "is this device subscribed" has to be looked up.
+  const [state, setState] = useState<PushState | "loading">(() => immediatePushState() ?? "loading");
   const [busy, setBusy] = useState(false);
 
   const refresh = useCallback(() => {

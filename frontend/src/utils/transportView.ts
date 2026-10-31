@@ -67,3 +67,10 @@ export function driversMissing(
   }
   return missing.sort((a, b) => a.localeCompare(b, "nl"));
 }
+
+/** How you travel on a ride of yours, in a few words: "Jij rijdt", "Met Sam" or "Met het ov". A public transport ride
+ * is a member's own journey (they are its "driver"), so it is never "Jij rijdt". */
+export function rideHow(ride: Pick<Ride, "driver" | "is_public_transport">, isMine: (name: string) => boolean): string {
+  if (ride.is_public_transport) return "Met het ov";
+  return isMine(ride.driver) ? "Jij rijdt" : `Met ${ride.driver}`;
+}

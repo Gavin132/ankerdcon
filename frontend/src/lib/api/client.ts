@@ -1,6 +1,9 @@
 import axios from "axios";
 import { env } from "../../config/env";
 import { useAuthStore } from "../../store/auth.store";
+import { toastReadOnly } from "../../store/toast.store";
+import { isViewerMode, READ_ONLY_MESSAGE, viewerMayRequest } from "../viewerMode";
+import { useUploadProgressStore } from "../../store/uploadProgress.store";
 
 // ── Typed error class ──────────────────────────────────────────────
 
@@ -36,6 +39,12 @@ export class ApiError extends Error {
  * gives up after 100 s anyway (a 524), so waiting longer than this never helps.
  */
 export const REQUEST_TIMEOUT_MS = 30_000;
+/**
+ * A read gives up sooner: when the server is off or the home network is down, the person is waiting on a spinner
+ * for the whole timeout (and a retry after it). Fifteen seconds is long even for a slow phone connection, and
+ * the call can simply be tried again; a change (POST, PUT) keeps the longer limit.
+ */
+export const GET_TIMEOUT_MS = 15_000;
 /** Uploads carry a photo over what may be a poor connection, so they get longer. */
 export const UPLOAD_TIMEOUT_MS = 60_000;
 /** A video from a phone can be tens of MB; Cloudflare itself allows a request 100 s. */
@@ -53,10 +62,48 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
+  // A read-only member's change is not even sent: the backend would refuse it anyway, and this way
+  // they are told why, once, instead of getting each screen's own idea of what went wrong.
+  if (isViewerMode() && !viewerMayRequest(config.method ?? "get", config.url ?? "")) {
+    toastReadOnly(READ_ONLY_MESSAGE);
+    return Promise.reject(new ApiError(403, READ_ONLY_MESSAGE));
+  }
   const token = useAuthStore.getState().accessToken;
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  // Only the default is shortened: a call that set its own limit (an upload, a zip with none) keeps it.
+  if ((config.method ?? "get").toLowerCase() === "get" && config.timeout === REQUEST_TIMEOUT_MS) {
+    config.timeout = GET_TIMEOUT_MS;
+  }
+  // A request that carries a file reports how far it is, for the bar at the top of the app (UploadProgress), besides
+  // whatever the caller does with it itself.
+  if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    (config as { uploadId?: string }).uploadId = id;
+    const own = config.onUploadProgress;
+    config.onUploadProgress = (event) => {
+      own?.(event);
+      if (event.total) useUploadProgressStore.getState().update(id, event.loaded, event.total);
+    };
+  }
   return config;
 });
+
+// However an upload ends, its bar goes: answered, refused or given up on. Registered before the refresh logic below, so a
+// request that is sent again after a token refresh starts a bar of its own.
+function finishUpload(config: unknown) {
+  const id = (config as { uploadId?: string } | undefined)?.uploadId;
+  if (id) useUploadProgressStore.getState().finish(id);
+}
+apiClient.interceptors.response.use(
+  (response) => {
+    finishUpload(response.config);
+    return response;
+  },
+  (error) => {
+    finishUpload(error?.config);
+    return Promise.reject(error);
+  },
+);
 
 // ── Token Refresh Variables ────────────────────────────────────────
 

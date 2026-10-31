@@ -12,8 +12,24 @@ try {
   }
 } catch {}
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+async function start() {
+  // Mock mode: the app on made-up data, signed in as nobody, for looking at every screen at phone sizes
+  // (`/?mock`, docs/local-development.md#mock-mode). Development builds only; `import.meta.env.DEV` is a
+  // constant, so a production build drops this branch and the whole `dev/` folder with it.
+  if (import.meta.env.DEV) {
+    // Remembered for the tab, so a reload (or an address typed without it) stays in mock mode.
+    const wanted = new URLSearchParams(window.location.search).has("mock") || sessionStorage.getItem("ankerd_mock") !== null;
+    if (wanted) {
+      const { installMock } = await import("./dev/mock");
+      installMock();
+    }
+  }
+
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}
+
+void start();

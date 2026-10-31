@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Sparkles, Plus, Image, Upload, UploadCloud, X,
   CheckCircle2, SlidersHorizontal, ChevronLeft, ChevronRight,
+  Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
@@ -24,11 +25,14 @@ import {
 import { TripSheet } from "../../components/trip/TripSheet";
 import { SelectableDayCards } from "../../components/trip/SelectableDayCards";
 import { Button } from "../../components/common/Button";
+import { EmptyState } from "../../components/common/EmptyState";
+import { Segmented } from "../../components/common/Segmented";
 import { NamePicker } from "../../components/common/NamePicker";
 import { toast } from "../../store/toast.store";
 import { ApiError } from "../../lib/api/client";
-import { listContainer, listItem } from "../../utils/motion";
+import { listContainer } from "../../utils/motion";
 import { useTrip } from "./tripContext";
+import { useIsViewer } from "../../hooks/useIsViewer";
 import type { Cosplay } from "../../types";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -63,7 +67,7 @@ interface ImageEntry {
 // Flat form sections separated by a divider; labels follow the design system.
 const SF = "space-y-3 border-t-1.5 border-line pt-5 first:border-t-0 first:pt-0";
 const ST = "section-label";
-const SL = "mb-1.5 block text-[12.5px] font-semibold text-ink-2";
+const SL = "field-label";
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -74,6 +78,7 @@ const SL = "mb-1.5 block text-[12.5px] font-semibold text-ink-2";
  * list/form pattern as Vervoer — instead of stacking a second overlay on top.
  */
 export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const viewer = useIsViewer();
   const { trip, dayId } = useTrip();
   const firstConDay = trip.days.find((d) => d.ev.has_con !== false) ?? trip.days[0];
   const id = dayId ?? firstConDay.ev.id;
@@ -323,7 +328,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
       loading={isSubmitting || createMutation.isPending}
       className="w-full"
     >
-      <Sparkles size={15} />
+      <Sparkles size={16} />
       Cosplay opslaan
     </Button>
   );
@@ -331,11 +336,11 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
   const isFiltered = activeFilterCount > 0;
 
   const removableChip =
-    "inline-flex items-center gap-1.5 rounded-full border-1.5 border-line bg-surface py-1 pl-2.5 pr-1 text-[11.5px] font-semibold text-ink-2";
+    "inline-flex items-center gap-1.5 rounded-full border-1.5 border-line bg-surface py-1 pl-2.5 pr-1 text-[12px] font-semibold text-ink-2";
   const removeChipButton =
-    "flex h-5 w-5 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-sunken hover:text-ink";
+    "hit-area flex h-5 w-5 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-sunken hover:text-ink";
   const pageArrow =
-    "flex h-8 w-8 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-line";
+    "hit-area flex h-9 w-9 items-center justify-center rounded-xl border-1.5 border-line bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-line";
 
   return (
     <TripSheet
@@ -353,7 +358,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
         view === "form" ? "Laat zien wat je draagt!"
         : view === "filter" ? "Vind het cosplay dat je zoekt"
         : view === "detail" ? detailCosplay?.series ?? undefined
-        : undefined
+        : trip.title
       }
       footer={
         view === "form" ? createFooter
@@ -371,12 +376,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
       }
     >
       {!event ? (
-        <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
-            <Sparkles size={22} />
-          </div>
-          <p className="text-sm font-semibold text-ink">Deze dag bestaat niet meer</p>
-        </div>
+        <EmptyState icon={<Sparkles size={22} />} title="Deze dag bestaat niet meer" />
       ) : view === "filter" ? (
         <CosplayFilterPanel
           filters={filters}
@@ -406,7 +406,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
             <div>
               <label className={SL}>Karakter naam *</label>
               <input className="input-field" placeholder="Bijv. Luffy, Batman, Pikachu…" autoComplete="off" {...register("character_name")} />
-              {errors.character_name && <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400">{errors.character_name.message}</p>}
+              {errors.character_name && <p className="field-error">{errors.character_name.message}</p>}
             </div>
             <div>
               <label className={SL}>Serie / film / game (optioneel)</label>
@@ -427,7 +427,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                 }}
                 label="Welke dagen draag je dit?"
               />
-              {selectedDays.length === 0 && <p className="text-xs text-rose-600 dark:text-rose-400">Selecteer minimaal één dag.</p>}
+              {selectedDays.length === 0 && <p className="field-error">Selecteer minimaal één dag.</p>}
             </div>
           )}
 
@@ -436,21 +436,12 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
             <div className="space-y-3">
               {images.map((entry, index) => (
                 <div key={index} className="space-y-1.5">
-                  <div className="inline-flex gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]">
-                    {(["url", "file"] as const).map((m) => (
-                      <button
-                        key={m} type="button" onClick={() => setImageField(index, { mode: m })}
-                        aria-pressed={entry.mode === m}
-                        className={`rounded-[7px] px-2.5 py-1 text-[11.5px] font-semibold transition-colors ${
-                          entry.mode === m
-                            ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]"
-                            : "text-ink-2 hover:text-ink"
-                        }`}
-                      >
-                        {m === "url" ? "Link" : "Bestand"}
-                      </button>
-                    ))}
-                  </div>
+                  <Segmented
+                    label="Soort afbeelding"
+                    options={[{ value: "url", label: "Link" }, { value: "file", label: "Bestand" }]}
+                    value={entry.mode}
+                    onChange={(m) => setImageField(index, { mode: m })}
+                  />
                   <div className="flex items-center gap-2">
                     {entry.mode === "url" ? (
                       <>
@@ -465,20 +456,20 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                     ) : (
                       <label className={`flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-xl border-1.5 px-3 py-2.5 transition-colors ${
                         entry.url
-                          ? "border-emerald-300 bg-emerald-50 dark:border-emerald-500/40 dark:bg-emerald-500/10"
+                          ? "border-ok-line bg-ok-soft"
                           : entry.queued
-                          ? "border-amber-300 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10"
+                          ? "border-warn-line bg-warn-soft"
                           : "border-line bg-surface hover:border-ink-3"
                       }`}>
                         {entry.uploading
-                          ? <div className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-ink-3 border-t-transparent" />
+                          ? <Loader2 size={14} className="shrink-0 animate-spin text-ink-3" />
                           : entry.url
-                          ? <CheckCircle2 size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                          ? <CheckCircle2 size={14} className="shrink-0 text-ok" />
                           : entry.queued
-                          ? <UploadCloud size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                          ? <UploadCloud size={14} className="shrink-0 text-warn" />
                           : <Upload size={14} className="shrink-0 text-ink-3" />}
                         <span className={`truncate text-xs font-medium ${
-                          entry.url ? "text-emerald-700 dark:text-emerald-300" : entry.queued ? "text-amber-700 dark:text-amber-400" : "text-ink-2"
+                          entry.url ? "text-ok" : entry.queued ? "text-warn" : "text-ink-2"
                         }`}>
                           {entry.uploading
                             ? "Uploaden…"
@@ -503,8 +494,8 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                       </label>
                     )}
                     {images.length > 1 && (
-                      <button type="button" onClick={() => removeImage(index)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400">
-                        <X size={13} />
+                      <button type="button" onClick={() => removeImage(index)} aria-label="Afbeelding verwijderen" className="icon-btn hover:bg-bad-soft hover:text-bad">
+                        <X size={16} />
                       </button>
                     )}
                   </div>
@@ -512,8 +503,8 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
               ))}
             </div>
             {images.length < MAX_IMAGES ? (
-              <button type="button" onClick={addImage} className="flex items-center gap-1.5 text-[12.5px] font-semibold text-brand-text hover:underline">
-                <Plus size={12} />
+              <button type="button" onClick={addImage} className="hit-area flex items-center gap-1.5 text-[12.5px] font-semibold text-brand-text hover:underline">
+                <Plus size={14} />
                 Afbeelding toevoegen <span className="font-mono font-normal text-ink-3">({images.length}/{MAX_IMAGES})</span>
               </button>
             ) : (
@@ -531,40 +522,39 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
           {/* Filter toolbar */}
           {!isLoading && eventCosplays.length > 0 && (
             <div className="mb-5 space-y-3">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 {/* Filter trigger */}
                 <button
                   onClick={() => setView("filter")}
-                  className={`relative flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
+                  className={`relative flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
                     activeFilterCount > 0
-                      ? "border-1.5 border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
+                      ? "border-1.5 border-transparent bg-selected text-selected-on"
                       : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"
                   }`}
                 >
-                  <SlidersHorizontal size={13} />
-                  Filter & Sorteren
+                  <SlidersHorizontal size={14} />
+                  Filter & sorteren
                   {activeFilterCount > 0 && (
-                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-paper font-mono text-[9.5px] font-semibold text-ink">
+                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-paper text-[12px] font-semibold leading-none text-ink">
                       {activeFilterCount}
                     </span>
                   )}
                 </button>
 
-                {/* Result count */}
-                <span className="ml-auto truncate font-mono text-[11px] uppercase tracking-[0.05em] text-ink-3 tabular-nums">
-                  {isFiltered
-                    ? `${filtered.length} van ${eventCosplays.length} cosplays`
-                    : `${eventCosplays.length} ${eventCosplays.length === 1 ? "cosplay" : "cosplays"}`}
-                </span>
-
-                <button
-                  onClick={openCreate}
-                  className="btn-primary shrink-0 px-3 py-2 text-xs"
-                >
-                  <Plus size={14} />
-                  Toevoegen
-                </button>
+                {!viewer && (
+                  <button onClick={openCreate} className="btn-primary ml-auto shrink-0 px-3">
+                    <Plus size={14} />
+                    Toevoegen
+                  </button>
+                )}
               </div>
+
+              {/* Result count */}
+              <p className="text-xs tabular-nums text-ink-3">
+                {isFiltered
+                  ? `${filtered.length} van ${eventCosplays.length} cosplays`
+                  : `${eventCosplays.length} ${eventCosplays.length === 1 ? "cosplay" : "cosplays"}`}
+              </p>
 
               {/* Active filter chips */}
               <AnimatePresence>
@@ -578,24 +568,24 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                     {filters.persons.map((name) => (
                       <span key={name} className={removableChip}>
                         {name}
-                        <button onClick={() => removePersonFilter(name)} className={removeChipButton}>
-                          <X size={11} />
+                        <button onClick={() => removePersonFilter(name)} aria-label={`Filter ${name} verwijderen`} className={removeChipButton}>
+                          <X size={12} />
                         </button>
                       </span>
                     ))}
                     {filters.days.length > 0 && (
                       <span className={removableChip}>
                         {filters.days.length} {filters.days.length === 1 ? "dag" : "dagen"}
-                        <button onClick={removeDayFilter} className={removeChipButton}>
-                          <X size={11} />
+                        <button onClick={removeDayFilter} aria-label="Dagfilter verwijderen" className={removeChipButton}>
+                          <X size={12} />
                         </button>
                       </span>
                     )}
                     {filters.sort !== "newest" && (
                       <span className={removableChip}>
                         {SORT_LABELS[filters.sort]}
-                        <button onClick={removeSortFilter} className={removeChipButton}>
-                          <X size={11} />
+                        <button onClick={removeSortFilter} aria-label="Sortering verwijderen" className={removeChipButton}>
+                          <X size={12} />
                         </button>
                       </span>
                     )}
@@ -612,11 +602,11 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                 <div key={i} className="card-surface overflow-hidden animate-pulse">
                   <div className="aspect-[4/3] w-full border-b-1.5 border-line bg-sunken" />
                   <div className="space-y-2.5 p-3">
-                    <div className="h-4 w-3/4 rounded bg-sunken" />
-                    <div className="h-3 w-1/2 rounded bg-sunken" />
+                    <div className="h-4 w-3/4 rounded-md bg-sunken" />
+                    <div className="h-3 w-1/2 rounded-md bg-sunken" />
                     <div className="flex items-center gap-1.5">
                       <div className="h-5 w-5 rounded-full bg-sunken" />
-                      <div className="h-3 w-16 rounded bg-sunken" />
+                      <div className="h-3 w-16 rounded-md bg-sunken" />
                     </div>
                     <div className="h-4 w-20 rounded-md bg-sunken" />
                   </div>
@@ -627,45 +617,33 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
 
           {/* ── Empty state (no cosplays at all) ── */}
           {!isLoading && eventCosplays.length === 0 && (
-            <div className="flex flex-col items-center gap-4 py-16 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
-                <Sparkles size={22} />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-ink">
-                  Nog geen cosplays gedeeld
-                </p>
-                <p className="mt-1 text-xs text-ink-3">Laat anderen weten wat je draagt!</p>
-              </div>
-              <button
-                onClick={openCreate}
-                className="btn-primary px-4 py-2.5 text-sm"
-              >
-                <Plus size={16} />
-                Eerste cosplay toevoegen
-              </button>
-            </div>
+            <EmptyState
+              icon={<Sparkles size={22} />}
+              title="Nog geen cosplays gedeeld"
+              description="Laat anderen weten wat je draagt!"
+              action={
+                !viewer && (
+                  <button onClick={openCreate} className="btn-primary px-4">
+                    <Plus size={16} />
+                    Eerste cosplay toevoegen
+                  </button>
+                )
+              }
+            />
           )}
 
           {/* ── Filtered empty state ── */}
           {!isLoading && eventCosplays.length > 0 && filtered.length === 0 && (
-            <div className="flex flex-col items-center gap-4 py-16 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
-                <SlidersHorizontal size={22} />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-ink">
-                  Geen cosplays gevonden
-                </p>
-                <p className="mt-1 text-xs text-ink-3">Pas je filters aan of wis ze.</p>
-              </div>
-              <button
-                onClick={() => setFilters(DEFAULT_COSPLAY_FILTERS)}
-                className="text-[12.5px] font-semibold text-brand-text hover:underline"
-              >
-                Filters wissen
-              </button>
-            </div>
+            <EmptyState
+              icon={<SlidersHorizontal size={22} />}
+              title="Geen cosplays gevonden"
+              description="Pas je filters aan of wis ze."
+              action={
+                <button onClick={() => setFilters(DEFAULT_COSPLAY_FILTERS)} className="hit-area text-[12.5px] font-semibold text-brand-text hover:underline">
+                  Filters wissen
+                </button>
+              }
+            />
           )}
 
           {/* ── Grid ── */}
@@ -687,21 +665,6 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                   />
                 ))}
 
-                {/* Add cosplay card — shown on last page or when no filters active */}
-                {(!isFiltered || page === totalPages) && (
-                  <motion.button
-                    key="add-card"
-                    variants={listItem}
-                    type="button"
-                    onClick={openCreate}
-                    className="flex min-h-[160px] cursor-pointer flex-col items-center justify-center gap-2.5 rounded-[12px] border-1.5 border-dashed border-line py-10 text-ink-3 transition-colors hover:border-ink-3 hover:text-ink"
-                  >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sunken">
-                      <Plus size={16} />
-                    </div>
-                    <span className="text-xs font-semibold">Cosplay toevoegen</span>
-                  </motion.button>
-                )}
               </AnimatePresence>
             </motion.div>
           )}
@@ -712,9 +675,10 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
+                aria-label="Vorige pagina"
                 className={pageArrow}
               >
-                <ChevronLeft size={15} />
+                <ChevronLeft size={16} />
               </button>
 
               {Array.from({ length: totalPages }).map((_, i) => {
@@ -726,7 +690,7 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                 const showEllipsisAfter  = p === page + 2 && page < totalPages - 2;
                 if (showEllipsisBefore || showEllipsisAfter) {
                   return (
-                    <span key={p} className="w-8 text-center text-xs text-ink-3">…</span>
+                    <span key={p} className="w-9 text-center text-xs text-ink-3">…</span>
                   );
                 }
                 if (!show) return null;
@@ -734,9 +698,11 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
                   <button
                     key={p}
                     onClick={() => setPage(p)}
-                    className={`h-8 min-w-[2rem] rounded-xl px-2 font-mono text-xs font-semibold tabular-nums transition-colors ${
+                    aria-label={`Pagina ${p}`}
+                    aria-current={active ? "page" : undefined}
+                    className={`hit-area h-9 min-w-[2.25rem] rounded-xl px-2 font-mono text-xs font-semibold tabular-nums transition-colors ${
                       active
-                        ? "border-1.5 border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
+                        ? "border-1.5 border-transparent bg-selected text-selected-on"
                         : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
                     }`}
                   >
@@ -748,9 +714,10 @@ export function TripCosplaySheet({ open, onClose }: { open: boolean; onClose: ()
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
+                aria-label="Volgende pagina"
                 className={pageArrow}
               >
-                <ChevronRight size={15} />
+                <ChevronRight size={16} />
               </button>
             </div>
           )}

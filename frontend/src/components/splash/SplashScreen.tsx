@@ -21,7 +21,7 @@ export function SplashScreen({ onDismiss }: SplashScreenProps) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden bg-[#0F1519] px-6 select-none"
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden bg-hero px-6 select-none"
       initial={{ opacity: 1 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -46,12 +46,12 @@ export function SplashScreen({ onDismiss }: SplashScreenProps) {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.25, duration: 0.35, ease: "easeOut" }}
         >
-          <p className="font-display text-[52px] font-extrabold uppercase leading-[0.88] tracking-[0.01em] text-[#E6F0F3]">
+          <p className="font-display text-[52px] font-extrabold uppercase leading-[0.88] tracking-[0.01em] text-hero-ink">
             {APP_NAME}
           </p>
           <span aria-hidden className="h-[3px] w-10 rounded-full bg-brand" />
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#E6F0F3]/50">
-            Live Event Logistics
+          <p className="font-mono text-xs text-hero-ink/60">
+            Logistiek voor evenementen
           </p>
         </motion.div>
       </motion.div>

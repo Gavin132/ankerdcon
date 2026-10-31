@@ -30,7 +30,9 @@ is easy to get wrong.
   Keys and URLs come from `QUERY_KEYS`, `apiRoutes`, `routes`; never hand-write them.
 - **Anything that depends on "now" uses `getNow()`** (`store/time.store.ts`), not
   `new Date()`, so admin time travel works.
-- **Names are stored, not ids, in most arrays**; resolve a stored name through `name`,
+- **Names are stored, not ids, in most arrays**; and one person can be on a list under two of them (a rename, a
+  Discord username), so show and count people with `groupPeople` / `tripPeople` (`utils/people.ts`), never `list.length`
+  or one row per stored name. Resolve a stored name through `name`,
   `discord_username` and `aliases`.
 - **Design:** flat, tokens not colours (`bg-surface`, `text-ink-2`), no floating buttons, no
   shadows on cards, things that open over a page are a `TripSheet`. `font-display` is
@@ -46,6 +48,11 @@ is easy to get wrong.
 
 - Backend: `cd backend && python -m pytest`. Add a test for a bug you fix.
 - Frontend: `cd frontend && npx tsc --noEmit && npm run build`.
+- **Colours: `cd frontend && npm run check-colors`** fails on a raw palette class, `text-white` or a hex literal; use the tokens
+  (`text-ok`, `bg-warn-soft`, `bg-scrim/50` ...), `docs/design-system.md#colours`.
+- **A layout change: `npm run mobile-audit`** (dev server running): it opens every screen at phone widths on mock data
+  and reports clipped text, anything past the screen edge and controls too small to hit. Add a new page or sheet to
+  `scripts/audit-screens.mjs` (`docs/local-development.md#mock-mode`).
 - **Restart the backend and the frontend dev server** after changing them: `--reload` misses
   changes on Windows and Tailwind config is not hot-reloaded. Make sure only one process
   listens on port 8000.

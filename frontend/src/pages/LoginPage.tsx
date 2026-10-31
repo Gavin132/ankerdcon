@@ -17,11 +17,11 @@ export function LoginPage() {
             alt=""
             className="mb-4 h-16 w-16 object-contain"
           />
-          <h1 className="font-display text-[52px] font-black uppercase leading-[0.88] tracking-[0.01em] text-ink">
+          <h1 className="font-display text-[42px] font-extrabold uppercase leading-[0.88] tracking-[0.01em] text-ink">
             Ankerd Con
           </h1>
-          <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3">
-            Jouw leden portal voor het evenement
+          <p className="mt-3 font-mono text-xs text-ink-3">
+            Het ledenportaal voor Ankerd-evenementen
           </p>
         </motion.div>
 
@@ -32,12 +32,12 @@ export function LoginPage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1, duration: 0.3 }}
         >
-          <div className="rounded-[14px] border-2 border-outline bg-surface p-6 sm:p-7">
+          <div className="rounded-hero border-2 border-outline bg-paper p-6 sm:p-7">
             <LoginForm />
           </div>
 
           <p className="mt-5 text-center text-xs text-ink-3">
-            Alleen toegankelijk voor Ankerd members
+            Alleen voor Ankerd-leden
           </p>
         </motion.div>
       </div>

@@ -30,27 +30,27 @@ export function StoryUploadButton({ eventDayId, className }: StoryUploadButtonPr
         onClick={picker.open}
         title={
           progress
-            ? `Foto ${Math.min(progress.done + 1, progress.total)} van ${progress.total} wordt toegevoegd`
+            ? `${Math.min(progress.done + 1, progress.total)} van ${progress.total} wordt toegevoegd${progress.fraction !== undefined ? ` (${Math.round(progress.fraction * 100)}%)` : ""}`
             : pendingCount > 0
               ? `${pendingCount} foto('s) wachten op verbinding`
-              : "Foto's toevoegen aan story"
+              : "Foto's of video's toevoegen aan story"
         }
         className={`relative ${className ?? DEFAULT_CLASS}`}
       >
         {picker.busy ? (
           <Loader2 size={16} className="animate-spin" />
         ) : pendingCount > 0 ? (
-          <UploadCloud size={16} className="text-amber-600 dark:text-amber-400" />
+          <UploadCloud size={16} />
         ) : (
           <ImagePlus size={16} />
         )}
         {progress && progress.total > 1 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-ink px-1 font-mono text-[9px] font-bold text-paper">
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-ink px-1 font-mono text-[12px] font-bold text-paper">
             {progress.done}/{progress.total}
           </span>
         )}
         {!picker.busy && pendingCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 font-mono text-[9px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-warn-fill px-1 font-mono text-[12px] font-bold text-warn-on">
             {pendingCount}
           </span>
         )}

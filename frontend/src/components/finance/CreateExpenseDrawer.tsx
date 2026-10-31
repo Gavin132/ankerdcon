@@ -5,6 +5,7 @@ import { z } from "zod";
 import { Equal, Tag, SlidersHorizontal, X, Plus } from "lucide-react";
 import { TripSheet } from "../trip/TripSheet";
 import { Button } from "../common/Button";
+import { Segmented } from "../common/Segmented";
 import { NamePicker } from "../common/NamePicker";
 import { EventPicker } from "../common/EventPicker";
 import { useCalendar } from "../../hooks/useCalendar";
@@ -28,20 +29,20 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-const ERR = "mt-1.5 text-xs text-rose-600 dark:text-rose-400";
+const ERR = "field-error";
 
 const CURRENCIES = ["EUR", "USD", "GBP", "JPY"] as const;
 
 type SplitMode = "gelijk" | "vast" | "handmatig";
 
 const SPLIT_MODES: { id: SplitMode; label: string; icon: React.ReactNode }[] = [
-  { id: "gelijk",    label: "Gelijk",    icon: <Equal           size={13} /> },
-  { id: "vast",      label: "Vast",      icon: <Tag             size={13} /> },
-  { id: "handmatig", label: "Handmatig", icon: <SlidersHorizontal size={13} /> },
+  { id: "gelijk",    label: "Gelijk",    icon: <Equal           size={14} /> },
+  { id: "vast",      label: "Vast",      icon: <Tag             size={14} /> },
+  { id: "handmatig", label: "Handmatig", icon: <SlidersHorizontal size={14} /> },
 ];
 
-const SL = "mb-1.5 block text-[12.5px] font-semibold text-ink-2";
-const SF = "space-y-3 rounded-xl border-1.5 border-line bg-surface p-4";
+const SL = "field-label";
+const SF = "card-surface space-y-3 p-4";
 const ST = "section-label";
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -191,32 +192,27 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
     <TripSheet open={open} onClose={handleClose} title="Uitgave toevoegen" subtitle="Registreer een groepsuitgave" footer={footer}>
       <form id="create-expense-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
-        {/* ── Betaler ───────────────────────────────────────── */}
-        <div className={SF}>
-          <p className={ST}>Betaler</p>
+        {/* ── What it was, how much, when, who paid, for which event: plain fields, no card each ── */}
+        <div className="space-y-4">
           <div>
-            <label className={SL}>Betaald door</label>
-            <NamePicker
-              options={actable(userNames)}
-              value={watch("paid_by") ?? ""}
-              onChange={(name) => setValue("paid_by", name, { shouldValidate: true })}
-              color="sky"
-              placeholder="Zoek naam…"
+            <label className={SL} htmlFor="expense-description">Wat was het voor?</label>
+            <input
+              id="expense-description"
+              className="input-field"
+              placeholder="Bijv. Parkeerkosten Jaarbeurs"
+              {...register("description")}
             />
-            {errors.paid_by && <p className={ERR}>{errors.paid_by.message}</p>}
+            {errors.description && <p className={ERR}>{errors.description.message}</p>}
           </div>
-        </div>
 
-        {/* ── Bedrag, valuta & datum ────────────────────────── */}
-        <div className={SF}>
-          <p className={ST}>Bedrag & datum</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Amount + currency */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className={SL}>Bedrag</label>
+              <label className={SL} htmlFor="expense-amount">Bedrag</label>
               <div className="flex gap-2">
                 <input
+                  id="expense-amount"
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   min="0"
                   className="input-field flex-1"
@@ -224,6 +220,7 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
                   {...register("amount")}
                 />
                 <select
+                  aria-label="Valuta"
                   className="input-field w-20 shrink-0"
                   {...register("currency")}
                 >
@@ -234,41 +231,35 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
               </div>
               {errors.amount && <p className={ERR}>{errors.amount.message}</p>}
             </div>
-            {/* Date */}
             <div>
-              <label className={SL}>Datum</label>
-              <input type="date" className="input-field" {...register("date")} />
+              <label className={SL} htmlFor="expense-date">Datum</label>
+              <input id="expense-date" type="date" className="input-field" {...register("date")} />
             </div>
           </div>
-        </div>
 
-        {/* ── Event ───────────────────────────────────────── */}
-        <div className={SF}>
-          <p className={ST}>Event (optioneel)</p>
           <div>
+            <p className={SL}>Betaald door</p>
+            <NamePicker
+              options={actable(userNames)}
+              value={watch("paid_by") ?? ""}
+              onChange={(name) => setValue("paid_by", name, { shouldValidate: true })}
+              color="sky"
+              placeholder="Zoek naam…"
+            />
+            {errors.paid_by && <p className={ERR}>{errors.paid_by.message}</p>}
+          </div>
+
+          <div>
+            <p className={SL}>Evenement (optioneel)</p>
             <EventPicker
               events={events}
               value={watch("linked_event_id") || undefined}
               onChange={(id) => setValue("linked_event_id", id ?? "", { shouldDirty: true })}
-              placeholder="Hoort bij een event? Zoek en koppel…"
+              placeholder="Hoort bij een evenement? Zoek en koppel…"
             />
             <p className="mt-1.5 text-xs text-ink-3">
               Dan staat de uitgave ook bij de uitgaven van die trip.
             </p>
-          </div>
-        </div>
-
-        {/* ── Omschrijving ──────────────────────────────────── */}
-        <div className={SF}>
-          <p className={ST}>Omschrijving</p>
-          <div>
-            <label className={SL}>Wat was het voor?</label>
-            <input
-              className="input-field"
-              placeholder="Bijv. Parkeerkosten Jaarbeurs"
-              {...register("description")}
-            />
-            {errors.description && <p className={ERR}>{errors.description.message}</p>}
           </div>
         </div>
 
@@ -277,24 +268,13 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
           <p className={ST}>Verdeling</p>
 
           {/* Mode tabs */}
-          <div className="flex gap-1 rounded-[10px] border-1.5 border-line bg-sunken p-[3px]">
-            {SPLIT_MODES.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => setSplitMode(m.id)}
-                aria-pressed={splitMode === m.id}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-[7px] px-3 py-1.5 text-[13px] font-semibold transition-colors ${
-                  splitMode === m.id
-                    ? "bg-surface text-ink shadow-[0_0_0_1.5px_rgb(var(--outline))]"
-                    : "text-ink-2 hover:text-ink"
-                }`}
-              >
-                {m.icon}
-                {m.label}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            label="Verdeling"
+            fill
+            options={SPLIT_MODES.map((m) => ({ value: m.id, label: m.label, icon: m.icon }))}
+            value={splitMode}
+            onChange={setSplitMode}
+          />
 
           {/* ── Gelijk verdeeld ── */}
           {splitMode === "gelijk" && (
@@ -344,6 +324,7 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
                 <label className={SL}>Bedrag per persoon</label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   min="0"
                   className="input-field"
@@ -353,14 +334,8 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
                 />
               </div>
               {splitParticipants.length > 0 && parseFloat(fixedAmountStr) > 0 && (
-                <div className={`rounded-xl px-3 py-2.5 ${
-                  Math.abs(remaining) < 0.01
-                    ? "bg-emerald-100 dark:bg-emerald-500/15"
-                    : "bg-amber-100 dark:bg-amber-500/15"
-                }`}>
-                  <p className={`font-mono text-[12px] font-semibold tabular-nums ${
-                    Math.abs(remaining) < 0.01 ? "text-emerald-700 dark:text-emerald-300" : "text-amber-800 dark:text-amber-300"
-                  }`}>
+                <div className={`p-3 ${Math.abs(remaining) < 0.01 ? "notice-ok" : "notice-warn"}`}>
+                  <p className={`font-mono text-[12px] font-semibold tabular-nums ${Math.abs(remaining) < 0.01 ? "text-ok" : "text-warn"}`}>
                     {splitParticipants.length} × {formatAmount(parseFloat(fixedAmountStr), currency)} = {formatAmount(sharesSum, currency)}
                     {Math.abs(remaining) >= 0.01 && ` · verschil: ${formatAmount(Math.abs(remaining), currency)}`}
                   </p>
@@ -376,7 +351,7 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
               {manualRows.length > 0 && (
                 <div className="space-y-1.5">
                   {manualRows.map((row, i) => (
-                    <div key={i} className="flex items-center gap-2 rounded-xl border-1.5 border-line bg-surface px-3 py-2">
+                    <div key={i} className="flex items-center card-surface gap-2 px-3 py-2">
                       <UserAvatar
                         name={row.participant}
                         user={resolveUser(row.participant)}
@@ -388,18 +363,14 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
                       <span className="shrink-0 font-mono text-[13px] font-semibold tabular-nums text-ink">
                         {formatAmount(row.amount, currency)}
                       </span>
-                      <button type="button" onClick={() => removeManualRow(i)} className="ml-1 flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-500/15 dark:hover:text-rose-300">
-                        <X size={13} />
+                      <button type="button" onClick={() => removeManualRow(i)} aria-label={`${row.participant} verwijderen`} className="hit-area ml-1 flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-bad-soft hover:text-bad">
+                        <X size={14} />
                       </button>
                     </div>
                   ))}
                   {/* Running total */}
-                  <div className={`rounded-xl px-3 py-2 ${
-                    Math.abs(remaining) < 0.01
-                      ? "bg-emerald-100 dark:bg-emerald-500/15"
-                      : "bg-sunken"
-                  }`}>
-                    <p className={`font-mono text-[12px] font-semibold tabular-nums ${Math.abs(remaining) < 0.01 ? "text-emerald-700 dark:text-emerald-300" : "text-ink-2"}`}>
+                  <div className={`p-3 ${Math.abs(remaining) < 0.01 ? "notice-ok" : "rounded-xl bg-sunken"}`}>
+                    <p className={`font-mono text-[12px] font-semibold tabular-nums ${Math.abs(remaining) < 0.01 ? "text-ok" : "text-ink-2"}`}>
                       Totaal: {formatAmount(sharesSum, currency)}
                       {totalAmount > 0 && Math.abs(remaining) >= 0.01 && ` · restant: ${formatAmount(remaining, currency)}`}
                       {Math.abs(remaining) < 0.01 && " · volledig verdeeld"}
@@ -422,6 +393,7 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
                   <div className="flex gap-2">
                     <input
                       type="number"
+                      inputMode="decimal"
                       step="0.01"
                       min="0"
                       className="input-field flex-1"
@@ -434,9 +406,10 @@ export function CreateExpenseDrawer({ open, onClose, me, defaultEventId }: Props
                       type="button"
                       onClick={addManualRow}
                       disabled={!manualName || !manualAmountStr}
-                      className="btn-primary w-12 shrink-0 disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Persoon toevoegen"
+                      className="btn-secondary w-12 shrink-0 px-0"
                     >
-                      <Plus size={15} />
+                      <Plus size={16} />
                     </button>
                   </div>
                 </div>

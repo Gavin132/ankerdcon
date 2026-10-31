@@ -8,13 +8,17 @@ import {
   useAdminBulkDeleteEventGroups,
 } from "../../hooks/useAdmin";
 import { toast } from "../../store/toast.store";
-import { F } from "./styles";
+import { F, TH, TD, TR, TR_SELECTED } from "./styles";
+import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 import { AdminPagination } from "./components/AdminPagination";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 import { AdminBulkBar } from "./components/AdminBulkBar";
+import { RowCheckbox } from "./components/RowCheckbox";
 import { useTableSelection } from "../../hooks/useTableSelection";
+import { EmptyState } from "../../components/common/EmptyState";
+import { countOf } from "../../utils/format";
 
 const PAGE_SIZE = 15;
 
@@ -42,10 +46,10 @@ export function AdminEventGroupsPage() {
     const ids = [...selectedIds];
     try {
       await bulkDeleteMutation.mutateAsync(ids);
-      toast("success", `${ids.length} groepen verwijderd.`);
+      toast("success", `${countOf(ids.length, "groep", "groepen")} verwijderd.`);
       clearSelection();
     } catch {
-      toast("error", "Kon groepen niet verwijderen.");
+      toast("error", "Kon de groepen niet verwijderen. Probeer het opnieuw.");
     }
   }
 
@@ -58,7 +62,7 @@ export function AdminEventGroupsPage() {
       setNewName("");
       toast("success", `Groep "${name}" aangemaakt.`);
     } catch {
-      toast("error", "Kon groep niet aanmaken.");
+      toast("error", "Kon de groep niet aanmaken. Probeer het opnieuw.");
     }
   }
 
@@ -75,7 +79,7 @@ export function AdminEventGroupsPage() {
       setEditingId(null);
       toast("success", "Groep bijgewerkt.");
     } catch {
-      toast("error", "Kon groep niet bijwerken.");
+      toast("error", "Kon de groep niet bijwerken. Probeer het opnieuw.");
     }
   }
 
@@ -85,15 +89,15 @@ export function AdminEventGroupsPage() {
       setConfirmDeleteId(null);
       toast("success", `Groep "${name}" verwijderd.`);
     } catch {
-      toast("error", "Kon groep niet verwijderen.");
+      toast("error", "Kon de groep niet verwijderen. Probeer het opnieuw.");
     }
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+    <AdminPage>
       <AdminPageHeader
         title="Evenementgroepen"
-        subtitle={`${groups.length} groepen`}
+        subtitle={`${groups.length} ${groups.length === 1 ? "groep" : "groepen"}`}
       />
 
       {/* Create form */}
@@ -102,38 +106,37 @@ export function AdminEventGroupsPage() {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           className={`${F} flex-1`}
-          placeholder="Nieuwe groepsnaam, bijv. Comic Con…"
+          aria-label="Naam van de nieuwe groep"
+          placeholder="Naam van de nieuwe groep"
         />
         <button
           type="submit"
           disabled={!newName.trim() || createMutation.isPending}
-          className="btn-primary gap-2 px-4 py-2.5 text-sm disabled:opacity-50"
+          className="btn-primary gap-2 self-center px-4"
         >
-          <Plus size={15} />
+          <Plus size={16} />
           Aanmaken
         </button>
       </form>
 
       {/* Groups table */}
+      <AdminBulkBar
+        itemsLabel="groepen"
+        count={selectedIds.size}
+        isPending={bulkDeleteMutation.isPending}
+        onDelete={handleBulkDelete}
+        onClear={clearSelection}
+      />
+
       <div className="card-surface overflow-hidden">
-        <table className="w-full">
+        <table className="stack-table w-full">
           <thead>
-            <tr className="border-b-1.5 border-line">
-              <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  ref={(el) => { if (el) el.indeterminate = indeterminate; }}
-                  onChange={selectAll}
-                  className="cb"
-                />
+            <tr>
+              <th className={`${TH} w-10 !pr-2`}>
+                <RowCheckbox checked={allSelected} indeterminate={indeterminate} onChange={selectAll} label="Alles selecteren" />
               </th>
-              <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                Groepsnaam
-              </th>
-              <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                Acties
-              </th>
+              <th className={TH}>Groepsnaam</th>
+              <th className={`${TH} text-right`}>Acties</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
@@ -141,32 +144,21 @@ export function AdminEventGroupsPage() {
               <AdminTableSkeleton cols={3} />
             ) : groups.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-5 py-10 text-center text-sm text-ink-3">
-                  Nog geen groepen aangemaakt.
+                <td colSpan={3}>
+                  <EmptyState compact icon={<Layers size={22} />} title="Nog geen groepen aangemaakt" />
                 </td>
               </tr>
             ) : (
               paginated.map((group) => (
-                <tr
-                  key={group.id}
-                  className={`transition-colors ${selectedIds.has(group.id) ? "bg-brand-soft/50 hover:bg-brand-soft/70" : "hover:bg-sunken"}`}
-                >
-                  <td
-                    className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3.5"
-                    onClick={(e) => { e.stopPropagation(); toggleSelect(group.id); }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(group.id)}
-                      onChange={() => toggleSelect(group.id)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="cb"
-                    />
+                <tr key={group.id} className={selectedIds.has(group.id) ? TR_SELECTED : TR}>
+                  <td className={`${TD} w-10 !pr-2`} onClick={(e) => { e.stopPropagation(); toggleSelect(group.id); }}>
+                    <RowCheckbox checked={selectedIds.has(group.id)} onChange={() => toggleSelect(group.id)} label={`Selecteer ${group.name}`} />
                   </td>
-                  <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                  <td className={`cell-main ${TD}`}>
                     {editingId === group.id ? (
                       <input
                         autoFocus
+                        aria-label="Naam van de groep"
                         value={editingName}
                         onChange={(e) => setEditingName(e.target.value)}
                         onKeyDown={(e) => {
@@ -177,8 +169,8 @@ export function AdminEventGroupsPage() {
                       />
                     ) : (
                       <div className="flex items-center gap-2 sm:gap-2.5">
-                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink sm:h-7 sm:w-7">
-                          <Layers size={13} />
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                          <Layers size={14} />
                         </div>
                         <span className="text-sm font-semibold text-ink truncate">
                           {group.name}
@@ -186,21 +178,25 @@ export function AdminEventGroupsPage() {
                       </div>
                     )}
                   </td>
-                  <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
+                  <td className={`cell-actions ${TD}`}>
                     {editingId === group.id ? (
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => saveEdit(group.id)}
                           disabled={updateMutation.isPending}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg bg-ink text-paper transition-colors disabled:opacity-50 dark:bg-brand dark:text-brand-on"
+                          className="icon-btn"
+                          title="Opslaan"
+                          aria-label="Opslaan"
                         >
-                          <Check size={13} />
+                          <Check size={16} />
                         </button>
                         <button
                           onClick={() => setEditingId(null)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink transition-colors"
+                          className="icon-btn"
+                          title="Annuleren"
+                          aria-label="Annuleren"
                         >
-                          <X size={13} />
+                          <X size={16} />
                         </button>
                       </div>
                     ) : (
@@ -212,6 +208,8 @@ export function AdminEventGroupsPage() {
                         onRequestDelete={() => setConfirmDeleteId(group.id)}
                         onConfirmDelete={() => handleDelete(group.id, group.name)}
                         onCancelDelete={() => setConfirmDeleteId(null)}
+                        editLabel={`${group.name} hernoemen`}
+                        deleteLabel={`${group.name} verwijderen`}
                       />
                     )}
                   </td>
@@ -228,13 +226,6 @@ export function AdminEventGroupsPage() {
           onPage={setPage}
         />
       </div>
-
-      <AdminBulkBar
-        count={selectedIds.size}
-        isPending={bulkDeleteMutation.isPending}
-        onDelete={handleBulkDelete}
-        onClear={clearSelection}
-      />
-    </div>
+    </AdminPage>
   );
 }

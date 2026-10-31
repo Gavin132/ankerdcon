@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Car, ChevronRight, Users } from "lucide-react";
+import { Car, Users } from "lucide-react";
 import { routes } from "../../config/routes";
 import { useCalendar } from "../../hooks/useCalendar";
 import { parseEventDate, toDateKey } from "../../utils/date";
@@ -22,29 +22,21 @@ interface QuickRideTilesProps {
   rides?: Ride[];
 }
 
-function QuickTile({ icon, title, hint, onClick }: { icon: React.ReactNode; title: string; hint: string; onClick: () => void }) {
+/** One of the two shortcuts: a standard blue button, the icon beside a one-line label, so both are the same width and
+ * height whatever the label says. */
+function QuickButton({ icon, title, onClick }: { icon: React.ReactNode; title: string; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex flex-col gap-3 rounded-xl border-1.5 border-line bg-surface p-3.5 text-left transition-colors hover:border-ink-3"
-    >
-      <span className="flex w-full items-start justify-between">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sunken text-ink">{icon}</span>
-        <ChevronRight size={15} className="text-ink-3" />
-      </span>
-      <span>
-        <span className="block text-[14px] font-semibold leading-tight text-ink">{title}</span>
-        <span className="mt-1 block text-[11px] leading-snug text-ink-3">{hint}</span>
-      </span>
+    <button type="button" onClick={onClick} className="btn-primary gap-2 px-2">
+      {icon}
+      {title}
     </button>
   );
 }
 
 /** Two hub shortcuts for getting to/from the event. The titles are fixed;
- * the grey line says what the sheet will open on — which direction and when
- * (see `planQuickRide`), or "naar restaurant" in the evening when there's a
- * meal still needing a ride. */
+ * the one grey line above them says what both sheets will open on — which
+ * direction and when (see `planQuickRide`), or "naar restaurant" in the
+ * evening when there's a meal still needing a ride. */
 export function QuickRideTiles({ event, restaurantMeal, rides = [] }: QuickRideTilesProps) {
   const navigate = useNavigate();
   const [offerOpen, setOfferOpen] = useState(false);
@@ -83,9 +75,10 @@ export function QuickRideTiles({ event, restaurantMeal, rides = [] }: QuickRideT
 
   return (
     <>
+      <p className="mb-2 text-xs text-ink-3">{hint}</p>
       <div className="grid grid-cols-2 gap-3">
-        <QuickTile icon={<Car size={16} />} title="Rit aanbieden" hint={hint} onClick={handleOfferClick} />
-        <QuickTile icon={<Users size={16} />} title="Meerijden" hint={hint} onClick={handleJoinClick} />
+        <QuickButton icon={<Car size={16} />} title="Rit aanbieden" onClick={handleOfferClick} />
+        <QuickButton icon={<Users size={16} />} title="Meerijden" onClick={handleJoinClick} />
       </div>
 
       {isRestaurantLeg ? (

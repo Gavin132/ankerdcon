@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouteError } from "react-router-dom";
 import { ErrorFallback } from "./ErrorBoundary";
+import { LoadingSpinner } from "./LoadingSpinner";
 import { attemptAutoReload } from "../../utils/errorRecovery";
 
 /**
@@ -25,7 +26,7 @@ export function RouteErrorFallback() {
   if (giveUp) return <ErrorFallback error={error} />;
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-paper">
-      <div className="h-8 w-8 rounded-full border-2 border-brand-text border-t-transparent animate-spin" />
+      <LoadingSpinner />
     </div>
   );
 }

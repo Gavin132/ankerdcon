@@ -1,189 +1,98 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Clock, MapPin, Banknote, Bus, CalendarDays, ChevronDown, UserCheck, UserMinus } from "lucide-react";
-import { UserAvatar } from "../common/UserAvatar";
-import { Collapse } from "../common/Collapse";
-import { UserProfilePopup, type AnchorRect } from "../common/UserProfilePopup";
-import { useCalendar } from "../../hooks/useCalendar";
-import { useAuthStore } from "../../store/auth.store";
-import { formatDateTime } from "../../utils/format";
+import { Clock, MapPin, Banknote, UserCheck, UserMinus, UserPlus } from "lucide-react";
+import { HeroActions, HeroButton } from "../common/HeroActions";
+import { HeroPeople } from "../common/HeroPeople";
+import { formatAmount, formatDateTime } from "../../utils/format";
 import { routes } from "../../config/routes";
+import { useIsViewer } from "../../hooks/useIsViewer";
+import { useIsOnList } from "../../hooks/useIsOnList";
 import { mealCategory } from "../../utils/mealCategory";
-import type { CalendarEvent, Meal, User } from "../../types";
-
-const CLOSED_RECT: AnchorRect = { top: 0, left: 0, right: 0, height: 0 };
-
-/** White-ish mono chip on the ink hero. */
-const CHIP =
-  "inline-flex items-center gap-1.5 rounded-md border border-white/25 bg-white/10 px-2 py-[3px] font-mono text-[10.5px] font-semibold uppercase tracking-[0.05em] text-[#E6F0F3]";
+import type { CalendarEvent, Meal } from "../../types";
 
 interface MealHeroProps {
   meal: Meal;
   linkedEvent?: CalendarEvent;
-  users: User[];
   onRsvpClick: () => void;
   onCancelClick: () => void;
 }
 
-/** Flat ink hero for an activity: name in the display face, mono chips, brand-blue "Aanmelden". */
-export function MealHero({ meal, linkedEvent, users, onRsvpClick, onCancelClick }: MealHeroProps) {
-  const { data: calendarEvents } = useCalendar();
-  const currentUser = useAuthStore((s) => s.currentUser);
-  const [popupUser, setPopupUser] = useState<User | null>(null);
-  const [popupAnchorRect, setPopupAnchorRect] = useState<AnchorRect>(CLOSED_RECT);
-  const [namesOpen, setNamesOpen] = useState(false);
+/** Flat ink hero for an activity: kicker, name in the display face, the facts, and the sign-up row. */
+export function MealHero({ meal, linkedEvent, onRsvpClick, onCancelClick }: MealHeroProps) {
+  const viewer = useIsViewer();
   const participants = meal.participants ?? [];
+  const onList = useIsOnList(participants);
   const category = mealCategory(meal);
 
-  function resolveUser(stored: string) {
-    return users.find(
-      (u) =>
-        u.name === stored ||
-        u.discord_username === stored ||
-        u.aliases?.includes(stored),
-    );
-  }
-
-  function openPopup(user: User, e: React.MouseEvent<HTMLElement>) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setPopupAnchorRect({ top: rect.top, left: rect.left, right: rect.right, height: rect.height });
-    setPopupUser(user);
-  }
-
   return (
-    <section className="overflow-hidden rounded-[14px] border-2 border-outline bg-[#0F1519] text-[#E6F0F3]">
+    <section className="overflow-hidden rounded-hero border-2 border-outline bg-hero text-hero-ink">
       <div className="px-5 py-5 sm:px-7 sm:py-6">
-
-        <div className="mb-3 flex flex-wrap gap-1.5">
-          <span className={`${CHIP} !border-white/40 !bg-white/20`}>{category.name}</span>
+        {/* One kicker line: what kind of activity, and of which trip. */}
+        <p className="mb-2 text-xs font-medium text-hero-ink/75">
+          {category.name}
           {linkedEvent && (
-            <Link
-              to={routes.event.view(linkedEvent.id)}
-              className={`${CHIP} transition-colors hover:bg-white/20`}
-            >
-              <CalendarDays size={11} />
-              {linkedEvent.event_name}
-            </Link>
+            <>
+              {" · "}
+              <Link to={routes.event.view(linkedEvent.id)} className="hit-area underline-offset-2 hover:underline">
+                {linkedEvent.event_name}
+              </Link>
+            </>
           )}
-        </div>
+        </p>
 
-        <h1 className="break-words font-display text-[34px] font-extrabold uppercase leading-[0.95] tracking-[0.005em] text-[#E6F0F3] sm:text-[42px]">
+        <h1 className="line-clamp-3 break-words font-display text-[30px] font-extrabold uppercase leading-[0.95] tracking-[0.005em] text-hero-ink sm:line-clamp-none sm:text-[42px]">
           {meal.meal_name}
         </h1>
 
         {meal.description && (
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/65">
-            {meal.description}
-          </p>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-hero-ink/75">{meal.description}</p>
         )}
 
-        {/* Chips */}
-        <div className="mt-4 flex flex-wrap gap-1.5">
-          <span className={CHIP}>
-            <Clock size={11} />
-            {formatDateTime(meal.time)}
-          </span>
+        {/* The facts, as lines: when, where, what it costs. */}
+        <ul className="mt-4 space-y-1.5 text-sm text-hero-ink">
+          <li className="flex items-start gap-2">
+            <Clock size={14} className="mt-[3px] shrink-0 text-hero-ink/70" />
+            <span>{formatDateTime(meal.time)}</span>
+          </li>
           {meal.location && (
-            <span className={CHIP}>
-              <MapPin size={11} />
-              {meal.location}
-            </span>
+            <li className="flex items-start gap-2">
+              <MapPin size={14} className="mt-[3px] shrink-0 text-hero-ink/70" />
+              <span className="min-w-0 break-words">{meal.location}</span>
+            </li>
           )}
           {category.has_cost && meal.cost > 0 && (
-            <span className={`${CHIP} tabular-nums`}>
-              <Banknote size={11} />
-              €{meal.cost.toFixed(2)} p.p.
-            </span>
+            <li className="flex items-start gap-2">
+              <Banknote size={14} className="mt-[3px] shrink-0 text-hero-ink/70" />
+              <span className="tabular-nums">{formatAmount(meal.cost)} p.p.</span>
+            </li>
           )}
-          {category.has_transport && meal.transport_needed && (
-            <span className={CHIP}>
-              <Bus size={11} />
-              Vervoer nodig
-            </span>
-          )}
-        </div>
+        </ul>
 
-        {/* Attendees + sign-up: only for kinds of activity people sign up for (not the group photo). */}
-        {category.has_signup && (
-        <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-dashed border-white/20 pt-4">
-          {participants.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setNamesOpen((v) => !v)}
-              aria-expanded={namesOpen}
-              className="flex items-center gap-3 rounded-lg text-left"
-            >
-              <span className="flex -space-x-2">
-                {participants.slice(0, 6).map((p) => {
-                  const u = resolveUser(p);
-                  return <UserAvatar key={p} name={u?.name ?? p} user={u} className="h-7 w-7 text-[10px] !border-[#0F1519]" />;
-                })}
-                {participants.length > 6 && (
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#0F1519] bg-white/15 font-mono text-[10px] font-semibold text-[#E6F0F3]">
-                    +{participants.length - 6}
-                  </span>
+        {/* Who is coming and the sign-up: only for kinds of activity people sign up for (not the group photo).
+            "Aanmelden" until you are on the list, then "Afmelden" and the way to sign up someone else
+            (members may act for anyone). All standard blue buttons. */}
+        {category.has_signup && (participants.length > 0 || !viewer) && (
+          <HeroPeople names={participants} singular="aanmelding" plural="aanmeldingen">
+            {!viewer && (
+              <HeroActions>
+                {onList ? (
+                  <>
+                    <HeroButton onClick={onCancelClick}>
+                      <UserMinus size={14} /> Afmelden
+                    </HeroButton>
+                    <HeroButton onClick={onRsvpClick}>
+                      <UserPlus size={14} /> Iemand aanmelden
+                    </HeroButton>
+                  </>
+                ) : (
+                  <HeroButton onClick={onRsvpClick}>
+                    <UserCheck size={14} /> Aanmelden
+                  </HeroButton>
                 )}
-              </span>
-              <span className="flex items-center gap-1 text-xs font-medium text-white/65">
-                <span className="font-mono font-semibold tabular-nums text-[#E6F0F3]">{participants.length}</span>{" "}
-                {participants.length === 1 ? "aanmelding" : "aanmeldingen"}
-                <ChevronDown size={13} className={`transition-transform ${namesOpen ? "rotate-180" : ""}`} />
-              </span>
-            </button>
-          )}
-          <div className="ml-auto flex items-center gap-2">
-            {participants.length > 0 && (
-              <button
-                type="button"
-                onClick={onCancelClick}
-                className="flex items-center gap-1.5 rounded-xl border-1.5 border-white/25 px-3 py-2 text-xs font-semibold text-[#E6F0F3] transition-colors hover:border-white/50"
-              >
-                <UserMinus size={13} /> Afmelden
-              </button>
+              </HeroActions>
             )}
-            <button
-              type="button"
-              onClick={onRsvpClick}
-              className="btn-primary px-3.5 py-2 text-xs"
-            >
-              <UserCheck size={13} /> Aanmelden
-            </button>
-          </div>
-        </div>
+          </HeroPeople>
         )}
-
-        {/* Who's on the list, by name — the avatars alone don't say. */}
-        <Collapse open={namesOpen && participants.length > 0}>
-          <div className="flex flex-wrap gap-1.5 pt-3">
-            {participants.map((p) => {
-              const u = resolveUser(p);
-              const chip = (
-                <>
-                  <UserAvatar name={u?.name ?? p} user={u} className="h-5 w-5 text-[8px] !border-0" />
-                  {u?.name ?? p}
-                </>
-              );
-              const cls = "inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 py-1 pl-1 pr-2.5 text-xs font-medium text-[#E6F0F3]";
-              return u ? (
-                <button key={p} type="button" onClick={(e) => openPopup(u, e)} className={`${cls} transition-colors hover:bg-white/20`}>
-                  {chip}
-                </button>
-              ) : (
-                <span key={p} className={cls}>{chip}</span>
-              );
-            })}
-          </div>
-        </Collapse>
       </div>
-
-      <UserProfilePopup
-        user={popupUser}
-        open={popupUser !== null}
-        isOwn={currentUser === popupUser?.id}
-        anchorRect={popupAnchorRect}
-        onClose={() => setPopupUser(null)}
-        calendarEvents={calendarEvents}
-      />
     </section>
   );
 }

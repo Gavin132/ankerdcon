@@ -2,9 +2,11 @@ import { useEffect } from "react";
 import { Link, Navigate, Outlet, useParams, useSearchParams } from "react-router-dom";
 import { CalendarDays } from "lucide-react";
 import { useCalendar } from "../../hooks/useCalendar";
+import { usePageHeader } from "../../hooks/usePageHeader";
 import { routes } from "../../config/routes";
 import { buildTrip, isTripTabId, visibleTripTabs, type TripTabId } from "../../utils/trips";
 import { rememberTripTab, type TripOutletContext } from "./tripContext";
+import { EmptyState } from "../../components/common/EmptyState";
 
 /**
  * Shell for the Event tab. Overzicht is the only real page — every other
@@ -20,13 +22,19 @@ export function TripLayout() {
   const { data: events = [], isLoading } = useCalendar();
 
   const trip = isLoading ? null : buildTrip(events, tripId);
+  // The bar gets a back arrow (and, where there is room, the trip's name), so the page does not look like the Agenda card
+  // it was opened from. The name is the small line: a phone's bar is full of buttons and would cut a title to "A…".
+  usePageHeader({ title: "Event", subtitle: trip?.title ?? "Alles voor deze trip", backTo: routes.calendar });
 
   const sheetParam = searchParams.get("sheet") ?? undefined;
   const activeTab: TripTabId = isTripTabId(sheetParam) ? sheetParam : "overview";
 
+  // A tab this trip does not have (Cosplay on a concert, Hotel without one) is never remembered, or the Event tab
+  // would keep reopening on it.
+  const tabAvailable = !!trip && visibleTripTabs(trip).some((t) => t.id === activeTab);
   useEffect(() => {
-    rememberTripTab(activeTab);
-  }, [activeTab]);
+    if (tabAvailable) rememberTripTab(activeTab);
+  }, [activeTab, tabAvailable]);
 
   if (isLoading) {
     return (
@@ -45,23 +53,26 @@ export function TripLayout() {
       return <Navigate to={routes.trip.view(dayEvent.multi_day_id, activeTab, dayEvent.id)} replace />;
     }
     return (
-      <div className="flex flex-col items-center gap-3 py-20 text-center text-slate-400">
-        <CalendarDays size={40} className="opacity-30" />
-        <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Evenement niet gevonden</p>
-        <Link to={routes.calendar} className="text-xs font-semibold text-brand-text hover:underline">
-          Bekijk de agenda
-        </Link>
-      </div>
+      <EmptyState
+        icon={<CalendarDays size={22} />}
+        title="Evenement niet gevonden"
+        action={
+          <Link to={routes.calendar} className="text-xs font-semibold text-brand-text hover:underline">
+            Bekijk de agenda
+          </Link>
+        }
+      />
     );
-  }
-
-  const tabs = visibleTripTabs(trip);
-  if (!tabs.some((t) => t.id === activeTab)) {
-    return <Navigate to={routes.trip.view(trip.id)} replace />;
   }
 
   const requestedDay = searchParams.get("day");
   const dayId = requestedDay && trip.eventIds.includes(requestedDay) ? requestedDay : null;
+
+  // A link to a sheet this trip does not have (?sheet=cosplay on a concert, from an old link or a search result)
+  // is plain Overzicht, with the chosen day kept.
+  if (!tabAvailable) {
+    return <Navigate to={routes.trip.view(trip.id, "overview", dayId ?? undefined)} replace />;
+  }
 
   function setDayId(next: string | null) {
     const params = new URLSearchParams(searchParams);

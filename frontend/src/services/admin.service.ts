@@ -82,6 +82,7 @@ export interface AdminCreateUserPayload {
   name: string;
   discord_id?: string;
   is_admin?: boolean;
+  is_viewer?: boolean;
 }
 
 export async function createAdminUser(payload: AdminCreateUserPayload): Promise<User> {
@@ -97,6 +98,7 @@ export interface AdminUpdateUserPayload {
   bio?: string;
   color?: string;
   is_admin?: boolean;
+  is_viewer?: boolean;
   is_active?: boolean;
   aliases?: string[];
 }
@@ -115,6 +117,27 @@ export async function bulkDeleteAdminUsers(userIds: string[]): Promise<void> {
 
 export async function bulkDeactivateAdminUsers(userIds: string[]): Promise<void> {
   await apiClient.post(apiRoutes.admin.users.bulkDeactivate, { user_ids: userIds });
+}
+
+/** What a merge moves (or, as a preview, would move), per kind. See backend/app/services/profile_merge.py. */
+export interface MergeUserResult {
+  dry_run: boolean;
+  source_name: string;
+  target_name: string;
+  counts: Record<string, number>;
+  /** Left out rather than moved: a duplicate, or a payment to oneself. */
+  dropped: Record<string, number>;
+  /** The placeholder's names that become aliases of the member. */
+  alias_names: string[];
+}
+
+/** Folds a placeholder into a real member. With `dryRun` nothing changes and the result is the preview. */
+export async function mergeAdminUser(sourceId: string, targetId: string, dryRun: boolean): Promise<MergeUserResult> {
+  const { data } = await apiClient.post<MergeUserResult>(apiRoutes.admin.users.merge(sourceId), {
+    target_id: targetId,
+    dry_run: dryRun,
+  });
+  return data;
 }
 
 export interface ImpersonateResponse {
@@ -325,22 +348,6 @@ export async function bulkRsvpAdminEvent(
 }
 
 // ── Hotel Rooms (admin) ───────────────────────────────────────────────────────
-
-export interface AdminUpdateHotelRoomPayload {
-  room_number?: string;
-  floor?: string;
-  instructions?: string;
-  capacity?: number;
-  occupants?: string[];
-}
-
-export async function adminUpdateHotelRoom(
-  eventId: string,
-  roomId: string,
-  payload: AdminUpdateHotelRoomPayload,
-): Promise<void> {
-  await apiClient.put(apiRoutes.admin.events.hotelRoomById(eventId, roomId), payload);
-}
 
 export async function adminDeleteHotelRoom(eventId: string, roomId: string): Promise<void> {
   await apiClient.delete(apiRoutes.admin.events.hotelRoomById(eventId, roomId));

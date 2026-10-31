@@ -6,18 +6,19 @@ import { Collapse } from "../common/Collapse";
 import { NamePicker } from "../common/NamePicker";
 import { useClaimSeat, useDeleteRide, useLeaveSeat } from "../../hooks/useRides";
 import { useCalendar } from "../../hooks/useCalendar";
-import { useCurrentUser, useUsers } from "../../hooks/useUsers";
+import { useCurrentUser, useMyNames, useUsers } from "../../hooks/useUsers";
 import { formatTime } from "../../utils/format";
 import { formatCountdown, getRideStatus, rideLocationLabel } from "../../utils/rides";
 import { toast } from "../../store/toast.store";
 import { routes } from "../../config/routes";
+import { useIsViewer } from "../../hooks/useIsViewer";
 import type { CarGuidance } from "../../utils/carBalance";
 import type { Ride } from "../../types";
+import { MINE_CLASS } from "./mine";
 
 /** The member's own ride. A deeper blue than the brand fill, so white text stays readable on it. */
-const MINE_CLASS = "bg-[#0D75D1] text-white dark:bg-[#1A6FC9]";
 
-const PILL = "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11.5px] font-semibold";
+const PILL = "pill";
 
 const rangeText = (g: CarGuidance) => (g.low === g.high ? `${g.low}` : `${g.low}–${g.high}`);
 
@@ -31,9 +32,9 @@ function joinNames(names: string[]): string {
 function LoadPill({ guidance: g }: { guidance: CarGuidance }) {
   const tone =
     g.status === "short"
-      ? "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"
+      ? "pill-warn"
       : g.status === "ok"
-        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+        ? "pill-ok"
         : "bg-sunken text-ink-2";
   const text =
     g.status === "short"
@@ -43,7 +44,7 @@ function LoadPill({ guidance: g }: { guidance: CarGuidance }) {
         : `Boven doel · ${rangeText(g)}`;
   return (
     <span title="Zo vol moet deze auto vertrekken, zodat niemand achterblijft" className={`${PILL} ${tone}`}>
-      <Users size={11} className="shrink-0" />
+      <Users size={12} className="shrink-0" />
       {text}
     </span>
   );
@@ -67,6 +68,7 @@ interface RideRowProps {
  * with the rest (who rides along, parking, getting in or out) one tap away.
  */
 export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, canDelete = false }: RideRowProps) {
+  const viewer = useIsViewer();
   const [action, setAction] = useState<"claim" | "leave" | null>(null);
   const [claimNames, setClaimNames] = useState<string[]>([]);
   const [leaveNames, setLeaveNames] = useState<string[]>([]);
@@ -78,6 +80,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
   const deleteMutation = useDeleteRide();
   const { data: users = [] } = useUsers();
   const { data: me } = useCurrentUser();
+  const { isMine } = useMyNames();
   const { data: events = [] } = useCalendar();
 
   useEffect(() => {
@@ -105,7 +108,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
   const isPast = status === "past";
   const canAct = !isRecent && !isPast;
   const dim = ride.is_full || isRecent || isPast;
-  const isMyRide = !!me && ride.driver === me.name;
+  const isMyRide = isMine(ride.driver);
 
   const fromLabel = rideLocationLabel(ride.start_location, linkedEvent, "Onbekende locatie");
   const toLabel = rideLocationLabel(ride.end_location, linkedEvent, "Bestemming");
@@ -116,20 +119,17 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
   const otherPassengers = ride.passengers.filter((p) => p !== ride.driver).map(resolveName);
 
   const seatsText = isPT ? `${ride.passengers.length} mee` : ride.is_full ? "Vol" : `${ride.seats_left} vrij`;
-  const goalText = guidance && canAct && !isPT ? `doel ${rangeText(guidance)}` : null;
-  const goalTone =
-    guidance?.status === "short"
-      ? "text-amber-800 dark:text-amber-300"
-      : guidance?.status === "ok"
-        ? "text-emerald-700 dark:text-emerald-300"
-        : "text-ink-3";
+  // Collapsed, a row only says "2 vrij" / "Vol"; the goal shows when the car is short of it. "On course" is in the
+  // expanded part (LoadPill).
+  const goalText = guidance && canAct && !isPT && guidance.status === "short" ? `doel ${rangeText(guidance)}` : null;
+  const goalTone = "text-warn";
 
   const statusPill = status === "urgent" || status === "soon" || status === "recent";
   const statusPillClass =
     status === "urgent"
-      ? "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300"
+      ? "pill-bad"
       : status === "soon"
-        ? "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"
+        ? "pill-warn"
         : "bg-sunken text-ink-2";
 
   function openAction(next: "claim" | "leave") {
@@ -196,15 +196,15 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
         </span>
         <span className="min-w-0 flex-1 leading-[1.3]">
           <span className={`block truncate text-[14px] font-semibold ${mine ? "" : "text-ink-2"}`}>{resolveName(ride.driver)}</span>
-          <span className={`block truncate text-[12px] ${mine ? "text-white/85" : "text-ink-3"}`}>{sub}</span>
+          <span className={`block truncate text-[12px] ${mine ? "text-ink-2" : "text-ink-3"}`}>{sub}</span>
         </span>
         <span className="shrink-0 text-right leading-[1.3]">
-          <span className={`block text-[12px] ${ride.is_full ? "font-semibold" : ""} ${mine ? "text-white/90" : "text-ink-2"}`}>{seatsText}</span>
-          {goalText && <span className={`block text-[11px] font-semibold ${mine ? "text-white" : goalTone}`}>{goalText}</span>}
+          <span className={`block text-[12px] ${ride.is_full ? "font-semibold" : ""} ${mine ? "text-ink-2" : "text-ink-2"}`}>{seatsText}</span>
+          {goalText && <span className={`block text-[12px] font-semibold ${mine ? "text-ink" : goalTone}`}>{goalText}</span>}
         </span>
         <ChevronDown
           size={14}
-          className={`shrink-0 transition-transform duration-200 ${expanded ? "rotate-180" : ""} ${mine ? "text-white/85" : "text-ink-3"}`}
+          className={`shrink-0 transition-transform duration-200 ${expanded ? "rotate-180" : ""} ${mine ? "text-ink-2" : "text-ink-3"}`}
         />
       </button>
 
@@ -215,13 +215,13 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
               {guidance && canAct && !isPT && <LoadPill guidance={guidance} />}
               {statusPill && (
                 <span className={`${PILL} ${statusPillClass}`}>
-                  <Timer size={11} />
+                  <Timer size={12} />
                   {status === "recent" ? "Vertrokken" : `Over ${formatCountdown(minutesUntil)}`}
                 </span>
               )}
               {ride.action_required && !isPast && (
-                <span className={`${PILL} bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300`}>
-                  <AlertCircle size={11} className="shrink-0" />
+                <span className={`${PILL} pill-warn`}>
+                  <AlertCircle size={12} className="shrink-0" />
                   Actie vereist
                 </span>
               )}
@@ -229,7 +229,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
           )}
 
           <div className="flex items-start gap-2">
-            <Users size={13} className="mt-0.5 shrink-0 text-ink-3" />
+            <Users size={14} className="mt-0.5 shrink-0 text-ink-3" />
             <span>
               {otherPassengers.length > 0
                 ? `${joinNames(otherPassengers)} ${otherPassengers.length === 1 ? "rijdt" : "rijden"} mee`
@@ -239,12 +239,12 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
 
           {ride.parking_info && (
             <div className="flex items-start gap-2">
-              <ParkingCircle size={13} className="mt-0.5 shrink-0 text-ink-3" />
+              <ParkingCircle size={14} className="mt-0.5 shrink-0 text-ink-3" />
               <span>{ride.parking_info}</span>
             </div>
           )}
 
-          {canAct && (
+          {canAct && !viewer && (
             <div className="space-y-2.5 pt-1">
               {action ? (
                 <>
@@ -262,7 +262,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
                   )}
                   <div className="flex gap-2">
                     <Button size="sm" variant="secondary" onClick={() => setAction(null)}>
-                      Annuleer
+                      Annuleren
                     </Button>
                     <Button
                       size="sm"
@@ -272,7 +272,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
                       disabled={names.length === 0}
                       onClick={action === "claim" ? handleClaim : handleLeave}
                     >
-                      {action === "claim" ? <Plus size={15} /> : <UserMinus size={15} />}
+                      {action === "claim" ? <Plus size={16} /> : <UserMinus size={16} />}
                       {names.length === 0
                         ? "Selecteer een naam"
                         : action === "claim"
@@ -290,7 +290,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
                     </Button>
                   )}
                   {ride.passengers.length > 0 && (
-                    <Button size="sm" variant="secondary" onClick={() => openAction("leave")}>
+                    <Button size="sm" onClick={() => openAction("leave")}>
                       <UserMinus size={14} />
                       Uitstappen
                     </Button>
@@ -303,38 +303,25 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
                   {confirmDelete ? (
                     <div className="space-y-1.5">
                       {otherPassengers.length > 0 && (
-                        <p className="text-[11.5px] text-rose-600 dark:text-rose-400">
+                        <p className="text-[12px] text-bad">
                           {otherPassengers.length === 1
                             ? "Er is al iemand bij deze rit ingedeeld — die persoon verliest zijn plek."
                             : `Er zijn al ${otherPassengers.length} mensen bij deze rit ingedeeld — zij verliezen hun plek.`}
                         </p>
                       )}
                       <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setConfirmDelete(false)}
-                          className="h-8 rounded-lg px-2 text-xs font-semibold text-ink-2 hover:text-ink"
-                        >
-                          Annuleer
-                        </button>
-                        <button
-                          type="button"
-                          disabled={deleteMutation.isPending}
-                          onClick={handleDelete}
-                          className="flex h-8 items-center gap-1 rounded-lg bg-rose-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-rose-700 disabled:opacity-60"
-                        >
-                          <Trash2 size={13} /> Zeker weten?
-                        </button>
+                        <Button size="sm" variant="secondary" onClick={() => setConfirmDelete(false)}>
+                          Annuleren
+                        </Button>
+                        <Button size="sm" variant="danger" loading={deleteMutation.isPending} onClick={handleDelete}>
+                          <Trash2 size={14} /> Zeker weten?
+                        </Button>
                       </div>
                     </div>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDelete(true)}
-                      className="flex h-8 items-center gap-1 rounded-lg border-1.5 border-line px-3 text-xs font-semibold text-ink-2 transition-colors hover:border-rose-300 hover:text-rose-600 dark:hover:border-rose-500/40 dark:hover:text-rose-400"
-                    >
-                      <Trash2 size={13} /> Rit verwijderen
-                    </button>
+                    <Button size="sm" variant="secondary" onClick={() => setConfirmDelete(true)}>
+                      <Trash2 size={14} /> Rit verwijderen
+                    </Button>
                   )}
                 </div>
               )}
@@ -345,7 +332,7 @@ export function RideRow({ ride, userNames, guidance, mine, expanded, onToggle, c
             to={routes.ride.view(ride.id)}
             className="inline-flex items-center gap-0.5 text-[12.5px] font-semibold text-brand-text hover:underline"
           >
-            Bekijk rit <ChevronRight size={13} />
+            Bekijk rit <ChevronRight size={14} />
           </Link>
         </div>
       </Collapse>

@@ -9,11 +9,14 @@ import {
   pingLocation,
   updateName,
   updatePreferences,
+  sendTestNotification,
   uploadAvatar,
   uploadBanner,
   type CompleteOnboardingPayload,
 } from "../services/users.service";
+import { useMemo } from "react";
 import { QUERY_KEYS, STALE_TIME } from "../constants";
+import { isOwnName, ownNames } from "../utils/people";
 import type { LocationPingRequest, UpdateNameRequest, UpdatePreferencesRequest } from "../types";
 
 export function useCurrentUser(options?: { enabled?: boolean }) {
@@ -26,13 +29,23 @@ export function useCurrentUser(options?: { enabled?: boolean }) {
   });
 }
 
-/** Who the signed-in user may act for: everyone for an admin, only
- * themselves otherwise. Mirrors act_as() on the backend, so a name picker
- * never offers a name the API would refuse. Only for what belongs to one
- * person (paid by, location pings, cosplays); sign-ups accept anyone. */
-export function useActingPermissions() {
+/** Every name the signed-in member can appear under in a stored row (a ride's driver, an expense's payer, a photo's
+ * uploader): their current name, Discord username and former names. `isMine(owner)` is the ownership check behind
+ * every "my own" edit and delete button; the backend (`require_owner_or_admin`) accepts the same names. */
+export function useMyNames() {
   const { data: me } = useCurrentUser();
-  const canActFor = (name: string) => !!me && (me.is_admin || name === me.name);
+  const { data: users } = useUsers();
+  const myNames = useMemo(() => ownNames(me, users), [me, users]);
+  return { me, myNames, isMine: (owner: string | null | undefined) => isOwnName(myNames, owner) };
+}
+
+/** Who the signed-in user may act for: everyone for an admin, only
+ * themselves (under any of their own names) otherwise. Mirrors act_as() on the
+ * backend, so a name picker never offers a name the API would refuse. Only for
+ * what belongs to one person (paid by, location pings, cosplays); sign-ups accept anyone. */
+export function useActingPermissions() {
+  const { me, isMine } = useMyNames();
+  const canActFor = (name: string) => !!me && (me.is_admin || isMine(name));
   return {
     canActFor,
     actable: (names: string[]) => names.filter(canActFor),
@@ -76,6 +89,10 @@ export function usePingLocation() {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.users });
     },
   });
+}
+
+export function useSendTestNotification() {
+  return useMutation({ mutationFn: sendTestNotification });
 }
 
 export function useUpdatePreferences() {

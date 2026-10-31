@@ -69,7 +69,9 @@ bottom tabs); settings, profile, ride and meal pages sit outside it with their o
 **Trips** are `/trips/:tripId`. The `?sheet=transport|rooms|cosplay` query parameter opens
 that part as a sheet over the page, and `?day=` preselects a day. Both are query
 parameters rather than path segments, so opening or closing a sheet never remounts the page
-underneath or resets its scroll. Old URLs redirect (`config/routes.ts` → `legacy`).
+underneath or resets its scroll. A sheet the trip does not have (`?sheet=cosplay` on a concert, `rooms` without a hotel)
+redirects to plain Overzicht, keeping `?day=` (`TripLayout`); global search only offers a cosplay whose trip has the
+sheet (`cosplayTripId`). Old URLs redirect (`config/routes.ts` → `legacy`).
 
 ## The data layer
 
@@ -127,7 +129,7 @@ Forms in a sheet put their submit button in the sheet's `footer` and tie it to t
   over a page: a bottom sheet that grows with its content up to 85 % of the screen, with a
   title, optional back arrow (`onBack`) and footer. A sheet with several views (a list, a
   form, a filter) swaps them with `viewKey` inside **one** sheet instead of stacking
-  another on top. It is used for Vervoer, Hotel, Cosplay, Weer, Praktisch, adding a meal,
+  another on top. It is used for Vervoer, Hotel, Cosplay, Weer, Info, adding a meal,
   and the three finance screens.
 - **`Modal`** is for small confirmations and pickers. **`UserProfilePopup`** anchors to what
   was tapped and scrolls inside itself.
@@ -143,6 +145,10 @@ Anything that depends on the present (is a ride past, is a trip over, which even
 nearest) must call `getNow()` from `store/time.store.ts` instead of `new Date()`, so the admin
 time-travel tool can test live and finished trips.
 
+Text for dates, money and sizes comes from `utils/format.ts` and nowhere else: `formatDate` ("17 november
+2026"), `formatDateShort` ("17 nov. 2026"), `formatDateTime`, `formatTime`, `formatAmount` ("€ 37,50", any
+currency) and `formatBytes` ("3,2 MB"). No hand-written `toFixed()` or `toLocale…String()` for these.
+
 ## Offline and updates
 
 The service worker caches the app shell and hashed assets; `useServiceWorker` and
@@ -157,8 +163,9 @@ disappears the instant the browser's `online` event fires. The full picture is i
 ## Conventions
 
 - **Dutch user-facing text**, English code. Errors say what went wrong and what to do.
-- **Tokens, not colours.** Use `bg-surface`, `text-ink-2`, `border-line` so dark mode works
-  by itself ([design-system.md](design-system.md)).
+- **Tokens, not colours.** Use `bg-surface`, `text-ink-2`, `border-line`, `text-bad`, `bg-warn-soft` so dark mode works
+  by itself, and never a palette class (`bg-rose-100`), `text-white` or a hex value; `npm run check-colors` fails on them
+  ([design-system.md](design-system.md#colours)).
 - **Names resolve through aliases.** A stored name may be a former name; look it up with
   `name`, `discord_username` or `aliases` (see `UserAvatar`, `TripParticipants`).
 - **One source for URLs and keys:** `routes`, `apiRoutes`, `QUERY_KEYS`.
@@ -175,5 +182,5 @@ disappears the instant the browser's `online` event fires. The full picture is i
    in `router.tsx` and `config/routes.ts`.
 3. If it opens over a page, use `TripSheet`. If it is admin-only, add it to
    `pages/admin/constants.ts` (navigation) and the admin router group.
-4. `npx tsc --noEmit`, `npm run build`, and the backend tests.
+4. `npx tsc --noEmit`, `npm run build`, `npm run check-colors`, and the backend tests.
 5. Update [api.md](api.md), [features.md](features.md) and `CHANGELOG.md`.

@@ -60,10 +60,14 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `GET /users/` | member | all members |
 | `GET /users/me` | member | your own profile |
 | `GET /users/{id or name}` | member | one profile, by id or name |
-| `PUT /users/preferences` | member | edit your profile (colour, bio, notifications, …) |
+| `PUT /users/preferences` | member | edit your profile (colour, bio, notifications, …). `notification_categories` containing an admin-only category (`feedback_submitted`, `new_user`) is a 403 for anyone who is not an admin; an unknown category is a 422. `quiet_hours_start` and `quiet_hours_end` (0-23, both or neither, not equal) set the quiet hours, `quiet_hours_off: true` clears them (422 on an incomplete window; 503 "Stille uren zijn nog niet beschikbaar" before migration v2.44) |
 | `PATCH /users/name` | member | rename yourself (the old name becomes an alias) |
-| `POST /users/me/onboarding` | member | finish onboarding |
+| `POST /users/me/onboarding` | member | finish onboarding (same rule for admin-only notification categories) |
 | `POST /users/me/link-discord` | member | link a Discord account to a Google login |
+| `DELETE /users/me/discord` | member (also read-only) | forget the linked Discord account on the profile, after the browser has unlinked it from the login (`supabase.auth.unlinkIdentity`); 409 while Discord is still on the login, 400 when none is linked |
+| `POST /users/me/deletion-request` | member (also read-only) | ask for the account and data to be deleted: saved as a message under Admin → Feedback and sent to **every active admin** as a DM/push, whatever notifications they chose (`broadcast_category_dm(admins_always=True)`); at most 2 a day (429). The app does not delete anything itself |
+| `GET /users/me/export` | member | everything stored about you as one JSON download: profile (never the login hash), the days you go, your rides, activities, expenses and shares, cosplays, photos, ticket votes and feedback, found by every name you go by |
+| `POST /users/me/test-notification` | member | send yourself one message through your saved channel(s); 5 an hour |
 | `PUT /users/{id}/location` | member | set a location ping (for yourself, via `act_as`) |
 | `POST /users/banner`, `DELETE /users/banner` | member | upload or remove your banner |
 | `POST /users/avatar`, `DELETE /users/avatar` | member | upload or remove a custom profile picture — JPG/PNG/WebP (5 MB) or a small GIF (2 MB, kept as is, not re-encoded) — replacing/restoring the Discord or Google one |
@@ -77,8 +81,10 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `GET /calendar/feed-url` | member | your private `.ics` subscription link |
 | `GET /calendar/feed.ics?token=` | *public, by token* | the `.ics` feed |
 | `GET /calendar/{day}/hotel-rooms` | member | rooms of the trip |
-| `POST /calendar/{day}/hotel-rooms`, `…/bulk` | member | create a room, or many |
-| `POST /calendar/{day}/hotel-rooms/{room}/assign`, `…/leave` | member | take or leave a bed |
+| `POST /calendar/{day}/hotel-rooms`, `…/bulk` | member | create a room, or many. A new room with `occupants` moves those people out of their other rooms and answers with the room plus `moved` |
+| `PUT /calendar/{day}/hotel-rooms/{room}` | member | edit a room: number, floor, notes, capacity and `occupants` (the whole list; new names must be members; at most `capacity` people). `null` clears a field, leaving it out keeps it. Answers `{moved: [{name, room_id, room_number}]}`: the people who were taken out of another room because they are in this one now |
+| `POST /calendar/{day}/hotel-rooms/{room}/assign` | member | take a bed (`user_names`). A person sleeps in one room: anyone in another room of the hotel is moved here, under all their names, and a full room (400) refuses before anybody leaves their old room. Answers `{moved: [...]}` like the PUT |
+| `POST /calendar/{day}/hotel-rooms/{room}/leave` | member | give up a bed |
 
 ### Rides — `/rides`
 
@@ -89,7 +95,7 @@ one place, `backend/app/routes.py`, and mirrored for the frontend in
 | `DELETE /rides/{id}` | owner | remove a ride |
 | `POST /rides/{id}/claim`, `…/leave` | member | take or leave a seat |
 | `POST /rides/{id}/restaurant-driver`, `…/leave` | member | join or leave as a driver of a restaurant ride |
-| `POST /rides/{id}/restaurant-driver/assign`, `…/unassign` | member | put a passenger in or out of a car |
+| `POST /rides/{id}/restaurant-driver/assign`, `…/unassign` | member | put a passenger in or out of a car (400 "Deze auto is vol." when no seat is left) |
 
 Creating a ride broadcasts `ride_created` (`app/routers/rides.py`'s `_notify_ride_created`, also used by
 `admin_create_ride`), narrowed by `_day_ride_eligible_names` beyond the usual category opt-in: only a
@@ -127,11 +133,11 @@ Best-effort throughout; neither resolving means no pin.
 
 | Method and path | Who | What |
 | --- | --- | --- |
-| `GET /stories/summary?event_day_ids=a,b` | member | per day: photo count, newest photo, whether there is anything unseen |
+| `GET /stories/summary?event_day_ids=a,b` | member | per day: photo count, newest photo, whether there is anything unseen. `photo_count` is the event day itself; photos of the day just before or after the event are in `extra_days` (`date`, `photo_count`, `preview_url`) |
 | `GET /stories/user/{id or name}` | member | every photo one member uploaded, with its event |
-| `GET /stories/{day}` | member | a day's photos in order |
-| `GET /stories/{day}/download-all` | member | the day's photos as one zip, streamed while it is built (413 above 300 photos; a file MinIO can't read is skipped) |
-| `POST /stories/{day}` | member | upload a photo (multipart, field `file`) |
+| `GET /stories/{day}[?taken_on=YYYY-MM-DD]` | member | a day's photos in order (with `taken_on`: those of that day beside the event instead), each with `media_type` and, where they exist, `thumb_url` (grids), `preview_url` (the viewer, only for a big photo) and `poster_url` (a video's still frame); `image_url` is always the full original |
+| `GET /stories/{day}/download-all[?taken_on=]` | member | the day's photos (or those of one day beside the event) as one zip, streamed while it is built (413 above 300 photos; a file MinIO can't read is skipped) |
+| `POST /stories/{day}[?taken_on=YYYY-MM-DD]` | member | upload (`taken_on`: the day it was taken when that is exactly one day before or after this day, else 422) a photo (multipart, field `file`, max 15 MB), or a video (`file` as MP4/MOV/WebM, max 80 MB, plus the still frame as field `poster`). Photos and videos come back with `media_type` (`image`/`video`, from the file name) and `poster_url` |
 | `GET /stories/{day}/seen`, `PUT /stories/{day}/seen` | member | your watch progress |
 | `GET /stories/photos/{id}/download` | member | the original, as a download |
 | `DELETE /stories/photos/{id}` | uploader | remove |
@@ -219,6 +225,32 @@ the trip (an `events.id` for a multi-day trip, an `event_days.id` for a single-d
 driver's rides is "current" (for display and for the pin's own 2-hour-after-departure expiry) is
 resolved client-side in `CrewMap.tsx`, not stored here.
 
+### Ticket vote — `/ticket-polls`
+
+| Method and path | Who | What |
+| --- | --- | --- |
+| `GET /ticket-polls/{trip_id}` | member | the trip's ticket vote with its options and votes, or `null` when there is none |
+| `PUT /ticket-polls/{trip_id}` | admin | opens the vote — `{options: [{label, price}]}` (1 to 8; the server gives them ids); 409 when the trip has one already (delete it first) |
+| `PUT /ticket-polls/{trip_id}/vote` | member | `{choice, user_name?}`: a ticket's id or `unsure`; replaces the earlier vote. Any member may fill it in for another member (`act_for_anyone`). 409 once the tickets are bought |
+| `DELETE /ticket-polls/{trip_id}/vote?user_name=` | member | take a vote back, your own or another member's; 409 once the tickets are bought |
+| `POST /ticket-polls/{trip_id}/bought` | admin | `{buyer, option_id}`: the vote ends, the buyer and ticket are kept; the buyer has to be a member |
+| `DELETE /ticket-polls/{trip_id}` | admin | removes the vote and its votes, so a new one can be opened |
+
+`trip_id` is the frontend's `tripIdOf()` (an `events.id` for a multi-day trip, an `event_days.id` for a single-day
+one); the vote belongs to the event either way. Opening and buying send the `ticket_vote` notification.
+
+### Ride costs — `/ride-costs`
+
+| Method and path | Who | What |
+| --- | --- | --- |
+| `GET /ride-costs` | member | the member's ride costs: per trip as a driver (the sheet: the amount, who shares it, what each owes) and as a passenger (what they owe which driver) |
+| `PUT /ride-costs/{trip_id}` | driver | the driver's amount for the trip, all in one — `{amount}`; empty or 0 removes it; 404 without rides as driver there |
+
+Amounts are worked out on the server (`app/services/ride_costs.py`): everyone pays the driver of the first
+ride they took to the trip, the amount shared equally. A driver sees their passengers' amounts, a passenger
+only their own line. `trip_id` is the frontend's `tripIdOf()` (an `events.id` for a multi-day trip, an
+`event_days.id` for a single-day one).
+
 ### Link previews — *public*, not under `/api`
 
 `GET /trips/{id}` and `GET /events/{id}` (the older link shape) are for link-unfurling
@@ -233,13 +265,13 @@ and description are left out. Only registered when the built frontend exists.
 | Area | Endpoints |
 | --- | --- |
 | Overview | `GET /admin/stats`, `GET /admin/cdn` (`?limit=&offset=&kind=&event=`: every file in the bucket, newest first; `event` narrows story photos to one event) |
-| Users | list, create (a stub for the whitelist), update, delete, bulk delete, bulk deactivate, `POST /admin/impersonate/{id}` ([security.md](security.md#log-in-as)), badges per user |
+| Users | list (with `is_placeholder`), create (a stub for the whitelist), update, delete, bulk delete, bulk deactivate, `POST /admin/impersonate/{id}` ([security.md](security.md#log-in-as)), badges per user, `POST /admin/users/{id}/merge` (below) |
 | Whitelist | list, add, remove |
 | Feedback | `GET /admin/feedback` (newest first), `PUT /admin/feedback/{id}` (status `new`, `seen` or `done`), `DELETE /admin/feedback/{id}` |
 | Meal categories (`/admin/meal-categories`) | list, create, update (name, order, switches), delete (409 while in use) |
 | Rides, meals | list, create, update, delete, bulk delete, remove one passenger or participant |
 | Events | list events and days, create, update, delete, add a day, update or delete a day, remove one participant, bulk RSVP, bulk delete, bulk set group |
-| Hotel rooms | list, update, delete |
+| Hotel rooms | list, delete (editing is for every member, see Calendar) |
 | Event groups | list, create, update, delete, bulk delete |
 | Badges | list, create, update, delete, reorder |
 | Expenses | update (its linked event), delete, `PUT /admin/expense-shares/{id}` to force a status. Refused with 409 while the expense or share is in an open settlement. |
@@ -248,6 +280,14 @@ and description are left out. Only registered when the built frontend exists.
 | Download as zip | `GET /admin/cdn/download?kind=&event=` streams one zip of the same selection, keeping the bucket's folders. Built while it is sent (stored, not recompressed), so a big one starts at once. Refused with 413 above 1.5 GB or 3000 files; 404 when nothing matches. A file MinIO cannot read is skipped and logged. |
 | Delete a file | `DELETE /admin/cdn?key=<object key>` removes any file in the bucket and clears what pointed at it (story photo row, cosplay image, banner, event cover). Refuses a file a badge still uses (409). |
 | Quick upload | `POST /admin/quick-upload` stores an image or video under `uploads/` and returns `{url, key, media, size}` |
+
+**Merging a placeholder** (`POST /admin/users/{source_id}/merge`, body `{"target_id": "…", "dry_run": true}`): folds a
+placeholder profile (the one in the URL) into a real member. `dry_run` is `true` unless the request says `false`, and a dry run
+changes nothing; both return `{dry_run, source_name, target_name, counts, dropped, alias_names}` (`counts` per kind of what moves,
+`dropped` what is left out as a duplicate or a payment to oneself). 400 when the source is not a placeholder, the target is
+one or is deactivated, or both are the same profile (each with a Dutch message that says what to do); 404 for an unknown
+profile; 409 when the placeholder and the member both have an open settlement with the same person (finish one first).
+What it touches, and in which order, is in [security.md](security.md#placeholders-and-merging).
 
 ## Interactive docs
 

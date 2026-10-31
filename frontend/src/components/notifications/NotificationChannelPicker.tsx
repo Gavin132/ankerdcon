@@ -1,6 +1,8 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Bell, Check, Download, ShieldOff } from "lucide-react";
 import { usePush } from "../../hooks/usePush";
+import { useSendTestNotification } from "../../hooks/useUsers";
+import { Button } from "../common/Button";
 import { toast } from "../../store/toast.store";
 import { DiscordIcon } from "../common/DiscordIcon";
 
@@ -23,12 +25,14 @@ interface NotificationChannelPickerProps {
  */
 export function NotificationChannelPicker({ allowDm, onAllowDmChange, hasDiscord }: NotificationChannelPickerProps) {
   const { state: pushState, busy: pushBusy, enable, disable } = usePush();
-
-  if (pushState === "loading") return null;
+  const testMutation = useSendTestNotification();
+  const [testSent, setTestSent] = useState(false);
 
   const pushOn = pushState === "on";
   const pushShown = pushState !== "unsupported";
   const pushClickable = pushState === "on" || pushState === "off";
+  // The card is drawn at once; only the push row waits for the lookup of this device's subscription.
+  const pushLoading = pushState === "loading";
   const selected: "discord" | "push" | null = pushOn ? "push" : hasDiscord && allowDm ? "discord" : null;
 
   async function selectDiscord() {
@@ -52,10 +56,20 @@ export function NotificationChannelPicker({ allowDm, onAllowDmChange, hasDiscord
     }
   }
 
+  async function sendTest() {
+    setTestSent(false);
+    try {
+      await testMutation.mutateAsync();
+      setTestSent(true);
+    } catch (e) {
+      toast("error", e instanceof Error && e.message ? e.message : "Kon geen testmelding sturen. Probeer het opnieuw.");
+    }
+  }
+
   if (!hasDiscord && !pushShown) {
     return (
       <div className="card-surface p-4 text-[12.5px] leading-relaxed text-ink-3">
-        Op dit apparaat kun je nu geen meldingen ontvangen: koppel Discord via je profiel, of voeg de app toe aan je
+        Op dit apparaat kun je nu geen meldingen ontvangen: koppel Discord via Instellingen, of voeg de app toe aan je
         beginscherm voor pushmeldingen.
       </div>
     );
@@ -86,14 +100,31 @@ export function NotificationChannelPicker({ allowDm, onAllowDmChange, hasDiscord
             icon={pushState === "denied" ? <ShieldOff size={16} /> : <Bell size={16} />}
             label="Pushmeldingen"
             description={
-              pushState === "needs-install"
-                ? "Voeg de app toe aan je beginscherm om dit te kunnen aanzetten."
-                : pushState === "denied"
-                  ? "Geblokkeerd in je browser- of telefooninstellingen voor deze site."
-                  : "Meldingen op dit apparaat, ook als de app niet open staat."
+              pushLoading
+                ? "Even kijken of dit apparaat dit kan…"
+                : pushState === "needs-install"
+                  ? "Voeg de app toe aan je beginscherm om dit te kunnen aanzetten."
+                  : pushState === "denied"
+                    ? "Geblokkeerd in je browser- of telefooninstellingen voor deze site."
+                    : "Meldingen op dit apparaat, ook als de app niet open staat."
             }
             trailing={pushState === "needs-install" ? <Download size={14} className="shrink-0 text-ink-3" /> : undefined}
           />
+        )}
+        {selected && (
+          <div className="flex items-center justify-between gap-4 px-4 py-3">
+            <div className="min-w-0">
+              <p className="text-[14px] font-semibold text-ink">Testmelding</p>
+              <p className="mt-0.5 text-[12.5px] text-ink-3" role="status">
+                {testSent
+                  ? "Verstuurd. Zie je hem niet binnen een minuut? Kijk dan je instellingen na."
+                  : "Stuur jezelf één bericht om te zien of het aankomt. Gebruikt wat je het laatst opsloeg."}
+              </p>
+            </div>
+            <Button size="sm" onClick={sendTest} loading={testMutation.isPending}>
+              {testSent ? "Opnieuw" : "Stuur"}
+            </Button>
+          </div>
         )}
       </div>
     </div>
@@ -144,7 +175,7 @@ function ChannelRow({
       {trailing ?? (
         <div
           className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-1.5 ${
-            selected ? "border-brand-text bg-brand-text text-brand-on" : "border-line text-transparent"
+            selected ? "border-brand bg-brand text-brand-on" : "border-line text-transparent"
           }`}
         >
           <Check size={12} strokeWidth={3} />

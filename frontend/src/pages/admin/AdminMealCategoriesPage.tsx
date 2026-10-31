@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowDown, ArrowUp, Check, Plus, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Plus, X, Layers } from "lucide-react";
 import {
   useAdminMealCategories,
   useAdminCreateMealCategory,
@@ -10,8 +10,10 @@ import { ApiError } from "../../lib/api/client";
 import { toast } from "../../store/toast.store";
 import type { MealCategory } from "../../types";
 import { F } from "./styles";
+import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
+import { EmptyState } from "../../components/common/EmptyState";
 
 type Flag = "has_signup" | "has_cost" | "has_transport" | "is_meal";
 
@@ -42,10 +44,11 @@ function FlagToggle({
       title={flag.hint}
       disabled={disabled}
       onClick={onToggle}
-      className={`rounded-full border-1.5 px-3 py-1 text-[12.5px] font-semibold transition-colors disabled:opacity-50 ${
-        on ? "border-outline bg-brand text-brand-on" : "border-line bg-surface text-ink-3 hover:border-ink-3"
-      }`}
+      // Several of these are on at once, so "on" is a soft tint and a tick, not the ink fill of a filter chip.
+      className={`chip disabled:opacity-50 ${on ? "border-transparent bg-brand-soft text-brand-text" : "chip-off"}`}
     >
+      {/* The tick says "on" without leaning on the colour alone */}
+      {on && <Check size={14} />}
       {flag.label}
     </button>
   );
@@ -130,10 +133,10 @@ export function AdminMealCategoriesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+    <AdminPage width="narrow">
       <AdminPageHeader
         title="Categorieën"
-        subtitle={`${categories.length} soorten activiteit. De bovenste staat voorgeselecteerd bij een nieuwe activiteit.`}
+        subtitle={`${categories.length} ${categories.length === 1 ? "soort" : "soorten"} activiteit. De bovenste staat voorgeselecteerd bij een nieuwe activiteit.`}
       />
 
       <form onSubmit={handleCreate} className="card-surface space-y-3 p-4">
@@ -143,19 +146,19 @@ export function AdminMealCategoriesPage() {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             className={`${F} flex-1`}
-            placeholder="Nieuwe categorie, bijv. Bowlen…"
+            placeholder="Nieuwe categorie…"
             maxLength={40}
           />
           <button
             type="submit"
             disabled={!newName.trim() || createMutation.isPending}
-            className="btn-primary gap-2 px-4 py-2.5 text-sm disabled:opacity-50"
+            className="btn-primary gap-2 self-center px-4"
           >
-            <Plus size={15} />
+            <Plus size={16} />
             Aanmaken
           </button>
         </div>
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Wat heeft de nieuwe categorie">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Wat heeft de nieuwe categorie">
           {FLAGS.map((f) => (
             <FlagToggle key={f.key} flag={f} on={newFlags[f.key]} onToggle={() => setNewFlags((v) => ({ ...v, [f.key]: !v[f.key] }))} />
           ))}
@@ -168,31 +171,29 @@ export function AdminMealCategoriesPage() {
             {[0, 1, 2].map((i) => <div key={i} className="h-14 animate-pulse rounded-xl bg-sunken" />)}
           </div>
         ) : categories.length === 0 ? (
-          <p className="px-5 py-10 text-center text-sm text-ink-3">
-            Nog geen categorieën. Als dit er al hoort te zijn: draai migration v2.36 eerst.
-          </p>
+          <EmptyState compact icon={<Layers size={22} />} title="Nog geen categorieën" description="Voeg de eerste toe." />
         ) : (
           categories.map((category, index) => (
             <div key={category.id} className="space-y-2.5 px-4 py-3.5">
               <div className="flex items-center gap-2">
-                <div className="flex shrink-0 flex-col">
+                <div className="flex shrink-0 gap-2">
                   <button
                     type="button"
                     aria-label={`${category.name} omhoog`}
                     disabled={index === 0 || updateMutation.isPending}
                     onClick={() => move(index, -1)}
-                    className="flex h-5 w-6 items-center justify-center rounded text-ink-3 hover:bg-sunken hover:text-ink disabled:opacity-30"
+                    className="icon-btn"
                   >
-                    <ArrowUp size={13} />
+                    <ArrowUp size={16} />
                   </button>
                   <button
                     type="button"
                     aria-label={`${category.name} omlaag`}
                     disabled={index === categories.length - 1 || updateMutation.isPending}
                     onClick={() => move(index, 1)}
-                    className="flex h-5 w-6 items-center justify-center rounded text-ink-3 hover:bg-sunken hover:text-ink disabled:opacity-30"
+                    className="icon-btn"
                   >
-                    <ArrowDown size={13} />
+                    <ArrowDown size={16} />
                   </button>
                 </div>
 
@@ -216,23 +217,25 @@ export function AdminMealCategoriesPage() {
                 </div>
 
                 {editingId === category.id ? (
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
                       aria-label="Opslaan"
+                      title="Opslaan"
                       onClick={() => saveName(category.id)}
                       disabled={updateMutation.isPending}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg bg-ink text-paper transition-colors disabled:opacity-50 dark:bg-brand dark:text-brand-on"
+                      className="icon-btn"
                     >
-                      <Check size={13} />
+                      <Check size={16} />
                     </button>
                     <button
                       type="button"
                       aria-label="Annuleren"
+                      title="Annuleren"
                       onClick={() => setEditingId(null)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+                      className="icon-btn"
                     >
-                      <X size={13} />
+                      <X size={16} />
                     </button>
                   </div>
                 ) : (
@@ -240,6 +243,8 @@ export function AdminMealCategoriesPage() {
                     id={category.id}
                     confirmId={confirmDeleteId}
                     isPending={deleteMutation.isPending}
+                    editLabel={`${category.name} hernoemen`}
+                    deleteLabel={`${category.name} verwijderen`}
                     onEdit={() => {
                       setEditingId(category.id);
                       setEditingName(category.name);
@@ -251,7 +256,7 @@ export function AdminMealCategoriesPage() {
                 )}
               </div>
 
-              <div className="flex flex-wrap gap-1.5 pl-8" role="group" aria-label={`Wat heeft ${category.name}`}>
+              <div className="flex flex-wrap gap-2" role="group" aria-label={`Wat heeft ${category.name}`}>
                 {FLAGS.map((f) => (
                   <FlagToggle
                     key={f.key}
@@ -266,6 +271,6 @@ export function AdminMealCategoriesPage() {
           ))
         )}
       </div>
-    </div>
+    </AdminPage>
   );
 }

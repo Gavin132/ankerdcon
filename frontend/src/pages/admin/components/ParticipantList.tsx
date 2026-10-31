@@ -26,7 +26,7 @@ export function ParticipantList({
         {participants.map((p) => (
           <div
             key={p}
-            className="flex items-center gap-2.5 rounded-lg border border-line bg-paper px-3 py-2"
+            className="flex items-center gap-2.5 rounded-lg border border-line bg-paper py-0.5 pl-3 pr-1.5"
           >
             <UserAvatar name={p} className="h-6 w-6 text-[8px]" />
             <span className="flex-1 text-sm text-ink">{p}</span>
@@ -34,9 +34,11 @@ export function ParticipantList({
               type="button"
               onClick={() => onRemove(p)}
               disabled={isPending}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-rose-100 hover:text-rose-700 disabled:opacity-40 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
+              aria-label={`${p} verwijderen`}
+              title="Verwijderen"
+              className="icon-btn text-ink-3 hover:!bg-bad-soft hover:!text-bad"
             >
-              <UserX size={13} />
+              <UserX size={16} />
             </button>
           </div>
         ))}

@@ -8,6 +8,7 @@ everything itself.** See [architecture.md](architecture.md) for why.
 - [The whitelist](#the-whitelist)
 - [Authorization](#authorization)
 - [Log in as](#log-in-as)
+- [Placeholders and merging](#placeholders-and-merging)
 - [Requests and responses](#requests-and-responses)
 - [Uploads](#uploads)
 - [Money and links](#money-and-links)
@@ -60,9 +61,10 @@ Only people who sign up with Google can link Discord (Instellingen), not the oth
 - A whitelisted first login creates the profile (and sends a welcome DM). Profiles are
   **only ever created by the backend**, never by a database trigger, because a trigger
   would skip the whitelist (migrations v2.23 and `remove_trigger.sql`).
-- An admin can create a **stub profile** ahead of time. It is only claimed by a Discord
-  account that is on the whitelist with a matching id.
-- Deactivating or deleting a member cuts off access at once and sends them a DM.
+- An admin can create a **stub profile** (a placeholder) ahead of time. It is only claimed by a Discord
+  account that is on the whitelist with a matching id; otherwise the person gets a profile of their own and
+  an admin merges the placeholder into it by hand ([below](#placeholders-and-merging)).
+- Deactivating or deleting a member cuts off access at once, takes them (and their former names) off every ride, activity, trip day, hotel room and restaurant car, and sends them a DM. Deactivating in bulk does the same as the switch in the edit sheet.
 
 ## Authorization
 
@@ -75,14 +77,16 @@ Everything that is not "any signed-in member may do this" is a line in a router.
 
 | Rule | Where | Meaning |
 | --- | --- | --- |
-| member | `get_current_user` | any whitelisted, active member |
+| member | `get_current_user` | any whitelisted, active member. A **read-only member ("kijker", `profiles.is_viewer`)** gets a 403 (without `X-Access`) on every request that changes something, except their own account (preferences, onboarding, test notification, avatar, banner, Discord link, push subscribe, feedback) and marking a story seen (`_VIEWER_WRITABLE`). Enforced here for every route at once, with the flag looked up only for writes and remembered 30 s. An admin is never read-only. A database without the column is treated as "nobody is read-only". |
 | admin | `get_admin_user` | additionally `profiles.is_admin`, read from the database (never from the token) |
+| admin-only notifications | `ADMIN_ONLY_CATEGORIES` in `services/notification_service.py` | `feedback_submitted` and `new_user` ("Nieuwe gebruiker": a first login created a profile). A member who sends one of them in `notification_categories` (preferences or onboarding) gets a 403 `Deze melding is alleen voor admins.` (`_require_admin_for_categories`), and the choice is checked again when sending: `broadcast_category_dm` skips an inactive profile and one that is no longer an admin, so a demoted admin stops receiving it. The frontend only hides the row (`adminOnly`). |
+| hotel rooms | `routers/calendar.py` | any member (not a read-only one) creates, edits (number, floor, notes, capacity and who sleeps in it) and signs people up or off; only an admin deletes a room. Names put in a room must be members and the room may not exceed its capacity. A person sleeps in one room of a hotel: putting someone in a room moves them out of the others (`services/hotel_rooms.py`), under all the names they go by. |
 | acting for someone | `act_as` / `act_for_anyone` | sign-ups (meals, seats, trip days, hotel rooms) may name anyone; `paid_by`, location pings and cosplays only yourself (admins anyone). See [acting-for-others.md](acting-for-others.md). |
-| creator or admin | `require_owner_or_admin` | deleting things you made |
+| creator or admin | `require_owner_or_admin` | deleting things you made, claiming and confirming expense shares. "You" is the member's current name, Discord username and former names (aliases), minus any name another profile goes by (`_own_names`), because rows keep the name they were made under. Story photos use the same names but stay owner-only (`is_own_name`). |
 | involved party | in the router | a settlement can be confirmed by its receiver, withdrawn by either side |
 
-The frontend mirrors these rules (`useActingPermissions`) so it does not offer what
-would be refused. That is a convenience; the backend is what enforces them.
+The frontend mirrors these rules (`useActingPermissions`, and `useMyNames().isMine` for ownership, built from `ownNames` in
+`utils/people.ts`) so it does not offer what would be refused. That is a convenience; the backend is what enforces them.
 
 ## Log in as
 
@@ -108,6 +112,48 @@ What this is **not** protected against, and what is planned, is in
 The risk is therefore a **hijacked admin account** or a **leaked secret**, not anything an
 ordinary member can do. Protect the admins' Discord and Google accounts with two-factor
 authentication and keep the secret out of screenshots and chat.
+
+## Placeholders and merging
+
+A **placeholder** is a profile nobody has ever logged in to: an admin made it (Admin > Gebruikers > Nieuwe gebruiker) so
+the person can already be put on rides, meals and expenses. There is deliberately **no self-claim**: a member who logs in
+for the first time gets a new profile (the one exception is the automatic claim of a stub whose name equals the Discord
+username, see [The whitelist](#the-whitelist)), and an admin merges the placeholder into it by hand. So that the admin
+knows when there is a profile to merge, admins can switch on the "Nieuwe gebruiker" notification (off by default, admins
+only, see [Authorization](#authorization)): a profile *created* by a first login tells those admins once, from a background
+thread that can never fail the login. Claiming a stub and an admin adding a profile by hand do not.
+
+- **What counts as a placeholder** is one function, `is_placeholder` in `backend/app/services/profile_merge.py`: no `email`,
+  no `discord_username` and no `avatar_url`, which is what every login fills in. `is_first_login` is not used because "log
+  in as" clears it for a guest, and `discord_id` is not used because an admin may type one in ahead of time. The admin and
+  member user lists carry it as `is_placeholder`.
+- **`POST /admin/users/{id}/merge`** (`get_admin_user`, enforced in the router): the source must be a placeholder, the target a
+  real, active member, and they must differ. `dry_run` (the default) only counts. The real merge is written to the server log
+  as a `WARNING` (admin, both profiles, counts), like "log in as" and CDN deletes.
+- **What it touches.** By id: `settlements` (`from_user_id`, `to_user_id`, `created_by`). By name (the placeholder's name and
+  its aliases): `rides` (`driver`, `passengers`, the cars in `restaurant_drivers`), `meals` (`participants`, `created_by`),
+  `event_days.participants`, `hotel_rooms.occupants`, `expenses.paid_by`, `expense_shares.participant`, `cosplays.user_name`,
+  `story_photos.uploaded_by`, `story_seen.user_name`, `ride_costs.driver`, `parking_spots` (`driver`, `placed_by`), `ticket_votes.voter` (one vote per ticket vote: the
+  placeholder's is dropped when the member voted too), `ticket_polls.buyer`,
+  `feedback.user_name`, `push_subscriptions.user_name`. On the member's profile: `badge_ids` gain the placeholder's, and
+  `aliases` gain its names. Tables from a later migration that has not been run are skipped.
+- **Never twice.** In a name list the placeholder's name is replaced by the member's, or just removed when the member is on it
+  already (under their name or an alias). Two restaurant cars of the same person become one. One row per (trip, driver) in
+  `ride_costs` and `parking_spots` and per day in `story_seen` is kept for the member; the placeholder's duplicate is
+  dropped (`story_seen` keeps the furthest). Two shares of the member in one expense are added up when they are in the same
+  state, otherwise both stay.
+- **Money.** A settlement between the two is dropped (it would be a payment to oneself) and the expense shares it held are
+  freed. A share the member would now owe themselves is marked paid. Other settlements move to the member; if the
+  placeholder and the member both have an *open* settlement with the same person in the same currency the merge is
+  refused (409), because the database allows one open settlement per pair.
+- **No transaction, so the order is the safety.** Supabase's REST client has none. Every step is a rename "placeholder name
+  to member name" (idempotent), lists are changed with `update_list` (compare-and-swap, so a sign-up at the same moment is
+  kept), the placeholder is deleted only after all of that (a profile delete cascades to its settlements), and its name
+  becomes an alias only after it is deleted (an alias another profile still has is rejected elsewhere). A failure halfway
+  answers 503 and the placeholder is still there: run the merge again and it carries on.
+- **Not touched, on purpose:** `announcements.created_by` and `changelog_entries.created_by` (admin-written; a placeholder
+  never logged in so it cannot have written them), the `whitelist`, and the placeholder's own fields (phone, bio, colour,
+  a typed-in `discord_id`): the member keeps theirs. The placeholder's `discord_id`, if any, is dropped with the profile.
 
 ## Requests and responses
 

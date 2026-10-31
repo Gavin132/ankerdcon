@@ -1,12 +1,5 @@
 import { ReactNode } from "react";
 
-export interface BadgeProps {
-  children: ReactNode;
-  variant?: "blue" | "green" | "yellow" | "red" | "gray" | "violet" | "teal" | "white";
-  className?: string;
-  dot?: boolean;
-}
-
 export interface CardProps {
   children: ReactNode;
   className?: string;
@@ -20,10 +13,14 @@ export interface EmptyStateProps {
   title: string;
   description?: string;
   action?: ReactNode;
+  /** Less air above and below, for use inside a card or a table cell. */
+  compact?: boolean;
 }
 
 export interface LoadingSpinnerProps {
   size?: "sm" | "md" | "lg";
+  /** On the always-dark hero background: the brand fill instead of the brand text colour. */
+  onDark?: boolean;
   className?: string;
 }
 

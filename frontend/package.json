@@ -1,7 +1,7 @@
 {
   "name": "ankerdcon-frontend",
   "private": true,
-  "version": "2.1.1",
+  "version": "2.2.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,6 +10,8 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "ios-check": "node scripts/ios-check.mjs",
+    "mobile-audit": "node scripts/mobile-audit.mjs",
+    "check-colors": "node scripts/check-colors.mjs",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {

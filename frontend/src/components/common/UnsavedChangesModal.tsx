@@ -17,7 +17,7 @@ export function UnsavedChangesModal({ blocker }: Props) {
       {open && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
           <motion.div
-            className="absolute inset-0 bg-slate-950/50"
+            className="absolute inset-0 bg-scrim/50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -31,8 +31,8 @@ export function UnsavedChangesModal({ blocker }: Props) {
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.18 }}
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-500/15 mb-4">
-              <AlertTriangle size={20} className="text-amber-600 dark:text-amber-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warn-soft mb-4">
+              <AlertTriangle size={20} className="text-warn" />
             </div>
             <h2 className="font-display text-2xl font-extrabold uppercase leading-none text-ink">
               Niet-opgeslagen wijzigingen
@@ -42,7 +42,7 @@ export function UnsavedChangesModal({ blocker }: Props) {
             </p>
             <div className="mt-5 flex items-center justify-end gap-2">
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="sm"
                 onClick={() => blocker.state === "blocked" && blocker.reset()}
               >

@@ -9,26 +9,27 @@ interface Props {
 export function AdminSearch({
   value,
   onChange,
-  placeholder = "Zoeken...",
+  placeholder = "Zoeken…",
 }: Props) {
   return (
     <div className="relative w-full max-w-sm">
       <Search
-        size={15}
+        size={16}
         className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3"
       />
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="input-field rounded-[9px] py-2 pl-9 pr-9 text-base sm:text-sm"
+        className="input-field pl-9 pr-10"
         placeholder={placeholder}
       />
       {value && (
         <button
           onClick={() => onChange("")}
-          className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded text-ink-3 transition-colors hover:text-ink"
+          aria-label="Zoekopdracht wissen"
+          className="icon-btn absolute right-1 top-1/2 -translate-y-1/2"
         >
-          <X size={12} />
+          <X size={16} />
         </button>
       )}
     </div>

@@ -14,8 +14,8 @@ function loadWidgetEnabled(): boolean {
 interface TimeState {
   override: Date | null;
   setOverride: (d: Date | null) => void;
-  /** Whether the floating time-travel button should render at all — toggled
-   *  from Admin > Testen, persisted so it stays hidden across reloads. */
+  /** Whether the time-travel clock in the bar should render at all — toggled
+   *  from Admin > Testen > Tijdreis, persisted so it stays hidden across reloads. */
   widgetEnabled: boolean;
   setWidgetEnabled: (v: boolean) => void;
 }

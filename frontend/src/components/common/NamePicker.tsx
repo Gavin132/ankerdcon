@@ -7,6 +7,24 @@ import { TOKENS } from "../../constants";
 import { NamePickerProps, MultiProps, SingleProps } from "../../types";
 import { useUsers } from "../../hooks/useUsers";
 
+/** The most the list of names is tall, the gap to the input and the space kept free at the edge of the window. */
+const MENU_MAX_HEIGHT = 220;
+const MENU_GAP = 4;
+const MENU_EDGE = 8;
+const MENU_MIN_HEIGHT = 96;
+
+/**
+ * Where the list of names goes relative to its input: under it, unless it does not fit there and there is more room
+ * above (a field near the bottom of the window). Never taller than the room it has (but at least `MENU_MIN_HEIGHT`).
+ */
+export function menuPlacement(inputTop: number, inputBottom: number, viewportHeight: number): { side: "below" | "above"; maxHeight: number } {
+  const below = viewportHeight - inputBottom - MENU_GAP - MENU_EDGE;
+  const above = inputTop - MENU_GAP - MENU_EDGE;
+  const side = below >= MENU_MAX_HEIGHT || below >= above ? "below" : "above";
+  const room = side === "below" ? below : above;
+  return { side, maxHeight: Math.max(MENU_MIN_HEIGHT, Math.min(MENU_MAX_HEIGHT, room)) };
+}
+
 export function NamePicker(props: NamePickerProps) {
   const { options, placeholder = "Zoek naam…", color = "sky" } = props;
   const tk = TOKENS[color];
@@ -17,7 +35,8 @@ export function NamePicker(props: NamePickerProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [menuRect, setMenuRect] = useState<{ top: number; left: number; width: number } | null>(null);
+  // Where the menu sits: under the input, or above it when there is not enough room below, never taller than the room it has.
+  const [menuRect, setMenuRect] = useState<{ top?: number; bottom?: number; left: number; width: number; maxHeight: number } | null>(null);
   const { data: users = [] } = useUsers();
 
   const isMulti = props.multiple === true;
@@ -81,7 +100,13 @@ export function NamePicker(props: NamePickerProps) {
     if (!showMenu) return;
     function updatePosition() {
       const rect = wrapperRef.current?.getBoundingClientRect();
-      if (rect) setMenuRect({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+      if (!rect) return;
+      const { side, maxHeight } = menuPlacement(rect.top, rect.bottom, window.innerHeight);
+      setMenuRect(
+        side === "below"
+          ? { top: rect.bottom + MENU_GAP, left: rect.left, width: rect.width, maxHeight }
+          : { bottom: window.innerHeight - rect.top + MENU_GAP, left: rect.left, width: rect.width, maxHeight },
+      );
     }
     updatePosition();
     window.addEventListener("resize", updatePosition);
@@ -160,9 +185,10 @@ export function NamePicker(props: NamePickerProps) {
                           e.stopPropagation();
                           handleDeselect(name);
                         }}
-                        className={`ml-0.5 transition-colors ${tk.chipX}`}
+                        aria-label={`${name} verwijderen`}
+                        className={`hit-area -mr-1 p-1 transition-colors ${tk.chipX}`}
                       >
-                        <X size={11} />
+                        <X size={12} />
                       </button>
                     </motion.div>
                   ))}
@@ -171,7 +197,7 @@ export function NamePicker(props: NamePickerProps) {
 
               {maxSelect !== undefined && (
                 <div className="flex items-center gap-2">
-                  <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div className="h-1 flex-1 overflow-hidden rounded-full bg-sunken">
                     <motion.div
                       className={`h-full rounded-full transition-colors ${atMax ? tk.barFull : tk.bar}`}
                       animate={{ width: `${(selected.length / maxSelect) * 100}%` }}
@@ -179,7 +205,7 @@ export function NamePicker(props: NamePickerProps) {
                     />
                   </div>
                   <span className={`shrink-0 text-xs font-bold tabular-nums ${atMax ? tk.counterFull : tk.counter}`}>
-                    {selected.length}/{maxSelect}
+                    {atMax ? `Vol · ${selected.length}/${maxSelect}` : `${selected.length}/${maxSelect}`}
                   </span>
                 </div>
               )}
@@ -191,12 +217,14 @@ export function NamePicker(props: NamePickerProps) {
       {/* ── Search input ─────────────────────────────────────────────────── */}
       <div ref={wrapperRef} className="relative">
         <Search
-          size={13}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          size={14}
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3"
         />
         <input
           ref={inputRef}
           className="input-field pl-8"
+          enterKeyHint="search"
+          autoCorrect="off"
           placeholder={placeholder}
           value={open ? query : !isMulti && singleValue ? singleValue : query}
           onChange={(e) => {
@@ -218,11 +246,11 @@ export function NamePicker(props: NamePickerProps) {
       {showMenu && menuRect && createPortal(
         <div
           ref={menuRef}
-          style={{ position: "fixed", top: menuRect.top, left: menuRect.left, width: menuRect.width }}
-          className="z-[300] max-h-[220px] overflow-y-auto overscroll-contain rounded-xl border-1.5 border-line divide-y divide-line bg-surface shadow-xl"
+          style={{ position: "fixed", top: menuRect.top, bottom: menuRect.bottom, left: menuRect.left, width: menuRect.width, maxHeight: menuRect.maxHeight }}
+          className="z-[300] overflow-y-auto overscroll-contain rounded-xl border-1.5 border-line divide-y divide-line bg-surface shadow-xl"
         >
           {filtered.length === 0 ? (
-            <p className="px-4 py-4 text-center text-xs text-slate-400">
+            <p className="px-4 py-4 text-center text-xs text-ink-3">
               Geen resultaten voor &ldquo;{query}&rdquo;
             </p>
           ) : (
@@ -247,12 +275,12 @@ export function NamePicker(props: NamePickerProps) {
                       ? tk.activeRow
                       : isDisabled
                         ? "cursor-not-allowed opacity-35"
-                        : "hover:bg-slate-50 active:bg-slate-50 dark:hover:bg-slate-800/60 dark:active:bg-slate-800/60"
+                        : "hover:bg-sunken active:bg-sunken"
                   }`}
                 >
                   <UserAvatar name={name} className="h-7 w-7 text-xs" />
                   <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    <span className="block text-sm font-semibold text-ink">
                       {name}
                     </span>
                     {(() => {
@@ -262,12 +290,12 @@ export function NamePicker(props: NamePickerProps) {
                         ? user?.aliases?.find((a) => a.toLowerCase().includes(q))
                         : undefined;
                       return matchedAlias ? (
-                        <span className="block text-[11px] text-slate-400 truncate">ook bekend als &ldquo;{matchedAlias}&rdquo;</span>
+                        <span className="block text-[12px] text-ink-3 truncate">ook bekend als &ldquo;{matchedAlias}&rdquo;</span>
                       ) : null;
                     })()}
                   </span>
                   {isSelected && (
-                    <Check size={15} className={`shrink-0 ${tk.check}`} />
+                    <Check size={16} className={`shrink-0 ${tk.check}`} />
                   )}
                   {!isMulti && singleValue === name && (
                     <span className={`h-2 w-2 shrink-0 rounded-full ${tk.dot}`} />

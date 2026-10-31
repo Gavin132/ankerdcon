@@ -70,6 +70,9 @@ async def create_meal(
         logger.error("Failed to create meal: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
 
+    # Who it is for: the people on the trip it is planned for (everyone, if it is for no trip).
+    trip_names = await run_in_threadpool(notification_service.trip_names_for_day, body.linked_event_id)
+
     background_tasks.add_task(
         notification_service.broadcast_category_dm,
         settings.discord_bot_token,
@@ -79,6 +82,7 @@ async def create_meal(
             time=escape_markdown(body.time),
             location_line=f"\n📍 {escape_markdown(body.location)}" if body.location else "",
         ),
+        trip_names=trip_names,
     )
 
 

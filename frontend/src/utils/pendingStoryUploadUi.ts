@@ -27,9 +27,10 @@ export async function queueIfNetworkFailure(
   eventDayId: string,
   blob: Blob,
   err: unknown | { isOffline: true },
+  takenOn?: string | null,
 ): Promise<"queued" | "failed"> {
   if (!isNetworkFailure(err)) return "failed";
-  const queued = await usePendingStoryUploadsStore.getState().add(eventDayId, blob);
+  const queued = await usePendingStoryUploadsStore.getState().add(eventDayId, blob, takenOn);
   return queued ? "queued" : "failed";
 }
 

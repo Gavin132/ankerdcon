@@ -10,13 +10,13 @@ export type Density = "comfortable" | "compact";
  * attribute; the others are the `[data-accent]` blocks in index.css (keep in sync).
  * `swatch` is only what the picker shows. */
 export const ACCENTS = [
-  { id: "blue", label: "Blauw", swatch: "#57B2F9" },
-  { id: "teal", label: "Turquoise", swatch: "#2DD4BF" },
-  { id: "green", label: "Groen", swatch: "#4FC38A" },
-  { id: "gold", label: "Goud", swatch: "#FACC15" },
-  { id: "orange", label: "Oranje", swatch: "#FB923C" },
-  { id: "pink", label: "Roze", swatch: "#F472B6" },
-  { id: "purple", label: "Paars", swatch: "#A78BFA" },
+  { id: "blue", label: "Blauw", swatch: "#0078D4" },
+  { id: "teal", label: "Turquoise", swatch: "#0D7C72" },
+  { id: "green", label: "Groen", swatch: "#15803D" },
+  { id: "gold", label: "Goud", swatch: "#A66506" },
+  { id: "orange", label: "Oranje", swatch: "#CA480E" },
+  { id: "pink", label: "Roze", swatch: "#DB2777" },
+  { id: "purple", label: "Paars", swatch: "#8242F0" },
 ] as const;
 
 export type AccentId = (typeof ACCENTS)[number]["id"];
@@ -33,7 +33,11 @@ function getInitialDark(): boolean {
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
 
+/** The dev site is always orange, whatever was chosen, so it cannot be mistaken for the real app. */
+const DEV_ACCENT: AccentId = "orange";
+
 function getInitialAccent(): AccentId {
+  if (__DEV_BUILD__) return DEV_ACCENT;
   try {
     const stored = localStorage.getItem(ACCENT_KEY);
     if (isAccent(stored)) return stored;
@@ -91,6 +95,7 @@ export const useThemeStore = create<ThemeStore>((set) => ({
       return { isDark: next };
     }),
   setAccent: (accent) => {
+    if (__DEV_BUILD__) return;
     applyAccent(accent);
     try {
       if (accent === "blue") localStorage.removeItem(ACCENT_KEY);

@@ -3,6 +3,7 @@ import { NamePicker } from "../common/NamePicker";
 import { Button } from "../common/Button";
 import { SelectableDayCards } from "../trip/SelectableDayCards";
 import type { TripDay } from "../../utils/trips";
+import { EmptyState } from "../common/EmptyState";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -104,7 +105,7 @@ export function CosplayFilterPanel({ filters, onChange, personOptions, days, cou
                   aria-pressed={active}
                   className={`flex items-center gap-2 rounded-xl border-1.5 px-3 py-2.5 text-left transition-colors ${
                     active
-                      ? "border-brand-text bg-brand-soft"
+                      ? "border-outline bg-brand-soft"
                       : "border-line bg-surface text-ink-2 hover:border-ink-3"
                   }`}
                 >
@@ -122,7 +123,7 @@ export function CosplayFilterPanel({ filters, onChange, personOptions, days, cou
             <p className={SECTION_TITLE}>
               Persoon
               {filters.persons.length > 0 && (
-                <span className="ml-2 inline-flex h-4 w-4 items-center justify-center rounded-full bg-ink font-mono text-[9.5px] font-semibold text-paper dark:bg-brand dark:text-brand-on">
+                <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-selected px-1 font-mono text-xs font-semibold text-selected-on">
                   {filters.persons.length}
                 </span>
               )}
@@ -147,7 +148,7 @@ export function CosplayFilterPanel({ filters, onChange, personOptions, days, cou
             <p className={SECTION_TITLE}>
               Dag
               {filters.days.length > 0 && (
-                <span className="ml-2 inline-flex h-4 w-4 items-center justify-center rounded-full bg-ink font-mono text-[9.5px] font-semibold text-paper dark:bg-brand dark:text-brand-on">
+                <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-selected px-1 font-mono text-xs font-semibold text-selected-on">
                   {filters.days.length}
                 </span>
               )}
@@ -168,12 +169,7 @@ export function CosplayFilterPanel({ filters, onChange, personOptions, days, cou
 
         {/* No filter options available */}
         {personOptions.length === 0 && days.length <= 1 && (
-          <div className="flex flex-col items-center gap-3 py-10 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
-              <ArrowUpDown size={22} />
-            </div>
-            <p className="text-xs text-ink-3">Alleen sortering beschikbaar.<br />Voeg meer cosplays toe om filteropties te zien.</p>
-          </div>
+          <EmptyState compact icon={<ArrowUpDown size={22} />} title="Alleen sortering beschikbaar" description="Voeg meer cosplays toe om filteropties te zien." />
         )}
       </div>
   );
@@ -186,7 +182,7 @@ export function CosplayFilterFooter({ activeCount, onReset, onDone }: { activeCo
       <Button variant="ghost" className="flex-1" onClick={onReset} disabled={activeCount === 0}>
         Filters wissen
         {activeCount > 0 && (
-          <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-ink font-mono text-[9.5px] font-semibold text-paper dark:bg-brand dark:text-brand-on">
+          <span className="ml-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-selected px-1 font-mono text-xs font-semibold text-selected-on">
             {activeCount}
           </span>
         )}

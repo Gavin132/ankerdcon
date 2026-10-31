@@ -54,7 +54,7 @@ export function FeedbackSheet({ open, onClose }: { open: boolean; onClose: () =>
       subtitle="Een bug, idee of iets anders"
       footer={
         <Button onClick={send} loading={submit.isPending} disabled={!canSend} className="w-full">
-          <Send size={15} />
+          <Send size={16} />
           Versturen
         </Button>
       }
@@ -69,9 +69,7 @@ export function FeedbackSheet({ open, onClose }: { open: boolean; onClose: () =>
                 type="button"
                 onClick={() => setKind(k.id)}
                 aria-pressed={kind === k.id}
-                className={`rounded-xl px-3 py-2 text-[13px] font-semibold transition-colors ${
-                  kind === k.id ? "border-2 border-outline bg-brand text-brand-on" : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"
-                }`}
+                className={`chip ${kind === k.id ? "chip-on" : "chip-off"}`}
               >
                 {k.label}
               </button>
@@ -90,7 +88,7 @@ export function FeedbackSheet({ open, onClose }: { open: boolean; onClose: () =>
             value={message}
             onChange={(e) => setMessage(e.target.value)}
           />
-          <p className="mt-1 text-right font-mono text-[11px] tabular-nums text-ink-3">{trimmed.length} / {MAX}</p>
+          <p className="mt-1 text-right font-mono text-[12px] tabular-nums text-ink-3">{trimmed.length} / {MAX}</p>
         </div>
 
         <label htmlFor="feedback-anonymous" className="flex cursor-pointer items-start gap-2.5 text-sm text-ink-2">

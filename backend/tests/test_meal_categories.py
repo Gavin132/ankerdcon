@@ -89,6 +89,7 @@ def _use(monkeypatch, db):
         monkeypatch.setattr(module, "supabase", db)
     monkeypatch.setattr(meals_router, "resolve_location", AsyncMock(return_value=None))
     monkeypatch.setattr(meals_router.notification_service, "broadcast_category_dm", lambda *a, **k: None)
+    monkeypatch.setattr(meals_router.notification_service, "trip_names_for_day", lambda _day: None)
 
 
 class _Tasks:

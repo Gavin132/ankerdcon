@@ -1,29 +1,35 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { Plus, CalendarDays, Hotel, Tag, Check, History, Music2, PartyPopper, Ticket } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Plus, CalendarDays, Hotel, Tag, Check, Eye, Music2, PartyPopper, Ticket } from "lucide-react";
 import type { Event, EventDay } from "../../types";
 import {
   useAdminEvents,
   useAdminEventDays,
-  useAdminUsers,
   useAdminDeleteEvent,
   useAdminEventGroups,
   useAdminBulkDeleteEvents,
   useAdminBulkSetEventGroup,
 } from "../../hooks/useAdmin";
-import { UserAvatar } from "../../components/common/UserAvatar";
+import { AvatarStack } from "../../components/common/AvatarStack";
+import { Segmented } from "../../components/common/Segmented";
 import { EventEditDrawer } from "./EventEditDrawer";
 import { toast } from "../../store/toast.store";
 import { routes } from "../../config/routes";
+import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
+import { TH, TD, TR, TR_SELECTED, PILL_NEUTRAL } from "./styles";
+import { EVENT_TYPE_LABEL } from "./constants";
 import { AdminSearch } from "./components/AdminSearch";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
 import { AdminPagination } from "./components/AdminPagination";
 import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 import { AdminBulkBar } from "./components/AdminBulkBar";
+import { RowCheckbox } from "./components/RowCheckbox";
 import { useTableSelection } from "../../hooks/useTableSelection";
-import { formatDate } from "../../utils/format";
+import { countOf, formatDateRangeShort } from "../../utils/format";
 import { parseEventDate } from "../../utils/date";
+import { getNow } from "../../store/time.store";
+import { EmptyState } from "../../components/common/EmptyState";
 
 const PAGE_SIZE = 15;
 
@@ -40,13 +46,33 @@ function uniqueParticipants(days: EventDay[]): string[] {
   return [...new Set(days.flatMap((d) => d.participants))];
 }
 
+/** Hotel and the kind of event, as pills. */
+function EventKinds({ ev }: { ev: Event }) {
+  return (
+    <>
+      {ev.is_hotel && (
+        <span className={PILL_NEUTRAL}>
+          <Hotel size={14} />
+          Hotel
+        </span>
+      )}
+      {ev.event_type && (
+        <span className={PILL_NEUTRAL}>
+          {ev.event_type === "con" && <Ticket size={14} />}
+          {ev.event_type === "gathering" && <PartyPopper size={14} />}
+          {ev.event_type === "concert" && <Music2 size={14} />}
+          {EVENT_TYPE_LABEL[ev.event_type]}
+        </span>
+      )}
+    </>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export function AdminEventsPage() {
-  const navigate = useNavigate();
   const { data: events = [], isLoading: eventsLoading } = useAdminEvents();
   const { data: days = [], isLoading: daysLoading } = useAdminEventDays();
-  const { data: allUsers = [] } = useAdminUsers();
   const { data: eventGroups = [] } = useAdminEventGroups();
   const isLoading = eventsLoading || daysLoading;
   const deleteMutation = useAdminDeleteEvent();
@@ -83,7 +109,7 @@ export function AdminEventsPage() {
         : null;
   const drawerDays = drawerId && drawerId !== "new" ? (daysByEvent.get(drawerId) ?? []) : [];
 
-  const today = new Date();
+  const today = new Date(getNow());
   today.setHours(0, 0, 0, 0);
 
   const enriched = useMemo(
@@ -144,7 +170,7 @@ export function AdminEventsPage() {
     const ids = [...selectedIds];
     try {
       await bulkDeleteMutation.mutateAsync(ids);
-      toast("success", `${ids.length} evenementen verwijderd.`);
+      toast("success", `${countOf(ids.length, "evenement", "evenementen")} verwijderd.`);
       clearSelection();
     } catch {
       toast("error", "Kon evenementen niet verwijderen.");
@@ -155,10 +181,10 @@ export function AdminEventsPage() {
     const ids = [...selectedIds];
     try {
       await bulkSetGroupMutation.mutateAsync({ eventIds: ids, groupId });
-      toast("success", `Label bijgewerkt voor ${ids.length} evenementen.`);
+      toast("success", `Groep bijgewerkt voor ${ids.length} ${ids.length === 1 ? "evenement" : "evenementen"}.`);
       clearSelection();
     } catch {
-      toast("error", "Kon label niet instellen.");
+      toast("error", "Kon de groep niet instellen. Probeer het opnieuw.");
     }
   }
 
@@ -173,242 +199,199 @@ export function AdminEventsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+    <AdminPage>
       <AdminPageHeader
         title="Evenementen"
-        subtitle={`${filtered.length} ${showHistory ? "historische" : "aankomende"} items`}
+        subtitle={`${filtered.length} ${filtered.length === 1 ? "evenement" : "evenementen"} · ${showHistory ? "geschiedenis" : "aankomend"}`}
         action={
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => { setShowHistory((v) => !v); setPage(0); clearSelection(); }}
-              className={`flex items-center gap-2 rounded-xl border-1.5 px-4 py-2.5 text-sm font-semibold transition-colors ${
-                showHistory
-                  ? "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
-                  : "border-line bg-surface text-ink hover:border-ink-3"
-              }`}
-            >
-              <History size={16} />
-              {showHistory ? "Terug naar aankomend" : "Geschiedenis"}
-            </button>
-            <button
-              onClick={() => setDrawerId("new")}
-              className="btn-primary gap-2 px-4 py-2.5 text-sm"
-            >
-              <Plus size={16} />
-              Nieuw evenement
-            </button>
-          </div>
+          <button
+            onClick={() => setDrawerId("new")}
+            className="btn-primary gap-2 px-4"
+          >
+            <Plus size={16} />
+            Nieuw evenement
+          </button>
         }
       />
 
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <Segmented
+          label="Periode"
+          value={showHistory ? "history" : "upcoming"}
+          onChange={(v) => { setShowHistory(v === "history"); setPage(0); clearSelection(); }}
+          options={[
+            { value: "upcoming", label: "Aankomend" },
+            { value: "history", label: "Geschiedenis" },
+          ]}
+        />
         {eventGroups.length > 0 && (
-          <div className="flex gap-1.5 overflow-x-auto pb-1">
+          <div className="flex gap-2 overflow-x-auto sm:min-w-0">
             <button
               onClick={() => { setGroupFilter("All"); setPage(0); }}
-              className={`shrink-0 rounded-full border-1.5 px-3.5 py-1.5 text-sm font-semibold transition-colors ${
-                groupFilter === "All"
-                  ? "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
-                  : "border-line bg-surface text-ink-2 hover:border-ink-3"
-              }`}
+              className={`chip ${groupFilter === "All" ? "chip-on" : "chip-off"}`}
             >
-              Alle
+              Alle groepen
             </button>
-            {eventGroups.map((g) => {
-              const isActive = groupFilter === g.name;
-              return (
-                <button
-                  key={g.id}
-                  onClick={() => { setGroupFilter(g.name); setPage(0); }}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full border-1.5 px-3.5 py-1.5 text-sm font-semibold transition-colors ${
-                    isActive
-                      ? "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
-                      : "border-line bg-surface text-ink-2 hover:border-ink-3"
-                  }`}
-                >
-                  {g.name}
-                </button>
-              );
-            })}
+            {eventGroups.map((g) => (
+              <button
+                key={g.id}
+                onClick={() => { setGroupFilter(g.name); setPage(0); }}
+                className={`chip ${groupFilter === g.name ? "chip-on" : "chip-off"}`}
+              >
+                {g.name}
+              </button>
+            ))}
           </div>
         )}
-        <AdminSearch
-          value={search}
-          onChange={handleSearch}
-          placeholder="Zoek op naam of groep..."
-        />
       </div>
+
+      <AdminSearch
+        value={search}
+        onChange={handleSearch}
+        placeholder="Zoek op naam of groep…"
+      />
+
+      <AdminBulkBar
+        itemsLabel="evenementen"
+        count={selectedIds.size}
+        isPending={bulkIsPending}
+        onDelete={handleBulkDelete}
+        onClear={handleClearSelection}
+        extraActions={
+          <button
+            onClick={() => setBulkMode("set-group")}
+            disabled={bulkIsPending}
+            className="btn-primary px-3"
+          >
+            <Tag size={16} />
+            Groep
+          </button>
+        }
+        overrideContent={
+          bulkMode === "set-group" ? (
+            <>
+              <select
+                value={pickedGroup}
+                onChange={(e) => setPickedGroup(e.target.value)}
+                className="input-field w-full sm:w-auto"
+              >
+                <option value="">— Geen groep —</option>
+                {eventGroups.map((g) => (
+                  <option key={g.id} value={g.name}>{g.name}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => { handleBulkSetGroup(pickedGroup || null); setPickedGroup(""); setBulkMode("idle"); }}
+                disabled={bulkIsPending}
+                className="btn-primary gap-1.5 px-3"
+              >
+                <Check size={16} />
+                {bulkIsPending ? "Bezig…" : "Toepassen"}
+              </button>
+              <button
+                onClick={() => { setBulkMode("idle"); setPickedGroup(""); }}
+                disabled={bulkIsPending}
+                className="btn-secondary px-3"
+              >
+                Annuleren
+              </button>
+            </>
+          ) : undefined
+        }
+      />
 
       <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="stack-table w-full">
             <thead>
-              <tr className="border-b-1.5 border-line">
-                <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    ref={(el) => { if (el) el.indeterminate = indeterminate; }}
-                    onChange={selectAll}
-                    className="cb"
-                  />
+              <tr>
+                <th className={`${TH} w-10 !pr-2`}>
+                  <RowCheckbox checked={allSelected} indeterminate={indeterminate} onChange={selectAll} label="Alles selecteren" />
                 </th>
-                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Evenement
-                </th>
-                <th className="hidden sm:table-cell px-5 py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Data
-                </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Info
-                </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Deelnemers
-                </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Acties
-                </th>
+                <th className={TH}>Evenement</th>
+                <th className={`${TH} hidden sm:table-cell`}>Data</th>
+                <th className={`${TH} hidden sm:table-cell`}>Soort</th>
+                <th className={`${TH} hidden sm:table-cell`}>Deelnemers</th>
+                <th className={`${TH} text-right`}>Acties</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
               {isLoading ? (
-                <AdminTableSkeleton cols={5} />
+                <AdminTableSkeleton cols={6} />
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-5 py-10 text-center text-sm text-ink-3"
-                  >
-                    {showHistory ? "Geen historische evenementen gevonden." : "Geen aankomende evenementen gevonden."}
+                  <td colSpan={6}>
+                    <EmptyState compact icon={<CalendarDays size={22} />} title={showHistory ? "Geen evenementen in de geschiedenis" : "Geen aankomende evenementen gevonden"} />
                   </td>
                 </tr>
               ) : (
                 paginated.map(({ ev, days: evDays, first, last, participants }) => {
                   const isSelected = selectedIds.has(ev.id);
+                  const dateLabel = first && last ? formatDateRangeShort(first, last) : "—";
+                  const dayCount = `${evDays.length} ${evDays.length === 1 ? "dag" : "dagen"}`;
                   return (
-                  <tr
-                    key={ev.id}
-                    onClick={() => evDays[0] && navigate(routes.event.view(evDays[0].id))}
-                    className={`cursor-pointer transition-colors ${isSelected ? "bg-brand-soft/50 hover:bg-brand-soft/70" : "hover:bg-sunken"}`}
-                  >
-                    <td
-                      className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3.5"
-                      onClick={(e) => { e.stopPropagation(); toggleSelect(ev.id); }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleSelect(ev.id)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="cb"
-                      />
-                    </td>
-                    <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
-                      <div className="flex items-center gap-2 sm:gap-2.5">
-                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink sm:h-7 sm:w-7">
-                          <CalendarDays size={13} />
+                    <tr key={ev.id} className={isSelected ? TR_SELECTED : TR}>
+                      <td className={`${TD} w-10 !pr-2`} onClick={(e) => { e.stopPropagation(); toggleSelect(ev.id); }}>
+                        <RowCheckbox checked={isSelected} onChange={() => toggleSelect(ev.id)} label={`Selecteer ${ev.event_name}`} />
+                      </td>
+                      <td className={`cell-main ${TD}`}>
+                        <div className="flex items-center gap-2 sm:gap-2.5">
+                          <div className="hidden h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink sm:flex">
+                            <CalendarDays size={14} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-ink">{ev.event_name}</p>
+                            {ev.event_group_id && <span className="tag mt-0.5">{ev.event_group_id}</span>}
+                            {/* On a phone the other columns are hidden; the row is these lines. */}
+                            <p className="mt-0.5 text-xs text-ink-3 sm:hidden">{dateLabel} · {dayCount}</p>
+                            <div className="mt-1 flex flex-wrap gap-1.5 sm:hidden">
+                              <EventKinds ev={ev} />
+                            </div>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-ink truncate">
-                            {ev.event_name}
-                          </p>
-                          {ev.event_group_id && (
-                            <span className="mt-0.5 inline-flex items-center rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2">
-                              {ev.event_group_id}
-                            </span>
-                          )}
-                          {/* Dates — visible on mobile only, where the Data column is hidden */}
-                          <p className="mt-0.5 whitespace-nowrap font-mono text-xs text-ink-3 sm:hidden">
-                            {!first ? "—" : !last || first.getTime() === last.getTime()
-                              ? formatDate(evDays[0]?.date ?? "")
-                              : `${formatDate(evDays.find((d) => parseEventDate(d.date)?.getTime() === first.getTime())?.date ?? "")} – ${formatDate(evDays.find((d) => parseEventDate(d.date)?.getTime() === last.getTime())?.date ?? "")}`
-                            }
-                          </p>
+                      </td>
+                      <td className={`hidden sm:table-cell ${TD}`}>
+                        <p className="whitespace-nowrap text-sm text-ink-2">{dateLabel}</p>
+                        <p className="text-xs text-ink-3">{dayCount}</p>
+                      </td>
+                      <td className={`hidden sm:table-cell ${TD}`}>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <EventKinds ev={ev} />
                         </div>
-                      </div>
-                    </td>
-                    <td className="hidden sm:table-cell px-5 py-3.5">
-                      <span className="whitespace-nowrap font-mono text-[12.5px] text-ink-2">
-                        {!first ? "—" : !last || first.getTime() === last.getTime()
-                          ? formatDate(evDays[0]?.date ?? "")
-                          : `${formatDate(evDays.find((d) => parseEventDate(d.date)?.getTime() === first.getTime())?.date ?? "")} – ${formatDate(evDays.find((d) => parseEventDate(d.date)?.getTime() === last.getTime())?.date ?? "")}`
-                        }
-                      </span>
-                    </td>
-                    <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {ev.is_hotel && (
-                          <span
-                            title="Hotel"
-                            className="inline-flex items-center gap-1.5 rounded-full bg-sunken p-1.5 text-[11.5px] font-semibold text-ink-2 sm:px-2 sm:py-0.5"
-                          >
-                            <Hotel size={10} />
-                            <span className="hidden sm:inline">Hotel</span>
-                          </span>
-                        )}
-                        {ev.event_type && (
-                          <span
-                            title={{ con: "Con", gathering: "Gathering", concert: "Concert" }[ev.event_type]}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-sunken p-1.5 text-[11.5px] font-semibold text-ink-2 sm:px-2 sm:py-0.5"
-                          >
-                            {ev.event_type === "con" && <Ticket size={10} />}
-                            {ev.event_type === "gathering" && <PartyPopper size={10} />}
-                            {ev.event_type === "concert" && <Music2 size={10} />}
-                            <span className="hidden sm:inline">
-                              {{ con: "Con", gathering: "Gathering", concert: "Concert" }[ev.event_type]}
-                            </span>
-                          </span>
-                        )}
-                        <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-2">
-                          {evDays.length} {evDays.length === 1 ? "dag" : "dagen"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
-                      <div className="flex -space-x-1.5">
+                      </td>
+                      <td className={`hidden sm:table-cell ${TD}`}>
                         {participants.length === 0 ? (
                           <span className="text-xs text-ink-3">—</span>
                         ) : (
-                          <>
-                            {participants.slice(0, 4).map((p) => {
-                              const resolved = allUsers.find(
-                                (u) =>
-                                  u.name === p ||
-                                  u.discord_username === p ||
-                                  u.aliases?.includes(p),
-                              );
-                              return (
-                                <UserAvatar
-                                  key={p}
-                                  name={resolved?.name ?? p}
-                                  user={resolved}
-                                  className="h-5 w-5 sm:h-6 sm:w-6 text-[7px] sm:text-[8px] ring-2 ring-surface"
-                                />
-                              );
-                            })}
-                            {participants.length > 4 && (
-                              <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full ring-2 ring-surface bg-sunken text-[8px] sm:text-[9px] font-bold text-ink-2">
-                                +{participants.length - 4}
-                              </span>
-                            )}
-                          </>
+                          <AvatarStack names={participants} size="sm" max={4} />
                         )}
-                      </div>
-                    </td>
-                    <td className="px-2 sm:px-5 py-2.5 sm:py-3.5" onClick={(e) => e.stopPropagation()}>
-                      <DeleteConfirmActions
-                        id={ev.id}
-                        confirmId={confirmDeleteId}
-                        isPending={deleteMutation.isPending}
-                        onEdit={() => setDrawerId(ev.id)}
-                        onRequestDelete={() => setConfirmDeleteId(ev.id)}
-                        onConfirmDelete={() =>
-                          handleDelete(ev.id, ev.event_name)
-                        }
-                        onCancelDelete={() => setConfirmDeleteId(null)}
-                      />
-                    </td>
-                  </tr>
+                      </td>
+                      <td className={`cell-actions ${TD}`}>
+                        <DeleteConfirmActions
+                          id={ev.id}
+                          confirmId={confirmDeleteId}
+                          isPending={deleteMutation.isPending}
+                          before={
+                            evDays[0] && (
+                              <Link
+                                to={routes.event.view(evDays[0].id)}
+                                className="icon-btn text-ink-3"
+                                aria-label={`${ev.event_name} bekijken in de app`}
+                                title="Bekijken in de app"
+                              >
+                                <Eye size={16} />
+                              </Link>
+                            )
+                          }
+                          onEdit={() => setDrawerId(ev.id)}
+                          onRequestDelete={() => setConfirmDeleteId(ev.id)}
+                          onConfirmDelete={() => handleDelete(ev.id, ev.event_name)}
+                          onCancelDelete={() => setConfirmDeleteId(null)}
+                          editLabel={`${ev.event_name} bewerken`}
+                          deleteLabel={`${ev.event_name} verwijderen`}
+                        />
+                      </td>
+                    </tr>
                   );
                 })
               )}
@@ -431,54 +414,6 @@ export function AdminEventsPage() {
         onClose={() => { setDrawerId(null); setJustCreated(null); }}
         onCreated={(ev) => { setJustCreated(ev); setDrawerId(ev.id); }}
       />
-
-      <AdminBulkBar
-        count={selectedIds.size}
-        isPending={bulkIsPending}
-        onDelete={handleBulkDelete}
-        onClear={handleClearSelection}
-        extraActions={
-          <button
-            onClick={() => setBulkMode("set-group")}
-            disabled={bulkIsPending}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-ink-2 transition-colors hover:bg-sunken hover:text-ink disabled:opacity-40"
-          >
-            <Tag size={14} />
-            Label
-          </button>
-        }
-        overrideContent={
-          bulkMode === "set-group" ? (
-            <>
-              <select
-                value={pickedGroup}
-                onChange={(e) => setPickedGroup(e.target.value)}
-                className="input-field w-auto rounded-lg px-3 py-1.5 text-sm"
-              >
-                <option value="">— Geen groep —</option>
-                {eventGroups.map((g) => (
-                  <option key={g.id} value={g.name}>{g.name}</option>
-                ))}
-              </select>
-              <button
-                onClick={() => { handleBulkSetGroup(pickedGroup || null); setPickedGroup(""); setBulkMode("idle"); }}
-                disabled={bulkIsPending}
-                className="btn-primary gap-1.5 px-3 py-1.5 text-sm disabled:opacity-50"
-              >
-                <Check size={14} />
-                {bulkIsPending ? "Bezig…" : "Toepassen"}
-              </button>
-              <button
-                onClick={() => { setBulkMode("idle"); setPickedGroup(""); }}
-                disabled={bulkIsPending}
-                className="rounded-lg px-3 py-1.5 text-sm font-medium text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
-              >
-                Annuleer
-              </button>
-            </>
-          ) : undefined
-        }
-      />
-    </div>
+    </AdminPage>
   );
 }

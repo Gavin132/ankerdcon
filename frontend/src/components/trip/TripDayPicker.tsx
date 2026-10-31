@@ -1,6 +1,8 @@
 import { Check } from "lucide-react";
 import { toDateKey, todayKey } from "../../utils/date";
 import { dayShort, monthShort } from "../../utils/multiDay";
+import { groupPeople } from "../../utils/people";
+import { useUsers } from "../../hooks/useUsers";
 import type { Trip, TripDay } from "../../utils/trips";
 
 interface TripDayPickerProps {
@@ -19,6 +21,7 @@ interface TripDayPickerProps {
  * only ones that fade.
  */
 export function TripDayPicker({ trip, myNames, readOnly = false, onToggleDay }: TripDayPickerProps) {
+  const { data: users = [] } = useUsers();
   const today = todayKey();
   const isMine = (p: string) => myNames.includes(p);
 
@@ -31,30 +34,28 @@ export function TripDayPicker({ trip, myNames, readOnly = false, onToggleDay }: 
           const isTravelDay = ev.has_con === false;
           const imGoing = ev.participants.some(isMine);
           const canToggle = !readOnly && toDateKey(date) >= today;
-          const label = `${dayShort(date)} ${date.getDate()}`;
+          const label = `${dayShort(date)} ${date.getDate()} ${monthShort(date)}`;
 
-          const className = `relative min-w-0 rounded-[10px] border-1.5 px-1.5 pb-2 pt-3 text-center transition-[colors,transform] ${
-            imGoing ? "border-brand-text bg-brand-soft" : `border-line ${isTravelDay ? "bg-hatch-surface" : "bg-surface"}`
-          } ${canToggle ? "hover:border-ink-3 active:scale-[0.97]" : imGoing ? "" : "opacity-60"}`;
+          const className = `relative min-w-0 rounded-xl border-1.5 px-1.5 pb-2 pt-5 text-center transition-colors ${
+            imGoing ? "border-outline bg-brand-soft" : `border-line ${isTravelDay ? "bg-hatch-surface" : "bg-surface"}`
+          } ${canToggle ? "hover:border-ink-3" : imGoing ? "" : "opacity-60"}`;
 
           const content = (
             <>
               {(canToggle || imGoing) && (
                 <span
                   aria-hidden
-                  className={`absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full border-1.5 ${
-                    imGoing ? "border-brand-text bg-brand text-brand-on" : "border-ink-3 bg-surface"
+                  className={`absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full border-1.5 ${
+                    imGoing ? "border-outline bg-brand text-brand-on" : "border-ink-3 bg-surface"
                   }`}
                 >
-                  {imGoing && <Check size={9} strokeWidth={3} />}
+                  {imGoing && <Check size={12} strokeWidth={3} />}
                 </span>
               )}
-              <span className="block font-mono text-[10px] uppercase leading-none tracking-[0.08em] text-ink-3">
-                {dayShort(date)} {monthShort(date)}
-              </span>
+              <span className="block text-[12px] capitalize leading-none text-ink-3">{dayShort(date)}</span>
               <span className="block font-display text-[26px] font-extrabold leading-none text-ink">{date.getDate()}</span>
-              <span className="mt-1 block truncate text-[11.5px] leading-none text-ink-2">
-                {isTravelDay ? "Reisdag" : `${ev.participants.length} mee`}
+              <span className="mt-1 block truncate text-[12px] leading-none text-ink-2">
+                {isTravelDay ? "Reisdag" : `${groupPeople(ev.participants ?? [], users).length} mee`}
               </span>
             </>
           );

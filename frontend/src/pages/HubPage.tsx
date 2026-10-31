@@ -16,6 +16,8 @@ import { useCurrentUser, useUsers } from "../hooks/useUsers";
 import { groupCalendarEntries, dayShort } from "../utils/multiDay";
 import { UpcomingEventsCarousel } from "../components/hub/UpcomingEventsCarousel";
 import { QuickRideTiles } from "../components/hub/QuickRideTiles";
+import { useIsViewer } from "../hooks/useIsViewer";
+import { InstallHint, useShowInstallHint } from "../components/common/InstallHint";
 import { MealTodayCard } from "../components/hub/MealTodayCard";
 import { TicketShortcutCard } from "../components/hub/TicketShortcutCard";
 import { LocationPingModal } from "../components/hub/LocationPingModal";
@@ -25,7 +27,7 @@ import { AddStoryTile } from "../components/story/AddStoryTile";
 import { useStorySummary } from "../hooks/useStories";
 import { listItem, listContainer } from "../utils/motion";
 import { parseEventDate, toDateKey, todayKey } from "../utils/date";
-import { useTimeStore } from "../store/time.store";
+import { getNow, useTimeStore } from "../store/time.store";
 import type { CalendarEvent, Meal, User } from "../types";
 
 const MAX_CAROUSEL_ITEMS = 8;
@@ -37,6 +39,8 @@ const MONTHS_NL = ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","
 
 export function HubPage() {
   const navigate = useNavigate();
+  const viewer = useIsViewer();
+  const installHint = useShowInstallHint();
   const currentUser = useAuthStore((s) => s.currentUser);
   const [popupUser, setPopupUser] = useState<User | null>(null);
   const [popupAnchorRect, setPopupAnchorRect] = useState<AnchorRect>({ top: 0, left: 0, right: 0, height: 0 });
@@ -49,7 +53,7 @@ export function HubPage() {
   const { data: expenses = [] } = useExpenses();
   const { data: users } = useUsers();
   const { data: me } = useCurrentUser();
-  const timeOverride = useTimeStore((s) => s.override);
+  useTimeStore((s) => s.override); // re-render when the time-travel override changes
 
   // `events` is available from useCalendar() regardless of its loading
   // state, so all of this (including the useStorySummary hook call) is safe
@@ -94,6 +98,9 @@ export function HubPage() {
       .map(({ ev, date }) => ({ id: ev.id, label: `${dayShort(date)} ${date.getDate()}`, dateKey: toDateKey(date) }));
   })();
   const { data: storySummary } = useStorySummary(storyDays.map((d) => d.id));
+  // Weeks before a trip the row is only empty circles, so it waits until a day has photos or the trip is a day away.
+  const dayBefore = storyDays[0] ? toDateKey(new Date(new Date(`${storyDays[0].dateKey}T00:00:00`).getTime() - 86_400_000)) : null;
+  const showStories = storyDays.length > 0 && (todayStr >= (dayBefore ?? todayStr) || storyDays.some((d) => (storySummary?.[d.id]?.photo_count ?? 0) > 0));
   // The quick "add to story" tile targets whichever trip day a photo added
   // right now would land in, by upload time: today's day, else the most recent
   // day that's over, else the trip's first day (same rule as tripUploadDay).
@@ -105,7 +112,7 @@ export function HubPage() {
 
   if (evLoading) return <HubSkeleton />;
 
-  const now = timeOverride ?? new Date();
+  const now = getNow();
   const hour = now.getHours();
   const greeting = hour < 12 ? "Goedemorgen" : hour < 18 ? "Goedemiddag" : "Goedenavond";
   const todayFormatted = `${DAYS_NL[now.getDay()]} ${now.getDate()} ${MONTHS_NL[now.getMonth()]}`;
@@ -131,34 +138,37 @@ export function HubPage() {
   return (
     <>
     <motion.div
-      className="space-y-6"
+      className="space-y-5"
       variants={listContainer}
       initial="hidden"
       animate="show"
     >
 
       {/* ── Greeting ──────────────────────────────────────────────────────── */}
-      {me?.show_greeting !== false && (
-        <motion.div variants={listItem}>
-          <div>
-            <div className="min-w-0">
-              <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-3">
-                {greeting} · {todayFormatted}
-              </p>
-              <h1 className="mt-1 truncate font-display text-[34px] font-extrabold uppercase leading-[0.95] tracking-[0.005em] text-ink md:text-[42px]">
-                {me?.name ?? "…"}
-              </h1>
-            </div>
-          </div>
+      {me?.show_greeting !== false ? (
+        <motion.div variants={listItem} className="min-w-0">
+          <p className="label-quiet">
+            {greeting} · {todayFormatted}
+          </p>
+          <h1 className="mt-1 truncate font-display text-[28px] font-extrabold uppercase leading-[0.95] tracking-[0.005em] text-ink md:text-[34px]">
+            {me?.name ?? "…"}
+          </h1>
         </motion.div>
+      ) : (
+        // The top bar names the page with a <p> here, so the page still needs its one heading.
+        <h1 className="sr-only">Hub</h1>
       )}
 
       {/* ── Story rings ───────────────────────────────────────────────────── */}
-      {storyDays.length > 0 && (
+      {showStories && (
         <motion.div variants={listItem}>
-          <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <AddStoryTile eventDayId={uploadTargetDay?.id ?? null} />
-            <div className="w-px h-16 shrink-0 self-start bg-line" />
+          <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {!viewer && (
+              <>
+                <AddStoryTile eventDayId={uploadTargetDay?.id ?? null} />
+                <div className="w-px h-16 shrink-0 self-start bg-line" />
+              </>
+            )}
             {storyDays.map((day) => {
               const summary = storySummary?.[day.id];
               return (
@@ -180,12 +190,20 @@ export function HubPage() {
         </motion.div>
       )}
 
-      {/* Two columns on wide screens: the trip on the left, what needs doing on the right. */}
-      <div className="space-y-6 xl:grid xl:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] xl:items-start xl:gap-8 xl:space-y-0">
-        <div className="min-w-0 space-y-6">
+      {/* ── Put the app on the home screen (phones, not when installed, not for 30 days after "Sluiten") ── */}
+      {installHint.visible && installHint.kind && (
+        <motion.div variants={listItem}>
+          <InstallHint kind={installHint.kind} onDismiss={installHint.dismiss} />
+        </motion.div>
+      )}
+
+      {/* Two columns on wide screens: the trip on the left, what needs doing on the right. On a phone the two
+          columns dissolve (max-xl:contents): the trip, the two ride buttons, "Voor jou", a meal today, the shortcuts. */}
+      <div className="flex flex-col gap-5 xl:grid xl:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] xl:items-start xl:gap-8">
+        <div className="min-w-0 space-y-5 max-xl:contents max-xl:space-y-0">
           {/* ── Upcoming events carousel ───────────────────────────────── */}
           {upcomingItems.length > 0 && (
-            <motion.div variants={listItem}>
+            <motion.div variants={listItem} className="max-xl:order-1">
               <UpcomingEventsCarousel
                 items={upcomingItems}
                 allEvents={events ?? []}
@@ -200,21 +218,26 @@ export function HubPage() {
             </motion.div>
           )}
 
-          {/* ── A mealplan today: shortcut to it, above the ride cards ── */}
-          <MealTodayCard meals={meals ?? []} myNames={[me?.name, ...(me?.aliases ?? [])].filter((n): n is string => !!n)} />
-
-          {/* ── Quick ride shortcuts — switches to the shared restaurant ride
+          {/* ── Quick ride shortcuts, straight under the trip — switches to the shared restaurant ride
                 itself in the evening when a meal still needs transport. ── */}
-          {event && (
-            <motion.div variants={listItem}>
+          {event && !viewer && (
+            <motion.div variants={listItem} className="max-xl:order-2">
               <QuickRideTiles event={event} restaurantMeal={restaurantMeal} rides={rides ?? []} />
             </motion.div>
           )}
+
+          {/* ── A mealplan today: shortcut to it ── */}
+          <MealTodayCard
+            className="max-xl:order-4"
+            meals={meals ?? []}
+            myNames={[me?.name, ...(me?.aliases ?? [])].filter((n): n is string => !!n)}
+          />
         </div>
 
-        <div className="min-w-0 space-y-6">
+        <div className="min-w-0 space-y-5 max-xl:contents max-xl:space-y-0">
           {/* ── Voor jou ─────────────────────────────────────────────────── */}
           <ForYouPanel
+            className="max-xl:order-3"
             events={events ?? []}
             rides={rides ?? []}
             meals={meals ?? []}
@@ -222,24 +245,22 @@ export function HubPage() {
             myName={me?.name}
           />
 
-          {/* ── Mijn ticket shortcut ─────────────────────────────────────── */}
-          <TicketShortcutCard events={events ?? []} />
-
-          {/* ── Locatie pingen ───────────────────────────────────────────── */}
-          <motion.div variants={listItem}>
+          {/* ── Shortcuts: one card with a row each, not a card per shortcut ── */}
+          <motion.div variants={listItem} className="card-surface divide-y divide-line overflow-hidden max-xl:order-5">
+            <TicketShortcutCard events={events ?? []} />
             <button
               type="button"
               onClick={() => setPingOpen(true)}
-              className="card-surface-hover flex w-full items-center gap-3 px-4 py-3.5 text-left"
+              className="flex min-h-11 w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-sunken"
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
-                <MapPin size={15} />
+                <MapPin size={16} />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold text-ink">Locatie pingen</span>
                 <span className="block text-xs text-ink-3">Laat de groep weten waar je bent</span>
               </span>
-              <ChevronRight size={14} className="shrink-0 text-ink-3" />
+              <ChevronRight size={16} className="shrink-0 text-ink-3" />
             </button>
           </motion.div>
         </div>

@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Car, Train } from "lucide-react";
+import { Plus, Car, Train, AlertCircle } from "lucide-react";
 import { LocationSearchInput } from "../../components/common/LocationSearchInput";
-import { formatDateTime } from "../../utils/format";
+import { countOf, formatDateTime } from "../../utils/format";
 import {
   useAdminRides,
   useAdminUsers,
@@ -15,13 +15,16 @@ import {
   useAdminBulkDeleteRides,
 } from "../../hooks/useAdmin";
 import { useCalendar } from "../../hooks/useCalendar";
-import { UserAvatar } from "../../components/common/UserAvatar";
+import { AvatarStack } from "../../components/common/AvatarStack";
+import { groupPeople } from "../../utils/people";
 import { AdminDrawer } from "./AdminDrawer";
 import { NamePicker } from "../../components/common/NamePicker";
 import { toast } from "../../store/toast.store";
 import type { Ride } from "../../types";
-import { F, FS, L } from "./styles";
-import { DIRECTION_COLORS } from "./constants";
+import { F, FS, L, TH, TD, TR, TR_SELECTED, TAG } from "./styles";
+import { DIRECTION_LABEL, VEHICLE_LABEL } from "./constants";
+import { AdminPage } from "./components/AdminPage";
+import { ToggleRow } from "../../components/common/ToggleRow";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminSearch } from "./components/AdminSearch";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
@@ -31,8 +34,10 @@ import { DrawerFooter } from "./components/DrawerFooter";
 import { DiscardChangesConfirm } from "./components/DiscardChangesConfirm";
 import { ParticipantList } from "./components/ParticipantList";
 import { AdminBulkBar } from "./components/AdminBulkBar";
+import { RowCheckbox } from "./components/RowCheckbox";
 import { useTableSelection } from "../../hooks/useTableSelection";
 import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
+import { EmptyState } from "../../components/common/EmptyState";
 
 const PAGE_SIZE = 15;
 const DIRECTIONS = ["Inbound", "Outbound", "Restaurant"] as const;
@@ -41,7 +46,7 @@ const VEHICLE_TYPES = ["Car", "Public Transport"] as const;
 const rideSchema = z.object({
   direction: z.enum(["Inbound", "Outbound", "Restaurant"]),
   vehicle_type: z.enum(["Car", "Public Transport"]),
-  driver: z.string().min(1, "Driver is verplicht"),
+  driver: z.string().min(1, "Chauffeur is verplicht"),
   departure_time: z.string().min(1, "Vertrektijd is verplicht"),
   start_location: z.string().min(1, "Startlocatie is verplicht"),
   end_location: z.string().optional(),
@@ -75,6 +80,7 @@ function RideDrawer({
     register,
     handleSubmit,
     watch,
+    setValue,
     control,
     formState: { errors, isDirty },
   } = useForm<RideForm>({
@@ -97,6 +103,8 @@ function RideDrawer({
   });
   const vehicleType = watch("vehicle_type");
   const isPT = vehicleType === "Public Transport";
+  const carAvailable = watch("car_available");
+  const actionRequired = watch("action_required");
 
   async function onSubmit(values: RideForm) {
     const payload = { ...values, linked_event_id: values.linked_event_id || undefined };
@@ -134,7 +142,7 @@ function RideDrawer({
       onClose={requestClose}
       title={isEdit ? "Rit bewerken" : "Nieuwe rit"}
       subtitle={
-        isEdit ? `${ride.direction} · ${ride.driver}` : "Voeg een nieuwe rit toe"
+        isEdit ? `${DIRECTION_LABEL[ride.direction] ?? ride.direction} · ${ride.driver}` : "Voeg een nieuwe rit toe"
       }
       footer={
         <DrawerFooter
@@ -156,7 +164,7 @@ function RideDrawer({
             <select {...register("direction")} className={FS}>
               {DIRECTIONS.map((d) => (
                 <option key={d} value={d}>
-                  {d}
+                  {DIRECTION_LABEL[d]}
                 </option>
               ))}
             </select>
@@ -166,7 +174,7 @@ function RideDrawer({
             <select {...register("vehicle_type")} className={FS}>
               {VEHICLE_TYPES.map((v) => (
                 <option key={v} value={v}>
-                  {v}
+                  {VEHICLE_LABEL[v]}
                 </option>
               ))}
             </select>
@@ -188,7 +196,7 @@ function RideDrawer({
             )}
           />
           {errors.driver && (
-            <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
+            <p className="field-error">
               {errors.driver.message}
             </p>
           )}
@@ -198,7 +206,7 @@ function RideDrawer({
           <label className={L}>Vertrektijd</label>
           <input {...register("departure_time")} type="datetime-local" className={F} />
           {errors.departure_time && (
-            <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
+            <p className="field-error">
               {errors.departure_time.message}
             </p>
           )}
@@ -219,7 +227,7 @@ function RideDrawer({
             )}
           />
           {errors.start_location && (
-            <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.start_location.message}</p>
+            <p className="field-error">{errors.start_location.message}</p>
           )}
         </div>
 
@@ -243,7 +251,7 @@ function RideDrawer({
           <div>
             <label className={L}>Totaal aantal plekken in de auto</label>
             <input {...register("total_seats")} type="number" min={0} className={F} />
-            <p className="mt-1.5 text-[11px] text-ink-3">Incl. de chauffeur</p>
+            <p className="mt-1.5 text-xs text-ink-3">Incl. de chauffeur</p>
           </div>
         )}
 
@@ -252,24 +260,18 @@ function RideDrawer({
           <input {...register("parking_info")} className={F} placeholder="Optioneel" />
         </div>
 
-        <div className="flex gap-6 pt-1">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              {...register("car_available")}
-              className="cb"
-            />
-            <span className="text-sm text-ink-2">Auto beschikbaar</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              {...register("action_required")}
-              className="cb"
-            />
-            <span className="text-sm text-ink-2">Actie vereist</span>
-          </label>
-        </div>
+        <ToggleRow
+          icon={<Car size={16} />}
+          label="Auto beschikbaar"
+          checked={!!carAvailable}
+          onChange={() => setValue("car_available", !carAvailable, { shouldDirty: true })}
+        />
+        <ToggleRow
+          icon={<AlertCircle size={16} />}
+          label="Actie vereist"
+          checked={!!actionRequired}
+          onChange={() => setValue("action_required", !actionRequired, { shouldDirty: true })}
+        />
 
         <div>
           <label className={L}>Koppel aan evenement</label>
@@ -318,7 +320,8 @@ export function AdminRidesPage() {
     return (
       r.driver.toLowerCase().includes(q) ||
       r.start_location.toLowerCase().includes(q) ||
-      r.direction.toLowerCase().includes(q)
+      r.direction.toLowerCase().includes(q) ||
+      (DIRECTION_LABEL[r.direction] ?? "").toLowerCase().includes(q)
     );
   });
 
@@ -336,7 +339,7 @@ export function AdminRidesPage() {
     const ids = [...selectedIds];
     try {
       await bulkDeleteMutation.mutateAsync(ids);
-      toast("success", `${ids.length} ritten verwijderd.`);
+      toast("success", `${countOf(ids.length, "rit", "ritten")} verwijderd.`);
       clearSelection();
     } catch {
       toast("error", "Kon ritten niet verwijderen.");
@@ -364,14 +367,14 @@ export function AdminRidesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+    <AdminPage>
       <AdminPageHeader
         title="Ritten"
-        subtitle={`${rides.length} ritten gepland`}
+        subtitle={`${rides.length} ${rides.length === 1 ? "rit" : "ritten"} gepland`}
         action={
           <button
             onClick={() => setDrawer("new")}
-            className="btn-primary gap-2 px-4 py-2.5 text-sm"
+            className="btn-primary gap-2 px-4"
           >
             <Plus size={16} />
             Nieuwe rit
@@ -386,52 +389,40 @@ export function AdminRidesPage() {
             <button
               key={d}
               onClick={() => handleFilter(d)}
-              className={`shrink-0 rounded-full border-1.5 px-3.5 py-1.5 text-sm font-semibold transition-colors ${
-                dirFilter === d
-                  ? "border-transparent bg-ink text-paper dark:bg-brand dark:text-brand-on"
-                  : "border-line bg-surface text-ink-2 hover:border-ink-3"
-              }`}
+              className={`chip ${dirFilter === d ? "chip-on" : "chip-off"}`}
             >
-              {d === "All" ? "Alle" : d}
+              {d === "All" ? "Alle" : DIRECTION_LABEL[d]}
             </button>
           ))}
         </div>
         <AdminSearch
           value={search}
           onChange={handleSearch}
-          placeholder="Zoek op chauffeur of locatie..."
+          placeholder="Zoek op chauffeur of locatie…"
         />
       </div>
 
+      <AdminBulkBar
+        itemsLabel="ritten"
+        count={selectedIds.size}
+        isPending={bulkDeleteMutation.isPending}
+        onDelete={handleBulkDelete}
+        onClear={clearSelection}
+      />
+
       <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="stack-table w-full">
             <thead>
-              <tr className="border-b-1.5 border-line">
-                <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    ref={(el) => { if (el) el.indeterminate = indeterminate; }}
-                    onChange={selectAll}
-                    className="cb"
-                  />
+              <tr>
+                <th className={`${TH} w-10 !pr-2`}>
+                  <RowCheckbox checked={allSelected} indeterminate={indeterminate} onChange={selectAll} label="Alles selecteren" />
                 </th>
-                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Rit
-                </th>
-                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Vertrek
-                </th>
-                <th className="hidden sm:table-cell px-5 py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Zitplaatsen
-                </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Passagiers
-                </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Acties
-                </th>
+                <th className={TH}>Rit</th>
+                <th className={`${TH} hidden sm:table-cell`}>Vertrek</th>
+                <th className={`${TH} hidden sm:table-cell`}>Zitplaatsen</th>
+                <th className={`${TH} hidden sm:table-cell`}>Passagiers</th>
+                <th className={`${TH} text-right`}>Acties</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -439,112 +430,70 @@ export function AdminRidesPage() {
                 <AdminTableSkeleton cols={6} />
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-5 py-10 text-center text-sm text-ink-3"
-                  >
-                    Geen ritten gevonden.
+                  <td colSpan={6}>
+                    <EmptyState compact icon={<Car size={22} />} title="Geen ritten gevonden" />
                   </td>
                 </tr>
               ) : (
-                paginated.map((ride) => (
-                  <tr
-                    key={ride.id}
-                    className={`transition-colors ${selectedIds.has(ride.id) ? "bg-brand-soft/50 hover:bg-brand-soft/70" : "hover:bg-sunken"}`}
-                  >
-                    <td
-                      className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3.5"
-                      onClick={(e) => { e.stopPropagation(); toggleSelect(ride.id); }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(ride.id)}
-                        onChange={() => toggleSelect(ride.id)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="cb"
-                      />
-                    </td>
-                    <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
-                      <div className="flex items-center gap-2 sm:gap-2.5">
-                        <div
-                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink sm:h-7 sm:w-7"
-                        >
-                          {ride.is_public_transport ? (
-                            <Train size={13} />
-                          ) : (
-                            <Car size={13} />
-                          )}
+                paginated.map((ride) => {
+                  const isSelected = selectedIds.has(ride.id);
+                  const name = ride.driver || ride.start_location;
+                  return (
+                    <tr key={ride.id} className={isSelected ? TR_SELECTED : TR}>
+                      <td className={`${TD} w-10 !pr-2`} onClick={(e) => { e.stopPropagation(); toggleSelect(ride.id); }}>
+                        <RowCheckbox checked={isSelected} onChange={() => toggleSelect(ride.id)} label={`Selecteer ${name}`} />
+                      </td>
+                      <td className={`cell-main ${TD}`}>
+                        <div className="flex items-center gap-2 sm:gap-2.5">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink">
+                            {ride.is_public_transport ? <Train size={14} /> : <Car size={14} />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-ink">{ride.driver}</p>
+                            <span className={`${TAG} mt-0.5`}>{DIRECTION_LABEL[ride.direction] ?? ride.direction}</span>
+                            {/* On a phone the other columns are hidden; the row is these two lines. */}
+                            <p className="mt-0.5 truncate text-xs text-ink-3 sm:hidden">
+                              {formatDateTime(ride.departure_time)} · {ride.start_location}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-ink truncate">
-                            {ride.driver}
-                          </p>
-                          <span
-                            className={`mt-0.5 inline-block rounded-md border border-line px-1.5 font-mono text-[10.5px] uppercase tracking-[0.05em] ${DIRECTION_COLORS[ride.direction] ?? "text-ink-2"}`}
-                          >
-                            {ride.direction}
+                      </td>
+                      <td className={`hidden sm:table-cell ${TD}`}>
+                        <p className="whitespace-nowrap font-mono text-sm text-ink-2">{formatDateTime(ride.departure_time)}</p>
+                        <p className="truncate text-xs text-ink-3">{ride.start_location}</p>
+                      </td>
+                      <td className={`hidden sm:table-cell ${TD}`}>
+                        {ride.is_public_transport ? (
+                          <span className="text-xs text-ink-3">n.v.t.</span>
+                        ) : (
+                          <span className="font-mono text-sm font-medium tabular-nums text-ink-2">
+                            {groupPeople(ride.passengers, allUsers).length}/{ride.total_seats}
                           </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
-                      <p className="text-sm text-ink-2 font-mono whitespace-nowrap">
-                        {formatDateTime(ride.departure_time)}
-                      </p>
-                      <p className="text-xs text-ink-3 truncate max-w-[140px] sm:max-w-none">
-                        {ride.start_location}
-                      </p>
-                    </td>
-                    <td className="hidden sm:table-cell px-5 py-3.5">
-                      {ride.is_public_transport ? (
-                        <span className="text-xs text-ink-3">N/A</span>
-                      ) : (
-                        <span className="font-mono text-sm font-medium tabular-nums text-ink-2">
-                          {ride.passengers.length}/{ride.total_seats}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
-                      <div className="flex -space-x-1.5">
+                        )}
+                      </td>
+                      <td className={`hidden sm:table-cell ${TD}`}>
                         {ride.passengers.length === 0 ? (
                           <span className="text-xs text-ink-3">—</span>
                         ) : (
-                          <>
-                            {ride.passengers.slice(0, 4).map((p) => {
-                              const resolved = allUsers.find(
-                                (u) => u.name === p || u.discord_username === p,
-                              );
-                              return (
-                                <UserAvatar
-                                  key={p}
-                                  name={resolved?.name ?? p}
-                                  user={resolved}
-                                  className="h-5 w-5 sm:h-6 sm:w-6 text-[7px] sm:text-[8px] ring-2 ring-surface"
-                                />
-                              );
-                            })}
-                            {ride.passengers.length > 4 && (
-                              <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full ring-2 ring-surface bg-sunken text-[8px] sm:text-[9px] font-bold text-ink-2">
-                                +{ride.passengers.length - 4}
-                              </span>
-                            )}
-                          </>
+                          <AvatarStack names={ride.passengers} size="sm" max={4} />
                         )}
-                      </div>
-                    </td>
-                    <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
-                      <DeleteConfirmActions
-                        id={ride.id}
-                        confirmId={confirmDeleteId}
-                        isPending={deleteMutation.isPending}
-                        onEdit={() => setDrawer(ride)}
-                        onRequestDelete={() => setConfirmDeleteId(ride.id)}
-                        onConfirmDelete={() => handleDelete(ride.id)}
-                        onCancelDelete={() => setConfirmDeleteId(null)}
-                      />
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className={`cell-actions ${TD}`}>
+                        <DeleteConfirmActions
+                          id={ride.id}
+                          confirmId={confirmDeleteId}
+                          isPending={deleteMutation.isPending}
+                          onEdit={() => setDrawer(ride)}
+                          onRequestDelete={() => setConfirmDeleteId(ride.id)}
+                          onConfirmDelete={() => handleDelete(ride.id)}
+                          onCancelDelete={() => setConfirmDeleteId(null)}
+                          editLabel={`Rit van ${name} bewerken`}
+                          deleteLabel={`Rit van ${name} verwijderen`}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -567,13 +516,6 @@ export function AdminRidesPage() {
         ride={drawer}
         onClose={() => setDrawer(null)}
       />
-
-      <AdminBulkBar
-        count={selectedIds.size}
-        isPending={bulkDeleteMutation.isPending}
-        onDelete={handleBulkDelete}
-        onClear={clearSelection}
-      />
-    </div>
+    </AdminPage>
   );
 }

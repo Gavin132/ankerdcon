@@ -11,21 +11,22 @@ export function UpdateBanner() {
   const { updateReady, applyUpdate } = useServiceWorker();
 
   return (
-    <AnimatePresence>
+    <AnimatePresence initial={false}>
       {updateReady && (
+        // A strip at the top, in the flow like the other banners (offline, viewer): nothing floats over the tab bar.
         <motion.div
-          initial={{ y: 60, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 60, opacity: 0 }}
-          transition={{ type: "spring", damping: 26, stiffness: 300 }}
-          className="pointer-events-none fixed inset-x-0 bottom-0 z-[120] flex justify-center px-4"
-          style={{ paddingBottom: "max(5.5rem, calc(env(safe-area-inset-bottom, 0px) + 5.5rem))" }}
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.25 }}
+          className="sticky top-0 z-[100] overflow-hidden border-b-1.5 border-line bg-brand-soft text-brand-text"
           role="status"
         >
-          <div className="pointer-events-auto flex items-center gap-3 rounded-[12px] border-2 border-outline bg-surface px-3.5 py-2.5">
-            <span className="text-[13px] font-semibold text-ink">Nieuwe versie beschikbaar</span>
-            <button type="button" onClick={applyUpdate} className="btn-primary h-8 px-3 text-xs">
-              <RefreshCw size={13} />
+          <div style={{ height: "env(safe-area-inset-top, 0px)" }} />
+          <div className="flex items-center justify-between gap-3 px-4 py-1.5 md:px-8 lg:px-10">
+            <span className="text-sm font-semibold">Nieuwe versie beschikbaar</span>
+            <button type="button" onClick={applyUpdate} className="btn-primary px-3.5">
+              <RefreshCw size={16} />
               Herladen
             </button>
           </div>

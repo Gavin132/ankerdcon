@@ -49,6 +49,15 @@ const KNOWN = {
 
 const FALLBACK = ["Serverfout", "Er ging iets mis tussen Cloudflare en de server."];
 
+// How long the origin gets to *start* answering (the response headers, not the whole body) before it counts as down.
+// Without this only Cloudflare's own limits apply: about 15 s to connect (a 522) and 100 s to answer (a 524), and a
+// visitor stares at a loading spinner for all of it when the home server or the home network is off. A page load is
+// the one a person is waiting on, so it gets the shortest; a read (GET) from the app a little longer, since the
+// app's own request limit (15 s) fires first for it. A request that sends something (POST, PUT, an upload) is never
+// cut off: the time it takes to upload is not the origin being down.
+const NAVIGATION_TIMEOUT_MS = 8000;
+const READ_TIMEOUT_MS = 25000;
+
 // Logo as a data URI, not a fetch to the (possibly down) origin: this page has
 // to render with nothing else reachable. Regenerate with
 // `python -c "import base64;print(base64.b64encode(open('frontend/public/assets/images/ankerd-logo.webp','rb').read()).decode())"`
@@ -168,9 +177,23 @@ export default {
     const isHtmlRequest = (request.headers.get("accept") || "").includes("text/html");
 
     let response;
+    let timedOut = false;
+    let timer;
+    let init;
+    if (request.method === "GET" || request.method === "HEAD") {
+      const controller = new AbortController();
+      timer = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, isHtmlRequest ? NAVIGATION_TIMEOUT_MS : READ_TIMEOUT_MS);
+      init = { signal: controller.signal };
+    }
     try {
-      response = await fetch(request);
+      response = await fetch(request, init);
     } catch (err) {
+      // Gave up waiting: "no answer in time" (522) is the honest name for it, and the one the page explains
+      // as the home network or router.
+      if (timedOut) return errorResponse(site, 522, isHtmlRequest);
       // The origin could not be reached at all — connection refused, DNS,
       // TLS, or a timeout. This is what Cloudflare's own 521/522/523 pages
       // cover; whether this catch actually fires (instead of Cloudflare
@@ -179,6 +202,9 @@ export default {
       // docs/cloudflare-error-page.md. 502 is the closest accurate status
       // for "this gateway (worker) got no usable response from upstream".
       return errorResponse(site, 502, isHtmlRequest);
+    } finally {
+      // Once the headers are here the timer has done its job; it must not cut a long body (a zip) short.
+      if (timer) clearTimeout(timer);
     }
 
     if (response.status >= 500 && response.status <= 599) {

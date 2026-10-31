@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 import re
+import time
 import uuid
 
 from fastapi.concurrency import run_in_threadpool
@@ -13,11 +14,13 @@ import jwt
 from app.config import Settings, get_settings
 from app.constants import Tables
 from app.core import minio_client
+from app.core.atomic import update_list
 from app.core.logging import get_logger
 from app.core.meal_categories import default_category_id, list_meals_with_category, require_category
-from app.core.uploads import clean_image, read_capped, sniff_video
+from app.core.thumbnails import derivative_keys_by_name, derivative_urls, is_derivative
+from app.core.uploads import clean_image, read_capped, shrink_image, sniff_video
 from app.core.zip_stream import stream_zip
-from app.dependencies import _unique_profile_name, get_admin_user
+from app.dependencies import _unique_profile_name, forget_viewer, get_admin_user
 from app.models.meal_category import CreateMealCategoryRequest, MealCategory, UpdateMealCategoryRequest
 from app.models.admin import (
     CdnListing,
@@ -28,7 +31,6 @@ from app.models.admin import (
     AdminSetShareStatusRequest,
     AdminUpdateEventRequest,
     AdminUpdateExpenseRequest,
-    AdminUpdateHotelRoomRequest,
     AdminUpdateMealRequest,
     AdminUpdateRideRequest,
     AdminUpdateUserRequest,
@@ -39,6 +41,8 @@ from app.models.admin import (
     BulkDeleteMealsRequest,
     BulkDeleteEventGroupsRequest,
     BulkRsvpRequest,
+    MergeUserRequest,
+    MergeUserResult,
     BulkSetEventGroupRequest,
     CreateEventDayRequest,
     UpdateEventDayRequest,
@@ -61,7 +65,7 @@ from app.models.rides import CreateRideRequest, Ride
 from app.models.user import User
 from app.routes import AdminRoutes
 import app.services.discord_service as discord_service
-from app.services import discord_bot, notification_service
+from app.services import discord_bot, notification_service, profile_merge
 from app import messages as M
 from app.core.database import supabase
 
@@ -151,6 +155,7 @@ def admin_list_users(_: str = Depends(get_admin_user)) -> list[User]:
     users = []
     for user in resp.data:
         user.pop("passcode", None)
+        user["is_placeholder"] = profile_merge.is_placeholder(user)
         users.append(user)
     return users
 
@@ -164,6 +169,8 @@ def admin_create_user(body: AdminCreateUserRequest, _: str = Depends(get_admin_u
             detail="Deze naam is al in gebruik (of was de naam van iemand anders).",
         )
     data: dict = {"name": body.name, "is_admin": body.is_admin, "is_active": True, "is_first_login": True}
+    if body.is_viewer:
+        data["is_viewer"] = True
     if body.discord_id:
         data["discord_id"] = body.discord_id
     try:
@@ -174,6 +181,54 @@ def admin_create_user(body: AdminCreateUserRequest, _: str = Depends(get_admin_u
     if not resp.data:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kon gebruiker niet aanmaken.")
     return resp.data[0]
+
+
+@router.post(AdminRoutes.USER_MERGE, response_model=MergeUserResult)
+def admin_merge_user(source_id: str, body: MergeUserRequest, admin: str = Depends(get_admin_user)) -> MergeUserResult:
+    """Folds a placeholder profile into the real member it was made for: everything the placeholder was
+    on (rides, meals, trip days, expenses, ...) goes to the member, the placeholder's name becomes one of
+    the member's aliases and the placeholder is deleted. `dry_run` (the default) only says what would
+    move. See app/services/profile_merge.py for what is touched and in which order."""
+    if source_id == body.target_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Je kunt een profiel niet met zichzelf samenvoegen. Kies een ander lid.",
+        )
+    try:
+        rows = supabase.table(Tables.PROFILES).select("*").in_("id", [source_id, body.target_id]).execute().data or []
+    except Exception as e:
+        logger.error("Failed to fetch profiles %s and %s for a merge: %s", source_id, body.target_id, e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
+    by_id = {r["id"]: r for r in rows}
+    source, target = by_id.get(source_id), by_id.get(body.target_id)
+    if not source or not target:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden. Ververs de pagina en probeer het opnieuw.")
+    if not profile_merge.is_placeholder(source):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{source['name']} is al ingelogd en is geen placeholder. Je kunt alleen een placeholder samenvoegen: kies een ander profiel.",
+        )
+    if profile_merge.is_placeholder(target):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{target['name']} is zelf een placeholder en heeft nog niet ingelogd. Kies een lid dat al is ingelogd.",
+        )
+    if target.get("is_active") is False:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{target['name']} is gedeactiveerd. Activeer het lid eerst, of kies een ander lid.",
+        )
+
+    plan = profile_merge.plan_merge(source, target)
+    if not body.dry_run:
+        # The server log is the audit trail for admin actions (see also impersonation and CDN deletes).
+        logger.warning(
+            "Merge: admin %s merges placeholder %s (%s) into %s (%s): %s, dropped %s",
+            admin, source["name"], source["id"], target["name"], target["id"], plan.counts, plan.dropped,
+        )
+        profile_merge.execute(plan)
+        forget_viewer(source["name"])
+    return MergeUserResult(dry_run=body.dry_run, **plan.summary())
 
 
 @router.post(AdminRoutes.IMPERSONATE)
@@ -242,21 +297,57 @@ def admin_impersonate_user(
     return {"access_token": token, "name": profile["name"]}
 
 
-def _remove_user_from_all_events(name: str) -> None:
-    """Strip a user's name from passengers/participants arrays across all tables."""
-    for table, field in [
-        (Tables.RIDES, "passengers"),
-        (Tables.MEALS, "participants"),
-        (Tables.EVENT_DAYS, "participants"),
+def _remove_user_from_all_events(name: str, aliases: list[str] | None = None) -> None:
+    """Take a member off everything they were signed up for: ride passengers, activities, trip days, hotel
+    rooms and the cars of restaurant rides (a car they drove goes, with the people in it). Their former
+    names go too, so nobody is left on a list as a ghost. Each list is changed with `update_list`, so a
+    sign-up that happens at the same moment is kept."""
+    names = {n for n in [name, *(aliases or [])] if n}
+    if not names:
+        return
+
+    def drop(current: list, _row: dict) -> list | None:
+        kept = [m for m in current if m not in names]
+        return kept if len(kept) != len(current) else None
+
+    def drop_from_cars(cars: list, _row: dict) -> list | None:
+        kept = [
+            {**car, "passengers": [p for p in car.get("passengers") or [] if p not in names]}
+            for car in cars if car.get("name") not in names
+        ]
+        return kept if kept != cars else None
+
+    for table, field, change, jsonb in [
+        (Tables.RIDES, "passengers", drop, False),
+        (Tables.RIDES, "restaurant_drivers", drop_from_cars, True),
+        (Tables.MEALS, "participants", drop, False),
+        (Tables.EVENT_DAYS, "participants", drop, False),
+        (Tables.HOTEL_ROOMS, "occupants", drop, False),
     ]:
         try:
             rows = supabase.table(table).select(f"id, {field}").execute().data or []
-            for row in rows:
-                members: list = row.get(field) or []
-                if name in members:
-                    supabase.table(table).update({field: [m for m in members if m != name]}).eq("id", row["id"]).execute()
         except Exception as e:
             logger.error("Cleanup %s.%s failed for %r: %s", table, field, name, e)
+            continue
+        for row in rows:
+            if not row.get(field):
+                continue
+            try:
+                update_list(table, row["id"], field, change, jsonb=jsonb)
+            except Exception as e:  # one stuck row must not leave the rest of the member's sign-ups behind
+                logger.error("Cleanup %s.%s of %s failed for %r: %s", table, field, row["id"], name, e)
+
+
+def _after_deactivation(row: dict, settings: Settings) -> None:
+    """What deactivating a member also does, however it was done (one by one or in bulk): they come off every
+    list they were on, and they get a Discord message when they allow one."""
+    if row.get("name"):
+        _remove_user_from_all_events(row["name"], row.get("aliases"))
+    if row.get("allow_dm", True) and row.get("discord_id"):
+        try:
+            discord_bot.send_deactivated_dm(settings.discord_bot_token, row["discord_id"])
+        except Exception as e:
+            logger.warning("Failed to send deactivation DM to %s: %s", row.get("discord_id"), e)
 
 
 def _revoke_whitelist(row: dict) -> None:
@@ -284,7 +375,7 @@ def admin_update_user(
         return
 
     try:
-        current = supabase.table(Tables.PROFILES).select("name, discord_id, is_active, allow_dm").eq("id", user_id).execute()
+        current = supabase.table(Tables.PROFILES).select("name, discord_id, is_active, allow_dm, aliases").eq("id", user_id).execute()
     except Exception as e:
         logger.error("Failed to fetch user %s for update: %s", user_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
@@ -301,16 +392,12 @@ def admin_update_user(
 
     if not resp.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden.")
+    # The member's own requests should feel the change at once, not after the short memory of the check.
+    forget_viewer(row["name"])
 
     # Deactivation: send DM + remove from all events
     if body.is_active is False and row.get("is_active") is not False:
-        if row.get("name"):
-            _remove_user_from_all_events(row["name"])
-        if row.get("allow_dm", True) and row.get("discord_id"):
-            try:
-                discord_bot.send_deactivated_dm(settings.discord_bot_token, row["discord_id"])
-            except Exception as e:
-                logger.warning("Failed to send deactivation DM to %s: %s", row.get("discord_id"), e)
+        _after_deactivation(row, settings)
 
 
 @router.delete(AdminRoutes.USER_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
@@ -320,7 +407,7 @@ def admin_delete_user(
     settings: Settings = Depends(get_settings),
 ) -> None:
     try:
-        current = supabase.table(Tables.PROFILES).select("name, discord_id, email, allow_dm").eq("id", user_id).execute()
+        current = supabase.table(Tables.PROFILES).select("name, discord_id, email, allow_dm, aliases").eq("id", user_id).execute()
     except Exception as e:
         logger.error("Failed to fetch user %s for deletion: %s", user_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
@@ -330,7 +417,7 @@ def admin_delete_user(
     row = current.data[0]
 
     if row.get("name"):
-        _remove_user_from_all_events(row["name"])
+        _remove_user_from_all_events(row["name"], row.get("aliases"))
 
     try:
         supabase.table(Tables.PROFILES).delete().eq("id", user_id).execute()
@@ -354,7 +441,7 @@ def admin_bulk_delete_users(
 ) -> None:
     for user_id in body.user_ids:
         try:
-            current = supabase.table(Tables.PROFILES).select("name, discord_id, email, allow_dm").eq("id", user_id).execute()
+            current = supabase.table(Tables.PROFILES).select("name, discord_id, email, allow_dm, aliases").eq("id", user_id).execute()
         except Exception as e:
             logger.error("Failed to fetch user %s during bulk delete: %s", user_id, e)
             continue
@@ -362,7 +449,7 @@ def admin_bulk_delete_users(
             continue
         row = current.data[0]
         if row.get("name"):
-            _remove_user_from_all_events(row["name"])
+            _remove_user_from_all_events(row["name"], row.get("aliases"))
         try:
             supabase.table(Tables.PROFILES).delete().eq("id", user_id).execute()
         except Exception as e:
@@ -377,12 +464,25 @@ def admin_bulk_delete_users(
 
 
 @router.post(AdminRoutes.USERS_BULK_DEACTIVATE, status_code=status.HTTP_204_NO_CONTENT)
-def admin_bulk_deactivate_users(body: BulkDeactivateUsersRequest, _: str = Depends(get_admin_user)) -> None:
+def admin_bulk_deactivate_users(
+    body: BulkDeactivateUsersRequest,
+    _: str = Depends(get_admin_user),
+    settings: Settings = Depends(get_settings),
+) -> None:
+    """The same as deactivating each member in their edit sheet: no more login, off every list, a message on Discord."""
     for user_id in body.user_ids:
         try:
+            current = supabase.table(Tables.PROFILES).select("name, discord_id, is_active, allow_dm, aliases").eq("id", user_id).execute()
+            if not current.data:
+                continue
+            row = current.data[0]
             supabase.table(Tables.PROFILES).update({"is_active": False}).eq("id", user_id).execute()
         except Exception as e:
             logger.error("Failed to deactivate user %s: %s", user_id, e)
+            continue
+        forget_viewer(row["name"])
+        if row.get("is_active") is not False:
+            _after_deactivation(row, settings)
 
 
 # ── Whitelist ──────────────────────────────────────────────────────────────────
@@ -410,7 +510,7 @@ def admin_create_whitelist_entry(body: CreateWhitelistEntryRequest, _: str = Dep
     try:
         resp = (
             supabase.table(Tables.WHITELIST)
-            .insert({"discord_id": body.discord_id, "email": body.email})
+            .insert({"discord_id": body.discord_id, "email": body.email, **({"viewer": True} if body.viewer else {})})
             .execute()
         )
         return resp.data[0]
@@ -573,10 +673,17 @@ async def admin_update_meal(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Maaltijd niet gevonden.")
 
 
+def _delete_meal(meal_id: str) -> None:
+    """The ride to a restaurant only exists for its meal (the foreign key would just blank the link and leave
+    a ride nobody can place, with people still in its cars), so it goes first, as in the member's own delete."""
+    supabase.table(Tables.RIDES).delete().eq("direction", "Restaurant").eq("linked_meal_id", meal_id).execute()
+    supabase.table(Tables.MEALS).delete().eq("id", meal_id).execute()
+
+
 @router.delete(AdminRoutes.MEAL_DETAIL, status_code=status.HTTP_204_NO_CONTENT)
 def admin_delete_meal(meal_id: str, _: str = Depends(get_admin_user)) -> None:
     try:
-        supabase.table(Tables.MEALS).delete().eq("id", meal_id).execute()
+        _delete_meal(meal_id)
     except Exception as e:
         logger.error("Failed to delete meal %s: %s", meal_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
@@ -586,7 +693,7 @@ def admin_delete_meal(meal_id: str, _: str = Depends(get_admin_user)) -> None:
 def admin_bulk_delete_meals(body: BulkDeleteMealsRequest, _: str = Depends(get_admin_user)) -> None:
     for meal_id in body.meal_ids:
         try:
-            supabase.table(Tables.MEALS).delete().eq("id", meal_id).execute()
+            _delete_meal(meal_id)
         except Exception as e:
             logger.error("Failed to delete meal %s during bulk delete: %s", meal_id, e)
 
@@ -901,6 +1008,7 @@ def admin_bulk_rsvp_event(day_id: str, body: BulkRsvpRequest, _: str = Depends(g
 # ── Hotel Rooms (admin) ──────────────────────────────────────────────────────────
 # event_id here is an event_days id, same as the user-facing hotel-rooms
 # page already sends — _hotel_group_key resolves it to the real parent.
+# Editing a room is not here: any member may (`update_hotel_room` in routers/calendar.py).
 
 @router.get(AdminRoutes.EVENT_HOTEL_ROOMS, response_model=list[HotelRoom])
 def admin_list_hotel_rooms(event_id: str, _: str = Depends(get_admin_user)) -> list[HotelRoom]:
@@ -910,30 +1018,6 @@ def admin_list_hotel_rooms(event_id: str, _: str = Depends(get_admin_user)) -> l
     except Exception as e:
         logger.error("Failed to list hotel rooms for event %s: %s", event_id, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-
-
-@router.put(AdminRoutes.EVENT_HOTEL_ROOM, status_code=status.HTTP_204_NO_CONTENT)
-def admin_update_hotel_room(
-    event_id: str,
-    room_id: str,
-    body: AdminUpdateHotelRoomRequest,
-    _: str = Depends(get_admin_user),
-) -> None:
-    updates: dict = {}
-    for field, value in body.model_dump(exclude_unset=False).items():
-        if field in body.model_fields_set:
-            updates[field] = value
-        elif value is not None:
-            updates[field] = value
-    if not updates:
-        return
-    try:
-        resp = supabase.table(Tables.HOTEL_ROOMS).update(updates).eq("id", room_id).execute()
-    except Exception as e:
-        logger.error("Failed to update hotel room %s: %s", room_id, e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_DB_ERROR)
-    if not resp.data:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kamer niet gevonden.")
 
 
 @router.delete(AdminRoutes.EVENT_HOTEL_ROOM, status_code=status.HTTP_204_NO_CONTENT)
@@ -1341,11 +1425,29 @@ def admin_delete_changelog_entry(entry_id: str, _: str = Depends(get_admin_user)
 
 # ── Image uploads ──────────────────────────────────────────────────────────────
 
+# An event cover is shown across a phone screen on the Hub, the agenda and the recap, and is usually
+# straight from a camera: stored at up to 1600 px of WebP, not as the 10 MB it came as.
+_COVER_MAX_SIDE = 1600
+
+
 def _store_admin_image(kind: str, folder: str, content: bytes) -> dict:
+    received = len(content)
+    started = time.perf_counter()
     content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP"})
+    if kind == "event-cover":
+        shrunk = shrink_image(content, max_side=_COVER_MAX_SIDE)
+        if shrunk:
+            content, content_type, ext = shrunk
+    processed = time.perf_counter()
     key = f"{folder}/{uuid.uuid4().hex}.{ext}"
     try:
-        return {"url": minio_client.upload_bytes(key, content, content_type)}
+        url = minio_client.upload_bytes(key, content, content_type)
+        # Where a slow upload spends its time, when somebody asks: the browser's own upload is the part before this.
+        logger.info(
+            "Stored a %s: %d KB received, %d KB stored, %.2fs processing, %.2fs storing",
+            kind, received // 1024, len(content) // 1024, processed - started, time.perf_counter() - processed,
+        )
+        return {"url": url}
     except RuntimeError as e:
         logger.error("%s upload failed (MinIO not configured): %s", kind, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
@@ -1490,7 +1592,7 @@ def _cdn_objects(kind: Optional[str], event: Optional[str]) -> tuple[list[dict],
     """The bucket's objects, each tagged with its kind. Raises the 503 the CDN
     endpoints share when the bucket cannot be read."""
     if event is not None and not _EVENT_ID.match(event):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ongeldig event.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ongeldig evenement.")
     try:
         objects, capped = minio_client.list_all_objects()
     except RuntimeError as e:
@@ -1501,6 +1603,9 @@ def _cdn_objects(kind: Optional[str], event: Optional[str]) -> tuple[list[dict],
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="De bucket kon niet worden uitgelezen. Controleer of MinIO bereikbaar is en de sleutel mag lijsten.",
         )
+    # A story photo's thumbnail, preview and video poster belong to it: they are made and removed with it,
+    # so they are not listed (or zipped, or counted) as files of their own.
+    objects = [o for o in objects if not is_derivative(o["key"])]
     for o in objects:
         o["kind"] = _cdn_kind(o["key"])
     return objects, capped
@@ -1572,7 +1677,7 @@ def admin_download_cdn(
     if len(chosen) > _ZIP_MAX_FILES or sum(o["size"] for o in chosen) > _ZIP_MAX_BYTES:
         raise HTTPException(
             status_code=413,
-            detail="Dit is te veel voor één zip. Kies eerst een onderdeel (of een event) en download die apart.",
+            detail="Dit is te veel voor één zip. Kies eerst een onderdeel (of een evenement) en download die apart.",
         )
     logger.warning("CDN: admin %s downloads %d files (kind=%s, event=%s)", admin, len(chosen), kind, event)
     label = "-".join(p for p in ("cdn", kind, event[:8] if event else None) if p)
@@ -1583,7 +1688,7 @@ def admin_download_cdn(
     )
 
 
-def _forget_file(key: str, url: str) -> None:
+def _forget_file(key: str, url: str) -> list[str]:
     """Take every reference to a file out of the database before it is deleted,
     so nothing is left pointing at an image that is gone. A badge cannot do
     without its image, so a file a badge still uses is refused instead."""
@@ -1593,6 +1698,12 @@ def _forget_file(key: str, url: str) -> None:
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Deze afbeelding is het plaatje van de badge \"{badge[0]['name']}\". Vervang eerst de afbeelding van de badge.",
         )
+    # The lighter copies of a story photo go with it (read before its row is deleted).
+    derived = [
+        _key_of_url(u)
+        for row in supabase.table(Tables.STORY_PHOTOS).select("*").eq("image_url", url).execute().data or []
+        for u in derivative_urls(row)
+    ]
     supabase.table(Tables.STORY_PHOTOS).delete().eq("image_url", url).execute()
     supabase.table(Tables.EVENTS).update({"image_url": None}).eq("image_url", url).execute()
     supabase.table(Tables.PROFILES).update({"banner_url": None, "banner_position": None}).eq("banner_url", url).execute()
@@ -1600,6 +1711,11 @@ def _forget_file(key: str, url: str) -> None:
     for row in supabase.table(Tables.COSPLAYS).select("id, inspo_images").overlaps("inspo_images", [url]).execute().data or []:
         kept = [u for u in (row.get("inspo_images") or []) if u != url]
         supabase.table(Tables.COSPLAYS).update({"inspo_images": kept}).eq("id", row["id"]).execute()
+    return derived
+
+
+def _key_of_url(url: str) -> str:
+    return url.split(f"/{get_settings().minio_bucket}/", 1)[-1]
 
 
 @router.delete(AdminRoutes.CDN, status_code=status.HTTP_204_NO_CONTENT)
@@ -1617,7 +1733,7 @@ def admin_delete_cdn_file(
         logger.error("CDN delete: MinIO not configured: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Opslag is niet ingesteld.")
     try:
-        _forget_file(key, url)
+        derived = _forget_file(key, url)
     except HTTPException:
         raise
     except Exception as e:
@@ -1628,4 +1744,12 @@ def admin_delete_cdn_file(
     except Exception as e:
         logger.error("CDN delete of %s failed: %s", key, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Verwijderen mislukt. Probeer het opnieuw.")
+    # The ones the database named, and (a story file whose row is already gone, say after its event was deleted,
+    # names nothing) the ones its file name implies.
+    extras = list(dict.fromkeys([*derived, *(derivative_keys_by_name(key) if _cdn_kind(key) == "story" else [])]))
+    for extra in extras:
+        try:
+            minio_client.delete_object(extra)
+        except Exception:
+            pass
     logger.warning("CDN: admin %s deleted %s", admin, key)

@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import {
   Car,
-  Plus,
   UserMinus,
   AlertCircle,
   CheckCircle2,
@@ -12,7 +11,8 @@ import {
 import { Button } from "../common/Button";
 import { TripSheet } from "../trip/TripSheet";
 import { NamePicker } from "../common/NamePicker";
-import { UserAvatar } from "../common/UserAvatar";
+import { SeatPicker } from "../common/SeatPicker";
+import { AvatarStack } from "../common/AvatarStack";
 import { CarCard } from "./CarCard";
 import {
   useClaimSeat,
@@ -25,8 +25,10 @@ import {
 import { useRestaurantCars } from "../../hooks/useRestaurantCars";
 import { exportRideToIcs } from "../../utils/ics";
 import { getRideStatus } from "../../utils/rides";
+import { restaurantCarGaps } from "../../utils/restaurantCars";
 import { toast } from "../../store/toast.store";
 import type { Meal, Ride, User } from "../../types";
+import { EmptyState } from "../common/EmptyState";
 
 interface Props {
   ride: Ride;
@@ -38,7 +40,7 @@ interface Props {
 export function RestaurantDetailActions({
   ride,
   userNames,
-  users: _users,
+  users,
   linkedMeal,
 }: Props) {
   const [driverOpen, setDriverOpen] = useState(false);
@@ -64,10 +66,8 @@ export function RestaurantDetailActions({
   const drivers = ride.restaurant_drivers ?? [];
   const attendees = linkedMeal ? (linkedMeal.participants ?? []) : ride.passengers;
   const driverNames = new Set(drivers.map((d) => d.name));
-  const assignedPax = new Set(drivers.flatMap((d) => d.passengers));
-  const unassigned = attendees.filter(
-    (a) => !driverNames.has(a) && !assignedPax.has(a),
-  );
+  // People, not names: the same worked out for the Hub and the Vervoer sheet (`restaurantCarGaps`).
+  const { unassigned, hasPassengers } = restaurantCarGaps(attendees, drivers, users);
   const allParticipants = Array.from(
     new Set([...attendees, ...drivers.map((d) => d.name)]),
   );
@@ -151,28 +151,19 @@ export function RestaurantDetailActions({
     }
   }
 
-  const hasGap = unassigned.length > 0 && drivers.length > 0;
   const allClear =
     drivers.length > 0 &&
-    attendees.filter((a) => !driverNames.has(a)).length > 0 &&
+    hasPassengers &&
     unassigned.length === 0;
 
   return (
     <>
       <div className="space-y-4">
-        {/* Status strip */}
-        {hasGap && canAct && (
-          <div className="flex items-center gap-2 rounded-xl border-1.5 border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-300">
-            <AlertCircle size={15} className="shrink-0" />
-            {unassigned.length}{" "}
-            {unassigned.length === 1 ? "persoon heeft" : "personen hebben"} nog
-            geen rit — wijs ze toe!
-          </div>
-        )}
+        {/* Everyone has a car: the one good-news line. (Who still has none is the box under the cars.) */}
         {allClear && canAct && (
-          <div className="flex items-center gap-2 rounded-xl border-1.5 border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-300">
-            <CheckCircle2 size={15} className="shrink-0" />
-            Iedereen heeft een rit — alles geregeld!
+          <div className="notice-ok flex items-center gap-2 px-4 py-3 text-sm font-semibold text-ok">
+            <CheckCircle2 size={16} className="shrink-0" />
+            Iedereen heeft een auto.
           </div>
         )}
 
@@ -200,9 +191,9 @@ export function RestaurantDetailActions({
                       setLeaveName("");
                       setLeaveOpen(true);
                     }}
-                    className="flex h-9 items-center gap-1.5 rounded-xl border-1.5 border-line px-3 text-xs font-semibold text-ink transition-colors hover:border-ink-3"
+                    className="btn-primary btn-compact px-3.5"
                   >
-                    <UserMinus size={13} /> Afmelden
+                    <UserMinus size={14} /> Afmelden
                   </button>
                 )}
                 {canAct && (
@@ -212,9 +203,9 @@ export function RestaurantDetailActions({
                       setDriverName("");
                       setDriverOpen(true);
                     }}
-                    className="btn-primary h-9 px-3.5 text-xs"
+                    className="btn-primary btn-compact px-3.5"
                   >
-                    <Car size={13} /> Ik rijd
+                    <Car size={14} /> Ik rijd
                   </button>
                 )}
               </div>
@@ -222,30 +213,25 @@ export function RestaurantDetailActions({
 
             {/* Car cards */}
             {drivers.length === 0 ? (
-              <div className="flex flex-col items-center gap-4 py-10 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
-                  <Car size={22} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-ink">
-                    Nog geen auto's aangemeld
-                  </p>
-                  <p className="mt-1 text-xs text-ink-3">
-                    Wie rijdt er mee naar {ride.start_location}?
-                  </p>
-                </div>
-                {canAct && (
-                  <Button
-                    onClick={() => {
-                      setDriverName("");
-                      setDriverOpen(true);
-                    }}
-                  >
-                    <Car size={15} />
-                    Eerste auto aanmelden
-                  </Button>
-                )}
-              </div>
+              <EmptyState
+                compact
+                icon={<Car size={22} />}
+                title="Nog geen auto's aangemeld"
+                description={`Wie rijdt er mee naar ${ride.start_location}?`}
+                action={
+                  canAct && (
+                    <Button
+                      onClick={() => {
+                        setDriverName("");
+                        setDriverOpen(true);
+                      }}
+                    >
+                      <Car size={16} />
+                      Eerste auto aanmelden
+                    </Button>
+                  )
+                }
+              />
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <AnimatePresence mode="popLayout">
@@ -260,57 +246,39 @@ export function RestaurantDetailActions({
                       isPending={isMutating}
                     />
                   ))}
-                  {canAct && (
-                    <motion.button
-                      key="add-car"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      onClick={() => {
-                        setDriverName("");
-                        setDriverOpen(true);
-                      }}
-                      className="flex min-h-[100px] cursor-pointer flex-col items-center justify-center gap-2 rounded-[12px] border-1.5 border-dashed border-line py-8
-                                 text-ink-3 transition-colors hover:border-ink-3 hover:text-ink"
-                    >
-                      <Plus size={20} />
-                      <span className="text-xs font-semibold">
-                        Auto toevoegen
-                      </span>
-                    </motion.button>
-                  )}
                 </AnimatePresence>
               </div>
             )}
           </div>
         </div>
 
-        {/* Zonder rit strip */}
+        {/* Who has no car yet */}
         {unassigned.length > 0 && (
-          <div className="space-y-3 rounded-xl border-1.5 border-dashed border-rose-300 bg-rose-50 px-4 py-3.5 dark:border-rose-400/40 dark:bg-rose-500/10">
+          <div className="notice-warn space-y-3 px-4 py-3.5">
             <div className="flex items-center gap-2">
-              <AlertCircle size={16} className="shrink-0 text-rose-700 dark:text-rose-300" />
-              <p className="text-sm font-semibold leading-tight text-rose-800 dark:text-rose-300">
+              <AlertCircle size={16} className="shrink-0 text-warn" />
+              <p className="text-sm font-semibold leading-tight text-ink">
                 {unassigned.length}{" "}
                 {unassigned.length === 1 ? "persoon heeft" : "personen hebben"}{" "}
                 nog geen auto
               </p>
             </div>
             <div className="space-y-2">
-              {unassigned.map((name) => (
-                <div key={name} className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <UserAvatar name={name} className="h-6 w-6 shrink-0 text-[8px] !border-0" />
-                    <span className="truncate text-sm font-semibold text-ink">{name}</span>
+              {unassigned.map((person) => (
+                <div key={person.name} className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <AvatarStack names={[person.name]} size="sm" ringClass="!border-0" />
+                    <span className="truncate text-sm font-semibold text-ink">{person.name}</span>
                   </div>
                   {canAct && drivers.length > 0 && (
                     <button
                       type="button"
                       onClick={() => {
-                        setAssignPersonName(name);
+                        setAssignPersonName(person.names[0]);
                         setAssignPersonDriver("");
                         setAssignPersonOpen(true);
                       }}
-                      className="shrink-0 rounded-lg border-1.5 border-rose-300 bg-surface px-2.5 py-1 text-xs font-semibold text-rose-700 transition-colors hover:border-rose-500 dark:border-rose-400/40 dark:text-rose-300 dark:hover:border-rose-400"
+                      className="btn-primary shrink-0 px-3"
                     >
                       Wijs toe
                     </button>
@@ -324,7 +292,7 @@ export function RestaurantDetailActions({
         {/* Calendar export */}
         <button
           onClick={() => exportRideToIcs(ride)}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border-1.5 border-line bg-surface px-4 py-3 text-xs font-semibold text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
+          className="btn-primary w-full px-4"
         >
           <CalendarPlus size={14} />
           Toevoegen aan kalender
@@ -347,30 +315,14 @@ export function RestaurantDetailActions({
             className="w-full"
             disabled={!driverName.trim()}
           >
-            <Car size={15} />
+            <Car size={16} />
             {driverName.trim() ? `${driverName} rijdt met ${driverSeats} plaatsen` : "Selecteer een naam"}
           </Button>
         }
       >
         <div className="space-y-4">
           <NamePicker options={userNames} value={driverName} onChange={setDriverName} color="sky" />
-          <div>
-            <label className="section-label mb-2 block">Totaal aantal plekken in je auto</label>
-            <div className="flex gap-2">
-              {[2, 3, 4, 5, 6, 7].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setDriverSeats(n)}
-                  aria-pressed={driverSeats === n}
-                  className={`flex h-10 flex-1 items-center justify-center rounded-xl font-mono text-sm font-semibold tabular-nums transition-colors ${driverSeats === n ? "border-2 border-outline bg-brand text-brand-on" : "border-1.5 border-line bg-surface text-ink-2 hover:border-ink-3"}`}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
-            <p className="mt-1.5 text-xs text-ink-3">Incl. de chauffeur</p>
-          </div>
+          <SeatPicker value={driverSeats} onChange={setDriverSeats} />
         </div>
       </TripSheet>
 
@@ -411,7 +363,7 @@ export function RestaurantDetailActions({
             className="w-full"
             disabled={!assignPersonDriver}
           >
-            <ArrowRight size={15} />
+            <ArrowRight size={16} />
             {assignPersonDriver ? `${assignPersonName} → ${assignPersonDriver}` : "Selecteer een auto"}
           </Button>
         }
@@ -429,7 +381,7 @@ export function RestaurantDetailActions({
                 aria-pressed={isSelected}
                 className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-left transition-colors ${
                   isSelected
-                    ? "border-1.5 border-outline bg-sunken"
+                    ? "border-1.5 border-outline bg-brand-soft"
                     : isFull
                     ? "cursor-not-allowed border-1.5 border-line opacity-50"
                     : "cursor-pointer border-1.5 border-line hover:border-ink-3"
@@ -439,7 +391,7 @@ export function RestaurantDetailActions({
                   <Car size={14} className={isSelected ? "text-ink" : "text-ink-3"} />
                   <span className="font-semibold text-ink">{d.name}</span>
                 </div>
-                <span className={`font-mono text-xs font-semibold tabular-nums ${isFull ? "text-rose-700 dark:text-rose-300" : "text-emerald-700 dark:text-emerald-300"}`}>
+                <span className={`font-mono text-xs font-semibold tabular-nums ${isFull ? "text-bad" : "text-ok"}`}>
                   {d.passengers.length}/{d.seats} {isFull ? "vol" : "vrij"}
                 </span>
               </button>

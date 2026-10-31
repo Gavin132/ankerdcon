@@ -31,24 +31,22 @@ export function SelectableDayCards({ days, selected, onToggle, caption, label = 
             type="button"
             onClick={() => onToggle(ev.id)}
             aria-pressed={on}
-            aria-label={`${dayShort(date)} ${date.getDate()}: ${on ? "gekozen" : "niet gekozen"}`}
-            className={`relative min-w-0 rounded-[10px] border-1.5 px-1.5 pb-2 pt-3 text-center transition-[colors,transform] hover:border-ink-3 active:scale-[0.97] ${
-              on ? "border-brand-text bg-brand-soft" : `border-line ${travel ? "bg-hatch-surface" : "bg-surface"}`
+            aria-label={`${dayShort(date)} ${date.getDate()} ${monthShort(date)}: ${on ? "gekozen" : "niet gekozen"}`}
+            className={`relative min-w-0 rounded-xl border-1.5 px-1.5 pb-2 pt-5 text-center transition-colors hover:border-ink-3 ${
+              on ? "border-outline bg-brand-soft" : `border-line ${travel ? "bg-hatch-surface" : "bg-surface"}`
             }`}
           >
             <span
               aria-hidden
-              className={`absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full border-1.5 ${
-                on ? "border-brand-text bg-brand text-brand-on" : "border-ink-3 bg-surface"
+              className={`absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full border-1.5 ${
+                on ? "border-outline bg-brand text-brand-on" : "border-ink-3 bg-surface"
               }`}
             >
-              {on && <Check size={9} strokeWidth={3} />}
+              {on && <Check size={12} strokeWidth={3} />}
             </span>
-            <span className="block font-mono text-[10px] uppercase leading-none tracking-[0.08em] text-ink-3">
-              {dayShort(date)} {monthShort(date)}
-            </span>
+            <span className="block text-[12px] capitalize leading-none text-ink-3">{dayShort(date)}</span>
             <span className="block font-display text-[26px] font-extrabold leading-none text-ink">{date.getDate()}</span>
-            <span className="mt-1 block truncate text-[11.5px] leading-none text-ink-2">
+            <span className="mt-1 block truncate text-[12px] leading-none text-ink-2">
               {caption ? caption(day) : travel ? "Reisdag" : ev.event_name}
             </span>
           </button>

@@ -48,7 +48,7 @@ export function usePendingStoryUploadsFlusher() {
 
         for (const item of items) {
           try {
-            await uploadStoryPhoto(item.eventDayId, item.blob);
+            await uploadStoryPhoto(item.eventDayId, item.blob, item.takenOn);
             await usePendingStoryUploadsStore.getState().remove(item.id);
             sentDays.add(item.eventDayId);
           } catch (err) {

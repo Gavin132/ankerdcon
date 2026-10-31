@@ -27,7 +27,7 @@ function formatOverride(d: Date): string {
  * Lives in the app chrome instead of floating over content: `sidebar` is a row
  * at the bottom of the desktop sidebar (icon only on the tablet rail), `icon`
  * a top-bar button. Both turn amber while a time override is active. Renders
- * nothing unless the widget is switched on (Admin › Tijdreis-widget) and the
+ * nothing unless the widget is switched on (Admin › Tijdreis) and the
  * user is an admin.
  */
 export function TimeTravelControl({ variant }: { variant: "sidebar" | "icon" }) {
@@ -70,14 +70,14 @@ export function TimeTravelControl({ variant }: { variant: "sidebar" | "icon" }) 
           aria-label="Tijdreizen (testtool)"
           className={`flex w-full items-center justify-center gap-2.5 rounded-lg p-2.5 text-left transition-colors lg:justify-start lg:px-2.5 lg:py-2 ${
             override
-              ? "bg-amber-100 text-amber-900 hover:bg-amber-200 dark:bg-amber-500/15 dark:text-amber-200 dark:hover:bg-amber-500/25"
+              ? "bg-warn-soft text-warn hover:bg-warn-line/60"
               : "text-ink-2 hover:bg-sunken hover:text-ink"
           }`}
         >
-          <Clock size={19} className="shrink-0 lg:h-4 lg:w-4" />
+          <Clock size={20} className="shrink-0 lg:h-4 lg:w-4" />
           <span className="hidden min-w-0 flex-1 lg:block">
             <span className="block text-[14px] font-medium leading-tight">Tijdreizen</span>
-            <span className="block truncate font-mono text-[10.5px] leading-tight opacity-80">
+            <span className="block truncate font-mono text-[12px] leading-tight opacity-80">
               {override ? formatOverride(override) : "Echte tijd"}
             </span>
           </span>
@@ -88,15 +88,15 @@ export function TimeTravelControl({ variant }: { variant: "sidebar" | "icon" }) 
           onClick={openPanel}
           title={override ? `Tijdreizen: ${formatOverride(override)}` : "Tijdreizen (testtool)"}
           aria-label="Tijdreizen (testtool)"
-          className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
+          className={`hit-area relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
             override
-              ? "bg-amber-100 text-amber-900 dark:bg-amber-500/15 dark:text-amber-200"
+              ? "bg-warn-soft text-warn"
               : "text-ink-2 hover:bg-sunken hover:text-ink"
           }`}
         >
-          <Clock size={17} />
+          <Clock size={16} />
           {override && (
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-1.5 border-surface bg-amber-500" />
+            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-1.5 border-surface bg-warn-fill" />
           )}
         </button>
       )}
@@ -165,7 +165,7 @@ export function TimeTravelControl({ variant }: { variant: "sidebar" | "icon" }) 
             type="button"
             onClick={() => { setOverride(null); setOpen(false); }}
             disabled={!override}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border-1.5 border-line bg-surface py-2.5 text-sm font-semibold text-ink-2 hover:border-ink-3 hover:text-ink disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="btn-primary w-full"
           >
             <RotateCcw size={14} />
             Terug naar echte tijd

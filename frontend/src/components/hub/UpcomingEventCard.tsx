@@ -1,9 +1,14 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BedDouble, CalendarDays, MapPin, Music2, PartyPopper, Utensils } from "lucide-react";
+import { BedDouble, Globe, MapPin, Music2, PartyPopper, Utensils } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
-import { formatDate } from "../../utils/format";
-import { dayShort, monthShort } from "../../utils/multiDay";
+import { AvatarStack } from "../common/AvatarStack";
+import { InfoChip } from "../common/InfoChip";
+import { parseEventDate, todayKey, toDateKey } from "../../utils/date";
+import { formatDate, mapsUrl, siteLabel } from "../../utils/format";
+import { safeHref } from "../../utils/validation";
+import { dayShort, formatDateRange } from "../../utils/multiDay";
+import { findUser as findMember, groupPeople } from "../../utils/people";
 import type { CalendarEvent, Meal, User } from "../../types";
 import type { AnchorRect } from "../common/UserProfilePopup";
 
@@ -14,10 +19,10 @@ export type EventUrgency = "today" | "tomorrow" | "normal";
 function Chip({ children, tone = "plain" }: { children: React.ReactNode; tone?: "plain" | "live" }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-[3px] text-[10.5px] font-semibold ${
+      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-[3px] text-[12px] font-semibold ${
         tone === "live"
           ? "border-brand bg-brand text-brand-on"
-          : "border-white/25 bg-white/10 text-[#E6F0F3]"
+          : "border-hero-ink/25 bg-hero-ink/10 text-hero-ink"
       }`}
     >
       {children}
@@ -25,20 +30,29 @@ function Chip({ children, tone = "plain" }: { children: React.ReactNode; tone?: 
   );
 }
 
-/** The brand-blue tear-off stub with the countdown. Beside the ticket from sm, below it on phones. */
-function Stub({ urgency, daysUntil, dayCount }: { urgency: EventUrgency; daysUntil: number; dayCount: number }) {
-  const label = urgency === "today" ? "Vandaag" : "Nog";
-  const big = urgency === "today" ? "Nu" : String(daysUntil);
-  const unit = urgency === "today" ? "bezig" : daysUntil === 1 ? "dag" : "dagen";
+/**
+ * The brand-blue tear-off stub with the countdown. Beside the ticket from sm, below it on phones. Today it says
+ * "Vandaag" (events have a date, not a start time, so it cannot say that it has begun); once a multi-day trip is
+ * under way it says "Nu bezig" and which day it is.
+ */
+function Stub({ urgency, daysUntil, dayCount, dayNumber }: { urgency: EventUrgency; daysUntil: number; dayCount: number; dayNumber: number | null }) {
+  const today = urgency === "today";
+  const underway = today && dayNumber !== null && dayNumber > 1;
+  const big = underway ? "Nu" : today ? "Vandaag" : String(daysUntil);
+  const unit = underway ? "bezig" : today ? "" : daysUntil === 1 ? "dag" : "dagen";
+  // Only while under way: how many days the trip lasts is on the card itself, and "nog 285 dagen" needs no second "3 dagen".
+  const sub = underway ? `dag ${dayNumber} van ${dayCount}` : "";
 
   return (
     <div className="flex items-center justify-center gap-3 border-t-2 border-dashed border-outline bg-brand px-4 py-2.5 text-brand-on sm:flex-col sm:gap-2 sm:border-l-2 sm:border-t-0 sm:px-4 sm:py-5 sm:text-center">
-      <span className="text-[11px] font-semibold">{label}</span>
-      <span className="font-display text-[52px] font-black leading-[0.8] sm:text-[88px]">{big}</span>
-      <span className="text-[11px] leading-snug sm:w-full sm:border-t-1.5 sm:border-ink/35 sm:pt-2 dark:sm:border-[#0F1519]/35">
-        <b className="block text-[13px]">{unit}</b>
-        {dayCount > 1 ? `${dayCount} dagen event` : "1 dag event"}
-      </span>
+      {!today && <span className="text-[12px] font-semibold">Nog</span>}
+      <span className={`font-display font-black leading-[0.8] ${big.length > 3 ? "text-[34px] sm:text-[38px]" : "text-[52px] sm:text-[88px]"}`}>{big}</span>
+      {(unit || sub) && (
+        <span className={`text-[12px] leading-snug ${sub ? "sm:w-full sm:border-t-1.5 sm:border-brand-on/35 sm:pt-2" : ""}`}>
+          {unit && <b className="block text-[13px]">{unit}</b>}
+          {sub}
+        </span>
+      )}
     </div>
   );
 }
@@ -91,31 +105,38 @@ export function UpcomingEventCard({
   const coverImage = dayEvents.map((ev) => ev.image_url).find(Boolean) ?? null;
   const description = dayEvents.map((ev) => ev.description).find(Boolean) ?? null;
   const location = dayEvents.map((ev) => ev.location).find(Boolean) ?? null;
+  const websiteUrl = safeHref(dayEvents.map((ev) => ev.website).find(Boolean));
   const isHotel = dayEvents.some((ev) => ev.is_hotel);
   const eventType = dayEvents.find((ev) => ev.event_type)?.event_type ?? null;
   const isTravelOnly = !isGroupEvent && event.has_con === false && !event.event_type;
   const title = isGroupEvent ? groupTitle : event.event_name;
-  const when = isGroupEvent ? groupDateRange : formatDate(event.date);
-  const participants = [...new Set(dayEvents.flatMap((ev) => ev.participants ?? []))];
+  // The short form the other ticket cards use ("za 7 nov"); the long one only when the date cannot be read.
+  const eventDate = parseEventDate(event.date);
+  const when = isGroupEvent ? groupDateRange : eventDate ? formatDateRange([eventDate]) : formatDate(event.date);
+  // One person per entry, not per name they are signed up under (see utils/people.ts).
+  const participants = groupPeople(dayEvents.flatMap((ev) => ev.participants ?? []), users).map((person) => person.name);
+
+  // Which day of the trip it is today (null when it is not under way), counted over all of its days.
+  const dayNumber = isGroupEvent ? days.filter((d) => d.date && toDateKey(d.date) <= todayKey()).length : null;
 
   function findUser(p: string) {
-    return users.find((u) => u.name === p || u.discord_username === p || u.aliases?.includes(p));
+    return findMember(users, p);
   }
 
   return (
     // `relative`: the title link stretches over the whole card (its ::after), so tapping anywhere
     // opens the event; the buttons inside sit above it (`relative z-10`) and keep their own action.
-    <div className="relative grid h-full overflow-hidden rounded-[14px] border-2 border-outline bg-surface sm:grid-cols-[minmax(0,1fr)_152px]">
+    <div className="relative grid h-full grid-rows-[1fr_auto] overflow-hidden rounded-hero border-2 border-outline bg-surface sm:grid-cols-[minmax(0,1fr)_152px] sm:grid-rows-none">
       <div className="flex min-w-0 flex-col">
         {/* ── Cover ── */}
         <button
           type="button"
           onClick={() => onNavigate(event.id)}
-          className="relative h-16 overflow-hidden bg-[#0F1519] text-left sm:h-20"
+          className="relative h-16 overflow-hidden bg-hero text-left sm:h-20"
           aria-label={`Open ${title}`}
         >
           {coverImage ? (
-            <img src={coverImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" />
+            <img src={coverImage} alt="" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-70" />
           ) : (
             <span
               aria-hidden
@@ -126,36 +147,50 @@ export function UpcomingEventCard({
               }}
             />
           )}
-          <span aria-hidden className={`absolute inset-0 ${coverImage ? "bg-[#0F1519]/45" : ""}`} />
+          <span aria-hidden className={`absolute inset-0 ${coverImage ? "bg-hero/45" : ""}`} />
           <span className="absolute left-4 top-3 flex flex-wrap gap-1.5 sm:left-5 sm:top-4">
-            {urgency === "today" && <Chip tone="live">Vandaag</Chip>}
-            {urgency === "tomorrow" && <Chip>Morgen</Chip>}
             {isTravelOnly && <Chip>Reisdag</Chip>}
-            {isHotel && <Chip><BedDouble size={11} /> Hotel</Chip>}
-            {eventType === "gathering" && <Chip><PartyPopper size={11} /> Feestje</Chip>}
-            {eventType === "concert" && <Chip><Music2 size={11} /> Concert</Chip>}
+            {isHotel && <Chip><BedDouble size={12} /> Hotel</Chip>}
+            {eventType === "gathering" && <Chip><PartyPopper size={12} /> Feestje</Chip>}
+            {eventType === "concert" && <Chip><Music2 size={12} /> Concert</Chip>}
           </span>
         </button>
 
         {/* ── Body ── */}
         <div className="flex flex-1 flex-col gap-4 p-4 sm:px-6 sm:py-5">
-          <button
-            type="button"
-            onClick={() => onNavigate(event.id)}
-            className="group text-left after:absolute after:inset-0 after:z-0 after:content-['']"
-          >
-            <h2 className="font-display text-[30px] font-black uppercase leading-[0.92] tracking-[0.01em] text-ink group-hover:underline decoration-2 underline-offset-4 sm:text-[38px]">
-              {title}
-            </h2>
-            <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-2">
-              <span className="flex items-center gap-1.5"><CalendarDays size={13} className="shrink-0" /> {when}</span>
-              {location && <span className="flex min-w-0 items-center gap-1.5"><MapPin size={13} className="shrink-0" /> <span className="truncate">{location}</span></span>}
-              {!isGroupEvent && hasMeal(event.id) && <span className="flex items-center gap-1.5"><Utensils size={13} className="shrink-0" /> Activiteit gepland</span>}
-            </p>
-            {description && (
-              <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-ink-3">{description}</p>
+          <div>
+            <button
+              type="button"
+              onClick={() => onNavigate(event.id)}
+              className="group block text-left after:absolute after:inset-0 after:z-0 after:content-['']"
+            >
+              <span className="mb-1.5 block font-mono text-xs font-semibold text-ink">{when}</span>
+              <h2 className="font-display text-[30px] font-black uppercase leading-[0.92] tracking-[0.01em] text-ink group-hover:underline decoration-2 underline-offset-4 sm:text-[38px]">
+                {title}
+              </h2>
+            </button>
+            {/* Links, so they sit above the card-wide tap target (`z-10`) instead of inside the button. */}
+            {(location || websiteUrl || (!isGroupEvent && hasMeal(event.id))) && (
+              <div className="relative z-10 mt-2.5 flex flex-wrap items-center gap-2">
+                {location && <InfoChip icon={<MapPin size={14} />} href={mapsUrl(location)}>{location}</InfoChip>}
+                {websiteUrl && (
+                  <InfoChip
+                    icon={<Globe size={14} />}
+                    href={websiteUrl}
+                    external
+                    title={`Website van het evenement: ${websiteUrl}`}
+                    ariaLabel={`Website van het evenement, ${siteLabel(websiteUrl)} (opent in een nieuw tabblad)`}
+                  >
+                    Website
+                  </InfoChip>
+                )}
+                {!isGroupEvent && hasMeal(event.id) && <InfoChip icon={<Utensils size={14} />}>Activiteit gepland</InfoChip>}
+              </div>
             )}
-          </button>
+            {description && (
+              <p className="mt-3 line-clamp-2 text-[13px] leading-relaxed text-ink-3">{description}</p>
+            )}
+          </div>
 
           {/* Days of a multi-day trip — travel-only days are hatched */}
           {isGroupEvent && (
@@ -168,18 +203,18 @@ export function UpcomingEventCard({
                     type="button"
                     onClick={() => onNavigate(dayEv.id)}
                     title={dayEv.event_name}
-                    className={`relative z-10 min-w-0 rounded-[10px] border-1.5 border-line px-1.5 py-2 text-center transition-colors hover:border-ink-3 ${
+                    className={`relative z-10 min-w-0 rounded-xl border-1.5 border-line px-1.5 py-2 text-center transition-colors hover:border-ink-3 ${
                       isTravelDay ? "bg-hatch-surface" : "bg-surface"
                     }`}
                   >
-                    <span className="block text-[10px] leading-none text-ink-3">
-                      {dayShort(date)} {monthShort(date)}
+                    <span className="block text-[12px] capitalize leading-none text-ink-3" aria-label={formatDate(dayEv.date)}>
+                      {dayShort(date)}
                     </span>
                     <span className="block font-display text-[26px] font-extrabold leading-none text-ink">{date.getDate()}</span>
-                    <span className="mt-1 flex items-center justify-center gap-1 text-[11.5px] leading-none text-ink-2">
-                      {isTravelDay ? <BedDouble size={11} className="shrink-0" /> : null}
-                      {hasMeal(dayEv.id) && <Utensils size={11} className="shrink-0" />}
-                      <span className="truncate">{isTravelDay ? "Reisdag" : `${dayEv.participants.length} mee`}</span>
+                    <span className="mt-1 flex items-center justify-center gap-1 text-[12px] leading-none text-ink-2">
+                      {isTravelDay ? <BedDouble size={12} className="shrink-0" /> : null}
+                      {hasMeal(dayEv.id) && <Utensils size={12} className="shrink-0" />}
+                      <span className="truncate">{isTravelDay ? "Reisdag" : `${groupPeople(dayEv.participants ?? [], users).length} mee`}</span>
                     </span>
                   </button>
                 );
@@ -193,15 +228,10 @@ export function UpcomingEventCard({
               <button
                 type="button"
                 onClick={() => setParticipantsExpanded((v) => !v)}
-                className="relative z-10 inline-flex items-center gap-2 text-left"
+                className="hit-area relative z-10 inline-flex items-center gap-2 py-1 text-left"
                 aria-expanded={participantsExpanded}
               >
-                <span className="flex -space-x-1.5">
-                  {participants.slice(0, 5).map((p) => {
-                    const u = findUser(p);
-                    return <UserAvatar key={p} name={u?.name ?? p} user={u} className="h-6 w-6 text-[9px] !border-surface" />;
-                  })}
-                </span>
+                <AvatarStack names={dayEvents.flatMap((ev) => ev.participants ?? [])} size="sm" />
                 <span className="text-[13px] text-ink-2 hover:text-ink">
                   {participantsExpanded
                     ? "Verbergen"
@@ -247,7 +277,7 @@ export function UpcomingEventCard({
         </div>
       </div>
 
-      <Stub urgency={urgency} daysUntil={daysUntil} dayCount={days.length} />
+      <Stub urgency={urgency} daysUntil={daysUntil} dayCount={days.length} dayNumber={dayNumber} />
     </div>
   );
 }

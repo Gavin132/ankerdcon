@@ -12,9 +12,11 @@ import { buildTrip, currentTripId, tripRides } from "../utils/trips";
 import { todayKey, toDateKey } from "../utils/date";
 import { toast } from "../store/toast.store";
 import { useRouteAction } from "../hooks/useRouteAction";
+import { useIsViewer } from "../hooks/useIsViewer";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { UserProfilePopup, type AnchorRect } from "../components/common/UserProfilePopup";
 import { BadgeIcon } from "../components/common/BadgeIcon";
+import { EmptyState } from "../components/common/EmptyState";
 import { LocationPingDisplay } from "../components/common/LocationPingDisplay";
 import { isPingFresh, parsePing } from "../utils/locationPing";
 import { LocationPingModal } from "../components/hub/LocationPingModal";
@@ -37,6 +39,7 @@ const CrewMap = lazy(() => import("../components/crew/CrewMap"));
 
 /** Crew tab: everyone in the group, where people are right now, and a way to share your own location. */
 export function CrewPage() {
+  const viewer = useIsViewer();
   const [query, setQuery] = useState("");
   const [popupUser, setPopupUser] = useState<User | null>(null);
   const [anchorRect, setAnchorRect] = useState<AnchorRect>(CLOSED_RECT);
@@ -125,11 +128,9 @@ export function CrewPage() {
       {/* ── Waar is iedereen ─────────────────────────────────────────── */}
       <section className="card-surface overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-3.5 pb-3">
-          <p className="section-label flex items-center gap-1.5 whitespace-nowrap">
-            <MapPin size={12} />
-            Waar is iedereen
-          </p>
-          <div className="flex items-center gap-2">
+          <p className="section-label whitespace-nowrap">Waar is iedereen</p>
+          {!viewer && (
+          <div className="flex flex-wrap items-center gap-2">
             {/* aria-disabled instead of disabled: a disabled button swallows the
                 tap, and on a phone there is no hover tooltip to say why. */}
             <button
@@ -137,22 +138,21 @@ export function CrewPage() {
               onClick={openParking}
               aria-disabled={!!parkingBlockedReason}
               title={parkingBlockedReason ?? undefined}
-              className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-[13px] font-semibold transition-colors ${
-                parkingBlockedReason ? "text-ink-3 opacity-50" : "text-ink hover:border-ink-3"
-              }`}
+              className="btn-primary px-3 aria-disabled:opacity-60"
             >
-              <Car size={13} />
+              <Car size={14} />
               Parkeerplek
             </button>
             <button
               type="button"
               onClick={() => setPingOpen(true)}
-              className="flex items-center gap-1.5 whitespace-nowrap rounded-xl border-1.5 border-line bg-surface px-3 py-1.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-3"
+              className="btn-primary px-3"
             >
-              <MapPin size={13} />
+              <MapPin size={14} />
               Locatie pingen
             </button>
           </div>
+          )}
         </div>
         {/* Always mounted, not just when someone's pinned — the con/hotel/meal
             pins (see CrewMap) are worth showing on their own, and CrewMap
@@ -204,14 +204,18 @@ export function CrewPage() {
           )}
         </div>
 
-        <div className="relative px-4 pb-3">
-          <Search size={15} className="pointer-events-none absolute left-7 top-[calc(50%-6px)] -translate-y-1/2 text-ink-3" />
+        <div className="px-4 pb-3">
+          <div className="relative">
+          <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-3" />
           <input
             id="crew-search"
             type="search"
+            enterKeyHint="search"
+            autoCorrect="off"
+            autoCapitalize="off"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Zoek op naam, Discord of alias…"
+            placeholder="Zoek op naam of alias…"
             aria-label="Zoek leden"
             className="input-field pl-10 pr-9"
             autoComplete="off"
@@ -220,11 +224,12 @@ export function CrewPage() {
             <button
               onClick={() => setQuery("")}
               aria-label="Zoekopdracht wissen"
-              className="absolute right-6 top-[calc(50%-6px)] flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+              className="icon-btn absolute right-1 top-1/2 -translate-y-1/2"
             >
-              <X size={14} />
+              <X size={16} />
             </button>
           )}
+          </div>
         </div>
 
         {isLoading ? (
@@ -233,23 +238,20 @@ export function CrewPage() {
               <div key={i} className="flex animate-pulse items-center gap-3 border-b border-line px-4 py-2.5 sm:odd:border-r">
                 <div className="h-9 w-9 shrink-0 rounded-full bg-sunken" />
                 <div className="flex-1 space-y-1.5">
-                  <div className="h-3 w-24 rounded bg-sunken" />
-                  <div className="h-2.5 w-16 rounded bg-sunken" />
+                  <div className="h-3 w-24 rounded-md bg-sunken" />
+                  <div className="h-2.5 w-16 rounded-md bg-sunken" />
                 </div>
               </div>
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 border-t border-line px-4 py-12 text-center">
-            <span className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-sunken text-ink-3">
-              <Users size={22} />
-            </span>
-            <p className="text-sm font-semibold text-ink">
-              Geen resultaten voor &ldquo;{query}&rdquo;
-            </p>
-            <button onClick={() => setQuery("")} className="text-[12.5px] font-semibold text-brand-text hover:underline">
-              Wis zoekopdracht
-            </button>
+          <div className="border-t border-line">
+            <EmptyState
+              compact
+              icon={<Users size={22} />}
+              title={`Geen resultaten voor “${query}”`}
+              action={<button onClick={() => setQuery("")} className="hit-area text-[12.5px] font-semibold text-brand-text hover:underline">Wis zoekopdracht</button>}
+            />
           </div>
         ) : (
           <motion.div
@@ -271,7 +273,9 @@ export function CrewPage() {
                   <div className="relative shrink-0">
                     <UserAvatar name={u.name} user={u} className="h-9 w-9 text-sm" />
                     {isPingFresh(u.live_location_ping) && (
-                      <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-surface animate-pulse" />
+                      <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-ok-fill ring-2 ring-surface">
+                        <span className="sr-only">Locatie gedeeld</span>
+                      </span>
                     )}
                   </div>
 
@@ -280,12 +284,12 @@ export function CrewPage() {
                       {u.name}
                     </p>
                     <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                      {u.discord_username && (
-                        <span className="truncate text-[12px] text-ink-3">{u.discord_username}</span>
+                      {u.discord_username && u.discord_username.toLowerCase() !== u.name.toLowerCase() && (
+                        <span className="truncate text-[12px] text-ink-3">@{u.discord_username}</span>
                       )}
                       {room && (
-                        <span className="flex items-center gap-1 font-mono text-[11.5px] text-ink-2">
-                          <BedDouble size={11} />
+                        <span className="flex items-center gap-1 font-mono text-[12px] text-ink-2">
+                          <BedDouble size={12} />
                           {room}
                         </span>
                       )}
@@ -297,6 +301,7 @@ export function CrewPage() {
                       {badges.slice(0, 3).map((b) => (
                         <BadgeIcon key={b.id} badge={b} size="sm" />
                       ))}
+                      {badges.length > 3 && <span className="pl-0.5 text-[12px] font-semibold text-ink-3">+{badges.length - 3}</span>}
                     </div>
                   )}
                 </motion.button>

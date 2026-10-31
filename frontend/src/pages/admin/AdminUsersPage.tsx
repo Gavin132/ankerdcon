@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Shield, ShieldOff, Plus, X, UserPlus, Ban, CheckCircle, Copy, Check } from "lucide-react";
+import { Shield, Plus, X, UserPlus, Ban, Copy, Check, Eye, Users, GitMerge, Hourglass } from "lucide-react";
 import {
   useAdminUsers,
   useAdminCreateUser,
@@ -15,7 +15,8 @@ import { UserAvatar } from "../../components/common/UserAvatar";
 import { AdminDrawer } from "./AdminDrawer";
 import { toast } from "../../store/toast.store";
 import type { User } from "../../types";
-import { F, L } from "./styles";
+import { F, L, TH, TD, TR, TR_SELECTED, PILL_NEUTRAL, CHIP_ON, CHIP_OFF } from "./styles";
+import { AdminPage } from "./components/AdminPage";
 import { AdminPageHeader } from "./components/AdminPageHeader";
 import { AdminSearch } from "./components/AdminSearch";
 import { AdminTableSkeleton } from "./components/AdminTableSkeleton";
@@ -24,8 +25,14 @@ import { DeleteConfirmActions } from "./components/DeleteConfirmActions";
 import { DrawerFooter } from "./components/DrawerFooter";
 import { DiscardChangesConfirm } from "./components/DiscardChangesConfirm";
 import { AdminBulkBar } from "./components/AdminBulkBar";
+import { RowCheckbox } from "./components/RowCheckbox";
+import { ToggleRow } from "../../components/common/ToggleRow";
 import { useTableSelection } from "../../hooks/useTableSelection";
 import { useConfirmDiscard } from "../../hooks/useConfirmDiscard";
+import { askConfirm } from "../../store/confirm.store";
+import { EmptyState } from "../../components/common/EmptyState";
+import { UserMergeSheet } from "./components/UserMergeSheet";
+import { countOf } from "../../utils/format";
 
 const PAGE_SIZE = 15;
 
@@ -35,6 +42,7 @@ const createSchema = z.object({
   name: z.string().min(2, "Min 2 tekens").max(30, "Max 30 tekens"),
   discord_id: z.string().optional(),
   is_admin: z.boolean().optional(),
+  is_viewer: z.boolean().optional(),
 });
 type CreateForm = z.infer<typeof createSchema>;
 
@@ -49,9 +57,10 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
     setValue,
   } = useForm<CreateForm>({
     resolver: zodResolver(createSchema),
-    defaultValues: { name: "", discord_id: "", is_admin: false },
+    defaultValues: { name: "", discord_id: "", is_admin: false, is_viewer: false },
   });
   const isAdmin = watch("is_admin");
+  const isViewer = watch("is_viewer");
   const { requestClose, confirming, confirmDiscard, cancelDiscard } = useConfirmDiscard(isDirty, onClose);
 
   async function onSubmit(values: CreateForm) {
@@ -60,6 +69,8 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
         name: values.name,
         discord_id: values.discord_id || undefined,
         is_admin: values.is_admin,
+        // Only sent when it is on: a database without the column yet must still be able to add anyone.
+        ...(values.is_viewer ? { is_viewer: true } : {}),
       });
       toast("success", `${values.name} toegevoegd.`);
       reset();
@@ -75,7 +86,7 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
       open={open}
       onClose={requestClose}
       title="Nieuwe gebruiker"
-      subtitle="Voeg een gebruiker toe, met of zonder eigen account"
+      subtitle="Met of zonder eigen account"
       footer={
         <DrawerFooter
           onCancel={requestClose}
@@ -95,9 +106,9 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
             autoFocus
           />
           {errors.name && (
-            <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.name.message}</p>
+            <p className="field-error">{errors.name.message}</p>
           )}
-          <p className="mt-1.5 text-[11px] text-ink-3">
+          <p className="mt-1.5 text-xs text-ink-3">
             Zichtbaar voor de hele groep bij ritten, maaltijden, kamers en uitgaven.
           </p>
         </div>
@@ -109,30 +120,24 @@ function UserCreateDrawer({ open, onClose }: { open: boolean; onClose: () => voi
             className={`${F} font-mono`}
             placeholder="123456789012345678"
           />
-          <p className="mt-1.5 text-[11px] text-ink-3">
+          <p className="mt-1.5 text-xs text-ink-3">
             Alleen nodig als deze persoon zelf met Discord gaat inloggen — voor een stabielere koppeling na naamwijzigingen. Laat dit leeg voor iemand zonder eigen account (bijv. iemand die niet mee wil doen aan de app); je kunt ze dan nog steeds overal aan toevoegen.
           </p>
         </div>
 
-        <div className="flex items-center justify-between rounded-xl border-1.5 border-line bg-paper px-4 py-3">
-          <div className="flex items-center gap-2">
-            <Shield size={15} className="text-ink-2" />
-            <span className="text-sm font-medium text-ink">Admin-rechten</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setValue("is_admin", !isAdmin)}
-            className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${
-              isAdmin ? "bg-ink dark:bg-brand" : "bg-line"
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition-transform ${
-                isAdmin ? "translate-x-4 bg-paper" : "bg-white dark:bg-ink-3"
-              }`}
-            />
-          </button>
-        </div>
+        <ToggleRow
+          icon={<Shield size={16} />}
+          label="Admin-rechten"
+          checked={!!isAdmin}
+          onChange={() => setValue("is_admin", !isAdmin, { shouldDirty: true })}
+        />
+        <ToggleRow
+          icon={<Eye size={16} />}
+          label="Alleen kijken"
+          hint="Kan alles bekijken, maar niets aanpassen of zich ergens voor aanmelden."
+          checked={!!isViewer}
+          onChange={() => setValue("is_viewer", !isViewer, { shouldDirty: true })}
+        />
       </form>
     </AdminDrawer>
     <DiscardChangesConfirm open={confirming} onCancel={cancelDiscard} onConfirm={confirmDiscard} />
@@ -151,6 +156,8 @@ const editSchema = z.object({
     .regex(/^(#[0-9a-fA-F]{3,6})?$/, "Gebruik hex kleur (#rrggbb)")
     .optional(),
   is_admin: z.boolean().optional(),
+  is_viewer: z.boolean().optional(),
+  is_active: z.boolean().optional(),
 });
 type EditForm = z.infer<typeof editSchema>;
 
@@ -180,9 +187,13 @@ function UserEditDrawer({
       bio: user?.bio ?? "",
       color: user?.color ?? "",
       is_admin: user?.is_admin ?? false,
+      is_viewer: user?.is_viewer ?? false,
+      is_active: user?.is_active !== false,
     },
   });
   const isAdmin = watch("is_admin");
+  const isViewer = watch("is_viewer");
+  const isActive = watch("is_active");
 
   function addAlias() {
     const trimmed = aliasInput.trim();
@@ -193,8 +204,27 @@ function UserEditDrawer({
   }
 
   async function onSubmit(values: EditForm) {
+    // Deactivating takes the member off every event and sends a Discord message, so it asks first.
+    if (user?.is_active !== false && values.is_active === false) {
+      const ok = await askConfirm({
+        title: `${user!.name} deactiveren?`,
+        message: "Deze persoon kan niet meer inloggen, gaat van alle evenementen af en krijgt een bericht op Discord.",
+        confirmLabel: "Deactiveren",
+        cancelLabel: "Annuleren",
+        destructive: true,
+      });
+      if (!ok) return;
+    }
     try {
-      await updateMutation.mutateAsync({ id: user!.id!, ...values, aliases });
+      // is_viewer only when it was changed: a database without the column yet must still save everything else.
+      const { is_viewer, is_active, ...rest } = values;
+      await updateMutation.mutateAsync({
+        id: user!.id!,
+        ...rest,
+        aliases,
+        ...((is_viewer ?? false) !== (user?.is_viewer ?? false) ? { is_viewer } : {}),
+        ...((is_active ?? true) !== (user?.is_active !== false) ? { is_active } : {}),
+      });
       toast("success", `${user!.name} bijgewerkt.`);
       onClose();
     } catch {
@@ -251,7 +281,7 @@ function UserEditDrawer({
             <input
               {...register("phone_number")}
               className={F}
-              placeholder="+31 6..."
+              placeholder="+31 6…"
             />
           </div>
 
@@ -263,7 +293,7 @@ function UserEditDrawer({
               placeholder="hij/hem"
             />
             {errors.pronouns && (
-              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
+              <p className="field-error">
                 {errors.pronouns.message}
               </p>
             )}
@@ -275,10 +305,10 @@ function UserEditDrawer({
               {...register("bio")}
               rows={3}
               className={`${F} resize-none`}
-              placeholder="Over mij..."
+              placeholder="Over mij…"
             />
             {errors.bio && (
-              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.bio.message}</p>
+              <p className="field-error">{errors.bio.message}</p>
             )}
           </div>
 
@@ -290,7 +320,7 @@ function UserEditDrawer({
               placeholder="#3b82f6"
             />
             {errors.color && (
-              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
+              <p className="field-error">
                 {errors.color.message}
               </p>
             )}
@@ -322,9 +352,10 @@ function UserEditDrawer({
                   aliases.includes(aliasInput.trim()) ||
                   aliases.length >= 10
                 }
-                className="btn-primary h-[42px] w-10 shrink-0 disabled:opacity-50"
+                aria-label="Alias toevoegen"
+                className="btn-primary w-11 shrink-0 self-center lg:w-10"
               >
-                <Plus size={14} />
+                <Plus size={16} />
               </button>
             </div>
             {aliases.length > 0 && (
@@ -338,41 +369,40 @@ function UserEditDrawer({
                     <button
                       type="button"
                       onClick={() => setAliases(aliases.filter((x) => x !== a))}
-                      className="text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                      aria-label={`Alias ${a} verwijderen`}
+                      className="hit-area -mr-1 p-1 text-ink-3 hover:text-bad transition-colors"
                     >
-                      <X size={11} />
+                      <X size={14} />
                     </button>
                   </span>
                 ))}
               </div>
             )}
-            <p className="mt-1.5 text-[11px] text-ink-3">
+            <p className="mt-1.5 text-xs text-ink-3">
               Zoekopdrachten in aanmeldformulieren herkennen deze namen ook.
             </p>
           </div>
 
-          {/* Admin toggle */}
-          <div className="flex items-center justify-between rounded-xl border-1.5 border-line bg-paper px-4 py-3">
-            <div className="flex items-center gap-2">
-              <Shield size={15} className="text-ink-2" />
-              <span className="text-sm font-medium text-ink">
-                Admin-rechten
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setValue("is_admin", !isAdmin)}
-              className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${
-                isAdmin ? "bg-ink dark:bg-brand" : "bg-line"
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition-transform ${
-                  isAdmin ? "translate-x-4 bg-paper" : "bg-white dark:bg-ink-3"
-                }`}
-              />
-            </button>
-          </div>
+          <ToggleRow
+            icon={<Shield size={16} />}
+            label="Admin-rechten"
+            checked={!!isAdmin}
+            onChange={() => setValue("is_admin", !isAdmin, { shouldDirty: true })}
+          />
+          <ToggleRow
+            icon={<Eye size={16} />}
+            label="Alleen kijken"
+            hint="Kan alles bekijken, maar niets aanpassen of zich ergens voor aanmelden."
+            checked={!!isViewer}
+            onChange={() => setValue("is_viewer", !isViewer, { shouldDirty: true })}
+          />
+          <ToggleRow
+            icon={<Ban size={16} />}
+            label="Account actief"
+            hint="Uitzetten blokkeert inloggen en haalt de persoon van alle evenementen af."
+            checked={isActive !== false}
+            onChange={() => setValue("is_active", isActive === false, { shouldDirty: true })}
+          />
         </form>
       )}
     </AdminDrawer>
@@ -385,19 +415,24 @@ function UserEditDrawer({
 
 export function AdminUsersPage() {
   const { data: users = [], isLoading } = useAdminUsers();
-  const updateMutation = useAdminUpdateUser();
   const deleteMutation = useAdminDeleteUser();
   const bulkDeleteMutation = useAdminBulkDeleteUsers();
   const bulkDeactivateMutation = useAdminBulkDeactivateUsers();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [editing, setEditing] = useState<User | null>(null);
+  const [merging, setMerging] = useState<User | null>(null);
+  const [onlyPlaceholders, setOnlyPlaceholders] = useState(false);
   const [creating, setCreating] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [confirmDeactivateId, setConfirmDeactivateId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  const placeholderCount = users.filter((u) => u.is_placeholder).length;
+  // Switched on and the last placeholder merged away: back to everyone, not to an empty list with no way out.
+  const placeholdersOnly = onlyPlaceholders && placeholderCount > 0;
+
   const filtered = users.filter((u) => {
+    if (placeholdersOnly && !u.is_placeholder) return false;
     if (!search) return true;
     const q = search.toLowerCase();
     return (
@@ -424,25 +459,6 @@ export function AdminUsersPage() {
     setPage(0);
   }
 
-  async function handleDeactivate(user: User) {
-    try {
-      await updateMutation.mutateAsync({ id: user.id!, is_active: false });
-      toast("success", `${user.name} gedeactiveerd.`);
-      setConfirmDeactivateId(null);
-    } catch {
-      toast("error", "Kon status niet wijzigen.");
-    }
-  }
-
-  async function handleActivate(user: User) {
-    try {
-      await updateMutation.mutateAsync({ id: user.id!, is_active: true });
-      toast("success", `${user.name} geactiveerd.`);
-    } catch {
-      toast("error", "Kon status niet wijzigen.");
-    }
-  }
-
   function handleCopyDiscordId(id: string, userId: string) {
     navigator.clipboard.writeText(id);
     setCopiedId(userId);
@@ -463,7 +479,7 @@ export function AdminUsersPage() {
     const ids = [...selectedIds];
     try {
       await bulkDeleteMutation.mutateAsync(ids);
-      toast("success", `${ids.length} gebruikers verwijderd.`);
+      toast("success", `${countOf(ids.length, "gebruiker", "gebruikers")} verwijderd.`);
       clearSelection();
     } catch {
       toast("error", "Kon gebruikers niet verwijderen.");
@@ -472,9 +488,17 @@ export function AdminUsersPage() {
 
   async function handleBulkDeactivate() {
     const ids = [...selectedIds];
+    const ok = await askConfirm({
+      title: `${ids.length} ${ids.length === 1 ? "gebruiker" : "gebruikers"} deactiveren?`,
+      message: "Zij kunnen niet meer inloggen, gaan van alle evenementen af en krijgen een bericht op Discord.",
+      confirmLabel: "Deactiveren",
+      cancelLabel: "Annuleren",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await bulkDeactivateMutation.mutateAsync(ids);
-      toast("success", `${ids.length} gebruikers gedeactiveerd.`);
+      toast("success", `${countOf(ids.length, "gebruiker", "gebruikers")} gedeactiveerd.`);
       clearSelection();
     } catch {
       toast("error", "Kon gebruikers niet deactiveren.");
@@ -484,16 +508,16 @@ export function AdminUsersPage() {
   const activeCount = users.filter((u) => u.is_active !== false).length;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+    <AdminPage>
       <AdminPageHeader
         title="Gebruikers"
         subtitle={`${activeCount} actief · ${users.length} totaal`}
         action={
           <button
             onClick={() => setCreating(true)}
-            className="btn-primary px-4 py-2 text-sm"
+            className="btn-primary px-4"
           >
-            <UserPlus size={15} />
+            <UserPlus size={16} />
             Nieuwe gebruiker
           </button>
         }
@@ -502,202 +526,172 @@ export function AdminUsersPage() {
       <AdminSearch
         value={search}
         onChange={handleSearch}
-        placeholder="Zoek op naam, Discord of alias..."
+        placeholder="Zoek op naam, Discord of alias…"
+      />
+
+      {placeholderCount > 0 && (
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Filter">
+          <button
+            type="button"
+            className={placeholdersOnly ? CHIP_OFF : CHIP_ON}
+            aria-pressed={!placeholdersOnly}
+            onClick={() => { setOnlyPlaceholders(false); setPage(0); }}
+          >
+            Iedereen · {users.length}
+          </button>
+          <button
+            type="button"
+            className={placeholdersOnly ? CHIP_ON : CHIP_OFF}
+            aria-pressed={placeholdersOnly}
+            onClick={() => { setOnlyPlaceholders(true); setPage(0); }}
+          >
+            Placeholders · {placeholderCount}
+          </button>
+        </div>
+      )}
+
+      <AdminBulkBar
+        itemsLabel="gebruikers"
+        count={selectedIds.size}
+        isPending={bulkIsPending}
+        onDelete={handleBulkDelete}
+        onClear={clearSelection}
+        extraActions={
+          <button
+            onClick={handleBulkDeactivate}
+            disabled={bulkIsPending}
+            className="btn-primary px-3"
+          >
+            <Ban size={16} />
+            Deactiveren
+          </button>
+        }
       />
 
       <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="stack-table w-full">
             <thead>
-              <tr className="border-b-1.5 border-line text-left">
-                <th className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    ref={(el) => { if (el) el.indeterminate = indeterminate; }}
-                    onChange={selectAll}
-                    className="cb"
-                  />
+              <tr className="text-left">
+                <th className={`${TH} w-10 !pr-2`}>
+                  <RowCheckbox checked={allSelected} indeterminate={indeterminate} onChange={selectAll} label="Alles selecteren" />
                 </th>
-                <th className="px-2.5 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Gebruiker
-                </th>
-                <th className="hidden sm:table-cell px-5 py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Discord ID
-                </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Status
-                </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-left whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Rol
-                </th>
-                <th className="px-2 sm:px-5 py-2.5 sm:py-3 text-right whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.09em] text-ink-3">
-                  Acties
-                </th>
+                <th className={TH}>Gebruiker</th>
+                <th className={`${TH} hidden sm:table-cell`}>Discord ID</th>
+                <th className={TH}>Status</th>
+                <th className={`${TH} text-right`}>Acties</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
               {isLoading ? (
-                <AdminTableSkeleton cols={6} />
+                <AdminTableSkeleton cols={5} />
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-5 py-10 text-center text-sm text-ink-3"
-                  >
-                    Geen gebruikers gevonden.
+                  <td colSpan={5}>
+                    <EmptyState compact icon={<Users size={22} />} title="Geen gebruikers gevonden" />
                   </td>
                 </tr>
               ) : (
                 paginated.map((user) => {
                   const isActive = user.is_active !== false;
+                  const isSelected = selectedIds.has(user.id!);
                   return (
-                    <tr
-                      key={user.id}
-                      className={`group transition-colors ${selectedIds.has(user.id!) ? "bg-brand-soft/50 hover:bg-brand-soft/70" : "hover:bg-sunken"} ${!isActive ? "opacity-50" : ""}`}
-                    >
+                    <tr key={user.id} className={`${isSelected ? TR_SELECTED : TR} ${!isActive ? "opacity-60" : ""}`}>
                       <td
-                        className="w-8 sm:w-10 pl-2.5 sm:pl-4 pr-1.5 sm:pr-2 py-2.5 sm:py-3.5"
+                        className={`${TD} w-10 !pr-2`}
                         onClick={(e) => { e.stopPropagation(); toggleSelect(user.id!); }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.has(user.id!)}
-                          onChange={() => toggleSelect(user.id!)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="cb"
-                        />
+                        <RowCheckbox checked={isSelected} onChange={() => toggleSelect(user.id!)} label={`Selecteer ${user.name}`} />
                       </td>
-                      <td className="px-2.5 sm:px-5 py-2.5 sm:py-3.5">
+                      <td className={`cell-main ${TD}`}>
                         <div className="flex items-center gap-2 sm:gap-3">
-                          <UserAvatar
-                            name={user.name}
-                            className="h-7 w-7 sm:h-8 sm:w-8 text-[9px] sm:text-[10px] shrink-0"
-                          />
+                          <span className="relative shrink-0">
+                            <UserAvatar
+                              name={user.name}
+                              className="h-7 w-7 sm:h-8 sm:w-8 text-[9px] sm:text-[10px]"
+                            />
+                            {/* Admin is a shield on the corner of the picture: it does not need a word of its own. */}
+                            {user.is_admin && (
+                              <span
+                                title="Admin"
+                                className="absolute -bottom-1.5 -right-1.5 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-brand text-brand-on ring-2 ring-surface"
+                              >
+                                <Shield size={12} aria-hidden />
+                                <span className="sr-only">Admin</span>
+                              </span>
+                            )}
+                          </span>
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-ink truncate">
-                              {user.name}
-                            </p>
+                            <p className="truncate text-sm font-semibold text-ink">{user.name}</p>
                             {user.discord_username && (
-                              <p className="text-xs text-ink-3 truncate">
-                                @{user.discord_username}
+                              <p className="truncate text-xs text-ink-3">@{user.discord_username}</p>
+                            )}
+                            {/* Under the name, not in the status column: a wide pill there squeezes the name to nothing on a phone. */}
+                            {user.is_placeholder && (
+                              <p className="mt-0.5 flex items-center gap-1 text-xs text-ink-3" title="Nog niemand heeft hiermee ingelogd">
+                                <Hourglass size={12} aria-hidden />
+                                Placeholder
                               </p>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="hidden sm:table-cell px-5 py-3.5">
+                      <td className={`hidden sm:table-cell ${TD}`}>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-xs text-ink-3 font-mono">
-                            {user.discord_id ?? (
-                              <span className="text-ink-3">—</span>
-                            )}
-                          </span>
+                          <span className="font-mono text-xs text-ink-3">{user.discord_id ?? "—"}</span>
                           {user.discord_id && (
                             <button
                               onClick={() => handleCopyDiscordId(user.discord_id!, user.id!)}
-                              className="opacity-0 group-hover:opacity-100 flex h-6 w-6 items-center justify-center rounded-md text-ink-3 hover:bg-sunken hover:text-ink transition-all"
-                              title="Kopieer Discord ID"
+                              className="icon-btn text-ink-3"
+                              title="Discord ID kopiëren"
+                              aria-label="Discord ID kopiëren"
                             >
-                              {copiedId === user.id ? (
-                                <Check size={11} className="text-emerald-600 dark:text-emerald-400" />
-                              ) : (
-                                <Copy size={11} />
-                              )}
+                              {copiedId === user.id ? <Check size={14} className="text-ok" /> : <Copy size={14} />}
                             </button>
                           )}
                         </div>
                       </td>
-                      <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
-                        {isActive ? (
-                          <span
-                            title="Actief"
-                            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 p-1.5 text-[11.5px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 sm:px-2 sm:py-0.5"
-                          >
-                            <CheckCircle size={10} />
-                            <span className="hidden sm:inline">Actief</span>
-                          </span>
-                        ) : (
-                          <span
-                            title="Inactief"
-                            className="inline-flex items-center gap-1.5 rounded-full bg-sunken p-1.5 text-[11.5px] font-semibold text-ink-2 sm:px-2 sm:py-0.5"
-                          >
-                            <Ban size={10} />
-                            <span className="hidden sm:inline">Inactief</span>
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
-                        {user.is_admin ? (
-                          <span
-                            title="Admin"
-                            className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface p-1.5 text-[11.5px] font-semibold text-ink sm:px-2 sm:py-0.5"
-                          >
-                            <Shield size={10} />
-                            <span className="hidden sm:inline">Admin</span>
-                          </span>
-                        ) : (
-                          <span
-                            title="Gebruiker"
-                            className="inline-flex items-center gap-1.5 rounded-full bg-sunken p-1.5 text-[11.5px] font-semibold text-ink-2 sm:px-2 sm:py-0.5"
-                          >
-                            <ShieldOff size={10} />
-                            <span className="hidden sm:inline">Gebruiker</span>
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-2 sm:px-5 py-2.5 sm:py-3.5">
-                        <div className="flex items-center justify-end gap-1 sm:gap-1.5">
-                          {/* Deactivate confirmation inline */}
-                          {confirmDeactivateId === user.id ? (
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-ink-3">Deactiveren?</span>
-                              <button
-                                onClick={() => handleDeactivate(user)}
-                                disabled={updateMutation.isPending}
-                                className="rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:hover:bg-amber-500/25 disabled:opacity-50 transition-colors"
-                              >
-                                {updateMutation.isPending ? "..." : "Ja"}
-                              </button>
-                              <button
-                                onClick={() => setConfirmDeactivateId(null)}
-                                className="rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-sunken text-ink-2 hover:text-ink transition-colors"
-                              >
-                                Nee
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() =>
-                                isActive
-                                  ? setConfirmDeactivateId(user.id!)
-                                  : handleActivate(user)
-                              }
-                              disabled={updateMutation.isPending}
-                              title={isActive ? "Deactiveren" : "Activeren"}
-                              className={`flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg transition-colors disabled:opacity-40 ${
-                                isActive
-                                  ? "text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-500/15"
-                                  : "text-emerald-700 hover:bg-emerald-100 dark:text-emerald-300 dark:hover:bg-emerald-500/15"
-                              }`}
-                            >
-                              {isActive ? <Ban size={14} /> : <CheckCircle size={14} />}
-                            </button>
+                      {/* Only what is not the normal case: a plain active member shows nothing here. */}
+                      <td className={TD}>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {!isActive && (
+                            <span className={PILL_NEUTRAL}>
+                              <Ban size={14} />
+                              Inactief
+                            </span>
                           )}
-
-                          <DeleteConfirmActions
-                            id={user.id!}
-                            confirmId={confirmDeleteId}
-                            isPending={deleteMutation.isPending}
-                            onEdit={() => setEditing(user)}
-                            onRequestDelete={() => {
-                              setConfirmDeactivateId(null);
-                              setConfirmDeleteId(user.id!);
-                            }}
-                            onConfirmDelete={() => handleDelete(user.id!, user.name)}
-                            onCancelDelete={() => setConfirmDeleteId(null)}
-                          />
+                          {user.is_viewer && !user.is_admin && (
+                            <span className="pill border border-line bg-surface text-ink-2">
+                              <Eye size={14} />
+                              Kijker
+                            </span>
+                          )}
                         </div>
+                      </td>
+                      <td className={`cell-actions ${TD}`}>
+                        <DeleteConfirmActions
+                          id={user.id!}
+                          confirmId={confirmDeleteId}
+                          isPending={deleteMutation.isPending}
+                          onEdit={() => setEditing(user)}
+                          onRequestDelete={() => setConfirmDeleteId(user.id!)}
+                          onConfirmDelete={() => handleDelete(user.id!, user.name)}
+                          onCancelDelete={() => setConfirmDeleteId(null)}
+                          editLabel={`${user.name} bewerken`}
+                          deleteLabel={`${user.name} verwijderen`}
+                          before={
+                            user.is_placeholder ? (
+                              <button
+                                onClick={() => setMerging(user)}
+                                className="icon-btn text-ink-3"
+                                title="Voeg samen met…"
+                                aria-label={`${user.name} samenvoegen met een lid`}
+                              >
+                                <GitMerge size={16} />
+                              </button>
+                            ) : undefined
+                          }
+                        />
                       </td>
                     </tr>
                   );
@@ -717,28 +711,13 @@ export function AdminUsersPage() {
 
       <UserCreateDrawer open={creating} onClose={() => setCreating(false)} />
 
+      <UserMergeSheet key={merging?.id ?? "none-merge"} source={merging} users={users} onClose={() => setMerging(null)} />
+
       <UserEditDrawer
         key={editing?.id ?? "none"}
         user={editing}
         onClose={() => setEditing(null)}
       />
-
-      <AdminBulkBar
-        count={selectedIds.size}
-        isPending={bulkIsPending}
-        onDelete={handleBulkDelete}
-        onClear={clearSelection}
-        extraActions={
-          <button
-            onClick={handleBulkDeactivate}
-            disabled={bulkIsPending}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-100 disabled:opacity-40 dark:text-amber-300 dark:hover:bg-amber-500/15"
-          >
-            <Ban size={14} />
-            Deactiveer
-          </button>
-        }
-      />
-    </div>
+    </AdminPage>
   );
 }

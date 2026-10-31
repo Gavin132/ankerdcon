@@ -103,6 +103,23 @@ export async function readCaptureTime(file: File): Promise<number> {
   return file.lastModified;
 }
 
+/**
+ * The day (local) a photo says it was taken, from its EXIF only: null for anything without it (a video, a
+ * screenshot, a WhatsApp forward). The file's last-modified time is no basis for filing a photo under a day:
+ * for a forwarded photo it is when it was downloaded.
+ */
+export async function readExifDay(file: File): Promise<string | null> {
+  try {
+    const head = await file.slice(0, HEADER_BYTES).arrayBuffer();
+    const taken = parseExifDate(head);
+    if (!taken) return null;
+    const d = new Date(taken);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  } catch {
+    return null;
+  }
+}
+
 /** The files oldest-first by when they were taken. Ties keep the order the
  * picker returned them in. */
 export async function sortByCaptureTime(files: File[]): Promise<File[]> {

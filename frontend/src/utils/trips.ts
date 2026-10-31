@@ -1,4 +1,5 @@
-import type { CalendarEvent, HotelRoom, Meal, Ride } from "../types";
+import type { CalendarEvent, HotelRoom, Meal, Ride, User } from "../types";
+import { groupPeople, isIn, type Person } from "./people";
 import { parseEventDate, toDateKey, todayKey } from "./date";
 import { formatDateRange, groupCalendarEntries } from "./multiDay";
 import { isMealItem } from "./mealCategory";
@@ -76,7 +77,8 @@ function tripFromDays(id: string, days: TripDay[]): Trip {
     location: days.find((d) => d.ev.location)?.ev.location ?? "",
     locationCoords: locationCoordsOf(days),
     isHotel: days.some((d) => d.ev.is_hotel),
-    hasCon: days.some((d) => d.ev.has_con !== false),
+    // A concert has no cosplay: no tile, tab or search action for it, whatever the day's has_con says.
+    hasCon: !days.some((d) => d.ev.event_type === "concert") && days.some((d) => d.ev.has_con !== false),
     participants: [...new Set(days.flatMap((d) => d.ev.participants ?? []))],
   };
 }
@@ -92,17 +94,19 @@ export interface TripOutlier {
  * People who aren't signed up for every day of a multi-day trip — they arrive
  * late or go home early. Single-day trips have no outliers by definition.
  */
-export function tripOutliers(trip: Trip): TripOutlier[] {
+export function tripOutliers(trip: Trip, users: User[] = []): TripOutlier[] {
   if (trip.days.length < 2) return [];
-  return trip.participants.flatMap((name) => {
-    const flags = trip.days.map((d) => (d.ev.participants ?? []).includes(name));
+  return tripPeople(trip, users).flatMap((person) => {
+    // Any of the names they are signed up under counts for a day: one person is on Friday as "Sam", on Saturday as
+    // their old name, and is there both days.
+    const flags = trip.days.map((d) => (d.ev.participants ?? []).some((n) => person.names.includes(n)));
     const days = trip.days.filter((_, i) => flags[i]);
     if (days.length === trip.days.length) return [];
     const first = flags.indexOf(true);
     const last = flags.lastIndexOf(true);
     const contiguous = flags.slice(first, last + 1).every(Boolean);
     const kind: TripOutlier["kind"] = !contiguous ? "some-days" : first === 0 ? "leaves-early" : last === flags.length - 1 ? "arrives-late" : "some-days";
-    return [{ name, days, kind }];
+    return [{ name: person.name, days, kind }];
   });
 }
 
@@ -128,9 +132,30 @@ export function buildTrips(events: CalendarEvent[]): Trip[] {
   );
 }
 
+/**
+ * The people on a trip, each once. `trip.participants` holds the names people are signed up under, so a member
+ * who was renamed and is on one day under the old name and another under the new one is in it twice; this is
+ * that list as people (see utils/people.ts). Pass the members, or every name is taken as a person of its own.
+ */
+export function tripPeople(trip: Trip, users: User[] = []): Person[] {
+  return groupPeople(trip.participants, users);
+}
+
 /** The event image of a trip: the first day that has one. */
 export function tripImage(trip: Trip): string | null {
   return trip.days.map((d) => d.ev.image_url).find(Boolean) ?? null;
+}
+
+/**
+ * The trip a cosplay belongs to, for opening it from search: the first of the events it is linked to whose trip has a
+ * Cosplay sheet. Null when it has none (a concert has no cosplay, so its rows lead nowhere).
+ */
+export function cosplayTripId(events: CalendarEvent[], linkedEventIds: string[]): string | null {
+  for (const id of linkedEventIds) {
+    const tripId = tripIdForEvent(events, id);
+    if (tripId && buildTrip(events, tripId)?.hasCon) return tripId;
+  }
+  return null;
 }
 
 /** The trip a given event day belongs to, or null when the event doesn't exist. */
@@ -247,8 +272,11 @@ export interface TripGaps {
   food: string[];
 }
 
-/** Who is still missing transport or food for this trip. Names compare case-insensitively. */
-export function tripGaps(trip: Trip, rides: Ride[], meals: Meal[]): TripGaps {
+/**
+ * Who is still missing transport or food for this trip. Names compare case-insensitively, and a member counts
+ * under every name they go by: signed up as "Sam" but on the ride as their old name is on the ride.
+ */
+export function tripGaps(trip: Trip, rides: Ride[], meals: Meal[], users: User[] = []): TripGaps {
   const thisTripRides = tripRides(rides, meals, trip);
   const onRide = (direction: Ride["direction"]) =>
     new Set(
@@ -265,26 +293,35 @@ export function tripGaps(trip: Trip, rides: Ride[], meals: Meal[]): TripGaps {
   const thisTripMeals = tripMeals(meals, trip).filter(isMealItem);
   const eating = new Set(thisTripMeals.flatMap((m) => m.participants ?? []).map((n) => n.toLowerCase()));
 
-  const transport = trip.participants
-    .map((name) => {
-      const lc = name.toLowerCase();
+  const people = tripPeople(trip, users);
+  const transport = people
+    .map((person) => {
       const items: ("Heen" | "Terug")[] = [];
-      if (!inbound.has(lc)) items.push("Heen");
-      if (!outbound.has(lc)) items.push("Terug");
-      return { name, items };
+      if (!isIn(person, inbound)) items.push("Heen");
+      if (!isIn(person, outbound)) items.push("Terug");
+      return { name: person.name, items };
     })
     .filter((g) => g.items.length > 0);
 
-  const food = thisTripMeals.length > 0
-    ? trip.participants.filter((name) => !eating.has(name.toLowerCase()))
-    : [];
+  const food = thisTripMeals.length > 0 ? people.filter((person) => !isIn(person, eating)).map((person) => person.name) : [];
 
   return { transport, food };
 }
 
 /** People signed up for a hotel trip who aren't in any of its rooms yet. Names compare case-insensitively. */
-export function tripRoomGaps(trip: Trip, rooms: HotelRoom[]): string[] {
+export function tripRoomGaps(trip: Trip, rooms: HotelRoom[], users: User[] = []): string[] {
   if (!trip.isHotel) return [];
   const assigned = new Set(rooms.flatMap((r) => r.occupants).map((n) => n.toLowerCase()));
-  return trip.participants.filter((name) => !assigned.has(name.toLowerCase()));
+  return tripPeople(trip, users).filter((person) => !isIn(person, assigned)).map((person) => person.name);
+}
+
+/**
+ * The numbers on top of the Hotel sheet: rooms, their beds (when every room says how many it has) and how many of the
+ * people on the trip are in a room. People, not stored names: someone signed up under two names counts once.
+ */
+export function tripRoomSummary(trip: Trip, rooms: HotelRoom[], users: User[] = []) {
+  const people = tripPeople(trip, users).length;
+  const withoutRoom = tripRoomGaps(trip, rooms, users).length;
+  const seats = rooms.length > 0 && rooms.every((r) => r.capacity != null) ? rooms.reduce((sum, r) => sum + (r.capacity ?? 0), 0) : null;
+  return { rooms: rooms.length, seats, people, assigned: people - withoutRoom };
 }
