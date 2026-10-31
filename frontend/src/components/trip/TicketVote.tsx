@@ -193,7 +193,7 @@ function DeleteVote({ confirming, setConfirming, onDelete }: { confirming: boole
     </div>
   ) : (
     <button type="button" onClick={() => setConfirming(true)} className="btn-ghost btn-compact w-full px-3.5">
-      <Trash2 size={14} /> Stemming verwijderen
+      <Trash2 size={14} /> Poll verwijderen
     </button>
   );
 }
@@ -247,9 +247,9 @@ export function StartTicketVote({ trip }: { trip: Trip }) {
   async function submit() {
     try {
       await open.mutateAsync(options.map((o) => ({ label: o.label.trim(), price: Number(o.price.replace(",", ".")) || 0 })));
-      toast("success", "De kaartstemming is geopend.");
+      toast("success", "De ticket poll is geopend.");
     } catch (e) {
-      toast("error", errorText(e, "Kon de stemming niet openen. Probeer opnieuw."));
+      toast("error", errorText(e, "Kon de poll niet openen. Probeer opnieuw."));
     }
   }
 
@@ -294,7 +294,7 @@ export function StartTicketVote({ trip }: { trip: Trip }) {
         </button>
       )}
       <Button className="w-full" onClick={submit} loading={open.isPending} disabled={!ready}>
-        Stemming openen
+        Poll openen
       </Button>
     </div>
   );

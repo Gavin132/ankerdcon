@@ -37,9 +37,9 @@ router = APIRouter(prefix=TicketPollRoutes.PREFIX, tags=["ticket-polls"])
 
 _DB_ERROR = "Databasefout. Probeer het opnieuw."
 _NO_EVENT = "Evenement niet gevonden."
-_NO_POLL = "Er is geen kaartstemming voor dit evenement."
+_NO_POLL = "Er is geen ticket poll voor dit evenement."
 _CLOSED = "De tickets zijn al gekocht. Je kunt niet meer stemmen."
-_BAD_CHOICE = "Dat ticket staat niet in de stemming. Kies een ticket uit de lijst."
+_BAD_CHOICE = "Dat ticket staat niet in de poll. Kies een ticket uit de lijst."
 # Besides the ticket options, a member can say they do not know yet. Somebody who is not going just does not vote.
 _UNSURE = "unsure"
 
@@ -136,7 +136,7 @@ def open_ticket_poll(
     if _poll_row(event_id):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Er is al een kaartstemming voor dit evenement. Verwijder die eerst om opnieuw te beginnen.",
+            detail="Er is al een ticket poll voor dit evenement. Verwijder die eerst om opnieuw te beginnen.",
         )
     options = [{"id": f"o{i + 1}", "label": o.label.strip(), "price": round(o.price, 2)} for i, o in enumerate(body.options)]
     if any(not o["label"] for o in options):

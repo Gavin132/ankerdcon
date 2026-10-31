@@ -33,7 +33,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategoryDef[] = [
   { id: "event_reminder_day_of", group: "events", label: "Herinnering — op de dag zelf", description: "Op de dag van het evenement zelf." },
   { id: "ride_created", group: "plans", label: "Nieuwe rit", description: "Wanneer iemand een rit aanmaakt." },
   { id: "expense_created", group: "plans", label: "Nieuwe uitgave", description: "Wanneer iemand een groepsuitgave toevoegt." },
-  { id: "ticket_vote", group: "plans", label: "Ticketstemming", description: "Wanneer een beheerder een stemming over de tickets opent en wanneer de tickets gekocht zijn." },
+  { id: "ticket_vote", group: "plans", label: "Ticket poll", description: "Wanneer een beheerder een poll over de tickets opent en wanneer de tickets gekocht zijn." },
   { id: "meal_created", group: "plans", label: "Nieuwe activiteit", description: "Wanneer iemand een activiteit plant, zoals een etentje of bowlen." },
   { id: "feedback_submitted", group: "admin", label: "Nieuwe feedback", description: "Wanneer iemand een bug, idee of opmerking instuurt. Alleen voor admins.", adminOnly: true },
   { id: "new_user", group: "admin", label: "Nieuwe gebruiker", description: "Wanneer iemand voor het eerst inlogt, zodat je weet wanneer er een profiel is om samen te voegen. Alleen voor admins.", adminOnly: true },
@@ -54,14 +54,14 @@ export function categoriesToSave(chosen: string[], isAdmin: boolean): string[] {
   return chosen.filter((id) => !NOTIFICATION_CATEGORIES.some((c) => c.id === id && c.adminOnly));
 }
 
-/** What "Alleen belangrijk" switches on: what you would miss something over. */
+/** What "Alleen belangrijk" switches on: what you would miss something over. Not the reminders a day before or on the
+ * day itself: by then you know, and they come on top of the one a week before. */
 export const IMPORTANT_CATEGORY_IDS: readonly string[] = [
   "event_created",
   "ticket_sale",
-  "event_reminder_1d",
-  "event_reminder_day_of",
   "expense_created",
   "ticket_vote",
+  "meal_created",
 ];
 
 export type NotificationPreset = "all" | "important" | "none";
