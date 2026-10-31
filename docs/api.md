@@ -231,7 +231,8 @@ resolved client-side in `CrewMap.tsx`, not stored here.
 | --- | --- | --- |
 | `GET /ticket-polls/{trip_id}` | member | the trip's ticket vote with its options and votes, or `null` when there is none |
 | `PUT /ticket-polls/{trip_id}` | admin | opens the vote — `{options: [{label, price}]}` (1 to 8; the server gives them ids); 409 when the trip has one already (delete it first) |
-| `PUT /ticket-polls/{trip_id}/vote` | member | `{choice, user_name?}`: a ticket's id or `unsure`; replaces the earlier vote. Members vote for themselves (`act_as`), an admin may vote for someone. 409 once the tickets are bought |
+| `PUT /ticket-polls/{trip_id}/vote` | member | `{choice, user_name?}`: a ticket's id or `unsure`; replaces the earlier vote. Any member may fill it in for another member (`act_for_anyone`). 409 once the tickets are bought |
+| `DELETE /ticket-polls/{trip_id}/vote?user_name=` | member | take a vote back, your own or another member's; 409 once the tickets are bought |
 | `POST /ticket-polls/{trip_id}/bought` | admin | `{buyer, option_id}`: the vote ends, the buyer and ticket are kept; the buyer has to be a member |
 | `DELETE /ticket-polls/{trip_id}` | admin | removes the vote and its votes, so a new one can be opened |
 

@@ -13,7 +13,12 @@ export async function openTicketPoll(tripId: string, options: { label: string; p
   return data;
 }
 
-/** `userName` votes for someone else (admins only); leave it out to vote for yourself. */
+/** Take a vote back. `userName` withdraws somebody else's; leave it out for your own. */
+export async function withdrawTicketVote(tripId: string, userName?: string): Promise<void> {
+  await apiClient.delete(apiRoutes.ticketPolls.vote(tripId), { params: userName ? { user_name: userName } : undefined });
+}
+
+/** `userName` fills the vote in for another member; leave it out to vote for yourself. */
 export async function castTicketVote(tripId: string, choice: string, userName?: string): Promise<void> {
   await apiClient.put(apiRoutes.ticketPolls.vote(tripId), { choice, user_name: userName });
 }

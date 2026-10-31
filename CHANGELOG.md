@@ -6,6 +6,13 @@ All notable changes to Ankerd Con are documented here.
 
 ## [Unreleased]
 
+### Added
+- **You can take your vote back in the ticket poll** ("Mijn stem intrekken"), until the tickets are bought.
+- **You can fill in the ticket poll for someone else.** Ask around, then choose the member under "Stem voor iemand anders" and pick their ticket (or take their vote back).
+
+### Fixed
+- **In Settings, "Ankerd" in the "Powered by" line no longer drops to a new line on narrow phones.**
+
 ---
 
 ## [2.2.3] - 2026-10-31

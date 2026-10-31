@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { Check, Plus, Trash2 } from "lucide-react";
+import { Check, Plus, Trash2, X } from "lucide-react";
 import { AvatarStack } from "../common/AvatarStack";
 import { Button } from "../common/Button";
 import { NamePicker } from "../common/NamePicker";
 import { useIsViewer } from "../../hooks/useIsViewer";
-import { useCastTicketVote, useDeleteTicketPoll, useOpenTicketPoll, useTicketsBought } from "../../hooks/useTicketPoll";
+import {
+  useCastTicketVote, useDeleteTicketPoll, useOpenTicketPoll, useTicketsBought, useWithdrawTicketVote,
+} from "../../hooks/useTicketPoll";
 import { useMyNames, useUsers } from "../../hooks/useUsers";
 import { toast } from "../../store/toast.store";
 import { formatAmount, formatTicketSaleStart } from "../../utils/format";
 import { groupPeople } from "../../utils/people";
-import { myTicketChoice, notVotedYet, tallyTicketPoll, VOTE_UNSURE, type TicketTally } from "../../utils/ticketPoll";
+import { myTicketChoice, notVotedYet, tallyTicketPoll, ticketChoiceOf, VOTE_UNSURE, type TicketTally } from "../../utils/ticketPoll";
 import { tripInfo, tripPeople, type Trip } from "../../utils/trips";
 import type { TicketPoll, TicketPollOption } from "../../types";
 
@@ -85,16 +87,32 @@ export function TicketVoteView({ trip, poll }: { trip: Trip; poll: TicketPoll })
   const tally = tallyTicketPoll(poll, users);
   const myChoice = myTicketChoice(poll, myNames);
   const missing = notVotedYet(tripPeople(trip, users), tally);
+  const withdraw = useWithdrawTicketVote(trip.id);
   const canVote = !viewer && !!me;
+  // Whose vote the buttons below show and change: yours, or the member you are filling it in for.
+  const [forName, setForName] = useState("");
+  const other = forName ? groupPeople([forName], users)[0] : null;
+  const shownChoice = other ? ticketChoiceOf(tally, other) : myChoice;
+  // Under the name that person already voted with, so a changed vote replaces the old one.
+  const votingName = other
+    ? poll.votes.find((v) => other.identities.has(v.voter.toLowerCase()))?.voter ?? forName
+    : poll.votes.find((v) => myNames.includes(v.voter))?.voter ?? me?.name ?? "";
 
   async function pick(choice: string) {
-    if (!me) return;
-    // Under the name the member already voted with, so a changed vote replaces the old one.
-    const asName = poll.votes.find((v) => myNames.includes(v.voter))?.voter ?? me.name;
+    if (!votingName) return;
     try {
-      await vote.mutateAsync({ choice, userName: asName });
+      await vote.mutateAsync({ choice, userName: votingName });
     } catch (e) {
-      toast("error", errorText(e, "Je stem is niet opgeslagen. Probeer opnieuw."));
+      toast("error", errorText(e, "De stem is niet opgeslagen. Probeer opnieuw."));
+    }
+  }
+
+  async function takeBack() {
+    if (!votingName) return;
+    try {
+      await withdraw.mutateAsync({ userName: votingName });
+    } catch (e) {
+      toast("error", errorText(e, "De stem is niet ingetrokken. Probeer opnieuw."));
     }
   }
 
@@ -106,20 +124,37 @@ export function TicketVoteView({ trip, poll }: { trip: Trip; poll: TicketPoll })
         <p className="text-[13px] text-ink-2">Verkoop start {formatTicketSaleStart(info.ticket_sale_start)}.</p>
       )}
 
+      {canVote && (
+        <div>
+          <span className="field-label">Stem voor iemand anders</span>
+          <NamePicker
+            options={users.map((u) => u.name).filter((n) => !myNames.includes(n))}
+            value={forName}
+            onChange={setForName}
+            placeholder="Kies een lid, of laat leeg voor jezelf…"
+          />
+        </div>
+      )}
+
       <div className="space-y-2">
-        <p className="section-label">Welk ticket wil jij?</p>
+        <p className="section-label">{other ? `Welk ticket wil ${other.name}?` : "Welk ticket wil jij?"}</p>
         {tally.options.map(({ option, people }) => (
           <ChoiceButton
             key={option.id}
             label={option.label}
             detail={option.price > 0 ? formatAmount(option.price) : undefined}
-            chosen={myChoice === option.id}
+            chosen={shownChoice === option.id}
             people={peopleOf(people)}
             disabled={!canVote}
             onClick={() => pick(option.id)}
           />
         ))}
-        <ChoiceButton label="Weet ik nog niet" chosen={myChoice === VOTE_UNSURE} people={peopleOf(tally.unsure)} disabled={!canVote} onClick={() => pick(VOTE_UNSURE)} />
+        <ChoiceButton label="Weet ik nog niet" chosen={shownChoice === VOTE_UNSURE} people={peopleOf(tally.unsure)} disabled={!canVote} onClick={() => pick(VOTE_UNSURE)} />
+        {canVote && shownChoice !== null && (
+          <button type="button" onClick={takeBack} disabled={withdraw.isPending} className="btn-ghost btn-compact w-full px-3.5">
+            <X size={14} /> {other ? `Stem van ${other.name} intrekken` : "Mijn stem intrekken"}
+          </button>
+        )}
       </div>
 
       {missing.length > 0 && (

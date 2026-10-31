@@ -19,7 +19,7 @@ from app.config import Settings, get_settings
 from app.constants import Tables
 from app.core.database import supabase
 from app.core.logging import get_logger
-from app.dependencies import _profile_exists, act_as, get_admin_user, get_current_user
+from app.dependencies import _profile_exists, act_for_anyone, get_admin_user, get_current_user
 from app.models.ticket_poll import (
     CastVoteRequest,
     OpenTicketPollRequest,
@@ -160,7 +160,8 @@ def cast_ticket_vote(trip_id: str, body: CastVoteRequest, current_user: str = De
     poll = _open_poll(trip_id)
     if poll["status"] != "open":
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=_CLOSED)
-    voter = act_as(current_user, body.user_name)
+    # Members ask around and fill the vote in for each other, so any member's name is accepted.
+    voter = act_for_anyone(current_user, body.user_name, adding=True)
     if body.choice not in {o["id"] for o in poll.get("options") or []} | {_UNSURE}:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=_BAD_CHOICE)
     try:
@@ -170,6 +171,23 @@ def cast_ticket_vote(trip_id: str, body: CastVoteRequest, current_user: str = De
         ).execute()
     except Exception as e:
         raise _db_error(f"save the vote of {voter}", e)
+
+
+@router.delete(TicketPollRoutes.VOTE, status_code=status.HTTP_204_NO_CONTENT)
+def withdraw_ticket_vote(
+    trip_id: str,
+    user_name: Optional[str] = None,
+    current_user: str = Depends(get_current_user),
+) -> None:
+    """Take a vote back, your own or (like casting one) somebody else's. Withdrawing none is not an error."""
+    poll = _open_poll(trip_id)
+    if poll["status"] != "open":
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=_CLOSED)
+    voter = act_for_anyone(current_user, user_name)
+    try:
+        supabase.table(Tables.TICKET_VOTES).delete().eq("poll_id", poll["id"]).eq("voter", voter).execute()
+    except Exception as e:
+        raise _db_error(f"withdraw the vote of {voter}", e)
 
 
 @router.post(TicketPollRoutes.BOUGHT, response_model=TicketPoll)

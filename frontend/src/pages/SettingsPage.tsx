@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { DetailTopbar } from "../components/detail/DetailTopbar";
 import { motion, AnimatePresence } from "framer-motion";
@@ -456,19 +456,20 @@ export function SettingsPage() {
               <div className="flex-1 min-w-0">
                 <p className="text-[14px] font-semibold text-ink">Ankerd Con</p>
                 <p className="text-[12.5px] text-ink-3">Ledenportaal · v{__APP_VERSION__}</p>
-                <p className="-ml-2 flex flex-wrap items-center text-[12px] text-ink-3">
-                  <span className="pl-2">Powered by</span>
-                  <a href="https://ayoublfatmi.nl" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 min-w-11 items-center justify-center px-2 font-semibold text-ink-2 hover:text-ink hover:underline">
-                    ALFA
-                  </a>
-                  {" · "}
-                  <a href="https://rg-digital.dev/" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 min-w-11 items-center justify-center px-2 font-semibold text-ink-2 hover:text-ink hover:underline">
-                    RG Digital
-                  </a>
-                  {" · "}
-                  <a href="https://ankerd.nl" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 min-w-11 items-center justify-center px-2 font-semibold text-ink-2 hover:text-ink hover:underline">
-                    Ankerd
-                  </a>
+                <p className="-ml-1.5 flex flex-nowrap items-center whitespace-nowrap text-[12px] text-ink-3">
+                  <span className="pl-1.5">Powered by</span>
+                  {[
+                    ["ALFA", "https://ayoublfatmi.nl"],
+                    ["RG Digital", "https://rg-digital.dev/"],
+                    ["Ankerd", "https://ankerd.nl"],
+                  ].map(([name, href], i) => (
+                    <Fragment key={name}>
+                      {i > 0 && <span aria-hidden>·</span>}
+                      <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 min-w-11 items-center justify-center px-1.5 font-semibold text-ink-2 hover:text-ink hover:underline">
+                        {name}
+                      </a>
+                    </Fragment>
+                  ))}
                 </p>
               </div>
             </div>

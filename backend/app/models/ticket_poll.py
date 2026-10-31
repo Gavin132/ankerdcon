@@ -34,7 +34,7 @@ class TicketPoll(BaseModel):
 
 
 class CastVoteRequest(BaseModel):
-    # None votes for yourself; an admin may vote for someone else.
+    # None votes for yourself; any member's name fills the vote in for them.
     user_name: Optional[str] = None
     choice: str = Field(..., min_length=1, max_length=40)
 

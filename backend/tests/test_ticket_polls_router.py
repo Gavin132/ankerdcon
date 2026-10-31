@@ -96,6 +96,7 @@ def db(monkeypatch):
     monkeypatch.setattr(dependencies, "_is_admin", lambda name: name == "Admin")
     monkeypatch.setattr(dependencies, "_is_own_former_name", lambda *_: False)
     monkeypatch.setattr(router, "_profile_exists", lambda name: name in {"Sam", "Pip"})
+    monkeypatch.setattr(dependencies, "_profile_exists", lambda name: name in {"Sam", "Pip"})
     monkeypatch.setattr(notification_service, "trip_names_for_day", lambda day_id: {"Sam", "Pip"})
     return fake
 
@@ -151,13 +152,37 @@ def test_a_choice_outside_the_options_is_refused(db):
     assert e.value.status_code == 400
 
 
-def test_a_member_cannot_vote_for_someone_else_but_an_admin_can(db):
+def test_a_member_can_fill_the_vote_in_for_another_member(db):
+    open_poll()
+    router.cast_ticket_vote("E", CastVoteRequest(user_name="Pip", choice="o1"), "Sam")
+    assert [(v.voter, v.choice) for v in router.get_ticket_poll("E", "Sam").votes] == [("Pip", "o1")]
+
+
+def test_a_vote_cannot_be_cast_for_someone_who_is_not_a_member(db):
     open_poll()
     with pytest.raises(HTTPException) as e:
-        router.cast_ticket_vote("E", CastVoteRequest(user_name="Pip", choice="o1"), "Sam")
-    assert e.value.status_code == 403
-    router.cast_ticket_vote("E", CastVoteRequest(user_name="Pip", choice="o1"), "Admin")
+        router.cast_ticket_vote("E", CastVoteRequest(user_name="Nobody", choice="o1"), "Sam")
+    assert e.value.status_code == 400
+
+
+def test_a_vote_can_be_withdrawn_for_yourself_or_someone_else(db):
+    open_poll()
+    router.cast_ticket_vote("E", CastVoteRequest(choice="o1"), "Sam")
+    router.cast_ticket_vote("E", CastVoteRequest(user_name="Pip", choice="o2"), "Sam")
+    router.withdraw_ticket_vote("E", None, "Sam")
     assert [v.voter for v in router.get_ticket_poll("E", "Sam").votes] == ["Pip"]
+    router.withdraw_ticket_vote("E", "Pip", "Sam")
+    assert router.get_ticket_poll("E", "Sam").votes == []
+    router.withdraw_ticket_vote("E", None, "Sam")  # nothing left to withdraw: not an error
+
+
+def test_a_vote_cannot_be_withdrawn_once_the_tickets_are_bought(db):
+    open_poll()
+    router.cast_ticket_vote("E", CastVoteRequest(choice="o1"), "Sam")
+    router.tickets_bought("E", TicketsBoughtRequest(buyer="Sam", option_id="o1"), BackgroundTasks(), SETTINGS, "Admin")
+    with pytest.raises(HTTPException) as e:
+        router.withdraw_ticket_vote("E", None, "Sam")
+    assert e.value.status_code == 409
 
 
 def test_voting_without_a_poll_is_a_404(db):

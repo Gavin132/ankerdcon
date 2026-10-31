@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  castTicketVote, deleteTicketPoll, getTicketPoll, markTicketsBought, openTicketPoll,
+  castTicketVote, deleteTicketPoll, getTicketPoll, markTicketsBought, openTicketPoll, withdrawTicketVote,
 } from "../services/ticketPolls.service";
 import { QUERY_KEYS, STALE_TIME } from "../constants";
 import type { TicketPoll } from "../types";
@@ -35,6 +35,23 @@ export function useCastTicketVote(tripId: string) {
       qc.setQueryData<TicketPoll | null>(key, (old) =>
         old ? { ...old, votes: [...old.votes.filter((v) => v.voter !== userName), { voter: userName, choice }] } : old,
       );
+      return { previous };
+    },
+    onError: (_e, _v, ctx) => qc.setQueryData(key, ctx?.previous ?? null),
+    onSettled: () => qc.invalidateQueries({ queryKey: key }),
+  });
+}
+
+/** The vote disappears at once and is put back when the server refuses. */
+export function useWithdrawTicketVote(tripId: string) {
+  const qc = useQueryClient();
+  const key = QUERY_KEYS.ticketPoll(tripId);
+  return useMutation({
+    mutationFn: ({ userName }: { userName: string }) => withdrawTicketVote(tripId, userName),
+    onMutate: async ({ userName }) => {
+      await qc.cancelQueries({ queryKey: key });
+      const previous = qc.getQueryData<TicketPoll | null>(key);
+      qc.setQueryData<TicketPoll | null>(key, (old) => (old ? { ...old, votes: old.votes.filter((v) => v.voter !== userName) } : old));
       return { previous };
     },
     onError: (_e, _v, ctx) => qc.setQueryData(key, ctx?.previous ?? null),

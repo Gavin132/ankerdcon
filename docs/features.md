@@ -119,7 +119,8 @@ the trip, the ride buttons and a meal today are the left column and "Voor jou" w
 - **Kaartverkoop (the ticket vote)** (`TicketVote.tsx`, `hooks/useTicketPoll.ts`, `app/routers/ticket_polls.py`): what
   used to be a Discord poll. An admin opens it in the Tickets sheet with the ticket options (the event's own ticket types
   are filled in and can be changed: "Vr + za + zo", "Za + zo", "Alleen zaterdag", each with a price). Members pick one,
-  or "Weet ik nog niet" (somebody who is not going just does not vote), and can change it until the tickets are bought. While the vote is open the
+  or "Weet ik nog niet" (somebody who is not going just does not vote), and can change it or take it back ("Mijn stem intrekken") until the tickets are bought.
+  Members ask around, so the sheet has a "Stem voor iemand anders" picker: choose a member and the choices and the withdraw button are theirs. While the vote is open the
   Ticket tile is a card of its own, full width and first, with a bar per ticket and a "Stem mee" pill for whoever has not
   voted; the sheet has the choices, who has not voted yet and, for admins, "Tickets zijn gekocht" (pick the buyer and the
   ticket: one person buys for everyone) and "Poll verwijderen". After that the vote is gone from the page: the tile is
