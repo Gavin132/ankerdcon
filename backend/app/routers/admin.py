@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 import re
+import time
 import uuid
 
 from fastapi.concurrency import run_in_threadpool
@@ -1430,14 +1431,23 @@ _COVER_MAX_SIDE = 1600
 
 
 def _store_admin_image(kind: str, folder: str, content: bytes) -> dict:
+    received = len(content)
+    started = time.perf_counter()
     content, content_type, ext = clean_image(content, {"JPEG", "PNG", "WEBP"})
     if kind == "event-cover":
         shrunk = shrink_image(content, max_side=_COVER_MAX_SIDE)
         if shrunk:
             content, content_type, ext = shrunk
+    processed = time.perf_counter()
     key = f"{folder}/{uuid.uuid4().hex}.{ext}"
     try:
-        return {"url": minio_client.upload_bytes(key, content, content_type)}
+        url = minio_client.upload_bytes(key, content, content_type)
+        # Where a slow upload spends its time, when somebody asks: the browser's own upload is the part before this.
+        logger.info(
+            "Stored a %s: %d KB received, %d KB stored, %.2fs processing, %.2fs storing",
+            kind, received // 1024, len(content) // 1024, processed - started, time.perf_counter() - processed,
+        )
+        return {"url": url}
     except RuntimeError as e:
         logger.error("%s upload failed (MinIO not configured): %s", kind, e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))

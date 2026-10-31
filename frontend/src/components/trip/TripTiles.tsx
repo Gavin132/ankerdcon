@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { BedDouble, Camera, Car, ChevronRight, CloudSun, FileText, Info, Plus, Sparkles, Ticket as TicketIcon, Trash2, Upload, Utensils, Wallet } from "lucide-react";
+import { BedDouble, Camera, Car, ChevronRight, CloudSun, FileText, Image as ImageIcon, Info, Plus, Sparkles, Ticket as TicketIcon, Trash2, Upload, Utensils, Wallet } from "lucide-react";
 import { UserAvatar } from "../common/UserAvatar";
 import { Segmented } from "../common/Segmented";
 import { StartTicketVote, TicketBars, TicketBoughtView, TicketVoteView, choiceLabel } from "./TicketVote";
@@ -32,7 +32,7 @@ import { countOf, formatAmount, formatBytes, formatTicketSaleStart } from "../..
 import { defaultTripDayId, tripGaps, tripInfo, tripMeals, tripRides, tripOutliers, tripRoomGaps, type Trip, type TripDay, type TripPhase } from "../../utils/trips";
 import { groupPeople } from "../../utils/people";
 import { useLocalTicketsStore } from "../../store/localTickets.store";
-import type { LocalTicket } from "../../utils/localTickets";
+import { makeTicketThumbnail, type LocalTicket } from "../../utils/localTickets";
 import type { CalendarEvent, Cosplay, Expense, HotelRoom, Meal, Ride, StoryDaySummary, TicketPoll, User } from "../../types";
 
 /** The small "add" button in the corner of a tile: the standard blue, as a 36 px square like every icon button. */
@@ -645,11 +645,43 @@ export function TicketTile({ trip, poll, onOpen, wide }: { trip: Trip; poll?: Ti
 }
 
 /** One saved ticket: a thumbnail for an image, an icon for a PDF, tap to open full-screen. */
-function TicketRow({ ticket, onDelete }: { ticket: LocalTicket; onDelete: () => void }) {
+function TicketRow({ ticket, onDelete, onThumb }: { ticket: LocalTicket; onDelete: () => void; onThumb: (thumb: Blob | null) => void }) {
   const [confirming, setConfirming] = useState(false);
-  const url = useMemo(() => URL.createObjectURL(ticket.blob), [ticket.blob]);
-  useEffect(() => () => URL.revokeObjectURL(url), [url]);
+  // The link opens the file itself (a URL costs nothing until it is opened); the list only ever draws the small copy.
+  // Made in an effect, with the clean-up beside it: a URL made while rendering is revoked by a remount (React's strict mode
+  // does one in development) and the picture stays broken.
+  const [url, setUrl] = useState<string>();
+  useEffect(() => {
+    const made = URL.createObjectURL(ticket.blob);
+    setUrl(made);
+    return () => URL.revokeObjectURL(made);
+  }, [ticket.blob]);
   const isImage = ticket.contentType.startsWith("image/");
+  const [thumbUrl, setThumbUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!ticket.thumb) {
+      setThumbUrl(null);
+      return;
+    }
+    const made = URL.createObjectURL(ticket.thumb);
+    setThumbUrl(made);
+    return () => URL.revokeObjectURL(made);
+  }, [ticket.thumb]);
+  // A ticket saved before there were thumbnails gets its one now, a moment after the sheet has finished opening, so
+  // decoding the picture never competes with that animation.
+  useEffect(() => {
+    if (!isImage || ticket.thumb !== undefined) return;
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      const thumb = await makeTicketThumbnail(ticket.blob);
+      if (!cancelled) onThumb(thumb);
+    }, 700);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isImage, ticket.thumb, ticket.blob]);
 
   return (
     <div className="flex items-center gap-3 rounded-xl border-1.5 border-line px-3 py-2.5">
@@ -659,8 +691,12 @@ function TicketRow({ ticket, onDelete }: { ticket: LocalTicket; onDelete: () => 
         rel="noopener noreferrer"
         className="flex min-w-0 flex-1 items-center gap-3"
       >
-        {isImage ? (
-          <img src={url} alt="" className="h-11 w-11 shrink-0 rounded-lg object-cover" />
+        {isImage && thumbUrl ? (
+          <img src={thumbUrl} alt="" className="h-11 w-11 shrink-0 rounded-lg object-cover" />
+        ) : isImage ? (
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink-3">
+            <ImageIcon size={16} />
+          </span>
         ) : (
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-sunken text-ink-3">
             <FileText size={16} />
@@ -709,6 +745,7 @@ export function TicketSheet({
   const items = useLocalTicketsStore((s) => s.items);
   const add = useLocalTicketsStore((s) => s.add);
   const remove = useLocalTicketsStore((s) => s.remove);
+  const setThumb = useLocalTicketsStore((s) => s.setThumb);
   const [error, setError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const mine = items.filter((t) => t.eventId === trip.id).sort((a, b) => b.createdAt - a.createdAt);
@@ -781,7 +818,7 @@ export function TicketSheet({
           ) : (
             <div className="space-y-2">
               {mine.map((t) => (
-                <TicketRow key={t.id} ticket={t} onDelete={() => remove(t.id)} />
+                <TicketRow key={t.id} ticket={t} onDelete={() => remove(t.id)} onThumb={(thumb) => setThumb(t.id, thumb)} />
               ))}
             </div>
           )}

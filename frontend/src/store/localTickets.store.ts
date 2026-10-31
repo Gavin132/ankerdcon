@@ -3,6 +3,7 @@ import {
   addLocalTicket,
   removeLocalTicket,
   listLocalTickets,
+  saveLocalTicketThumb,
   type LocalTicket,
 } from "../utils/localTickets";
 
@@ -17,6 +18,8 @@ interface LocalTicketsState {
    * caller falls back to a plain error. */
   add: (eventId: string, file: File) => Promise<LocalTicket | null>;
   remove: (id: string) => Promise<void>;
+  /** Remembers the thumbnail of a ticket that was saved without one. */
+  setThumb: (id: string, thumb: Blob | null) => Promise<void>;
 }
 
 export const useLocalTicketsStore = create<LocalTicketsState>((set, get) => ({
@@ -38,6 +41,14 @@ export const useLocalTicketsStore = create<LocalTicketsState>((set, get) => ({
       return item;
     } catch {
       return null;
+    }
+  },
+  setThumb: async (id, thumb) => {
+    set((s) => ({ items: s.items.map((i) => (i.id === id ? { ...i, thumb } : i)) }));
+    try {
+      await saveLocalTicketThumb(id, thumb);
+    } catch {
+      // best effort: it is made again next time
     }
   },
   remove: async (id) => {

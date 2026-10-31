@@ -21,6 +21,37 @@ export interface LocalTicket {
   fileName: string;
   size: number;
   createdAt: number;
+  /** A small square copy for the list. `undefined` for a ticket saved before there were any (made later, once), `null`
+   * when there is none to make (a PDF, or a picture this browser cannot decode). */
+  thumb?: Blob | null;
+}
+
+const THUMB_SIZE = 96; // twice the 44 px it is shown at, for a sharp screen
+
+/**
+ * A small square copy of an image ticket, centred like the list shows it. The list used to put the original in a 44 px
+ * box, which made the browser decode a whole phone photo (several megapixels, up to 15 MB) just to draw it that size, and
+ * that is what made the sheet stutter while it opened.
+ */
+export async function makeTicketThumbnail(blob: Blob): Promise<Blob | null> {
+  if (!blob.type.startsWith("image/")) return null;
+  try {
+    const bitmap = await createImageBitmap(blob);
+    const side = Math.min(bitmap.width, bitmap.height);
+    const canvas = document.createElement("canvas");
+    canvas.width = THUMB_SIZE;
+    canvas.height = THUMB_SIZE;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      bitmap.close();
+      return null;
+    }
+    ctx.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, THUMB_SIZE, THUMB_SIZE);
+    bitmap.close();
+    return await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.75));
+  } catch {
+    return null;
+  }
 }
 
 function openDb(): Promise<IDBDatabase> {
@@ -61,9 +92,30 @@ export async function addLocalTicket(eventId: string, file: File): Promise<Local
     fileName: file.name,
     size: file.size,
     createdAt: Date.now(),
+    thumb: await makeTicketThumbnail(file),
   };
   await withStore("readwrite", (store) => store.put(item));
   return item;
+}
+
+/** Keeps the thumbnail made for a ticket that was saved without one. */
+export async function saveLocalTicketThumb(id: string, thumb: Blob | null): Promise<void> {
+  const db = await openDb();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(STORE, "readwrite");
+      const store = tx.objectStore(STORE);
+      const read = store.get(id);
+      read.onsuccess = () => {
+        if (read.result) store.put({ ...read.result, thumb });
+      };
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+  } finally {
+    db.close();
+  }
 }
 
 export async function removeLocalTicket(id: string): Promise<void> {

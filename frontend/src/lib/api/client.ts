@@ -3,6 +3,7 @@ import { env } from "../../config/env";
 import { useAuthStore } from "../../store/auth.store";
 import { toastReadOnly } from "../../store/toast.store";
 import { isViewerMode, READ_ONLY_MESSAGE, viewerMayRequest } from "../viewerMode";
+import { useUploadProgressStore } from "../../store/uploadProgress.store";
 
 // ── Typed error class ──────────────────────────────────────────────
 
@@ -73,8 +74,36 @@ apiClient.interceptors.request.use((config) => {
   if ((config.method ?? "get").toLowerCase() === "get" && config.timeout === REQUEST_TIMEOUT_MS) {
     config.timeout = GET_TIMEOUT_MS;
   }
+  // A request that carries a file reports how far it is, for the bar at the top of the app (UploadProgress), besides
+  // whatever the caller does with it itself.
+  if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    (config as { uploadId?: string }).uploadId = id;
+    const own = config.onUploadProgress;
+    config.onUploadProgress = (event) => {
+      own?.(event);
+      if (event.total) useUploadProgressStore.getState().update(id, event.loaded, event.total);
+    };
+  }
   return config;
 });
+
+// However an upload ends, its bar goes: answered, refused or given up on. Registered before the refresh logic below, so a
+// request that is sent again after a token refresh starts a bar of its own.
+function finishUpload(config: unknown) {
+  const id = (config as { uploadId?: string } | undefined)?.uploadId;
+  if (id) useUploadProgressStore.getState().finish(id);
+}
+apiClient.interceptors.response.use(
+  (response) => {
+    finishUpload(response.config);
+    return response;
+  },
+  (error) => {
+    finishUpload(error?.config);
+    return Promise.reject(error);
+  },
+);
 
 // ── Token Refresh Variables ────────────────────────────────────────
 

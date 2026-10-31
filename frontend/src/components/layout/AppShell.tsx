@@ -2,6 +2,7 @@ import { Suspense, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Header } from "./Header";
+import { UploadProgress } from "../common/UploadProgress";
 import { BottomNav } from "./BottomNav";
 import { Sidebar } from "./Sidebar";
 import { CONTENT_WIDTH } from "./contentWidth";
@@ -51,6 +52,7 @@ export function AppShell() {
       <ScrollToTop />
       <Sidebar />
       <AnnouncementBanner fallback={<ChangelogBanner />} />
+      <UploadProgress />
       <Header />
       <PullToRefresh />
       <motion.main
